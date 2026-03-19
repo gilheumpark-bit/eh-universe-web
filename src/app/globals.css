@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg-primary: #0a0a0c;
+  --color-bg-secondary: #12121a;
+  --color-bg-tertiary: #1a1a2e;
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #8888a0;
+  --color-text-tertiary: #555570;
+  --color-accent-purple: #7b5ea7;
+  --color-accent-red: #c0392b;
+  --color-accent-green: #1d9e75;
+  --color-accent-amber: #d4a017;
+  --color-accent-blue: #2980b9;
+  --color-border: #2a2a3e;
+  --font-sans: 'IBM Plex Sans', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-document: 'IBM Plex Mono', monospace;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+}
+
+* {
+  letter-spacing: 0.02em;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* Noise/grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Scanline effect */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.03;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-purple);
+}
+
+/* Glitch hover effect */
+.glitch-hover:hover {
+  animation: glitch 0.3s ease-in-out;
+}
+
+@keyframes glitch {
+  0% { text-shadow: 2px 0 var(--color-accent-purple), -2px 0 var(--color-accent-red); }
+  25% { text-shadow: -2px 0 var(--color-accent-purple), 2px 0 var(--color-accent-red); }
+  50% { text-shadow: 2px 0 var(--color-accent-red), -2px 0 var(--color-accent-purple); }
+  75% { text-shadow: -1px 0 var(--color-accent-purple), 1px 0 var(--color-accent-red); }
+  100% { text-shadow: none; }
+}
+
+/* Star field animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* Badge styles */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 2px;
+}
+.badge-classified { background: var(--color-accent-red); color: #fff; }
+.badge-allow { background: var(--color-accent-green); color: #fff; }
+.badge-deny { background: var(--color-accent-red); color: #fff; }
+.badge-amber { background: var(--color-accent-amber); color: #000; }
+.badge-blue { background: var(--color-accent-blue); color: #fff; }
+.badge-redacted { background: var(--color-text-tertiary); color: var(--color-text-tertiary); }
+
+/* EH Log block */
+.eh-log {
+  background: var(--color-bg-secondary);
+  border-left: 3px solid var(--color-accent-purple);
+  padding: 1rem 1.25rem;
+  font-family: var(--font-document);
+  font-size: 0.85rem;
+  color: var(--color-accent-green);
+  line-height: 1.8;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Document header */
+.doc-header {
+  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-document);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+}
+
+/* Zone cards */
+.zone-card {
+  border-radius: 4px;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+.zone-red { border-left: 4px solid var(--color-accent-red); }
+.zone-green { border-left: 4px solid var(--color-accent-green); }
+.zone-amber { border-left: 4px solid var(--color-accent-amber); }
+.zone-blue { border-left: 4px solid var(--color-accent-blue); }
+
+/* Purple glow on cards */
+.card-glow {
+  box-shadow: 0 0 20px rgba(123, 94, 167, 0.08);
+  transition: box-shadow 0.3s ease;
+}
+.card-glow:hover {
+  box-shadow: 0 0 30px rgba(123, 94, 167, 0.15);
+}
