@@ -43,7 +43,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
       <main className="pt-14">
         <div className="mx-auto max-w-4xl px-4 py-16">
           <Link
-            href="/archive"
+            href={`/archive?cat=${article.category.toLowerCase()}`}
             className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
           >
             ← ARCHIVE / {article.category}
