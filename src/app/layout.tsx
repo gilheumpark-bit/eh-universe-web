@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { LangProvider } from "@/lib/LangContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
   description:
-    "6,600만 년의 검증된 SF 우주. 오픈소스 서사 엔진 EH Rulebook. 설정집 200+ 아티클. 당신의 이야기가 무너지지 않게 막는다.",
+    "66 million years of verified SF universe. Open-source narrative engine EH Rulebook. 200+ article archive.",
   openGraph: {
     title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
     description:
-      "6,600만 년의 검증된 SF 우주. 오픈소스 서사 엔진 EH Rulebook.",
+      "66 million years of verified SF universe. Open-source narrative engine EH Rulebook.",
     type: "website",
   },
 };
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="h-full antialiased">
+    <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -32,7 +33,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <LangProvider>{children}</LangProvider>
+      </body>
     </html>
   );
 }
