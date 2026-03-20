@@ -35,6 +35,11 @@ const categories = [
       { slug: "neka-empire", title: { ko: "네카 제국", en: "Neka Empire" }, level: "RESTRICTED" },
       { slug: "liberation-front", title: { ko: "해방 연대", en: "Liberation Front" }, level: "RESTRICTED" },
       { slug: "noa-4th-force", title: { ko: "NOA (제4세력)", en: "NOA (The Fourth Force)" }, level: "CLASSIFIED" },
+      { slug: "galaxy-30-factions", title: { ko: "은하 30개 대표 행성 세력", en: "30 Representative Galactic Factions" }, level: "RESTRICTED" },
+      { slug: "green-zone-factions", title: { ko: "GREEN 구역 — 핵심 문명권 15개 세력", en: "GREEN Zone — 15 Core Civilization Factions" }, level: "RESTRICTED" },
+      { slug: "blue-zone-factions", title: { ko: "BLUE 구역 — 표준 생활권 8개 세력", en: "BLUE Zone — 8 Standard Living Factions" }, level: "RESTRICTED" },
+      { slug: "yellow-zone-factions", title: { ko: "YELLOW~RED 구역 — 변경 및 전장 7개 세력", en: "YELLOW~RED Zone — 7 Frontier & Battlefield Factions" }, level: "CLASSIFIED" },
+      { slug: "faction-politics", title: { ko: "30개 세력 정치 지형", en: "Political Landscape of 30 Factions" }, level: "CLASSIFIED" },
     ],
   },
   {

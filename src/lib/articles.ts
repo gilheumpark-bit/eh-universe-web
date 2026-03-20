@@ -3270,6 +3270,445 @@ That is all.
 Manual No. [REDACTED] | Issued by: Council Fleet Command | Applies to: All Riders`,
     },
   },
+  "galaxy-30-factions": {
+    title: { ko: "은하 30개 대표 행성 세력", en: "30 Representative Galactic Factions" },
+    level: "RESTRICTED",
+    category: "FACTIONS",
+    related: ["council", "liberation-front", "galaxy-zones", "gate-infra", "green-zone-factions", "blue-zone-factions", "yellow-zone-factions", "faction-politics"],
+    content: {
+      ko: `은하 30개 대표 행성 세력 — 현실 국가 후신
+
+■ 원칙
+AK(한미 주축)에서 출발한 인류가 5,000년간 은하로 확산. 각 행성은 비개입 원칙으로 자치. 강제 통합 없음.
+결과: 원래 국가의 DNA가 행성 문화로 진화.
+
+■ 구역 분류
+- GREEN 구역 (15개): 핵심 문명권. 은하 GDP 80%. S~A급. NET-3. Gate 허브 접근.
+- BLUE 구역 (8개): 표준 생활권. 은하 GDP 15%. A~B급. NET-2~3.
+- YELLOW 구역 (5개): 변경. 은하 GDP 4%. B~D급. NET-1~2. 해방연대 영향권 시작.
+- AMBER~RED 구역 (2개): 완충/전장. 해방연대 3행성 + RED 8행성 연합.
+
+■ 핵심 수치
+- 총 세력: 30개
+- 총 추정 인구: 약 3,700억+
+- Gate 허브: H1~H6 (6개)
+- 경제력 1위: 화원(H4, 제조) / 2위: 콜럼비아(H2, 금융) / 3위: 네오(H1, 정치+기술)
+
+■ 정사 관통 — 3계층 구조
+- 지배: AK → 협의회 (네오+콜럼비아). "관리한다."
+- 반발: NOB → 변경파+독자파+해방연대. "부럽다/거부한다."
+- 배제: ER → Gate 밖 소수. "존재하지 않는다."
+
+5,000년이 지나도 AK/NOB/ER 구도는 형태만 바꿔서 반복된다.`,
+      en: `30 Representative Galactic Factions — Successors of Earth Nations
+
+■ Principle
+Humanity, originating from the AK (Korea-US axis), spread across the galaxy over 5,000 years. Each planet is self-governing under the Non-Intervention Principle. No forced unification.
+Result: The DNA of original nations evolved into planetary cultures.
+
+■ Zone Classification
+- GREEN Zone (15): Core civilization. 80% of galactic GDP. S~A rank. NET-3. Gate hub access.
+- BLUE Zone (8): Standard living zone. 15% of galactic GDP. A~B rank. NET-2~3.
+- YELLOW Zone (5): Frontier. 4% of galactic GDP. B~D rank. NET-1~2. Liberation Front influence begins.
+- AMBER~RED Zone (2): Buffer/battlefield. Liberation Front 3 planets + RED 8-planet union.
+
+■ Key Numbers
+- Total factions: 30
+- Estimated total population: ~370 billion+
+- Gate hubs: H1~H6 (6 total)
+- Economic rank: #1 Huayuan (H4, manufacturing) / #2 Columbia (H2, finance) / #3 Neo (H1, politics+tech)
+
+■ Narrative Continuity — Three-Layer Structure
+- Ruling: AK → Council (Neo + Columbia). "We manage."
+- Dissent: NOB → Frontier + Independent + Liberation Front. "We envy / We refuse."
+- Excluded: ER → Those beyond the Gate. "They do not exist."
+
+Even after 5,000 years, the AK/NOB/ER structure repeats — only the form changes.`,
+    },
+  },
+  "green-zone-factions": {
+    title: { ko: "GREEN 구역 — 핵심 문명권 15개 세력", en: "GREEN Zone — 15 Core Civilization Factions" },
+    level: "RESTRICTED",
+    category: "FACTIONS",
+    related: ["galaxy-30-factions", "council", "gate-infra", "neo-homeworld"],
+    content: {
+      ko: `GREEN 구역 — 핵심 문명권 (15개 세력)
+은하 GDP 80%. S~A급. NET-3. Gate 허브 접근.
+
+# | 행성 세력명 | 참조 국가 | 허브 | 등급 | 특화 | 인구(추정)
+1 | 네오 연방 (Neo Federation) | 한국 | H1 | S | 정치 수도. Gate 원조. 기술 집약. | 300억
+2 | 콜럼비아 (Columbia) | 미국 | H2 | S | 금융. EH 중앙은행. 군사기술. | 500억
+3 | 신화 (Shinwa) | 일본 | H5 | S | 문화/기술. 안드로이드 미학. | 200억
+4 | 라인란트 (Rheinland) | 독일 | H3 | S | 정밀 공학. SJC 모듈 설계. | 180억
+5 | 화원 (Huayuan) | 중국 | H4 | S | 제조/물류. 은하 최대 생산력. | 800억
+6 | 브리타니아 (Britannia) | 영국 | H2 | A | 금융/학술. 학술회 중추. | 120억
+7 | 갈리아 (Gallia) | 프랑스 | H5 | A | 문화/예술. 은하 미디어. | 150억
+8 | 노르딕 (Nordic) | 북유럽 | H3 | A | 에너지/복지. 모델 행성. | 80억
+9 | 마플 (Maple) | 캐나다 | H6 | A | 자원/에너지. 광업. | 60억
+10 | 아우스트라 (Austra) | 호주 | H6 | A | 자원/광업. 변경 개발. | 50억
+11 | 이탈리카 (Italica) | 이탈리아 | H5 | A | 디자인/문화. 함선 미학. | 100억
+12 | 홀란트 (Hollant) | 네덜란드 | H4 | A | 무역/물류. Gate 화물 허브. | 40억
+13 | 이베리아 (Iberia) | 스페인 | H5 | A | 관광/문화. 은하 휴양지. | 90억
+14 | 헬베티아 (Helvetia) | 스위스 | H2 | A | 중립 금융. EH 비밀 계좌. | 20억
+15 | 아리랑 (Arirang) | 한국 분파 | H1 | A | 문화 수출. 전통 보존. 네오와 별도. | 50억
+
+■ 네오 vs 아리랑
+네오는 AK 정통 후신(정치/기술). 아리랑은 문화/전통 보존 분파.
+"같은 뿌리, 다른 가지." 한국 계열 내부에서도 분화.
+
+■ Gate 이동반경과 경제권
+H1(NEO): 반경 5,000광년 — GREEN 정치 수도권
+H2(콜럼비아+브리타니아+헬베티아): 반경 3,000광년 — 금융 허브권
+H3(라인란트+노르딕): 반경 4,000광년 — R&D 벨트
+H4(화원+홀란트): 반경 6,000광년 — 제조/물류 벨트 (가장 넓음)
+H5(갈리아+이탈리카+이베리아+신화): 반경 3,000광년 — 문화/교육 벨트
+H6(마플+아우스트라): 반경 5,000광년 — 자원/에너지 벨트
+
+■ Gate 접근성 = 경제력
+화원(H4 직결) → 경제력 1위 (제조)
+콜럼비아(H2 직결) → 2위 (금융)
+네오(H1 직결) → 3위 (정치+기술)
+라인란트(H3 직결) → 4위 (기술)`,
+      en: `GREEN Zone — Core Civilization (15 Factions)
+80% of galactic GDP. S~A rank. NET-3. Gate hub access.
+
+# | Faction | Reference Nation | Hub | Rank | Specialization | Pop. (est.)
+1 | Neo Federation | Korea | H1 | S | Political capital. Gate origin. Tech-intensive. | 30B
+2 | Columbia | USA | H2 | S | Finance. EH Central Bank. Military tech. | 50B
+3 | Shinwa | Japan | H5 | S | Culture/tech. Android aesthetics. | 20B
+4 | Rheinland | Germany | H3 | S | Precision engineering. SJC module design. | 18B
+5 | Huayuan | China | H4 | S | Manufacturing/logistics. Galaxy's largest production. | 80B
+6 | Britannia | UK | H2 | A | Finance/academia. Academic council core. | 12B
+7 | Gallia | France | H5 | A | Culture/arts. Galactic media. | 15B
+8 | Nordic | Northern Europe | H3 | A | Energy/welfare. Model planet. | 8B
+9 | Maple | Canada | H6 | A | Resources/energy. Mining. | 6B
+10 | Austra | Australia | H6 | A | Resources/mining. Frontier development. | 5B
+11 | Italica | Italy | H5 | A | Design/culture. Ship aesthetics. | 10B
+12 | Hollant | Netherlands | H4 | A | Trade/logistics. Gate cargo hub. | 4B
+13 | Iberia | Spain | H5 | A | Tourism/culture. Galactic resort. | 9B
+14 | Helvetia | Switzerland | H2 | A | Neutral finance. EH secret accounts. | 2B
+15 | Arirang | Korean splinter | H1 | A | Cultural export. Tradition preservation. Separate from Neo. | 5B
+
+■ Neo vs Arirang
+Neo is the orthodox AK successor (politics/tech). Arirang is a cultural/traditional preservation splinter.
+"Same root, different branch." Even within the Korean lineage, divergence occurred.
+
+■ Gate Range & Economic Zones
+H1 (NEO): 5,000 ly radius — GREEN political capital zone
+H2 (Columbia + Britannia + Helvetia): 3,000 ly radius — Financial hub
+H3 (Rheinland + Nordic): 4,000 ly radius — R&D belt
+H4 (Huayuan + Hollant): 6,000 ly radius — Manufacturing/logistics belt (widest)
+H5 (Gallia + Italica + Iberia + Shinwa): 3,000 ly radius — Culture/education belt
+H6 (Maple + Austra): 5,000 ly radius — Resource/energy belt
+
+■ Gate Access = Economic Power
+Huayuan (H4 direct) → Economic rank #1 (manufacturing)
+Columbia (H2 direct) → #2 (finance)
+Neo (H1 direct) → #3 (politics + tech)
+Rheinland (H3 direct) → #4 (tech)`,
+    },
+  },
+  "blue-zone-factions": {
+    title: { ko: "BLUE 구역 — 표준 생활권 8개 세력", en: "BLUE Zone — 8 Standard Living Factions" },
+    level: "RESTRICTED",
+    category: "FACTIONS",
+    related: ["galaxy-30-factions", "green-zone-factions", "yellow-zone-factions"],
+    content: {
+      ko: `BLUE 구역 — 표준 생활권 (8개 세력)
+은하 GDP 15%. A~B급. NET-2~3.
+
+# | 행성 세력명 | 참조 국가 | 등급 | 특화 | 인구(추정)
+16 | 인디라 (Indira) | 인도 | A | IT/서비스. 소프트웨어 허브. | 400억
+17 | 브라질리아 (Brazilia) | 브라질 | B | 농업/자원. 식량 수출. | 200억
+18 | 나일 (Nile) | 이집트 | B | 고대 유산. 학술. | 60억
+19 | 한사 (Hansa) | 동남아 연합 | B | 무역/제조. Gate 중계. | 150억
+20 | 투란 (Turan) | 터키 | B | 교역 교차점. 문화 혼합. | 80억
+21 | 페르시아 (Persia) | 이란 | B | 에너지/학술. 독자 기술. | 70억
+22 | 멕시카 (Mexica) | 멕시코 | B | 제조/문화. 노동력. | 100억
+23 | 사르마트 (Sarmat) | 러시아 | B | 자원/군사. 독자 노선. 협의회와 긴장. | 120억
+
+■ 사르마트 (러시아 후신)
+협의회 체제에 반발하는 최대 세력.
+완전 이탈은 아니지만 독자 Gate 건설 시도.
+"협의회 안의 반대파."
+
+전쟁에 대해 독자 정보를 보유하지만 협의회와 공유하지 않음.
+독자 정찰 수행. 표면은 협력, 실제는 독자 대응 준비.
+
+■ 경제 위치
+인디라: Gate Tier 2 접근 — 경제력 7위 (IT)
+사르마트: BLUE 외곽 — 경제력 10위 (자원, 독자 Gate 시도)`,
+      en: `BLUE Zone — Standard Living Zone (8 Factions)
+15% of galactic GDP. A~B rank. NET-2~3.
+
+# | Faction | Reference Nation | Rank | Specialization | Pop. (est.)
+16 | Indira | India | A | IT/services. Software hub. | 40B
+17 | Brazilia | Brazil | B | Agriculture/resources. Food exports. | 20B
+18 | Nile | Egypt | B | Ancient heritage. Academia. | 6B
+19 | Hansa | Southeast Asian Union | B | Trade/manufacturing. Gate relay. | 15B
+20 | Turan | Turkey | B | Trade crossroads. Cultural hybrid. | 8B
+21 | Persia | Iran | B | Energy/academia. Independent tech. | 7B
+22 | Mexica | Mexico | B | Manufacturing/culture. Labor. | 10B
+23 | Sarmat | Russia | B | Resources/military. Independent course. Tension with Council. | 12B
+
+■ Sarmat (Russian Successor)
+The largest faction opposing the Council system.
+Not fully seceded, but attempting independent Gate construction.
+"The opposition within the Council."
+
+Possesses independent intelligence on the war but does not share with the Council.
+Conducts independent reconnaissance. Surface-level cooperation, actual independent preparations.
+
+■ Economic Position
+Indira: Gate Tier 2 access — Economic rank #7 (IT)
+Sarmat: BLUE outer edge — Economic rank #10 (resources, independent Gate attempt)`,
+    },
+  },
+  "yellow-zone-factions": {
+    title: { ko: "YELLOW~RED 구역 — 변경 및 전장 7개 세력", en: "YELLOW~RED Zone — 7 Frontier & Battlefield Factions" },
+    level: "CLASSIFIED",
+    category: "FACTIONS",
+    related: ["galaxy-30-factions", "liberation-front", "red-border-8", "liberation-3"],
+    content: {
+      ko: `YELLOW 구역 — 변경 (5개 세력)
+은하 GDP 4%. B~D급. NET-1~2. 해방연대 영향권 시작.
+
+# | 행성 세력명 | 참조 국가 | 등급 | 특화 | 인구(추정)
+24 | 사하라 (Sahara) | 아프리카 연합 | C | 자원/생존. 독자 문화 강함. | 80억
+25 | 안데스 (Andes) | 남미 연합 | C | 농업/광업. 공동체 중심. | 50억
+26 | 폴리네시아 (Polynesia) | 태평양 도서국 | C | 해양/탐험. 소규모 독립. | 10억
+27 | 카슈미르 (Kashmir) | 중앙아시아 | D | 자원/분쟁. Gate 접근 제한. | 30억
+28 | 아르카디아 (Arcadia) | 이상주의 분파 | D | 유토피아 실험. 비개입 극단 해석. | 5억
+
+■ 아르카디아
+특정 국가 후신이 아님. 비개입 원칙을 극단적으로 해석한 집단.
+"관측도 하지 않겠다." 협의회와 철학적 대립. 해방연대와 접점.
+
+AMBER~RED 구역 — 완충/전장 (2개)
+
+29 | 해방연대 3행성 | 체 게바라/저항 세력 | B~S(비밀) | Arcanum/Crypta/Latebra. 수오 철학 계승.
+30 | RED 8행성 연합 | 비밀조사국 직할 | D~S | Terminus~Ora. 전장 거점. 세력이 아닌 "기지".
+
+■ RED 행성 주민 = 7000년대의 ER
+D~E급 행성. NET-0. Gate 없음.
+전쟁이 자기 행성에서 벌어지는 걸 본다. 누구에게도 신고할 수 없다.
+Gate가 없으니까. NET-0이니까. 기록에 없으니까.
+
+비밀조사국은 이들을 "보호한다"고 말한다.
+실제로는 이들의 행성을 전장으로 사용한다.
+보호인가 이용인가? 답 없음. 비개입 원칙.
+
+■ 경제 위치
+사하라: YELLOW Tier 3 — 경제력 20위+ (Gate 희소)
+카슈미르: YELLOW 외곽 — 경제력 27위 (Gate 거의 없음)`,
+      en: `YELLOW Zone — Frontier (5 Factions)
+4% of galactic GDP. B~D rank. NET-1~2. Liberation Front influence begins.
+
+# | Faction | Reference Nation | Rank | Specialization | Pop. (est.)
+24 | Sahara | African Union | C | Resources/survival. Strong independent culture. | 8B
+25 | Andes | South American Union | C | Agriculture/mining. Community-centered. | 5B
+26 | Polynesia | Pacific Island Nations | C | Maritime/exploration. Small-scale independence. | 1B
+27 | Kashmir | Central Asia | D | Resources/conflict. Limited Gate access. | 3B
+28 | Arcadia | Idealist splinter | D | Utopian experiment. Extreme Non-Intervention interpretation. | 0.5B
+
+■ Arcadia
+Not a successor of any specific nation. A group that interprets the Non-Intervention Principle to its extreme.
+"We will not even observe." Philosophical opposition to the Council. Contact with Liberation Front.
+
+AMBER~RED Zone — Buffer/Battlefield (2)
+
+29 | Liberation Front 3 Planets | Che Guevara/Resistance | B~S (secret) | Arcanum/Crypta/Latebra. Suo philosophy inherited.
+30 | RED 8-Planet Union | Bureau of Investigation direct | D~S | Terminus~Ora. Battlefield bases. Not factions — "installations."
+
+■ RED Planet Residents = The ER of the 7000s
+D~E rank planets. NET-0. No Gate.
+They see war happening on their planet. They cannot report it to anyone.
+No Gate. NET-0. Not in the records.
+
+The Bureau of Investigation says it "protects" them.
+In reality, it uses their planets as battlefields.
+Protection or exploitation? No answer. Non-Intervention Principle.
+
+■ Economic Position
+Sahara: YELLOW Tier 3 — Economic rank 20+ (Gate scarcity)
+Kashmir: YELLOW outer edge — Economic rank 27 (almost no Gate)`,
+    },
+  },
+  "faction-politics": {
+    title: { ko: "30개 세력 정치 지형", en: "Political Landscape of 30 Factions" },
+    level: "CLASSIFIED",
+    category: "FACTIONS",
+    related: ["galaxy-30-factions", "council", "non-intervention", "liberation-front"],
+    content: {
+      ko: `30개 세력 정치 지형
+
+■ 협의회 내부 파벌과 행성 세력
+
+한국 계열: 네오 + 아리랑 + 신화
+→ 전 행성 균등 지원. Gate Tier 3 확충.
+
+미국 계열: 콜럼비아
+→ 핵심 행성 집중. GREEN 강화.
+
+유럽 중립: 라인란트 + 갈리아 + 브리타니아 + 노르딕
+→ 실리. 양쪽 사이 줄타기.
+
+독자파: 사르마트 + 화원
+→ 협의회 체제 내 독자 노선.
+
+변경파: 사하라 + 안데스 + 카슈미르
+→ "GREEN이 우릴 버렸다." 해방연대 동조.
+
+■ 핵심 대립 구도
+
+GREEN 중심: 네오 + 콜럼비아 + 라인란트
+  "Gate를 지키면 은하를 지킨다"
+     vs
+변경: 사하라 + 안데스 + 아르카디아
+  "Gate가 우리한테 안 온다"
+     vs
+독자: 사르마트 + 화원
+  "우리가 Gate를 만들겠다"
+
+■ 현실 지정학의 7000년대 버전
+
+현실 → 7000년대
+NATO vs 러시아 → 협의회 중심 vs 사르마트
+G7 vs 글로벌 사우스 → GREEN vs YELLOW 변경
+한미동맹 vs 중국 → 네오+콜럼비아 vs 화원
+EU 중립 → 유럽 중립파 (라인란트+갈리아)
+
+■ 전쟁과의 관계
+
+네오/콜럼비아: 최상위만 인지. 비밀조사국 운영. 은폐 유지.
+라인란트/노르딕: 최상위만 인지. 기술 지원. 비공개.
+사르마트: 독자 정보. 독자 정찰. 협의회와 공유 안 함.
+화원: 독자 정보. 독자 대응 준비. 표면은 협력.
+사하라/안데스: 모름. 행성 소멸만 감지. 원인 불명.
+해방연대: 안다. 직접 전투 중.
+
+■ NOB 후신 — "부러움"의 변형
+
+NOB DNA가 나타나는 7000년대 세력:
+- 사르마트: "우리는 협의회 밑이 아니다" — 독자 Gate. 독자 노선.
+- 아르카디아: "관측도 거부한다" — 비개입 극단 해석. 시스템 전체 거부.
+- 카슈미르: "Gate가 안 오니까 우리끼리 산다" — 강제 고립 → 자발 고립으로 전환.
+- 해방연대: "협의회도 네카도 거부한다" — NOB의 가장 직계 후손.
+- 변경파 전체: "GREEN이 우릴 버렸다" — NOB의 "부러움" = 변경의 "분노"
+
+NOB는 죽었지만 "부러움"은 죽지 않았다.
+형태만 바뀌었을 뿐 — "우리가 진짜다" → "우리를 버렸다" → "우리끼리 산다."
+
+■ ER 후신 — 은하의 오타자
+
+구역별 ER 존재:
+GREEN — 없음. 전부 시스템 안. Gate 완비.
+BLUE — 거의 없음. Gate 있음.
+YELLOW — 시작. Gate 희소. 끝자락 주민.
+AMBER — 확대. Gate 기밀. 정보 없음.
+RED — 전부 ER. Gate 없음. NET-0. 기록 없음. 존재하지 않음.
+
+■ "같이 가자" — 5,000년째 재생 중
+
+GREEN은 갔다. 커피를 마신다.
+BLUE도 갔다. 학술회지를 읽는다.
+YELLOW는 가는 중이다. Gate가 올까 기다린다.
+AMBER는 가다 멈췄다. Gate가 기밀이라 모른다.
+RED는 못 갔다. Gate가 없다.
+
+"같이 가자"는 아직도 재생 중이다.
+응답하는 사람이 없을 뿐.
+
+■ 세 계층의 전쟁 대응
+
+지배 (협의회): 전쟁을 알면서 숨긴다.
+반발 (NOB 후신): 전쟁을 감지하면서 싸운다.
+배제 (ER 후신): 전쟁을 겪으면서 모른다.`,
+      en: `Political Landscape of 30 Factions
+
+■ Council Internal Factions
+
+Korean Bloc: Neo + Arirang + Shinwa
+→ Equal support for all planets. Gate Tier 3 expansion.
+
+American Bloc: Columbia
+→ Core planet concentration. GREEN reinforcement.
+
+European Neutral: Rheinland + Gallia + Britannia + Nordic
+→ Pragmatic. Balancing between both sides.
+
+Independent: Sarmat + Huayuan
+→ Independent course within the Council system.
+
+Frontier: Sahara + Andes + Kashmir
+→ "GREEN abandoned us." Liberation Front sympathizers.
+
+■ Core Conflict Structure
+
+GREEN Center: Neo + Columbia + Rheinland
+  "Guard the Gate, guard the galaxy"
+     vs
+Frontier: Sahara + Andes + Arcadia
+  "The Gate never comes to us"
+     vs
+Independent: Sarmat + Huayuan
+  "We'll build our own Gate"
+
+■ Real Geopolitics → 7000s Version
+
+NATO vs Russia → Council center vs Sarmat
+G7 vs Global South → GREEN vs YELLOW frontier
+Korea-US Alliance vs China → Neo + Columbia vs Huayuan
+EU Neutrality → European neutral bloc (Rheinland + Gallia)
+
+■ Relationship with the War
+
+Neo/Columbia: Only top leadership aware. Bureau of Investigation operated. Concealment maintained.
+Rheinland/Nordic: Only top leadership aware. Tech support. Classified.
+Sarmat: Independent intelligence. Independent recon. Does not share with Council.
+Huayuan: Independent intelligence. Independent preparations. Surface cooperation.
+Sahara/Andes: Unaware. Only detect planetary disappearances. Cause unknown.
+Liberation Front: Knows. Directly fighting.
+
+■ NOB Successors — Mutations of "Envy"
+
+7000s factions carrying NOB DNA:
+- Sarmat: "We are not beneath the Council" — Independent Gate. Independent course.
+- Arcadia: "We refuse even observation" — Extreme Non-Intervention interpretation. Total system rejection.
+- Kashmir: "Gate won't come, so we live alone" — Forced isolation → Voluntary isolation.
+- Liberation Front: "We reject both Council and Neka" — Most direct descendant of NOB.
+- Entire frontier bloc: "GREEN abandoned us" — NOB's "envy" = frontier's "fury"
+
+NOB is dead, but "envy" is not.
+Only the form changed — "We are the real ones" → "They abandoned us" → "We live alone."
+
+■ ER Successors — Galactic Typos
+
+ER presence by zone:
+GREEN — None. All within the system. Gate complete.
+BLUE — Almost none. Gate available.
+YELLOW — Beginning. Gate scarce. Edge dwellers.
+AMBER — Expanding. Gate classified. No information.
+RED — All ER. No Gate. NET-0. No records. Do not exist.
+
+■ "Let's Go Together" — Still Playing After 5,000 Years
+
+GREEN went. They drink coffee.
+BLUE went too. They read academic journals.
+YELLOW is going. Waiting for the Gate to come.
+AMBER stopped midway. Don't know the Gate is classified.
+RED never went. No Gate.
+
+"Let's go together" is still playing.
+No one is responding.
+
+■ Three Layers' War Response
+
+Ruling (Council): Knows the war. Hides it.
+Dissent (NOB successors): Senses the war. Fights.
+Excluded (ER successors): Lives through the war. Doesn't know.`,
+    },
+  },
 };
 
 export function getArticleTitle(slug: string, lang: "ko" | "en"): string {
