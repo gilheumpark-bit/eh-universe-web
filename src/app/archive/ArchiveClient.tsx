@@ -170,6 +170,13 @@ export default function ArchiveClient() {
                 {en ? "Soundtrack" : "사운드트랙"}
               </span>
             </Link>
+            <Link href="/tools/galaxy-map"
+              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
+              <span>🌌</span>
+              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+                {en ? "Galaxy Zone & Gate Map" : "은하 구역 & Gate 지도"}
+              </span>
+            </Link>
           </div>
         </aside>
 
