@@ -849,24 +849,138 @@ This is the real reason Tintapin wants Gate technology.`,
     content: {
       ko: `안에서 밖으로 (Inward → Outward). 인류 문명의 혈관 구조.
 
-■ Tier 1 — Core Corridor (GREEN): Gate v47 허브 6개. 환형 고속도로.
-■ Tier 2 — Radial Corridor (GREEN→BLUE): 방사형 12개.
-■ Tier 3 — Frontier Gate (BLUE→YELLOW): Corridor 미완성 구간.
-■ Tier 4 — Emergency Gate (AMBER): 비밀조사국 전용. 극소수 3~5개. 위치 기밀.
+"Gate는 문이 아니다. 조건이다. 조건을 통과하면 이미 도착해 있다."
+— HOLD → ALLOW → 좌표 재조립 → 이동.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Gate 진화: v1.0 (2130) → v47 (7000s)
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ 원형 — Gate v1.0 (2130년)
+외경 2km / 모듈 1,200개 / 인류 최초 Gate.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 1 — Core Hub Gate (GREEN)
+━━━━━━━━━━━━━━━━━━━━━━━━
+은하의 대동맥. Spacetime Corridor 직결.
+외경: 12km / 유효 통과: 4km / 모듈: 48,000개
+SJC: v47 (64+8 계층) / φ: 0.710 / HOLD: 12초
+Corridor 포트: 6방향 인접 허브 직결 / 보유: GREEN 구역 6개
+
+107-K 모듈: 5,000년 이상 지속된 구조 결함. 현재 미수리.
+
+워프는 빛나지 않고 소리 없고 폭발 없다.
+HOLD 12초의 침묵 → ALLOW → 좌표 재조립 → 4.7광년 이동.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 2 — Radial Corridor Gate (GREEN→BLUE)
+━━━━━━━━━━━━━━━━━━━━━━━━
+물류/화물/여객의 주요 이동 경로.
+외경: ~6km / 유효 통과: ~2km / 모듈: 20,000개
+SJC: v47-R / φ: 0.705 / HOLD: 15초
+점프 거리: 4.7 ly / 노선: 방사형 12개
+
+은하 경제의 동맥. 기업 물류 핵심 인프라.
+"Gate 통행료 = 은하 세금. Tier 2가 매출 25%."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 3 — Frontier Gate (BLUE→YELLOW)
+━━━━━━━━━━━━━━━━━━━━━━━━
+변경 구역 연결. Corridor 미완성. Multi-hop 필수.
+외경: ~2km / 유효 통과: ~800m / 모듈: 1,500~3,000개
+φ: 0.680~0.700 (불안정) / HOLD: 30~60초
+점프 거리: 10 ly+ / Gate v1.0 원형 설계 계승
+
+해방연대가 비공식적으로 사용하는 경우 있음.
+"변경의 마지막 연결. 여기가 끊기면 YELLOW는 고립."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 4 — Emergency Gate (AMBER) — 기밀
+━━━━━━━━━━━━━━━━━━━━━━━━
+■ LOCATION CLASSIFIED ■
+외경: ~1km 이하 / 유효 통과: ~500m / 모듈: 500~800개
+φ: 0.690 (은폐 우선) / HOLD: 20~40초
+보유: 전 은하 3~5개 / 비밀조사국 내부에서도 극소수만 인지
+
+소행성 잔해 사이에 위장 배치. 능동 은폐 구조.
+안정성보다 은폐 우선으로 설계됨.
+RED 구역과의 유일한 Gate 연결.
+
 ■ RED — Gate 없음. 이동식 임시 Gate 또는 자체 추진만.
 
-■ 전략적 병목
-AMBER Tier 4 비상 Gate 3개가 파괴되면 RED 전장 완전 단절.`,
+━━━━━━━━━━━━━━━━━━━━━━━━
+전략적 중요도 — CRITICAL
+━━━━━━━━━━━━━━━━━━━━━━━━
+★ AMBER Tier 4 비상 Gate 3개 파괴 시 RED 전장 완전 단절.
+★ 방어 우선순위: Gate > 행성 > 함선.
+"이 Gate가 끊기면 전쟁이 존재하지 않게 된다. 진짜로."`,
       en: `Inward → Outward. The vascular structure of human civilization.
 
-■ Tier 1 — Core Corridor (GREEN): 6 Gate v47 hubs. Ring highway.
-■ Tier 2 — Radial Corridor (GREEN→BLUE): 12 radial corridors.
-■ Tier 3 — Frontier Gate (BLUE→YELLOW): Incomplete corridor sections.
-■ Tier 4 — Emergency Gate (AMBER): Bureau-only. Very few (est. 3~5). Location classified.
+"A Gate is not a door. It is a condition. Pass the condition, and you have already arrived."
+— HOLD → ALLOW → coordinate reassembly → transit.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Gate Evolution: v1.0 (2130) → v47 (7000s)
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ Origin — Gate v1.0 (2130)
+Outer diameter 2km / 1,200 modules / Humanity's first Gate.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 1 — Core Hub Gate (GREEN)
+━━━━━━━━━━━━━━━━━━━━━━━━
+The galaxy's great artery. Direct Spacetime Corridor link.
+Outer diameter: 12km / Effective passage: 4km / Modules: 48,000
+SJC: v47 (64+8 layers) / φ: 0.710 / HOLD: 12 sec
+Corridor ports: 6-directional adjacent hub links / Units: 6 in GREEN zone
+
+Module 107-K: Structural defect persisting 5,000+ years. Currently unrepaired.
+
+Warp does not glow, makes no sound, no explosion.
+12 seconds of silence in HOLD → ALLOW → coordinate reassembly → 4.7 light-year transit.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 2 — Radial Corridor Gate (GREEN→BLUE)
+━━━━━━━━━━━━━━━━━━━━━━━━
+Primary route for logistics, cargo, and passenger transit.
+Outer diameter: ~6km / Effective passage: ~2km / Modules: 20,000
+SJC: v47-R / φ: 0.705 / HOLD: 15 sec
+Jump distance: 4.7 ly / Routes: 12 radial corridors
+
+The artery of the galactic economy. Core corporate logistics infrastructure.
+"Gate tolls = galactic taxes. Tier 2 accounts for 25% of revenue."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 3 — Frontier Gate (BLUE→YELLOW)
+━━━━━━━━━━━━━━━━━━━━━━━━
+Frontier zone connections. Incomplete corridors. Multi-hop required.
+Outer diameter: ~2km / Effective passage: ~800m / Modules: 1,500~3,000
+φ: 0.680~0.700 (unstable) / HOLD: 30~60 sec
+Jump distance: 10 ly+ / Inherits Gate v1.0 original design
+
+Liberation Front known to use these unofficially.
+"The last link to the frontier. If this breaks, YELLOW is isolated."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tier 4 — Emergency Gate (AMBER) — Classified
+━━━━━━━━━━━━━━━━━━━━━━━━
+■ LOCATION CLASSIFIED ■
+Outer diameter: ~1km or less / Effective passage: ~500m / Modules: 500~800
+φ: 0.690 (concealment priority) / HOLD: 20~40 sec
+Units: 3~5 galaxy-wide / Known only to a handful within the Bureau
+
+Camouflaged among asteroid debris. Active concealment structure.
+Designed for concealment over stability.
+Only Gate connection to the RED zone.
+
 ■ RED — No Gates. Mobile temporary Gates or self-propulsion only.
 
-■ Strategic Bottleneck
-If the 3 AMBER Tier 4 Emergency Gates are destroyed, the RED battlefield is completely severed.`,
+━━━━━━━━━━━━━━━━━━━━━━━━
+Strategic Importance — CRITICAL
+━━━━━━━━━━━━━━━━━━━━━━━━
+★ Destruction of 3 AMBER Tier 4 Emergency Gates = complete severance of RED battlefield.
+★ Defense priority: Gates > Planets > Ships.
+"If these Gates go down, the war ceases to exist. Literally."`,
     },
   },
   "neo-homeworld": {
