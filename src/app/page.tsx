@@ -119,7 +119,7 @@ export default function Home() {
       <section className="border-t border-border bg-bg-secondary py-24 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-12">Numbers of the Universe</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {stats[lang].map((s) => (
               <div key={s.label} className="card-glow rounded border border-border bg-bg-primary p-6">
                 <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary">
