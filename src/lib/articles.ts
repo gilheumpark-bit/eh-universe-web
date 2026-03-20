@@ -988,24 +988,288 @@ B-class Latebra = Honesty: "But our essence is hiding."`,
   "ship-classes": {
     title: { ko: "함급 체계", en: "Ship Class System" },
     level: "RESTRICTED", category: "MILITARY",
-    related: ["android-formation", "battle-doctrine", "eh-chamber", "energy-weapons"],
+    related: ["android-formation", "battle-doctrine", "eh-chamber", "energy-weapons", "neka-empire", "liberation-front"],
     content: {
-      ko: `3세력의 함급 편제. 인류 1인 운용 vs 네카 수백~수만 명.
+      ko: `3세력 함급 분류 체계 — 현실 해군 참조
 
-■ 협의회: 초계함(K) 3,000t~기함(S) 500,000t. 드론 120~48,000기. 안드로이드 12~600체.
-■ 해방 연대: 바늘함(N) 120~200t / 가시함(T) 800t / 뿌리함(R) 3,000t.
-■ 네카: 초계함(K) 4,000t~황제함(E) 1,200,000t. 승무원 200~80,000명.
+■ 참조 기준
+네카 제국 → 미 해군 (US Navy) — 압도적 물량, 대형, 항모전단 구조
+협의회 → 대한민국 해군 (ROKN) — 효율, 기술집약, 배치(Batch) 진화
+해방연대 → 게릴라 해군 — 고속정/잠수함 개념
 
-네카: 드론 없음. 안드로이드 없음. AI 없음. 전부 사람.
-프리깃 기준 효율: 인류 1명 vs 네카 600명. 600배 인력.`,
-      en: `Ship class formations of three factions. Human 1-person operation vs Neka hundreds-to-tens-of-thousands.
+━━━━━━━━━━━━━━━━━━━━━━━━
+1. 협의회 연합함대 — 한국 해군 참조
+━━━━━━━━━━━━━━━━━━━━━━━━
 
-■ Council: Corvette(K) 3,000t ~ Flagship(S) 500,000t. Drones 120~48,000. Androids 12~600.
-■ Liberation Front: Needle(N) 120~200t / Thorn(T) 800t / Root(R) 3,000t.
-■ Neka: Corvette(K) 4,000t ~ Emperor-ship(E) 1,200,000t. Crew 200~80,000.
+■ 분류 철학
+한국 해군 KDX 사업처럼 배치(Batch) 진화 체계:
+KDX-I (광개토대왕급) → KDX-II (충무공이순신급) → KDX-III (세종대왕급)
+같은 함급 안에 3타입(Batch).
 
-Neka: No drones. No androids. No AI. All living crew.
-Frigate efficiency: Human 1 person vs Neka 600. ×600 personnel.`,
+■ 타입 분류
+타격형 (Strike, -S): 공격 특화. 드론 최대 탑재. → 충무공이순신급 대응
+방어형 (Guard, -G): 호위/방어. 요격 드론+CWEH 강화. → 세종대왕급 대응
+지원형 (Support, -P): 정찰/전자전/보급/수리. → 독도급 대응
+
+■ 전 함급표
+
+초계함 (Corvette) — HPG-K
+HPG-KS 타격형: 3,500t / 드론 150기 / 안드로이드 35체 / 전초 공격
+HPG-KG 방어형: 4,000t / 드론 120기 / 안드로이드 40체 / Gate 근접 경비
+HPG-KP 지원형: 3,000t / 드론 80기 / 안드로이드 45체 / 정찰/조기경보
+
+프리깃 (Frigate) — HPG-F ★기준함급
+HPG-FS 타격형: 6,500t / 드론 540기 / 안드로이드 75체 / 주력 소함대 공격
+HPG-FG 방어형: 7,500t / 드론 480기 / 안드로이드 85체 / 호위·대드론 방어
+HPG-FP 지원형: 5,500t / 드론 360기 / 안드로이드 90체 / 전자전/정찰/수리
+
+구축함 (Destroyer) — HPG-D
+HPG-DS 타격형: 15,000t / 드론 1,400기 / 안드로이드 180체 / 함대 주력 타격
+HPG-DG 방어형: 18,000t / 드론 1,200기 / 안드로이드 210체 / 함대 방공/호위
+HPG-DP 지원형: 12,000t / 드론 800기 / 안드로이드 220체 / C4ISR/전자전/보급
+
+순양함 (Cruiser) — HPG-C
+HPG-CS 타격형: 42,000t / 드론 4,000기 / 안드로이드 450체 / 함대 핵심 화력
+HPG-CG 방어형: 48,000t / 드론 3,600기 / 안드로이드 520체 / 함대 지휘/방어
+HPG-CP 지원형: 36,000t / 드론 2,400기 / 안드로이드 550체 / 대규모 전자전/보급
+
+전함 (Battleship) — HPG-B
+HPG-BS 타격형: 130,000t / 드론 14,000기 / 안드로이드 1,400체 / 최대 화력. 결전 병기.
+HPG-BG 방어형: 150,000t / 드론 12,000기 / 안드로이드 1,600체 / 함대 중핵. CWEH 최대.
+HPG-BP 지원형: 100,000t / 드론 8,000기 / 안드로이드 1,800체 / 이동 사령부/대규모 수리.
+
+기함 (Flagship) — HPG-S
+HPG-S (단일): 500,000t / 드론 48,000기 / 안드로이드 6,000체 / 함대 총지휘. φ 최대 출력자만 탑승.
+기함은 타입 분류 없음. 1척이 전부를 겸함. 협의회 전체에 수 척만 존재.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+2. 네카 제국 함대 — 미 해군 참조
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ 분류 철학
+미 해군 항모전단(CSG) 구조. 플라이트(Flight) 진화.
+네카는 드론/AI가 없으므로 전부 인력.
+
+■ 타입 분류
+돌격형 (Assault, -A): 백병전/근접전 특화. RIDE 장갑 최대. → 강습상륙함 대응
+포격형 (Gunship, -B): 원거리 RIDE 포격. 관통빔/소각파. → 알레이버크급 대응
+지휘형 (Command, -C): 함대 지휘/화학신호 중계. → 블루릿지급 대응
+
+■ 전 함급표
+
+초계함 (Raider) — NIV-K
+NIV-KA 돌격형: 4,500t / 220명 / 고속 접근+백병
+NIV-KB 포격형: 4,000t / 200명 / 전초 포격
+NIV-KC 지휘형: 3,500t / 180명 / 정찰/통신 중계
+
+프리깃 (Hunter) — NIV-F
+NIV-FA 돌격형: 9,000t / 650명 / 백병전 주력
+NIV-FB 포격형: 8,000t / 600명 / 중거리 포격
+NIV-FC 지휘형: 7,000t / 550명 / 소함대 지휘
+
+구축함 (Legionnaire) — NIV-D
+NIV-DA 돌격형: 22,000t / 2,000명 / 주력 돌격. 트리플렉스 1열.
+NIV-DB 포격형: 20,000t / 1,800명 / 주력 포격. 트리플렉스 2열.
+NIV-DC 지휘형: 18,000t / 1,600명 / 군단 지휘/화학신호 증폭.
+
+순양함 (Centurion) — NIV-C
+NIV-CA 돌격형: 65,000t / 5,500명 / 대형 백병. 기사 대대 수송.
+NIV-CB 포격형: 60,000t / 5,000명 / 장거리 관통빔.
+NIV-CC 지휘형: 55,000t / 4,500명 / 군단 사령부.
+
+전함 (Praetorian) — NIV-B
+NIV-BA 돌격형: 220,000t / 16,000명 / 최대 백병. 선체포 탑재.
+NIV-BB 포격형: 200,000t / 15,000명 / 선체포 특화. 트리아리 3열.
+NIV-BC 지휘형: 180,000t / 14,000명 / 대군단 지휘/화학신호 허브.
+
+황제함 (Imperator) — NIV-E
+NIV-E (단일): 1,200,000t / 80,000명 / 이동 수도. 12대군단 총지휘. 왕좌 탑재.
+틴타핀 전용. 4km. 시코르 프리마의 왕좌전이 함선 안에 복제. "황제가 있는 곳이 시코르다."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+3. 해방 연대 — 게릴라 해군
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+정규 해군이 아님. 타입 분류 없음. 있는 걸로 싸움.
+
+바늘함 (Needle) — MR-N: 200t / 드론 6기 / 1명 / 기습/정찰. 90초 교전 후 이탈.
+가시함 (Thorn) — MR-T: 800t / 드론 24기 / 1명 / 소규모 화력전. 바늘함 5척 지휘.
+뿌리함 (Root) — MR-R: 3,000t / 드론 96기 / 1~3명 / 이동 거점. 세포 기지함. 수리/보급.
+
+바늘함 10~20척이 1개 전선 세포.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+4. 프리깃 기준 비교
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+협의회 HPG-FS: 6,500t / 1명 / 드론 540기 / EH 반응형 장갑 / 기술 우세
+네카 NIV-FA: 9,000t / 650명 / 드론 0 / RIDE 합금 장갑 / 물량+장갑 우세
+해방연대 MR-T: 800t / 1명 / 드론 24기 / 경장갑 / 은닉 우세
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+5. 함급 명명 규칙
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ 협의회 — 한국식 (인물+개념)
+초계함: HPG 원년 기술자 이름 ("카터급", "첸급")
+프리깃: HPG 원년 인물 이름 ("미래급", "바스케스급")
+구축함: HPG 핵심 개념 ("정산급(Settlement)", "여백급(Margin)")
+순양함: 정사 인물 이름 ("민아급", "에이든급")
+전함: 절대 전제 ("기록급(Record)")
+기함: 개체명. 수 척뿐.
+
+■ 네카 — 라틴 군사 용어
+초계함: 레이더(Raider) / Explorator
+프리깃: 헌터(Hunter) / Venator
+구축함: 레기오네르(Legionnaire) / Legionarius
+순양함: 센추리온(Centurion) / Centurio
+전함: 프레토리안(Praetorian) / Praetorianus
+황제함: 임페라토르(Imperator) / Imperator
+
+■ 해방 연대 — 자연물
+바늘함 Needle: 찌르고 빠진다
+가시함 Thorn: 아프게 한다
+뿌리함 Root: 뽑히지 않는다`,
+      en: `Three-Faction Ship Class System — Real Navy Reference
+
+■ Reference Basis
+Neka Empire → US Navy — Overwhelming numbers, large-scale, carrier strike group structure
+Council → Republic of Korea Navy (ROKN) — Efficiency, tech-intensive, Batch evolution
+Liberation Front → Guerrilla navy — Fast attack craft/submarine concepts
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+1. Council Combined Fleet — ROKN Reference
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ Classification Philosophy
+Like the ROKN KDX program's Batch evolution:
+KDX-I (Gwanggaeto) → KDX-II (Chungmugong) → KDX-III (Sejong)
+3 types (Batches) within the same class.
+
+■ Type Classification
+Strike (-S): Offense-specialized. Max drone capacity. → Chungmugong-class equivalent
+Guard (-G): Escort/defense. Interceptor drones + CWEH reinforced. → Sejong-class equivalent
+Support (-P): Recon/EW/supply/repair. → Dokdo-class equivalent
+
+■ Full Ship Class Table
+
+Corvette — HPG-K
+HPG-KS Strike: 3,500t / 150 drones / 35 androids / Forward attack
+HPG-KG Guard: 4,000t / 120 drones / 40 androids / Gate perimeter security
+HPG-KP Support: 3,000t / 80 drones / 45 androids / Recon/early warning
+
+Frigate — HPG-F ★Standard class
+HPG-FS Strike: 6,500t / 540 drones / 75 androids / Main flotilla attack
+HPG-FG Guard: 7,500t / 480 drones / 85 androids / Escort/anti-drone defense
+HPG-FP Support: 5,500t / 360 drones / 90 androids / EW/recon/repair
+
+Destroyer — HPG-D
+HPG-DS Strike: 15,000t / 1,400 drones / 180 androids / Fleet main strike
+HPG-DG Guard: 18,000t / 1,200 drones / 210 androids / Fleet air defense/escort
+HPG-DP Support: 12,000t / 800 drones / 220 androids / C4ISR/EW/supply
+
+Cruiser — HPG-C
+HPG-CS Strike: 42,000t / 4,000 drones / 450 androids / Fleet core firepower
+HPG-CG Guard: 48,000t / 3,600 drones / 520 androids / Fleet command/defense
+HPG-CP Support: 36,000t / 2,400 drones / 550 androids / Large-scale EW/supply
+
+Battleship — HPG-B
+HPG-BS Strike: 130,000t / 14,000 drones / 1,400 androids / Max firepower. Decisive weapon.
+HPG-BG Guard: 150,000t / 12,000 drones / 1,600 androids / Fleet core. Max CWEH.
+HPG-BP Support: 100,000t / 8,000 drones / 1,800 androids / Mobile HQ/major repair.
+
+Flagship — HPG-S
+HPG-S (single): 500,000t / 48,000 drones / 6,000 androids / Fleet supreme command. φ max output only.
+No type classification. One ship covers all roles. Only a few exist in the entire Council.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+2. Neka Imperial Fleet — US Navy Reference
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ Classification Philosophy
+US Navy CSG structure. Flight evolution.
+Neka have no drones/AI — all living crew.
+
+■ Type Classification
+Assault (-A): Boarding/close combat specialized. Max RIDE armor. → Amphibious assault ship equiv.
+Gunship (-B): Long-range RIDE bombardment. Penetrating beam/incineration wave. → Arleigh Burke equiv.
+Command (-C): Fleet command/chemical signal relay. → Blue Ridge equiv.
+
+■ Full Ship Class Table
+
+Raider — NIV-K
+NIV-KA Assault: 4,500t / 220 crew / High-speed approach + boarding
+NIV-KB Gunship: 4,000t / 200 crew / Forward bombardment
+NIV-KC Command: 3,500t / 180 crew / Recon/comms relay
+
+Hunter — NIV-F
+NIV-FA Assault: 9,000t / 650 crew / Boarding main force
+NIV-FB Gunship: 8,000t / 600 crew / Mid-range bombardment
+NIV-FC Command: 7,000t / 550 crew / Flotilla command
+
+Legionnaire — NIV-D
+NIV-DA Assault: 22,000t / 2,000 crew / Main assault. Triplex 1st line.
+NIV-DB Gunship: 20,000t / 1,800 crew / Main bombardment. Triplex 2nd line.
+NIV-DC Command: 18,000t / 1,600 crew / Legion command/chemical signal amplification.
+
+Centurion — NIV-C
+NIV-CA Assault: 65,000t / 5,500 crew / Large-scale boarding. Knight battalion transport.
+NIV-CB Gunship: 60,000t / 5,000 crew / Long-range penetrating beam.
+NIV-CC Command: 55,000t / 4,500 crew / Legion HQ.
+
+Praetorian — NIV-B
+NIV-BA Assault: 220,000t / 16,000 crew / Max boarding. Hull cannon mounted.
+NIV-BB Gunship: 200,000t / 15,000 crew / Hull cannon specialized. Triarii 3rd line.
+NIV-BC Command: 180,000t / 14,000 crew / Grand legion command/chemical signal hub.
+
+Imperator — NIV-E
+NIV-E (single): 1,200,000t / 80,000 crew / Mobile capital. 12 grand legions supreme command. Throne mounted.
+Tintapin exclusive. 4km. Sichor Prima's throne hall replicated inside. "Where the Emperor is, there is Sichor."
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+3. Liberation Front — Guerrilla Navy
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+Not a regular navy. No type classification. Fight with what you have.
+
+Needle — MR-N: 200t / 6 drones / 1 person / Raid/recon. Disengage after 90 seconds.
+Thorn — MR-T: 800t / 24 drones / 1 person / Small-scale combat. Commands 5 Needles.
+Root — MR-R: 3,000t / 96 drones / 1~3 persons / Mobile base. Cell base ship. Repair/supply.
+
+10~20 Needles = 1 frontline cell.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+4. Frigate-Class Comparison
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+Council HPG-FS: 6,500t / 1 person / 540 drones / EH-reactive armor / Tech advantage
+Neka NIV-FA: 9,000t / 650 crew / 0 drones / RIDE alloy armor / Mass + armor advantage
+Liberation MR-T: 800t / 1 person / 24 drones / Light armor / Stealth advantage
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+5. Ship Naming Conventions
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ Council — Korean-style (People + Concepts)
+Corvette: HPG founding-year engineers ("Carter-class", "Chen-class")
+Frigate: HPG founding-year figures ("Mirae-class", "Vasquez-class")
+Destroyer: HPG core concepts ("Settlement-class", "Margin-class")
+Cruiser: Canon character names ("Mina-class", "Aiden-class")
+Battleship: Absolute premise ("Record-class")
+Flagship: Individual names. Only a few.
+
+■ Neka — Latin Military Terms
+Raider / Explorator
+Hunter / Venator
+Legionnaire / Legionarius
+Centurion / Centurio
+Praetorian / Praetorianus
+Imperator / Imperator
+
+■ Liberation Front — Natural Objects
+Needle: Strike and withdraw
+Thorn: Cause pain
+Root: Cannot be uprooted`,
     },
   },
   "android-formation": {
@@ -3707,6 +3971,204 @@ No one is responding.
 Ruling (Council): Knows the war. Hides it.
 Dissent (NOB successors): Senses the war. Fights.
 Excluded (ER successors): Lives through the war. Doesn't know.`,
+    },
+  },
+  "galaxy-profiles": {
+    title: { ko: "양쪽 은하 프로필", en: "Galaxy Profiles — Human vs Neka" },
+    level: "RESTRICTED",
+    category: "GEOGRAPHY",
+    related: ["galaxy-zones", "gate-infra", "neo-homeworld", "neka-homeworld", "galaxy-naming"],
+    content: {
+      ko: `양쪽 은하 프로필 — 모양·명칭·거리·시각
+
+■ 인류 은하 — 막대나선은하 (SBbc)
+유형: 막대나선은하 (Barred Spiral, SBbc)
+지름: 약 100,000 광년 / 두께: 약 2,000 광년 (원반부)
+항성 수: 2,000~4,000억 개
+중심: 초대질량 블랙홀 (BLACK 구역)
+나선팔: 4개 주요 팔 + 소팔
+특징: 중심에 막대 구조. 팔이 막대 끝에서 뻗어나감.
+
+시각: 파란빛+흰빛 (젊은 별 많음). 팔 위에 Gate Corridor가 빛나는 실처럼 이어짐. 팔 사이 어두운 공간 = YELLOW~AMBER. 가장 바깥 얇은 링 = RED (전장).
+"손을 펼친 은하."
+
+■ Gate와 나선팔의 관계
+팔 1: H1(NEO) + H2 — 정치/금융 회랑
+팔 2: H3 + H4 — 기술/제조 회랑
+팔 3: H5 + H6 — 문화/자원 회랑
+팔 4: (외곽) — YELLOW~AMBER 변경
+Gate는 나선팔의 별 밀집 지대를 따라 설치. 팔 사이 빈 공간 = Gate 없음 = 이동 불가 = 경제 사각.
+
+■ 네카 은하 — 타원형 은하 (E3)
+유형: 타원형 은하 (Elliptical, E3)
+장축: 약 60,000 광년 / 단축: 약 40,000 광년
+항성 수: 약 1,000~2,000억 개 (인류 은하의 절반)
+중심: 시코르 (모성) — 은하 중심 근처
+나선팔: 없음. 별이 균일하게 분포.
+특징: 오래된 별이 대부분. 가스/먼지 적음. 새 별 거의 안 태어남.
+
+시각: 타원형 빛 덩어리. 금색+붉은색 (늙은 별 대부분). 구조 없음. 팔 없음. "얼어붙은 불꽃" — 움직이지 않는 은하.
+"주먹을 쥔 은하."
+
+■ 은하 간 거리
+두 은하 간 거리: 약 250만 광년 (안드로메다까지 거리와 유사)
+Gate로: 불가능. Gate는 은하 내부 인프라.
+RIDE 워프로: 유일한 방법. 그러나 RIDE 대량 소모.
+
+네카 원정군이 인류 은하까지 오는 데 함대 전체 RIDE 비축량의 상당 부분 소모. 도착 시점에 이미 RIDE가 줄어든 상태. 이것이 네카가 Gate를 원하는 또 다른 이유: "오는 데 쓴 RIDE를 Gate로 대체하면 전투에 더 많은 RIDE를 쓸 수 있다."
+
+■ 양쪽 은하 대비
+인류 은하: 막대나선. 100,000광년. 파랑+흰. 팔 4개. 중심 비어있음. Gate로 이동. 비개입/분산. "펼친 손."
+네카 은하: 타원형. 60,000광년. 금색+붉은색. 구조 없음. 중심에 황제. RIDE 워프. 절대 권력/집중. "쥔 주먹."
+
+■ 대칭 원리 — 은하까지 관통
+은하 모양이 통치 구조를 결정한 것이 아니라, 같은 성질의 존재가 같은 모양의 은하에서 태어났다. = 우주 대칭 원리.
+펼친 손의 은하에서 자유를 선택한 종족. 쥔 주먹의 은하에서 복종을 선택한 종족. 둘 다 사람이다.`,
+      en: `Galaxy Profiles — Shape, Names, Distance, Visuals
+
+■ Human Galaxy — Barred Spiral (SBbc)
+Type: Barred Spiral Galaxy (SBbc)
+Diameter: ~100,000 light-years / Thickness: ~2,000 ly (disc)
+Stars: 200~400 billion
+Center: Supermassive black hole (BLACK zone)
+Spiral arms: 4 major + minor arms
+Feature: Bar structure at center. Arms extend from bar ends.
+
+Visual: Blue + white light (young stars). Gate Corridors run like glowing threads along the arms. Dark gaps between arms = YELLOW~AMBER. Outermost thin ring = RED (battlefield).
+"The galaxy with open hands."
+
+■ Gate & Spiral Arm Relationship
+Arm 1: H1 (NEO) + H2 — Political/financial corridor
+Arm 2: H3 + H4 — Tech/manufacturing corridor
+Arm 3: H5 + H6 — Culture/resource corridor
+Arm 4: (outer) — YELLOW~AMBER frontier
+Gates installed along star-dense zones of spiral arms. Gaps between arms = no Gate = no travel = economic blind spots.
+
+■ Neka Galaxy — Elliptical (E3)
+Type: Elliptical Galaxy (E3)
+Major axis: ~60,000 ly / Minor axis: ~40,000 ly
+Stars: ~100~200 billion (half of human galaxy)
+Center: Sichor (homeworld) — near galactic center
+Spiral arms: None. Stars distributed uniformly.
+Feature: Mostly old stars. Little gas/dust. Almost no new stars born.
+
+Visual: Elliptical mass of light. Gold + red (mostly old stars). No structure. No arms. "A frozen flame" — a galaxy that does not move.
+"The galaxy with a clenched fist."
+
+■ Intergalactic Distance
+Distance between galaxies: ~2.5 million light-years (similar to Andromeda)
+Via Gate: Impossible. Gates are intragalactic infrastructure.
+Via RIDE warp: The only method. But massive RIDE consumption.
+
+Neka expeditionary fleet consumes a significant portion of total RIDE reserves reaching human galaxy. Already depleted upon arrival. This is another reason Neka wants Gates: "If we replace transit RIDE with Gates, we can spend more RIDE on combat."
+
+■ Galaxy Comparison
+Human galaxy: Barred spiral. 100,000 ly. Blue+white. 4 arms. Empty center. Gate travel. Non-intervention/dispersed. "Open hands."
+Neka galaxy: Elliptical. 60,000 ly. Gold+red. No structure. Emperor at center. RIDE warp. Absolute power/concentrated. "Clenched fist."
+
+■ Symmetry Principle — Penetrates to Galactic Scale
+Galaxy shape did not determine governance — beings of the same nature were born in galaxies of the same shape. = Cosmic Symmetry Principle.
+The species that chose freedom in the galaxy of open hands. The species that chose obedience in the galaxy of clenched fists. Both are people.`,
+    },
+  },
+  "galaxy-naming": {
+    title: { ko: "은하 호칭 체계", en: "Galaxy Naming Conventions" },
+    level: "RESTRICTED",
+    category: "GEOGRAPHY",
+    related: ["galaxy-profiles", "neka-homeworld", "neo-homeworld", "neka-empire"],
+    content: {
+      ko: `은하 호칭 체계 — 각 세력이 부르는 이름
+
+■ 인류 은하를 부르는 이름
+인류 (협의회): "은하 (The Galaxy)" — 그냥 "은하". 다른 은하를 몰랐으니까 이름이 필요 없었다.
+인류 (학술): "라크테아 (Lactea)" — 라틴어 "젖빛 길". 고대 지구 명칭 계승. 공식 학술명.
+네카: "테이카 은하 (Teika Galaxy)" — "가짜 인류의 은하". 네카가 인류를 테이카라 부르니까.
+해방연대: "고향 (Home)" — "은하가 고향이다."
+NOA: (명칭 없음) — 관측 좌표만. 이름을 붙이지 않는다.
+
+■ 네카 은하를 부르는 이름
+네카 (자칭): "시코라 (Sichora)" — "시코르의 품". 모성 이름에서 파생. 은하 = 시코르의 확장.
+인류 (비밀조사국): "RED-X" — 코드명. "RED 너머의 미확인 은하". 최초 명칭.
+인류 (학술): "아우레아 (Aurea)" — 라틴어 "금빛". 관측 시 금색으로 보여서.
+해방연대: "적의 집 (Enemy Home)"
+NOA: (관측 좌표) — 이름 없음.
+
+■ 서로를 부르는 호칭
+
+공식:
+네카 → 인류: 테이카 (Teika) — "가짜 인류"
+인류 → 네카: 네카 (Neka) — "적 세력"
+
+멸칭:
+네카 → 인류: 코르타 (Korta) — "부서지는 것." RIDE 없이 돌아다니는 약한 존재.
+  사용 계급: 기사 이상만. 비공식.
+  평민 사용 불가: 각인 100%. 황제 지정 호칭(테이카)만 사용.
+  뉘앙스: 경멸+동정. "왜 갑옷도 안 입고 싸우러 오는 거지?"
+  카스트까지 관통: 멸칭을 쓸 자유조차 계급에 따른다.
+
+인류 → 네카: 귀없는놈 — 그대로. "귀가 없는 놈."
+  유래: 첫 접촉 시 가장 눈에 띄는 외형 차이. 2.3m, 상아색, 금색 눈 — 그리고 귀가 없다.
+  발생: 전선 현장에서 자연 발생. 누가 먼저 말했는지 불명.
+  확산: 비밀조사국 → 탑승자 → 해방연대까지 전파.
+  뉘앙스: 공포+조롱. "항복 신호를 못 듣는 건 귀가 없어서" (실제 이유는 각인이지만).
+
+■ 이중 아이러니
+"항복 신호를 못 듣는 건 귀가 없어서"라고 조롱하지만 — 실제로 귀가 없는 것이 아니라 화학신호로 소통하는 것이고, 항복을 무시하는 건 각인 때문. 멸칭이 진실을 가린다.
+
+■ 사용 맥락
+네카 공식 문서: "테이카"
+네카 기사 구어: "코르타 함선 발견"
+네카 평민: "테이카" (멸칭을 쓸 자유의지가 없음)
+비밀조사국 공식 문서: "네카 세력"
+전선 탑승자 구어: "귀없는놈들 3척 접근 중"
+해방연대: "귀없는놈이랑 협의회랑 뭐가 다르냐"
+GREEN 시민: (네카 존재 자체를 모름)`,
+      en: `Galaxy Naming Conventions — What Each Faction Calls Them
+
+■ Names for the Human Galaxy
+Humanity (Council): "The Galaxy" — Just "the galaxy." They didn't know other galaxies existed, so no name was needed.
+Humanity (Academic): "Lactea" — Latin for "milky way." Inherited from ancient Earth. Official academic name.
+Neka: "Teika Galaxy" — "Galaxy of the fake humans." Because Neka call humans Teika.
+Liberation Front: "Home" — "The galaxy is home."
+NOA: (No name) — Observation coordinates only. They do not assign names.
+
+■ Names for the Neka Galaxy
+Neka (self): "Sichora" — "Embrace of Sichor." Derived from homeworld name. Galaxy = extension of Sichor.
+Humanity (Bureau): "RED-X" — Codename. "Unidentified galaxy beyond RED." Original designation.
+Humanity (Academic): "Aurea" — Latin for "golden." Because it appears gold when observed.
+Liberation Front: "Enemy Home"
+NOA: (Observation coordinates) — No name.
+
+■ What They Call Each Other
+
+Official:
+Neka → Humans: Teika — "Fake humans"
+Humans → Neka: Neka — "Enemy force"
+
+Slurs:
+Neka → Humans: Korta — "The breakable ones." Weak beings walking around without RIDE.
+  Usage: Knights and above only. Unofficial.
+  Commoners cannot use it: 100% imprinted. Only emperor-designated term (Teika) permitted.
+  Nuance: Contempt + pity. "Why do they come to fight without even wearing armor?"
+  Caste penetration: Even the freedom to use slurs depends on rank.
+
+Humans → Neka: "Earless" — Literal. "The ones with no ears."
+  Origin: Most noticeable physical difference at first contact. 2.3m, ivory skin, gold eyes — and no ears.
+  Emergence: Naturally coined on the front lines. Origin unknown.
+  Spread: Bureau of Investigation → Riders → Liberation Front.
+  Nuance: Fear + mockery. "They can't hear the surrender signal because they have no ears" (actual reason is imprinting).
+
+■ Double Irony
+"They can't hear surrender because they have no ears" — but they don't actually lack ears; they communicate via chemical signals, and they ignore surrender because of imprinting. The slur obscures the truth.
+
+■ Usage Context
+Neka official documents: "Teika"
+Neka knight colloquial: "Korta vessel detected"
+Neka commoner: "Teika" (no free will to use slurs)
+Bureau official documents: "Neka forces"
+Frontline Rider colloquial: "Three earless ships approaching"
+Liberation Front: "What's the difference between the earless and the Council?"
+GREEN citizens: (don't even know Neka exist)`,
     },
   },
 };

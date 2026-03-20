@@ -56,6 +56,8 @@ const categories = [
     id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography" },
     articles: [
       { slug: "galaxy-zones", title: { ko: "은하 구역 분류", en: "Galactic Zone Classification" }, level: "PUBLIC" },
+      { slug: "galaxy-profiles", title: { ko: "양쪽 은하 프로필", en: "Galaxy Profiles — Human vs Neka" }, level: "RESTRICTED" },
+      { slug: "galaxy-naming", title: { ko: "은하 호칭 체계", en: "Galaxy Naming Conventions" }, level: "RESTRICTED" },
       { slug: "gate-infra", title: { ko: "Gate 인프라", en: "Gate Infrastructure" }, level: "RESTRICTED" },
       { slug: "neo-homeworld", title: { ko: "NEO (협의회 모행성)", en: "NEO (Council Homeworld)" }, level: "RESTRICTED" },
       { slug: "neka-homeworld", title: { ko: "시코르 (네카 모성)", en: "Sichor (Neka Homeworld)" }, level: "CLASSIFIED" },
