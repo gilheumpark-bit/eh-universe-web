@@ -1595,7 +1595,10 @@ Neira knows both sides are human. And does nothing. Because of principle.`,
 "복종" 동의어 12개. "사랑" 없음. 가장 가까운 단어: "보호 의무(상위→하위)".
 
 ■ 서사적 의미
-"시초"와 "시코르"의 발음 유사. DNA도, 사회 구조도, 언어도 비슷한데 — 서로를 적으로 규정했다.`,
+"시초"와 "시코르"의 발음 유사. DNA도, 사회 구조도, 언어도 비슷한데 — 서로를 적으로 규정했다.
+
+■ 음향 인터페이스
+→ [네카 화학신호 음향 변환기](/tools/neka-sound) — 자음/모음 발음 및 화학신호 전자음 인터페이스`,
       en: `Neka language ≠ Joseon language. Separate languages. But structural similarities became the key to decryption.
 
 ■ Script Structure: Consonants = chemical signal waveforms, Vowels = RIDE crystal 3-axes, Combination = vertical stacking.
@@ -1607,7 +1610,10 @@ Neira knows both sides are human. And does nothing. Because of principle.`,
 12 synonyms for "obedience." No word for "love." Closest: "protective duty (superior→inferior)."
 
 ■ Narrative Significance
-"시초(Beginning)" and "Sichor" sound similar. DNA, social structure, language all similar — yet they defined each other as enemies.`,
+"시초(Beginning)" and "Sichor" sound similar. DNA, social structure, language all similar — yet they defined each other as enemies.
+
+■ Sound Interface
+→ [Neka Chemical Signal Sound Converter](/tools/neka-sound) — Consonant/vowel pronunciation and chemical signal electronic sound interface`,
     },
   },
 
