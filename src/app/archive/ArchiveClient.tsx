@@ -163,6 +163,13 @@ export default function ArchiveClient() {
                 {en ? "Neka Sound Interface" : "네카 음향 인터페이스"}
               </span>
             </Link>
+            <Link href="/tools/soundtrack"
+              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
+              <span>🎵</span>
+              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+                {en ? "Soundtrack" : "사운드트랙"}
+              </span>
+            </Link>
           </div>
         </aside>
 
