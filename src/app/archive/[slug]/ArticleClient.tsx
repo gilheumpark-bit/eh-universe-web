@@ -61,6 +61,12 @@ export default function ArticleClient({ slug }: { slug: string }) {
               {article.title[lang]}
             </h1>
 
+            {article.image && (
+              <div className="mb-8 rounded border border-border overflow-hidden">
+                <img src={article.image} alt={article.title[lang]} className="w-full h-auto" />
+              </div>
+            )}
+
             <div className="whitespace-pre-line text-text-secondary leading-relaxed text-sm">
               {article.content[lang]}
             </div>

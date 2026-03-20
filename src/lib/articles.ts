@@ -3,6 +3,7 @@ export type ArticleData = {
   level: string;
   category: string;
   content: { ko: string; en: string };
+  image?: string;
   related?: string[];
 };
 
@@ -4289,6 +4290,143 @@ Bureau official documents: "Neka forces"
 Frontline Rider colloquial: "Three earless ships approaching"
 Liberation Front: "What's the difference between the earless and the Council?"
 GREEN citizens: (don't even know Neka exist)`,
+    },
+  },
+  // ═══════════════════════════════════
+  // VISUAL REFERENCES
+  // ═══════════════════════════════════
+  "visual-vessel-classification": {
+    title: { ko: "함선 분류 도해", en: "Vessel Classification Visual Reference" },
+    level: "CLASSIFIED", category: "MILITARY",
+    image: "/images/vessel-classification.jpg",
+    related: ["ship-classes", "battle-doctrine", "energy-weapons", "neka-empire", "liberation-front"],
+    content: {
+      ko: `EH Universe 전 세력 함선 분류 도해 — 비밀조사국 내부 자료
+
+■ Section I: 협의회 연합함대
+코르벳 · 프리깃(기준함급) · 구축함 · 순양함 · 전함
+드론 포드 기술(Drone Pod Technology) 기반 전력 투사
+기함: Council Flagship (500,000t)
+
+■ Section II: 네카 제국 함대
+RIDE 결정체 공명 가소성 구현 — 결정 다면체 형성 · 성장 파동
+레이더 · 헌터 · 랜서 · 소버린 · 프레토리안
+황제 전용: NEKA IMPERATOR-CLASS (1,200,000t)
+
+■ Section III: 해방 연대 함대
+개조된 민간 선박 기반 · 비대칭 게릴라 운용
+니들 · 스파이크 · 쏜 · 바스티온
+
+■ Section IV: 통합 비교 및 시뮬레이션
+3세력 함급별 크기 비교 · 함대 전략 시뮬레이션`,
+      en: `EH Universe full vessel classification visual — Bureau of Investigation internal reference
+
+■ Section I: Council United Human Joint Fleet
+Corvette · Frigate (baseline) · Destroyer · Cruiser · Battleship
+Drone Pod Technology-based force projection
+Flagship: Council Flagship (500,000t)
+
+■ Section II: Neka Empire Fleet
+RIDE Crystal Resonance Plasticity — Crystal Faceted Hull · Growth Wave
+Raider · Hunter · Lancer · Sovereign · Praetorian
+Emperor Only: NEKA IMPERATOR-CLASS (1,200,000t)
+
+■ Section III: Liberation Front Fleet
+Repurposed civilian vessels · Asymmetric guerrilla operations
+Needle · Spike · Thorn · Bastion
+
+■ Section IV: Unified Comparison & Simulation
+Cross-faction size comparison · Fleet strategy simulation`,
+    },
+  },
+  "visual-vessel-implementation": {
+    title: { ko: "함선 구현 도해", en: "Vessel Implementation Visual Reference" },
+    level: "CLASSIFIED", category: "MILITARY",
+    image: "/images/vessel-implementation.jpg",
+    related: ["ship-classes", "ride", "hctg-gate", "gate-infra", "visual-vessel-classification"],
+    content: {
+      ko: `함선 성장 및 구현 메커니즘 · Gate 기능 비교 · RIDE 에너지 관리 — 비밀조사국 내부 자료
+
+■ I. 함선 성장 및 구현
+네카 함선: RIDE 결정체 공명 가소성 → 성장 파동 → 결정 다면체 형성 → 실버 그레인 패턴 주입
+협의회 함선: 타원형 복합재 선체 제조
+
+■ II. 게이트 기능 및 크기 비교
+Tier 1 Core Hub (12km) · Tier 2 Radial Corridor (6km) · Tier 3 Frontier Gate (2km) · Tier 4 Emergency Gate (1km, masked)
+함선 크기 대비 게이트 스케일 시각화
+
+■ III. RIDE 에너지 및 물질 관리
+방전(Discharge) → 완전 방전 시 절대흑(Neka normal → Neka 방전)
+고갈(Depletion) → RIDE 소진 시 재백색(Neka normal → Neka 고갈)
+RIDE 충전소(RIDE Charging Station)
+
+■ IV. 함대 전략 시뮬레이션
+함급별 전략 배치 · GREEN/BLUE/YELLOW/RED 구역별 운용`,
+      en: `Vessel growth mechanisms · Gate function comparison · RIDE energy management — Bureau of Investigation internal reference
+
+■ I. Vessel Growth & Implementation
+Neka vessels: RIDE Crystal Resonance Plasticity → Growth Wave → Crystal Faceted Hull → Silver Grain Pattern Injection
+Council vessels: Elliptical composite hull manufacturing
+
+■ II. Gate Function & Size Comparison
+Tier 1 Core Hub (12km) · Tier 2 Radial Corridor (6km) · Tier 3 Frontier Gate (2km) · Tier 4 Emergency Gate (1km, masked)
+Gate scale visualization relative to vessel sizes
+
+■ III. RIDE Energy & Material Management
+Discharge → Full discharge turns absolute black (Neka normal → discharged)
+Depletion → RIDE exhaustion turns ashen white (Neka normal → depleted)
+RIDE Charging Station
+
+■ IV. Fleet Strategy Simulation
+Strategic deployment by ship class · Operations across GREEN/BLUE/YELLOW/RED zones`,
+    },
+  },
+  "visual-gate-infrastructure": {
+    title: { ko: "Gate 인프라 도해", en: "Gate Infrastructure Visual Reference" },
+    level: "CLASSIFIED", category: "GEOGRAPHY",
+    image: "/images/gate-infrastructure-visual.jpg",
+    related: ["gate-infra", "hctg-gate", "galaxy-zones", "sjc-system", "visual-vessel-implementation"],
+    content: {
+      ko: `HPG Gate Infrastructure 비주얼 레퍼런스 — 비밀조사국 내부 자료
+
+■ Tier 1 — Core Hub Gate
+직경 12km · 유효 통과폭 4km · 모듈 48,000 · Hold Time 12sec
+SJC Core v47 탑재 · Corridor 연결 포트
+
+■ Tier 2 — Radial Corridor Gate
+직경 ~6km · 유효 통과폭 ~2km · 모듈 ~20,000 · Hold Time 15sec
+12개 방사형 경로 · GREEN-BLUE 구역 연결 · SJC Core v47-R
+
+■ Tier 3 — Frontier Gate
+직경 ~2km · 모듈 1,500~3,000 · Hold Time 30~60sec
+v1.0 (2130) 원형 · φ값 불안정 (0.680~0.700) · Multi-Hop 필수
+
+■ Tier 4 — Emergency Gate
+직경 ~1km · 모듈 500~800 · Hold Time 20~40sec
+RED Sector 기밀 위치 · 방어 우선순위: Gate > Planet > Ship
+
+■ Summary: 크기 비교
+v1.0 (2km) → Tier 3 (2km) → Tier 4 (1km) → Tier 2 (6km) → Tier 1 (12km)`,
+      en: `HPG Gate Infrastructure Visual Reference — Bureau of Investigation internal reference
+
+■ Tier 1 — Core Hub Gate
+Diameter 12km · Effective Passage 4km · Modules 48,000 · Hold Time 12sec
+SJC Core v47 installed · Corridor connection ports
+
+■ Tier 2 — Radial Corridor Gate
+Diameter ~6km · Effective Passage ~2km · Modules ~20,000 · Hold Time 15sec
+12 radial routes · GREEN-BLUE zone connector · SJC Core v47-R
+
+■ Tier 3 — Frontier Gate
+Diameter ~2km · Modules 1,500~3,000 · Hold Time 30~60sec
+v1.0 (2130) origin · φ value unstable (0.680~0.700) · Multi-Hop necessary
+
+■ Tier 4 — Emergency Gate
+Diameter ~1km · Modules 500~800 · Hold Time 20~40sec
+Classified RED Sector location · Defense priority: Gate > Planet > Ship
+
+■ Summary: Size Comparison
+v1.0 (2km) → Tier 3 (2km) → Tier 4 (1km) → Tier 2 (6km) → Tier 1 (12km)`,
     },
   },
 };
