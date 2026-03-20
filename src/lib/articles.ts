@@ -1069,7 +1069,7 @@ Only the scale changes. The principle is identical.`,
 ■ 네카: 기사 보병. RIDE 풀아머 40~60kg. 라이플+RIDE 대검 (90~120cm, 모스 15+). 안드로이드 1격 절단.
 ■ 해방연대: 인간. 경량 방탄복. 교전 90초 이내. 정면전 ❌.
 
-■ 접현전 = 네카 압도적 유리
+■ 백병전 = 네카 압도적 유리
 2.3m 풀아머가 통로를 꽉 채움. 드론 효율 급감. 대검 1격에 절단.
 이것이 협의회가 절대 근접전을 허용하면 안 되는 이유.`,
       en: `■ Council: Combat androids controlling 3~5 small drones simultaneously. Close combat is emergency only.
