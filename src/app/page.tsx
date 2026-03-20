@@ -9,14 +9,12 @@ const stats = {
   ko: [
     { value: "66,000,000", unit: "년", label: "타임라인" },
     { value: "4", unit: "개 장르", label: "하나의 우주" },
-    { value: "2,000", unit: "화", label: "검증된 서사" },
     { value: "200+", unit: "", label: "아티클 아카이브" },
     { value: "1", unit: "", label: "엔진 — EH Rulebook v1.0" },
   ],
   en: [
     { value: "66,000,000", unit: " yrs", label: "Timeline" },
     { value: "4", unit: " genres", label: "One Universe" },
-    { value: "2,000", unit: " episodes", label: "Verified Narrative" },
     { value: "200+", unit: "", label: "Article Archive" },
     { value: "1", unit: "", label: "Engine — EH Rulebook v1.0" },
   ],
