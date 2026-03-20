@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2400" style="background:#0a0a0f;font-family:'Courier New',monospace">
+
+  <!-- TITLE -->
+  <text x="750" y="40" fill="#c8c8d8" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="4">HPG GATE INFRASTRUCTURE — VISUAL REFERENCE</text>
+  <text x="750" y="64" fill="#666688" font-size="12" text-anchor="middle" letter-spacing="2">Bureau of Investigation — Gate Classification Archive / CLASSIFIED</text>
+  <text x="750" y="82" fill="#444466" font-size="10" text-anchor="middle">Gate v1.0 (2130) → v47 (7000s) / Tier 1~4 + Tactical variants</text>
+  <line x1="40" y1="95" x2="1460" y2="95" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: GATE v47 — Tier 1 Core Hub -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="130" fill="#5599dd" font-size="17" font-weight="bold" letter-spacing="3">TIER 1 — CORE HUB GATE (GREEN 구역)</text>
+  <text x="60" y="150" fill="#335577" font-size="11">6 hubs in GREEN / Spacetime Corridor connected / Galaxy's aorta / 외경 12km</text>
+
+  <g transform="translate(200,170)">
+    <!-- 외부 링 — 12km 거대 구조 -->
+    <circle cx="400" cy="280" r="260" fill="none" stroke="#2255882" stroke-width="3"/>
+    <circle cx="400" cy="280" r="255" fill="none" stroke="#1a3355" stroke-width="1"/>
+    <!-- 내부 유효 통과 구역 — 4km -->
+    <circle cx="400" cy="280" r="88" fill="#050810" stroke="#4488cc" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <text x="400" y="284" fill="#4488cc" font-size="10" text-anchor="middle">유효 통과: 4km</text>
+
+    <!-- 모듈 48,000개 표현 (링 위에 점선) -->
+    <circle cx="400" cy="280" r="260" fill="none" stroke="#3366aa" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>
+    <circle cx="400" cy="280" r="250" fill="none" stroke="#3366aa" stroke-width="0.5" stroke-dasharray="1,4" opacity="0.4"/>
+
+    <!-- SJC Gate Core — 중앙 200m 보호캡슐 -->
+    <circle cx="400" cy="280" r="12" fill="#0a1525" stroke="#5599dd" stroke-width="2"/>
+    <text x="400" y="300" fill="#5599dd" font-size="8" text-anchor="middle">SJC Core</text>
+    <text x="400" y="312" fill="#335577" font-size="7" text-anchor="middle">v47 / 64+8 / φ 0.710</text>
+
+    <!-- 세그먼트 표시 -->
+    <line x1="400" y1="20" x2="400" y2="540" stroke="#1a2a44" stroke-width="0.5" opacity="0.3"/>
+    <line x1="140" y1="280" x2="660" y2="280" stroke="#1a2a44" stroke-width="0.5" opacity="0.3"/>
+    <line x1="216" y1="96" x2="584" y2="464" stroke="#1a2a44" stroke-width="0.5" opacity="0.2"/>
+    <line x1="584" y1="96" x2="216" y2="464" stroke="#1a2a44" stroke-width="0.5" opacity="0.2"/>
+
+    <!-- Corridor 연결 표시 (6방향) -->
+    <line x1="400" y1="20" x2="400" y2="-20" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <line x1="660" y1="280" x2="720" y2="280" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <line x1="140" y1="280" x2="80" y2="280" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <line x1="584" y1="96" x2="620" y2="60" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <line x1="216" y1="96" x2="180" y2="60" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <line x1="584" y1="464" x2="620" y2="500" stroke="#5599dd" stroke-width="2" stroke-dasharray="8,4"/>
+    <text x="400" y="-30" fill="#5599dd" font-size="8" text-anchor="middle">→ Corridor to H2</text>
+    <text x="730" y="284" fill="#5599dd" font-size="8">→ Corridor to H3</text>
+
+    <!-- 107번 모듈 표시 -->
+    <circle cx="316" cy="68" r="5" fill="#cc4422" stroke="#ff4422" stroke-width="1"/>
+    <text x="316" y="58" fill="#cc4422" font-size="7" text-anchor="middle">107-K</text>
+    <text x="316" y="84" fill="#663322" font-size="6" text-anchor="middle">5,000yr defect</text>
+
+    <!-- 스케일 바 -->
+    <line x1="100" y1="560" x2="200" y2="560" stroke="#445566" stroke-width="1"/>
+    <text x="150" y="575" fill="#445566" font-size="8" text-anchor="middle">~2km</text>
+
+    <!-- 시각 설명 -->
+    <text x="400" y="590" fill="#335577" font-size="10" text-anchor="middle">워프는 빛나지 않고 소리 없고 폭발 없다.</text>
+    <text x="400" y="606" fill="#335577" font-size="10" text-anchor="middle">HOLD 12초의 침묵 → ALLOW → 좌표 재조립 → 4.7광년 이동.</text>
+    <text x="400" y="622" fill="#446688" font-size="9" text-anchor="middle">"Gate는 문이 아니다. 조건이다. 조건을 통과하면 이미 도착해 있다."</text>
+  </g>
+
+  <line x1="40" y1="830" x2="1460" y2="830" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: Tier 2 — Radial Corridor Gate -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="865" fill="#2980b9" font-size="17" font-weight="bold" letter-spacing="3">TIER 2 — RADIAL CORRIDOR GATE (GREEN→BLUE)</text>
+  <text x="60" y="885" fill="#1a5070" font-size="11">12 radial corridors / 4.7 ly per jump / Standard transit gate / 외경 ~6km</text>
+
+  <g transform="translate(200,905)">
+    <!-- 중형 링 -->
+    <circle cx="250" cy="180" r="160" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+    <circle cx="250" cy="180" r="155" fill="none" stroke="#1a4060" stroke-width="0.8"/>
+    <!-- 유효 통과 -->
+    <circle cx="250" cy="180" r="55" fill="#050810" stroke="#2980b9" stroke-width="1" stroke-dasharray="5,4"/>
+    <text x="250" y="184" fill="#2980b9" font-size="9" text-anchor="middle">유효 ~2km</text>
+    <!-- SJC -->
+    <circle cx="250" cy="180" r="8" fill="#0a1525" stroke="#2980b9" stroke-width="1.5"/>
+    <text x="250" y="200" fill="#2980b9" font-size="7" text-anchor="middle">SJC v47-R</text>
+    <!-- 모듈 간략 -->
+    <circle cx="250" cy="180" r="160" fill="none" stroke="#2980b9" stroke-width="0.5" stroke-dasharray="1,3" opacity="0.5"/>
+    <!-- Corridor 양방향 -->
+    <line x1="250" y1="20" x2="250" y2="-20" stroke="#2980b9" stroke-width="2" stroke-dasharray="6,4"/>
+    <line x1="250" y1="340" x2="250" y2="380" stroke="#2980b9" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="250" y="-30" fill="#2980b9" font-size="8" text-anchor="middle">↑ to GREEN Hub</text>
+    <text x="250" y="395" fill="#2980b9" font-size="8" text-anchor="middle">↓ to BLUE</text>
+  </g>
+
+  <!-- Tier 2 설명 -->
+  <g transform="translate(750,920)">
+    <text x="0" y="0" fill="#2980b9" font-size="12" font-weight="bold">Tier 2 특성</text>
+    <text x="0" y="22" fill="#1a5070" font-size="10">• 외경 약 6km (Tier 1의 절반)</text>
+    <text x="0" y="40" fill="#1a5070" font-size="10">• 모듈 약 20,000개</text>
+    <text x="0" y="58" fill="#1a5070" font-size="10">• φ 0.705 유지 (허브보다 약간 낮음)</text>
+    <text x="0" y="76" fill="#1a5070" font-size="10">• HOLD 15초 (허브보다 약간 느림)</text>
+    <text x="0" y="94" fill="#1a5070" font-size="10">• 방사형 12개가 GREEN에서 BLUE로</text>
+    <text x="0" y="112" fill="#1a5070" font-size="10">• 물류/화물/여객 주요 경로</text>
+    <text x="0" y="134" fill="#446688" font-size="10">• 은하 경제의 동맥. 기업 물류 핵심.</text>
+    <text x="0" y="156" fill="#446688" font-size="9">"Gate 통행료 = 은하 세금. Tier 2가 매출 25%."</text>
+  </g>
+
+  <line x1="40" y1="1340" x2="1460" y2="1340" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: Tier 3 — Frontier Gate -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="1375" fill="#d4a017" font-size="17" font-weight="bold" letter-spacing="3">TIER 3 — FRONTIER GATE (BLUE→YELLOW)</text>
+  <text x="60" y="1395" fill="#8a6010" font-size="11">Sparse / Multi-hop required / Incomplete corridor / 외경 ~2km / Gate v1.0 계승</text>
+
+  <g transform="translate(200,1415)">
+    <!-- 소형 링 — v1.0 원형 계승 -->
+    <circle cx="160" cy="130" r="100" fill="none" stroke="#d4a017" stroke-width="2"/>
+    <circle cx="160" cy="130" r="95" fill="none" stroke="#8a6010" stroke-width="0.5"/>
+    <!-- 유효 통과 -->
+    <circle cx="160" cy="130" r="35" fill="#050810" stroke="#d4a017" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="160" y="134" fill="#d4a017" font-size="8" text-anchor="middle">유효 ~800m</text>
+    <!-- SJC 소형 -->
+    <circle cx="160" cy="130" r="5" fill="#0a1525" stroke="#d4a017" stroke-width="1"/>
+    <!-- 모듈 (원형 점선) -->
+    <circle cx="160" cy="130" r="100" fill="none" stroke="#d4a017" stroke-width="0.5" stroke-dasharray="1,5" opacity="0.5"/>
+    <!-- 불완전 Corridor -->
+    <line x1="160" y1="30" x2="160" y2="-10" stroke="#d4a017" stroke-width="1.5" stroke-dasharray="4,6"/>
+    <line x1="160" y1="230" x2="160" y2="270" stroke="#d4a017" stroke-width="1.5" stroke-dasharray="4,6"/>
+    <text x="160" y="-20" fill="#d4a017" font-size="7" text-anchor="middle">↑ to BLUE (multi-hop)</text>
+    <text x="160" y="285" fill="#d4a017" font-size="7" text-anchor="middle">↓ to YELLOW (sparse)</text>
+    <!-- 노후 표시 -->
+    <line x1="90" y1="60" x2="110" y2="80" stroke="#8a6010" stroke-width="0.5" opacity="0.6"/>
+    <line x1="220" y1="180" x2="240" y2="200" stroke="#8a6010" stroke-width="0.5" opacity="0.6"/>
+  </g>
+
+  <g transform="translate(500,1430)">
+    <text x="0" y="0" fill="#d4a017" font-size="12" font-weight="bold">Tier 3 특성</text>
+    <text x="0" y="22" fill="#8a6010" font-size="10">• 외경 약 2km (Gate v1.0 원형과 동일)</text>
+    <text x="0" y="40" fill="#8a6010" font-size="10">• 모듈 약 1,500~3,000개</text>
+    <text x="0" y="58" fill="#8a6010" font-size="10">• φ 0.680~0.700 (불안정)</text>
+    <text x="0" y="76" fill="#8a6010" font-size="10">• HOLD 30~60초 (느림)</text>
+    <text x="0" y="94" fill="#8a6010" font-size="10">• Corridor 미완성. Multi-hop 필요.</text>
+    <text x="0" y="112" fill="#8a6010" font-size="10">• 간격 넓음. 10광년+</text>
+    <text x="0" y="134" fill="#8a6010" font-size="10">• 해방연대가 비공식 사용하는 경우 있음</text>
+    <text x="0" y="158" fill="#665510" font-size="9">"변경의 마지막 연결. 여기가 끊기면 YELLOW는 고립."</text>
+  </g>
+
+  <line x1="40" y1="1730" x2="1460" y2="1730" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: Tier 4 — Emergency Gate -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="1765" fill="#c0392b" font-size="17" font-weight="bold" letter-spacing="3">TIER 4 — EMERGENCY GATE (AMBER / 기밀)</text>
+  <text x="60" y="1785" fill="#7a2218" font-size="11">3~5 units only / Location: CLASSIFIED / RED zone lifeline / Destroyable = war over</text>
+
+  <g transform="translate(200,1810)">
+    <!-- 소형 + 위장/은폐 구조 -->
+    <circle cx="130" cy="110" r="70" fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="8,4"/>
+    <circle cx="130" cy="110" r="65" fill="none" stroke="#7a2218" stroke-width="0.5" stroke-dasharray="2,6"/>
+    <!-- 유효 통과 (최소) -->
+    <circle cx="130" cy="110" r="22" fill="#050505" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,4"/>
+    <text x="130" y="114" fill="#c0392b" font-size="7" text-anchor="middle">유효 ~500m</text>
+    <!-- SJC 극소 -->
+    <circle cx="130" cy="110" r="3" fill="#1a0808" stroke="#c0392b" stroke-width="1"/>
+    <!-- 위장 패턴 (소행성 잔해처럼) -->
+    <rect x="60" y="45" width="15" height="10" rx="2" fill="#1a1a1a" stroke="#333333" stroke-width="0.5" opacity="0.4"/>
+    <rect x="175" y="150" width="12" height="8" rx="2" fill="#1a1a1a" stroke="#333333" stroke-width="0.5" opacity="0.4"/>
+    <rect x="45" y="130" width="18" height="6" rx="1" fill="#1a1a1a" stroke="#333333" stroke-width="0.5" opacity="0.3"/>
+    <!-- RED 연결 -->
+    <line x1="130" y1="180" x2="130" y2="220" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3,8"/>
+    <text x="130" y="235" fill="#c0392b" font-size="7" text-anchor="middle">↓ to RED (only link)</text>
+    <!-- CLASSIFIED 스탬프 -->
+    <rect x="80" y="75" width="100" height="16" rx="2" fill="#c0392b" opacity="0.15"/>
+    <text x="130" y="87" fill="#c0392b" font-size="9" text-anchor="middle" font-weight="bold">CLASSIFIED</text>
+  </g>
+
+  <g transform="translate(500,1820)">
+    <text x="0" y="0" fill="#c0392b" font-size="12" font-weight="bold">Tier 4 특성</text>
+    <text x="0" y="22" fill="#7a2218" font-size="10">• 외경 약 1km 이하 (최소형)</text>
+    <text x="0" y="40" fill="#7a2218" font-size="10">• 모듈 약 500~800개</text>
+    <text x="0" y="58" fill="#7a2218" font-size="10">• φ 0.690 (안정성보다 은폐 우선)</text>
+    <text x="0" y="76" fill="#7a2218" font-size="10">• HOLD 20~40초</text>
+    <text x="0" y="94" fill="#7a2218" font-size="10">• **위치 기밀.** 비밀조사국 내부에서도 극소수만 인지.</text>
+    <text x="0" y="112" fill="#7a2218" font-size="10">• 소행성 잔해 사이에 위장 배치</text>
+    <text x="0" y="130" fill="#7a2218" font-size="10">• 전 은하에 3~5개만 존재</text>
+    <text x="0" y="152" fill="#c0392b" font-size="10" font-weight="bold">★ 3개 파괴 시 RED 전장 완전 단절</text>
+    <text x="0" y="172" fill="#c0392b" font-size="10" font-weight="bold">★ 방어 우선순위: Gate > 행성 > 함선</text>
+    <text x="0" y="196" fill="#7a2218" font-size="9">"이 Gate가 끊기면 전쟁이 존재하지 않게 된다.</text>
+    <text x="0" y="210" fill="#7a2218" font-size="9"> 진짜로."</text>
+  </g>
+
+  <line x1="40" y1="2060" x2="1460" y2="2060" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: SIZE & EVOLUTION COMPARISON -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="2095" fill="#888899" font-size="17" font-weight="bold" letter-spacing="3">V. GATE SIZE EVOLUTION — 2130 → 7000s</text>
+
+  <!-- v1.0 -->
+  <circle cx="200" cy="2210" r="20" fill="none" stroke="#446688" stroke-width="1.5"/>
+  <text x="200" y="2250" fill="#446688" font-size="9" text-anchor="middle">v1.0 (2130)</text>
+  <text x="200" y="2262" fill="#335566" font-size="8" text-anchor="middle">2km / 1,200 mod</text>
+
+  <!-- Tier 3 -->
+  <circle cx="400" cy="2210" r="25" fill="none" stroke="#d4a017" stroke-width="1.5"/>
+  <text x="400" y="2250" fill="#d4a017" font-size="9" text-anchor="middle">Tier 3 (7000s)</text>
+  <text x="400" y="2262" fill="#8a6010" font-size="8" text-anchor="middle">~2km / 1,500~3,000</text>
+
+  <!-- Tier 4 -->
+  <circle cx="560" cy="2210" r="14" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="560" y="2250" fill="#c0392b" font-size="9" text-anchor="middle">Tier 4 (CLASSIFIED)</text>
+  <text x="560" y="2262" fill="#7a2218" font-size="8" text-anchor="middle">~1km / 500~800</text>
+
+  <!-- Tier 2 -->
+  <circle cx="780" cy="2210" r="55" fill="none" stroke="#2980b9" stroke-width="2"/>
+  <text x="780" y="2280" fill="#2980b9" font-size="9" text-anchor="middle">Tier 2</text>
+  <text x="780" y="2292" fill="#1a5070" font-size="8" text-anchor="middle">~6km / 20,000</text>
+
+  <!-- Tier 1 -->
+  <circle cx="1100" cy="2210" r="110" fill="none" stroke="#5599dd" stroke-width="3"/>
+  <text x="1100" y="2340" fill="#5599dd" font-size="10" text-anchor="middle">Tier 1 Core Hub</text>
+  <text x="1100" y="2355" fill="#335577" font-size="9" text-anchor="middle">12km / 48,000 modules / φ 0.710</text>
+
+  <!-- 화살표 -->
+  <text x="100" y="2180" fill="#445566" font-size="9">2130</text>
+  <text x="1200" y="2180" fill="#5599dd" font-size="9">7000s</text>
+  <line x1="140" y1="2175" x2="1180" y2="2175" stroke="#333355" stroke-width="0.5"/>
+  <polygon points="1180,2172 1195,2175 1180,2178" fill="#333355"/>
+
+  <!-- 하단 -->
+  <line x1="40" y1="2370" x2="1460" y2="2370" stroke="#222233" stroke-width="1"/>
+  <text x="750" y="2390" fill="#444455" font-size="10" text-anchor="middle">Source: 은하구역_Gate인프라_기술외삽 / 함선_우주인프라_통합본 / 세대별_연도별_사건사고_완전판</text>
+  <text x="750" y="2407" fill="#333344" font-size="10" text-anchor="middle">무단 유출 시 해당 인원은 오타로 처리된다.</text>
+
+</svg>

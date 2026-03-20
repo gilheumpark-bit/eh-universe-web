@@ -61,7 +61,11 @@ export default function Home() {
       <Header />
       <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-14">
         <StarField />
-        <div className="relative z-10 flex flex-col items-center gap-8 px-4 text-center">
+        {/* Hero character image */}
+        <div className="absolute bottom-0 right-0 z-[1] pointer-events-none select-none hidden md:block opacity-30 lg:opacity-40">
+          <img src="/images/hero-mina.jpg" alt="" className="h-[45vh] lg:h-[55vh] w-auto object-contain object-bottom" style={{ maskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", WebkitMaskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", maskComposite: "intersect", WebkitMaskComposite: "source-in" }} />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-8 px-4 text-center mb-[15vh]">
           <div className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-[0.3em] uppercase">
             Error Heart Universe
           </div>
@@ -119,7 +123,7 @@ export default function Home() {
       <section className="border-t border-border bg-bg-secondary py-24 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-12">Numbers of the Universe</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
             {stats[lang].map((s) => (
               <div key={s.label} className="card-glow rounded border border-border bg-bg-primary p-6">
                 <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary">

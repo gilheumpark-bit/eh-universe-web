@@ -1,0 +1,402 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 3800" style="background:#0a0a0f;font-family:'Courier New',monospace">
+
+  <!-- TITLE -->
+  <text x="750" y="40" fill="#c8c8d8" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="4">EH UNIVERSE — VESSEL CLASSIFICATION FULL REFERENCE</text>
+  <text x="750" y="64" fill="#666688" font-size="12" text-anchor="middle" letter-spacing="2">Bureau of Investigation — Internal Design Archive / CLASSIFIED</text>
+  <text x="750" y="82" fill="#444466" font-size="10" text-anchor="middle">All classes shown with Type -1(Strike) / -2(Guard) / -3(Support) variants</text>
+  <line x1="40" y1="95" x2="1460" y2="95" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: 협의회 (COUNCIL) -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="130" fill="#4488cc" font-size="17" font-weight="bold" letter-spacing="3">I. COUNCIL — 인류공동협의회 연합함대</text>
+  <text x="60" y="150" fill="#446688" font-size="11" letter-spacing="1">Design: Elliptical hull / EH Chamber center dome / Drone wing pods / Dark steel-blue / 1 rider per vessel</text>
+
+  <!-- 초계함 (Corvette) -->
+  <g transform="translate(60,170)">
+    <text x="0" y="12" fill="#3377aa" font-size="12" font-weight="bold">CORVETTE — 초계함-1/2/3</text>
+    <!-- 초계함-1 (Strike) -->
+    <ellipse cx="120" cy="50" rx="100" ry="16" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.2"/>
+    <circle cx="120" cy="49" r="10" fill="#0d1f35" stroke="#5599dd" stroke-width="1.5"/>
+    <text x="120" y="52" fill="#4488cc" font-size="5" text-anchor="middle">EH</text>
+    <rect x="25" y="42" width="40" height="14" rx="2" fill="#162030" stroke="#225588" stroke-width="0.8"/>
+    <rect x="175" y="42" width="40" height="14" rx="2" fill="#162030" stroke="#225588" stroke-width="0.8"/>
+    <polygon points="218,42 235,49 218,56" fill="#1a2a3a" stroke="#3366aa" stroke-width="1"/>
+    <text x="120" y="80" fill="#3377aa" font-size="9" text-anchor="middle">-1 Strike / 3,500t / 150 drones</text>
+
+    <!-- 초계함-2 (Guard) -->
+    <ellipse cx="400" cy="50" rx="108" ry="18" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <circle cx="400" cy="49" r="12" fill="#0d1f35" stroke="#5599dd" stroke-width="2"/>
+    <text x="400" y="52" fill="#4488cc" font-size="5" text-anchor="middle">EH</text>
+    <ellipse cx="400" cy="49" rx="80" ry="24" fill="none" stroke="#5599dd" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.4"/>
+    <text x="400" y="80" fill="#3377aa" font-size="9" text-anchor="middle">-2 Guard / 4,000t / CWEH enhanced</text>
+
+    <!-- 초계함-3 (Support) -->
+    <ellipse cx="660" cy="50" rx="90" ry="14" fill="#1a2a3a" stroke="#3366aa" stroke-width="1"/>
+    <circle cx="660" cy="49" r="8" fill="#0d1f35" stroke="#5599dd" stroke-width="1.2"/>
+    <rect x="610" y="35" width="16" height="8" rx="1" fill="#162030" stroke="#225588" stroke-width="0.5"/>
+    <rect x="694" y="35" width="16" height="8" rx="1" fill="#162030" stroke="#225588" stroke-width="0.5"/>
+    <text x="660" y="80" fill="#3377aa" font-size="9" text-anchor="middle">-3 Support / 3,000t / ECM/recon</text>
+  </g>
+
+  <!-- 프리깃 (Frigate) ★ -->
+  <g transform="translate(60,280)">
+    <text x="0" y="12" fill="#3377aa" font-size="12" font-weight="bold">FRIGATE ★ 기준함급 — 프리깃-1/2/3</text>
+    <!-- 프리깃-1 -->
+    <ellipse cx="160" cy="55" rx="150" ry="22" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <circle cx="160" cy="54" r="14" fill="#0d1f35" stroke="#5599dd" stroke-width="2"/>
+    <text x="160" y="57" fill="#4488cc" font-size="6" text-anchor="middle">EH</text>
+    <rect x="20" y="44" width="55" height="18" rx="3" fill="#162030" stroke="#225588" stroke-width="1"/>
+    <rect x="245" y="44" width="55" height="18" rx="3" fill="#162030" stroke="#225588" stroke-width="1"/>
+    <polygon points="308,42 338,54 308,66" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.2"/>
+    <circle cx="335" cy="54" r="4" fill="#223344" stroke="#5599dd" stroke-width="1"/>
+    <text x="160" y="90" fill="#3377aa" font-size="9" text-anchor="middle">-1 Strike / 6,500t / 540 drones / Max firepower</text>
+
+    <!-- 프리깃-2 -->
+    <ellipse cx="560" cy="55" rx="160" ry="26" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.8"/>
+    <circle cx="560" cy="54" r="16" fill="#0d1f35" stroke="#5599dd" stroke-width="2.5"/>
+    <text x="560" y="57" fill="#4488cc" font-size="6" text-anchor="middle">EH</text>
+    <ellipse cx="560" cy="54" rx="120" ry="32" fill="none" stroke="#5599dd" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.4"/>
+    <text x="560" y="90" fill="#3377aa" font-size="9" text-anchor="middle">-2 Guard / 7,500t / CWEH max / Escort</text>
+
+    <!-- 프리깃-3 -->
+    <ellipse cx="920" cy="55" rx="130" ry="18" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.2"/>
+    <circle cx="920" cy="54" r="11" fill="#0d1f35" stroke="#5599dd" stroke-width="1.5"/>
+    <rect x="840" y="38" width="24" height="12" rx="2" fill="#162030" stroke="#225588" stroke-width="0.8"/>
+    <rect x="978" y="38" width="24" height="12" rx="2" fill="#162030" stroke="#225588" stroke-width="0.8"/>
+    <rect x="860" y="30" width="8" height="18" rx="1" fill="#1e3050" stroke="#3366aa" stroke-width="0.5"/>
+    <rect x="970" y="30" width="8" height="18" rx="1" fill="#1e3050" stroke="#3366aa" stroke-width="0.5"/>
+    <text x="920" y="90" fill="#3377aa" font-size="9" text-anchor="middle">-3 Support / 5,500t / ECM + repair / Most androids</text>
+  </g>
+
+  <!-- 구축함 (Destroyer) -->
+  <g transform="translate(60,400)">
+    <text x="0" y="12" fill="#3377aa" font-size="12" font-weight="bold">DESTROYER — 구축함-1/2/3</text>
+    <ellipse cx="200" cy="58" rx="190" ry="30" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.8"/>
+    <circle cx="200" cy="57" r="18" fill="#0d1f35" stroke="#5599dd" stroke-width="2"/>
+    <text x="200" y="60" fill="#4488cc" font-size="6" text-anchor="middle">EH</text>
+    <rect x="20" y="46" width="70" height="22" rx="3" fill="#162030" stroke="#225588" stroke-width="1"/>
+    <rect x="310" y="46" width="70" height="22" rx="3" fill="#162030" stroke="#225588" stroke-width="1"/>
+    <polygon points="388,44 420,57 388,70" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <text x="200" y="100" fill="#3377aa" font-size="9" text-anchor="middle">-1 Strike / 15,000t / 1,400 drones — Fleet main assault</text>
+    <text x="750" y="58" fill="#446688" font-size="10">-2: 18,000t / CWEH max / Fleet defense</text>
+    <text x="750" y="74" fill="#446688" font-size="10">-3: 12,000t / C4ISR / Electronic warfare</text>
+  </g>
+
+  <!-- 순양함~기함 (텍스트 스펙) -->
+  <g transform="translate(60,520)">
+    <text x="0" y="12" fill="#3377aa" font-size="12" font-weight="bold">CRUISER — BATTLESHIP — FLAGSHIP</text>
+    <text x="0" y="32" fill="#446688" font-size="10">순양함-1: 42,000t / 4,000 drones   |  -2: 48,000t / CWEH core  |  -3: 36,000t / Fleet ECM</text>
+    <text x="0" y="48" fill="#446688" font-size="10">전함-1: 130,000t / 14,000 drones  |  -2: 150,000t / Fleet anchor  |  -3: 100,000t / Mobile HQ</text>
+    <text x="0" y="64" fill="#446688" font-size="10">기함: 500,000t / 48,000 drones / φ max pilot only / Council has few</text>
+    <text x="0" y="82" fill="#335577" font-size="9">Scaling: Same elliptical design language. Larger = more wing pods, bigger EH dome, thicker hull.</text>
+  </g>
+
+  <line x1="40" y1="620" x2="1460" y2="620" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: 네카 (NEKA) — RIDE 결정체 형태 -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="655" fill="#cc4422" font-size="17" font-weight="bold" letter-spacing="3">II. NEKA EMPIRE — 네카 제국 함대</text>
+  <text x="60" y="675" fill="#663322" font-size="11" letter-spacing="1">Design: RIDE crystal growth form / Angular faceted hull / No drones / All crew / Dark gunmetal + silver grain</text>
+  <text x="60" y="692" fill="#553320" font-size="10" letter-spacing="1">★ Hull shape reflects RIDE crystalline structure — "Grown, not built." Faceted like obsidian crystal.</text>
+
+  <!-- 레이더 (Raider) — 초계함급 -->
+  <g transform="translate(60,710)">
+    <text x="0" y="12" fill="#aa3311" font-size="12" font-weight="bold">RAIDER (레이더) — 초계함급 -1/2/3</text>
+    <!-- 레이더-1 (Assault) — 뾰족한 결정 -->
+    <polygon points="40,55 120,25 240,40 260,55 240,70 120,85 40,55" fill="#1a1410" stroke="#5a3020" stroke-width="1.5"/>
+    <!-- 은결 무늬 -->
+    <line x1="80" y1="40" x2="200" y2="60" stroke="#2a2018" stroke-width="0.5" opacity="0.5"/>
+    <line x1="100" y1="70" x2="220" y2="50" stroke="#2a2018" stroke-width="0.5" opacity="0.4"/>
+    <!-- 관통빔 포구 -->
+    <circle cx="258" cy="55" r="4" fill="#0a0808" stroke="#aa4422" stroke-width="1.5"/>
+    <!-- RIDE 에너지 슬릿 -->
+    <line x1="80" y1="38" x2="230" y2="43" stroke="#0a0806" stroke-width="2" opacity="0.6"/>
+    <line x1="80" y1="72" x2="230" y2="67" stroke="#0a0806" stroke-width="2" opacity="0.6"/>
+    <text x="150" y="105" fill="#aa3311" font-size="9" text-anchor="middle">-1 Assault / 4,500t / 220 crew / Boarding lance</text>
+
+    <!-- 레이더-2 (Gunship) -->
+    <polygon points="350,55 420,30 530,42 548,55 530,68 420,80 350,55" fill="#1a1410" stroke="#4a3020" stroke-width="1.2"/>
+    <line x1="390" y1="38" x2="510" y2="48" stroke="#2a2018" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="546" cy="55" r="4" fill="#0a0808" stroke="#aa4422" stroke-width="1.2"/>
+    <text x="450" y="105" fill="#aa3311" font-size="9" text-anchor="middle">-2 Gunship / 4,000t / 200 crew / Ranged fire</text>
+
+    <!-- 레이더-3 (Command) -->
+    <polygon points="640,55 700,35 790,45 805,55 790,65 700,75 640,55" fill="#1a1410" stroke="#3a2518" stroke-width="1"/>
+    <rect x="720" y="38" width="8" height="34" rx="1" fill="#201810" stroke="#4a3020" stroke-width="0.5"/>
+    <text x="720" y="105" fill="#aa3311" font-size="9" text-anchor="middle">-3 Command / 3,500t / 180 crew / Signal relay</text>
+  </g>
+
+  <!-- 헌터 (Hunter) — 프리깃급 ★ -->
+  <g transform="translate(60,840)">
+    <text x="0" y="12" fill="#aa3311" font-size="12" font-weight="bold">HUNTER (헌터) ★ 기준함급 — 프리깃급 -1/2/3</text>
+    <!-- 헌터-1 (Assault) — 두꺼운 결정, 접현 장갑 강화 -->
+    <polygon points="30,60 130,18 320,30 380,45 400,60 380,75 320,90 130,102 30,60" fill="#1a1410" stroke="#6a3a22" stroke-width="2"/>
+    <!-- 장갑판 패싯 -->
+    <line x1="130" y1="18" x2="130" y2="102" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="220" y1="24" x2="220" y2="96" stroke="#2a1a10" stroke-width="0.8"/>
+    <line x1="320" y1="30" x2="320" y2="90" stroke="#2a1a10" stroke-width="0.8"/>
+    <!-- 은결 -->
+    <line x1="60" y1="40" x2="350" y2="55" stroke="#2a2018" stroke-width="0.5" opacity="0.5"/>
+    <line x1="80" y1="80" x2="360" y2="65" stroke="#2a2018" stroke-width="0.5" opacity="0.4"/>
+    <!-- 관통빔 포구 (함수) -->
+    <circle cx="398" cy="60" r="6" fill="#0a0808" stroke="#cc4422" stroke-width="2"/>
+    <circle cx="398" cy="60" r="3" fill="#cc3300" opacity="0.5"/>
+    <!-- 소각파 포탑 -->
+    <rect x="160" y="12" width="18" height="10" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="260" y="12" width="18" height="10" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- RIDE 에너지 슬릿 -->
+    <line x1="80" y1="30" x2="350" y2="38" stroke="#0a0806" stroke-width="2.5" opacity="0.5"/>
+    <line x1="80" y1="90" x2="350" y2="82" stroke="#0a0806" stroke-width="2.5" opacity="0.5"/>
+    <!-- 워프 드라이브 (함미) -->
+    <ellipse cx="35" cy="60" rx="8" ry="22" fill="#1f1208" stroke="#663322" stroke-width="1.5"/>
+    <text x="215" y="125" fill="#cc4422" font-size="9" text-anchor="middle">-1 Assault / 9,000t / 650 crew / Boarding primary / Knight Assault concentrated</text>
+
+    <!-- 헌터-2 설명 -->
+    <text x="500" y="50" fill="#663322" font-size="10">-2 Gunship: 8,000t / 600 crew / RIDE beam focus</text>
+    <text x="500" y="66" fill="#663322" font-size="10">  Longer facets. Thinner hull. More energy slits.</text>
+    <text x="500" y="86" fill="#663322" font-size="10">-3 Command: 7,000t / 550 crew / Signal hub</text>
+    <text x="500" y="102" fill="#663322" font-size="10">  Taller spire antenna. Chemical signal amplifier.</text>
+  </g>
+
+  <!-- 레기온 (Legionnaire) — 구축함급 -->
+  <g transform="translate(60,990)">
+    <text x="0" y="12" fill="#aa3311" font-size="12" font-weight="bold">LEGIONNAIRE (레기온) — 구축함급 -1/2/3</text>
+    <polygon points="20,65 140,10 440,25 520,45 545,65 520,85 440,105 140,120 20,65" fill="#1a1410" stroke="#6a3a22" stroke-width="2"/>
+    <!-- 장갑 패싯 대형 -->
+    <line x1="140" y1="10" x2="140" y2="120" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="240" y1="18" x2="240" y2="112" stroke="#2a1a10" stroke-width="0.8"/>
+    <line x1="340" y1="22" x2="340" y2="108" stroke="#2a1a10" stroke-width="0.8"/>
+    <line x1="440" y1="25" x2="440" y2="105" stroke="#2a1a10" stroke-width="0.8"/>
+    <!-- 은결 대형 -->
+    <line x1="60" y1="35" x2="480" y2="55" stroke="#2a2018" stroke-width="0.6" opacity="0.5"/>
+    <line x1="80" y1="95" x2="500" y2="75" stroke="#2a2018" stroke-width="0.6" opacity="0.4"/>
+    <line x1="200" y1="30" x2="400" y2="40" stroke="#2a2018" stroke-width="0.4" opacity="0.3"/>
+    <!-- 관통빔 주포 -->
+    <circle cx="543" cy="65" r="8" fill="#0a0808" stroke="#cc4422" stroke-width="2.5"/>
+    <circle cx="543" cy="65" r="4" fill="#cc3300" opacity="0.6"/>
+    <!-- 소각파 4문 -->
+    <rect x="180" y="4" width="22" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="300" y="4" width="22" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="180" y="114" width="22" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="300" y="114" width="22" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- 워프 드라이브 -->
+    <ellipse cx="25" cy="65" rx="10" ry="30" fill="#1f1208" stroke="#663322" stroke-width="1.5"/>
+    <text x="280" y="148" fill="#cc4422" font-size="9" text-anchor="middle">-1 Assault / 22,000t / 2,000 crew / Triplex Acies 1st line (Hastati)</text>
+    <text x="750" y="55" fill="#663322" font-size="10">-2 Gunship: 20,000t / Triplex 2nd (Principes) / Main beam battery</text>
+    <text x="750" y="75" fill="#663322" font-size="10">-3 Command: 18,000t / Legion HQ / Chemical signal hub</text>
+  </g>
+
+  <!-- 프레토리안 (Praetorian) — 전함급 -->
+  <g transform="translate(60,1170)">
+    <text x="0" y="12" fill="#aa3311" font-size="12" font-weight="bold">PRAETORIAN (프레토리안) — 전함급 -1/2/3</text>
+    <polygon points="10,75 180,5 680,18 780,40 820,75 780,110 680,132 180,145 10,75" fill="#1a1410" stroke="#7a4018" stroke-width="2.5"/>
+    <!-- 대형 패싯 -->
+    <line x1="180" y1="5" x2="180" y2="145" stroke="#2a1a10" stroke-width="1.2"/>
+    <line x1="330" y1="12" x2="330" y2="138" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="480" y1="15" x2="480" y2="135" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="680" y1="18" x2="680" y2="132" stroke="#2a1a10" stroke-width="1"/>
+    <!-- 은결 대형 -->
+    <line x1="50" y1="35" x2="720" y2="60" stroke="#2a2018" stroke-width="0.8" opacity="0.5"/>
+    <line x1="80" y1="110" x2="740" y2="88" stroke="#2a2018" stroke-width="0.8" opacity="0.4"/>
+    <!-- 선체포 (Hull Cannon) — 발사 시 칠흑 -->
+    <circle cx="818" cy="75" r="12" fill="#0a0808" stroke="#cc4422" stroke-width="3"/>
+    <circle cx="818" cy="75" r="6" fill="#cc3300" opacity="0.6"/>
+    <!-- 소각파 6문 -->
+    <rect x="220" y="0" width="24" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="380" y="0" width="24" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="560" y="0" width="24" height="12" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- 워프 드라이브 대형 -->
+    <ellipse cx="16" cy="75" rx="12" ry="40" fill="#1f1208" stroke="#773322" stroke-width="2"/>
+    <text x="420" y="165" fill="#cc4422" font-size="10" text-anchor="middle">-1 Assault / 220,000t / 16,000 crew / Hull Cannon (Gladius) / Maximum boarding</text>
+    <text x="420" y="180" fill="#663322" font-size="9" text-anchor="middle">-2: 200,000t / Hull Cannon focus / Triarii 3rd line  |  -3: 180,000t / Grand Legion HQ</text>
+  </g>
+
+  <!-- 임페라토르 (Imperator) — 황제함 -->
+  <g transform="translate(60,1380)">
+    <text x="0" y="12" fill="#cc4422" font-size="12" font-weight="bold">IMPERATOR (임페라토르) — 황제함 / 단일</text>
+    <!-- 초대형 결정체 -->
+    <polygon points="5,80 250,5 950,15 1100,40 1150,80 1100,120 950,145 250,155 5,80" fill="#1a1410" stroke="#8a4820" stroke-width="3"/>
+    <!-- 대형 패싯 -->
+    <line x1="250" y1="5" x2="250" y2="155" stroke="#2a1a10" stroke-width="1.5"/>
+    <line x1="450" y1="10" x2="450" y2="150" stroke="#2a1a10" stroke-width="1.2"/>
+    <line x1="650" y1="12" x2="650" y2="148" stroke="#2a1a10" stroke-width="1.2"/>
+    <line x1="850" y1="14" x2="850" y2="146" stroke="#2a1a10" stroke-width="1.2"/>
+    <!-- 은결 다수 -->
+    <line x1="50" y1="30" x2="1050" y2="65" stroke="#2a2018" stroke-width="1" opacity="0.5"/>
+    <line x1="80" y1="125" x2="1070" y2="92" stroke="#2a2018" stroke-width="1" opacity="0.4"/>
+    <line x1="300" y1="20" x2="900" y2="45" stroke="#2a2018" stroke-width="0.6" opacity="0.3"/>
+    <!-- 왕좌전 표시 (중심부) -->
+    <circle cx="580" cy="80" r="20" fill="#150f0a" stroke="#d4a017" stroke-width="2"/>
+    <text x="580" y="84" fill="#d4a017" font-size="7" text-anchor="middle">THRONE</text>
+    <!-- 선체포 복수 -->
+    <circle cx="1148" cy="80" r="14" fill="#0a0808" stroke="#cc4422" stroke-width="3"/>
+    <circle cx="1148" cy="80" r="7" fill="#cc3300" opacity="0.6"/>
+    <!-- 워프 대형 -->
+    <ellipse cx="12" cy="80" rx="14" ry="50" fill="#1f1208" stroke="#883322" stroke-width="2"/>
+    <text x="580" y="175" fill="#cc4422" font-size="10" text-anchor="middle">1,200,000t / 80,000 crew / 4km / Mobile capital / Throne Hall replica / Tintapin only</text>
+    <text x="580" y="192" fill="#d4a017" font-size="10" text-anchor="middle" font-weight="bold">"Where the Emperor is, there is Sichor."</text>
+  </g>
+
+  <line x1="40" y1="1610" x2="1460" y2="1610" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: 해방연대 (LIBERATION ALLIANCE) -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="1645" fill="#44aa66" font-size="17" font-weight="bold" letter-spacing="3">III. LIBERATION ALLIANCE — 해방연대</text>
+  <text x="60" y="1665" fill="#336644" font-size="11" letter-spacing="1">Design: Modified civilian / Asymmetric / Individually named / No type classification — "Ride what you have"</text>
+
+  <!-- 바늘함 -->
+  <g transform="translate(60,1685)">
+    <text x="0" y="12" fill="#33aa55" font-size="12" font-weight="bold">NEEDLE-CLASS (바늘함) — ~200t</text>
+    <polygon points="0,35 280,18 370,35 280,52 0,35" fill="#0f2015" stroke="#336633" stroke-width="1.5"/>
+    <rect x="50" y="24" width="40" height="18" rx="2" fill="#0a1a10" stroke="#225533" stroke-width="1"/>
+    <rect x="150" y="20" width="30" height="12" rx="2" fill="#0c1d12" stroke="#2a5533" stroke-width="1"/>
+    <polygon points="370,32 400,35 370,38" fill="#0f2015" stroke="#44aa66" stroke-width="1.2"/>
+    <rect x="110" y="26" width="26" height="14" rx="2" fill="#081508" stroke="#33aa55" stroke-width="1"/>
+    <text x="123" y="36" fill="#33aa55" font-size="6" text-anchor="middle">NAME</text>
+    <text x="200" y="70" fill="#44aa66" font-size="9" text-anchor="middle">Solo rider / 6 drones / 90-second engagement / Named individually</text>
+  </g>
+
+  <!-- 가시함 -->
+  <g transform="translate(60,1775)">
+    <text x="0" y="12" fill="#33aa55" font-size="12" font-weight="bold">THORN-CLASS (가시함) — ~800t</text>
+    <polygon points="0,35 320,15 430,35 320,55 0,35" fill="#0f2015" stroke="#336633" stroke-width="1.5"/>
+    <rect x="60" y="22" width="50" height="22" rx="3" fill="#0a1a10" stroke="#225533" stroke-width="1"/>
+    <rect x="180" y="18" width="40" height="14" rx="2" fill="#0c1d12" stroke="#2a5533" stroke-width="1"/>
+    <polygon points="430,30 465,35 430,40" fill="#0f2015" stroke="#44aa66" stroke-width="1.5"/>
+    <rect x="250" y="14" width="50" height="10" rx="2" fill="#0a1a08" stroke="#446644" stroke-width="1"/>
+    <text x="230" y="70" fill="#44aa66" font-size="9" text-anchor="middle">Solo rider / 24 drones / Commands 5 Needles / Small-scale fire support</text>
+  </g>
+
+  <!-- 뿌리함 -->
+  <g transform="translate(60,1865)">
+    <text x="0" y="12" fill="#33aa55" font-size="12" font-weight="bold">ROOT-CLASS (뿌리함) — ~3,000t</text>
+    <rect x="40" y="20" width="350" height="65" rx="5" fill="#0c1a10" stroke="#336633" stroke-width="1.5"/>
+    <rect x="60" y="10" width="100" height="16" rx="3" fill="#0a1508" stroke="#2a5522" stroke-width="1"/>
+    <rect x="200" y="10" width="80" height="16" rx="3" fill="#0a1508" stroke="#2a5522" stroke-width="1"/>
+    <rect x="0" y="28" width="40" height="48" rx="3" fill="#091408" stroke="#225522" stroke-width="1"/>
+    <rect x="390" y="28" width="40" height="48" rx="3" fill="#091408" stroke="#225522" stroke-width="1"/>
+    <line x1="80" y1="10" x2="80" y2="-5" stroke="#44aa66" stroke-width="1.5"/>
+    <line x1="80" y1="-5" x2="130" y2="-5" stroke="#44aa66" stroke-width="1.5"/>
+    <circle cx="130" cy="-5" r="3" fill="#33aa55"/>
+    <text x="215" y="105" fill="#44aa66" font-size="9" text-anchor="middle">1~3 crew / 96 drones / Mobile base / Repair + resupply / Cannot be uprooted</text>
+  </g>
+
+  <line x1="40" y1="2000" x2="1460" y2="2000" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: DESIGN PHILOSOPHY COMPARISON -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="2035" fill="#888899" font-size="17" font-weight="bold" letter-spacing="3">IV. DESIGN PHILOSOPHY — 외형 설계 철학 대비</text>
+
+  <!-- 3세력 대비 박스 -->
+  <rect x="60" y="2055" width="420" height="180" rx="5" fill="#0f1a28" stroke="#3366aa" stroke-width="1.5"/>
+  <text x="270" y="2075" fill="#4488cc" font-size="12" text-anchor="middle" font-weight="bold">COUNCIL</text>
+  <text x="80" y="2095" fill="#446688" font-size="10">Shape: Elliptical (유선형 타원)</text>
+  <text x="80" y="2112" fill="#446688" font-size="10">Surface: Smooth composite</text>
+  <text x="80" y="2129" fill="#446688" font-size="10">Color: Dark steel-blue + violet EH glow</text>
+  <text x="80" y="2146" fill="#446688" font-size="10">Center: EH Chamber dome (visible)</text>
+  <text x="80" y="2163" fill="#446688" font-size="10">Impression: "Aircraft carrier in space"</text>
+  <text x="80" y="2180" fill="#446688" font-size="10">Hull reacts to pilot emotion (φ)</text>
+  <text x="80" y="2200" fill="#335577" font-size="10">Drones swarm from wing pods</text>
+  <text x="80" y="2220" fill="#4488cc" font-size="11" font-weight="bold">"An open hand."</text>
+
+  <rect x="540" y="2055" width="420" height="180" rx="5" fill="#1a1410" stroke="#6a3a22" stroke-width="1.5"/>
+  <text x="750" y="2075" fill="#cc4422" font-size="12" text-anchor="middle" font-weight="bold">NEKA</text>
+  <text x="560" y="2095" fill="#663322" font-size="10">Shape: Faceted crystal (각진 결정체)</text>
+  <text x="560" y="2112" fill="#663322" font-size="10">Surface: RIDE grain visible (은결 무늬)</text>
+  <text x="560" y="2129" fill="#663322" font-size="10">Color: Dark gunmetal → Black (discharge)</text>
+  <text x="560" y="2146" fill="#663322" font-size="10">Center: No dome. Hull IS the weapon.</text>
+  <text x="560" y="2163" fill="#663322" font-size="10">Impression: "Obsidian crystal in void"</text>
+  <text x="560" y="2180" fill="#663322" font-size="10">Grown from RIDE, not built from parts</text>
+  <text x="560" y="2200" fill="#553320" font-size="10">12,000 crew operate manually</text>
+  <text x="560" y="2220" fill="#cc4422" font-size="11" font-weight="bold">"A clenched fist."</text>
+
+  <rect x="1020" y="2055" width="420" height="180" rx="5" fill="#0f2015" stroke="#336633" stroke-width="1.5"/>
+  <text x="1230" y="2075" fill="#44aa66" font-size="12" text-anchor="middle" font-weight="bold">LIBERATION</text>
+  <text x="1040" y="2095" fill="#336644" font-size="10">Shape: Asymmetric (비대칭 뾰족)</text>
+  <text x="1040" y="2112" fill="#336644" font-size="10">Surface: Patched, scratched, repaired</text>
+  <text x="1040" y="2129" fill="#336644" font-size="10">Color: Matte dark green-grey</text>
+  <text x="1040" y="2146" fill="#336644" font-size="10">Center: Nothing special. It's all they have.</text>
+  <text x="1040" y="2163" fill="#336644" font-size="10">Impression: "Junk that won't die"</text>
+  <text x="1040" y="2180" fill="#336644" font-size="10">Modified civilian. No two alike.</text>
+  <text x="1040" y="2200" fill="#336644" font-size="10">Named individually. Nickname painted.</text>
+  <text x="1040" y="2220" fill="#44aa66" font-size="11" font-weight="bold">"A thorn that won't break."</text>
+
+  <line x1="40" y1="2260" x2="1460" y2="2260" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: SIZE COMPARISON -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="2295" fill="#888899" font-size="17" font-weight="bold" letter-spacing="3">V. SIZE COMPARISON — 함급 크기 비교</text>
+
+  <line x1="60" y1="2520" x2="1460" y2="2520" stroke="#333355" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="50" y="2523" fill="#445566" font-size="8" text-anchor="end">0</text>
+
+  <!-- 임페라토르 -->
+  <polygon points="70,2340 220,2310 370,2320 390,2340 370,2360 220,2370 70,2340" fill="#1a1410" stroke="#cc4422" stroke-width="2"/>
+  <text x="230" y="2535" fill="#cc4422" font-size="9" text-anchor="middle">Imperator 4km</text>
+  <text x="230" y="2547" fill="#663322" font-size="8" text-anchor="middle">1,200,000t</text>
+
+  <!-- 협의회 기함 -->
+  <ellipse cx="530" cy="2370" rx="130" ry="30" fill="#0f1a28" stroke="#3366aa" stroke-width="2"/>
+  <text x="530" y="2535" fill="#4488cc" font-size="9" text-anchor="middle">Council Flagship</text>
+  <text x="530" y="2547" fill="#335577" font-size="8" text-anchor="middle">500,000t</text>
+
+  <!-- 네카 전함 -->
+  <polygon points="700,2390 780,2370 860,2375 875,2390 860,2405 780,2410 700,2390" fill="#1a1410" stroke="#aa3311" stroke-width="1.5"/>
+  <text x="790" y="2535" fill="#aa3311" font-size="9" text-anchor="middle">Praetorian</text>
+  <text x="790" y="2547" fill="#663322" font-size="8" text-anchor="middle">200,000t</text>
+
+  <!-- 협의회 전함 -->
+  <ellipse cx="960" cy="2400" rx="60" ry="18" fill="#0f1a28" stroke="#3366aa" stroke-width="1.5"/>
+  <text x="960" y="2535" fill="#3366aa" font-size="9" text-anchor="middle">Council BB</text>
+  <text x="960" y="2547" fill="#335577" font-size="8" text-anchor="middle">130,000t</text>
+
+  <!-- 프리깃 비교 -->
+  <polygon points="1060,2460 1095,2450 1130,2455 1135,2460 1130,2465 1095,2470 1060,2460" fill="#1a1410" stroke="#aa3311" stroke-width="1"/>
+  <text x="1097" y="2535" fill="#aa3311" font-size="8" text-anchor="middle">Hunter 9,000t</text>
+
+  <ellipse cx="1200" cy="2465" rx="30" ry="8" fill="#0f1a28" stroke="#3366aa" stroke-width="1"/>
+  <text x="1200" y="2535" fill="#3366aa" font-size="8" text-anchor="middle">Frigate 6,500t</text>
+
+  <!-- 바늘함 -->
+  <polygon points="1290,2490 1310,2488 1320,2490 1310,2492 1290,2490" fill="#0f2015" stroke="#44aa66" stroke-width="1"/>
+  <text x="1305" y="2535" fill="#44aa66" font-size="8" text-anchor="middle">Needle ~200t</text>
+
+  <line x1="40" y1="2570" x2="1460" y2="2570" stroke="#333355" stroke-width="1"/>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 6: MATERIAL LEGEND -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <text x="60" y="2600" fill="#888899" font-size="14" font-weight="bold" letter-spacing="3">VI. MATERIAL &amp; COLOR LEGEND</text>
+
+  <rect x="60" y="2620" width="18" height="12" fill="#1a2a3a" stroke="#3366aa" stroke-width="1"/>
+  <text x="84" y="2630" fill="#4488cc" font-size="10">Council — Dark steel-blue composite / EH glow: blue-violet</text>
+
+  <polygon points="60,2645 72,2640 78,2645 72,2650 60,2645" fill="#1a1410" stroke="#5a3020" stroke-width="1"/>
+  <text x="84" y="2648" fill="#cc4422" font-size="10">Neka (normal) — RIDE faceted crystal / Dark gunmetal / Silver grain visible</text>
+
+  <polygon points="60,2663 72,2658 78,2663 72,2668 60,2663" fill="#050302" stroke="#aa2200" stroke-width="1"/>
+  <text x="84" y="2666" fill="#aa3311" font-size="10">Neka (energy discharge) — Absolute black / "Darkness breathed out"</text>
+
+  <polygon points="60,2681 72,2676 78,2681 72,2686 60,2681" fill="#c8c0b8" stroke="#888880" stroke-width="1"/>
+  <text x="84" y="2684" fill="#888880" font-size="10">Neka (depleted) — Ash-white / "Dying signal"</text>
+
+  <rect x="60" y="2695" width="18" height="12" fill="#0f2015" stroke="#336633" stroke-width="1"/>
+  <text x="84" y="2705" fill="#44aa66" font-size="10">Liberation — Irregular matte dark green-grey / Asymmetric / Scratched / Named</text>
+
+  <!-- 네카 결정 설명 -->
+  <line x1="40" y1="2730" x2="1460" y2="2730" stroke="#222233" stroke-width="1"/>
+  <text x="750" y="2755" fill="#663322" font-size="11" text-anchor="middle">★ Neka vessels are not "built" — they are "grown" from RIDE crystal using resonant plasticity.</text>
+  <text x="750" y="2773" fill="#663322" font-size="11" text-anchor="middle">The hull retains crystalline facets and silver grain patterns. No two ships are geometrically identical.</text>
+  <text x="750" y="2791" fill="#663322" font-size="11" text-anchor="middle">This is why Neka ships look like obsidian crystals floating in the void.</text>
+
+  <line x1="40" y1="2810" x2="1460" y2="2810" stroke="#222233" stroke-width="1"/>
+  <text x="750" y="2835" fill="#444455" font-size="10" text-anchor="middle">Source: 세션_통합_마스터 / 네카_제국_종합설정집_v1.0 / 네카_RIDE_물성설계 / 3세력_함급분류_체계 / 해방연대_조직구조</text>
+  <text x="750" y="2855" fill="#333344" font-size="10" text-anchor="middle">Bureau of Investigation — Internal Design Archive / CLASSIFIED</text>
+  <text x="750" y="2873" fill="#333344" font-size="10" text-anchor="middle">무단 유출 시 해당 인원은 오타로 처리된다.</text>
+
+</svg>

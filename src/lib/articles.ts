@@ -846,7 +846,8 @@ This is the real reason Tintapin wants Gate technology.`,
   "gate-infra": {
     title: { ko: "Gate 인프라", en: "Gate Infrastructure" },
     level: "RESTRICTED", category: "GEOGRAPHY",
-    related: ["hctg-gate", "galaxy-zones", "red-border-8", "neo-homeworld"],
+    image: "/images/gate-infra-blueprint.svg",
+    related: ["visual-gate-infrastructure", "hctg-gate", "galaxy-zones", "red-border-8", "neo-homeworld"],
     content: {
       ko: `안에서 밖으로 (Inward → Outward). 인류 문명의 혈관 구조.
 
@@ -1103,7 +1104,8 @@ B-class Latebra = Honesty: "But our essence is hiding."`,
   "ship-classes": {
     title: { ko: "함급 체계", en: "Ship Class System" },
     level: "RESTRICTED", category: "MILITARY",
-    related: ["android-formation", "battle-doctrine", "eh-chamber", "energy-weapons", "neka-empire", "liberation-front"],
+    image: "/images/vessel-silhouette.svg",
+    related: ["visual-vessel-classification", "visual-vessel-implementation", "android-formation", "battle-doctrine", "eh-chamber", "energy-weapons", "neka-empire", "liberation-front"],
     content: {
       ko: `3세력 함급 분류 체계 — 현실 해군 참조
 
@@ -2654,6 +2656,7 @@ Document #ECH-001 | Classification: CLASSIFIED | Source: Vessel C Black Box`,
   "rpt-shin-mina-file": {
     title: { ko: "신민아 인물 기밀 파일", en: "Shin Mina Personnel File" },
     level: "CLASSIFIED", category: "REPORTS",
+    image: "/images/hero-mina.jpg",
     related: ["era-origin", "era-war", "eh-definition", "rpt-non-intervention-2100"],
     content: {
       ko: `인물 파일 #MA-1989-001

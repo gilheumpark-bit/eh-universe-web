@@ -1,0 +1,354 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1900" style="background:#0a0a0f;font-family:'Courier New',monospace">
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TITLE -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="700" y="48" fill="#c8c8d8" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="4">EH UNIVERSE — VESSEL SILHOUETTE REFERENCE</text>
+  <text x="700" y="72" fill="#666688" font-size="13" text-anchor="middle" letter-spacing="2">Bureau of Investigation — Internal Design Archive</text>
+  <line x1="60" y1="85" x2="1340" y2="85" stroke="#333355" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 1: 협의회 (COUNCIL) -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="120" fill="#4488cc" font-size="16" font-weight="bold" letter-spacing="3">I. COUNCIL — 인류공동협의회</text>
+  <text x="80" y="138" fill="#446688" font-size="11" letter-spacing="1">Design Philosophy: Modular drone-launch platform / EH Chamber centered / Long-range doctrine</text>
+
+  <!-- 협의회 프리깃 -->
+  <g transform="translate(100,160)">
+    <!-- 선체 본체 — 유선형 모듈 구조 -->
+    <ellipse cx="300" cy="45" rx="295" ry="28" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <!-- 상부 센서 타워 -->
+    <rect x="240" y="10" width="12" height="25" fill="#1e3050" stroke="#3366aa" stroke-width="1"/>
+    <rect x="260" y="5" width="8" height="22" fill="#1e3050" stroke="#3366aa" stroke-width="1"/>
+    <!-- EH 챔버 돔 (함선 중앙, 구형) — 소스: 직경 8m 구형, 정중앙 -->
+    <circle cx="300" cy="42" r="18" fill="#0d1f35" stroke="#5599dd" stroke-width="2"/>
+    <circle cx="300" cy="42" r="10" fill="#0a1525" stroke="#4488cc" stroke-width="1.5"/>
+    <text x="300" y="46" fill="#4488cc" font-size="7" text-anchor="middle">EH</text>
+    <!-- 드론 격납 포드 — 좌우 날개 -->
+    <rect x="30" y="32" width="80" height="25" rx="4" fill="#162030" stroke="#2255882" stroke-width="1"/>
+    <rect x="490" y="32" width="80" height="25" rx="4" fill="#162030" stroke="#225588" stroke-width="1"/>
+    <!-- 드론 사출구 (측면) -->
+    <rect x="35" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="45" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="55" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="65" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="75" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="493" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="503" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="513" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="523" y="38" width="6" height="5" fill="#336699"/>
+    <rect x="533" y="38" width="6" height="5" fill="#336699"/>
+    <!-- 함수 (앞) -->
+    <polygon points="595,30 620,45 595,60" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <!-- 함미 엔진 노즐 -->
+    <rect x="0" y="35" width="18" height="20" rx="2" fill="#0f1820" stroke="#225577" stroke-width="1"/>
+    <ellipse cx="5" cy="45" rx="4" ry="8" fill="#1a3a5a" opacity="0.7"/>
+    <!-- EH 파동 방출구 (선수) -->
+    <circle cx="615" cy="44" r="5" fill="#223344" stroke="#5599dd" stroke-width="1"/>
+    <circle cx="615" cy="44" r="2" fill="#4488cc" opacity="0.8"/>
+    <!-- 라벨 -->
+    <text x="300" y="82" fill="#4488cc" font-size="11" text-anchor="middle" font-weight="bold">FRIGATE (F) — 15,000t / 180m</text>
+    <text x="300" y="95" fill="#335577" font-size="9" text-anchor="middle">Color: Dark steel-blue / EH chamber: center dome / Drone bays: wing pods</text>
+    <text x="300" y="107" fill="#335577" font-size="9" text-anchor="middle">Armament: EH wave emitter (bow) / CWEH shield / 480 drones</text>
+  </g>
+
+  <!-- 협의회 1인 전술함 -->
+  <g transform="translate(820,155)">
+    <!-- 소형 타원형 선체 -->
+    <ellipse cx="130" cy="45" rx="120" ry="20" fill="#121e2e" stroke="#2255882" stroke-width="1.5"/>
+    <!-- EH 챔버 — 함선 전체 대비 비율이 큰 중앙 구 -->
+    <circle cx="130" cy="44" r="22" fill="#0d1a2a" stroke="#5599dd" stroke-width="2.5"/>
+    <circle cx="130" cy="44" r="13" fill="#081218" stroke="#4488cc" stroke-width="1.5"/>
+    <text x="130" y="48" fill="#5599dd" font-size="7" text-anchor="middle">EH</text>
+    <!-- 단일 엔진 후방 -->
+    <rect x="0" y="38" width="14" height="14" rx="2" fill="#0f1820" stroke="#225577" stroke-width="1"/>
+    <ellipse cx="5" cy="45" rx="4" ry="5" fill="#1a3a5a" opacity="0.8"/>
+    <!-- 함수 -->
+    <polygon points="248,36 262,44 248,52" fill="#1a2a3a" stroke="#3366aa" stroke-width="1.5"/>
+    <!-- 탑승자 거주 모듈 (함선 후미, 좁은 실린더) -->
+    <rect x="14" y="36" width="40" height="18" rx="3" fill="#111c2a" stroke="#2a4466" stroke-width="1"/>
+    <text x="34" y="48" fill="#2a4466" font-size="7" text-anchor="middle">CREW</text>
+    <!-- 드론 없음 표시 -->
+    <text x="130" y="82" fill="#4488cc" font-size="11" text-anchor="middle" font-weight="bold">1-RIDER TACTICAL VESSEL</text>
+    <text x="130" y="95" fill="#335577" font-size="9" text-anchor="middle">Solo Rider + Main Android (Zero)</text>
+    <text x="130" y="107" fill="#335577" font-size="9" text-anchor="middle">EH chamber dominates hull / No drones / High stealth</text>
+  </g>
+
+  <line x1="60" y1="300" x2="1340" y2="300" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 2: 네카 (NEKA) -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="330" fill="#cc4422" font-size="16" font-weight="bold" letter-spacing="3">II. NEKA EMPIRE — 네카 제국</text>
+  <text x="80" y="348" fill="#663322" font-size="11" letter-spacing="1">Design Philosophy: RIDE armor / No drones — all human crew / Self-warp capable / Dense formation</text>
+
+  <!-- 네카 프리깃 -->
+  <g transform="translate(60,365)">
+    <!-- 선체 — 두껍고 장갑화된 직선형 -->
+    <!-- 주 선체 (건메탈 RIDE 장갑) -->
+    <rect x="60" y="20" width="480" height="60" rx="6" fill="#1a1410" stroke="#4a3020" stroke-width="2"/>
+    <!-- RIDE 장갑판 레이어 (상부) -->
+    <rect x="80" y="15" width="440" height="12" rx="3" fill="#201810" stroke="#5a3a22" stroke-width="1.5"/>
+    <!-- RIDE 장갑판 레이어 (하부) -->
+    <rect x="80" y="73" width="440" height="12" rx="3" fill="#201810" stroke="#5a3a22" stroke-width="1.5"/>
+    <!-- 장갑 이음새 라인들 -->
+    <line x1="160" y1="15" x2="160" y2="85" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="260" y1="15" x2="260" y2="85" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="360" y1="15" x2="360" y2="85" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="460" y1="15" x2="460" y2="85" stroke="#2a1a10" stroke-width="1"/>
+    <!-- 함수 — 쐐기형 관통빔 포탑 -->
+    <polygon points="540,20 600,50 540,80" fill="#201408" stroke="#6a3a18" stroke-width="2"/>
+    <!-- 관통빔 포구 (함수) -->
+    <circle cx="598" cy="50" r="6" fill="#0a0808" stroke="#aa4422" stroke-width="2"/>
+    <circle cx="598" cy="50" r="3" fill="#cc3300" opacity="0.6"/>
+    <!-- 함미 RIDE 워프 드라이브 -->
+    <rect x="0" y="25" width="60" height="50" rx="4" fill="#150f0a" stroke="#4a2810" stroke-width="1.5"/>
+    <ellipse cx="12" cy="50" rx="8" ry="18" fill="#1f1208" stroke="#663322" stroke-width="1.5"/>
+    <!-- RIDE 에너지 방출 슬릿 (측면) — 건메탈이 전투 중 완전 블랙으로 -->
+    <rect x="80" y="30" width="380" height="4" rx="1" fill="#0a0806" stroke="#3a2010" stroke-width="0.5"/>
+    <rect x="80" y="64" width="380" height="4" rx="1" fill="#0a0806" stroke="#3a2010" stroke-width="0.5"/>
+    <!-- 소각파 포탑 (측면 2개) -->
+    <rect x="180" y="8" width="20" height="10" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="380" y="8" width="20" height="10" rx="2" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="300" y="108" fill="#cc4422" font-size="11" text-anchor="middle" font-weight="bold">FRIGATE (F) — 8,000t / 180m</text>
+    <text x="300" y="121" fill="#663322" font-size="9" text-anchor="middle">Color: Dark gunmetal (RIDE) / Energy discharge: absolute black / Dying: ash-white</text>
+    <text x="300" y="133" fill="#663322" font-size="9" text-anchor="middle">Armament: Penetration beam (bow) / Incineration wave (top turrets) / Hull cannon</text>
+  </g>
+
+  <!-- 네카 전함 -->
+  <g transform="translate(60,530)">
+    <!-- 거대 선체 -->
+    <rect x="30" y="15" width="900" height="80" rx="8" fill="#1a1410" stroke="#5a3020" stroke-width="2.5"/>
+    <!-- 상부 장갑 -->
+    <rect x="50" y="8" width="860" height="14" rx="4" fill="#201810" stroke="#6a3a22" stroke-width="1.5"/>
+    <!-- 하부 장갑 -->
+    <rect x="50" y="86" width="860" height="14" rx="4" fill="#201810" stroke="#6a3a22" stroke-width="1.5"/>
+    <!-- 장갑 이음새 -->
+    <line x1="200" y1="8" x2="200" y2="100" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="400" y1="8" x2="400" y2="100" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="600" y1="8" x2="600" y2="100" stroke="#2a1a10" stroke-width="1"/>
+    <line x1="800" y1="8" x2="800" y2="100" stroke="#2a1a10" stroke-width="1"/>
+    <!-- 함수 쐐기 -->
+    <polygon points="930,15 990,55 930,95" fill="#201408" stroke="#7a4018" stroke-width="2"/>
+    <!-- 함수 주포 -->
+    <circle cx="988" cy="55" r="9" fill="#0a0808" stroke="#cc4422" stroke-width="2.5"/>
+    <circle cx="988" cy="55" r="4" fill="#cc3300" opacity="0.7"/>
+    <!-- 워프 드라이브 (함미, 대형) -->
+    <rect x="0" y="20" width="30" height="70" rx="3" fill="#150f0a" stroke="#4a2810" stroke-width="1.5"/>
+    <ellipse cx="8" cy="55" rx="6" ry="28" fill="#1f1208" stroke="#773322" stroke-width="1.5"/>
+    <!-- 측면 포탑 다수 -->
+    <rect x="150" y="2" width="28" height="14" rx="3" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="350" y="2" width="28" height="14" rx="3" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="550" y="2" width="28" height="14" rx="3" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <rect x="750" y="2" width="28" height="14" rx="3" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="500" y="122" fill="#cc4422" font-size="11" text-anchor="middle" font-weight="bold">BATTLESHIP (B) — 200,000t / 1,500m</text>
+    <text x="500" y="135" fill="#663322" font-size="9" text-anchor="middle">30% larger than equivalent Council vessel / All-RIDE armor / 15,000 crew / No AI</text>
+  </g>
+
+  <line x1="60" y1="700" x2="1340" y2="700" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 3: 해방연대 (LIBERATION ALLIANCE) -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="730" fill="#44aa66" font-size="16" font-weight="bold" letter-spacing="3">III. LIBERATION ALLIANCE — 해방연대</text>
+  <text x="80" y="748" fill="#336644" font-size="11" letter-spacing="1">Design Philosophy: Modified civilian / Guerrilla doctrine / Named individually / Needle-class stealth</text>
+
+  <!-- 해방연대 바늘함 (Needle-class) -->
+  <g transform="translate(100,765)">
+    <!-- 바늘함 — 극도로 날렵한 침 형태 -->
+    <!-- 주 선체 (개조 흔적 있는 불균형 형태) -->
+    <polygon points="0,35 350,20 420,35 350,50 0,35" fill="#0f2015" stroke="#336633" stroke-width="1.5"/>
+    <!-- 개조 패치 1 (불균형한 추가 장갑) -->
+    <rect x="60" y="25" width="50" height="20" rx="2" fill="#0a1a10" stroke="#225533" stroke-width="1"/>
+    <!-- 개조 패치 2 -->
+    <rect x="180" y="22" width="35" height="14" rx="2" fill="#0c1d12" stroke="#2a5533" stroke-width="1"/>
+    <!-- 바늘 선수 (뾰족하게) -->
+    <polygon points="420,32 470,35 420,38" fill="#0f2015" stroke="#44aa66" stroke-width="1.5"/>
+    <!-- 측면 소형 엔진 2개 (비대칭) -->
+    <ellipse cx="20" cy="28" rx="12" ry="6" fill="#0a1a0a" stroke="#336633" stroke-width="1"/>
+    <ellipse cx="20" cy="42" rx="10" ry="5" fill="#0a1a0a" stroke="#225522" stroke-width="1"/>
+    <!-- 별명 태그 (개인화 문화 표현) -->
+    <rect x="130" y="27" width="30" height="16" rx="2" fill="#081508" stroke="#33aa55" stroke-width="1"/>
+    <text x="145" y="38" fill="#33aa55" font-size="7" text-anchor="middle">가위</text>
+    <!-- 무장 (경량 단일포) -->
+    <rect x="290" y="14" width="40" height="8" rx="2" fill="#0a1a08" stroke="#446644" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="235" y="75" fill="#44aa66" font-size="11" text-anchor="middle" font-weight="bold">NEEDLE-CLASS — ~200t (est.)</text>
+    <text x="235" y="88" fill="#336644" font-size="9" text-anchor="middle">Color: Irregular matte dark green-grey / Asymmetric modifications / Individually named</text>
+    <text x="235" y="100" fill="#336644" font-size="9" text-anchor="middle">5~15 vessels per cell / Source: "MR-N 042" nicknamed "가위 (Scissors)"</text>
+  </g>
+
+  <!-- 해방연대 뿌리함 (Root-class) -->
+  <g transform="translate(720,760)">
+    <!-- 뿌리함 — 조선소 기능 겸용, 투박한 복합 구조체 -->
+    <!-- 중앙 본체 -->
+    <rect x="60" y="20" width="280" height="75" rx="5" fill="#0c1a10" stroke="#336633" stroke-width="1.5"/>
+    <!-- 조선소 모듈 (상부 부착) -->
+    <rect x="80" y="5" width="120" height="20" rx="3" fill="#0a1508" stroke="#2a5522" stroke-width="1"/>
+    <rect x="220" y="5" width="90" height="20" rx="3" fill="#0a1508" stroke="#2a5522" stroke-width="1"/>
+    <!-- 화물/보급 격납 모듈 (측면) -->
+    <rect x="0" y="30" width="60" height="55" rx="4" fill="#091408" stroke="#225522" stroke-width="1"/>
+    <rect x="340" y="30" width="60" height="55" rx="4" fill="#091408" stroke="#225522" stroke-width="1"/>
+    <!-- 조선 크레인 암 (특징) -->
+    <line x1="100" y1="5" x2="100" y2="-10" stroke="#44aa66" stroke-width="2"/>
+    <line x1="100" y1="-10" x2="160" y2="-10" stroke="#44aa66" stroke-width="2"/>
+    <circle cx="160" cy="-10" r="4" fill="#33aa55" stroke="#44aa66" stroke-width="1"/>
+    <!-- 엔진 후방 -->
+    <rect x="0" y="35" width="18" height="45" rx="3" fill="#081008" stroke="#1a3318" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="200" y="110" fill="#44aa66" font-size="11" text-anchor="middle" font-weight="bold">ROOT-CLASS — 3,000t</text>
+    <text x="200" y="123" fill="#336644" font-size="9" text-anchor="middle">Mobile shipyard / Repair + resupply / Irregular composite structure</text>
+    <text x="200" y="135" fill="#336644" font-size="9" text-anchor="middle">Bulkier than military vessels / Modified civilian origin</text>
+  </g>
+
+  <line x1="60" y1="930" x2="1340" y2="930" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 4: 물류선 (LOGISTICS / SUPPLY VESSEL) -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="960" fill="#aaaa44" font-size="16" font-weight="bold" letter-spacing="3">IV. LOGISTICS VESSEL — 물류/보급선</text>
+  <text x="80" y="978" fill="#666622" font-size="11" letter-spacing="1">* Exterior details not in source. Design inferred from function + setting constraints.</text>
+
+  <!-- 협의회 물류선 -->
+  <g transform="translate(80,995)">
+    <!-- 컨테이너형 대형 선체 — 장거리 Gate 의존 구조 -->
+    <!-- 화물 격납 모듈 블록들 -->
+    <rect x="60" y="5" width="90" height="70" rx="3" fill="#141a22" stroke="#335566" stroke-width="1"/>
+    <rect x="158" y="5" width="90" height="70" rx="3" fill="#141a22" stroke="#335566" stroke-width="1"/>
+    <rect x="256" y="5" width="90" height="70" rx="3" fill="#141a22" stroke="#335566" stroke-width="1"/>
+    <rect x="354" y="5" width="90" height="70" rx="3" fill="#141a22" stroke="#335566" stroke-width="1"/>
+    <!-- 연결 프레임 -->
+    <rect x="60" y="30" width="384" height="20" rx="2" fill="#0f1520" stroke="#224455" stroke-width="1"/>
+    <!-- 함수 조종 모듈 (소형) -->
+    <polygon points="444,15 490,40 444,65" fill="#141e2a" stroke="#335577" stroke-width="1.5"/>
+    <!-- EH 챔버 (소형, 운항용) -->
+    <circle cx="220" cy="40" r="10" fill="#0a1525" stroke="#4477aa" stroke-width="1.5"/>
+    <!-- 엔진 (후방, 소형 다수) -->
+    <rect x="0" y="20" width="60" height="14" rx="2" fill="#0d1520" stroke="#224455" stroke-width="1"/>
+    <rect x="0" y="46" width="60" height="14" rx="2" fill="#0d1520" stroke="#224455" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="245" y="95" fill="#aaaa44" font-size="11" text-anchor="middle" font-weight="bold">COUNCIL SUPPLY VESSEL (Inferred)</text>
+    <text x="245" y="108" fill="#666622" font-size="9" text-anchor="middle">Modular cargo blocks / Gate-dependent transit / Small EH drive module</text>
+    <text x="245" y="120" fill="#555511" font-size="8" text-anchor="middle">⚠ Exterior not in source — inferred from modular design doctrine</text>
+  </g>
+
+  <!-- 네카 물류선 -->
+  <g transform="translate(760,995)">
+    <!-- RIDE 보급선 — 장갑화된 화물함 -->
+    <rect x="40" y="10" width="420" height="60" rx="5" fill="#18120c" stroke="#4a3018" stroke-width="1.5"/>
+    <!-- RIDE 화물 격납 (위험 물질 특수 하중 구조) -->
+    <rect x="60" y="18" width="80" height="44" rx="3" fill="#120e08" stroke="#3a2010" stroke-width="1"/>
+    <rect x="150" y="18" width="80" height="44" rx="3" fill="#120e08" stroke="#3a2010" stroke-width="1"/>
+    <rect x="240" y="18" width="80" height="44" rx="3" fill="#120e08" stroke="#3a2010" stroke-width="1"/>
+    <rect x="330" y="18" width="80" height="44" rx="3" fill="#120e08" stroke="#3a2010" stroke-width="1"/>
+    <!-- RIDE 원석 표시 (칠흑+은색 결 — 소스 묘사) -->
+    <rect x="65" y="23" width="70" height="34" rx="2" fill="#080606" stroke="#444430" stroke-width="1"/>
+    <line x1="70" y1="28" x2="130" y2="52" stroke="#333322" stroke-width="0.5" opacity="0.6"/>
+    <line x1="80" y1="23" x2="80" y2="57" stroke="#333322" stroke-width="0.5" opacity="0.4"/>
+    <!-- 함수 쐐기 (무장 최소화) -->
+    <polygon points="460,18 500,40 460,62" fill="#18120a" stroke="#4a2a10" stroke-width="1.5"/>
+    <!-- 워프 드라이브 (자체 초광속) -->
+    <rect x="0" y="20" width="40" height="40" rx="3" fill="#120e08" stroke="#3a2010" stroke-width="1.5"/>
+    <ellipse cx="8" cy="40" rx="6" ry="16" fill="#1a1008" stroke="#553322" stroke-width="1"/>
+    <!-- 라벨 -->
+    <text x="270" y="95" fill="#aaaa44" font-size="11" text-anchor="middle" font-weight="bold">NEKA RIDE CARRIER (Inferred)</text>
+    <text x="270" y="108" fill="#666622" font-size="9" text-anchor="middle">Heavy armored cargo / RIDE ore transport / Self-warp capable / Heavily guarded</text>
+    <text x="270" y="120" fill="#555511" font-size="8" text-anchor="middle">⚠ Exterior not in source — inferred from RIDE transport context</text>
+  </g>
+
+  <line x1="60" y1="1155" x2="1340" y2="1155" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 5: SIZE COMPARISON -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="1185" fill="#888899" font-size="16" font-weight="bold" letter-spacing="3">V. SIZE COMPARISON — 함급 크기 비교</text>
+
+  <!-- 비교 기준선 -->
+  <line x1="80" y1="1380" x2="1340" y2="1380" stroke="#333355" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="70" y="1383" fill="#445566" font-size="9" text-anchor="end">0m</text>
+
+  <!-- 협의회 기함 (2,000,000t / 비율 대비 표현) -->
+  <rect x="100" y="1230" width="220" height="150" rx="6" fill="#0f1a28" stroke="#3366aa" stroke-width="2"/>
+  <text x="210" y="1400" fill="#4488cc" font-size="10" text-anchor="middle">Council Flagship</text>
+  <text x="210" y="1412" fill="#335577" font-size="9" text-anchor="middle">2,000,000t</text>
+
+  <!-- 네카 황제함 -->
+  <rect x="340" y="1250" width="200" height="130" rx="6" fill="#1a1410" stroke="#cc4422" stroke-width="2"/>
+  <text x="440" y="1400" fill="#cc4422" font-size="10" text-anchor="middle">Neka Emperor Vessel</text>
+  <text x="440" y="1412" fill="#663322" font-size="9" text-anchor="middle">1,200,000t / 4,000m</text>
+
+  <!-- 네카 전함 -->
+  <rect x="560" y="1290" width="160" height="90" rx="5" fill="#1a1410" stroke="#aa3311" stroke-width="1.5"/>
+  <text x="640" y="1400" fill="#aa3311" font-size="10" text-anchor="middle">Neka Battleship</text>
+  <text x="640" y="1412" fill="#552211" font-size="9" text-anchor="middle">200,000t / 1,500m</text>
+
+  <!-- 협의회 전함 -->
+  <rect x="740" y="1295" width="150" height="85" rx="5" fill="#0f1a28" stroke="#2255882" stroke-width="1.5"/>
+  <text x="815" y="1400" fill="#3377aa" font-size="10" text-anchor="middle">Council Battleship</text>
+  <text x="815" y="1412" fill="#225566" font-size="9" text-anchor="middle">500,000t</text>
+
+  <!-- 협의회 프리깃 -->
+  <rect x="920" y="1350" width="80" height="30" rx="3" fill="#0f1a28" stroke="#3366aa" stroke-width="1"/>
+  <text x="960" y="1400" fill="#3366aa" font-size="9" text-anchor="middle">Council Frigate</text>
+  <text x="960" y="1411" fill="#225566" font-size="8" text-anchor="middle">15,000t</text>
+
+  <!-- 네카 프리깃 -->
+  <rect x="1020" y="1355" width="65" height="25" rx="3" fill="#1a1410" stroke="#cc4422" stroke-width="1"/>
+  <text x="1052" y="1400" fill="#cc4422" font-size="9" text-anchor="middle">Neka Frigate</text>
+  <text x="1052" y="1411" fill="#663322" font-size="8" text-anchor="middle">8,000t</text>
+
+  <!-- 해방연대 뿌리함 -->
+  <rect x="1105" y="1365" width="45" height="15" rx="2" fill="#0c1a10" stroke="#44aa66" stroke-width="1"/>
+  <text x="1127" y="1400" fill="#44aa66" font-size="9" text-anchor="middle">Root-class</text>
+  <text x="1127" y="1411" fill="#336644" font-size="8" text-anchor="middle">3,000t</text>
+
+  <!-- 해방연대 바늘함 -->
+  <rect x="1170" y="1373" width="25" height="7" rx="1" fill="#0f2015" stroke="#44aa66" stroke-width="1"/>
+  <text x="1182" y="1400" fill="#44aa66" font-size="9" text-anchor="middle">Needle</text>
+  <text x="1182" y="1411" fill="#336644" font-size="8" text-anchor="middle">~200t</text>
+
+  <!-- 1인 전술함 -->
+  <rect x="1215" y="1375" width="18" height="5" rx="1" fill="#121e2e" stroke="#5599dd" stroke-width="1"/>
+  <text x="1224" y="1400" fill="#5599dd" font-size="9" text-anchor="middle">1-Rider</text>
+  <text x="1224" y="1411" fill="#335577" font-size="8" text-anchor="middle">small</text>
+
+  <line x1="60" y1="1430" x2="1340" y2="1430" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SECTION 6: COLOR / MATERIAL LEGEND -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <text x="80" y="1460" fill="#888899" font-size="14" font-weight="bold" letter-spacing="3">VI. MATERIAL &amp; COLOR LEGEND</text>
+
+  <!-- 협의회 -->
+  <rect x="80" y="1475" width="18" height="12" fill="#1a2a3a" stroke="#3366aa" stroke-width="1"/>
+  <text x="104" y="1485" fill="#4488cc" font-size="10">Council — Dark steel-blue composite / EH glow: blue-violet</text>
+
+  <!-- 네카 일반 -->
+  <rect x="80" y="1495" width="18" height="12" fill="#1a1410" stroke="#4a3020" stroke-width="1"/>
+  <text x="104" y="1505" fill="#cc4422" font-size="10">Neka (normal) — Dark gunmetal RIDE / "Frozen night sky" grain visible</text>
+
+  <!-- 네카 전투 -->
+  <rect x="80" y="1515" width="18" height="12" fill="#050302" stroke="#aa2200" stroke-width="1"/>
+  <text x="104" y="1525" fill="#aa3311" font-size="10">Neka (energy discharge) — Absolute black / Light-absorbing</text>
+
+  <!-- 네카 고갈 -->
+  <rect x="80" y="1535" width="18" height="12" fill="#c8c0b8" stroke="#888880" stroke-width="1"/>
+  <text x="104" y="1545" fill="#888880" font-size="10">Neka (energy depleted) — Ash-white / "Dying" signal</text>
+
+  <!-- 해방연대 -->
+  <rect x="80" y="1555" width="18" height="12" fill="#0f2015" stroke="#336633" stroke-width="1"/>
+  <text x="104" y="1565" fill="#44aa66" font-size="10">Liberation Alliance — Irregular matte dark green-grey / Asymmetric patching</text>
+
+  <!-- 물류 -->
+  <rect x="80" y="1575" width="18" height="12" fill="#141a22" stroke="#335566" stroke-width="1"/>
+  <text x="104" y="1585" fill="#aaaa44" font-size="10">Logistics — Neutral dark grey / Modular block structure</text>
+
+  <!-- 소스 주석 -->
+  <line x1="60" y1="1608" x2="1340" y2="1608" stroke="#222233" stroke-width="1"/>
+  <text x="700" y="1628" fill="#444455" font-size="10" text-anchor="middle">Source: 세션_통합_마스터.md / 네카_제국_종합설정집_v1.0.md / 네카_RIDE_물성설계.md / 해방연대_조직구조.md</text>
+  <text x="700" y="1645" fill="#333344" font-size="10" text-anchor="middle">⚠ Items marked "Inferred" have no explicit exterior description in source — designed consistent with established lore</text>
+  <text x="700" y="1662" fill="#333344" font-size="10" text-anchor="middle">Bureau of Investigation — Internal Design Archive / CLASSIFIED</text>
+
+</svg>
