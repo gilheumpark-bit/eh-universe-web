@@ -299,6 +299,10 @@ export default function SoundtrackPage() {
                 {en
                   ? "Unauthorized reproduction will result in the personnel being processed as a typo."
                   : "무단 복제 시 해당 인원은 오타로 처리된다."}
+                <br />
+                <span className="opacity-50">
+                  {en ? "Generated with Google Gemini Music" : "Google Gemini 음악 생성으로 제작"}
+                </span>
               </p>
             </div>
           </div>
