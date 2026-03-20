@@ -148,6 +148,19 @@ export default function ArchiveClient() {
               </button>
             ))}
           </nav>
+
+          <div className="mt-6 pt-4 border-t border-border">
+            <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
+              {en ? "Tools" : "도구"}
+            </h2>
+            <Link href="/tools/neka-sound"
+              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
+              <span>🔧</span>
+              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+                {en ? "Neka Sound Interface" : "네카 음향 인터페이스"}
+              </span>
+            </Link>
+          </div>
         </aside>
 
         <div className="flex-1 p-6 md:p-10">
@@ -163,16 +176,19 @@ export default function ArchiveClient() {
               </h1>
 
               <div className="space-y-3">
-                {currentCategory.articles.map((article) => (
-                  <Link key={article.slug} href={`/archive/${article.slug}`}
-                    className="card-glow group flex items-center justify-between gap-4 rounded border border-border bg-bg-primary p-4 transition hover:border-accent-purple/50">
-                    <div className="flex items-center gap-3">
-                      <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>
-                      <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{article.title[lang]}</span>
-                    </div>
-                    <BadgeLevel level={article.level} />
-                  </Link>
-                ))}
+                {currentCategory.articles.map((article) => {
+                  const href = `/archive/${article.slug}`;
+                  return (
+                    <Link key={article.slug} href={href}
+                      className="card-glow group flex items-center justify-between gap-4 rounded border border-border bg-bg-primary p-4 transition hover:border-accent-purple/50">
+                      <div className="flex items-center gap-3">
+                        <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>
+                        <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{article.title[lang]}</span>
+                      </div>
+                      <BadgeLevel level={article.level} />
+                    </Link>
+                  );
+                })}
               </div>
 
               <div className="mt-8 eh-log">
