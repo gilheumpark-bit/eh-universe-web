@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
+import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
@@ -38,23 +39,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* Profile Card */}
-        <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0">
-              <User className="w-6 h-6 md:w-8 md:h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="font-black text-base md:text-lg">Guest Writer</h3>
-              <p className="text-zinc-600 text-xs">Premium Membership: <span className="text-blue-500">ACTIVE</span></p>
-            </div>
-          </div>
-          <button
-            onClick={() => alert(isKO ? "게스트 계정은 프로필 수정이 제한됩니다." : "Profile editing is restricted for guest accounts.")}
-            className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-zinc-600 transition-all active:scale-[0.98]"
-          >
-            {isKO ? "프로필 수정" : "Edit Profile"} <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <ProfileCard isKO={isKO} />
 
         {/* Engine Status Card */}
         <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
@@ -221,6 +206,58 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
     </div>
   );
 };
+
+function ProfileCard({ isKO }: { isKO: boolean }) {
+  const { user, signInWithGoogle, signOut, isConfigured } = useAuth();
+
+  if (user) {
+    return (
+      <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white text-xl font-black">{user.displayName?.[0] || '?'}</span>
+            )}
+          </div>
+          <div>
+            <h3 className="font-black text-base md:text-lg">{user.displayName || (isKO ? '작가' : 'Writer')}</h3>
+            <p className="text-zinc-500 text-xs">{user.email}</p>
+          </div>
+        </div>
+        <button onClick={signOut}
+          className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-all active:scale-[0.98]">
+          {isKO ? '로그아웃' : 'Sign Out'} <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0">
+          <User className="w-6 h-6 md:w-8 md:h-8 text-zinc-500" />
+        </div>
+        <div>
+          <h3 className="font-black text-base md:text-lg">{isKO ? '게스트' : 'Guest'}</h3>
+          <p className="text-zinc-600 text-xs">{isKO ? '로그인하면 세션이 계정에 연동됩니다' : 'Sign in to sync sessions to your account'}</p>
+        </div>
+      </div>
+      <button onClick={() => {
+        if (!isConfigured) {
+          alert(isKO ? 'Firebase 설정이 필요합니다.' : 'Firebase configuration required.');
+          return;
+        }
+        signInWithGoogle();
+      }}
+        className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all active:scale-[0.98] text-blue-400">
+        🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'} <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 export default SettingsView;
 
