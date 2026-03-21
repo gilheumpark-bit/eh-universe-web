@@ -7,9 +7,14 @@ import React, { useState, useCallback, useEffect } from "react";
 // ============================================================
 
 type Lang = "ko" | "en";
-type SheetTab = "goguma" | "hook" | "emotion" | "dialogue" | "dopamine" | "cliff" | "plot";
+type SheetTab = "goguma" | "hook" | "emotion" | "dialogue" | "dopamine" | "cliff" | "plot" | "foreshadow" | "pacing" | "tension" | "canon" | "transition" | "notes";
 
 interface GogumaEntry { id: string; type: "goguma" | "cider"; intensity: "small" | "medium" | "large"; desc: string; episode: number; }
+interface ForeshadowEntry { id: string; planted: string; payoff: string; episode: number; resolved: boolean; }
+interface PacingEntry { id: string; section: string; percent: number; desc: string; }
+interface TensionPoint { id: string; position: number; level: number; label: string; }
+interface CanonEntry { id: string; character: string; rule: string; }
+interface TransitionEntry { id: string; fromScene: string; toScene: string; method: string; }
 interface HookEntry { id: string; position: "opening" | "middle" | "ending"; hookType: string; desc: string; }
 interface EmotionPoint { id: string; position: number; emotion: string; intensity: number; }
 interface DialogueRule { id: string; character: string; tone: string; notes: string; }
@@ -96,6 +101,12 @@ const TAB_DEF: { id: SheetTab; ko: string; en: string; emoji: string }[] = [
   { id: "dialogue", ko: "대사 톤", en: "Dialogue Tone", emoji: "💬" },
   { id: "dopamine", ko: "도파민 루프", en: "Dopamine Loop", emoji: "⚡" },
   { id: "cliff", ko: "클리프행어", en: "Cliffhanger", emoji: "🔚" },
+  { id: "foreshadow", ko: "떡밥/복선", en: "Foreshadow", emoji: "🧩" },
+  { id: "pacing", ko: "분량 배분", en: "Pacing", emoji: "📏" },
+  { id: "tension", ko: "텐션 곡선", en: "Tension Curve", emoji: "📈" },
+  { id: "canon", ko: "캐릭터 규칙", en: "Canon Rules", emoji: "📌" },
+  { id: "transition", ko: "장면 전환", en: "Scene Transition", emoji: "🔄" },
+  { id: "notes", ko: "작가 메모", en: "Writer Notes", emoji: "📝" },
   { id: "plot", ko: "플롯 구조", en: "Plot Structure", emoji: "📊" },
 ];
 
@@ -257,6 +268,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const [dialogueRules, setDialogueRules] = useState<DialogueRule[]>(initialDirection?.dialogueRules || []);
   const [dopamines, setDopamines] = useState<DopamineEntry[]>(initialDirection?.dopamines || []);
   const [cliffs, setCliffs] = useState<CliffEntry[]>(initialDirection?.cliffs || []);
+  const [foreshadows, setForeshadows] = useState<ForeshadowEntry[]>([]);
+  const [pacings, setPacings] = useState<PacingEntry[]>([
+    { id: 'p-1', section: lang === 'ko' ? '도입' : 'Intro', percent: 20, desc: '' },
+    { id: 'p-2', section: lang === 'ko' ? '전개' : 'Development', percent: 50, desc: '' },
+    { id: 'p-3', section: lang === 'ko' ? '전환' : 'Transition', percent: 30, desc: '' },
+  ]);
+  const [tensionPoints, setTensionPoints] = useState<TensionPoint[]>([]);
+  const [canons, setCanons] = useState<CanonEntry[]>([]);
+  const [transitions, setTransitions] = useState<TransitionEntry[]>([]);
+  const [writerNotes, setWriterNotes] = useState('');
 
   // Sync to parent whenever data changes
   const syncDirection = useCallback((g: GogumaEntry[], h: HookEntry[], e: EmotionPoint[], d: DialogueRule[], dp: DopamineEntry[], cl: CliffEntry[]) => {
@@ -592,6 +613,162 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
         )}
 
         {/* ====== PLOT TAB ====== */}
+        {/* ====== FORESHADOW (떡밥/복선) ====== */}
+        {activeTab === "foreshadow" && (
+          <div className="space-y-4">
+            <button onClick={() => setForeshadows(prev => [...prev, { id: `fs-${Date.now()}`, planted: '', payoff: '', episode: 1, resolved: false }])}
+              className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
+              + {lang === "ko" ? "떡밥 추가" : "Add Foreshadow"}
+            </button>
+            {foreshadows.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "복선을 심고 회수를 추적하세요" : "Plant foreshadowing and track payoffs"}</p>}
+            {foreshadows.map((fs, i) => (
+              <div key={fs.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🌱 심기" : "🌱 Plant"}</span>
+                    <input value={fs.planted} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, planted: e.target.value } : f))}
+                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🎯 회수" : "🎯 Payoff"}</span>
+                    <input value={fs.payoff} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, payoff: e.target.value } : f))}
+                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1 text-[10px] text-text-tertiary cursor-pointer">
+                    <input type="checkbox" checked={fs.resolved} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, resolved: e.target.checked } : f))} className="accent-accent-green" />
+                    {lang === "ko" ? "회수 완료" : "Resolved"}
+                  </label>
+                  <input type="number" min={1} value={fs.episode} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, episode: parseInt(e.target.value) || 1 } : f))}
+                    className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" title="EP" />
+                  <button onClick={() => setForeshadows(prev => prev.filter((_, ii) => ii !== i))} className="ml-auto text-text-tertiary hover:text-accent-red text-xs">✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== PACING (분량 배분) ====== */}
+        {activeTab === "pacing" && (
+          <div className="space-y-4">
+            <div className="flex rounded-lg overflow-hidden h-10 border border-border">
+              {pacings.map((p, i) => (
+                <div key={p.id} className="flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${p.percent}%`, background: i === 0 ? '#3b82f6' : i === 1 ? '#f59e0b' : '#10b981' }}>
+                  {p.section} {p.percent}%
+                </div>
+              ))}
+            </div>
+            {pacings.map((p, i) => (
+              <div key={p.id} className="flex items-center gap-3 border border-border rounded px-3 py-2 bg-bg-primary">
+                <span className="text-[10px] font-bold w-16">{p.section}</span>
+                <input type="range" min={5} max={80} value={p.percent} onChange={e => {
+                  setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, percent: parseInt(e.target.value) } : pp));
+                }} className="flex-1 h-1 accent-accent-purple" />
+                <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
+                <input value={p.desc} onChange={e => setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, desc: e.target.value } : pp))}
+                  placeholder={lang === "ko" ? "메모..." : "Note..."} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== TENSION CURVE (텐션 곡선) ====== */}
+        {activeTab === "tension" && (
+          <div className="space-y-4">
+            <button onClick={() => setTensionPoints(prev => [...prev, { id: `tp-${Date.now()}`, position: prev.length * 20, level: 50, label: '' }])}
+              className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
+              + {lang === "ko" ? "텐션 포인트" : "Tension Point"}
+            </button>
+            {tensionPoints.length > 0 && (
+              <div className="relative h-32 border border-border rounded-lg bg-bg-primary overflow-hidden">
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                  {tensionPoints.length >= 2 && (
+                    <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
+                      points={tensionPoints.sort((a, b) => a.position - b.position).map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
+                  )}
+                  {tensionPoints.map(t => (
+                    <circle key={t.id} cx={t.position} cy={50 - t.level / 2} r="2" fill="var(--color-accent-red)" />
+                  ))}
+                </svg>
+              </div>
+            )}
+            {tensionPoints.map((tp, i) => (
+              <div key={tp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
+                <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
+                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
+                <input type="range" min={0} max={100} value={tp.position} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
+                  className="w-20 h-1 accent-accent-purple" />
+                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Lv"}</span>
+                <input type="range" min={0} max={100} value={tp.level} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
+                  className="w-20 h-1 accent-accent-red" />
+                <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
+                <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== CANON RULES (캐릭터 규칙) ====== */}
+        {activeTab === "canon" && (
+          <div className="space-y-4">
+            <button onClick={() => setCanons(prev => [...prev, { id: `cn-${Date.now()}`, character: '', rule: '' }])}
+              className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
+              + {lang === "ko" ? "규칙 추가" : "Add Canon Rule"}
+            </button>
+            {canons.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "캐릭터 설정 모순을 방지하는 규칙을 정의하세요" : "Define rules to prevent character inconsistencies"}</p>}
+            {canons.map((cn, i) => (
+              <div key={cn.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
+                <input value={cn.character} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, character: e.target.value } : c))}
+                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
+                <input value={cn.rule} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, rule: e.target.value } : c))}
+                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== SCENE TRANSITION (장면 전환) ====== */}
+        {activeTab === "transition" && (
+          <div className="space-y-4">
+            <button onClick={() => setTransitions(prev => [...prev, { id: `tr-${Date.now()}`, fromScene: '', toScene: '', method: '' }])}
+              className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
+              + {lang === "ko" ? "전환 추가" : "Add Transition"}
+            </button>
+            {transitions.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "시점/장소/시간 전환 타이밍을 설계하세요" : "Design POV/location/time transition timing"}</p>}
+            {transitions.map((tr, i) => (
+              <div key={tr.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
+                <input value={tr.fromScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, fromScene: e.target.value } : t))}
+                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                <span className="text-text-tertiary text-xs">→</span>
+                <input value={tr.toScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, toScene: e.target.value } : t))}
+                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                <input value={tr.method} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, method: e.target.value } : t))}
+                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== WRITER NOTES (작가 메모) ====== */}
+        {activeTab === "notes" && (
+          <div className="space-y-3">
+            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. AI 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
+            <textarea
+              value={writerNotes}
+              onChange={e => setWriterNotes(e.target.value)}
+              className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
+              placeholder={lang === "ko" ? "이번 화에서 꼭 넣고 싶은 장면, 대사, 분위기, 전개 방향 등을 자유롭게 적으세요...\n\n예시:\n- 주인공이 처음으로 울어야 함\n- 악역과의 재회 장면 필수\n- 비 오는 밤 배경\n- 마지막에 반드시 떡밥 회수" : "Write freely about scenes, dialogue, mood, direction you want...\n\nExample:\n- Protagonist must cry for first time\n- Reunion with antagonist required\n- Rainy night setting\n- Must resolve foreshadow at end"}
+            />
+            <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              {writerNotes.length.toLocaleString()}{lang === "ko" ? "자" : " chars"}
+            </div>
+          </div>
+        )}
+
         {activeTab === "plot" && (
           <PlotBarEditor lang={lang} />
         )}
