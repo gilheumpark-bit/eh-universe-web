@@ -871,12 +871,28 @@ export default function StudioPage() {
                           {isGenerating && <span className="text-[9px] text-accent-purple animate-pulse font-[family-name:var(--font-mono)]">{isKO ? '생성 중...' : 'Generating...'}</span>}
                         </div>
 
+                        {/* Custom prompt input */}
+                        <div className="flex gap-2">
+                          <input
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { handleSend(); } }}
+                            placeholder={isKO ? '💡 커스텀 지시 (예: "전투 장면 더 길게", "대사 톤 부드럽게", "클리프행어 바꿔줘")' : '💡 Custom instruction (e.g. "extend fight scene", "softer dialogue", "change cliffhanger")'}
+                            className="flex-1 bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-xs outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
+                            disabled={isGenerating}
+                          />
+                          <button onClick={() => { if (input.trim()) handleSend(); }} disabled={isGenerating || !input.trim()}
+                            className="px-4 py-2.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
+                            {isKO ? '전송' : 'Send'}
+                          </button>
+                        </div>
+
                         {/* Canvas textarea */}
                         <textarea
                           value={canvasContent}
                           onChange={e => setCanvasContent(e.target.value)}
                           className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-                          placeholder={isKO ? '3패스 캔버스 — 아래 단계 버튼을 순서대로 눌러 원고를 완성하세요.\n\n1단계: 뼈대 (사건+대사)\n2단계: 감정선 (내면+리듬)\n3단계: 감각 묘사 (시각+청각+촉각)' : '3-Pass Canvas — Click buttons below in order.\n\n1. Skeleton (events+dialogue)\n2. Emotion (inner thoughts+rhythm)\n3. Sensory (visual+auditory+tactile)'}
+                          placeholder={isKO ? '3패스 캔버스 — 상단에서 커스텀 지시를 보내거나, 아래 단계 버튼을 순서대로 눌러 원고를 완성하세요.' : '3-Pass Canvas — Send custom instructions above, or click pass buttons below in order.'}
                         />
 
                         {/* Pass action buttons */}
