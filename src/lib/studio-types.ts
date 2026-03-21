@@ -101,6 +101,9 @@ export interface Message {
     };
     critique?: string;
     engineReport?: EngineReport;
+    hfcpMode?: string;
+    hfcpVerdict?: string;
+    hfcpScore?: number;
   };
   timestamp: number;
 }

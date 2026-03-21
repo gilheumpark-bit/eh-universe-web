@@ -13,6 +13,7 @@ import {
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { useAuth } from '@/lib/AuthContext';
+import { createHFCPState, processHFCPTurn, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
 import ChatMessage from '@/components/studio/ChatMessage';
 import PlanningView from '@/components/studio/PlanningView';
@@ -91,6 +92,7 @@ export default function StudioPage() {
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured } = useAuth();
+  const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
   const [editDraft, setEditDraft] = useState('');
   const [canvasContent, setCanvasContent] = useState('');
@@ -299,7 +301,11 @@ export default function StudioPage() {
     const text = customPrompt || input;
     if (!text.trim() || isGenerating || !currentSessionId) return;
 
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now() };
+    // HFCP: classify input and get prompt modifier
+    const hfcpResult = processHFCPTurn(hfcpState, text);
+    const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
+
+    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
     const aiMsgId = `a-${Date.now()}`;
     const initialAiMsg: Message = { id: aiMsgId, role: 'assistant', content: '', timestamp: Date.now() };
     const existingMessages = currentSession?.messages || [];
@@ -318,7 +324,7 @@ export default function StudioPage() {
     try {
       let fullContent = '';
       const result = await generateStoryStream(
-        currentSession!.config, text,
+        currentSession!.config, hfcpPrefix + text,
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
@@ -801,7 +807,24 @@ export default function StudioPage() {
 
                     {writingMode === 'ai' && (
                       <>
-                        <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
+                          {/* HFCP Status */}
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+                            <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">HFCP</span>
+                            <span className={`text-[9px] font-black uppercase font-[family-name:var(--font-mono)] ${
+                              hfcpState.verdict === 'engagement' ? 'text-accent-green' :
+                              hfcpState.verdict === 'normal_free' ? 'text-accent-blue' :
+                              hfcpState.verdict === 'normal_analysis' ? 'text-accent-amber' :
+                              hfcpState.verdict === 'limited' ? 'text-accent-red' : 'text-text-tertiary'
+                            }`}>
+                              {hfcpState.verdict.replace('_', ' ')}
+                            </span>
+                            <span className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                              {Math.round(hfcpState.score)}
+                            </span>
+                          </div>
+                        </div>
                         {currentSession.messages.length === 0 ? (
                           <div className="py-20 text-center space-y-4">
                             <Sparkles className="w-10 h-10 text-accent-purple/30 mx-auto" />
