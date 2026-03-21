@@ -97,7 +97,8 @@ export default function StudioPage() {
   const [editDraft, setEditDraft] = useState('');
   const [canvasContent, setCanvasContent] = useState('');
   const [canvasPass, setCanvasPass] = useState(0);
-  const [promptDirective, setPromptDirective] = useState(''); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+  const [promptDirective, setPromptDirective] = useState('');
+  const [rightPanelOpen, setRightPanelOpen] = useState(true); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -1036,115 +1037,123 @@ export default function StudioPage() {
             <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
           )}
 
-          {/* Right-side Writing Assistant Panel */}
+          {/* Right Panel — Writing Assistant + AI Chat */}
           {activeTab === 'writing' && writingMode === 'ai' && currentSession && !showDashboard && (
-            <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
-              <div className="p-4 space-y-3">
-                <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)] mb-2">
-                  {isKO ? '집필 도우미' : 'Writing Assistant'}
-                </div>
+            <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
+              {/* Toggle button */}
+              <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)]">
+                {rightPanelOpen ? '▶' : '◀'}
+              </button>
 
-                {/* ① 이전 화 브릿지 */}
-                <details className="group">
-                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                    <span>📎</span> {isKO ? '브릿지' : 'Bridge'}
-                  </summary>
-                  {(() => {
-                    const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
-                    const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                    return txt ? (
-                      <p className="mt-1 text-[9px] text-text-secondary font-serif leading-relaxed italic pl-5 border-l-2 border-border ml-1">{txt.slice(-300)}</p>
-                    ) : (
-                      <p className="mt-1 text-[8px] text-text-tertiary pl-5 italic">{isKO ? '아직 생성된 내용 없음' : 'No content yet'}</p>
-                    );
-                  })()}
-                </details>
+              {rightPanelOpen && (
+                <div className="flex-1 overflow-y-auto">
+                  {/* 도우미 섹션 */}
+                  <div className="p-3 space-y-2 border-b border-border">
+                    <div className="text-[8px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                      {isKO ? '집필 참고' : 'Reference'}
+                    </div>
 
-                {/* ② 씬시트 미니뷰 */}
-                <details className="group">
-                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                    <span>🎬</span> {isKO ? '씬시트' : 'Scene'}
-                  </summary>
-                  <div className="mt-1 pl-5 space-y-1">
-                    {currentSession.config.sceneDirection?.hooks?.map((h, i) => (
-                      <div key={i} className="text-[8px] text-blue-400">🪝 {h.position}: {h.desc}</div>
-                    ))}
-                    {currentSession.config.sceneDirection?.goguma?.map((g, i) => (
-                      <div key={i} className={`text-[8px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                        {g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}
+                    {/* ① 브릿지 */}
+                    <details className="group">
+                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">📎 {isKO ? '이전 화' : 'Bridge'}</summary>
+                      {(() => {
+                        const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
+                        const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
+                        return <p className="mt-1 text-[8px] text-text-tertiary pl-4 italic leading-relaxed">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
+                      })()}
+                    </details>
+
+                    {/* ② 씬시트 */}
+                    <details className="group">
+                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">🎬 {isKO ? '씬시트' : 'Scene'}</summary>
+                      <div className="mt-1 pl-4 space-y-0.5">
+                        {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[7px] text-blue-400">🪝 {h.desc}</div>)}
+                        {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className="text-[7px] text-amber-400">{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
+                        {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[7px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
+                        {!currentSession.config.sceneDirection && <p className="text-[7px] text-text-tertiary italic">{isKO ? '미설정' : 'Not set'}</p>}
                       </div>
-                    ))}
-                    {currentSession.config.sceneDirection?.cliffhanger && (
-                      <div className="text-[8px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>
-                    )}
-                    {currentSession.config.sceneDirection?.emotionTargets?.map((e, i) => (
-                      <div key={i} className="text-[8px] text-pink-400">💓 {e.emotion} {e.intensity}%</div>
-                    ))}
-                    {!currentSession.config.sceneDirection && (
-                      <p className="text-[8px] text-text-tertiary italic">{isKO ? '연출 미설정' : 'Not set'}</p>
-                    )}
-                  </div>
-                </details>
+                    </details>
 
-                {/* ③ 등장인물 퀵카드 */}
-                <details className="group">
-                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                    <span>👤</span> {isKO ? '캐릭터' : 'Chars'} <span className="text-[8px]">({currentSession.config.characters.length})</span>
-                  </summary>
-                  <div className="mt-1 pl-5 space-y-1.5">
-                    {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
-                      <div key={c.id} className="text-[8px]">
-                        <span className="font-bold text-text-primary">{c.name}</span>
-                        <span className="text-text-tertiary"> ({c.role})</span>
-                        {c.speechStyle && <div className="text-accent-blue ml-2">🗣️ {c.speechStyle}</div>}
-                        {c.personality && <div className="text-text-tertiary ml-2">🧠 {c.personality}</div>}
+                    {/* ③ 캐릭터 */}
+                    <details className="group">
+                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">👤 {isKO ? '캐릭터' : 'Chars'} ({currentSession.config.characters.length})</summary>
+                      <div className="mt-1 pl-4 space-y-1">
+                        {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
+                          <div key={c.id} className="text-[7px]">
+                            <span className="font-bold text-text-primary">{c.name}</span> <span className="text-text-tertiary">({c.role})</span>
+                            {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
+                          </div>
+                        )) : <p className="text-[7px] text-text-tertiary italic">{isKO ? '없음' : 'None'}</p>}
                       </div>
-                    )) : (
-                      <p className="text-[8px] text-text-tertiary italic">{isKO ? '캐릭터 미등록' : 'No characters'}</p>
-                    )}
-                    {currentSession.config.charRelations?.map((r, i) => {
-                      const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
-                      const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
-                      return <div key={i} className="text-[7px] text-text-tertiary">{from}⇄{to} [{r.type}]</div>;
-                    })}
-                  </div>
-                </details>
+                    </details>
 
-                {/* ④ 서식 규칙 */}
-                <details className="group">
-                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                    <span>📐</span> {isKO ? '서식 7조' : 'Format Rules'}
-                  </summary>
-                  <div className="mt-1 pl-5 space-y-0.5">
-                    {[
-                      { ko: '괄호 제거', en: 'No parens' },
-                      { ko: '소제목 없음', en: 'No subheads' },
-                      { ko: '대화문 줄분리', en: 'Dialogue split' },
-                      { ko: 'Em dash 금지', en: 'No em dash' },
-                      { ko: '삭제 금지', en: 'No deletion' },
-                      { ko: '…통일', en: '…unified' },
-                      { ko: '대화 수정금지', en: 'Keep dialogue' },
-                    ].map((r, i) => (
-                      <div key={i} className="text-[7px] text-text-tertiary"><span className="text-accent-green">✓</span> {isKO ? r.ko : r.en}</div>
-                    ))}
-                  </div>
-                </details>
+                    {/* ④ 서식 */}
+                    <details className="group">
+                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">📐 {isKO ? '서식' : 'Format'}</summary>
+                      <div className="mt-1 pl-4 grid grid-cols-2 gap-0.5">
+                        {(isKO ? ['괄호제거','소제목없음','대화줄분리','—금지','삭제금지','…통일','대화보호'] : ['No()','No head','Dlg split','No—','No del','…','Keep dlg']).map((r, i) => (
+                          <div key={i} className="text-[6px] text-text-tertiary"><span className="text-accent-green">✓</span>{r}</div>
+                        ))}
+                      </div>
+                    </details>
 
-                {/* ⑤ HFCP 상태 */}
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">HFCP</span>
-                    <span className={`text-[9px] font-bold font-[family-name:var(--font-mono)] ${
-                      hfcpState.verdict === 'engagement' ? 'text-accent-green' :
-                      hfcpState.verdict === 'normal_free' ? 'text-accent-blue' :
-                      hfcpState.verdict === 'normal_analysis' ? 'text-accent-amber' :
-                      'text-text-tertiary'
-                    }`}>
-                      {hfcpState.verdict.replace('_', ' ')} {Math.round(hfcpState.score)}
-                    </span>
+                    {/* ⑤ 대화 온도 (HFCP 한글화) */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[8px] text-text-tertiary">🌡️</span>
+                      <span className={`text-[8px] font-bold ${
+                        hfcpState.verdict === 'engagement' ? 'text-accent-green' :
+                        hfcpState.verdict === 'normal_free' ? 'text-accent-blue' :
+                        hfcpState.verdict === 'normal_analysis' ? 'text-accent-amber' :
+                        hfcpState.verdict === 'limited' ? 'text-accent-red' : 'text-text-tertiary'
+                      }`}>
+                        {isKO ? ({
+                          engagement: '적극 참여',
+                          normal_free: '자유 대화',
+                          normal_analysis: '분석 모드',
+                          limited: '절제 모드',
+                          silent: '침묵',
+                        } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict
+                        : hfcpState.verdict.replace('_', ' ')}
+                      </span>
+                      <span className="text-[7px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
+                    </div>
+                  </div>
+
+                  {/* AI 대화 섹션 */}
+                  <div className="p-3 space-y-3">
+                    <div className="text-[8px] font-black text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                      💬 {isKO ? 'AI 대화' : 'AI Chat'}
+                    </div>
+                    <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+                      {currentSession.messages.filter(m => {
+                        // AI 대화만 필터 (생성 결과 제외)
+                        if (m.role === 'user') {
+                          const isGen = m.meta?.hfcpMode === 'generate' || m.content.startsWith('[1단계') || m.content.startsWith('[2단계') || m.content.startsWith('[3단계') || m.content.startsWith('[Pass');
+                          return !isGen;
+                        }
+                        return false;
+                      }).length === 0 ? (
+                        <p className="text-[8px] text-text-tertiary italic text-center py-4">{isKO ? 'AI와 대화하려면 아래 입력창에 질문하세요' : 'Ask questions in the input below'}</p>
+                      ) : (
+                        currentSession.messages.filter(m => {
+                          if (m.role === 'user' && m.meta?.hfcpMode === 'chat') return true;
+                          // Show assistant response after chat message
+                          const idx = currentSession.messages.indexOf(m);
+                          if (m.role === 'assistant' && idx > 0) {
+                            const prev = currentSession.messages[idx - 1];
+                            return prev.meta?.hfcpMode === 'chat';
+                          }
+                          return false;
+                        }).slice(-6).map(msg => (
+                          <div key={msg.id} className={`text-[8px] ${msg.role === 'user' ? 'text-accent-purple' : 'text-text-secondary'}`}>
+                            <span className="font-bold">{msg.role === 'user' ? '나' : 'AI'}:</span> {msg.content.slice(0, 150)}{msg.content.length > 150 ? '...' : ''}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </aside>
           )}
         </div>
