@@ -96,7 +96,8 @@ export default function StudioPage() {
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
   const [editDraft, setEditDraft] = useState('');
   const [canvasContent, setCanvasContent] = useState('');
-  const [canvasPass, setCanvasPass] = useState(0); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+  const [canvasPass, setCanvasPass] = useState(0);
+  const [promptDirective, setPromptDirective] = useState(''); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -304,6 +305,7 @@ export default function StudioPage() {
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
+    const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
     const aiMsgId = `a-${Date.now()}`;
@@ -324,7 +326,7 @@ export default function StudioPage() {
     try {
       let fullContent = '';
       const result = await generateStoryStream(
-        currentSession!.config, hfcpPrefix + text,
+        currentSession!.config, directivePrefix + hfcpPrefix + text,
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
@@ -802,6 +804,22 @@ export default function StudioPage() {
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
                         </span>
+                      )}
+                    </div>
+
+                    {/* Prompt Directive — AI에 추가 지시 */}
+                    <div className="flex gap-2 items-center">
+                      <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">
+                        💡 {isKO ? '지침' : 'Directive'}
+                      </span>
+                      <input
+                        value={promptDirective}
+                        onChange={e => setPromptDirective(e.target.value)}
+                        placeholder={isKO ? '프롬프트 지침 (예: "문체를 하드보일드로", "대화 비율 50%", "1인칭 시점")' : 'Prompt directive (e.g. "hardboiled style", "50% dialogue", "1st person POV")'}
+                        className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
+                      />
+                      {promptDirective && (
+                        <button onClick={() => setPromptDirective('')} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
                       )}
                     </div>
 
