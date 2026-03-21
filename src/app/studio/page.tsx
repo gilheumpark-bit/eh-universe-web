@@ -330,10 +330,18 @@ export default function StudioPage() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    let fullContent = '';
     try {
-      let fullContent = '';
+      // Inject genreSelections from worldSimData into simulatorRef for AI prompt
+      const configForAI = {
+        ...currentSession!.config,
+        simulatorRef: {
+          ...currentSession!.config.simulatorRef,
+          genreSelections: currentSession!.config.worldSimData?.genreSelections || currentSession!.config.simulatorRef?.genreSelections,
+        },
+      };
       const result = await generateStoryStream(
-        currentSession!.config, directivePrefix + hfcpPrefix + text,
+        configForAI, directivePrefix + hfcpPrefix + text,
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
@@ -362,6 +370,12 @@ export default function StudioPage() {
     } catch (error: unknown) {
       if (error instanceof Error && error.name !== 'AbortError') console.error(error);
     } finally {
+      // 3패스 캔버스 모드: 단계 완료 시 JSON 제거 후 자동 주입
+      if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
+        const clean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
+        if (clean) setCanvasContent(clean);
+        setWritingMode('canvas');
+      }
       setIsGenerating(false);
       abortControllerRef.current = null;
     }
@@ -386,10 +400,17 @@ export default function StudioPage() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    let fullContent = '';
     try {
-      let fullContent = '';
+      const configForChat = {
+        ...currentSession.config,
+        simulatorRef: {
+          ...currentSession.config.simulatorRef,
+          genreSelections: currentSession.config.worldSimData?.genreSelections || currentSession.config.simulatorRef?.genreSelections,
+        },
+      };
       const result = await generateStoryStream(
-        currentSession.config, userMsg.content,
+        configForChat, userMsg.content,
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
@@ -648,6 +669,7 @@ export default function StudioPage() {
                               transitions: data.transitions,
                               selectedGenre: data.selectedGenre,
                               selectedLevel: data.selectedLevel,
+                              genreSelections: data.genreSelections,
                               ruleLevel: data.ruleLevel,
                             },
                           },
