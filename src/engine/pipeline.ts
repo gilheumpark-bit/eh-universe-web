@@ -226,14 +226,21 @@ ${ehRules}
 - 반복 표현 다양화: 같은 묘사를 3회 이상 반복하지 마십시오
 - 긴장도 ${targetTension}%에 맞는 문장 리듬과 장면 전환 속도를 유지하십시오
 
-[서식 규칙 7조 — WEB-NOVEL FORMATTING]
+${isKO ? `[서식 규칙 7조 — WEB-NOVEL FORMATTING]
 1. 괄호 처리: ( ) 기호만 제거. 괄호 안 텍스트는 앞뒤 문장에 이어 붙여 한 문장으로 풀어낸다. 줄 삭제·추가 금지.
 2. 소제목: 소제목 행은 생성하지 않는다. 본문에 녹여 넣지도 않는다.
 3. 대화문: 모든 대화문은 반드시 새로운 줄에서 시작한다. 문장 내부 대화문도 줄을 분리한다.
 4. Em dash: —(Em dash)는 사용하지 않는다.
 5. 글자 수 유지: 문장 부호·띄어쓰기·줄바꿈 조정 가능. 단어·문장·문단 삭제와 내용 압축·요약은 금지.
 6. 말줄임표: 세 개 이상의 마침표(...)는 말줄임표(…)로 통일한다.
-7. 오탈자: 명백한 오탈자·맞춤법·띄어쓰기는 지문에 한해서만 수정. 대화문 내부는 캐릭터 말투 보호를 위해 수정 금지.
+7. 오탈자: 명백한 오탈자·맞춤법·띄어쓰기는 지문에 한해서만 수정. 대화문 내부는 캐릭터 말투 보호를 위해 수정 금지.` : `[FORMATTING RULES — WEB-NOVEL STYLE]
+1. Parentheses: Remove ( ) symbols only. Keep inner text and merge into surrounding sentence. No line deletion or addition.
+2. Subheadings: Do not generate subheading lines. Do not embed subheading content into body text.
+3. Dialogue: Every dialogue must start on a new line. Inline dialogue must be split to a new line.
+4. Em dash: Do not use — (em dash).
+5. Word count: Punctuation, spacing, and line breaks may be adjusted. Deleting words, sentences, paragraphs, or compressing/summarizing content is strictly forbidden.
+6. Ellipsis: Three or more periods (...) must be unified to ellipsis character (…).
+7. Typos: Fix obvious typos, spelling, and spacing in narration only. Dialogue text must not be modified to preserve character voice and tone.`}
 
 [OUTPUT RULES]
 - 반드시 유저가 선택한 [Target Language: ${LANG_NAMES[language]}]를 엄격히 준수하십시오.
