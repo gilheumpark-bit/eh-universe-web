@@ -88,6 +88,8 @@ export default function StudioPage() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [writingMode, setWritingMode] = useState<'ai' | 'edit'>('ai');
+  const [editDraft, setEditDraft] = useState('');
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -651,18 +653,86 @@ export default function StudioPage() {
                       </div>
                     </details>
 
-                    <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
-                    {currentSession.messages.length === 0 ? (
-                      <div className="py-20 text-center space-y-4">
-                        <Sparkles className="w-10 h-10 text-accent-purple/30 mx-auto" />
-                        <p className="text-text-tertiary text-sm font-medium">{t.engine.startPrompt}</p>
-                      </div>
+                    {/* AI / Edit sub-tabs */}
+                    <div className="flex gap-1 items-center">
+                      <button onClick={() => setWritingMode('ai')}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                          writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                        }`}>
+                        🤖 {isKO ? 'AI 집필' : 'AI Writing'}
+                      </button>
+                      <button onClick={() => {
+                        setWritingMode('edit');
+                        if (!editDraft && currentSession.messages.length > 0) {
+                          const allText = currentSession.messages
+                            .filter(m => m.role === 'assistant' && m.content)
+                            .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
+                            .join('\n\n---\n\n');
+                          setEditDraft(allText);
+                        }
+                      }}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                          writingMode === 'edit' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                        }`}>
+                        ✏️ {isKO ? '직접 편집' : 'Manual Edit'}
+                      </button>
+                      {writingMode === 'edit' && (
+                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
+                          {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
+                        </span>
+                      )}
+                    </div>
+
+                    {writingMode === 'ai' ? (
+                      <>
+                        <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
+                        {currentSession.messages.length === 0 ? (
+                          <div className="py-20 text-center space-y-4">
+                            <Sparkles className="w-10 h-10 text-accent-purple/30 mx-auto" />
+                            <p className="text-text-tertiary text-sm font-medium">{t.engine.startPrompt}</p>
+                          </div>
+                        ) : (
+                          (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
+                            <ChatMessage key={msg.id} message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
+                          ))
+                        )}
+                        <div ref={messagesEndRef} className="h-32" />
+                      </>
                     ) : (
-                      (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
-                        <ChatMessage key={msg.id} message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
-                      ))
+                      /* ====== EDIT MODE ====== */
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] text-text-tertiary">
+                            {isKO ? 'AI가 생성한 텍스트를 직접 수정할 수 있습니다. 수정 후 원고에 반영됩니다.' : 'Directly edit AI-generated text. Changes will be applied to your manuscript.'}
+                          </p>
+                          <div className="flex gap-2">
+                            <button onClick={() => {
+                              if (!editDraft.trim()) return;
+                              const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
+                              updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[작가 직접 편집]' : '[Manual Edit]', timestamp: Date.now() }, editMsg] });
+                              setWritingMode('ai');
+                            }}
+                              className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+                              {isKO ? '💾 원고에 반영' : '💾 Apply to Manuscript'}
+                            </button>
+                            <button onClick={() => setEditDraft('')}
+                              className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-accent-red transition-colors">
+                              {isKO ? '초기화' : 'Clear'}
+                            </button>
+                          </div>
+                        </div>
+                        <textarea
+                          value={editDraft}
+                          onChange={e => setEditDraft(e.target.value)}
+                          className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
+                          placeholder={isKO ? '여기에 직접 소설을 쓰거나, AI 집필 탭에서 생성된 텍스트를 편집하세요...' : 'Write your novel here directly, or edit AI-generated text...'}
+                        />
+                        <div className="flex justify-between items-center text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                          <span>{editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'} | ~{Math.round(editDraft.length / 2).toLocaleString()} tokens</span>
+                          <span>{isKO ? '자동저장 활성' : 'Autosave active'}</span>
+                        </div>
+                      </div>
                     )}
-                    <div ref={messagesEndRef} className="h-32" />
                   </div>
                 )}
                 {activeTab === 'history' && (
