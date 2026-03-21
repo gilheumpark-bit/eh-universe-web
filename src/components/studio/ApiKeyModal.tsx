@@ -8,7 +8,7 @@ import {
   getActiveProvider, setActiveProvider,
   getApiKey, setApiKey,
   getActiveModel, setActiveModel,
-  testApiKey,
+  testApiKey, isPreviewModel, getModelWarning,
 } from '@/lib/ai-providers';
 
 // ============================================================
@@ -190,12 +190,25 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                     {m === currentProvider.defaultModel && (
                       <span className="ml-2 text-[8px] text-text-tertiary uppercase">{isKO ? '기본' : 'Default'}</span>
                     )}
+                    {isPreviewModel(m) && (
+                      <span className="ml-2 text-[8px] text-accent-amber uppercase">⚠ Preview</span>
+                    )}
                   </button>
                 ))}
               </div>
             )}
           </div>
         </div>
+
+        {/* Preview model warning */}
+        {isPreviewModel(selectedModel) && (
+          <div className="flex items-start gap-2 px-3 py-2 bg-accent-amber/5 border border-accent-amber/20 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-accent-amber shrink-0 mt-0.5" />
+            <p className="text-[10px] text-accent-amber leading-relaxed">
+              {getModelWarning(selectedModel, isKO ? 'ko' : 'en')}
+            </p>
+          </div>
+        )}
 
         {/* Status */}
         {status === 'success' && (

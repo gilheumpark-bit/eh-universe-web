@@ -38,12 +38,12 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     name: "Google Gemini",
     color: "#4285f4",
     placeholder: "AIza...",
-    defaultModel: "gemini-3.1-pro-preview",
+    defaultModel: "gemini-2.5-pro",
     models: [
-      "gemini-3.1-pro-preview",
-      "gemini-3-flash-preview",
       "gemini-2.5-pro",
       "gemini-2.5-flash",
+      "gemini-3.1-pro-preview",
+      "gemini-3-flash-preview",
     ],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_api_key",
@@ -108,6 +108,21 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
 };
 
 export const PROVIDER_LIST = Object.values(PROVIDERS);
+
+// Preview/experimental model detection
+const PREVIEW_PATTERNS = ["preview", "nano", "experimental", "beta"];
+
+export function isPreviewModel(model: string): boolean {
+  const lower = model.toLowerCase();
+  return PREVIEW_PATTERNS.some(p => lower.includes(p));
+}
+
+export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string | null {
+  if (!isPreviewModel(model)) return null;
+  return lang === "ko"
+    ? `"${model}"은(는) 프리뷰/실험 모델입니다. 안정성이 보장되지 않으며 예고 없이 변경·중단될 수 있습니다. 프로덕션 용도에는 정식 모델을 권장합니다.`
+    : `"${model}" is a preview/experimental model. Stability is not guaranteed and it may change or be discontinued without notice. Stable models are recommended for production use.`;
+}
 
 // ============================================================
 // PART 2: KEY MANAGEMENT

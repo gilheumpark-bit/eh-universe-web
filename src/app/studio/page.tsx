@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Settings, Send,
   Sparkles, Menu, Globe, UserCircle,
-  BookOpen, Zap, Ghost, X, PenTool, History, StopCircle
+  Zap, Ghost, X, PenTool, History, StopCircle
 } from 'lucide-react';
 import {
   Message, StoryConfig, Genre,
@@ -16,7 +16,7 @@ import ChatMessage from '@/components/studio/ChatMessage';
 import PlanningView from '@/components/studio/PlanningView';
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
-import RulebookView from '@/components/studio/RulebookView';
+// RulebookView removed — available at /rulebook site-wide
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
@@ -283,12 +283,12 @@ export default function StudioPage() {
       {/* Sidebar */}
       <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
         <div className="p-6">
-          <div className="flex items-center gap-3 mb-4">
+          <Link href="/" className="flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
             <Zap className="w-6 h-6 text-accent-purple" />
-            <h1 className="text-lg font-black italic tracking-tighter font-[family-name:var(--font-mono)]">NOA STUDIO</h1>
-          </div>
-          <Link href="/" className="block text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase mb-6 hover:text-accent-purple transition-colors">
-            ← EH UNIVERSE
+            <div>
+              <h1 className="text-lg font-black italic tracking-tighter font-[family-name:var(--font-mono)]">NOA STUDIO</h1>
+              <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase">← EH UNIVERSE</span>
+            </div>
           </Link>
           <button onClick={createNewSession} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
             <Plus className="w-4 h-4" /> {t.sidebar.newProject}
@@ -298,7 +298,6 @@ export default function StudioPage() {
             {([
               { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
-              { tab: 'rulebook' as AppTab, icon: BookOpen, label: t.sidebar.rulebook },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
               { tab: 'critique' as AppTab, icon: Map, label: language === 'KO' ? '세계관 시뮬레이터' : 'World Simulator' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
@@ -357,7 +356,7 @@ export default function StudioPage() {
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            {!currentSessionId && !['settings', 'history', 'rulebook'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history'].includes(activeTab) ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <Ghost className="w-12 h-12 md:w-16 md:h-16 text-border mb-6" />
                 <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)]">{t.engine.noActiveNarrative}</h2>
@@ -374,9 +373,6 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'settings' && (
                   <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
-                )}
-                {activeTab === 'rulebook' && (
-                  <RulebookView language={language} />
                 )}
                 {activeTab === 'critique' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
