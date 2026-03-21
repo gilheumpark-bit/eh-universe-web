@@ -1048,59 +1048,59 @@ export default function StudioPage() {
               {rightPanelOpen && (
                 <div className="flex-1 overflow-y-auto">
                   {/* 도우미 섹션 */}
-                  <div className="p-3 space-y-2 border-b border-border">
-                    <div className="text-[8px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                  <div className="p-4 space-y-3 border-b border-border">
+                    <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
                       {isKO ? '집필 참고' : 'Reference'}
                     </div>
 
                     {/* ① 브릿지 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">📎 {isKO ? '이전 화' : 'Bridge'}</summary>
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📎 {isKO ? '이전 화' : 'Bridge'}</summary>
                       {(() => {
                         const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
                         const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                        return <p className="mt-1 text-[8px] text-text-tertiary pl-4 italic leading-relaxed">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
+                        return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
                       })()}
                     </details>
 
                     {/* ② 씬시트 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">🎬 {isKO ? '씬시트' : 'Scene'}</summary>
-                      <div className="mt-1 pl-4 space-y-0.5">
-                        {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[7px] text-blue-400">🪝 {h.desc}</div>)}
-                        {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className="text-[7px] text-amber-400">{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
-                        {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[7px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
-                        {!currentSession.config.sceneDirection && <p className="text-[7px] text-text-tertiary italic">{isKO ? '미설정' : 'Not set'}</p>}
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">🎬 {isKO ? '씬시트' : 'Scene'}</summary>
+                      <div className="mt-1.5 pl-4 space-y-1">
+                        {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400">🪝 {h.desc}</div>)}
+                        {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
+                        {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
+                        {!currentSession.config.sceneDirection && <p className="text-[10px] text-text-tertiary italic">{isKO ? '미설정' : 'Not set'}</p>}
                       </div>
                     </details>
 
                     {/* ③ 캐릭터 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">👤 {isKO ? '캐릭터' : 'Chars'} ({currentSession.config.characters.length})</summary>
-                      <div className="mt-1 pl-4 space-y-1">
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">👤 {isKO ? '캐릭터' : 'Chars'} ({currentSession.config.characters.length})</summary>
+                      <div className="mt-1.5 pl-4 space-y-1.5">
                         {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
-                          <div key={c.id} className="text-[7px]">
+                          <div key={c.id} className="text-[10px]">
                             <span className="font-bold text-text-primary">{c.name}</span> <span className="text-text-tertiary">({c.role})</span>
                             {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
                           </div>
-                        )) : <p className="text-[7px] text-text-tertiary italic">{isKO ? '없음' : 'None'}</p>}
+                        )) : <p className="text-[10px] text-text-tertiary italic">{isKO ? '없음' : 'None'}</p>}
                       </div>
                     </details>
 
                     {/* ④ 서식 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1 cursor-pointer text-[9px] font-bold text-text-tertiary hover:text-text-secondary">📐 {isKO ? '서식' : 'Format'}</summary>
-                      <div className="mt-1 pl-4 grid grid-cols-2 gap-0.5">
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📐 {isKO ? '서식' : 'Format'}</summary>
+                      <div className="mt-1.5 pl-4 grid grid-cols-2 gap-1">
                         {(isKO ? ['괄호제거','소제목없음','대화줄분리','—금지','삭제금지','…통일','대화보호'] : ['No()','No head','Dlg split','No—','No del','…','Keep dlg']).map((r, i) => (
-                          <div key={i} className="text-[6px] text-text-tertiary"><span className="text-accent-green">✓</span>{r}</div>
+                          <div key={i} className="text-[9px] text-text-tertiary"><span className="text-accent-green">✓</span> {r}</div>
                         ))}
                       </div>
                     </details>
 
-                    {/* ⑤ 대화 온도 (HFCP 한글화) */}
+                    {/* ⑤ 대화 온도 */}
                     <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[8px] text-text-tertiary">🌡️</span>
-                      <span className={`text-[8px] font-bold ${
+                      <span className="text-xs text-text-tertiary">🌡️</span>
+                      <span className={`text-xs font-bold ${
                         hfcpState.verdict === 'engagement' ? 'text-accent-green' :
                         hfcpState.verdict === 'normal_free' ? 'text-accent-blue' :
                         hfcpState.verdict === 'normal_analysis' ? 'text-accent-amber' :
@@ -1115,29 +1115,27 @@ export default function StudioPage() {
                         } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict
                         : hfcpState.verdict.replace('_', ' ')}
                       </span>
-                      <span className="text-[7px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
+                      <span className="text-[10px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
                     </div>
                   </div>
 
                   {/* AI 대화 섹션 */}
-                  <div className="p-3 space-y-3">
-                    <div className="text-[8px] font-black text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                  <div className="p-4 space-y-3">
+                    <div className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
                       💬 {isKO ? 'AI 대화' : 'AI Chat'}
                     </div>
                     <div className="space-y-3 max-h-[40vh] overflow-y-auto">
                       {currentSession.messages.filter(m => {
-                        // AI 대화만 필터 (생성 결과 제외)
                         if (m.role === 'user') {
                           const isGen = m.meta?.hfcpMode === 'generate' || m.content.startsWith('[1단계') || m.content.startsWith('[2단계') || m.content.startsWith('[3단계') || m.content.startsWith('[Pass');
                           return !isGen;
                         }
                         return false;
                       }).length === 0 ? (
-                        <p className="text-[8px] text-text-tertiary italic text-center py-4">{isKO ? 'AI와 대화하려면 아래 입력창에 질문하세요' : 'Ask questions in the input below'}</p>
+                        <p className="text-[11px] text-text-tertiary italic text-center py-4">{isKO ? 'AI와 대화하려면 아래 입력창에 질문하세요' : 'Ask questions in the input below'}</p>
                       ) : (
                         currentSession.messages.filter(m => {
                           if (m.role === 'user' && m.meta?.hfcpMode === 'chat') return true;
-                          // Show assistant response after chat message
                           const idx = currentSession.messages.indexOf(m);
                           if (m.role === 'assistant' && idx > 0) {
                             const prev = currentSession.messages[idx - 1];
@@ -1145,8 +1143,8 @@ export default function StudioPage() {
                           }
                           return false;
                         }).slice(-6).map(msg => (
-                          <div key={msg.id} className={`text-[8px] ${msg.role === 'user' ? 'text-accent-purple' : 'text-text-secondary'}`}>
-                            <span className="font-bold">{msg.role === 'user' ? '나' : 'AI'}:</span> {msg.content.slice(0, 150)}{msg.content.length > 150 ? '...' : ''}
+                          <div key={msg.id} className={`text-[11px] leading-relaxed ${msg.role === 'user' ? 'text-accent-purple' : 'text-text-secondary'}`}>
+                            <span className="font-bold">{msg.role === 'user' ? '나' : 'AI'}:</span> {msg.content.slice(0, 200)}{msg.content.length > 200 ? '...' : ''}
                           </div>
                         ))
                       )}
