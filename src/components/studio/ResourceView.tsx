@@ -174,7 +174,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-[9px] font-black text-zinc-700 uppercase tracking-widest">
-                  <span>Narrative DNA</span>
+                  <span>서사 잠재력</span>
                   <span className="text-blue-500">{newChar.dna} pts</span>
                 </div>
                 <input 
@@ -209,7 +209,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
              )}
              
              <div className="flex-1 flex items-center gap-2 bg-zinc-950/50 p-1.5 rounded-2xl border border-zinc-900 overflow-x-auto custom-scrollbar">
-               {[{ value: 'all', label: 'All Units' }, ...roleLabels].map(cat => (
+               {[{ value: 'all', label: 'All Characters' }, ...roleLabels].map(cat => (
                  <button
                   key={cat.value}
                   onClick={() => setActiveCategory(cat.value)}
@@ -229,7 +229,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="w-16 h-16 bg-zinc-900/50 rounded-full flex items-center justify-center mb-6">
                   <Users className="w-8 h-8 opacity-20" />
                 </div>
-                <span className="text-xs font-black tracking-[0.4em] uppercase">No Entities Found</span>
+                <span className="text-xs font-black tracking-[0.4em] uppercase">No Characters Found</span>
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${
@@ -305,7 +305,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
-                          <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Narrative Potential</span>
+                          <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">서사 잠재력</span>
                        </div>
                        <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
                     </div>

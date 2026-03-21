@@ -249,6 +249,16 @@ export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
   const [dopamines, setDopamines] = useState<DopamineEntry[]>([]);
   const [cliffs, setCliffs] = useState<CliffEntry[]>([]);
 
+  // Simulator reference checkpoints
+  const [simRef, setSimRef] = useState({
+    worldConsistency: false,
+    civRelations: false,
+    timeline: false,
+    territoryMap: false,
+    languageSystem: false,
+    genreLevel: false,
+  });
+
   // Quick-add helpers
   const addGoguma = (type: "goguma" | "cider", intensity: "small" | "medium" | "large") => {
     setGogumas(prev => [...prev, { id: `g-${Date.now()}`, type, intensity, desc: "", episode: 1 }]);
@@ -497,6 +507,37 @@ export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
         {activeTab === "plot" && (
           <PlotBarEditor lang={lang} />
         )}
+
+        {/* Simulator reference checkpoints */}
+        <div className="border border-border rounded-xl p-4 bg-bg-primary space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+              🗺️ {lang === "ko" ? "세계관 시뮬레이터 참고" : "World Simulator Reference"}
+            </span>
+            <span className="text-[8px] text-text-tertiary">
+              {lang === "ko" ? "체크한 항목이 연출에 반영됩니다" : "Checked items will be referenced in direction"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {([
+              { key: "worldConsistency" as const, ko: "세계관 일관성 검증", en: "World Consistency" },
+              { key: "civRelations" as const, ko: "문명 관계도", en: "Civilization Relations" },
+              { key: "timeline" as const, ko: "시대 타임라인", en: "Era Timeline" },
+              { key: "territoryMap" as const, ko: "세력권 지도", en: "Territory Map" },
+              { key: "languageSystem" as const, ko: "세계관 언어", en: "Language System" },
+              { key: "genreLevel" as const, ko: "장르 레벨 규칙", en: "Genre Level Rules" },
+            ]).map(item => (
+              <label key={item.key} className="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" checked={simRef[item.key]}
+                  onChange={e => setSimRef(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                  className="accent-accent-purple w-3.5 h-3.5" />
+                <span className={`text-[10px] font-bold transition-colors ${simRef[item.key] ? "text-accent-purple" : "text-text-tertiary group-hover:text-text-secondary"}`}>
+                  {lang === "ko" ? item.ko : item.en}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Validation receipt */}
         <div className="border-t border-border pt-4 space-y-2">

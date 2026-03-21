@@ -25,7 +25,7 @@ import { generateStoryStream } from '@/services/geminiService';
 import WorldSimulator from '@/components/WorldSimulator';
 import SceneSheet from '@/components/studio/SceneSheet';
 import Link from 'next/link';
-import { FileText } from 'lucide-react';
+import { FileText, Map } from 'lucide-react';
 // BYOK provider info available via '@/lib/ai-providers'
 
 const STORAGE_KEY_SESSIONS = 'noa_chat_sessions_v2';
@@ -429,7 +429,8 @@ export default function StudioPage() {
 
           <nav className="space-y-1">
             {([
-              { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
+              { tab: 'world' as AppTab, icon: Globe, label: language === 'KO' ? '세계관 설계' : 'World Design' },
+              { tab: 'critique' as AppTab, icon: Map, label: language === 'KO' ? '세계관 시뮬레이터' : 'World Simulator' },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '연출 스튜디오' : 'Direction Studio' },
               { tab: 'writing' as AppTab, icon: PenTool, label: language === 'KO' ? '집필 스튜디오' : 'Writing Studio' },
@@ -551,7 +552,7 @@ export default function StudioPage() {
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            {!currentSessionId && !['settings', 'history', 'rulebook'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook', 'critique'].includes(activeTab) ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <Ghost className="w-12 h-12 md:w-16 md:h-16 text-border mb-6" />
                 <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)]">{t.engine.noActiveNarrative}</h2>
@@ -561,11 +562,11 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <div className="space-y-8">
-                    <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
-                    <div className="max-w-5xl mx-auto px-4 md:px-6 pb-12">
-                      <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
-                    </div>
+                  <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                )}
+                {activeTab === 'critique' && (
+                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
+                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
                   </div>
                 )}
                 {activeTab === 'characters' && currentSession && (
@@ -574,7 +575,7 @@ export default function StudioPage() {
                 {activeTab === 'settings' && (
                   <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
                 )}
-                {/* WorldSimulator moved into 'world' tab above */}
+                {/* critique tab rendered above */}
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'} />
