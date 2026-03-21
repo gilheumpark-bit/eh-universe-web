@@ -463,8 +463,8 @@ export default function StudioPage() {
           <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
             {isKO ? '📦 전체 백업 (JSON)' : '📦 Full Backup (JSON)'}
           </button>
-          {/* Auth — only show if Firebase configured */}
-          {authConfigured && <div className="flex items-center gap-2 py-1">
+          {/* Auth */}
+          <div className="flex items-center gap-2 py-1">
             {user ? (
               <>
                 <div className="w-6 h-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-[9px] font-bold text-accent-purple overflow-hidden">
@@ -474,11 +474,17 @@ export default function StudioPage() {
                 <button onClick={signOut} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{isKO ? '로그아웃' : 'Logout'}</button>
               </>
             ) : (
-              <button onClick={signInWithGoogle} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
+              <button onClick={() => {
+                if (!authConfigured) {
+                  alert(isKO ? 'Firebase 설정이 필요합니다.\n.env.local에 NEXT_PUBLIC_FIREBASE_* 환경변수를 설정해주세요.' : 'Firebase configuration required.\nSet NEXT_PUBLIC_FIREBASE_* in .env.local');
+                  return;
+                }
+                signInWithGoogle();
+              }} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
                 🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'}
               </button>
             )}
-          </div>}
+          </div>
           <div className="flex gap-4">
             {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
               <button key={l} onClick={() => setLanguage(l)} className={`text-[10px] font-black font-[family-name:var(--font-mono)] ${language === l ? 'text-accent-purple' : 'text-text-tertiary'}`}>{l}</button>
