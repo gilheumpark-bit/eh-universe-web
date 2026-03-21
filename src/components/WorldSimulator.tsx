@@ -1405,10 +1405,84 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
 // PART 8: MAIN WORLD SIMULATOR
 // ============================================================
 
+// ============================================================
+// PART 8-A: EH RULE LEVEL DESCRIPTIONS
+// ============================================================
+
+const RULE_LEVELS: { lv: number; ko: string; en: string; desc_ko: string; desc_en: string; pct: number }[] = [
+  { lv: 1, ko: "미적용", en: "Off", desc_ko: "EH 규칙 없음. 자유 집필", desc_en: "No EH rules. Free writing", pct: 0 },
+  { lv: 2, ko: "소프트", en: "Soft", desc_ko: "금지어 차단만 적용", desc_en: "Banned words only", pct: 10 },
+  { lv: 3, ko: "미디엄", en: "Medium", desc_ko: "금지어 + 대가 정산 시스템", desc_en: "Bans + cost infliction", pct: 20 },
+  { lv: 4, ko: "하드", en: "Hard", desc_ko: "금지어 + 대가 + 시점잠금 + 마스킹", desc_en: "Bans + cost + POV lock + masking", pct: 30 },
+  { lv: 5, ko: "익스트림", en: "Extreme", desc_ko: "전체 적용: 인지비용 + 자격박탈 + 이중로그", desc_en: "Full: cognitive cost + dequalification + dual-log", pct: 40 },
+];
+
+// ============================================================
+// PART 8-B: WORLD AUTO-GENERATOR
+// ============================================================
+
+const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; relations: Omit<CivRelation, "from" | "to">[] }> = {
+  Fantasy: {
+    civs: [
+      { name: "엘도라 왕국", era: "medieval", color: "#6b46c1", traits: ["마법 기사단", "왕정"], x: 30, y: 30 },
+      { name: "다크포레스트 부족", era: "primitive", color: "#059669", traits: ["자연 마법", "샤먼"], x: 70, y: 25 },
+      { name: "드워프 연합", era: "renaissance", color: "#d97706", traits: ["단조 기술", "지하 도시"], x: 50, y: 70 },
+    ],
+    relations: [{ type: "alliance" as RelationType }, { type: "trade" as RelationType }],
+  },
+  SF: {
+    civs: [
+      { name: "테라 연방", era: "space", color: "#2563eb", traits: ["FTL 항행", "의회 민주주의"], x: 25, y: 40 },
+      { name: "네오코프 기업국", era: "info", color: "#dc2626", traits: ["AI 통치", "사이버네틱스"], x: 75, y: 35 },
+      { name: "프리 콜로니", era: "space", color: "#0891b2", traits: ["해적", "자유 무역"], x: 50, y: 75 },
+    ],
+    relations: [{ type: "war" as RelationType }, { type: "trade" as RelationType }],
+  },
+  Romance: {
+    civs: [
+      { name: "로즈가든 학원", era: "modern", color: "#db2777", traits: ["명문 사립", "학생회"], x: 40, y: 30 },
+      { name: "하이소사이어티", era: "modern", color: "#7c3aed", traits: ["재벌가", "정략결혼"], x: 60, y: 65 },
+    ],
+    relations: [{ type: "vassal" as RelationType }],
+  },
+  Thriller: {
+    civs: [
+      { name: "쉐도우 카르텔", era: "modern", color: "#dc2626", traits: ["마약 조직", "정보망"], x: 30, y: 40 },
+      { name: "국가정보원", era: "info", color: "#1e40af", traits: ["첩보", "감시"], x: 70, y: 35 },
+      { name: "글로벌 컨소시엄", era: "info", color: "#6b7280", traits: ["다국적 음모", "로비"], x: 50, y: 75 },
+    ],
+    relations: [{ type: "war" as RelationType }, { type: "alliance" as RelationType }],
+  },
+  Horror: {
+    civs: [
+      { name: "세일럼 마을", era: "industrial", color: "#7c3aed", traits: ["고립", "미신"], x: 40, y: 30 },
+      { name: "심연 교단", era: "ancient", color: "#991b1b", traits: ["코즈믹 숭배", "금기 의식"], x: 55, y: 70 },
+    ],
+    relations: [{ type: "vassal" as RelationType }],
+  },
+  "System/Hunter": {
+    civs: [
+      { name: "한터 협회", era: "modern", color: "#0891b2", traits: ["랭크 시스템", "던전 관리"], x: 30, y: 35 },
+      { name: "게이트 너머", era: "post", color: "#dc2626", traits: ["마수", "보스 몬스터"], x: 70, y: 30 },
+      { name: "비각성자 사회", era: "modern", color: "#6b7280", traits: ["일반인", "공포"], x: 50, y: 70 },
+    ],
+    relations: [{ type: "war" as RelationType }, { type: "trade" as RelationType }],
+  },
+  "Fantasy Romance": {
+    civs: [
+      { name: "크로노아 제국", era: "renaissance", color: "#e11d48", traits: ["황실", "정략결혼"], x: 35, y: 30 },
+      { name: "북방 공작령", era: "medieval", color: "#1e40af", traits: ["냉혈 공작", "군사력"], x: 65, y: 35 },
+      { name: "성녀의 신전", era: "medieval", color: "#d97706", traits: ["신성력", "예언"], x: 50, y: 70 },
+    ],
+    relations: [{ type: "alliance" as RelationType }, { type: "vassal" as RelationType }],
+  },
+};
+
 export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
   const [selectedGenre, setSelectedGenre] = useState("Fantasy");
   const [selectedLevel, setSelectedLevel] = useState(1);
+  const [ruleLevel, setRuleLevel] = useState(1);
   const [civs, setCivs] = useState<Civilization[]>([]);
   const [relations, setRelations] = useState<CivRelation[]>([]);
   const [transitions, setTransitions] = useState<TransitionEvent[]>([]);
@@ -1417,6 +1491,25 @@ export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
     setSelectedGenre(genre);
     setSelectedLevel(level);
   }, []);
+
+  const handleAutoGenerate = useCallback(() => {
+    const template = AUTO_WORLD_TEMPLATES[selectedGenre];
+    if (!template) return;
+    const newCivs = template.civs.map((c, i) => ({
+      ...c,
+      id: `auto-${Date.now()}-${i}`,
+    }));
+    setCivs(newCivs);
+    // Auto relations
+    const newRels: CivRelation[] = [];
+    template.relations.forEach((r, i) => {
+      if (newCivs[i] && newCivs[i + 1]) {
+        newRels.push({ from: newCivs[i].id, to: newCivs[i + 1].id, type: r.type });
+      }
+    });
+    setRelations(newRels);
+    setTransitions([]);
+  }, [selectedGenre]);
 
   const VIEW_TABS: { id: ViewTab; ko: string; en: string }[] = [
     { id: "leveling", ko: "장르 레벨", en: "Genre Level" },
@@ -1439,6 +1532,53 @@ export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
         {/* Genre Leveling (always visible at top) */}
         <GenreLeveling lang={lang} selectedGenre={selectedGenre} selectedLevel={selectedLevel} onSelect={handleGenreSelect} />
+
+        {/* EH Rule Level + Auto Generate */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+          {/* Rule Level Selector */}
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
+                {lang === "ko" ? "EH 규칙 강도" : "EH Rule Intensity"}
+              </h3>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)]"
+                style={{
+                  background: ruleLevel <= 1 ? "var(--color-border)" : ruleLevel <= 2 ? "#22c55e20" : ruleLevel <= 3 ? "#eab30820" : ruleLevel <= 4 ? "#f9731620" : "#ef444420",
+                  color: ruleLevel <= 1 ? "var(--color-text-tertiary)" : ruleLevel <= 2 ? "#22c55e" : ruleLevel <= 3 ? "#eab308" : ruleLevel <= 4 ? "#f97316" : "#ef4444",
+                }}>
+                {RULE_LEVELS[ruleLevel - 1].pct}%
+              </span>
+            </div>
+            <div className="flex gap-1">
+              {RULE_LEVELS.map(rl => (
+                <button key={rl.lv} onClick={() => setRuleLevel(rl.lv)}
+                  className={`flex-1 py-2 rounded text-[9px] font-bold border transition-all ${
+                    ruleLevel === rl.lv
+                      ? "text-white border-transparent"
+                      : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
+                  }`}
+                  style={ruleLevel === rl.lv ? {
+                    background: rl.lv <= 1 ? "#6b7280" : rl.lv <= 2 ? "#22c55e" : rl.lv <= 3 ? "#eab308" : rl.lv <= 4 ? "#f97316" : "#ef4444",
+                    borderColor: "transparent",
+                  } : undefined}
+                  title={lang === "ko" ? rl.desc_ko : rl.desc_en}
+                >
+                  <div>{lang === "ko" ? rl.ko : rl.en}</div>
+                  <div className="text-[7px] opacity-70">Lv{rl.lv}</div>
+                </button>
+              ))}
+            </div>
+            <div className="text-[9px] text-text-tertiary">
+              {lang === "ko" ? RULE_LEVELS[ruleLevel - 1].desc_ko : RULE_LEVELS[ruleLevel - 1].desc_en}
+            </div>
+          </div>
+
+          {/* Auto Generate Button */}
+          <button onClick={handleAutoGenerate}
+            className="px-4 py-2.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity shrink-0">
+            {lang === "ko" ? `⚡ ${selectedGenre} 세계관 자동생성` : `⚡ Auto-Generate ${selectedGenre}`}
+          </button>
+        </div>
 
         {/* View Tabs */}
         <div className="flex gap-1 overflow-x-auto border-b border-border pb-1">
@@ -1520,6 +1660,14 @@ export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
             <span className="text-text-tertiary">{lang === "ko" ? "장르" : "Genre"}: </span>
             <span className="font-bold" style={{ color: GENRE_LEVELS.find(g => g.genre === selectedGenre)?.color }}>
               {selectedGenre} Lv{selectedLevel}
+            </span>
+          </div>
+          <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
+            <span className="text-text-tertiary">{lang === "ko" ? "EH 규칙" : "EH Rules"}: </span>
+            <span className="font-bold" style={{
+              color: ruleLevel <= 1 ? "var(--color-text-tertiary)" : ruleLevel <= 2 ? "#22c55e" : ruleLevel <= 3 ? "#eab308" : ruleLevel <= 4 ? "#f97316" : "#ef4444"
+            }}>
+              Lv{ruleLevel} ({RULE_LEVELS[ruleLevel - 1].pct}%)
             </span>
           </div>
         </div>

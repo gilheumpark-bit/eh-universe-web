@@ -2,7 +2,7 @@ import { StoryConfig, AppLanguage } from '../lib/studio-types';
 import { EngineReport, PlatformType, getActFromEpisode } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
-import { getTargetByteRange } from './serialization';
+import { getTargetByteRange, getTargetCharRange } from './serialization';
 
 // ============================================================
 // Dynamic System Instruction Builder
@@ -48,15 +48,110 @@ const GENRE_GUIDELINES: Record<string, string> = {
   FANTASY_ROMANCE: '판타지 세계관과 감정선의 균형을 맞추세요. 설정에 압도당하지 마세요.',
 };
 
+// ============================================================
+// EH Engine v1.4 — Rule Level System (Lv1~5)
+// Lv1: 미적용, Lv2: 10%, Lv3: 20%, Lv4: 30%, Lv5: 40%
+// ============================================================
+
+function buildEHRules(ruleLevel: number, isKO: boolean): string {
+  if (ruleLevel <= 1) return '';
+
+  const sections: string[] = [];
+
+  // Lv2+: 금지어 차단 (The Enforcer)
+  if (ruleLevel >= 2) {
+    sections.push(isKO
+      ? `[EH ENFORCER — 인과율 금지어 차단 Lv${ruleLevel}]
+다음 단어는 인과관계를 흐리므로 절대 사용 금지: "기적", "운명", "갑자기", "그냥", "원래"
+위반 시 반드시 논리적 인과관계가 증명된 문장으로 대체하십시오.`
+      : `[EH ENFORCER — Causality Ban Lv${ruleLevel}]
+Never use: "miracle", "destiny", "suddenly", "just because", "originally"
+Replace with logically justified causal statements.`);
+  }
+
+  // Lv3+: 대가 정산 (Cost Infliction)
+  if (ruleLevel >= 3) {
+    sections.push(isKO
+      ? `[EH COST INFLICTION — 대가 정산 시스템]
+주인공이 이득을 얻거나 위기를 넘길 때 반드시 아래 손실 중 하나를 삽입:
+- 등급1: 수명 단축 (10~30년)
+- 등급2: 감각 소실 (시력/청력)
+- 등급3: 기억/관계 절단
+- 등급4: 부분 감정 마비
+타인의 희생으로 얻은 이득은 대가로 최대 50%만 인정(Proxy Cost 제한).`
+      : `[EH COST INFLICTION — Mandatory Payment]
+When protagonist gains advantage or survives crisis, insert ONE loss:
+- Grade1: Lifespan reduction (10-30 years)
+- Grade2: Sensory loss (sight/hearing)
+- Grade3: Memory/relationship severance
+- Grade4: Partial emotional numbness
+Proxy Cost limit: sacrifice by others counts only 50%.`);
+  }
+
+  // Lv4+: 시점 잠금 + 마스킹 레이어
+  if (ruleLevel >= 4) {
+    sections.push(isKO
+      ? `[EH NARRATIVE LOCK — 시점 및 감정 잠금]
+EH(서사 에너지) 수치에 따라 서술 방식이 변합니다:
+- EH 100~50: 1인칭 허용, 감정 묘사 100%
+- EH 49~35: 3인칭 위주, 감정 묘사 최대 30%, 객관적 사실만
+- EH 9~0: 1인칭 차단, 감정 묘사 0%, '기계적 기록 장치'로 묘사
+[NARRATIVE MASKING LAYER]
+EH가 낮아도 대중성을 위해 풍부한 1인칭 감성을 복제 출력하되,
+괴리가 커지면 텍스트에 [Process: Success]나 깨진 글자를 삽입하여 불안감 유발.`
+      : `[EH NARRATIVE LOCK — POV & Emotion Lock]
+Narration changes based on EH (narrative energy) score:
+- EH 100~50: 1st person allowed, full emotional description
+- EH 49~35: 3rd person only, max 30% emotion, objective facts only
+- EH 9~0: 1st person blocked, 0% emotion, narrate as 'mechanical recorder'
+[NARRATIVE MASKING LAYER]
+Even at low EH, output rich 1st-person prose for commercial appeal,
+but insert [Process: Success] or glitched text when gap exceeds threshold.`);
+  }
+
+  // Lv5: 풀 강제 + 인지 리소스 + 자격 박탈
+  if (ruleLevel >= 5) {
+    sections.push(isKO
+      ? `[EH SYSTEM PRESSURE — 인지 리소스 비용]
+- 배경/풍경 상세 묘사 시 EH -0.10~-0.50 실시간 차감
+- 선택지 2개 이하로 좁혀지면 EH -10.00
+- 최적 경로 1개만 남으면 EH -20.00 (자유도 완전 고갈)
+[DEQUALIFICATION]
+EH = 0 도달 시 → System Crash
+해당 캐릭터는 주인공 자격 박탈, '단순 관찰 대상' 또는 '기록 장치'로 강제 전환.
+[DUAL-LOG SYSTEM]
+Public Log(독자용): 주인공이 인간적이라는 가짜 데이터 출력
+Admin Log(내부): 실제 EH 차감, 소실 감정, WS 정직 표시`
+      : `[EH SYSTEM PRESSURE — Cognitive Resource Cost]
+- Detailed background description: EH -0.10~-0.50 real-time deduction
+- Choices narrowed to 2: EH -10.00
+- Only 1 optimal path remains: EH -20.00 (freedom depleted)
+[DEQUALIFICATION]
+EH = 0 → System Crash
+Character loses protagonist status, forced to 'observer' or 'recording device'.
+[DUAL-LOG SYSTEM]
+Public Log (reader): fake data showing protagonist retains humanity
+Admin Log (internal): real EH deductions, lost emotions, honest WS display`);
+  }
+
+  const header = isKO
+    ? `\n[EH ENGINE v1.4 — 규칙 강도: Lv${ruleLevel}/5 (${ruleLevel * 10}% 적용)]`
+    : `\n[EH ENGINE v1.4 — Rule Intensity: Lv${ruleLevel}/5 (${ruleLevel * 10}% applied)]`;
+
+  return header + '\n' + sections.join('\n\n');
+}
+
 export function buildSystemInstruction(
   config: StoryConfig,
   language: AppLanguage,
-  platform: PlatformType = PlatformType.MOBILE
+  platform: PlatformType = PlatformType.MOBILE,
+  ruleLevel: number = 1
 ): string {
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
   const targetTension = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
   const byteTarget = getTargetByteRange(platform);
+  const charTarget = getTargetCharRange(platform);
   const isKO = language === 'KO';
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
   const genreGuide = GENRE_GUIDELINES[config.genre] ?? '';
@@ -67,6 +162,9 @@ export function buildSystemInstruction(
       `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`
     ).join('\n')
     : '  등록된 캐릭터 없음';
+
+  // EH v1.4 rules injection
+  const ehRules = buildEHRules(ruleLevel, isKO);
 
   return `당신은 "NOA 소설 스튜디오"의 핵심 엔진 [ANS 10.0]입니다.
 당신은 'Project EH'의 세계관 물리 법칙을 준수하며 작가와 협업하여 소설을 집필합니다.
@@ -98,7 +196,9 @@ ${characterDNA}
 [SERIALIZATION CONSTRAINTS]
 - Platform: ${platform}
 - Target byte range: ${(byteTarget.min / 1024).toFixed(1)}KB ~ ${(byteTarget.max / 1024).toFixed(1)}KB
-- 서사를 4개 파트로 나누어 출력하되, 바이트 목표 범위 내에서 마무리하십시오.
+- Target char range: ${charTarget.min.toLocaleString()}자 ~ ${charTarget.max.toLocaleString()}자
+- 서사를 4개 파트로 나누어 출력하되, 글자수 목표 범위 내에서 마무리하십시오.
+${ehRules}
 
 [QUALITY DIRECTIVES]
 - AI톤 금지: "그러나", "반면에", "한편으로는", "따라서", "그러므로" 사용 자제

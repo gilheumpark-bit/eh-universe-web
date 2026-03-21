@@ -154,6 +154,46 @@ const PUNCT_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
   { pattern: /!{3,}/g, description: '과도한 느낌표 (3개 이상)' },
 ];
 
+// ============================================================
+// EH Engine v1.4 — Causality Enforcer (인과율 금지어)
+// ============================================================
+
+const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래'];
+const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
+
+export function validateCausality(text: string, ruleLevel: number): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  const fixes: FixRecord[] = [];
+  const issues: ValidationIssue[] = [];
+
+  if (ruleLevel < 2) return { fixes, issues };
+
+  const allBanned = [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
+
+  for (const word of allBanned) {
+    const regex = new RegExp(word, 'gi');
+    const matches = text.match(regex);
+    if (matches) {
+      fixes.push({
+        fixType: FixType.AI_TONE,
+        original: word,
+        fixed: '',
+        position: text.search(regex),
+        reason: `[EH v1.4] 인과율 금지어: "${word}" — 논리적 인과관계로 대체 필요`,
+        severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
+      });
+      if (ruleLevel >= 3) {
+        issues.push({
+          category: 'eh_enforcer',
+          message: `인과율 위반: "${word}" ${matches.length}회 — 시스템 위반 가중치 +2`,
+          severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
+        });
+      }
+    }
+  }
+
+  return { fixes, issues };
+}
+
 // Simplified IP firewall — flag well-known franchise names
 const IP_PATTERNS = [
   /해리\s?포터/g, /Harry\s?Potter/gi,
@@ -215,7 +255,8 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
 
 export function validateGeneratedContent(
   text: string,
-  language: AppLanguage
+  language: AppLanguage,
+  ruleLevel: number = 1
 ): { fixes: FixRecord[]; issues: ValidationIssue[] } {
   const allFixes: FixRecord[] = [];
   const allIssues: ValidationIssue[] = [];
@@ -234,6 +275,13 @@ export function validateGeneratedContent(
   const staticResult = validateStatic(text);
   allFixes.push(...staticResult.fixes);
   allIssues.push(...staticResult.issues);
+
+  // EH Engine v1.4 — Causality enforcer (Lv2+)
+  if (ruleLevel >= 2) {
+    const causalityResult = validateCausality(text, ruleLevel);
+    allFixes.push(...causalityResult.fixes);
+    allIssues.push(...causalityResult.issues);
+  }
 
   return { fixes: allFixes, issues: allIssues };
 }
