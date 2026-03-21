@@ -28,6 +28,18 @@ export interface Character {
   traits: string;
   appearance: string;
   dna: number;
+  personality?: string;
+  speechStyle?: string;
+  speechExample?: string;
+}
+
+export type CharRelationType = "lover" | "rival" | "friend" | "enemy" | "family" | "mentor" | "subordinate";
+
+export interface CharRelation {
+  from: string;
+  to: string;
+  type: CharRelationType;
+  desc?: string;
 }
 
 export interface StoryConfig {
@@ -41,6 +53,7 @@ export interface StoryConfig {
   synopsis?: string;
   guardrails: PclGuardrails;
   characters: Character[];
+  charRelations?: CharRelation[];
   platform: PlatformType;
   episodeState?: EpisodeState;
 }

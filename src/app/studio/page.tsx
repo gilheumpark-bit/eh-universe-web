@@ -25,7 +25,7 @@ import { generateStoryStream } from '@/services/geminiService';
 import WorldSimulator from '@/components/WorldSimulator';
 import SceneSheet from '@/components/studio/SceneSheet';
 import Link from 'next/link';
-import { Map, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 // BYOK provider info available via '@/lib/ai-providers'
 
 const STORAGE_KEY_SESSIONS = 'noa_chat_sessions_v2';
@@ -430,7 +430,6 @@ export default function StudioPage() {
               { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
-              { tab: 'critique' as AppTab, icon: Map, label: language === 'KO' ? '세계관 시뮬레이터' : 'World Simulator' },
               { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '씬시트' : 'Scene Sheet' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
@@ -560,7 +559,12 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                  <div className="space-y-8">
+                    <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                    <div className="max-w-5xl mx-auto px-4 md:px-6 pb-12">
+                      <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
+                    </div>
+                  </div>
                 )}
                 {activeTab === 'characters' && currentSession && (
                   <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
@@ -568,11 +572,7 @@ export default function StudioPage() {
                 {activeTab === 'settings' && (
                   <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
                 )}
-                {activeTab === 'critique' && (
-                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
-                  </div>
-                )}
+                {/* WorldSimulator moved into 'world' tab above */}
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'} />

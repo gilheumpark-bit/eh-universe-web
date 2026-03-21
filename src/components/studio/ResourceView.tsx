@@ -1,9 +1,19 @@
 
 import React, { useState, useMemo } from 'react';
-import { Character, StoryConfig, AppLanguage } from '@/lib/studio-types';
+import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-constants';
-import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap } from 'lucide-react';
+import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2 } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
+
+const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
+  lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
+  rival:       { ko: "라이벌", en: "Rival", color: "#f59e0b" },
+  friend:      { ko: "친구", en: "Friend", color: "#22c55e" },
+  enemy:       { ko: "적", en: "Enemy", color: "#ef4444" },
+  family:      { ko: "가족", en: "Family", color: "#8b5cf6" },
+  mentor:      { ko: "사제", en: "Mentor", color: "#06b6d4" },
+  subordinate: { ko: "상하", en: "Superior/Sub", color: "#6b7280" },
+};
 
 interface ResourceViewProps {
   language: AppLanguage;
@@ -254,11 +264,42 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       </button>
                     </div>
 
-                    <div className="bg-black/40 p-5 rounded-2xl mb-6 relative group/traits">
+                    <div className="bg-black/40 p-5 rounded-2xl mb-4 relative group/traits">
                       <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-zinc-800 opacity-50" />
                       <p className="text-[11px] text-zinc-400 font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
                         {char.traits}
                       </p>
+                    </div>
+
+                    {/* Personality & Speech Style */}
+                    <div className="space-y-2 mb-4">
+                      <input
+                        value={char.personality || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, personality: e.target.value } : c)
+                        }))}
+                        placeholder={language === 'KO' ? '🧠 성격 (예: 냉소적이지만 내면은 따뜻함)' : '🧠 Personality (e.g. cynical but warm inside)'}
+                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                      />
+                      <input
+                        value={char.speechStyle || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, speechStyle: e.target.value } : c)
+                        }))}
+                        placeholder={language === 'KO' ? '🗣️ 억양/말투 (예: 반말, 짧은 문장, 냉담한 톤)' : '🗣️ Speech style (e.g. informal, short sentences, cold tone)'}
+                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                      />
+                      <input
+                        value={char.speechExample || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, speechExample: e.target.value } : c)
+                        }))}
+                        placeholder={language === 'KO' ? '💬 대사 예시 (예: "...그래서 뭐 어쩌라고.")' : '💬 Example dialogue (e.g. "...so what do you want me to do.")'}
+                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800 font-serif italic"
+                      />
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -276,11 +317,181 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
         </div>
       </div>
       
+      {/* ====== CHARACTER RELATIONSHIP MAP ====== */}
+      {config.characters.length >= 2 && (
+        <CharRelationMap language={language} config={config} setConfig={setConfig} />
+      )}
+
       {/* Mobile-only spacer for bottom nav */}
       <div className="h-20 md:hidden" />
     </div>
   );
 };
+
+// ============================================================
+// Character Relationship Map (관계도)
+// ============================================================
+
+function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
+  const isKO = language === 'KO';
+  const chars = config.characters;
+  const relations = config.charRelations || [];
+
+  const [selFrom, setSelFrom] = useState('');
+  const [selTo, setSelTo] = useState('');
+  const [selType, setSelType] = useState<CharRelationType>('friend');
+  const [relDesc, setRelDesc] = useState('');
+
+  const addRelation = () => {
+    if (!selFrom || !selTo || selFrom === selTo) return;
+    const exists = relations.some(r =>
+      (r.from === selFrom && r.to === selTo) || (r.from === selTo && r.to === selFrom)
+    );
+    if (exists) return;
+    setConfig((prev: StoryConfig) => ({
+      ...prev,
+      charRelations: [...(prev.charRelations || []), { from: selFrom, to: selTo, type: selType, desc: relDesc }]
+    }));
+    setRelDesc('');
+  };
+
+  const removeRelation = (idx: number) => {
+    setConfig((prev: StoryConfig) => ({
+      ...prev,
+      charRelations: (prev.charRelations || []).filter((_, i) => i !== idx)
+    }));
+  };
+
+  // SVG circular layout
+  const cx = 200, cy = 200, r = 140;
+  const nodePositions = chars.map((c, i) => {
+    const angle = (i / Math.max(chars.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    return { id: c.id, name: c.name, role: c.role, x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+  const getPos = (id: string) => nodePositions.find(n => n.id === id);
+
+  const ROLE_COLORS: Record<string, string> = {
+    hero: '#3b82f6', villain: '#ef4444', ally: '#22c55e', extra: '#6b7280'
+  };
+
+  return (
+    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-pink-600/10 border border-pink-500/20 rounded-2xl">
+          <Link2 className="w-6 h-6 text-pink-400" />
+        </div>
+        <div>
+          <h3 className="text-xl font-black tracking-tighter uppercase">{isKO ? '캐릭터 관계도' : 'Character Relations'}</h3>
+          <p className="text-zinc-500 text-[9px] font-bold tracking-widest uppercase">{isKO ? '인물 간 관계 시각화' : 'Visual relationship map'}</p>
+        </div>
+      </div>
+
+      {/* Add relation controls */}
+      <div className="flex flex-wrap gap-2 items-end">
+        <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
+          <option value="">{isKO ? '캐릭터 A' : 'Character A'}</option>
+          {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
+          <option value="">{isKO ? '캐릭터 B' : 'Character B'}</option>
+          {chars.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <div className="flex gap-1">
+          {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
+            <button key={rt} onClick={() => setSelType(rt)}
+              className={`px-2 py-2 rounded-lg text-[9px] font-bold border transition-all ${
+                selType === rt ? 'text-white' : 'text-zinc-600 border-zinc-800 hover:border-zinc-600'
+              }`}
+              style={selType === rt ? { background: CHAR_REL_STYLES[rt].color, borderColor: CHAR_REL_STYLES[rt].color } : undefined}
+            >
+              {isKO ? CHAR_REL_STYLES[rt].ko : CHAR_REL_STYLES[rt].en}
+            </button>
+          ))}
+        </div>
+        <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={isKO ? '관계 설명...' : 'Description...'}
+          className="flex-1 min-w-[120px] bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none" />
+        <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
+          {isKO ? '추가' : 'Add'}
+        </button>
+      </div>
+
+      {/* SVG Relation Graph */}
+      <div className="flex justify-center">
+        <svg viewBox="0 0 400 400" className="w-full max-w-[500px]" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
+          {/* Relation lines */}
+          {relations.map((rel, i) => {
+            const from = getPos(rel.from);
+            const to = getPos(rel.to);
+            if (!from || !to) return null;
+            const style = CHAR_REL_STYLES[rel.type];
+            return (
+              <g key={i}>
+                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={style.color} strokeWidth="2" opacity="0.6" />
+                <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 6} fill={style.color} fontSize="8" textAnchor="middle" fontWeight="bold">
+                  {isKO ? style.ko : style.en}
+                </text>
+                {rel.desc && (
+                  <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 + 5} fill={style.color} fontSize="6" textAnchor="middle" opacity="0.7">
+                    {rel.desc}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+          {/* Character nodes */}
+          {nodePositions.map(node => {
+            const roleColor = ROLE_COLORS[chars.find(c => c.id === node.id)?.role || 'extra'] || '#6b7280';
+            return (
+              <g key={node.id}>
+                <circle cx={node.x} cy={node.y} r="22" fill={roleColor} opacity="0.12" stroke={roleColor} strokeWidth="2" />
+                <text x={node.x} y={node.y - 2} fill="white" fontSize="11" textAnchor="middle" fontWeight="bold">
+                  {node.name.slice(0, 3)}
+                </text>
+                <text x={node.x} y={node.y + 10} fill={roleColor} fontSize="7" textAnchor="middle" opacity="0.8">
+                  {node.role}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Legend + list */}
+      <div className="flex flex-wrap gap-3 text-[9px]">
+        {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
+          <span key={rt} className="flex items-center gap-1">
+            <span className="w-3 h-0.5 inline-block rounded" style={{ background: CHAR_REL_STYLES[rt].color }} />
+            {isKO ? CHAR_REL_STYLES[rt].ko : CHAR_REL_STYLES[rt].en}
+          </span>
+        ))}
+      </div>
+
+      {relations.length > 0 && (
+        <div className="space-y-1.5">
+          {relations.map((rel, i) => {
+            const fromChar = chars.find(c => c.id === rel.from);
+            const toChar = chars.find(c => c.id === rel.to);
+            const style = CHAR_REL_STYLES[rel.type];
+            return (
+              <div key={i} className="flex items-center justify-between bg-black/30 border border-zinc-800/50 rounded-xl px-4 py-2 text-[10px]">
+                <span>
+                  <span className="font-bold text-white">{fromChar?.name}</span>
+                  <span className="text-zinc-600 mx-1.5">⇄</span>
+                  <span className="font-bold text-white">{toChar?.name}</span>
+                  <span className="ml-2 font-bold" style={{ color: style.color }}>
+                    [{isKO ? style.ko : style.en}]
+                  </span>
+                  {rel.desc && <span className="ml-2 text-zinc-500 italic">{rel.desc}</span>}
+                </span>
+                <button onClick={() => removeRelation(i)} className="text-zinc-700 hover:text-red-500 transition-colors">✕</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default ResourceView;
 
