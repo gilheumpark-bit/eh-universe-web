@@ -208,7 +208,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
 };
 
 function ProfileCard({ isKO }: { isKO: boolean }) {
-  const { user, signInWithGoogle, signOut, isConfigured } = useAuth();
+  const { user, signInWithGoogle, signOut, isConfigured, error } = useAuth();
 
   if (user) {
     return (
@@ -255,6 +255,9 @@ function ProfileCard({ isKO }: { isKO: boolean }) {
         className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all active:scale-[0.98] text-blue-400">
         🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'} <ChevronRight className="w-4 h-4" />
       </button>
+      {error && (
+        <p className="text-red-400 text-xs px-2">{error}</p>
+      )}
     </div>
   );
 }
