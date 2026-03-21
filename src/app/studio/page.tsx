@@ -578,11 +578,25 @@ export default function StudioPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {!currentSessionId && !['settings', 'history', 'rulebook', 'critique'].includes(activeTab) ? (
-              <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                <Ghost className="w-12 h-12 md:w-16 md:h-16 text-border mb-6" />
-                <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)]">{t.engine.noActiveNarrative}</h2>
-                <p className="text-text-tertiary text-sm mb-8">{t.engine.startPrompt}</p>
-                <button onClick={createNewSession} className="px-8 py-3 md:px-10 md:py-4 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)]">{t.sidebar.newProject}</button>
+              <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+                {/* Background gate image */}
+                <div className="absolute inset-0 z-0">
+                  <img src="/images/gate-infrastructure-visual.jpg" alt="" className="w-full h-full object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
+                </div>
+                {/* Noise overlay matching landing */}
+                <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+                {/* Content */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-accent-purple/30 flex items-center justify-center mb-6 backdrop-blur-sm bg-bg-primary/30">
+                    <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">{t.engine.noActiveNarrative}</h2>
+                  <p className="text-text-tertiary text-sm mb-2">{t.engine.startPrompt}</p>
+                  <p className="text-text-tertiary/50 text-[10px] mb-8 max-w-sm font-[family-name:var(--font-mono)]">
+                    {isKO ? '세계관 설계 → 캐릭터 생성 → 연출 설정 → 집필 순서로 진행하세요' : 'World Design → Characters → Direction → Writing — follow the workflow'}
+                  </p>
+                  <button onClick={createNewSession} className="px-8 py-3 md:px-10 md:py-4 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">{t.sidebar.newProject}</button>
+                </div>
               </div>
             ) : (
               <>
