@@ -223,7 +223,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={handleTest}
             disabled={!currentKey.trim() || status === 'testing'}
@@ -237,7 +237,19 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
             disabled={!currentKey.trim()}
             className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
-            {isKO ? '저장 및 활성화' : 'Save & Activate'}
+            {isKO ? '저장' : 'Save'}
+          </button>
+          <button
+            onClick={() => {
+              setApiKey(activeId, '');
+              setKeys(prev => ({ ...prev, [activeId]: '' }));
+              setTestStatus(prev => ({ ...prev, [activeId]: 'idle' }));
+              if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
+            }}
+            disabled={!currentKey.trim()}
+            className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
+          >
+            {isKO ? '삭제' : 'Delete'}
           </button>
         </div>
 
