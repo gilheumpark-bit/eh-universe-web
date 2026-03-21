@@ -262,6 +262,7 @@ interface SceneSheetProps {
 
 export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
+  const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
   const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
   const [emotions, setEmotions] = useState<EmotionPoint[]>(initialDirection?.emotions || []);
@@ -835,6 +836,117 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <span className="font-bold">{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ============================================================ */}
+        {/* Direction Assembly — 설정 조립 요약 카드 + AI 프롬프트 미리보기 */}
+        {/* ============================================================ */}
+        <div className="border-t border-border pt-4 space-y-3">
+          <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+            {lang === "ko" ? "설정 조립" : "Direction Assembly"}
+          </span>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {([
+              { tab: "goguma" as SheetTab, emoji: "🍠", label: lang === "ko" ? "고구마/사이다" : "Tension/Release",
+                count: gogumas.length,
+                detail: gogumas.length > 0 ? gogumas.map(g => g.type === "goguma" ? (lang === "ko" ? "고" : "T") : (lang === "ko" ? "사" : "R")).join("") : null },
+              { tab: "hook" as SheetTab, emoji: "🪝", label: lang === "ko" ? "훅" : "Hook",
+                count: hooks.length,
+                detail: hooks.length > 0 ? hooks.map(h => h.position[0].toUpperCase()).join("/") : null },
+              { tab: "emotion" as SheetTab, emoji: "💓", label: lang === "ko" ? "감정선" : "Emotion",
+                count: emotions.length,
+                detail: emotions.length > 0 ? emotions.slice(0, 3).map(e => e.emotion).join("→") : null },
+              { tab: "dialogue" as SheetTab, emoji: "💬", label: lang === "ko" ? "대사 톤" : "Dialogue",
+                count: dialogueRules.length,
+                detail: dialogueRules.length > 0 ? dialogueRules.map(d => d.character).join("/") : null },
+              { tab: "dopamine" as SheetTab, emoji: "⚡", label: lang === "ko" ? "도파민" : "Dopamine",
+                count: dopamines.length,
+                detail: dopamines.length > 0 ? dopamines.map(d => d.scale === "micro" ? (lang === "ko" ? "소" : "μ") : d.scale === "medium" ? (lang === "ko" ? "중" : "M") : (lang === "ko" ? "대" : "L")).join("/") : null },
+              { tab: "cliff" as SheetTab, emoji: "🔚", label: lang === "ko" ? "클리프행어" : "Cliff",
+                count: cliffs.length,
+                detail: cliffs.length > 0 ? cliffs[0].cliffType : null },
+            ]).map(card => (
+              <button key={card.tab} onClick={() => setActiveTab(card.tab)}
+                className={`text-left p-2.5 rounded-lg border transition-all ${card.count > 0 ? "border-accent-purple/30 bg-accent-purple/5 hover:bg-accent-purple/10" : "border-border bg-bg-primary hover:bg-bg-secondary"}`}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs">{card.emoji}</span>
+                  <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase">{card.label}</span>
+                  <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
+                </div>
+                <div className="text-[8px] text-text-tertiary truncate">
+                  {card.detail || (lang === "ko" ? "미설정" : "Not set")}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* AI Prompt Preview toggle */}
+          <div>
+            <button onClick={() => setShowPromptPreview(p => !p)}
+              className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary hover:text-accent-purple transition-colors">
+              {showPromptPreview ? "▼" : "▶"} {lang === "ko" ? "AI 지시문 미리보기" : "AI Prompt Preview"}
+            </button>
+
+            {showPromptPreview && (() => {
+              const parts: string[] = [];
+              if (gogumas.length > 0) {
+                parts.push(lang === "ko" ? "[고구마/사이다 리듬]" : "[Tension/Release Rhythm]");
+                gogumas.forEach(g => {
+                  parts.push(`  - ${g.type === "goguma" ? (lang === "ko" ? "고구마" : "Tension") : (lang === "ko" ? "사이다" : "Release")} (${g.intensity}): ${g.desc}`);
+                });
+              }
+              if (hooks.length > 0) {
+                parts.push(lang === "ko" ? "[훅 배치]" : "[Hook Placement]");
+                hooks.forEach(h => {
+                  parts.push(`  - ${h.position}: ${h.hookType} — ${h.desc}`);
+                });
+              }
+              if (emotions.length > 0) {
+                parts.push(lang === "ko" ? "[감정선 목표]" : "[Emotion Targets]");
+                emotions.forEach(e => {
+                  parts.push(`  - ${e.emotion}: ${lang === "ko" ? "강도" : "intensity"} ${e.intensity}%`);
+                });
+              }
+              if (dialogueRules.length > 0) {
+                parts.push(lang === "ko" ? "[대사 톤 규칙]" : "[Dialogue Tone Rules]");
+                dialogueRules.forEach(d => {
+                  parts.push(`  - ${d.character}: ${d.tone}${d.notes ? ` (${d.notes})` : ""}`);
+                });
+              }
+              if (dopamines.length > 0) {
+                parts.push(lang === "ko" ? "[도파민 장치]" : "[Dopamine Devices]");
+                dopamines.forEach(dp => {
+                  parts.push(`  - [${dp.scale}] ${dp.device}: ${dp.desc}`);
+                });
+              }
+              if (cliffs.length > 0) {
+                parts.push(lang === "ko" ? "[클리프행어]" : "[Cliffhanger]");
+                cliffs.forEach(cl => {
+                  parts.push(`  - ${cl.cliffType}: ${cl.desc}`);
+                });
+              }
+
+              const preview = parts.length > 0
+                ? "[SCENE DIRECTION]\n" + parts.join("\n")
+                : (lang === "ko" ? "(설정 없음 — 연출 데이터를 추가하세요)" : "(No direction data — add entries above)");
+
+              return (
+                <div className="mt-2 relative">
+                  <pre className="text-[9px] text-text-secondary bg-bg-primary border border-border rounded-lg p-3 overflow-x-auto whitespace-pre-wrap font-[family-name:var(--font-mono)] max-h-60 overflow-y-auto">
+                    {preview}
+                  </pre>
+                  {parts.length > 0 && (
+                    <button onClick={() => { navigator.clipboard.writeText(preview); }}
+                      className="absolute top-2 right-2 text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
+                      {lang === "ko" ? "복사" : "Copy"}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
