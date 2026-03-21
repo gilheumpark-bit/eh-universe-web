@@ -1,3 +1,4 @@
+"use client";
 
 import React, { useState } from 'react';
 import { AppLanguage } from '@/lib/studio-types';
@@ -24,9 +25,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   const isKO = language === 'KO';
   const l = LABELS[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => localStorage.getItem('noa_default_platform') || 'MOBILE');
-  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt(localStorage.getItem('noa_default_episodes') || '25'));
-  const [temperature, setTemperature] = useState<number>(() => parseFloat(localStorage.getItem('noa_temperature') || '0.7'));
+  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') || 'MOBILE' : 'MOBILE');
+  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => typeof window !== 'undefined' ? parseInt(localStorage.getItem('noa_default_episodes') || '25') : 25);
+  const [temperature, setTemperature] = useState<number>(() => typeof window !== 'undefined' ? parseFloat(localStorage.getItem('noa_temperature') || '0.7') : 0.7);
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
