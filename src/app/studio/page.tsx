@@ -98,7 +98,13 @@ export default function StudioPage() {
   const [canvasContent, setCanvasContent] = useState('');
   const [canvasPass, setCanvasPass] = useState(0);
   const [promptDirective, setPromptDirective] = useState('');
-  const [rightPanelOpen, setRightPanelOpen] = useState(true); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [saveFlash, setSaveFlash] = useState(false);
+  const triggerSave = useCallback(() => {
+    // Data is already auto-saved via localStorage, this is visual feedback
+    setSaveFlash(true);
+    setTimeout(() => setSaveFlash(false), 1500);
+  }, []); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -517,7 +523,7 @@ export default function StudioPage() {
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
               <span className="text-text-tertiary hidden sm:inline">{t.sidebar.activeProject}:</span>
               <span className="text-text-primary truncate">{currentSession?.title || t.engine.noStory}</span>
-              {currentSessionId && <span className="text-[8px] text-accent-green font-[family-name:var(--font-mono)]">✓ {isKO ? '저장됨' : 'Saved'}</span>}
+              {currentSessionId && <span className={`text-[8px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '자동 저장' : 'Auto-saved')}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -613,7 +619,14 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                  <>
+                    <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                    <div className="max-w-4xl mx-auto px-4 pb-8 flex justify-end">
+                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
+                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
+                      </button>
+                    </div>
+                  </>
                 )}
                 {activeTab === 'critique' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
@@ -641,10 +654,22 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    <div className="flex justify-end mt-4">
+                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
+                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'characters' && currentSession && (
-                  <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                  <>
+                    <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                    <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
+                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
+                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
+                      </button>
+                    </div>
+                  </>
                 )}
                 {activeTab === 'settings' && (
                   <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
@@ -689,6 +714,11 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    <div className="flex justify-end mt-4">
+                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
+                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
