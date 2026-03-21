@@ -23,8 +23,9 @@ import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import { generateStoryStream } from '@/services/geminiService';
 import WorldSimulator from '@/components/WorldSimulator';
+import SceneSheet from '@/components/studio/SceneSheet';
 import Link from 'next/link';
-import { Map } from 'lucide-react';
+import { Map, FileText } from 'lucide-react';
 // BYOK provider info available via '@/lib/ai-providers'
 
 const STORAGE_KEY_SESSIONS = 'noa_chat_sessions_v2';
@@ -430,6 +431,7 @@ export default function StudioPage() {
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
               { tab: 'critique' as AppTab, icon: Map, label: language === 'KO' ? '세계관 시뮬레이터' : 'World Simulator' },
+              { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '씬시트' : 'Scene Sheet' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
@@ -548,7 +550,7 @@ export default function StudioPage() {
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            {!currentSessionId && !['settings', 'history'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook'].includes(activeTab) ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <Ghost className="w-12 h-12 md:w-16 md:h-16 text-border mb-6" />
                 <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)]">{t.engine.noActiveNarrative}</h2>
@@ -569,6 +571,11 @@ export default function StudioPage() {
                 {activeTab === 'critique' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
+                  </div>
+                )}
+                {activeTab === 'rulebook' && (
+                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
+                    <SceneSheet lang={language === 'EN' ? 'en' : 'ko'} />
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
