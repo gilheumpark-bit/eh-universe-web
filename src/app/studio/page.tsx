@@ -993,7 +993,7 @@ export default function StudioPage() {
                             setWritingMode('ai');
                             setTimeout(() => {
                               handleSend(isKO
-                                ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자). JSON 리포트 없이 본문만 출력.'
+                                ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자). 중요: JSON 코드블록, 분석 리포트, grade, metrics 등 절대 출력하지 마세요. 순수 소설 본문만 출력하세요.'
                                 : '[Pass 1 — Skeleton] Scene sheet based. Events and dialogue only. ~1,000 tokens. Story text only, no JSON.'
                               );
                             }, 100);
@@ -1010,7 +1010,7 @@ export default function StudioPage() {
                             setWritingMode('ai');
                             setTimeout(() => {
                               handleSend(isKO
-                                ? `[2단계 — 감정선] 아래 초안을 전체 다시 써주세요. 인물 내면, 감정 밀도, 문장 리듬 강화. 고구마/사이다 타이밍 조정. 약 1,000토큰 추가하여 전체를 출력.\n\n---초안---\n${draft.slice(0, 4000)}`
+                                ? `[2단계 — 감정선] 아래 초안을 전체 다시 써주세요. 인물 내면, 감정 밀도, 문장 리듬 강화. 고구마/사이다 타이밍. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---초안---\n${draft.slice(0, 4000)}`
                                 : `[Pass 2 — Emotion] Rewrite fully with inner thoughts, emotional density, pacing. +1,000 tokens. Full output.\n\n---Draft---\n${draft.slice(0, 4000)}`
                               );
                             }, 100);
@@ -1027,7 +1027,7 @@ export default function StudioPage() {
                             setWritingMode('ai');
                             setTimeout(() => {
                               handleSend(isKO
-                                ? `[3단계 — 감각 묘사] 아래 원고를 전체 다시 써주세요. 물성/시각/청각/촉각 묘사 추가. 클리프행어 마무리. 약 1,000토큰 추가하여 전체를 출력.\n\n---원고---\n${ms.slice(0, 5000)}`
+                                ? `[3단계 — 감각 묘사] 아래 원고를 전체 다시 써주세요. 물성/시각/청각/촉각 묘사 추가. 클리프행어 마무리. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---원고---\n${ms.slice(0, 5000)}`
                                 : `[Pass 3 — Sensory] Rewrite with physical/visual/auditory descriptions. Cliffhanger. +1,000 tokens. Full output.\n\n---Manuscript---\n${ms.slice(0, 5000)}`
                               );
                             }, 100);
@@ -1235,7 +1235,14 @@ export default function StudioPage() {
                         {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400">🪝 {h.desc}</div>)}
                         {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
                         {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
-                        {!currentSession.config.sceneDirection && <p className="text-[10px] text-text-tertiary italic">{isKO ? '미설정' : 'Not set'}</p>}
+                        {!currentSession.config.sceneDirection && (
+                          <div className="space-y-1.5">
+                            <p className="text-[10px] text-text-tertiary italic">{isKO ? '연출이 설정되지 않았습니다' : 'Direction not configured'}</p>
+                            <button onClick={() => setActiveTab('rulebook')} className="text-[9px] text-accent-purple hover:underline font-bold">
+                              → {isKO ? '연출 스튜디오에서 설정하기' : 'Set up in Direction Studio'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </details>
 
