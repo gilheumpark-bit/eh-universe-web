@@ -93,6 +93,15 @@ export interface StoryConfig {
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;
   worldSimData?: WorldSimData;
+  savedSlots?: SavedSlot[];
+}
+
+export interface SavedSlot {
+  id: string;
+  name: string;
+  tab: string;
+  timestamp: number;
+  data: Partial<StoryConfig>;
 }
 
 export interface Message {

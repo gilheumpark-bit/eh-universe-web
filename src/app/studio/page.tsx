@@ -1101,6 +1101,107 @@ export default function StudioPage() {
             <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
           )}
 
+          {/* Right Panel — Save Slots (all tabs except writing) */}
+          {activeTab !== 'writing' && activeTab !== 'history' && activeTab !== 'settings' && currentSession && (
+            <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
+              <div className="p-4 space-y-3">
+                <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                  📂 {isKO ? '저장 목록' : 'Saved Versions'}
+                </div>
+
+                {/* Save current */}
+                <button onClick={() => {
+                  const name = prompt(isKO ? '저장 이름을 입력하세요:' : 'Enter save name:');
+                  if (!name) return;
+                  const slot: import('@/lib/studio-types').SavedSlot = {
+                    id: `slot-${Date.now()}`,
+                    name,
+                    tab: activeTab,
+                    timestamp: Date.now(),
+                    data: {
+                      genre: currentSession.config.genre,
+                      title: currentSession.config.title,
+                      povCharacter: currentSession.config.povCharacter,
+                      setting: currentSession.config.setting,
+                      primaryEmotion: currentSession.config.primaryEmotion,
+                      synopsis: currentSession.config.synopsis,
+                      characters: currentSession.config.characters,
+                      charRelations: currentSession.config.charRelations,
+                      sceneDirection: currentSession.config.sceneDirection,
+                      worldSimData: currentSession.config.worldSimData,
+                      simulatorRef: currentSession.config.simulatorRef,
+                    },
+                  };
+                  updateCurrentSession({
+                    config: {
+                      ...currentSession.config,
+                      savedSlots: [...(currentSession.config.savedSlots || []), slot],
+                    },
+                  });
+                  triggerSave();
+                }}
+                  className="w-full py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity active:scale-95">
+                  💾 {isKO ? '현재 설정 저장' : 'Save Current'}
+                </button>
+
+                {/* Saved slots list */}
+                <div className="space-y-1.5">
+                  {(currentSession.config.savedSlots || [])
+                    .filter(s => s.tab === activeTab || s.tab === 'all')
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .map(slot => (
+                      <div key={slot.id} className="flex items-center gap-2 px-2 py-2 bg-bg-secondary/50 border border-border rounded-lg group hover:border-accent-purple/30 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[10px] font-bold text-text-primary truncate">{slot.name}</div>
+                          <div className="text-[8px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
+                        </div>
+                        <button onClick={() => {
+                          if (!confirm(isKO ? `"${slot.name}"을 불러오시겠습니까? 현재 설정이 덮어씌워집니다.` : `Load "${slot.name}"? Current settings will be overwritten.`)) return;
+                          updateCurrentSession({ config: { ...currentSession.config, ...slot.data } });
+                          triggerSave();
+                        }}
+                          className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
+                          {isKO ? '불러오기' : 'Load'}
+                        </button>
+                        <button onClick={() => {
+                          updateCurrentSession({
+                            config: {
+                              ...currentSession.config,
+                              savedSlots: (currentSession.config.savedSlots || []).filter(s => s.id !== slot.id),
+                            },
+                          });
+                        }}
+                          className="text-text-tertiary hover:text-accent-red text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  {(currentSession.config.savedSlots || []).filter(s => s.tab === activeTab || s.tab === 'all').length === 0 && (
+                    <p className="text-[9px] text-text-tertiary italic text-center py-4">
+                      {isKO ? '저장된 버전이 없습니다' : 'No saved versions'}
+                    </p>
+                  )}
+                </div>
+
+                {/* All slots across tabs */}
+                {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length > 0 && (
+                  <details className="group">
+                    <summary className="text-[9px] text-text-tertiary cursor-pointer hover:text-text-secondary">
+                      {isKO ? '다른 탭 저장' : 'Other tabs'} ({(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length})
+                    </summary>
+                    <div className="mt-1 space-y-1">
+                      {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).map(slot => (
+                        <div key={slot.id} className="text-[8px] text-text-tertiary px-2 py-1 bg-bg-primary rounded">
+                          [{slot.tab}] {slot.name}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            </aside>
+          )}
+
           {/* Right Panel — Writing Assistant + AI Chat */}
           {activeTab === 'writing' && writingMode === 'ai' && currentSession && !showDashboard && (
             <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
