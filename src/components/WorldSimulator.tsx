@@ -1877,6 +1877,82 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
             </span>
           </div>
         </div>
+
+        {/* ============================================================ */}
+        {/* World Narrative Summary — 세계관 서술 요약 */}
+        {/* ============================================================ */}
+        {civs.length > 0 && (() => {
+          const isKO = lang === "ko";
+          const RELATION_KO: Record<string, string> = { war: "전쟁", alliance: "동맹", trade: "교역", vassal: "종속" };
+          const RELATION_EN: Record<string, string> = { war: "at war with", alliance: "allied with", trade: "trades with", vassal: "vassal of" };
+
+          const genreDesc = genreSelections.map(s => {
+            const g = GENRE_LEVELS.find(gl => gl.genre === s.genre);
+            const lvName = g?.levels.find(l => l.lv === s.level);
+            return `${s.genre} Lv${s.level}(${lvName ? (isKO ? lvName.ko : lvName.en) : ""})`;
+          }).join(" + ");
+
+          const paragraphs: string[] = [];
+
+          // Genre + rule intro
+          paragraphs.push(isKO
+            ? `이 세계는 ${genreDesc} 장르 블렌드로 구축되었으며, EH 규칙 Lv${ruleLevel}(${RULE_LEVELS[ruleLevel - 1][isKO ? "ko" : "en"]})이 적용됩니다.`
+            : `This world is built on a ${genreDesc} genre blend with EH Rules Lv${ruleLevel} (${RULE_LEVELS[ruleLevel - 1].en}).`);
+
+          // Civilizations
+          civs.forEach(c => {
+            const era = ERAS.find(e => e.id === c.era);
+            const eraName = era ? (isKO ? era.ko : era.en) : c.era;
+            const traitStr = c.traits.length > 0 ? c.traits.join(", ") : (isKO ? "특성 미정" : "traits TBD");
+            paragraphs.push(isKO
+              ? `"${c.name}"은(는) ${eraName} 시대의 문명으로, ${traitStr}의 특성을 가집니다.`
+              : `"${c.name}" is a ${eraName}-era civilization characterized by ${traitStr}.`);
+          });
+
+          // Relations
+          if (relations.length > 0) {
+            const relLines = relations.map(r => {
+              const fromCiv = civs.find(c => c.id === r.from);
+              const toCiv = civs.find(c => c.id === r.to);
+              if (!fromCiv || !toCiv) return null;
+              return isKO
+                ? `${fromCiv.name}과(와) ${toCiv.name}은(는) ${RELATION_KO[r.type] || r.type} 관계입니다.`
+                : `${fromCiv.name} is ${RELATION_EN[r.type] || r.type} ${toCiv.name}.`;
+            }).filter(Boolean);
+            if (relLines.length > 0) paragraphs.push(relLines.join(" "));
+          }
+
+          // Transitions
+          if (transitions.length > 0) {
+            const transLines = transitions.map(t => {
+              const fromEra = ERAS.find(e => e.id === t.fromEra);
+              const toEra = ERAS.find(e => e.id === t.toEra);
+              return isKO
+                ? `${fromEra ? fromEra.ko : t.fromEra}에서 ${toEra ? toEra.ko : t.toEra}로의 전환: ${t.description}`
+                : `Transition from ${fromEra ? fromEra.en : t.fromEra} to ${toEra ? toEra.en : t.toEra}: ${t.description}`;
+            });
+            paragraphs.push(transLines.join(" "));
+          }
+
+          const narrative = paragraphs.join("\n\n");
+
+          return (
+            <div className="border-t border-border pt-4 mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+                  {isKO ? "세계관 서술 요약" : "World Narrative Summary"}
+                </span>
+                <button onClick={() => navigator.clipboard.writeText(narrative)}
+                  className="text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
+                  {isKO ? "복사" : "Copy"}
+                </button>
+              </div>
+              <div className="text-[10px] text-text-secondary bg-bg-primary border border-border rounded-lg p-4 leading-relaxed whitespace-pre-wrap">
+                {narrative}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
