@@ -156,12 +156,30 @@ export function buildSystemInstruction(
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
   const genreGuide = GENRE_GUIDELINES[config.genre] ?? '';
 
-  // Character DNA formatting
+  // Character DNA formatting (with personality, speech style, dialogue example)
   const characterDNA = config.characters.length > 0
-    ? config.characters.map(c =>
-      `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`
-    ).join('\n')
+    ? config.characters.map(c => {
+      let entry = `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`;
+      if (c.personality) entry += `\n    성격: ${c.personality}`;
+      if (c.speechStyle) entry += `\n    말투: ${c.speechStyle}`;
+      if (c.speechExample) entry += `\n    대사 예시: ${c.speechExample}`;
+      return entry;
+    }).join('\n')
     : '  등록된 캐릭터 없음';
+
+  // Character relationships
+  const REL_LABELS: Record<string, string> = {
+    lover: '연인', rival: '라이벌', friend: '친구', enemy: '적',
+    family: '가족', mentor: '사제', subordinate: '상하',
+  };
+  const charRelations = (config.charRelations && config.charRelations.length > 0)
+    ? config.charRelations.map(r => {
+      const fromName = config.characters.find(c => c.id === r.from)?.name || r.from;
+      const toName = config.characters.find(c => c.id === r.to)?.name || r.to;
+      const label = REL_LABELS[r.type] || r.type;
+      return `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
+    }).join('\n')
+    : '';
 
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
@@ -192,6 +210,8 @@ ${genreGuide}
 
 [CHARACTER DATABASE / DIALOGUE DNA]
 ${characterDNA}
+${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
+${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 
 [SERIALIZATION CONSTRAINTS]
 - Platform: ${platform}

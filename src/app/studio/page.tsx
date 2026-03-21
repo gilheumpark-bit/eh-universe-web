@@ -429,8 +429,8 @@ export default function StudioPage() {
             {([
               { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
+              { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '연출 스튜디오' : 'Direction Studio' },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
-              { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '씬시트' : 'Scene Sheet' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
