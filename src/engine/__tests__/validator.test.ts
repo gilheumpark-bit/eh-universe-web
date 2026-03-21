@@ -1,4 +1,4 @@
-import { validateAITone, validateQuality, validateCausality, validateFormattingIssues, applyFormattingRules, validateGeneratedContent } from '../validator';
+import { validateAITone, validateQuality, validateCausality, validateFormattingIssues, applyFormattingRules, validateGeneratedContent, detectTrademarks, filterTrademarks } from '../validator';
 
 // ============================================================
 // AI Tone Validator
@@ -145,5 +145,45 @@ describe('validateGeneratedContent', () => {
     const { fixes } = validateGeneratedContent('However this is fine.', 'EN', 1);
     // No Korean AI tone fixes
     expect(fixes.filter(f => f.reason.includes('AI톤')).length).toBe(0);
+  });
+});
+
+// ============================================================
+// Trademark / IP Filter
+// ============================================================
+
+describe('detectTrademarks', () => {
+  it('detects Korean trademarks', () => {
+    const matches = detectTrademarks('주인공은 포켓몬을 잡기 위해 스타벅스에 갔다.');
+    expect(matches.length).toBe(2);
+    expect(matches.map(m => m.original)).toContain('포켓몬');
+    expect(matches.map(m => m.original)).toContain('스타벅스');
+  });
+
+  it('detects English trademarks', () => {
+    const matches = detectTrademarks('He played Pokemon and drank Coca-Cola.');
+    expect(matches.length).toBe(2);
+  });
+
+  it('returns empty for clean text', () => {
+    const matches = detectTrademarks('용사는 마법검을 들고 던전에 들어갔다.');
+    expect(matches.length).toBe(0);
+  });
+});
+
+describe('filterTrademarks', () => {
+  it('replaces trademarks with safe alternatives', () => {
+    const { filtered, matches } = filterTrademarks('그녀는 아이폰으로 유튜브를 봤다.');
+    expect(matches.length).toBe(2);
+    expect(filtered).toContain('스마트폰');
+    expect(filtered).toContain('동영상플랫폼');
+    expect(filtered).not.toContain('아이폰');
+    expect(filtered).not.toContain('유튜브');
+  });
+
+  it('handles mixed Korean/English', () => {
+    const { filtered } = filterTrademarks('Harry Potter와 나루토가 만났다.');
+    expect(filtered).not.toContain('Harry Potter');
+    expect(filtered).not.toContain('나루토');
   });
 });

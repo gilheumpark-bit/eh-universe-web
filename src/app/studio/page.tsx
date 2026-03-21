@@ -483,12 +483,20 @@ export default function StudioPage() {
         { language, signal: controller.signal, platform: currentSession!.config.platform, history: existingMessages }
       );
 
+      // Trademark/IP filter — 상표 자동 치환
+      const { filterTrademarks } = await import('@/engine/validator');
+      const ipCheck = filterTrademarks(fullContent);
+      if (ipCheck.matches.length > 0) {
+        fullContent = ipCheck.filtered;
+        console.info(`[IP Filter] ${ipCheck.matches.length}건 치환: ${[...new Set(ipCheck.matches.map(m => m.original))].join(', ')}`);
+      }
+
       setLastReport(result.report);
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
           const msgs = s.messages.map(m =>
             m.id === aiMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics } }
+              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
               : m
           );
           return { ...s, messages: msgs };
@@ -552,12 +560,19 @@ export default function StudioPage() {
         { language, signal: controller.signal, platform: currentSession.config.platform, history: historyMessages }
       );
 
+      // Trademark/IP filter
+      const { filterTrademarks } = await import('@/engine/validator');
+      const ipCheck = filterTrademarks(fullContent);
+      if (ipCheck.matches.length > 0) {
+        fullContent = ipCheck.filtered;
+      }
+
       setLastReport(result.report);
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
           const msgs = s.messages.map(m =>
             m.id === assistantMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics } }
+              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
               : m
           );
           return { ...s, messages: msgs };

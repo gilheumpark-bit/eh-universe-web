@@ -453,6 +453,135 @@ export function validateGeneratedContent(
     allIssues.push({ category: 'clean_taste', message: `클린테이스트 ${cleanTaste.balance.toFixed(2)} — 과도하게 다듬어짐`, severity: Severity.INFO });
   }
 
+  // Trademark / IP filter
+  const ipResult = validateTrademarkIP(text);
+  allFixes.push(...ipResult.fixes);
+  allIssues.push(...ipResult.issues);
+
   return { fixes: allFixes, issues: allIssues };
+}
+
+// ============================================================
+// Trademark / IP Filter — 상표·특허·저작물 명칭 감지
+// ============================================================
+
+const TRADEMARK_PATTERNS: { pattern: RegExp; replacement: string; category: string }[] = [
+  // Games / Entertainment
+  { pattern: /포켓몬|피카츄|Pokémon|Pokemon|Pikachu/gi, replacement: "○○몬", category: "game" },
+  { pattern: /마리오|Mario|루이지|Luigi/gi, replacement: "○○오", category: "game" },
+  { pattern: /젤다|Zelda|링크|Link(?=가|를|의|은|는)/gi, replacement: "○○다", category: "game" },
+  { pattern: /마인크래프트|Minecraft/gi, replacement: "블록월드", category: "game" },
+  { pattern: /리그 오브 레전드|League of Legends|LOL|롤/gi, replacement: "○○ 리그", category: "game" },
+  { pattern: /오버워치|Overwatch/gi, replacement: "○○워치", category: "game" },
+  { pattern: /포트나이트|Fortnite/gi, replacement: "○○나이트", category: "game" },
+
+  // Anime / Manga / Novel
+  { pattern: /나루토|Naruto/gi, replacement: "○○토", category: "anime" },
+  { pattern: /원피스|One Piece/gi, replacement: "○○피스", category: "anime" },
+  { pattern: /드래곤볼|Dragon Ball/gi, replacement: "○○볼", category: "anime" },
+  { pattern: /진격의 거인|Attack on Titan/gi, replacement: "○○의 거인", category: "anime" },
+  { pattern: /귀멸의 칼날|Demon Slayer/gi, replacement: "○○의 칼날", category: "anime" },
+  { pattern: /해리\s?포터|Harry\s?Potter/gi, replacement: "○○ 포터", category: "novel" },
+  { pattern: /반지의 제왕|Lord of the Rings/gi, replacement: "○○의 제왕", category: "novel" },
+  { pattern: /호그와트|Hogwarts/gi, replacement: "○○와트", category: "novel" },
+
+  // Movies / Series
+  { pattern: /스타워즈|Star\s?Wars/gi, replacement: "○○워즈", category: "movie" },
+  { pattern: /아이언맨|Iron\s?Man/gi, replacement: "○○맨", category: "movie" },
+  { pattern: /어벤져스|Avengers/gi, replacement: "○○져스", category: "movie" },
+  { pattern: /스파이더맨|Spider-?Man/gi, replacement: "○○맨", category: "movie" },
+  { pattern: /배트맨|Batman/gi, replacement: "○○맨", category: "movie" },
+  { pattern: /슈퍼맨|Superman/gi, replacement: "○○맨", category: "movie" },
+  { pattern: /트랜스포머|Transformers/gi, replacement: "○○포머", category: "movie" },
+
+  // Tech brands
+  { pattern: /아이폰|iPhone/gi, replacement: "스마트폰", category: "brand" },
+  { pattern: /갤럭시|Galaxy(?=\s|S|노트|폰)/gi, replacement: "스마트폰", category: "brand" },
+  { pattern: /구글|Google/gi, replacement: "검색엔진", category: "brand" },
+  { pattern: /애플|Apple(?=\s|의|이|은|는|을)/gi, replacement: "IT기업", category: "brand" },
+  { pattern: /테슬라|Tesla/gi, replacement: "전기차", category: "brand" },
+  { pattern: /페이스북|Facebook|메타|Meta(?=버스)/gi, replacement: "소셜플랫폼", category: "brand" },
+  { pattern: /인스타그램|Instagram/gi, replacement: "사진앱", category: "brand" },
+  { pattern: /유튜브|YouTube/gi, replacement: "동영상플랫폼", category: "brand" },
+  { pattern: /트위터|Twitter/gi, replacement: "마이크로블로그", category: "brand" },
+  { pattern: /넷플릭스|Netflix/gi, replacement: "스트리밍", category: "brand" },
+  { pattern: /카카오톡|KakaoTalk/gi, replacement: "메신저", category: "brand" },
+  { pattern: /네이버|Naver/gi, replacement: "포털", category: "brand" },
+
+  // Food / Consumer
+  { pattern: /코카콜라|Coca-?Cola/gi, replacement: "콜라", category: "brand" },
+  { pattern: /맥도날드|McDonald'?s/gi, replacement: "패스트푸드점", category: "brand" },
+  { pattern: /스타벅스|Starbucks/gi, replacement: "커피숍", category: "brand" },
+  { pattern: /나이키|Nike/gi, replacement: "운동브랜드", category: "brand" },
+  { pattern: /아디다스|Adidas/gi, replacement: "운동브랜드", category: "brand" },
+
+  // Music
+  { pattern: /BTS|방탄소년단/gi, replacement: "○○그룹", category: "music" },
+  { pattern: /블랙핑크|BLACKPINK/gi, replacement: "○○그룹", category: "music" },
+];
+
+export interface TrademarkMatch {
+  original: string;
+  replacement: string;
+  category: string;
+  position: number;
+}
+
+export function detectTrademarks(text: string): TrademarkMatch[] {
+  const matches: TrademarkMatch[] = [];
+  for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
+    const regex = new RegExp(pattern.source, pattern.flags);
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      matches.push({ original: m[0], replacement, category, position: m.index });
+    }
+  }
+  return matches;
+}
+
+export function filterTrademarks(text: string): { filtered: string; matches: TrademarkMatch[] } {
+  const matches = detectTrademarks(text);
+  let filtered = text;
+  for (const { pattern, replacement } of TRADEMARK_PATTERNS) {
+    filtered = filtered.replace(pattern, replacement);
+  }
+  return { filtered, matches };
+}
+
+function validateTrademarkIP(text: string): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  const fixes: FixRecord[] = [];
+  const issues: ValidationIssue[] = [];
+  const matches = detectTrademarks(text);
+
+  if (matches.length > 0) {
+    const grouped = new Map<string, string[]>();
+    for (const m of matches) {
+      const list = grouped.get(m.category) || [];
+      list.push(m.original);
+      grouped.set(m.category, list);
+    }
+
+    for (const [category, names] of grouped) {
+      const unique = [...new Set(names)];
+      issues.push({
+        category: 'trademark_ip',
+        message: `[${category}] 상표/IP 감지: ${unique.join(', ')} — 자동 치환됨`,
+        severity: Severity.WARNING,
+      });
+    }
+
+    for (const m of matches) {
+      fixes.push({
+        fixType: FixType.GRAMMAR,
+        original: m.original,
+        fixed: m.replacement,
+        position: m.position,
+        reason: `상표/IP 보호: ${m.original} → ${m.replacement}`,
+        severity: Severity.WARNING,
+      });
+    }
+  }
+
+  return { fixes, issues };
 }
 
