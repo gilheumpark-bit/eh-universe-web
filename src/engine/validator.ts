@@ -315,6 +315,94 @@ export function validateFormattingIssues(text: string): ValidationIssue[] {
 }
 
 // ============================================================
+// Clean Taste Balance (AI톤 vs 인간노이즈)
+// ============================================================
+
+const HUMAN_NOISE_PATTERNS = ['ㅋㅋ', 'ㅎㅎ', '뭐랄까', '그러니까', '아무튼', '진짜', '대박'];
+
+export function calculateCleanTaste(text: string): { aiTone: number; humanNoise: number; balance: number } {
+  const sentences = text.split(/[.!?。]+/).filter(s => s.trim()).length || 1;
+
+  // AI Tone score
+  let aiHits = 0;
+  for (const p of ['그러나 ', '반면에 ', '한편으로는 ', '따라서 ', '것이다.', '되었다.', '있었다.']) {
+    aiHits += (text.match(new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+  }
+  const aiTone = Math.min(1, aiHits / (sentences * 0.5));
+
+  // Human Noise score
+  let humanHits = 0;
+  for (const p of HUMAN_NOISE_PATTERNS) {
+    humanHits += (text.match(new RegExp(p, 'g')) || []).length;
+  }
+  const exclamations = (text.match(/!{2,}/g) || []).length;
+  humanHits += exclamations;
+  const humanNoise = Math.min(1, humanHits / (sentences * 0.3));
+
+  // Balance: sweet spot 0.6~0.8
+  const balance = 1 - (aiTone * 0.5 + humanNoise * 0.5);
+
+  return { aiTone, humanNoise, balance: Math.max(0, Math.min(1, balance)) };
+}
+
+// ============================================================
+// Sentence Length Variation (같은 길이 3개 연속 금지)
+// ============================================================
+
+export function validateSentenceVariation(text: string): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
+  if (sentences.length < 4) return issues;
+
+  let sameCount = 1;
+  for (let i = 1; i < sentences.length; i++) {
+    const prevLen = sentences[i - 1].trim().length;
+    const currLen = sentences[i].trim().length;
+    // "같은 길이" = ±5자 범위
+    if (Math.abs(prevLen - currLen) <= 5) {
+      sameCount++;
+      if (sameCount >= 3) {
+        issues.push({
+          category: 'sentence_variation',
+          message: `문장 ${i - 1}~${i + 1}: 비슷한 길이 ${sameCount}개 연속 (각 ~${currLen}자)`,
+          severity: Severity.WARNING,
+        });
+      }
+    } else {
+      sameCount = 1;
+    }
+  }
+  return issues;
+}
+
+// ============================================================
+// 10-Part Structure Validation
+// ============================================================
+
+const PART_TARGETS = [
+  { min: 450, max: 750 }, // Part 1-3 (도입)
+  { min: 450, max: 750 },
+  { min: 450, max: 750 },
+  { min: 550, max: 800 }, // Part 4-6 (전개)
+  { min: 550, max: 800 },
+  { min: 550, max: 800 },
+  { min: 500, max: 780 }, // Part 7-9 (절정)
+  { min: 500, max: 780 },
+  { min: 500, max: 780 },
+  { min: 350, max: 700 }, // Part 10 (마무리)
+];
+
+export function validate10PartStructure(text: string): { withinRange: boolean; partSizes: number[] } {
+  const totalChars = text.length;
+  const partSizes = PART_TARGETS.map(t => {
+    const targetMid = (t.min + t.max) / 2;
+    return Math.round(totalChars * (targetMid / 6000)); // proportional
+  });
+  const withinRange = totalChars >= 5500 && totalChars <= 7000;
+  return { withinRange, partSizes };
+}
+
+// ============================================================
 // Orchestrator
 // ============================================================
 
@@ -351,6 +439,19 @@ export function validateGeneratedContent(
   // Web-novel formatting rules (서식 규칙 7조)
   const formattingIssues = validateFormattingIssues(text);
   allIssues.push(...formattingIssues);
+
+  // Sentence variation check
+  const variationIssues = validateSentenceVariation(text);
+  allIssues.push(...variationIssues);
+
+  // Clean taste balance
+  const cleanTaste = calculateCleanTaste(text);
+  if (cleanTaste.balance < 0.5) {
+    allIssues.push({ category: 'clean_taste', message: `클린테이스트 ${cleanTaste.balance.toFixed(2)} (목표 0.6~0.8) — AI톤 과다`, severity: Severity.WARNING });
+  }
+  if (cleanTaste.balance > 0.85) {
+    allIssues.push({ category: 'clean_taste', message: `클린테이스트 ${cleanTaste.balance.toFixed(2)} — 과도하게 다듬어짐`, severity: Severity.INFO });
+  }
 
   return { fixes: allFixes, issues: allIssues };
 }

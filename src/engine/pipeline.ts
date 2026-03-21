@@ -38,15 +38,71 @@ const ACT_GUIDELINES: Record<number, { ko: string; en: string }> = {
   },
 };
 
-const GENRE_GUIDELINES: Record<string, string> = {
-  SF: '과학적 설정의 내적 논리를 지키세요. 기술 묘사는 감각적으로.',
-  FANTASY: '마법 체계의 규칙과 대가를 명시하세요. 경이로움과 위험을 동시에.',
-  ROMANCE: '감정선의 미세한 변화에 집중하세요. 대화의 이면을 읽게 하세요.',
-  THRILLER: '정보를 전략적으로 배분하세요. 짧은 문장, 빠른 전환.',
-  HORROR: '미지의 것은 묘사하지 말고 암시하세요. 일상의 균열을 통해 공포를.',
-  SYSTEM_HUNTER: '시스템 인터페이스와 서사를 자연스럽게 병합하세요. 성장의 대가를 보여주세요.',
-  FANTASY_ROMANCE: '판타지 세계관과 감정선의 균형을 맞추세요. 설정에 압도당하지 마세요.',
+// Narrative Sentinel™ Genre Presets
+const GENRE_PRESETS: Record<string, { rules: string; pacing: string; tensionBase: number; cliffTypes: string; emotionFocus: string }> = {
+  ROMANCE: {
+    rules: '해결을 의도적으로 지연. 행동보다 감정적 머뭇거림이 중요. 물리적 접촉은 절제 속에서 의미. 대화의 행간(말하지 않은 것)이 핵심. 시선/손끝/호흡 미세 묘사.',
+    pacing: 'slow_burn_with_spikes', tensionBase: 0.4,
+    cliffTypes: '고백 지연, 제3자 등장', emotionFocus: '욕망, 질투, 그리움',
+  },
+  THRILLER: {
+    rules: '모든 질문에 한꺼번에 답하지 말 것. 각 폭로는 더 큰 질문을 만들어야 함. 독자가 추리 가능한 단서 공정 배치. 레드헤링 최소 1개. 진실은 조각조각.',
+    pacing: 'steady_rise_with_reversals', tensionBase: 0.6,
+    cliffTypes: '새 단서, 용의자 전환', emotionFocus: '호기심, 공포, 의심',
+  },
+  SYSTEM_HUNTER: {
+    rules: '전력 대비가 흥분을 만듦. 전투는 에스컬레이션, 반복 금지. 각성/레벨업은 대가를 치르고. 스탯/스킬은 서사에 녹여서. 전투 중 내면 독백은 짧고 강렬하게.',
+    pacing: 'fast_spikes', tensionBase: 0.7,
+    cliffTypes: '보스 등장, 스킬 각성', emotionFocus: '쾌감, 공포, 승리',
+  },
+  FANTASY: {
+    rules: '마법 체계에 명확한 비용/제한. 세계관 설명은 장면 속에 녹여서(인포덤프 금지). 정치/세력 구도 최소 2개 긴장 축. 지명/인명 일관성.',
+    pacing: 'epic_waves', tensionBase: 0.5,
+    cliffTypes: '힘의 폭로, 배신', emotionFocus: '경이, 결의, 희생',
+  },
+  HORROR: {
+    rules: '보여주지 않는 것이 더 무섭다. 일상 묘사를 불안하게 뒤트는 기법. 안전 공간이 점차 침식. 감각 박탈/과부하 번갈아. 희망을 줬다가 빼앗는 리듬.',
+    pacing: 'slow_build_to_spike', tensionBase: 0.8,
+    cliffTypes: '정체 드러남, 탈출 실패', emotionFocus: '공포, 불안, 편집증',
+  },
+  SF: {
+    rules: '과학적 설정의 내적 논리 준수. 기술 묘사는 감각적으로. 사회 체계와 기술의 상호작용. 미래 사회의 윤리적 딜레마.',
+    pacing: 'steady_rise_with_reversals', tensionBase: 0.5,
+    cliffTypes: '기술 폭로, 사회 붕괴', emotionFocus: '경이, 고독, 결의',
+  },
+  FANTASY_ROMANCE: {
+    rules: '판타지 세계관과 감정선 균형. 회귀자의 자신감이 점차 흔들리는 구조. 2회차 이점이 줄어드는 긴장. 과거 행동이 미래를 바꿔야 함.',
+    pacing: 'layered_accumulation', tensionBase: 0.5,
+    cliffTypes: '예상 변화, 미래 무효화', emotionFocus: '후회, 기대, 불안',
+  },
 };
+
+function buildGenrePreset(genre: string, isKO: boolean): string {
+  const preset = GENRE_PRESETS[genre] || GENRE_PRESETS.FANTASY;
+  return isKO
+    ? `[장르 프리셋: ${genre}]
+- 서사 규칙: ${preset.rules}
+- 페이싱: ${preset.pacing} (긴장 기준선: ${preset.tensionBase})
+- 클리프행어 유형: ${preset.cliffTypes}
+- 감정 초점: ${preset.emotionFocus}
+[장르 공통 규칙]
+- 에피소드 시작은 장면으로 — 요약/설명 시작 금지
+- 에피소드 끝은 훅으로 — 다음 화를 읽고 싶게
+- 대화 비율 30~50%
+- 한 에피소드 내 장면 전환 최소 2회, 최대 5회
+- 같은 길이 문장 3개 이상 연속 금지`
+    : `[Genre Preset: ${genre}]
+- Rules: ${preset.rules}
+- Pacing: ${preset.pacing} (tension baseline: ${preset.tensionBase})
+- Cliffhanger types: ${preset.cliffTypes}
+- Emotion focus: ${preset.emotionFocus}
+[Common Rules]
+- Start episodes with scene, not summary
+- End with hook
+- Dialogue ratio 30-50%
+- Scene transitions: min 2, max 5 per episode
+- No 3+ consecutive sentences of same length`;
+}
 
 // ============================================================
 // EH Engine v1.4 — Rule Level System (Lv1~5)
@@ -153,7 +209,6 @@ export function buildSystemInstruction(
   const charTarget = getTargetCharRange(platform);
   const isKO = language === 'KO';
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
-  const genreGuide = GENRE_GUIDELINES[config.genre] ?? '';
 
   // Character DNA formatting (with personality, speech style, dialogue example)
   const characterDNA = config.characters.length > 0
@@ -274,8 +329,7 @@ export function buildSystemInstruction(
 [ACT-SPECIFIC DIRECTIVE]
 ${isKO ? actGuide.ko : actGuide.en}
 
-[GENRE DIRECTIVE]
-${genreGuide}
+${buildGenrePreset(config.genre, isKO)}
 
 [CHARACTER DATABASE / DIALOGUE DNA]
 ${characterDNA}

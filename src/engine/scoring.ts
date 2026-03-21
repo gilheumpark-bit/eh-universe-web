@@ -1,8 +1,9 @@
 import { StoryConfig, AppLanguage } from '../lib/studio-types';
 import { EngineReport, PlatformType, getActFromEpisode } from './types';
 import { tensionCurve, predictEngagement } from './models';
-import { validateAITone, validateGeneratedContent } from './validator';
+import { validateAITone, validateGeneratedContent, calculateCleanTaste } from './validator';
 import { calculateByteSize, getTargetByteRange } from './serialization';
+import { detectHallucination, calculateArcPhase } from './shadow';
 
 // ============================================================
 // EOS (Emotion OK Signal) — Ported from ANS 9.2
