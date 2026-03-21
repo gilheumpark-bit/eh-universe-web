@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
-import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle } from 'lucide-react';
+import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2 } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
+import { generateWorldDesign } from '@/services/geminiService';
 
 // ============================================================
 // Genre-specific auto-generation presets
@@ -50,6 +51,29 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const totalEpisodes = config.totalEpisodes ?? 25;
   const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
   const [autoGenGenre, setAutoGenGenre] = useState<Genre>(config.genre);
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const handleAIGenerate = async () => {
+    setAiGenerating(true);
+    try {
+      const result = await generateWorldDesign(autoGenGenre, language);
+      setConfig((prev: StoryConfig) => ({
+        ...prev,
+        title: result.title || prev.title,
+        genre: autoGenGenre,
+        povCharacter: result.povCharacter || prev.povCharacter,
+        setting: result.setting || prev.setting,
+        primaryEmotion: result.primaryEmotion || prev.primaryEmotion,
+        synopsis: result.synopsis || prev.synopsis,
+        totalEpisodes: 25,
+        guardrails: { min: 4000, max: 6000 },
+      }));
+    } catch {
+      alert(isKO ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI generation failed. Check API key.');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const injectDemoData = () => {
     const presets = AUTO_PRESETS[autoGenGenre];
@@ -84,7 +108,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             ))}
           </select>
           <button onClick={injectDemoData} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-95">
-            <Shuffle className="w-3.5 h-3.5" /> {isKO ? '자동 생성' : 'Auto Generate'}
+            <Shuffle className="w-3.5 h-3.5" /> {isKO ? '프리셋' : 'Preset'}
+          </button>
+          <button onClick={handleAIGenerate} disabled={aiGenerating}
+            className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
+            {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
+            {aiGenerating ? (isKO ? 'AI 생성 중...' : 'Generating...') : (isKO ? 'AI 생성' : 'AI Generate')}
           </button>
         </div>
       </div>

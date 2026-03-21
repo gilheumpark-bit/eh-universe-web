@@ -242,12 +242,14 @@ function PlotBarEditor({ lang }: { lang: Lang }) {
 
 interface SceneSheetProps {
   lang?: Lang;
+  synopsis?: string;
+  characterNames?: string[];
   onDirectionUpdate?: (data: { goguma: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogueRules: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] }) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: { goguma?: GogumaEntry[]; hooks?: HookEntry[]; emotions?: EmotionPoint[]; dialogueRules?: DialogueRule[]; dopamines?: DopamineEntry[]; cliffs?: CliffEntry[] };
 }
 
-export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
   const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
@@ -361,10 +363,28 @@ export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpd
           <span className="badge badge-amber mr-2">SCENE</span>
           {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
         </div>
-        <button onClick={autoGenerate}
-          className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-          ⚡ {lang === "ko" ? "자동 생성" : "Auto Generate"}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={autoGenerate}
+            className="px-3 py-1.5 bg-bg-secondary border border-border text-text-secondary rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:text-text-primary transition-colors">
+            ⚡ {lang === "ko" ? "프리셋" : "Preset"}
+          </button>
+          <button onClick={async () => {
+            if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
+            try {
+              const { generateSceneDirection } = await import('@/services/geminiService');
+              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN');
+              const ts = Date.now();
+              if (result.hook) setHooks([{ id: `ai-h-${ts}`, position: (result.hook.position || 'opening') as "opening" | "middle" | "ending", hookType: result.hook.type || 'question', desc: result.hook.desc || '' }]);
+              if (result.tension) setGogumas([{ id: `ai-g-${ts}`, type: 'goguma', intensity: 'medium', desc: result.tension.desc || '', episode: 1 }]);
+              if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.type || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
+              if (result.emotionTarget) setEmotions([{ id: `ai-e-${ts}`, position: 50, emotion: result.emotionTarget, intensity: 80 }]);
+              if (result.dialogueTone) setDialogueRules([{ id: `ai-d-${ts}`, character: result.dialogueTone.character, tone: result.dialogueTone.tone, notes: '' }]);
+            } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+          }}
+            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+            🤖 {lang === "ko" ? "AI 생성" : "AI Generate"}
+          </button>
+        </div>
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">

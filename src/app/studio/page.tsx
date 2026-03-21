@@ -517,6 +517,7 @@ export default function StudioPage() {
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
               <span className="text-text-tertiary hidden sm:inline">{t.sidebar.activeProject}:</span>
               <span className="text-text-primary truncate">{currentSession?.title || t.engine.noStory}</span>
+              {currentSessionId && <span className="text-[8px] text-accent-green font-[family-name:var(--font-mono)]">✓ {isKO ? '저장됨' : 'Saved'}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -617,6 +618,7 @@ export default function StudioPage() {
                 {activeTab === 'critique' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'}
+                      synopsis={currentSession?.config.synopsis}
                       initialData={currentSession?.config.worldSimData}
                       onSave={(data) => {
                         if (!currentSessionId || !currentSession) return;
@@ -651,6 +653,8 @@ export default function StudioPage() {
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
+                      synopsis={currentSession?.config.synopsis}
+                      characterNames={currentSession?.config.characters.map(c => c.name)}
                       initialDirection={currentSession?.config.sceneDirection ? {
                         goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: 1 })),
                         hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),

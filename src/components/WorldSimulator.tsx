@@ -1480,11 +1480,12 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
 
 interface WorldSimProps {
   lang?: Lang;
+  synopsis?: string;
   onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; ruleLevel: number }) => void;
   initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; ruleLevel?: number };
 }
 
-export default function WorldSimulator({ lang = "ko", onSave, initialData }: WorldSimProps) {
+export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialData }: WorldSimProps) {
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
   const [selectedGenre, setSelectedGenre] = useState(initialData?.selectedGenre || "Fantasy");
   const [selectedLevel, setSelectedLevel] = useState(initialData?.selectedLevel || 1);
@@ -1603,11 +1604,33 @@ export default function WorldSimulator({ lang = "ko", onSave, initialData }: Wor
             </div>
           </div>
 
-          {/* Auto Generate Button */}
-          <button onClick={handleAutoGenerate}
-            className="px-4 py-2.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity shrink-0">
-            {lang === "ko" ? `⚡ ${selectedGenre} 세계관 자동생성` : `⚡ Auto-Generate ${selectedGenre}`}
-          </button>
+          {/* Generate Buttons */}
+          <div className="flex gap-2 shrink-0">
+            <button onClick={handleAutoGenerate}
+              className="px-3 py-2 bg-bg-secondary border border-border text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:text-text-primary transition-colors">
+              ⚡ {lang === "ko" ? '프리셋' : 'Preset'}
+            </button>
+            <button onClick={async () => {
+              if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
+              try {
+                const { generateWorldSim } = await import('@/services/geminiService');
+                const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN');
+                if (result.civilizations) {
+                  const newCivs = result.civilizations.map((c: { name: string; era: string; traits: string[] }, i: number) => ({
+                    id: `ai-${Date.now()}-${i}`, name: c.name, era: c.era || 'medieval',
+                    color: CIV_COLORS[i % CIV_COLORS.length], traits: c.traits || [],
+                    x: 50 + 25 * Math.cos((i / Math.max(result.civilizations.length, 1)) * Math.PI * 2),
+                    y: 50 + 25 * Math.sin((i / Math.max(result.civilizations.length, 1)) * Math.PI * 2),
+                  }));
+                  setCivs(newCivs);
+                  setRelations([]);
+                }
+              } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+            }}
+              className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+              🤖 {lang === "ko" ? 'AI 생성' : 'AI Generate'}
+            </button>
+          </div>
         </div>
 
         {/* View Tabs */}
