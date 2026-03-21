@@ -2,15 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "EH Universe Dev Server",
+      "name": "dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
-    },
-    {
-      "name": "EH Universe Production Preview",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start"],
       "port": 3000
     }
   ]

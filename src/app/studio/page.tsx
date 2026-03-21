@@ -51,8 +51,12 @@ export default function StudioPage() {
   // ============================================================
   // PROJECT-BASED STATE MANAGEMENT
   // ============================================================
-  const [projects, setProjects] = useState<Project[]>(() => loadProjects());
+  const [projects, setProjects] = useState<Project[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadProjects();
+  });
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
     const loaded = loadProjects();
     return loaded.length > 0 ? loaded[0].id : null;
   });
@@ -193,20 +197,6 @@ export default function StudioPage() {
   }, [currentSession?.messages, isGenerating, activeTab]);
 
   const createNewSession = useCallback(() => {
-    // Auto-create default project if none exist
-    if (projects.length === 0) {
-      const p: Project = {
-        id: 'project-default',
-        name: '미분류',
-        description: '',
-        genre: Genre.SF,
-        createdAt: Date.now(),
-        lastUpdate: Date.now(),
-        sessions: [],
-      };
-      setProjects([p]);
-      setCurrentProjectId(p.id);
-    }
     const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
@@ -215,7 +205,23 @@ export default function StudioPage() {
       config: { ...INITIAL_CONFIG },
       lastUpdate: Date.now()
     };
-    setSessions(prev => [newSession, ...prev]);
+
+    if (projects.length === 0) {
+      // Auto-create default project with the new session inside
+      const p: Project = {
+        id: 'project-default',
+        name: '미분류',
+        description: '',
+        genre: Genre.SF,
+        createdAt: Date.now(),
+        lastUpdate: Date.now(),
+        sessions: [newSession],
+      };
+      setProjects([p]);
+      setCurrentProjectId(p.id);
+    } else {
+      setSessions(prev => [newSession, ...prev]);
+    }
     setCurrentSessionId(newSession.id);
     setActiveTab('world');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
