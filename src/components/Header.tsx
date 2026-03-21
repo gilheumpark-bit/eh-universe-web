@@ -6,11 +6,11 @@ import { useLang } from "@/lib/LangContext";
 
 const navItems = [
   { href: "/", label: "HOME" },
+  { href: "/studio", label: "STUDIO" },
+  { href: "/tools/style-studio", label: "STYLE" },
   { href: "/archive", label: "ARCHIVE" },
   { href: "/rulebook", label: "RULEBOOK" },
   { href: "/reference", label: "REFERENCE" },
-  { href: "/studio", label: "STUDIO" },
-  { href: "/tools/style-studio", label: "STYLE" },
   { href: "/about", label: "ABOUT" },
 ];
 
