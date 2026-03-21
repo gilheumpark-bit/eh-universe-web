@@ -295,6 +295,51 @@ export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpd
     syncDirection(gogumas, hooks, emotions, dialogueRules, dopamines, cliffs);
   }, [gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, syncDirection]);
 
+  // Auto-generate full scene sheet
+  const autoGenerate = useCallback(() => {
+    const ts = Date.now();
+
+    const newGogumas: GogumaEntry[] = [
+      { id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: lang === "ko" ? "오해/의심 씨앗" : "Seed of misunderstanding", episode: 1 },
+      { id: `g-${ts}-2`, type: "goguma", intensity: "medium", desc: lang === "ko" ? "진실 은폐/배신 암시" : "Hidden truth / betrayal hint", episode: 1 },
+      { id: `g-${ts}-3`, type: "cider", intensity: "large", desc: lang === "ko" ? "반격/진실 폭로" : "Counterattack / truth reveal", episode: 1 },
+    ];
+
+    const newHooks: HookEntry[] = [
+      { id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: lang === "ko" ? "긴박한 상황 중간 진입" : "Enter mid-crisis" },
+      { id: `h-${ts}-2`, position: "middle", hookType: "reversal", desc: lang === "ko" ? "예상치 못한 반전" : "Unexpected twist" },
+      { id: `h-${ts}-3`, position: "ending", hookType: "question", desc: lang === "ko" ? "정체 미상의 인물 등장" : "Unknown figure appears" },
+    ];
+
+    const newEmotions: EmotionPoint[] = [
+      { id: `e-${ts}-1`, position: 10, emotion: lang === "ko" ? "불안" : "Anxiety", intensity: 40 },
+      { id: `e-${ts}-2`, position: 45, emotion: lang === "ko" ? "분노" : "Anger", intensity: 75 },
+      { id: `e-${ts}-3`, position: 70, emotion: lang === "ko" ? "결의" : "Resolve", intensity: 85 },
+      { id: `e-${ts}-4`, position: 95, emotion: lang === "ko" ? "긴장" : "Tension", intensity: 90 },
+    ];
+
+    const newDialogue: DialogueRule[] = [
+      { id: `d-${ts}-1`, character: lang === "ko" ? "주인공" : "Protagonist", tone: lang === "ko" ? "짧고 날카로운 반말" : "Short, sharp, informal", notes: lang === "ko" ? "긴장 시 한 줄 이하" : "One line max in tension" },
+      { id: `d-${ts}-2`, character: lang === "ko" ? "악역" : "Antagonist", tone: lang === "ko" ? "여유롭고 조롱하는 경어" : "Relaxed, mocking, formal", notes: lang === "ko" ? "절대 다급하지 않게" : "Never rushed" },
+    ];
+
+    const newDopamines: DopamineEntry[] = [
+      { id: `dp-${ts}-1`, scale: "micro", device: "info", desc: lang === "ko" ? "단서 발견 → 2문단 후 해석" : "Clue found → explained 2 paragraphs later", resolved: false },
+      { id: `dp-${ts}-2`, scale: "medium", device: "growth", desc: lang === "ko" ? "에피소드 후반 능력 각성/승리" : "Late episode awakening/victory", resolved: false },
+    ];
+
+    const newCliffs: CliffEntry[] = [
+      { id: `cl-${ts}-1`, cliffType: "info-before", desc: lang === "ko" ? "\"사실 너는—\" (말 끊김)" : "\"The truth is, you—\" (cut off)", episode: 1 },
+    ];
+
+    setGogumas(newGogumas);
+    setHooks(newHooks);
+    setEmotions(newEmotions);
+    setDialogueRules(newDialogue);
+    setDopamines(newDopamines);
+    setCliffs(newCliffs);
+  }, [lang]);
+
   // Validation summary
   const validation = {
     gogumaOk: gogumas.length > 0,
@@ -310,9 +355,15 @@ export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpd
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="doc-header rounded-t mb-0">
-        <span className="badge badge-amber mr-2">SCENE</span>
-        {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+      <div className="doc-header rounded-t mb-0 flex items-center justify-between">
+        <div>
+          <span className="badge badge-amber mr-2">SCENE</span>
+          {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+        </div>
+        <button onClick={autoGenerate}
+          className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+          ⚡ {lang === "ko" ? "자동 생성" : "Auto Generate"}
+        </button>
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">
