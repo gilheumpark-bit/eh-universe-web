@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -240,7 +240,13 @@ function PlotBarEditor({ lang }: { lang: Lang }) {
 // PART 2: MAIN SCENE SHEET COMPONENT
 // ============================================================
 
-export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
+interface SceneSheetProps {
+  lang?: Lang;
+  onDirectionUpdate?: (data: { goguma: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogueRules: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] }) => void;
+  onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
+}
+
+export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpdate }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [gogumas, setGogumas] = useState<GogumaEntry[]>([]);
   const [hooks, setHooks] = useState<HookEntry[]>([]);
@@ -248,6 +254,11 @@ export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
   const [dialogueRules, setDialogueRules] = useState<DialogueRule[]>([]);
   const [dopamines, setDopamines] = useState<DopamineEntry[]>([]);
   const [cliffs, setCliffs] = useState<CliffEntry[]>([]);
+
+  // Sync to parent whenever data changes
+  const syncDirection = useCallback((g: GogumaEntry[], h: HookEntry[], e: EmotionPoint[], d: DialogueRule[], dp: DopamineEntry[], cl: CliffEntry[]) => {
+    onDirectionUpdate?.({ goguma: g, hooks: h, emotions: e, dialogueRules: d, dopamines: dp, cliffs: cl });
+  }, [onDirectionUpdate]);
 
   // Simulator reference checkpoints
   const [simRef, setSimRef] = useState({
@@ -278,6 +289,11 @@ export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
   const addCliff = () => {
     setCliffs(prev => [...prev, { id: `cl-${Date.now()}`, cliffType: "crisis-cut", desc: "", episode: 1 }]);
   };
+
+  // Auto-sync all direction data to parent
+  useEffect(() => {
+    syncDirection(gogumas, hooks, emotions, dialogueRules, dopamines, cliffs);
+  }, [gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, syncDirection]);
 
   // Validation summary
   const validation = {
@@ -529,7 +545,11 @@ export default function SceneSheet({ lang = "ko" }: { lang?: Lang }) {
             ]).map(item => (
               <label key={item.key} className="flex items-center gap-2 cursor-pointer group">
                 <input type="checkbox" checked={simRef[item.key]}
-                  onChange={e => setSimRef(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                  onChange={e => {
+                    const next = { ...simRef, [item.key]: e.target.checked };
+                    setSimRef(next);
+                    onSimRefUpdate?.(next);
+                  }}
                   className="accent-accent-purple w-3.5 h-3.5" />
                 <span className={`text-[10px] font-bold transition-colors ${simRef[item.key] ? "text-accent-purple" : "text-text-tertiary group-hover:text-text-secondary"}`}>
                   {lang === "ko" ? item.ko : item.en}

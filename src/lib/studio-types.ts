@@ -42,6 +42,30 @@ export interface CharRelation {
   desc?: string;
 }
 
+// Scene Sheet (연출 스튜디오) data
+export interface SceneDirectionData {
+  goguma?: { type: "goguma" | "cider"; intensity: string; desc: string }[];
+  hooks?: { position: string; hookType: string; desc: string }[];
+  emotionTargets?: { emotion: string; intensity: number }[];
+  dialogueTones?: { character: string; tone: string; notes: string }[];
+  dopamineDevices?: { scale: string; device: string; desc: string }[];
+  cliffhanger?: { cliffType: string; desc: string };
+  plotStructure?: string;
+}
+
+// World Simulator reference flags
+export interface SimulatorRef {
+  worldConsistency?: boolean;
+  civRelations?: boolean;
+  timeline?: boolean;
+  territoryMap?: boolean;
+  languageSystem?: boolean;
+  genreLevel?: boolean;
+  ruleLevel?: number;
+  civNames?: string[];
+  civRelationSummary?: string[];
+}
+
 export interface StoryConfig {
   genre: Genre;
   povCharacter: string;
@@ -56,6 +80,8 @@ export interface StoryConfig {
   charRelations?: CharRelation[];
   platform: PlatformType;
   episodeState?: EpisodeState;
+  sceneDirection?: SceneDirectionData;
+  simulatorRef?: SimulatorRef;
 }
 
 export interface Message {

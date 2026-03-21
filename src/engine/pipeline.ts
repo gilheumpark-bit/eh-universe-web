@@ -181,6 +181,76 @@ export function buildSystemInstruction(
     }).join('\n')
     : '';
 
+  // Scene Direction (연출 스튜디오) prompt injection
+  const sd = config.sceneDirection;
+  let sceneDirectionBlock = '';
+  if (sd) {
+    const parts: string[] = [];
+    if (sd.goguma && sd.goguma.length > 0) {
+      parts.push(isKO ? '[고구마/사이다 리듬]' : '[Tension/Release Rhythm]');
+      sd.goguma.forEach(g => {
+        parts.push(`  - ${g.type === 'goguma' ? (isKO ? '고구마' : 'Tension') : (isKO ? '사이다' : 'Release')} (${g.intensity}): ${g.desc}`);
+      });
+    }
+    if (sd.hooks && sd.hooks.length > 0) {
+      parts.push(isKO ? '[훅 배치]' : '[Hook Placement]');
+      sd.hooks.forEach(h => {
+        parts.push(`  - ${h.position}: ${h.hookType} — ${h.desc}`);
+      });
+    }
+    if (sd.emotionTargets && sd.emotionTargets.length > 0) {
+      parts.push(isKO ? '[감정선 목표]' : '[Emotion Targets]');
+      sd.emotionTargets.forEach(e => {
+        parts.push(`  - ${e.emotion}: ${isKO ? '강도' : 'intensity'} ${e.intensity}%`);
+      });
+    }
+    if (sd.dialogueTones && sd.dialogueTones.length > 0) {
+      parts.push(isKO ? '[대사 톤 규칙]' : '[Dialogue Tone Rules]');
+      sd.dialogueTones.forEach(d => {
+        parts.push(`  - ${d.character}: ${d.tone}${d.notes ? ` (${d.notes})` : ''}`);
+      });
+    }
+    if (sd.dopamineDevices && sd.dopamineDevices.length > 0) {
+      parts.push(isKO ? '[도파민 장치]' : '[Dopamine Devices]');
+      sd.dopamineDevices.forEach(dp => {
+        parts.push(`  - [${dp.scale}] ${dp.device}: ${dp.desc}`);
+      });
+    }
+    if (sd.cliffhanger) {
+      parts.push(isKO
+        ? `[클리프행어] 유형: ${sd.cliffhanger.cliffType} — ${sd.cliffhanger.desc}`
+        : `[Cliffhanger] Type: ${sd.cliffhanger.cliffType} — ${sd.cliffhanger.desc}`);
+    }
+    if (sd.plotStructure) {
+      parts.push(isKO ? `[플롯 구조] ${sd.plotStructure}` : `[Plot Structure] ${sd.plotStructure}`);
+    }
+    if (parts.length > 0) {
+      sceneDirectionBlock = '\n[SCENE DIRECTION — 연출 스튜디오]\n' + parts.join('\n');
+    }
+  }
+
+  // Simulator reference data
+  const simRef = config.simulatorRef;
+  let simulatorBlock = '';
+  if (simRef) {
+    const simParts: string[] = [];
+    if (simRef.worldConsistency) simParts.push(isKO ? '- 세계관 일관성 검증 적용' : '- World consistency validation applied');
+    if (simRef.genreLevel && simRef.ruleLevel) simParts.push(isKO ? `- 장르 레벨 규칙: Lv${simRef.ruleLevel}` : `- Genre level rules: Lv${simRef.ruleLevel}`);
+    if (simRef.civRelations && simRef.civRelationSummary && simRef.civRelationSummary.length > 0) {
+      simParts.push(isKO ? '- 문명 관계도:' : '- Civilization relations:');
+      simRef.civRelationSummary.forEach(s => simParts.push(`  ${s}`));
+    }
+    if (simRef.civNames && simRef.civNames.length > 0) {
+      simParts.push(isKO ? `- 등장 문명: ${simRef.civNames.join(', ')}` : `- Civilizations: ${simRef.civNames.join(', ')}`);
+    }
+    if (simRef.timeline) simParts.push(isKO ? '- 시대 타임라인 참고' : '- Era timeline referenced');
+    if (simRef.territoryMap) simParts.push(isKO ? '- 세력권 지도 참고' : '- Territory map referenced');
+    if (simRef.languageSystem) simParts.push(isKO ? '- 세계관 고유 언어 체계 참고' : '- World language system referenced');
+    if (simParts.length > 0) {
+      simulatorBlock = '\n[WORLD SIMULATOR REFERENCE]\n' + simParts.join('\n');
+    }
+  }
+
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
 
@@ -212,6 +282,8 @@ ${genreGuide}
 ${characterDNA}
 ${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
 ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
+${sceneDirectionBlock}
+${simulatorBlock}
 
 [SERIALIZATION CONSTRAINTS]
 - Platform: ${platform}

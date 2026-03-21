@@ -578,7 +578,33 @@ export default function StudioPage() {
                 {/* critique tab rendered above */}
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <SceneSheet lang={language === 'EN' ? 'en' : 'ko'} />
+                    <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
+                      onDirectionUpdate={(data) => {
+                        if (!currentSessionId) return;
+                        updateCurrentSession({
+                          config: {
+                            ...(currentSession?.config || INITIAL_CONFIG),
+                            sceneDirection: {
+                              goguma: data.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc })),
+                              hooks: data.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
+                              emotionTargets: data.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity })),
+                              dialogueTones: data.dialogueRules.map(d => ({ character: d.character, tone: d.tone, notes: d.notes })),
+                              dopamineDevices: data.dopamines.map(dp => ({ scale: dp.scale, device: dp.device, desc: dp.desc })),
+                              cliffhanger: data.cliffs.length > 0 ? { cliffType: data.cliffs[0].cliffType, desc: data.cliffs[0].desc } : undefined,
+                            },
+                          },
+                        });
+                      }}
+                      onSimRefUpdate={(ref) => {
+                        if (!currentSessionId) return;
+                        updateCurrentSession({
+                          config: {
+                            ...(currentSession?.config || INITIAL_CONFIG),
+                            simulatorRef: { ...ref },
+                          },
+                        });
+                      }}
+                    />
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
@@ -637,6 +663,48 @@ export default function StudioPage() {
                           <div>
                             <span className="text-text-tertiary font-bold uppercase">{isKO ? '시놉시스' : 'Synopsis'}</span>
                             <p className="text-text-secondary text-[9px] mt-0.5 line-clamp-2 italic">{currentSession.config.synopsis}</p>
+                          </div>
+                        )}
+                        {/* Scene Direction */}
+                        {currentSession.config.sceneDirection && (
+                          <div>
+                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '연출' : 'Direction'}</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {currentSession.config.sceneDirection.hooks && currentSession.config.sceneDirection.hooks.length > 0 && (
+                                <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold">
+                                  🪝 {isKO ? '훅' : 'Hook'} {currentSession.config.sceneDirection.hooks.length}
+                                </span>
+                              )}
+                              {currentSession.config.sceneDirection.goguma && currentSession.config.sceneDirection.goguma.length > 0 && (
+                                <span className="px-2 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[9px] font-bold">
+                                  🍠 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'goguma').length} / 🥤 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'cider').length}
+                                </span>
+                              )}
+                              {currentSession.config.sceneDirection.cliffhanger && (
+                                <span className="px-2 py-0.5 bg-accent-red/10 text-accent-red rounded text-[9px] font-bold">
+                                  🔚 {currentSession.config.sceneDirection.cliffhanger.cliffType}
+                                </span>
+                              )}
+                              {currentSession.config.sceneDirection.emotionTargets && currentSession.config.sceneDirection.emotionTargets.length > 0 && (
+                                <span className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                  💓 {currentSession.config.sceneDirection.emotionTargets.map(e => e.emotion).join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {/* Simulator Ref */}
+                        {currentSession.config.simulatorRef && Object.values(currentSession.config.simulatorRef).some(Boolean) && (
+                          <div>
+                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '시뮬레이터' : 'Simulator'}</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {currentSession.config.simulatorRef.worldConsistency && <span className="px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[8px] font-bold">✓ {isKO ? '일관성' : 'Consistency'}</span>}
+                              {currentSession.config.simulatorRef.civRelations && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {isKO ? '관계도' : 'Relations'}</span>}
+                              {currentSession.config.simulatorRef.timeline && <span className="px-1.5 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[8px] font-bold">✓ {isKO ? '타임라인' : 'Timeline'}</span>}
+                              {currentSession.config.simulatorRef.territoryMap && <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold">✓ {isKO ? '지도' : 'Map'}</span>}
+                              {currentSession.config.simulatorRef.languageSystem && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {isKO ? '언어' : 'Language'}</span>}
+                              {currentSession.config.simulatorRef.genreLevel && <span className="px-1.5 py-0.5 bg-accent-red/10 text-accent-red rounded text-[8px] font-bold">✓ {isKO ? '장르Lv' : 'GenreLv'}</span>}
+                            </div>
                           </div>
                         )}
                         {/* Quick nav */}
