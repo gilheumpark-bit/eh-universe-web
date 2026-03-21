@@ -158,7 +158,71 @@ export function setActiveModel(model: string): void {
 }
 
 // ============================================================
-// PART 3: UNIFIED STREAM API
+// PART 3: SERVER PROXY STREAM
+// ============================================================
+
+async function streamViaProxy(
+  provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
+): Promise<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provider,
+      model,
+      systemInstruction: opts.systemInstruction,
+      messages: opts.messages,
+      temperature: opts.temperature ?? 0.9,
+      apiKey: apiKey || undefined, // BYOK: send key to proxy, proxy uses it server-side
+    }),
+    signal: opts.signal,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Proxy error ${res.status}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE events from proxy
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+      const data = trimmed.slice(6);
+      if (data === '[DONE]') continue;
+      try {
+        const json = JSON.parse(data);
+        // Handle different provider formats
+        const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
+          || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
+          || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
+        if (text) {
+          full += text;
+          opts.onChunk(text);
+        }
+      } catch {
+        // Non-JSON SSE data, skip
+      }
+    }
+  }
+  return full;
+}
+
+// ============================================================
+// PART 4: UNIFIED STREAM API
 // ============================================================
 
 export async function streamChat(opts: StreamOptions): Promise<string> {
@@ -166,7 +230,14 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   const apiKey = getApiKey(provider);
   const model = getActiveModel();
 
-  if (!apiKey) throw new Error("API_KEY_MISSING");
+  // Try server-side proxy first (/api/chat)
+  // Falls back to client-side if proxy unavailable
+  try {
+    return await streamViaProxy(provider, model, apiKey, opts);
+  } catch (proxyErr) {
+    // If proxy 404 or network error, fall back to direct client call
+    if (!apiKey) throw new Error("API_KEY_MISSING");
+  }
 
   switch (provider) {
     case "gemini":
