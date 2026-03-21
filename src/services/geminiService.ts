@@ -159,3 +159,119 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
     throw error;
   }
 };
+
+// ============================================================
+// PART 4: AI WORLD DESIGN GENERATION
+// ============================================================
+
+export const generateWorldDesign = async (genre: string, language: AppLanguage = 'KO'): Promise<{
+  title: string; povCharacter: string; setting: string; primaryEmotion: string; synopsis: string;
+}> => {
+  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
+  if (!apiKey) throw new Error("API_KEY_INVALID");
+  const ai = new GoogleGenAI({ apiKey });
+  const langName = language === 'KO' ? 'Korean' : 'English';
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            povCharacter: { type: Type.STRING },
+            setting: { type: Type.STRING },
+            primaryEmotion: { type: Type.STRING },
+            synopsis: { type: Type.STRING },
+          },
+          required: ["title", "povCharacter", "setting", "primaryEmotion", "synopsis"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("World Design Generation Error:", error);
+    throw error;
+  }
+};
+
+// ============================================================
+// PART 5: AI WORLD SIMULATOR GENERATION
+// ============================================================
+
+export const generateWorldSim = async (synopsis: string, genre: string, language: AppLanguage = 'KO'): Promise<{
+  civilizations: { name: string; era: string; traits: string[] }[];
+  relations: { from: string; to: string; type: string }[];
+}> => {
+  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
+  if (!apiKey) throw new Error("API_KEY_INVALID");
+  const ai = new GoogleGenAI({ apiKey });
+  const langName = language === 'KO' ? 'Korean' : 'English';
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: `Based on this ${genre} story synopsis, generate 3-4 civilizations/factions and their relationships in ${langName}.\n\nSynopsis: ${synopsis}`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            civilizations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, era: { type: Type.STRING }, traits: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["name", "era", "traits"] } },
+            relations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { from: { type: Type.STRING }, to: { type: Type.STRING }, type: { type: Type.STRING } }, required: ["from", "to", "type"] } },
+          },
+          required: ["civilizations", "relations"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{"civilizations":[],"relations":[]}');
+  } catch (error) {
+    console.error("World Sim Generation Error:", error);
+    throw error;
+  }
+};
+
+// ============================================================
+// PART 6: AI SCENE DIRECTION GENERATION
+// ============================================================
+
+export const generateSceneDirection = async (synopsis: string, characters: string[], language: AppLanguage = 'KO'): Promise<{
+  hook: { position: string; type: string; desc: string };
+  tension: { type: string; desc: string };
+  cliffhanger: { type: string; desc: string };
+  emotionTarget: string;
+  dialogueTone: { character: string; tone: string };
+}> => {
+  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
+  if (!apiKey) throw new Error("API_KEY_INVALID");
+  const ai = new GoogleGenAI({ apiKey });
+  const langName = language === 'KO' ? 'Korean' : 'English';
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: `Based on this story, generate scene direction elements in ${langName}.\n\nSynopsis: ${synopsis}\nCharacters: ${characters.join(', ')}`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            hook: { type: Type.OBJECT, properties: { position: { type: Type.STRING }, type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["position", "type", "desc"] },
+            tension: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["type", "desc"] },
+            cliffhanger: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["type", "desc"] },
+            emotionTarget: { type: Type.STRING },
+            dialogueTone: { type: Type.OBJECT, properties: { character: { type: Type.STRING }, tone: { type: Type.STRING } }, required: ["character", "tone"] },
+          },
+          required: ["hook", "tension", "cliffhanger", "emotionTarget", "dialogueTone"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Scene Direction Generation Error:", error);
+    throw error;
+  }
+};

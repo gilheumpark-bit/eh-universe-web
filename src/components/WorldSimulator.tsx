@@ -1478,23 +1478,44 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
   },
 };
 
-export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
+interface WorldSimProps {
+  lang?: Lang;
+  onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; ruleLevel: number }) => void;
+  initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; ruleLevel?: number };
+}
+
+export default function WorldSimulator({ lang = "ko", onSave, initialData }: WorldSimProps) {
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
-  const [selectedGenre, setSelectedGenre] = useState("Fantasy");
-  const [selectedLevel, setSelectedLevel] = useState(1);
-  const [ruleLevel, setRuleLevel] = useState(1);
-  // 기본 베이스: Fantasy 템플릿 자동 로드
+  const [selectedGenre, setSelectedGenre] = useState(initialData?.selectedGenre || "Fantasy");
+  const [selectedLevel, setSelectedLevel] = useState(initialData?.selectedLevel || 1);
+  const [ruleLevel, setRuleLevel] = useState(initialData?.ruleLevel || 1);
   const [civs, setCivs] = useState<Civilization[]>(() => {
+    if (initialData?.civs && initialData.civs.length > 0) {
+      return initialData.civs.map((c, i) => ({ ...c, id: `saved-${i}`, x: 50 + 25 * Math.cos((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2), y: 50 + 25 * Math.sin((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2) }));
+    }
     const t = AUTO_WORLD_TEMPLATES["Fantasy"];
     return t ? t.civs.map((c, i) => ({ ...c, id: `base-${i}` })) : [];
   });
   const [relations, setRelations] = useState<CivRelation[]>(() => {
+    if (initialData?.relations && initialData.relations.length > 0) {
+      // Reconstruct from names
+      return [];
+    }
     const t = AUTO_WORLD_TEMPLATES["Fantasy"];
     if (!t) return [];
     const ids = t.civs.map((_, i) => `base-${i}`);
     return t.relations.filter((_, i) => ids[i] && ids[i + 1]).map((r, i) => ({ from: ids[i], to: ids[i + 1], type: r.type }));
   });
-  const [transitions, setTransitions] = useState<TransitionEvent[]>([]);
+  const [transitions, setTransitions] = useState<TransitionEvent[]>(
+    initialData?.transitions || []
+  );
+
+  // Auto-save to parent when data changes
+  useEffect(() => {
+    onSave?.({
+      civs, relations, transitions, selectedGenre, selectedLevel, ruleLevel,
+    });
+  }, [civs, relations, transitions, selectedGenre, selectedLevel, ruleLevel, onSave]);
 
   const handleGenreSelect = useCallback((genre: string, level: number) => {
     setSelectedGenre(genre);

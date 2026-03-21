@@ -53,6 +53,16 @@ export interface SceneDirectionData {
   plotStructure?: string;
 }
 
+// World Simulator persistent data
+export interface WorldSimData {
+  civs?: { name: string; era: string; color: string; traits: string[] }[];
+  relations?: { fromName: string; toName: string; type: string }[];
+  transitions?: { fromEra: string; toEra: string; description: string }[];
+  selectedGenre?: string;
+  selectedLevel?: number;
+  ruleLevel?: number;
+}
+
 // World Simulator reference flags
 export interface SimulatorRef {
   worldConsistency?: boolean;
@@ -82,6 +92,7 @@ export interface StoryConfig {
   episodeState?: EpisodeState;
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;
+  worldSimData?: WorldSimData;
 }
 
 export interface Message {

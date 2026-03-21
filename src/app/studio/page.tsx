@@ -616,7 +616,29 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'critique' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'} />
+                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'}
+                      initialData={currentSession?.config.worldSimData}
+                      onSave={(data) => {
+                        if (!currentSessionId || !currentSession) return;
+                        updateCurrentSession({
+                          config: {
+                            ...currentSession.config,
+                            worldSimData: {
+                              civs: data.civs.map(c => ({ name: c.name, era: c.era, color: c.color, traits: c.traits })),
+                              relations: data.relations.map(r => {
+                                const from = data.civs.find(c => c.id === r.from)?.name || '';
+                                const to = data.civs.find(c => c.id === r.to)?.name || '';
+                                return { fromName: from, toName: to, type: r.type };
+                              }),
+                              transitions: data.transitions,
+                              selectedGenre: data.selectedGenre,
+                              selectedLevel: data.selectedLevel,
+                              ruleLevel: data.ruleLevel,
+                            },
+                          },
+                        });
+                      }}
+                    />
                   </div>
                 )}
                 {activeTab === 'characters' && currentSession && (
@@ -629,6 +651,14 @@ export default function StudioPage() {
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
+                      initialDirection={currentSession?.config.sceneDirection ? {
+                        goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: 1 })),
+                        hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
+                        emotions: currentSession.config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: i * 25, emotion: e.emotion, intensity: e.intensity })),
+                        dialogueRules: currentSession.config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
+                        dopamines: currentSession.config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: false })),
+                        cliffs: currentSession.config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: currentSession.config.sceneDirection.cliffhanger.cliffType, desc: currentSession.config.sceneDirection.cliffhanger.desc, episode: 1 }] : [],
+                      } : undefined}
                       onDirectionUpdate={(data) => {
                         if (!currentSessionId) return;
                         updateCurrentSession({

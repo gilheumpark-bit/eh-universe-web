@@ -244,16 +244,17 @@ interface SceneSheetProps {
   lang?: Lang;
   onDirectionUpdate?: (data: { goguma: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogueRules: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] }) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
+  initialDirection?: { goguma?: GogumaEntry[]; hooks?: HookEntry[]; emotions?: EmotionPoint[]; dialogueRules?: DialogueRule[]; dopamines?: DopamineEntry[]; cliffs?: CliffEntry[] };
 }
 
-export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpdate }: SceneSheetProps) {
+export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
-  const [gogumas, setGogumas] = useState<GogumaEntry[]>([]);
-  const [hooks, setHooks] = useState<HookEntry[]>([]);
-  const [emotions, setEmotions] = useState<EmotionPoint[]>([]);
-  const [dialogueRules, setDialogueRules] = useState<DialogueRule[]>([]);
-  const [dopamines, setDopamines] = useState<DopamineEntry[]>([]);
-  const [cliffs, setCliffs] = useState<CliffEntry[]>([]);
+  const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
+  const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
+  const [emotions, setEmotions] = useState<EmotionPoint[]>(initialDirection?.emotions || []);
+  const [dialogueRules, setDialogueRules] = useState<DialogueRule[]>(initialDirection?.dialogueRules || []);
+  const [dopamines, setDopamines] = useState<DopamineEntry[]>(initialDirection?.dopamines || []);
+  const [cliffs, setCliffs] = useState<CliffEntry[]>(initialDirection?.cliffs || []);
 
   // Sync to parent whenever data changes
   const syncDirection = useCallback((g: GogumaEntry[], h: HookEntry[], e: EmotionPoint[], d: DialogueRule[], dp: DopamineEntry[], cl: CliffEntry[]) => {
