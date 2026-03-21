@@ -91,8 +91,10 @@ export default function StudioPage() {
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured } = useAuth();
-  const [writingMode, setWritingMode] = useState<'ai' | 'edit'>('ai');
+  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
   const [editDraft, setEditDraft] = useState('');
+  const [canvasContent, setCanvasContent] = useState('');
+  const [canvasPass, setCanvasPass] = useState(0); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -784,6 +786,12 @@ export default function StudioPage() {
                         }`}>
                         ✏️ {isKO ? '직접 편집' : 'Manual Edit'}
                       </button>
+                      <button onClick={() => { setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                          writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                        }`}>
+                        🎨 {isKO ? '3패스 캔버스' : '3-Pass Canvas'}
+                      </button>
                       {writingMode === 'edit' && (
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
@@ -841,6 +849,96 @@ export default function StudioPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* ====== 3-PASS CANVAS MODE ====== */}
+                    {writingMode === 'canvas' && (
+                      <div className="space-y-4">
+                        {/* Pass progress */}
+                        <div className="flex items-center gap-3">
+                          {[
+                            { pass: 1, emoji: '🦴', ko: '뼈대', en: 'Skeleton', color: 'blue' },
+                            { pass: 2, emoji: '💓', ko: '감정', en: 'Emotion', color: 'pink' },
+                            { pass: 3, emoji: '👁', ko: '묘사', en: 'Sensory', color: 'amber' },
+                          ].map(p => (
+                            <div key={p.pass} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] ${
+                              canvasPass >= p.pass ? `bg-${p.color}-600/20 text-${p.color}-400 border border-${p.color}-500/30` : 'bg-bg-secondary text-text-tertiary border border-border'
+                            }`}>
+                              {p.emoji} {canvasPass >= p.pass ? '✓' : p.pass} {isKO ? p.ko : p.en}
+                            </div>
+                          ))}
+                          <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                            {canvasContent.length.toLocaleString()}{isKO ? '자' : ' chars'}
+                          </span>
+                        </div>
+
+                        {/* Canvas textarea */}
+                        <textarea
+                          value={canvasContent}
+                          onChange={e => setCanvasContent(e.target.value)}
+                          className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
+                          placeholder={isKO ? '3패스 캔버스 — 각 단계 버튼을 눌러 점진적으로 원고를 완성하세요' : '3-Pass Canvas — Click each pass button to build your manuscript progressively'}
+                        />
+
+                        {/* Pass action buttons */}
+                        <div className="flex gap-2 flex-wrap">
+                          <button disabled={isGenerating} onClick={async () => {
+                            setCanvasPass(1);
+                            handleSend(isKO
+                              ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자). 반드시 본문만 출력하세요.'
+                              : '[Pass 1 — Skeleton] Scene sheet based draft. Events and dialogue only. ~1,000 tokens. Output story text only.'
+                            );
+                          }}
+                            className="px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-lg text-[10px] font-bold text-blue-400 hover:bg-blue-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
+                            🦴 {isKO ? '1단계: 뼈대 생성' : 'Pass 1: Generate Skeleton'}
+                          </button>
+                          <button disabled={isGenerating || canvasPass < 1} onClick={() => {
+                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
+                            const draft = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || canvasContent;
+                            if (!draft) return;
+                            setCanvasContent(draft);
+                            setCanvasPass(2);
+                            handleSend(isKO
+                              ? `[2단계 — 감정선] 아래 초안 전체를 다시 쓰되, 인물 내면/감정 밀도/문장 리듬을 강화하세요. 고구마/사이다 타이밍. 약 1,000토큰 추가. 전체를 새로 출력하세요.\n\n---초안---\n${draft.slice(0, 4000)}`
+                              : `[Pass 2 — Emotion] Rewrite this draft with inner thoughts, emotional density, pacing. ~1,000 tokens added. Output full rewrite.\n\n---Draft---\n${draft.slice(0, 4000)}`
+                            );
+                          }}
+                            className="px-4 py-2 bg-pink-600/10 border border-pink-500/20 rounded-lg text-[10px] font-bold text-pink-400 hover:bg-pink-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
+                            💓 {isKO ? '2단계: 감정선 강화' : 'Pass 2: Add Emotion'}
+                          </button>
+                          <button disabled={isGenerating || canvasPass < 2} onClick={() => {
+                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
+                            const manuscript = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || canvasContent;
+                            if (!manuscript) return;
+                            setCanvasContent(manuscript);
+                            setCanvasPass(3);
+                            handleSend(isKO
+                              ? `[3단계 — 감각 묘사] 아래 원고 전체를 다시 쓰되, 물성/시각/청각/촉각 묘사를 추가하세요. 장면이 눈에 보이게. 클리프행어 확인. 약 1,000토큰 추가. 전체를 새로 출력하세요.\n\n---원고---\n${manuscript.slice(0, 5000)}`
+                              : `[Pass 3 — Sensory] Rewrite with physical/visual/auditory descriptions. Vivid scenes. Verify cliffhanger. ~1,000 tokens added. Output full rewrite.\n\n---Manuscript---\n${manuscript.slice(0, 5000)}`
+                            );
+                          }}
+                            className="px-4 py-2 bg-amber-600/10 border border-amber-500/20 rounded-lg text-[10px] font-bold text-amber-400 hover:bg-amber-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
+                            👁 {isKO ? '3단계: 감각 묘사' : 'Pass 3: Add Sensory'}
+                          </button>
+                          <span className="text-border">|</span>
+                          <button disabled={!canvasContent && canvasPass === 0} onClick={() => {
+                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
+                            const final = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || canvasContent;
+                            if (final) setCanvasContent(final);
+                          }}
+                            className="px-3 py-2 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
+                            📋 {isKO ? '캔버스에 가져오기' : 'Pull to Canvas'}
+                          </button>
+                          <button disabled={!canvasContent} onClick={() => {
+                            const editMsg: Message = { id: `canvas-${Date.now()}`, role: 'assistant', content: canvasContent, timestamp: Date.now() };
+                            updateCurrentSession({ messages: [...(currentSession?.messages || []), { id: `u-canvas-${Date.now()}`, role: 'user', content: isKO ? `[3패스 캔버스 완성 — ${canvasContent.length}자]` : `[3-Pass Canvas Complete — ${canvasContent.length} chars]`, timestamp: Date.now() }, editMsg] });
+                            setWritingMode('ai');
+                          }}
+                            className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30">
+                            💾 {isKO ? '원고에 반영' : 'Apply to Manuscript'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeTab === 'history' && (
@@ -889,51 +987,23 @@ export default function StudioPage() {
         {activeTab === 'writing' && currentSessionId && (
           <div className="p-4 md:p-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
             <div className="max-w-4xl mx-auto relative">
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-14 md:left-0 md:right-0 md:translate-x-0 flex flex-col gap-2">
-                {/* 3-Pass Pipeline */}
-                <div className="flex gap-1.5 items-center">
-                  <span className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider hidden md:inline">{isKO ? '3패스' : '3-Pass'}:</span>
-                  <button onClick={() => handleSend(isKO
-                    ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자).'
-                    : '[Pass 1 — Skeleton] Write based on scene sheet. Events and dialogue only. No emotion. ~1,000 tokens.'
-                  )} className="px-2.5 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[9px] font-bold text-blue-400 hover:bg-blue-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    🦴 {isKO ? '1단계 뼈대' : 'Pass 1 Skeleton'}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
+                <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                  {t.engine.nextChapter}
+                </button>
+                <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                  {t.engine.plotTwist}
+                </button>
+                {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
+                  <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    EP.{currentSession.config.episode} → {currentSession.config.episode + 1}
                   </button>
-                  <button onClick={() => {
-                    const lastAssistant = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
-                    if (!lastAssistant) { alert(isKO ? '먼저 1단계를 실행하세요.' : 'Run Pass 1 first.'); return; }
-                    handleSend(isKO
-                      ? `[2단계 — 감정선] 아래 초안에 인물 내면, 감정 밀도, 문장 리듬을 덮어쓰세요. 고구마/사이다 타이밍 조정. EOS 점수를 올리세요. 약 1,000토큰(2,000자) 추가.\n\n---초안---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 3000)}`
-                      : `[Pass 2 — Emotion] Overlay inner thoughts, emotional density, rhythm on this draft. ~1,000 tokens added.\n\n---Draft---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 3000)}`
-                    );
-                  }} className="px-2.5 py-1 bg-pink-600/10 border border-pink-500/20 rounded-full text-[9px] font-bold text-pink-400 hover:bg-pink-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    💓 {isKO ? '2단계 감정' : 'Pass 2 Emotion'}
-                  </button>
-                  <button onClick={() => {
-                    const lastAssistant = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
-                    if (!lastAssistant) { alert(isKO ? '먼저 2단계를 실행하세요.' : 'Run Pass 2 first.'); return; }
-                    handleSend(isKO
-                      ? `[3단계 — 감각 묘사] 아래 원고에 물성/시각/청각/촉각 묘사를 덮어쓰세요. 장면이 눈에 보이게. 클리프행어 마무리 확인. 약 1,000토큰(2,000자) 추가.\n\n---원고---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 4000)}`
-                      : `[Pass 3 — Sensory] Overlay physical/visual/auditory/tactile descriptions. Make scenes vivid. Verify cliffhanger. ~1,000 tokens added.\n\n---Manuscript---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 4000)}`
-                    );
-                  }} className="px-2.5 py-1 bg-amber-600/10 border border-amber-500/20 rounded-full text-[9px] font-bold text-amber-400 hover:bg-amber-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    👁 {isKO ? '3단계 묘사' : 'Pass 3 Sensory'}
-                  </button>
-                </div>
-                {/* Quick actions */}
-                <div className="flex gap-2">
-                  <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    {t.engine.nextChapter}
-                  </button>
-                  <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    {t.engine.plotTwist}
-                  </button>
-                  {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
-                    <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                      EP.{currentSession.config.episode} → {currentSession.config.episode + 1}
-                    </button>
-                  )}
-                </div>
+                )}
+                <span className="text-border">|</span>
+                <button onClick={() => { setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
+                  className="px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                  🎨 {isKO ? '3패스 캔버스' : '3-Pass Canvas'}
+                </button>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
                 <textarea
