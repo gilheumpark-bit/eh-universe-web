@@ -67,7 +67,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
               <span className="text-xs text-zinc-400">{isKO ? "AI 모델" : "AI Model"}</span>
-              <span className="text-xs font-black text-white">Gemini 2.5 Flash</span>
+              <span className="text-xs font-black text-white">Gemini 3.1 Pro</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
               <span className="text-xs text-zinc-400">{isKO ? "지연 시간" : "Latency"}</span>

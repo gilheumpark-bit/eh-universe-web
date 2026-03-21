@@ -124,7 +124,7 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-05-20',
+      model: 'gemini-3.1-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
