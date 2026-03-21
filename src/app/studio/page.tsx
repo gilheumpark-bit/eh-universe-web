@@ -1045,70 +1045,70 @@ export default function StudioPage() {
                 </div>
 
                 {/* ① 이전 화 브릿지 */}
-                {(() => {
-                  const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
-                  const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                  if (!txt) return null;
-                  return (
-                    <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                        <span>📎</span> {isKO ? '이전 화 브릿지' : 'Prev. Bridge'}
-                      </summary>
-                      <p className="mt-1 text-[9px] text-text-secondary font-serif leading-relaxed italic pl-5 border-l-2 border-border ml-1">
-                        {txt.slice(-300)}
-                      </p>
-                    </details>
-                  );
-                })()}
+                <details className="group">
+                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
+                    <span>📎</span> {isKO ? '브릿지' : 'Bridge'}
+                  </summary>
+                  {(() => {
+                    const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
+                    const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
+                    return txt ? (
+                      <p className="mt-1 text-[9px] text-text-secondary font-serif leading-relaxed italic pl-5 border-l-2 border-border ml-1">{txt.slice(-300)}</p>
+                    ) : (
+                      <p className="mt-1 text-[8px] text-text-tertiary pl-5 italic">{isKO ? '아직 생성된 내용 없음' : 'No content yet'}</p>
+                    );
+                  })()}
+                </details>
 
                 {/* ② 씬시트 미니뷰 */}
-                {currentSession.config.sceneDirection && (
-                  <details open className="group">
-                    <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                      <span>🎬</span> {isKO ? '씬시트' : 'Scene Sheet'}
-                    </summary>
-                    <div className="mt-1 pl-5 space-y-1">
-                      {currentSession.config.sceneDirection.hooks?.map((h, i) => (
-                        <div key={i} className="text-[8px] text-blue-400">🪝 {h.position}: {h.desc}</div>
-                      ))}
-                      {currentSession.config.sceneDirection.goguma?.map((g, i) => (
-                        <div key={i} className={`text-[8px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                          {g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}
-                        </div>
-                      ))}
-                      {currentSession.config.sceneDirection.cliffhanger && (
-                        <div className="text-[8px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>
-                      )}
-                      {currentSession.config.sceneDirection.emotionTargets?.map((e, i) => (
-                        <div key={i} className="text-[8px] text-pink-400">💓 {e.emotion} {e.intensity}%</div>
-                      ))}
-                    </div>
-                  </details>
-                )}
+                <details className="group">
+                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
+                    <span>🎬</span> {isKO ? '씬시트' : 'Scene'}
+                  </summary>
+                  <div className="mt-1 pl-5 space-y-1">
+                    {currentSession.config.sceneDirection?.hooks?.map((h, i) => (
+                      <div key={i} className="text-[8px] text-blue-400">🪝 {h.position}: {h.desc}</div>
+                    ))}
+                    {currentSession.config.sceneDirection?.goguma?.map((g, i) => (
+                      <div key={i} className={`text-[8px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>
+                        {g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}
+                      </div>
+                    ))}
+                    {currentSession.config.sceneDirection?.cliffhanger && (
+                      <div className="text-[8px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>
+                    )}
+                    {currentSession.config.sceneDirection?.emotionTargets?.map((e, i) => (
+                      <div key={i} className="text-[8px] text-pink-400">💓 {e.emotion} {e.intensity}%</div>
+                    ))}
+                    {!currentSession.config.sceneDirection && (
+                      <p className="text-[8px] text-text-tertiary italic">{isKO ? '연출 미설정' : 'Not set'}</p>
+                    )}
+                  </div>
+                </details>
 
                 {/* ③ 등장인물 퀵카드 */}
-                {currentSession.config.characters.length > 0 && (
-                  <details open className="group">
-                    <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
-                      <span>👤</span> {isKO ? '캐릭터' : 'Characters'}
-                    </summary>
-                    <div className="mt-1 pl-5 space-y-1.5">
-                      {currentSession.config.characters.map(c => (
-                        <div key={c.id} className="text-[8px]">
-                          <span className="font-bold text-text-primary">{c.name}</span>
-                          <span className="text-text-tertiary"> ({c.role})</span>
-                          {c.speechStyle && <div className="text-accent-blue ml-2">🗣️ {c.speechStyle}</div>}
-                          {c.personality && <div className="text-text-tertiary ml-2">🧠 {c.personality}</div>}
-                        </div>
-                      ))}
-                      {currentSession.config.charRelations?.map((r, i) => {
-                        const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
-                        const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
-                        return <div key={i} className="text-[7px] text-text-tertiary">{from}⇄{to} [{r.type}]</div>;
-                      })}
-                    </div>
-                  </details>
-                )}
+                <details className="group">
+                  <summary className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors">
+                    <span>👤</span> {isKO ? '캐릭터' : 'Chars'} <span className="text-[8px]">({currentSession.config.characters.length})</span>
+                  </summary>
+                  <div className="mt-1 pl-5 space-y-1.5">
+                    {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
+                      <div key={c.id} className="text-[8px]">
+                        <span className="font-bold text-text-primary">{c.name}</span>
+                        <span className="text-text-tertiary"> ({c.role})</span>
+                        {c.speechStyle && <div className="text-accent-blue ml-2">🗣️ {c.speechStyle}</div>}
+                        {c.personality && <div className="text-text-tertiary ml-2">🧠 {c.personality}</div>}
+                      </div>
+                    )) : (
+                      <p className="text-[8px] text-text-tertiary italic">{isKO ? '캐릭터 미등록' : 'No characters'}</p>
+                    )}
+                    {currentSession.config.charRelations?.map((r, i) => {
+                      const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
+                      const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
+                      return <div key={i} className="text-[7px] text-text-tertiary">{from}⇄{to} [{r.type}]</div>;
+                    })}
+                  </div>
+                </details>
 
                 {/* ④ 서식 규칙 */}
                 <details className="group">
