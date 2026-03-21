@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Plus, Settings, Send,
   Sparkles, Menu, Globe, UserCircle,
-  Zap, Ghost, X, PenTool, History, StopCircle
+  Zap, Ghost, X, PenTool, History, StopCircle,
+  Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon
 } from 'lucide-react';
 import {
   Message, StoryConfig, Genre,
@@ -73,8 +74,19 @@ export default function StudioPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSession = sessions.find(s => s.id === currentSessionId) || null;
   const t = TRANSLATIONS[language] || TRANSLATIONS['KO'];
+  const isKO = language === 'KO';
+
+  // UX feature states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [lightTheme, setLightTheme] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     setIsSidebarOpen(window.innerWidth >= 768);
@@ -93,7 +105,7 @@ export default function StudioPage() {
     }
   }, [currentSession?.messages, isGenerating, activeTab]);
 
-  const createNewSession = () => {
+  const createNewSession = useCallback(() => {
     const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
@@ -102,11 +114,11 @@ export default function StudioPage() {
       config: { ...INITIAL_CONFIG },
       lastUpdate: Date.now()
     };
-    setSessions([newSession, ...sessions]);
+    setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
     setActiveTab('world');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  };
+  }, [language]);
 
   const handleTabChange = (tab: AppTab) => {
     setActiveTab(tab);
@@ -136,6 +148,124 @@ export default function StudioPage() {
       setActiveTab('world');
     }
   };
+
+  // ============================================================
+  // EXPORT / IMPORT / RENAME / SEARCH / SHORTCUTS
+  // ============================================================
+
+  // Export session as TXT
+  const exportTXT = useCallback(() => {
+    if (!currentSession) return;
+    const lines = currentSession.messages.map(m => {
+      const prefix = m.role === 'user' ? '[USER]' : '[NOA]';
+      return `${prefix}\n${m.content}\n`;
+    });
+    const header = `# ${currentSession.config.title || currentSession.title}\n# Genre: ${currentSession.config.genre} | Episode: ${currentSession.config.episode}\n# Exported: ${new Date().toISOString()}\n\n`;
+    const blob = new Blob([header + lines.join('\n---\n\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentSession.title || 'noa-story'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [currentSession]);
+
+  // Export session as JSON backup
+  const exportJSON = useCallback(() => {
+    if (!currentSession) return;
+    const blob = new Blob([JSON.stringify(currentSession, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentSession.title || 'noa-session'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [currentSession]);
+
+  // Export ALL sessions as JSON
+  const exportAllJSON = useCallback(() => {
+    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `noa-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [sessions]);
+
+  // Import JSON backup
+  const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (Array.isArray(data)) {
+          // Multiple sessions
+          setSessions(prev => [...data, ...prev]);
+          setCurrentSessionId(data[0]?.id || null);
+        } else if (data.id && data.messages) {
+          // Single session
+          setSessions(prev => [data, ...prev]);
+          setCurrentSessionId(data.id);
+        }
+        setActiveTab('writing');
+      } catch {
+        alert(isKO ? '유효하지 않은 JSON 파일입니다.' : 'Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }, [isKO]);
+
+  // Rename session
+  const startRename = (sessionId: string, currentTitle: string) => {
+    setRenamingSessionId(sessionId);
+    setRenameValue(currentTitle);
+  };
+  const confirmRename = () => {
+    if (!renamingSessionId || !renameValue.trim()) return;
+    setSessions(prev => prev.map(s =>
+      s.id === renamingSessionId ? { ...s, title: renameValue.trim() } : s
+    ));
+    setRenamingSessionId(null);
+    setRenameValue('');
+  };
+
+  // Search filter
+  const filteredMessages = currentSession?.messages.filter(m =>
+    !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
+  // Print
+  const handlePrint = useCallback(() => {
+    if (!currentSession) return;
+    const printContent = currentSession.messages.map(m => {
+      const prefix = m.role === 'user' ? '📝 ' : '🤖 ';
+      return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
+    }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<html><head><title>${currentSession.title}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${currentSession.title}</h1><p style="color:#888;">${currentSession.config.genre} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}</p><hr>${printContent}</body></html>`);
+    w.document.close();
+    w.print();
+  }, [currentSession]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.key === 'f') { e.preventDefault(); setShowSearch(prev => !prev); }
+      if (ctrl && e.key === 'e') { e.preventDefault(); exportTXT(); }
+      if (ctrl && e.key === 'p') { e.preventDefault(); handlePrint(); }
+      if (ctrl && e.key === 'n') { e.preventDefault(); createNewSession(); }
+      if (e.key === 'F11') { e.preventDefault(); setFocusMode(prev => !prev); }
+      if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [exportTXT, handlePrint, createNewSession]);
 
   const updateCurrentSession = (updates: Partial<ChatSession>) => {
     if (!currentSessionId) return;
@@ -277,11 +407,11 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="flex h-screen bg-bg-primary text-text-primary overflow-hidden" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={{ fontFamily: 'var(--font-sans)' }}>
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
       {/* Sidebar */}
-      <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
+      <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${focusMode ? '-translate-x-full md:translate-x-0 md:w-0' : isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
         <div className="p-6">
           <Link href="/" className="flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
             <Zap className="w-6 h-6 text-accent-purple" />
@@ -309,8 +439,24 @@ export default function StudioPage() {
           </nav>
         </div>
 
-        <div className="mt-auto p-6 border-t border-border">
-          <div className="flex gap-4 mb-4">
+        <div className="mt-auto p-6 border-t border-border space-y-3">
+          {/* Export / Import */}
+          <div className="flex gap-1.5">
+            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Download className="w-3 h-3" /> TXT
+            </button>
+            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Download className="w-3 h-3" /> JSON
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Upload className="w-3 h-3" /> {isKO ? '불러오기' : 'Import'}
+            </button>
+            <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
+          </div>
+          <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            {isKO ? '📦 전체 백업 (JSON)' : '📦 Full Backup (JSON)'}
+          </button>
+          <div className="flex gap-4">
             {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
               <button key={l} onClick={() => setLanguage(l)} className={`text-[10px] font-black font-[family-name:var(--font-mono)] ${language === l ? 'text-accent-purple' : 'text-text-tertiary'}`}>{l}</button>
             ))}
@@ -323,7 +469,7 @@ export default function StudioPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
-        <header className="h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0">
+        <header className={`h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
           <div className="flex items-center gap-2 md:gap-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors">
               <Menu className="w-5 h-5 text-text-tertiary" />
@@ -351,8 +497,54 @@ export default function StudioPage() {
                 </button>
               </div>
             )}
+            {/* Tool buttons */}
+            <div className="flex items-center gap-1">
+              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '검색 (Ctrl+F)' : 'Search (Ctrl+F)'}><Search className="w-4 h-4" /></button>
+              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '집중 모드 (F11)' : 'Focus Mode (F11)'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+              <button onClick={() => setLightTheme(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '테마 전환' : 'Toggle Theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title="Ctrl+/"><Keyboard className="w-4 h-4" /></button>
+            </div>
           </div>
         </header>
+
+        {/* Search bar */}
+        {showSearch && (
+          <div className="px-4 py-2 bg-bg-secondary border-b border-border flex items-center gap-2">
+            <Search className="w-4 h-4 text-text-tertiary shrink-0" />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={isKO ? '메시지 검색...' : 'Search messages...'} autoFocus
+              className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
+            <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+
+        {/* Shortcuts modal */}
+        {showShortcuts && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
+            <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center">
+                <h3 className="font-black text-sm">{isKO ? '키보드 단축키' : 'Keyboard Shortcuts'}</h3>
+                <button onClick={() => setShowShortcuts(false)}><X className="w-4 h-4 text-text-tertiary" /></button>
+              </div>
+              <div className="space-y-2 text-xs">
+                {[
+                  ['Ctrl+N', isKO ? '새 세션' : 'New session'],
+                  ['Ctrl+F', isKO ? '검색' : 'Search'],
+                  ['Ctrl+E', isKO ? 'TXT 내보내기' : 'Export TXT'],
+                  ['Ctrl+P', isKO ? '인쇄' : 'Print'],
+                  ['F11', isKO ? '집중 모드' : 'Focus mode'],
+                  ['Ctrl+/', isKO ? '단축키 도움말' : 'Shortcuts help'],
+                  ['Enter', isKO ? '메시지 전송' : 'Send message'],
+                  ['Shift+Enter', isKO ? '줄바꿈' : 'New line'],
+                ].map(([key, desc]) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="px-2 py-0.5 bg-bg-secondary rounded text-text-tertiary font-[family-name:var(--font-mono)]">{key}</span>
+                    <span className="text-text-secondary">{desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
@@ -388,7 +580,7 @@ export default function StudioPage() {
                         <p className="text-text-tertiary text-sm font-medium">{t.engine.startPrompt}</p>
                       </div>
                     ) : (
-                      currentSession.messages.map(msg => (
+                      (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
                         <ChatMessage key={msg.id} message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
                       ))
                     )}
@@ -406,13 +598,19 @@ export default function StudioPage() {
                           onClick={() => { setCurrentSessionId(s.id); setActiveTab('writing'); }}
                           className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
                         >
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}
-                            className="absolute top-4 right-4 p-2 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:bg-accent-red/20 hover:text-accent-red transition-all opacity-0 group-hover:opacity-100 z-10"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <h4 className="font-black text-sm mb-2 pr-8 truncate">{s.title}</h4>
+                          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
+                            <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
+                          </div>
+                          {renamingSessionId === s.id ? (
+                            <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingSessionId(null); }}
+                              onBlur={confirmRename} onClick={e => e.stopPropagation()}
+                              className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none" />
+                          ) : (
+                            <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
+                          )}
                           <div className="flex gap-2">
                             <span className="text-[9px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
                             <span className="text-[9px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
@@ -458,6 +656,11 @@ export default function StudioPage() {
                   rows={1}
                   disabled={isGenerating}
                 />
+                {input.length > 0 && (
+                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
+                    {input.length}
+                  </span>
+                )}
                 {isGenerating ? (
                   <button onClick={handleCancel} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-accent-red text-white transition-all shrink-0 hover:opacity-80">
                     <StopCircle className="w-5 h-5" />
