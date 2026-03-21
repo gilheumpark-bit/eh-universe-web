@@ -799,7 +799,7 @@ export default function StudioPage() {
                       )}
                     </div>
 
-                    {writingMode === 'ai' ? (
+                    {writingMode === 'ai' && (
                       <>
                         <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                         {currentSession.messages.length === 0 ? (
@@ -814,7 +814,9 @@ export default function StudioPage() {
                         )}
                         <div ref={messagesEndRef} className="h-32" />
                       </>
-                    ) : (
+                    )}
+
+                    {writingMode === 'edit' && (
                       /* ====== EDIT MODE ====== */
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
