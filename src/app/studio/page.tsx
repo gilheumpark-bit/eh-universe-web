@@ -1086,7 +1086,7 @@ export default function StudioPage() {
                             if (text) { setCanvasContent(text); setWritingMode('canvas'); }
                           }}
                             className="px-3 py-2.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)]">
-                            📋 {isKO ? '캔버스로' : 'To Canvas'}
+                            📋 {isKO ? '캔버스에 가져오기' : 'Pull to Canvas'}
                           </button>
                           <button disabled={!canvasContent} onClick={() => {
                             const editMsg: Message = { id: `canvas-${Date.now()}`, role: 'assistant', content: canvasContent, timestamp: Date.now() };
@@ -1165,7 +1165,7 @@ export default function StudioPage() {
                 <span className="text-border">|</span>
                 <button onClick={() => { setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
                   className="px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  🎨 {isKO ? '3패스 캔버스' : '3-Pass Canvas'}
+                  🎨 {isKO ? '캔버스 실행' : 'Open Canvas'}
                 </button>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
