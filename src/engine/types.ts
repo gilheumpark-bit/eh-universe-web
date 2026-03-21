@@ -18,6 +18,7 @@ export enum FixType {
   EMOTION = 'EMOTION',
   PACING = 'PACING',
   THEME = 'THEME',
+  CAUSALITY = 'CAUSALITY',
 }
 
 export enum Severity {

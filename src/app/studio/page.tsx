@@ -12,6 +12,7 @@ import {
   AppLanguage, AppTab, PlatformType
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
+import { useAuth } from '@/lib/AuthContext';
 import { EngineReport } from '@/engine/types';
 import ChatMessage from '@/components/studio/ChatMessage';
 import PlanningView from '@/components/studio/PlanningView';
@@ -22,8 +23,9 @@ import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import { generateStoryStream } from '@/services/geminiService';
-import WorldSimulator from '@/components/WorldSimulator';
-import SceneSheet from '@/components/studio/SceneSheet';
+import dynamic from 'next/dynamic';
+const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
+const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 import Link from 'next/link';
 import { FileText, Map } from 'lucide-react';
 // BYOK provider info available via '@/lib/ai-providers'
@@ -88,6 +90,7 @@ export default function StudioPage() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const { user, signInWithGoogle, signOut, isConfigured: authConfigured } = useAuth();
   const [writingMode, setWritingMode] = useState<'ai' | 'edit'>('ai');
   const [editDraft, setEditDraft] = useState('');
 
@@ -460,6 +463,22 @@ export default function StudioPage() {
           <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
             {isKO ? '📦 전체 백업 (JSON)' : '📦 Full Backup (JSON)'}
           </button>
+          {/* Auth — only show if Firebase configured */}
+          {authConfigured && <div className="flex items-center gap-2 py-1">
+            {user ? (
+              <>
+                <div className="w-6 h-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-[9px] font-bold text-accent-purple overflow-hidden">
+                  {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || '?'}
+                </div>
+                <span className="text-[9px] text-text-secondary truncate flex-1">{user.displayName || user.email}</span>
+                <button onClick={signOut} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{isKO ? '로그아웃' : 'Logout'}</button>
+              </>
+            ) : (
+              <button onClick={signInWithGoogle} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
+                🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'}
+              </button>
+            )}
+          </div>}
           <div className="flex gap-4">
             {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
               <button key={l} onClick={() => setLanguage(l)} className={`text-[10px] font-black font-[family-name:var(--font-mono)] ${language === l ? 'text-accent-purple' : 'text-text-tertiary'}`}>{l}</button>
@@ -503,10 +522,10 @@ export default function StudioPage() {
             )}
             {/* Tool buttons */}
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '검색 (Ctrl+F)' : 'Search (Ctrl+F)'}><Search className="w-4 h-4" /></button>
-              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '집중 모드 (F11)' : 'Focus Mode (F11)'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={() => setLightTheme(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title={isKO ? '테마 전환' : 'Toggle Theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
-              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors" title="Ctrl+/"><Keyboard className="w-4 h-4" /></button>
+              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '검색 (Ctrl+F)' : 'Search (Ctrl+F)'} aria-label={isKO ? '검색' : 'Search'}><Search className="w-4 h-4" /></button>
+              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '집중 모드 (F11)' : 'Focus Mode (F11)'} aria-label={isKO ? '집중 모드' : 'Focus mode'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+              <button onClick={() => setLightTheme(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '테마 전환' : 'Toggle Theme'} aria-label={isKO ? '테마 전환' : 'Toggle theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={isKO ? '단축키 도움말' : 'Keyboard shortcuts'}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
         </header>

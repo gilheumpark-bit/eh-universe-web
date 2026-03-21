@@ -174,7 +174,7 @@ export function validateCausality(text: string, ruleLevel: number): { fixes: Fix
     const matches = text.match(regex);
     if (matches) {
       fixes.push({
-        fixType: FixType.AI_TONE,
+        fixType: FixType.CAUSALITY,
         original: word,
         fixed: '',
         position: text.search(regex),

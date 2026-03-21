@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LangProvider } from "@/lib/LangContext";
+import { AuthProvider } from "@/lib/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +35,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <LangProvider>{children}</LangProvider>
+        <AuthProvider><LangProvider>{children}</LangProvider></AuthProvider>
       </body>
     </html>
   );

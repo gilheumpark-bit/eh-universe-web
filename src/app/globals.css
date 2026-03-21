@@ -6,7 +6,7 @@
   --color-bg-tertiary: #1a1a2e;
   --color-text-primary: #e0e0e0;
   --color-text-secondary: #8888a0;
-  --color-text-tertiary: #555570;
+  --color-text-tertiary: #6a6a82;
   --color-accent-purple: #7b5ea7;
   --color-accent-red: #c0392b;
   --color-accent-green: #1d9e75;
@@ -19,13 +19,7 @@
   --font-document: 'IBM Plex Mono', monospace;
 }
 
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-}
+/* Fonts loaded via <link> in layout.tsx — no @font-face needed */
 
 * {
   letter-spacing: 0.02em;

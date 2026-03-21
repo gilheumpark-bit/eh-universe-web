@@ -1,5 +1,8 @@
 // ============================================================
 // PART 0: IMPORTS & TYPES
+// Story streaming uses lib/ai-providers.ts (multi-provider).
+// This file handles: (1) story stream orchestration with engine
+//                     (2) Gemini-only structured output (characters)
 // ============================================================
 
 import { GoogleGenAI, Type } from "@google/genai";
