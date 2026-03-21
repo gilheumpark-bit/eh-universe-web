@@ -889,18 +889,51 @@ export default function StudioPage() {
         {activeTab === 'writing' && currentSessionId && (
           <div className="p-4 md:p-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
             <div className="max-w-4xl mx-auto relative">
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2">
-                <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.nextChapter}
-                </button>
-                <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.plotTwist}
-                </button>
-                {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
-                  <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                    EP.{currentSession.config.episode} → {currentSession.config.episode + 1}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-14 md:left-0 md:right-0 md:translate-x-0 flex flex-col gap-2">
+                {/* 3-Pass Pipeline */}
+                <div className="flex gap-1.5 items-center">
+                  <span className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider hidden md:inline">{isKO ? '3패스' : '3-Pass'}:</span>
+                  <button onClick={() => handleSend(isKO
+                    ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자).'
+                    : '[Pass 1 — Skeleton] Write based on scene sheet. Events and dialogue only. No emotion. ~1,000 tokens.'
+                  )} className="px-2.5 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[9px] font-bold text-blue-400 hover:bg-blue-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    🦴 {isKO ? '1단계 뼈대' : 'Pass 1 Skeleton'}
                   </button>
-                )}
+                  <button onClick={() => {
+                    const lastAssistant = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
+                    if (!lastAssistant) { alert(isKO ? '먼저 1단계를 실행하세요.' : 'Run Pass 1 first.'); return; }
+                    handleSend(isKO
+                      ? `[2단계 — 감정선] 아래 초안에 인물 내면, 감정 밀도, 문장 리듬을 덮어쓰세요. 고구마/사이다 타이밍 조정. EOS 점수를 올리세요. 약 1,000토큰(2,000자) 추가.\n\n---초안---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 3000)}`
+                      : `[Pass 2 — Emotion] Overlay inner thoughts, emotional density, rhythm on this draft. ~1,000 tokens added.\n\n---Draft---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 3000)}`
+                    );
+                  }} className="px-2.5 py-1 bg-pink-600/10 border border-pink-500/20 rounded-full text-[9px] font-bold text-pink-400 hover:bg-pink-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    💓 {isKO ? '2단계 감정' : 'Pass 2 Emotion'}
+                  </button>
+                  <button onClick={() => {
+                    const lastAssistant = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
+                    if (!lastAssistant) { alert(isKO ? '먼저 2단계를 실행하세요.' : 'Run Pass 2 first.'); return; }
+                    handleSend(isKO
+                      ? `[3단계 — 감각 묘사] 아래 원고에 물성/시각/청각/촉각 묘사를 덮어쓰세요. 장면이 눈에 보이게. 클리프행어 마무리 확인. 약 1,000토큰(2,000자) 추가.\n\n---원고---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 4000)}`
+                      : `[Pass 3 — Sensory] Overlay physical/visual/auditory/tactile descriptions. Make scenes vivid. Verify cliffhanger. ~1,000 tokens added.\n\n---Manuscript---\n${lastAssistant.content.replace(/```json[\s\S]*?```/g, '').trim().slice(0, 4000)}`
+                    );
+                  }} className="px-2.5 py-1 bg-amber-600/10 border border-amber-500/20 rounded-full text-[9px] font-bold text-amber-400 hover:bg-amber-600/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    👁 {isKO ? '3단계 묘사' : 'Pass 3 Sensory'}
+                  </button>
+                </div>
+                {/* Quick actions */}
+                <div className="flex gap-2">
+                  <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    {t.engine.nextChapter}
+                  </button>
+                  <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                    {t.engine.plotTwist}
+                  </button>
+                  {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
+                    <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
+                      EP.{currentSession.config.episode} → {currentSession.config.episode + 1}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
                 <textarea
