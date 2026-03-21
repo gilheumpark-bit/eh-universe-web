@@ -123,7 +123,25 @@ export default function StudioPage() {
       setLastSyncTime(Date.now());
       setSyncStatus('done');
       setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || '';
+      // Auto-retry on 401 (expired token)
+      if (msg.includes('401')) {
+        console.warn('[Sync] Token expired, refreshing...');
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+          try {
+            const retryResult = await syncAllProjects(newToken, projects);
+            setProjects(retryResult.merged);
+            setLastSyncTime(Date.now());
+            setSyncStatus('done');
+            setTimeout(() => setSyncStatus('idle'), 3000);
+            return;
+          } catch (retryErr) {
+            console.error('[Sync] Retry failed', retryErr);
+          }
+        }
+      }
       console.error('[Sync]', err);
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
@@ -165,6 +183,28 @@ export default function StudioPage() {
       p.id === projectId ? { ...p, name: newName, lastUpdate: Date.now() } : p
     ));
   }, []);
+
+  const moveSessionToProject = useCallback((sessionId: string, targetProjectId: string) => {
+    setProjects(prev => {
+      const sourceProject = prev.find(p => p.sessions.some(s => s.id === sessionId));
+      if (!sourceProject || sourceProject.id === targetProjectId) return prev;
+      const session = sourceProject.sessions.find(s => s.id === sessionId);
+      if (!session) return prev;
+      return prev.map(p => {
+        if (p.id === sourceProject.id) {
+          return { ...p, sessions: p.sessions.filter(s => s.id !== sessionId), lastUpdate: Date.now() };
+        }
+        if (p.id === targetProjectId) {
+          return { ...p, sessions: [session, ...p.sessions], lastUpdate: Date.now() };
+        }
+        return p;
+      });
+    });
+    if (currentSessionId === sessionId) {
+      setCurrentProjectId(targetProjectId);
+    }
+  }, [currentSessionId]);
+
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
   const [editDraft, setEditDraft] = useState('');
@@ -554,30 +594,38 @@ export default function StudioPage() {
           </Link>
           {/* Project Selector */}
           <div className="mb-3 space-y-1">
-            <div className="flex items-center gap-1">
-              <select
-                value={currentProjectId || ''}
-                onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-                className="flex-1 bg-bg-secondary border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold font-[family-name:var(--font-mono)] outline-none text-text-primary truncate"
-              >
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
-                ))}
-              </select>
-              <button onClick={createNewProject} className="p-1.5 bg-bg-secondary border border-border rounded-lg text-text-tertiary hover:text-accent-purple transition-colors" title={t.project?.newProject || 'New Project'}>
-                <Plus className="w-3 h-3" />
+            {projects.length === 0 ? (
+              <button onClick={createNewProject} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary border border-dashed border-border rounded-xl text-[10px] font-bold text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-all font-[family-name:var(--font-mono)]">
+                <Plus className="w-3.5 h-3.5" /> {t.project?.newProject || 'New Project'}
               </button>
-            </div>
-            {currentProject && (
-              <div className="flex gap-1 text-[8px] font-[family-name:var(--font-mono)]">
-                <button onClick={() => {
-                  const name = window.prompt(t.project?.renameProject || 'Rename', currentProject.name);
-                  if (name) renameProject(currentProject.id, name);
-                }} className="text-text-tertiary hover:text-accent-purple">{t.project?.renameProject || 'Rename'}</button>
-                {projects.length > 1 && (
-                  <button onClick={() => deleteProject(currentProject.id)} className="text-text-tertiary hover:text-accent-red">{t.project?.deleteProject || 'Delete'}</button>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={currentProjectId || ''}
+                    onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
+                    className="flex-1 bg-bg-secondary border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold font-[family-name:var(--font-mono)] outline-none text-text-primary truncate"
+                  >
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
+                    ))}
+                  </select>
+                  <button onClick={createNewProject} className="p-1.5 bg-bg-secondary border border-border rounded-lg text-text-tertiary hover:text-accent-purple transition-colors" title={t.project?.newProject || 'New Project'}>
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+                {currentProject && (
+                  <div className="flex gap-1 text-[8px] font-[family-name:var(--font-mono)]">
+                    <button onClick={() => {
+                      const name = window.prompt(t.project?.renameProject || 'Rename', currentProject.name);
+                      if (name) renameProject(currentProject.id, name);
+                    }} className="text-text-tertiary hover:text-accent-purple">{t.project?.renameProject || 'Rename'}</button>
+                    {projects.length > 1 && (
+                      <button onClick={() => deleteProject(currentProject.id)} className="text-text-tertiary hover:text-accent-red">{t.project?.deleteProject || 'Delete'}</button>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
@@ -587,11 +635,11 @@ export default function StudioPage() {
 
           <nav className="space-y-1">
             {([
-              { tab: 'world' as AppTab, icon: Globe, label: language === 'KO' ? '세계관 설계' : 'World Design' },
-              { tab: 'critique' as AppTab, icon: Map, label: language === 'KO' ? '세계관 시뮬레이터' : 'World Simulator' },
+              { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
+              { tab: 'critique' as AppTab, icon: Map, label: t.sidebar.worldSimulator },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
-              { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '연출 스튜디오' : 'Direction Studio' },
-              { tab: 'writing' as AppTab, icon: PenTool, label: language === 'KO' ? '집필 스튜디오' : 'Writing Studio' },
+              { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
+              { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
@@ -1236,6 +1284,22 @@ export default function StudioPage() {
                         >
                           <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
                             <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
+                            {projects.length > 1 && (
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                const others = projects.filter(p => p.id !== currentProjectId);
+                                if (others.length === 1) {
+                                  moveSessionToProject(s.id, others[0].id);
+                                } else {
+                                  const choice = window.prompt(
+                                    (t.project?.moveSession || 'Move to') + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
+                                    '1'
+                                  );
+                                  const idx = parseInt(choice || '', 10) - 1;
+                                  if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
+                                }
+                              }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
+                            )}
                             <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
                             <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
                           </div>
