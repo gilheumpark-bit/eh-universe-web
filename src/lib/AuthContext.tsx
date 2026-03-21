@@ -24,12 +24,12 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(auth !== null);
   const [error, setError] = useState<string | null>(null);
   const isConfigured = auth !== null;
 
   useEffect(() => {
-    if (!auth) { setLoading(false); return; }
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);

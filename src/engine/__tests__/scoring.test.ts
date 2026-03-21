@@ -70,6 +70,7 @@ describe('analyzeMetrics', () => {
   const mockConfig = { genre: 'SF', episode: 1, totalEpisodes: 25, povCharacter: '', setting: '', primaryEmotion: '', title: '', guardrails: { min: 3000, max: 5000 }, characters: [], platform: 'MOBILE' as const };
 
   it('returns zeros for empty text', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = analyzeMetrics('', mockConfig as any);
     expect(result.tension).toBe(0);
     expect(result.pacing).toBe(0);
@@ -78,6 +79,7 @@ describe('analyzeMetrics', () => {
 
   it('returns values between 0 and 100', () => {
     const text = '위험한 상황이 벌어졌다. 갑자기 폭발이 일어났다. 비명 소리가 울렸다. "도망쳐!" 그는 달렸다. 심장이 터질 듯 뛰었다. 긴장된 순간이었다.';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = analyzeMetrics(text, mockConfig as any);
     expect(result.tension).toBeGreaterThanOrEqual(0);
     expect(result.tension).toBeLessThanOrEqual(100);
@@ -90,6 +92,7 @@ describe('analyzeMetrics', () => {
   it('action-heavy text has higher tension', () => {
     const action = '폭발이 일어났다. 비명 소리가 울렸다. 전투가 시작됐다. 위험한 적이 나타났다. 충돌하는 소리가 들렸다. 긴장된 대치가 계속됐다. 급하게 달렸다. 갑자기 문이 열렸다. 위험한 상황이 벌어졌다. 폭발음이 다시 울렸다. 전투의 열기가 고조됐다. 비명이 멈추지 않았다.';
     const calm = '바다가 잔잔했다. 하늘이 맑았다. 새가 지저귀었다. 평화로운 오후였다. 구름이 흘러갔다. 풀밭에 누웠다. 바람이 살랑 불었다. 따뜻한 햇살이 내리쬐었다. 물결이 반짝였다. 조용한 시간이 흘렀다. 나비가 날아갔다. 꽃향기가 퍼졌다.';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(analyzeMetrics(action, mockConfig as any).tension).toBeGreaterThan(analyzeMetrics(calm, mockConfig as any).tension);
   });
 });

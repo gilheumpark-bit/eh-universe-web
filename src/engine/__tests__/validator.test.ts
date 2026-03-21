@@ -1,4 +1,4 @@
-import { validateAITone, validateQuality, validateCausality, validateStatic, validateFormattingIssues, applyFormattingRules, validateGeneratedContent } from '../validator';
+import { validateAITone, validateQuality, validateCausality, validateFormattingIssues, applyFormattingRules, validateGeneratedContent } from '../validator';
 
 // ============================================================
 // AI Tone Validator

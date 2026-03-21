@@ -234,7 +234,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   // Falls back to client-side if proxy unavailable
   try {
     return await streamViaProxy(provider, model, apiKey, opts);
-  } catch (proxyErr) {
+  } catch {
     // If proxy 404 or network error, fall back to direct client call
     if (!apiKey) throw new Error("API_KEY_MISSING");
   }

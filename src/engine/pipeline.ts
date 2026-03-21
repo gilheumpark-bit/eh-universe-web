@@ -2,7 +2,7 @@ import { StoryConfig, AppLanguage } from '../lib/studio-types';
 import { EngineReport, PlatformType, getActFromEpisode } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
-import { getTargetByteRange, getTargetCharRange } from './serialization';
+import { getTargetCharRange } from './serialization';
 
 // ============================================================
 // Dynamic System Instruction Builder
@@ -150,7 +150,6 @@ export function buildSystemInstruction(
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
   const targetTension = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
-  const byteTarget = getTargetByteRange(platform);
   const charTarget = getTargetCharRange(platform);
   const isKO = language === 'KO';
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
