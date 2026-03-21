@@ -10,6 +10,7 @@ const navItems = [
   { href: "/rulebook", label: "RULEBOOK" },
   { href: "/reference", label: "REFERENCE" },
   { href: "/studio", label: "STUDIO" },
+  { href: "/tools/style-studio", label: "STYLE" },
   { href: "/about", label: "ABOUT" },
 ];
 
