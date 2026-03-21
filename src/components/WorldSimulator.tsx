@@ -1483,8 +1483,17 @@ export default function WorldSimulator({ lang = "ko" }: { lang?: Lang }) {
   const [selectedGenre, setSelectedGenre] = useState("Fantasy");
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [ruleLevel, setRuleLevel] = useState(1);
-  const [civs, setCivs] = useState<Civilization[]>([]);
-  const [relations, setRelations] = useState<CivRelation[]>([]);
+  // 기본 베이스: Fantasy 템플릿 자동 로드
+  const [civs, setCivs] = useState<Civilization[]>(() => {
+    const t = AUTO_WORLD_TEMPLATES["Fantasy"];
+    return t ? t.civs.map((c, i) => ({ ...c, id: `base-${i}` })) : [];
+  });
+  const [relations, setRelations] = useState<CivRelation[]>(() => {
+    const t = AUTO_WORLD_TEMPLATES["Fantasy"];
+    if (!t) return [];
+    const ids = t.civs.map((_, i) => `base-${i}`);
+    return t.relations.filter((_, i) => ids[i] && ids[i + 1]).map((r, i) => ({ from: ids[i], to: ids[i + 1], type: r.type }));
+  });
   const [transitions, setTransitions] = useState<TransitionEvent[]>([]);
 
   const handleGenreSelect = useCallback((genre: string, level: number) => {

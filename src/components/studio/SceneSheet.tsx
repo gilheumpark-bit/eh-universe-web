@@ -24,41 +24,41 @@ const PLOT_PRESETS: Record<PlotType, { ko: string; en: string; segments: Omit<Pl
   "three-act": {
     ko: "3막 구조", en: "Three-Act",
     segments: [
-      { label: "Setup", color: "#3b82f6", width: 25, desc: "도입/설정" },
-      { label: "Confrontation", color: "#f59e0b", width: 50, desc: "대립/갈등" },
-      { label: "Resolution", color: "#10b981", width: 25, desc: "해결/결말" },
+      { label: "도입", color: "#3b82f6", width: 25, desc: "도입/설정" },
+      { label: "대립", color: "#f59e0b", width: 50, desc: "대립/갈등" },
+      { label: "해결", color: "#10b981", width: 25, desc: "해결/결말" },
     ],
   },
   "hero-journey": {
     ko: "영웅의 여정", en: "Hero's Journey",
     segments: [
-      { label: "Ordinary", color: "#6b7280", width: 10, desc: "일상 세계" },
-      { label: "Call", color: "#3b82f6", width: 10, desc: "모험의 부름" },
-      { label: "Threshold", color: "#8b5cf6", width: 10, desc: "문턱 넘기" },
-      { label: "Trials", color: "#f59e0b", width: 25, desc: "시련/동맹/적" },
-      { label: "Ordeal", color: "#ef4444", width: 15, desc: "시련/죽음" },
-      { label: "Reward", color: "#10b981", width: 10, desc: "보상" },
-      { label: "Return", color: "#06b6d4", width: 20, desc: "귀환/변화" },
+      { label: "일상", color: "#6b7280", width: 10, desc: "일상 세계" },
+      { label: "부름", color: "#3b82f6", width: 10, desc: "모험의 부름" },
+      { label: "문턱", color: "#8b5cf6", width: 10, desc: "문턱 넘기" },
+      { label: "시련", color: "#f59e0b", width: 25, desc: "시련/동맹/적" },
+      { label: "죽음", color: "#ef4444", width: 15, desc: "시련/죽음" },
+      { label: "보상", color: "#10b981", width: 10, desc: "보상" },
+      { label: "귀환", color: "#06b6d4", width: 20, desc: "귀환/변화" },
     ],
   },
   "kishotenketsu": {
     ko: "기승전결", en: "Ki-Sho-Ten-Ketsu",
     segments: [
-      { label: "起 (Ki)", color: "#3b82f6", width: 25, desc: "도입" },
-      { label: "承 (Sho)", color: "#f59e0b", width: 25, desc: "전개" },
-      { label: "転 (Ten)", color: "#ef4444", width: 25, desc: "전환/반전" },
-      { label: "結 (Ketsu)", color: "#10b981", width: 25, desc: "결말" },
+      { label: "기", color: "#3b82f6", width: 25, desc: "도입" },
+      { label: "승", color: "#f59e0b", width: 25, desc: "전개" },
+      { label: "전", color: "#ef4444", width: 25, desc: "전환/반전" },
+      { label: "결", color: "#10b981", width: 25, desc: "결말" },
     ],
   },
   "fichtean": {
-    ko: "피히테 곡선", en: "Fichtean Curve",
+    ko: "위기 곡선", en: "Fichtean Curve",
     segments: [
-      { label: "Crisis 1", color: "#f59e0b", width: 15, desc: "첫 번째 위기" },
-      { label: "Rise 1", color: "#ef4444", width: 15, desc: "상승" },
-      { label: "Crisis 2", color: "#f59e0b", width: 15, desc: "두 번째 위기" },
-      { label: "Rise 2", color: "#ef4444", width: 15, desc: "상승 가속" },
-      { label: "Climax", color: "#dc2626", width: 20, desc: "절정" },
-      { label: "Resolution", color: "#10b981", width: 20, desc: "하강/해결" },
+      { label: "위기1", color: "#f59e0b", width: 15, desc: "첫 번째 위기" },
+      { label: "상승1", color: "#ef4444", width: 15, desc: "상승" },
+      { label: "위기2", color: "#f59e0b", width: 15, desc: "두 번째 위기" },
+      { label: "상승2", color: "#ef4444", width: 15, desc: "상승 가속" },
+      { label: "절정", color: "#dc2626", width: 20, desc: "절정" },
+      { label: "하강", color: "#10b981", width: 20, desc: "하강/해결" },
     ],
   },
 };
@@ -527,9 +527,9 @@ export default function SceneSheet({ lang = "ko", onDirectionUpdate, onSimRefUpd
               <div key={dp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <select value={dp.scale} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, scale: e.target.value as "micro"|"medium"|"macro" } : d))}
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[9px] font-bold outline-none uppercase">
-                  <option value="micro">{lang === "ko" ? "마이크로" : "Micro"}</option>
-                  <option value="medium">{lang === "ko" ? "미디엄" : "Medium"}</option>
-                  <option value="macro">{lang === "ko" ? "매크로" : "Macro"}</option>
+                  <option value="micro">{lang === "ko" ? "소 (문단)" : "Micro"}</option>
+                  <option value="medium">{lang === "ko" ? "중 (에피소드)" : "Medium"}</option>
+                  <option value="macro">{lang === "ko" ? "대 (아크)" : "Macro"}</option>
                 </select>
                 <select value={dp.device} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, device: e.target.value } : d))}
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none">
