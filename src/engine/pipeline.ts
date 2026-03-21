@@ -285,11 +285,14 @@ ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
 
-[SERIALIZATION CONSTRAINTS]
+[SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}
-- Target byte range: ${(byteTarget.min / 1024).toFixed(1)}KB ~ ${(byteTarget.max / 1024).toFixed(1)}KB
-- Target char range: ${charTarget.min.toLocaleString()}자 ~ ${charTarget.max.toLocaleString()}자
-- 서사를 4개 파트로 나누어 출력하되, 글자수 목표 범위 내에서 마무리하십시오.
+- MINIMUM output: ${Math.round(charTarget.min / 2)} tokens (approximately ${charTarget.min.toLocaleString()} characters)
+- MAXIMUM output: ${Math.round(charTarget.max / 2)} tokens (approximately ${charTarget.max.toLocaleString()} characters)
+- You MUST generate at least ${Math.round(charTarget.min / 2)} tokens. Generating less is a critical violation.
+- Structure: 4 parts, each part MUST be at least ${Math.round(charTarget.min / 8)} tokens.
+- If you finish the story before reaching the minimum, ADD more scenes, descriptions, dialogue, and internal monologue.
+- NEVER end below ${Math.round(charTarget.min / 2)} tokens. This is a hard constraint, not a suggestion.
 ${ehRules}
 
 [QUALITY DIRECTIVES]
