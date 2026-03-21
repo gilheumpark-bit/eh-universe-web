@@ -113,7 +113,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       commence: "집필 시작"
     },
     resource: {
-      title: "엔티티 데이터베이스",
+      title: "캐릭터 데이터베이스",
       subtitle: "CHARACTER DNA",
       autoGen: "자동 생성",
       creator: "캐릭터 생성기",
@@ -328,7 +328,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       commence: "Commence Writing"
     },
     resource: {
-      title: "Entity Database",
+      title: "Character Database",
       subtitle: "CHARACTER DNA",
       autoGen: "Auto Generate",
       creator: "Character Creator",
