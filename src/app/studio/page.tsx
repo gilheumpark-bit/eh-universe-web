@@ -430,7 +430,7 @@ export default function StudioPage() {
               { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'rulebook' as AppTab, icon: FileText, label: language === 'KO' ? '연출 스튜디오' : 'Direction Studio' },
-              { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
+              { tab: 'writing' as AppTab, icon: PenTool, label: language === 'KO' ? '집필 스튜디오' : 'Writing Studio' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
@@ -579,7 +579,78 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
-                  <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-12">
+                  <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6">
+                    {/* Applied Settings Summary */}
+                    <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
+                      <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-secondary transition-colors">
+                        <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+                          {isKO ? '📋 현재 적용 설정' : '📋 Applied Settings'}
+                        </span>
+                        <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
+                      </summary>
+                      <div className="px-4 pb-4 space-y-3 text-[10px] border-t border-border pt-3">
+                        {/* World */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span className="text-text-tertiary font-bold uppercase w-16">{isKO ? '장르' : 'Genre'}</span>
+                          <span className="text-accent-purple font-bold">{currentSession.config.genre}</span>
+                          <span className="text-text-tertiary">EP.{currentSession.config.episode}/{currentSession.config.totalEpisodes}</span>
+                          {currentSession.config.setting && <span className="text-text-secondary">📍 {currentSession.config.setting}</span>}
+                          {currentSession.config.primaryEmotion && <span className="text-text-secondary">💓 {currentSession.config.primaryEmotion}</span>}
+                        </div>
+                        {/* Characters */}
+                        {currentSession.config.characters.length > 0 && (
+                          <div>
+                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '캐릭터' : 'Characters'}</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {currentSession.config.characters.map(c => (
+                                <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                  <span className="font-bold text-text-primary">{c.name}</span>
+                                  <span className="text-text-tertiary ml-1">({c.role})</span>
+                                  {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {/* Relations */}
+                        {currentSession.config.charRelations && currentSession.config.charRelations.length > 0 && (
+                          <div>
+                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '관계' : 'Relations'}</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {currentSession.config.charRelations.map((r, i) => {
+                                const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
+                                const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
+                                return (
+                                  <span key={i} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                    {from} ⇄ {to} <span className="text-accent-purple">[{r.type}]</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        {/* Synopsis preview */}
+                        {currentSession.config.synopsis && (
+                          <div>
+                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '시놉시스' : 'Synopsis'}</span>
+                            <p className="text-text-secondary text-[9px] mt-0.5 line-clamp-2 italic">{currentSession.config.synopsis}</p>
+                          </div>
+                        )}
+                        {/* Quick nav */}
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => setActiveTab('world')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                            {isKO ? '→ 세계관 수정' : '→ Edit World'}
+                          </button>
+                          <button onClick={() => setActiveTab('characters')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                            {isKO ? '→ 캐릭터 수정' : '→ Edit Characters'}
+                          </button>
+                          <button onClick={() => setActiveTab('rulebook')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                            {isKO ? '→ 연출 수정' : '→ Edit Direction'}
+                          </button>
+                        </div>
+                      </div>
+                    </details>
+
                     <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                     {currentSession.messages.length === 0 ? (
                       <div className="py-20 text-center space-y-4">
