@@ -68,18 +68,79 @@ const GENRE_LEVELS: GenreLevel[] = [
   ]},
 ];
 
-// --- Civilization Data ---
-interface CivEra { id: string; ko: string; en: string; techLevel: number; }
+// --- Civilization Data (지구 역사 치환) ---
+interface CivEra {
+  id: string; ko: string; en: string; techLevel: number;
+  society: { ko: string; en: string };
+  tech: { ko: string; en: string };
+  economy: { ko: string; en: string };
+  conflicts: { ko: string; en: string };
+  forbidden: { ko: string; en: string };
+}
 const ERAS: CivEra[] = [
-  { id: "primitive", ko: "원시", en: "Primitive", techLevel: 1 },
-  { id: "ancient", ko: "고대", en: "Ancient", techLevel: 2 },
-  { id: "medieval", ko: "중세", en: "Medieval", techLevel: 3 },
-  { id: "renaissance", ko: "르네상스", en: "Renaissance", techLevel: 4 },
-  { id: "industrial", ko: "산업혁명", en: "Industrial", techLevel: 5 },
-  { id: "modern", ko: "근현대", en: "Modern", techLevel: 6 },
-  { id: "info", ko: "정보화", en: "Information", techLevel: 7 },
-  { id: "space", ko: "우주시대", en: "Space Age", techLevel: 8 },
-  { id: "post", ko: "포스트휴먼", en: "Post-Human", techLevel: 9 },
+  { id: "primitive", ko: "원시", en: "Primitive", techLevel: 1,
+    society: { ko: "부족 사회, 샤먼 지도자, 혈연 집단", en: "Tribal, shaman leaders, kinship groups" },
+    tech: { ko: "석기, 불, 동굴 벽화, 구전 전승", en: "Stone tools, fire, cave art, oral tradition" },
+    economy: { ko: "수렵채집, 물물교환", en: "Hunter-gatherer, barter" },
+    conflicts: { ko: "영역 다툼, 자원 쟁탈, 맹수 위협", en: "Territory disputes, resource fights, predators" },
+    forbidden: { ko: "금속, 문자, 농경, 건축", en: "Metal, writing, farming, architecture" },
+  },
+  { id: "ancient", ko: "고대", en: "Ancient", techLevel: 2,
+    society: { ko: "도시국가, 왕정, 신관 계급, 노예제", en: "City-states, monarchy, priesthood, slavery" },
+    tech: { ko: "청동기/철기, 문자, 바퀴, 관개 수로", en: "Bronze/iron, writing, wheel, irrigation" },
+    economy: { ko: "농경, 조공, 교역로", en: "Agriculture, tribute, trade routes" },
+    conflicts: { ko: "제국 확장, 신전 전쟁, 반란", en: "Imperial expansion, temple wars, rebellion" },
+    forbidden: { ko: "화약, 인쇄술, 나침반", en: "Gunpowder, printing, compass" },
+  },
+  { id: "medieval", ko: "중세", en: "Medieval", techLevel: 3,
+    society: { ko: "봉건제, 영주-기사-농노, 종교 권위", en: "Feudalism, lord-knight-serf, religious authority" },
+    tech: { ko: "석조 건축, 갑옷, 석궁, 풍차, 양피지", en: "Stone architecture, armor, crossbow, windmill" },
+    economy: { ko: "장원 경제, 길드, 대상 무역", en: "Manor economy, guilds, caravan trade" },
+    conflicts: { ko: "왕위 계승, 십자군, 역병, 농민 반란", en: "Succession wars, crusades, plague, peasant revolts" },
+    forbidden: { ko: "화약 무기, 인쇄술, 전기, 증기기관", en: "Firearms, printing press, electricity, steam" },
+  },
+  { id: "renaissance", ko: "르네상스", en: "Renaissance", techLevel: 4,
+    society: { ko: "절대왕정, 상인 귀족, 예술 후원, 대학", en: "Absolute monarchy, merchant nobles, patronage, universities" },
+    tech: { ko: "인쇄술, 화약, 항해술, 망원경, 해부학", en: "Printing, gunpowder, navigation, telescope, anatomy" },
+    economy: { ko: "중상주의, 은행업, 식민지 무역", en: "Mercantilism, banking, colonial trade" },
+    conflicts: { ko: "종교개혁, 식민지 쟁탈, 왕조 전쟁", en: "Reformation, colonial rivalry, dynastic wars" },
+    forbidden: { ko: "전기, 증기기관, 자동화", en: "Electricity, steam engine, automation" },
+  },
+  { id: "industrial", ko: "산업혁명", en: "Industrial", techLevel: 5,
+    society: { ko: "자본가-노동자, 도시화, 의회 민주주의", en: "Capitalist-worker, urbanization, parliamentary democracy" },
+    tech: { ko: "증기기관, 철도, 전신, 공장 생산", en: "Steam engine, railway, telegraph, factory production" },
+    economy: { ko: "산업 자본주의, 주식회사, 세계 무역", en: "Industrial capitalism, corporations, world trade" },
+    conflicts: { ko: "제국주의, 노동 운동, 민족 전쟁", en: "Imperialism, labor movements, national wars" },
+    forbidden: { ko: "컴퓨터, 핵, 인터넷, 항공", en: "Computer, nuclear, internet, aviation" },
+  },
+  { id: "modern", ko: "근현대", en: "Modern", techLevel: 6,
+    society: { ko: "민주주의/독재, 냉전, 대중문화, 인권", en: "Democracy/dictatorship, Cold War, mass culture, human rights" },
+    tech: { ko: "자동차, 비행기, 핵, TV, 초기 컴퓨터", en: "Cars, planes, nuclear, TV, early computers" },
+    economy: { ko: "혼합 경제, 복지국가, 다국적 기업", en: "Mixed economy, welfare state, multinationals" },
+    conflicts: { ko: "세계대전, 냉전, 테러, 지역 분쟁", en: "World wars, Cold War, terrorism, regional conflicts" },
+    forbidden: { ko: "AI, 우주여행, 유전자 편집", en: "AI, space travel, gene editing" },
+  },
+  { id: "info", ko: "정보화", en: "Information", techLevel: 7,
+    society: { ko: "디지털 사회, SNS, 감시 자본주의, 원격근무", en: "Digital society, social media, surveillance capitalism" },
+    tech: { ko: "인터넷, 스마트폰, AI, 드론, 3D프린팅", en: "Internet, smartphones, AI, drones, 3D printing" },
+    economy: { ko: "플랫폼 경제, 암호화폐, 긱이코노미", en: "Platform economy, crypto, gig economy" },
+    conflicts: { ko: "사이버 전쟁, 정보 조작, 기술 격차", en: "Cyber warfare, disinformation, tech divide" },
+    forbidden: { ko: "FTL, 텔레포트, 의식 업로드", en: "FTL, teleportation, consciousness upload" },
+  },
+  { id: "space", ko: "우주시대", en: "Space Age", techLevel: 8,
+    society: { ko: "행성 연방, 우주 식민지, AI 협치", en: "Planetary federation, space colonies, AI governance" },
+    tech: { ko: "FTL 항행, 테라포밍, 양자 통신, 사이보그", en: "FTL travel, terraforming, quantum comms, cyborgs" },
+    economy: { ko: "항성간 무역, 자원 채굴, 에너지 경제", en: "Interstellar trade, resource mining, energy economy" },
+    conflicts: { ko: "행성간 전쟁, 외계 접촉, AI 반란", en: "Interplanetary war, alien contact, AI rebellion" },
+    forbidden: { ko: "차원이동, 시간여행, 의식 복제", en: "Dimensional travel, time travel, consciousness copy" },
+  },
+  { id: "post", ko: "포스트휴먼", en: "Post-Human", techLevel: 9,
+    society: { ko: "초월 지능, 의식 네트워크, 물질 초월", en: "Transcendent intelligence, consciousness network, post-material" },
+    tech: { ko: "나노 조립, 의식 업로드, 현실 조작, 특이점", en: "Nano-assembly, mind upload, reality manipulation, singularity" },
+    economy: { ko: "포스트-희소성, 에너지=화폐", en: "Post-scarcity, energy=currency" },
+    conflicts: { ko: "존재론적 위기, 의미의 상실, 엔트로피", en: "Existential crisis, loss of meaning, entropy" },
+    forbidden: { ko: "없음 — 물리법칙만이 제한", en: "None — only physics limits" },
+  },
 ];
 
 interface Civilization {
@@ -204,57 +265,89 @@ const HEX_COLS = 12;
 const HEX_ROWS = 8;
 
 // ============================================================
-// PART 1: GENRE LEVELING COMPONENT
+// PART 1: GENRE LEVELING COMPONENT (Multi-Select, max 5)
 // ============================================================
 
-function GenreLeveling({ lang, selectedGenre, selectedLevel, onSelect }: {
+interface GenreSelectionEntry { genre: string; level: number; }
+
+const MAX_GENRE_SELECTIONS = 5;
+
+function GenreLeveling({ lang, selections, onToggle }: {
   lang: Lang;
-  selectedGenre: string;
-  selectedLevel: number;
-  onSelect: (genre: string, level: number) => void;
+  selections: GenreSelectionEntry[];
+  onToggle: (genre: string, level: number) => void;
 }) {
   return (
     <div className="space-y-3">
-      <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
-        {lang === "ko" ? "장르별 세계관 복잡도" : "Genre World Complexity"}
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
-        {GENRE_LEVELS.map(g => (
-          <div key={g.genre} className="space-y-1">
-            <div className="text-[10px] font-bold tracking-wider text-center font-[family-name:var(--font-mono)]" style={{ color: g.color }}>
-              {g.genre}
-            </div>
-            <div className="flex gap-0.5">
-              {g.levels.map(lv => {
-                const active = selectedGenre === g.genre && selectedLevel === lv.lv;
-                return (
-                  <button
-                    key={lv.lv}
-                    onClick={() => onSelect(g.genre, lv.lv)}
-                    className={`flex-1 py-1.5 rounded text-[8px] font-bold transition-all border ${
-                      active
-                        ? "text-white shadow-lg"
-                        : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
-                    }`}
-                    style={active ? { background: g.color, borderColor: g.color } : undefined}
-                    title={lang === "ko" ? lv.ko : lv.en}
-                  >
-                    {lv.lv}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="text-[8px] text-text-tertiary text-center truncate">
-              {selectedGenre === g.genre
-                ? (lang === "ko"
-                    ? g.levels[selectedLevel - 1]?.ko
-                    : g.levels[selectedLevel - 1]?.en)
-                : (lang === "ko" ? g.levels[0].ko : g.levels[0].en)
-              }
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-between">
+        <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
+          {lang === "ko" ? "장르별 세계관 복잡도" : "Genre World Complexity"}
+        </h3>
+        <span className="text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary">
+          {selections.length}/{MAX_GENRE_SELECTIONS} {lang === "ko" ? "선택" : "selected"}
+        </span>
       </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
+        {GENRE_LEVELS.map(g => {
+          const sel = selections.find(s => s.genre === g.genre);
+          const isSelected = !!sel;
+          return (
+            <div key={g.genre} className={`space-y-1 rounded-lg p-1.5 transition-all border-2 ${isSelected ? "" : "border-transparent"}`}
+              style={isSelected ? { borderColor: g.color, background: `${g.color}10` } : undefined}>
+              <div className="text-[10px] font-bold tracking-wider text-center font-[family-name:var(--font-mono)] flex items-center justify-center gap-1" style={{ color: g.color }}>
+                {isSelected && <span className="text-[8px]">✓</span>}
+                {g.genre}
+              </div>
+              <div className="flex gap-0.5">
+                {g.levels.map(lv => {
+                  const active = sel?.level === lv.lv;
+                  return (
+                    <button
+                      key={lv.lv}
+                      onClick={() => onToggle(g.genre, lv.lv)}
+                      className={`flex-1 py-1.5 rounded text-[8px] font-bold transition-all border ${
+                        active
+                          ? "text-white shadow-lg"
+                          : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
+                      }`}
+                      style={active ? { background: g.color, borderColor: g.color } : undefined}
+                      title={lang === "ko" ? lv.ko : lv.en}
+                    >
+                      {lv.lv}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="text-[8px] text-text-tertiary text-center truncate">
+                {isSelected
+                  ? (lang === "ko"
+                      ? g.levels[(sel?.level ?? 1) - 1]?.ko
+                      : g.levels[(sel?.level ?? 1) - 1]?.en)
+                  : (lang === "ko" ? g.levels[0].ko : g.levels[0].en)
+                }
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {/* Selected genres summary */}
+      {selections.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selections.map((s, i) => {
+            const g = GENRE_LEVELS.find(gl => gl.genre === s.genre);
+            const lvName = g?.levels[(s.level ?? 1) - 1];
+            return (
+              <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold text-white"
+                style={{ background: g?.color }}>
+                {s.genre} Lv{s.level}
+                <span className="opacity-70">({lang === "ko" ? lvName?.ko : lvName?.en})</span>
+                <button onClick={() => onToggle(s.genre, 0)}
+                  className="ml-0.5 opacity-60 hover:opacity-100">×</button>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -347,6 +440,25 @@ function CivMapper({ lang, civs, setCivs }: {
                 </div>
                 <button onClick={() => removeCiv(civ.id)} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
+
+              {/* ERA detail fields */}
+              {era && (
+                <div className="mb-2 space-y-0.5 bg-bg-secondary/50 rounded p-2 border border-border/50">
+                  {([
+                    { key: 'society' as const, icon: '🏛', ko: '사회', en: 'Society' },
+                    { key: 'tech' as const, icon: '⚙', ko: '기술', en: 'Tech' },
+                    { key: 'economy' as const, icon: '💰', ko: '경제', en: 'Economy' },
+                    { key: 'conflicts' as const, icon: '⚔', ko: '갈등', en: 'Conflicts' },
+                    { key: 'forbidden' as const, icon: '🚫', ko: '금기', en: 'Forbidden' },
+                  ]).map(field => (
+                    <div key={field.key} className="flex gap-1.5 text-[9px]">
+                      <span className="shrink-0 w-12 text-text-tertiary font-bold">{field.icon} {lang === "ko" ? field.ko : field.en}</span>
+                      <span className="text-text-secondary">{lang === "ko" ? era[field.key].ko : era[field.key].en}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-1 mb-2">
                 {civ.traits.map((t, i) => (
                   <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-bg-secondary rounded text-[9px] text-text-secondary border border-border">
@@ -1481,14 +1593,24 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
 interface WorldSimProps {
   lang?: Lang;
   synopsis?: string;
-  onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; ruleLevel: number }) => void;
-  initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; ruleLevel?: number };
+  onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; genreSelections: GenreSelectionEntry[]; ruleLevel: number }) => void;
+  initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; genreSelections?: GenreSelectionEntry[]; ruleLevel?: number };
 }
 
 export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialData }: WorldSimProps) {
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
-  const [selectedGenre, setSelectedGenre] = useState(initialData?.selectedGenre || "Fantasy");
-  const [selectedLevel, setSelectedLevel] = useState(initialData?.selectedLevel || 1);
+
+  // Multi-genre selections (max 5) — backwards compatible
+  const [genreSelections, setGenreSelections] = useState<GenreSelectionEntry[]>(() => {
+    if (initialData?.genreSelections && initialData.genreSelections.length > 0) return initialData.genreSelections;
+    if (initialData?.selectedGenre) return [{ genre: initialData.selectedGenre, level: initialData.selectedLevel || 1 }];
+    return [{ genre: "Fantasy", level: 1 }];
+  });
+
+  // Primary genre = first selection (backwards compatibility)
+  const selectedGenre = genreSelections[0]?.genre || "Fantasy";
+  const selectedLevel = genreSelections[0]?.level || 1;
+
   const [ruleLevel, setRuleLevel] = useState(initialData?.ruleLevel || 1);
   const [civs, setCivs] = useState<Civilization[]>(() => {
     if (initialData?.civs && initialData.civs.length > 0) {
@@ -1514,13 +1636,25 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
   // Auto-save to parent when data changes
   useEffect(() => {
     onSave?.({
-      civs, relations, transitions, selectedGenre, selectedLevel, ruleLevel,
+      civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel,
     });
-  }, [civs, relations, transitions, selectedGenre, selectedLevel, ruleLevel, onSave]);
+  }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel, onSave]);
 
-  const handleGenreSelect = useCallback((genre: string, level: number) => {
-    setSelectedGenre(genre);
-    setSelectedLevel(level);
+  const handleGenreToggle = useCallback((genre: string, level: number) => {
+    setGenreSelections(prev => {
+      // level === 0 means remove
+      if (level === 0) return prev.filter(s => s.genre !== genre);
+      const existing = prev.find(s => s.genre === genre);
+      if (existing) {
+        // Same genre+level click = deselect
+        if (existing.level === level) return prev.filter(s => s.genre !== genre);
+        // Same genre different level = update level
+        return prev.map(s => s.genre === genre ? { ...s, level } : s);
+      }
+      // New genre — check max
+      if (prev.length >= MAX_GENRE_SELECTIONS) return prev;
+      return [...prev, { genre, level }];
+    });
   }, []);
 
   const handleAutoGenerate = useCallback(() => {
@@ -1562,7 +1696,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
         {/* Genre Leveling (always visible at top) */}
-        <GenreLeveling lang={lang} selectedGenre={selectedGenre} selectedLevel={selectedLevel} onSelect={handleGenreSelect} />
+        <GenreLeveling lang={lang} selections={genreSelections} onToggle={handleGenreToggle} />
 
         {/* EH Rule Level + Auto Generate */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
@@ -1653,21 +1787,35 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
         {/* Active View */}
         {activeView === "leveling" && (
           <div className="text-center py-8 space-y-3">
-            <div className="text-3xl font-black font-[family-name:var(--font-display)]" style={{ color: GENRE_LEVELS.find(g => g.genre === selectedGenre)?.color }}>
-              {selectedGenre} Lv.{selectedLevel}
-            </div>
-            <div className="text-text-secondary text-sm">
-              {(() => {
-                const g = GENRE_LEVELS.find(g => g.genre === selectedGenre);
-                const lv = g?.levels.find(l => l.lv === selectedLevel);
-                return lang === "ko" ? lv?.ko : lv?.en;
-              })()}
-            </div>
-            <div className="text-text-tertiary text-xs max-w-md mx-auto">
-              {lang === "ko"
-                ? "장르와 복잡도 레벨을 선택하면 문명 매핑, 타임라인, 검증 시 참조됩니다."
-                : "Selected genre and complexity level will be referenced in civilization mapping, timeline, and validation."}
-            </div>
+            {genreSelections.length === 0 ? (
+              <div className="text-text-tertiary text-sm">
+                {lang === "ko" ? "장르를 선택하세요 (최대 5개)" : "Select genres (max 5)"}
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {genreSelections.map((s, i) => {
+                    const g = GENRE_LEVELS.find(gl => gl.genre === s.genre);
+                    const lvName = g?.levels[(s.level ?? 1) - 1];
+                    return (
+                      <div key={i} className="text-center">
+                        <div className="text-xl font-black font-[family-name:var(--font-display)]" style={{ color: g?.color }}>
+                          {s.genre} Lv.{s.level}
+                        </div>
+                        <div className="text-text-secondary text-xs">
+                          {lang === "ko" ? lvName?.ko : lvName?.en}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="text-text-tertiary text-xs max-w-md mx-auto">
+                  {lang === "ko"
+                    ? `${genreSelections.length}개 장르 조합 — 문명 매핑, 타임라인, 검증 및 AI 집필에 반영됩니다.`
+                    : `${genreSelections.length} genre blend — applied to civilization mapping, timeline, validation, and AI writing.`}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -1711,9 +1859,14 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
             <span className="text-text-tertiary">{lang === "ko" ? "장르" : "Genre"}: </span>
-            <span className="font-bold" style={{ color: GENRE_LEVELS.find(g => g.genre === selectedGenre)?.color }}>
-              {selectedGenre} Lv{selectedLevel}
-            </span>
+            {genreSelections.map((s, i) => (
+              <span key={i}>
+                {i > 0 && <span className="text-text-tertiary"> + </span>}
+                <span className="font-bold" style={{ color: GENRE_LEVELS.find(g => g.genre === s.genre)?.color }}>
+                  {s.genre} Lv{s.level}
+                </span>
+              </span>
+            ))}
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
             <span className="text-text-tertiary">{lang === "ko" ? "EH 규칙" : "EH Rules"}: </span>

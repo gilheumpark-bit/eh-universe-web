@@ -53,6 +53,12 @@ export interface SceneDirectionData {
   plotStructure?: string;
 }
 
+// Genre selection entry (multi-genre support)
+export interface GenreSelection {
+  genre: string;
+  level: number;
+}
+
 // World Simulator persistent data
 export interface WorldSimData {
   civs?: { name: string; era: string; color: string; traits: string[] }[];
@@ -60,6 +66,7 @@ export interface WorldSimData {
   transitions?: { fromEra: string; toEra: string; description: string }[];
   selectedGenre?: string;
   selectedLevel?: number;
+  genreSelections?: GenreSelection[];
   ruleLevel?: number;
 }
 
@@ -74,6 +81,7 @@ export interface SimulatorRef {
   ruleLevel?: number;
   civNames?: string[];
   civRelationSummary?: string[];
+  genreSelections?: GenreSelection[];
 }
 
 export interface StoryConfig {

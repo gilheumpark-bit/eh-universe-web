@@ -290,6 +290,12 @@ export function buildSystemInstruction(
     const simParts: string[] = [];
     if (simRef.worldConsistency) simParts.push(isKO ? '- 세계관 일관성 검증 적용' : '- World consistency validation applied');
     if (simRef.genreLevel && simRef.ruleLevel) simParts.push(isKO ? `- 장르 레벨 규칙: Lv${simRef.ruleLevel}` : `- Genre level rules: Lv${simRef.ruleLevel}`);
+    if (simRef.genreSelections && simRef.genreSelections.length > 0) {
+      const genreStr = simRef.genreSelections.map(s => `${s.genre} Lv${s.level}`).join(' + ');
+      simParts.push(isKO
+        ? `- 장르 조합: ${genreStr} (${simRef.genreSelections.length}개 장르 블렌드 — 모든 장르의 특성을 균형있게 반영)`
+        : `- Genre blend: ${genreStr} (${simRef.genreSelections.length}-genre blend — balance all genre characteristics)`);
+    }
     if (simRef.civRelations && simRef.civRelationSummary && simRef.civRelationSummary.length > 0) {
       simParts.push(isKO ? '- 문명 관계도:' : '- Civilization relations:');
       simRef.civRelationSummary.forEach(s => simParts.push(`  ${s}`));
