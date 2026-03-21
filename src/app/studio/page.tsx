@@ -655,12 +655,17 @@ export default function StudioPage() {
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
-              { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
                 <Icon className="w-4 h-4" /> {label}
               </button>
             ))}
+            <Link href="/tools/style-studio" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] text-text-tertiary hover:bg-bg-secondary">
+              <Edit3 className="w-4 h-4" /> {isKO ? '문체 스튜디오' : 'Style Studio'}
+            </Link>
+            <button onClick={() => handleTabChange('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === 'history' ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
+              <History className="w-4 h-4" /> {t.sidebar.archives}
+            </button>
           </nav>
         </div>
 
