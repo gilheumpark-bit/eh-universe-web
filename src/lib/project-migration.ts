@@ -1,0 +1,81 @@
+// ============================================================
+// PART 0: PROJECT MIGRATION — localStorage 세션→프로젝트 전환
+// ============================================================
+
+import { ChatSession, Project, Genre } from './studio-types';
+
+export const STORAGE_KEY_SESSIONS_LEGACY = 'noa_chat_sessions_v2';
+export const STORAGE_KEY_PROJECTS = 'noa_projects_v2';
+
+// ============================================================
+// PART 1: MIGRATION
+// ============================================================
+
+/**
+ * Migrate legacy flat ChatSession[] to Project[] structure.
+ * Creates a default "미분류" project containing all existing sessions.
+ * Leaves the old key intact for rollback safety.
+ */
+export function migrateSessionsToProjects(): Project[] {
+  if (typeof window === 'undefined') return [];
+
+  const legacyRaw = localStorage.getItem(STORAGE_KEY_SESSIONS_LEGACY);
+  if (!legacyRaw) return [];
+
+  try {
+    const sessions: ChatSession[] = JSON.parse(legacyRaw);
+    if (!Array.isArray(sessions) || sessions.length === 0) return [];
+
+    const defaultProject: Project = {
+      id: 'project-default',
+      name: '미분류',
+      description: '',
+      genre: Genre.SF,
+      createdAt: Date.now(),
+      lastUpdate: Date.now(),
+      sessions,
+    };
+
+    return [defaultProject];
+  } catch {
+    return [];
+  }
+}
+
+// ============================================================
+// PART 2: LOAD / SAVE
+// ============================================================
+
+/**
+ * Load projects from localStorage.
+ * If noa_projects_v2 exists, use it.
+ * Otherwise, attempt migration from legacy key.
+ */
+export function loadProjects(): Project[] {
+  if (typeof window === 'undefined') return [];
+
+  const raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
+  if (raw) {
+    try {
+      const projects: Project[] = JSON.parse(raw);
+      if (Array.isArray(projects)) return projects;
+    } catch {
+      // corrupted — fall through to migration
+    }
+  }
+
+  // Attempt migration from legacy format
+  const migrated = migrateSessionsToProjects();
+  if (migrated.length > 0) {
+    saveProjects(migrated);
+  }
+  return migrated;
+}
+
+/**
+ * Save projects to localStorage.
+ */
+export function saveProjects(projects: Project[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+}

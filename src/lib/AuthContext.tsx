@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -11,6 +11,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isConfigured: boolean;
   error: string | null;
+  accessToken: string | null;
+  refreshAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,12 +22,15 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   isConfigured: false,
   error: null,
+  accessToken: null,
+  refreshAccessToken: async () => null,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(auth !== null);
   const [error, setError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const isConfigured = auth !== null;
 
   useEffect(() => {
@@ -33,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
+      if (!u) setAccessToken(null);
     });
     return () => unsubscribe();
   }, []);
@@ -46,24 +52,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      setAccessToken(credential?.accessToken ?? null);
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? '';
       const msg = (err as { message?: string })?.message ?? '';
-      // 사용자가 팝업 닫은 경우는 에러 무시
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
       setError(`로그인 실패: ${code || msg}`);
       console.error('[Auth] signInWithGoogle error', err);
     }
   };
 
+  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
+    if (!auth) return null;
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken ?? null;
+      setAccessToken(token);
+      return token;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const signOut = async () => {
     if (!auth) return;
+    setAccessToken(null);
     await firebaseSignOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, isConfigured, error }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, isConfigured, error, accessToken, refreshAccessToken }}>
       {children}
     </AuthContext.Provider>
   );

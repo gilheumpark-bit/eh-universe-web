@@ -148,5 +148,25 @@ export interface EngineStatus {
   platform: PlatformType;
 }
 
+// Chat session (moved from page.tsx for shared access)
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  config: StoryConfig;
+  lastUpdate: number;
+}
+
+// Project (multi-project folder structure)
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  genre: Genre;
+  createdAt: number;
+  lastUpdate: number;
+  sessions: ChatSession[];
+}
+
 export { PlatformType, EpisodeState } from '../engine/types';
 export type { EngineReport } from '../engine/types';

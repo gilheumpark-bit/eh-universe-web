@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import {
   Message, StoryConfig, Genre,
-  AppLanguage, AppTab, PlatformType
+  AppLanguage, AppTab, PlatformType,
+  ChatSession, Project
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { useAuth } from '@/lib/AuthContext';
@@ -28,18 +29,10 @@ import dynamic from 'next/dynamic';
 const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 import Link from 'next/link';
-import { FileText, Map } from 'lucide-react';
+import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
+import { loadProjects, saveProjects } from '@/lib/project-migration';
+import { syncAllProjects } from '@/services/driveService';
 // BYOK provider info available via '@/lib/ai-providers'
-
-const STORAGE_KEY_SESSIONS = 'noa_chat_sessions_v2';
-
-interface ChatSession {
-  id: string;
-  title: string;
-  messages: Message[];
-  config: StoryConfig;
-  lastUpdate: number;
-}
 
 const INITIAL_CONFIG: StoryConfig = {
   genre: Genre.SYSTEM_HUNTER,
@@ -55,16 +48,30 @@ const INITIAL_CONFIG: StoryConfig = {
 };
 
 export default function StudioPage() {
-  const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem(STORAGE_KEY_SESSIONS);
-    return saved ? JSON.parse(saved) : [];
+  // ============================================================
+  // PROJECT-BASED STATE MANAGEMENT
+  // ============================================================
+  const [projects, setProjects] = useState<Project[]>(() => loadProjects());
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => {
+    const loaded = loadProjects();
+    return loaded.length > 0 ? loaded[0].id : null;
   });
+  const currentProject = projects.find(p => p.id === currentProjectId) || null;
+
+  // Sessions derived from current project
+  const sessions = currentProject?.sessions || [];
+  const setSessions = useCallback((updater: ChatSession[] | ((prev: ChatSession[]) => ChatSession[])) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== currentProjectId) return p;
+      const newSessions = typeof updater === 'function' ? updater(p.sessions) : updater;
+      return { ...p, sessions: newSessions, lastUpdate: Date.now() };
+    }));
+  }, [currentProjectId]);
+
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const saved = localStorage.getItem(STORAGE_KEY_SESSIONS);
-    const parsed = saved ? JSON.parse(saved) : [];
-    return parsed.length > 0 ? parsed[0].id : null;
+    const loaded = loadProjects();
+    const firstProject = loaded[0];
+    return firstProject?.sessions?.[0]?.id || null;
   });
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
@@ -91,7 +98,69 @@ export default function StudioPage() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-  const { user, signInWithGoogle, signOut, isConfigured: authConfigured } = useAuth();
+  const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
+
+  // ============================================================
+  // SYNC STATE
+  // ============================================================
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+
+  const handleSync = useCallback(async () => {
+    let token = accessToken;
+    if (!token) {
+      token = await refreshAccessToken();
+      if (!token) return;
+    }
+    setSyncStatus('syncing');
+    try {
+      const result = await syncAllProjects(token, projects);
+      setProjects(result.merged);
+      setLastSyncTime(Date.now());
+      setSyncStatus('done');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch (err) {
+      console.error('[Sync]', err);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 5000);
+    }
+  }, [accessToken, refreshAccessToken, projects]);
+
+  // ============================================================
+  // PROJECT MANAGEMENT
+  // ============================================================
+  const createNewProject = useCallback(() => {
+    const names: Record<AppLanguage, string> = { KO: '새 작품', EN: 'New Project', JP: '新しい作品', CN: '新作品' };
+    const p: Project = {
+      id: `project-${Date.now()}`,
+      name: names[language],
+      description: '',
+      genre: Genre.SF,
+      createdAt: Date.now(),
+      lastUpdate: Date.now(),
+      sessions: [],
+    };
+    setProjects(prev => [...prev, p]);
+    setCurrentProjectId(p.id);
+    setCurrentSessionId(null);
+  }, [language]);
+
+  const deleteProject = useCallback((projectId: string) => {
+    const tp = t.project || {};
+    if (!window.confirm(tp.confirmDelete || 'Delete this project?')) return;
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    if (currentProjectId === projectId) {
+      const remaining = projects.filter(p => p.id !== projectId);
+      setCurrentProjectId(remaining[0]?.id || null);
+      setCurrentSessionId(null);
+    }
+  }, [currentProjectId, projects, t]);
+
+  const renameProject = useCallback((projectId: string, newName: string) => {
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, name: newName, lastUpdate: Date.now() } : p
+    ));
+  }, []);
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
   const [editDraft, setEditDraft] = useState('');
@@ -114,8 +183,8 @@ export default function StudioPage() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessions));
-  }, [sessions]);
+    saveProjects(projects);
+  }, [projects]);
 
   useEffect(() => {
     if (activeTab === 'writing') {
@@ -124,6 +193,20 @@ export default function StudioPage() {
   }, [currentSession?.messages, isGenerating, activeTab]);
 
   const createNewSession = useCallback(() => {
+    // Auto-create default project if none exist
+    if (projects.length === 0) {
+      const p: Project = {
+        id: 'project-default',
+        name: '미분류',
+        description: '',
+        genre: Genre.SF,
+        createdAt: Date.now(),
+        lastUpdate: Date.now(),
+        sessions: [],
+      };
+      setProjects([p]);
+      setCurrentProjectId(p.id);
+    }
     const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
@@ -136,7 +219,7 @@ export default function StudioPage() {
     setCurrentSessionId(newSession.id);
     setActiveTab('world');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, [language]);
+  }, [language, projects.length, setSessions]);
 
   const handleTabChange = (tab: AppTab) => {
     setActiveTab(tab);
@@ -162,7 +245,6 @@ export default function StudioPage() {
     if (window.confirm(confirmMsg)) {
       setSessions([]);
       setCurrentSessionId(null);
-      localStorage.removeItem(STORAGE_KEY_SESSIONS);
       setActiveTab('world');
     }
   };
@@ -464,6 +546,35 @@ export default function StudioPage() {
               <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase">← EH UNIVERSE</span>
             </div>
           </Link>
+          {/* Project Selector */}
+          <div className="mb-3 space-y-1">
+            <div className="flex items-center gap-1">
+              <select
+                value={currentProjectId || ''}
+                onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
+                className="flex-1 bg-bg-secondary border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold font-[family-name:var(--font-mono)] outline-none text-text-primary truncate"
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
+                ))}
+              </select>
+              <button onClick={createNewProject} className="p-1.5 bg-bg-secondary border border-border rounded-lg text-text-tertiary hover:text-accent-purple transition-colors" title={t.project?.newProject || 'New Project'}>
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+            {currentProject && (
+              <div className="flex gap-1 text-[8px] font-[family-name:var(--font-mono)]">
+                <button onClick={() => {
+                  const name = window.prompt(t.project?.renameProject || 'Rename', currentProject.name);
+                  if (name) renameProject(currentProject.id, name);
+                }} className="text-text-tertiary hover:text-accent-purple">{t.project?.renameProject || 'Rename'}</button>
+                {projects.length > 1 && (
+                  <button onClick={() => deleteProject(currentProject.id)} className="text-text-tertiary hover:text-accent-red">{t.project?.deleteProject || 'Delete'}</button>
+                )}
+              </div>
+            )}
+          </div>
+
           <button onClick={createNewSession} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
             <Plus className="w-4 h-4" /> {t.sidebar.newProject}
           </button>
@@ -523,6 +634,30 @@ export default function StudioPage() {
               </button>
             )}
           </div>
+          {/* Drive Sync */}
+          {user && (
+            <button
+              onClick={handleSync}
+              disabled={syncStatus === 'syncing'}
+              className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all border ${
+                syncStatus === 'syncing' ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/30 animate-pulse'
+                : syncStatus === 'done' ? 'bg-accent-green/10 text-accent-green border-accent-green/30'
+                : syncStatus === 'error' ? 'bg-accent-red/10 text-accent-red border-accent-red/30'
+                : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+              }`}
+            >
+              {syncStatus === 'syncing' ? <Cloud className="w-3 h-3 animate-spin" /> : syncStatus === 'error' ? <CloudOff className="w-3 h-3" /> : <Cloud className="w-3 h-3" />}
+              {syncStatus === 'syncing' ? (t.sync?.syncing || 'Syncing...')
+                : syncStatus === 'done' ? (t.sync?.syncDone || 'Synced!')
+                : syncStatus === 'error' ? (t.sync?.syncError || 'Error')
+                : (t.sync?.syncNow || 'Sync')}
+            </button>
+          )}
+          {lastSyncTime && (
+            <div className="text-[7px] text-text-tertiary font-[family-name:var(--font-mono)] text-center">
+              {t.sync?.lastSync || 'Last'}: {new Date(lastSyncTime).toLocaleTimeString()}
+            </div>
+          )}
           <div className="flex gap-4">
             {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
               <button key={l} onClick={() => setLanguage(l)} className={`text-[10px] font-black font-[family-name:var(--font-mono)] ${language === l ? 'text-accent-purple' : 'text-text-tertiary'}`}>{l}</button>
@@ -1250,17 +1385,21 @@ export default function StudioPage() {
                       })()}
                     </details>
 
-                    {/* ② 씬시트 */}
-                    <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">🎬 {isKO ? '씬시트' : 'Scene'}</summary>
+                    {/* ② 씬시트 — 미설정 시 자동 open + 경고 표시 */}
+                    <details className="group" open={!currentSession.config.sceneDirection}>
+                      <summary className={`flex items-center gap-1.5 cursor-pointer text-xs font-bold transition-colors ${
+                        currentSession.config.sceneDirection
+                          ? 'text-text-tertiary hover:text-text-secondary'
+                          : 'text-amber-400 hover:text-amber-300'
+                      }`}>🎬 {isKO ? '씬시트' : 'Scene'} {!currentSession.config.sceneDirection && <span className="text-[9px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{isKO ? '미설정' : 'Not set'}</span>}</summary>
                       <div className="mt-1.5 pl-4 space-y-1">
                         {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400">🪝 {h.desc}</div>)}
                         {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
                         {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                         {!currentSession.config.sceneDirection && (
-                          <div className="space-y-1.5">
-                            <p className="text-[10px] text-text-tertiary italic">{isKO ? '연출이 설정되지 않았습니다' : 'Direction not configured'}</p>
-                            <button onClick={() => setActiveTab('rulebook')} className="text-[9px] text-accent-purple hover:underline font-bold">
+                          <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
+                            <p className="text-[10px] text-amber-300">{isKO ? '씬시트 없이 집필하면 AI 품질이 떨어집니다' : 'Writing without scene direction reduces AI quality'}</p>
+                            <button onClick={() => setActiveTab('rulebook')} className="text-[10px] text-accent-purple hover:underline font-bold">
                               → {isKO ? '연출 스튜디오에서 설정하기' : 'Set up in Direction Studio'}
                             </button>
                           </div>
