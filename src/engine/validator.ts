@@ -250,6 +250,71 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
 }
 
 // ============================================================
+// Web-Novel Formatting Rules (웹소설 서식 규칙 7조)
+// ============================================================
+
+export function applyFormattingRules(text: string): { formatted: string; changes: string[] } {
+  const changes: string[] = [];
+  let result = text;
+
+  // 규칙 1: 괄호 제거 — ( ) 기호만 제거, 안의 텍스트는 유지
+  const beforeParen = result;
+  result = result.replace(/\(([^)]*)\)/g, '$1');
+  if (result !== beforeParen) changes.push('괄호 기호 제거 (내용 유지)');
+
+  // 규칙 2: 소제목 제거 — # 마크다운 헤딩 또는 단독 짧은 줄 (별도 처리는 프롬프트에서)
+  // (실제 소제목 감지는 AI 프롬프트에서 지시)
+
+  // 규칙 3: 대화문 줄 분리 — 문장 내부 대화문을 새 줄로 분리
+  const beforeDialogue = result;
+  result = result.replace(/([^"\n])(["「『])/g, '$1\n$2');
+  result = result.replace(/(["」』])([^"\n,.])/g, '$1\n$2');
+  if (result !== beforeDialogue) changes.push('대화문 줄 분리');
+
+  // 규칙 4: Em dash 삭제
+  const beforeDash = result;
+  result = result.replace(/—/g, '');
+  if (result !== beforeDash) changes.push('Em dash(—) 삭제');
+
+  // 규칙 6: 말줄임표 통일 — ... → …
+  const beforeEllipsis = result;
+  result = result.replace(/\.{3,}/g, '…');
+  if (result !== beforeEllipsis) changes.push('말줄임표 통일 (... → …)');
+
+  return { formatted: result, changes };
+}
+
+export function validateFormattingIssues(text: string): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  // 괄호 잔존 검사
+  const parenCount = (text.match(/[()]/g) || []).length;
+  if (parenCount > 0) {
+    issues.push({ category: 'formatting', message: `괄호 ${parenCount}개 잔존`, severity: Severity.WARNING, suggestion: '괄호 기호를 제거하고 내용만 유지하세요' });
+  }
+
+  // Em dash 잔존
+  const dashCount = (text.match(/—/g) || []).length;
+  if (dashCount > 0) {
+    issues.push({ category: 'formatting', message: `Em dash(—) ${dashCount}개 잔존`, severity: Severity.WARNING, suggestion: 'Em dash를 삭제하세요' });
+  }
+
+  // ... 미통일
+  const dotCount = (text.match(/\.{3,}/g) || []).length;
+  if (dotCount > 0) {
+    issues.push({ category: 'formatting', message: `마침표 3개 이상(${dotCount}건) → 말줄임표(…)로 통일 필요`, severity: Severity.INFO });
+  }
+
+  // 대화문 인라인 검사
+  const inlineDialogue = text.match(/[^\n]["「『][^"」』]+["」』]/g);
+  if (inlineDialogue && inlineDialogue.length > 0) {
+    issues.push({ category: 'formatting', message: `인라인 대화문 ${inlineDialogue.length}건 — 줄 분리 필요`, severity: Severity.WARNING });
+  }
+
+  return issues;
+}
+
+// ============================================================
 // Orchestrator
 // ============================================================
 
@@ -282,6 +347,10 @@ export function validateGeneratedContent(
     allFixes.push(...causalityResult.fixes);
     allIssues.push(...causalityResult.issues);
   }
+
+  // Web-novel formatting rules (서식 규칙 7조)
+  const formattingIssues = validateFormattingIssues(text);
+  allIssues.push(...formattingIssues);
 
   return { fixes: allFixes, issues: allIssues };
 }
