@@ -5,6 +5,7 @@ import { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { EngineReport, PlatformType } from '@/engine/types';
 import { generateTensionCurveData } from '@/engine/models';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
+import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';
 
 interface EngineDashboardProps {
   config: StoryConfig;
@@ -146,6 +147,33 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                   <span>{(report.serialization.targetRange.max / 1024).toFixed(1)}KB</span>
                 </div>
               </div>
+
+              {/* Char Count */}
+              {(() => {
+                const chars = bytesToEstimatedChars(report.serialization.byteSize);
+                const charRange = getTargetCharRange(config.platform);
+                const charInRange = chars >= charRange.min && chars <= charRange.max;
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px] font-black text-zinc-600 uppercase">
+                      <span>CHARS</span>
+                      <span className={charInRange ? 'text-green-500' : 'text-amber-500'}>
+                        {chars.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-1 bg-zinc-800 rounded-full overflow-hidden relative">
+                      <div
+                        className={`h-full transition-all duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
+                        style={{ width: `${Math.min(100, (chars / charRange.max) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[7px] text-zinc-700">
+                      <span>{charRange.min.toLocaleString()}</span>
+                      <span>{charRange.max.toLocaleString()}</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* AI Tone */}
               <div className="flex justify-between items-center">

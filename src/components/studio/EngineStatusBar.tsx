@@ -5,6 +5,7 @@ import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-constants';
 import { EngineReport, PlatformType, getActFromEpisode } from '@/engine/types';
 import { tensionCurve } from '@/engine/models';
+import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';
 
 interface EngineStatusBarProps {
   language: AppLanguage;
@@ -57,6 +58,21 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
               {report.eosScore}
             </span>
           </div>
+          {/* Char count badge */}
+          {(() => {
+            const chars = bytesToEstimatedChars(report.serialization.byteSize);
+            const charRange = getTargetCharRange(config.platform);
+            const inRange = chars >= charRange.min && chars <= charRange.max;
+            return (
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg whitespace-nowrap">
+                <span className="text-zinc-500">{language === 'KO' ? '글자' : 'Chars'}</span>
+                <span className={inRange ? 'text-green-400' : chars < charRange.min ? 'text-amber-400' : 'text-red-400'}>
+                  {chars.toLocaleString()}
+                </span>
+                <span className="text-zinc-700">/ {charRange.min.toLocaleString()}~{charRange.max.toLocaleString()}</span>
+              </div>
+            );
+          })()}
         </>
       )}
 
