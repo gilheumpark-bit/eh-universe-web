@@ -56,7 +56,15 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const handleAIGenerate = async () => {
     setAiGenerating(true);
     try {
-      const result = await generateWorldDesign(autoGenGenre, language);
+      // 사용자가 입력한 값을 힌트로 전달
+      const hints = {
+        title: config.title || undefined,
+        povCharacter: config.povCharacter || undefined,
+        setting: config.setting || undefined,
+        primaryEmotion: config.primaryEmotion || undefined,
+        synopsis: config.synopsis || undefined,
+      };
+      const result = await generateWorldDesign(autoGenGenre, language, hints);
       setConfig((prev: StoryConfig) => ({
         ...prev,
         title: result.title || prev.title,

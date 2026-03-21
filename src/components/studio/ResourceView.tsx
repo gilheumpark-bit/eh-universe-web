@@ -136,7 +136,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700 group-focus-within:text-blue-500 transition-colors" />
                    <input 
                     className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-zinc-800"
-                    placeholder="Character name..."
+                    placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     value={newChar.name}
                     onChange={e => setNewChar({...newChar, name: e.target.value})}
                   />
@@ -165,7 +165,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   <ScrollText className="absolute left-4 top-4 w-4 h-4 text-zinc-700" />
                   <textarea 
                     className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
-                    placeholder="Traits, background, dialect..."
+                    placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
                     value={newChar.traits}
                     onChange={e => setNewChar({...newChar, traits: e.target.value})}
                   />

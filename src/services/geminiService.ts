@@ -164,7 +164,11 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
 // PART 4: AI WORLD DESIGN GENERATION
 // ============================================================
 
-export const generateWorldDesign = async (genre: string, language: AppLanguage = 'KO'): Promise<{
+export const generateWorldDesign = async (
+  genre: string,
+  language: AppLanguage = 'KO',
+  hints?: { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string }
+): Promise<{
   title: string; povCharacter: string; setting: string; primaryEmotion: string; synopsis: string;
 }> => {
   const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
@@ -172,10 +176,22 @@ export const generateWorldDesign = async (genre: string, language: AppLanguage =
   const ai = new GoogleGenAI({ apiKey });
   const langName = language === 'KO' ? 'Korean' : 'English';
 
+  // 사용자가 입력한 힌트가 있으면 프롬프트에 반영
+  const hintParts: string[] = [];
+  if (hints?.title) hintParts.push(`Title hint: "${hints.title}"`);
+  if (hints?.povCharacter) hintParts.push(`Main character: "${hints.povCharacter}"`);
+  if (hints?.setting) hintParts.push(`Setting: "${hints.setting}"`);
+  if (hints?.primaryEmotion) hintParts.push(`Core emotion: "${hints.primaryEmotion}"`);
+  if (hints?.synopsis) hintParts.push(`Story synopsis: "${hints.synopsis}"`);
+
+  const hintBlock = hintParts.length > 0
+    ? `\n\nUSER-PROVIDED HINTS (incorporate these into your generation):\n${hintParts.join('\n')}`
+    : '';
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-pro',
-      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.`,
+      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.${hintBlock}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
