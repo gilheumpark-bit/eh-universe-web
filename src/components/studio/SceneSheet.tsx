@@ -114,14 +114,15 @@ const TAB_DEF: { id: SheetTab; ko: string; en: string; emoji: string }[] = [
 // PART 1: PLOT BAR EDITOR
 // ============================================================
 
-function PlotBarEditor({ lang }: { lang: Lang }) {
-  const [selectedPreset, setSelectedPreset] = useState<PlotType>("three-act");
+function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlotChange?: (preset: string) => void; initialPlot?: string }) {
+  const [selectedPreset, setSelectedPreset] = useState<PlotType>((initialPlot as PlotType) || "three-act");
   const [segments, setSegments] = useState<PlotSegment[]>(
     PLOT_PRESETS["three-act"].segments.map((s, i) => ({ ...s, id: `seg-${i}` }))
   );
   const loadPreset = (preset: PlotType) => {
     setSelectedPreset(preset);
     setSegments(PLOT_PRESETS[preset].segments.map((s, i) => ({ ...s, id: `seg-${Date.now()}-${i}` })));
+    onPlotChange?.(preset);
   };
 
   const updateWidth = useCallback((idx: number, delta: number) => {
@@ -251,13 +252,29 @@ function PlotBarEditor({ lang }: { lang: Lang }) {
 // PART 2: MAIN SCENE SHEET COMPONENT
 // ============================================================
 
+interface FullDirectionData {
+  goguma: GogumaEntry[];
+  hooks: HookEntry[];
+  emotions: EmotionPoint[];
+  dialogueRules: DialogueRule[];
+  dopamines: DopamineEntry[];
+  cliffs: CliffEntry[];
+  foreshadows: ForeshadowEntry[];
+  pacings: PacingEntry[];
+  tensionPoints: TensionPoint[];
+  canons: CanonEntry[];
+  transitions: TransitionEntry[];
+  writerNotes: string;
+  plotStructure: string;
+}
+
 interface SceneSheetProps {
   lang?: Lang;
   synopsis?: string;
   characterNames?: string[];
-  onDirectionUpdate?: (data: { goguma: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogueRules: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] }) => void;
+  onDirectionUpdate?: (data: FullDirectionData) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
-  initialDirection?: { goguma?: GogumaEntry[]; hooks?: HookEntry[]; emotions?: EmotionPoint[]; dialogueRules?: DialogueRule[]; dopamines?: DopamineEntry[]; cliffs?: CliffEntry[] };
+  initialDirection?: Partial<FullDirectionData>;
 }
 
 export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
@@ -269,21 +286,22 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const [dialogueRules, setDialogueRules] = useState<DialogueRule[]>(initialDirection?.dialogueRules || []);
   const [dopamines, setDopamines] = useState<DopamineEntry[]>(initialDirection?.dopamines || []);
   const [cliffs, setCliffs] = useState<CliffEntry[]>(initialDirection?.cliffs || []);
-  const [foreshadows, setForeshadows] = useState<ForeshadowEntry[]>([]);
-  const [pacings, setPacings] = useState<PacingEntry[]>([
+  const [foreshadows, setForeshadows] = useState<ForeshadowEntry[]>(initialDirection?.foreshadows || []);
+  const [pacings, setPacings] = useState<PacingEntry[]>(initialDirection?.pacings || [
     { id: 'p-1', section: lang === 'ko' ? '도입' : 'Intro', percent: 20, desc: '' },
     { id: 'p-2', section: lang === 'ko' ? '전개' : 'Development', percent: 50, desc: '' },
     { id: 'p-3', section: lang === 'ko' ? '전환' : 'Transition', percent: 30, desc: '' },
   ]);
-  const [tensionPoints, setTensionPoints] = useState<TensionPoint[]>([]);
-  const [canons, setCanons] = useState<CanonEntry[]>([]);
-  const [transitions, setTransitions] = useState<TransitionEntry[]>([]);
-  const [writerNotes, setWriterNotes] = useState('');
+  const [tensionPoints, setTensionPoints] = useState<TensionPoint[]>(initialDirection?.tensionPoints || []);
+  const [canons, setCanons] = useState<CanonEntry[]>(initialDirection?.canons || []);
+  const [transitions, setTransitions] = useState<TransitionEntry[]>(initialDirection?.transitions || []);
+  const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes || '');
+  const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure || '');
 
   // Sync to parent whenever data changes
-  const syncDirection = useCallback((g: GogumaEntry[], h: HookEntry[], e: EmotionPoint[], d: DialogueRule[], dp: DopamineEntry[], cl: CliffEntry[]) => {
-    onDirectionUpdate?.({ goguma: g, hooks: h, emotions: e, dialogueRules: d, dopamines: dp, cliffs: cl });
-  }, [onDirectionUpdate]);
+  const syncDirection = useCallback(() => {
+    onDirectionUpdate?.({ goguma: gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure });
+  }, [onDirectionUpdate, gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure]);
 
   // Simulator reference checkpoints
   const [simRef, setSimRef] = useState({
@@ -317,8 +335,8 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
 
   // Auto-sync all direction data to parent
   useEffect(() => {
-    syncDirection(gogumas, hooks, emotions, dialogueRules, dopamines, cliffs);
-  }, [gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, syncDirection]);
+    syncDirection();
+  }, [syncDirection]);
 
   // Auto-generate full scene sheet
   const autoGenerate = useCallback(() => {
@@ -771,7 +789,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
         )}
 
         {activeTab === "plot" && (
-          <PlotBarEditor lang={lang} />
+          <PlotBarEditor lang={lang} onPlotChange={setPlotStructure} initialPlot={plotStructure} />
         )}
 
         {/* Simulator reference checkpoints */}

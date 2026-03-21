@@ -14,7 +14,7 @@ export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 
-export type AppTab = 'world' | 'writing' | 'history' | 'critique' | 'settings' | 'characters' | 'rulebook';
+export type AppTab = 'world' | 'writing' | 'history' | 'critique' | 'settings' | 'characters' | 'rulebook' | 'manuscript';
 
 export interface PclGuardrails {
   min: number;
@@ -44,13 +44,19 @@ export interface CharRelation {
 
 // Scene Sheet (연출 스튜디오) data
 export interface SceneDirectionData {
-  goguma?: { type: "goguma" | "cider"; intensity: string; desc: string }[];
+  goguma?: { type: "goguma" | "cider"; intensity: string; desc: string; episode?: number }[];
   hooks?: { position: string; hookType: string; desc: string }[];
-  emotionTargets?: { emotion: string; intensity: number }[];
+  emotionTargets?: { emotion: string; intensity: number; position?: number }[];
   dialogueTones?: { character: string; tone: string; notes: string }[];
-  dopamineDevices?: { scale: string; device: string; desc: string }[];
-  cliffhanger?: { cliffType: string; desc: string };
+  dopamineDevices?: { scale: string; device: string; desc: string; resolved?: boolean }[];
+  cliffhanger?: { cliffType: string; desc: string; episode?: number };
   plotStructure?: string;
+  foreshadows?: { planted: string; payoff: string; episode: number; resolved: boolean }[];
+  pacings?: { section: string; percent: number; desc: string }[];
+  tensionCurve?: { position: number; level: number; label: string }[];
+  canonRules?: { character: string; rule: string }[];
+  sceneTransitions?: { fromScene: string; toScene: string; method: string }[];
+  writerNotes?: string;
 }
 
 // Genre selection entry (multi-genre support)
@@ -102,6 +108,16 @@ export interface StoryConfig {
   simulatorRef?: SimulatorRef;
   worldSimData?: WorldSimData;
   savedSlots?: SavedSlot[];
+  manuscripts?: EpisodeManuscript[];
+}
+
+// Episode manuscript entry
+export interface EpisodeManuscript {
+  episode: number;
+  title: string;
+  content: string;
+  charCount: number;
+  lastUpdate: number;
 }
 
 export interface SavedSlot {
