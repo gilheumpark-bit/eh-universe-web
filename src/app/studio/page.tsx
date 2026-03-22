@@ -35,6 +35,7 @@ const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { s
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
+const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -215,7 +216,7 @@ export default function StudioPage() {
   }, [currentSessionId]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
-  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas'>('ai');
+  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine'>('ai');
   const [editDraft, setEditDraft] = useState('');
   const [canvasContent, setCanvasContent] = useState('');
   const [canvasPass, setCanvasPass] = useState(0);
@@ -1165,6 +1166,21 @@ export default function StudioPage() {
                         }`}>
                         🎨 {isKO ? '3패스 캔버스' : '3-Pass Canvas'}
                       </button>
+                      <button onClick={() => {
+                        setWritingMode('refine');
+                        if (!editDraft && currentSession.messages.length > 0) {
+                          const allText = currentSession.messages
+                            .filter(m => m.role === 'assistant' && m.content)
+                            .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
+                            .join('\n\n---\n\n');
+                          setEditDraft(allText);
+                        }
+                      }}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                          writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                        }`}>
+                        ⚡ {isKO ? 'AUTO 30%' : 'AUTO 30%'}
+                      </button>
                       {writingMode === 'edit' && (
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
@@ -1254,7 +1270,28 @@ export default function StudioPage() {
                       </div>
                     )}
 
-                    {/* ====== 3-PASS CANVAS MODE ====== */}
+                    {/* ====== AUTO 30% REFINE MODE ====== */}
+                    {writingMode === 'refine' && editDraft && (
+                      <div className="space-y-4">
+                        <AutoRefiner
+                          content={editDraft}
+                          language={language}
+                          context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''} | EP.${currentSession.config.episode}` : undefined}
+                          onApply={(newContent) => {
+                            setEditDraft(newContent);
+                            const editMsg: Message = { id: `refine-${Date.now()}`, role: 'assistant', content: newContent, timestamp: Date.now() };
+                            updateCurrentSession({ messages: [...currentSession.messages, { id: `u-refine-${Date.now()}`, role: 'user', content: isKO ? '[AUTO 30% 리파인 완료]' : '[AUTO 30% Refine Complete]', timestamp: Date.now() }, editMsg] });
+                            setWritingMode('ai');
+                          }}
+                        />
+                        <div className="text-[9px] text-zinc-600 font-[family-name:var(--font-mono)]">
+                          {isKO
+                            ? '※ 분석 시작 → AI가 문단별 약점 분석 → 개별/전체 생성 → 선택 적용 → 원고 반영'
+                            : '※ Analyze → AI finds weak paragraphs → Generate fixes → Selectively apply → Save to manuscript'}
+                        </div>
+                      </div>
+                    )}
+
                     {/* ====== 3-PASS CANVAS MODE ====== */}
                     {writingMode === 'canvas' && (
                       <div className="space-y-4">
