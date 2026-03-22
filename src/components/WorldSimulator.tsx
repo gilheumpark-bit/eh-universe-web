@@ -1659,11 +1659,14 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
   );
 
   // Auto-save to parent when data changes
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
   useEffect(() => {
-    onSave?.({
+    onSaveRef.current?.({
       civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel,
     });
-  }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel, onSave]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel]);
 
   const handleGenreToggle = useCallback((genre: string, level: number) => {
     setGenreSelections(prev => {
