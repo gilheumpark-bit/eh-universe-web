@@ -1,16 +1,17 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 
-// IMPORTANT: authDomain and projectId are hardcoded because the Vercel env vars
-// contain wrong values ("eh-universe" instead of "gen-lang-client-0645063497").
-// The real Firebase project is gen-lang-client-0645063497.
+// Firebase config for project "NOA STUDIO" (gen-lang-client-0645063497).
+// All values are hardcoded because the Vercel env vars point to a different
+// project ("eh-universe" / 169294097312) which causes auth/invalid-continue-uri.
+// Source: Firebase Console → Project Settings → SDK setup and configuration.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  apiKey: 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
   authDomain: 'gen-lang-client-0645063497.firebaseapp.com',
   projectId: 'gen-lang-client-0645063497',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  storageBucket: 'gen-lang-client-0645063497.firebasestorage.app',
+  messagingSenderId: '262025911233',
+  appId: '1:262025911233:web:e49fe5b774538b808f2d40',
 };
 
 // Only initialize Firebase on the client side, and only if API key is configured
