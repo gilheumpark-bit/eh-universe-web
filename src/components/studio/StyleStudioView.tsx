@@ -50,7 +50,7 @@ const SF_CHECKS: CheckItem[] = [
   { title: "시간축 병렬 서술", desc: "과거·현재·미래 타임라인을 겹쳐 긴장감 만들기" },
   { title: "오류 미학", desc: "결함·이상신호·예외값을 문학적 상징으로 활용" },
   { title: "침묵의 데이터", desc: "로그가 기록하지 않은 것, 센서가 잡지 못한 것으로 감정 표현" },
-  { title: "캐릭터 행동 마커", desc: "Brian의 마커, Vasquez의 A5 노트 — 반복 행동으로 개성 각인" },
+  { title: "캐릭터 행동 마커", desc: "인물 고유의 반복 습관(펜 돌리기, 손톱 물어뜯기 등)으로 설명 없이 개성 각인" },
   { title: "스케일 전환", desc: "우주적 규모 ↔ 손가락 하나의 진동 — 줌인·줌아웃 기법" },
 ];
 
@@ -64,6 +64,36 @@ const WEB_CHECKS: CheckItem[] = [
   { title: "반복 어구의 리프레인", desc: "같은 단어·구절 재등장으로 감정 증폭 및 구조 통일" },
   { title: "에필로그의 여운", desc: "챕터 끝을 해결이 아닌 새로운 질문으로 닫기" },
 ];
+
+interface RefAuthor {
+  name: string;
+  nameEN: string;
+  desc: string;
+  descEN: string;
+}
+
+const REF_AUTHORS: Record<number, RefAuthor[]> = {
+  0: [
+    { name: "킴 스탠리 로빈슨", nameEN: "Kim Stanley Robinson", desc: "과학적 정밀함과 생태적 감수성. 데이터가 시가 되는 문장.", descEN: "Scientific precision meets ecological sensitivity. Data becomes poetry." },
+    { name: "테드 창", nameEN: "Ted Chiang", desc: "철학적 질문을 SF 논리로 풀어냄. 냉정하고 아름다운 구조.", descEN: "Philosophical questions through SF logic. Cold, beautiful structure." },
+    { name: "류츠신", nameEN: "Liu Cixin", desc: "우주적 스케일의 서사. 기술적 디테일이 경외감을 만든다.", descEN: "Cosmic-scale narrative. Technical detail creates awe." },
+  ],
+  1: [
+    { name: "싱숑", nameEN: "Sing Shong", desc: "한국 웹소설의 리듬 마스터. 짧은 호흡, 강한 훅.", descEN: "Master of Korean web novel rhythm. Short breath, strong hooks." },
+    { name: "히가시노 게이고", nameEN: "Keigo Higashino", desc: "미스터리의 페이지 터너. 독자를 놓지 않는 구조.", descEN: "Mystery page-turner. Structure that never lets go." },
+    { name: "브랜든 샌더슨", nameEN: "Brandon Sanderson", desc: "시스템 기반 판타지. 설정과 플롯의 정교한 맞물림.", descEN: "System-based fantasy. Precise interlocking of worldbuilding and plot." },
+  ],
+  2: [
+    { name: "한강", nameEN: "Han Kang", desc: "감각과 침묵으로 쓰는 작가. 문장이 이미지를 만든다.", descEN: "Writing through sensation and silence. Sentences create images." },
+    { name: "무라카미 하루키", nameEN: "Haruki Murakami", desc: "일상의 비현실. 리듬감 있는 산문과 은유의 층위.", descEN: "Surreal ordinary. Rhythmic prose and layers of metaphor." },
+    { name: "김영하", nameEN: "Kim Young-ha", desc: "건조한 유머와 날카로운 관찰. 도시적 감수성.", descEN: "Dry humor and sharp observation. Urban sensibility." },
+  ],
+  3: [
+    { name: "듀나", nameEN: "Djuna", desc: "한국 SF의 건조한 감각. 설명하지 않고 제시한다.", descEN: "Dry sensibility of Korean SF. Shows, never explains." },
+    { name: "어슐러 르 귄", nameEN: "Ursula K. Le Guin", desc: "SF·판타지·문학의 경계를 지운 작가. 장르 자체가 문학.", descEN: "Erased boundaries between SF, fantasy, and literature." },
+    { name: "이탈로 칼비노", nameEN: "Italo Calvino", desc: "실험적 구조와 문학적 상상력의 결합.", descEN: "Experimental structure meets literary imagination." },
+  ],
+};
 
 interface DnaCard {
   label: string;
@@ -468,20 +498,28 @@ export default function StyleStudioView({ isKO = true }: Props) {
               {en ? "Style Tips — Common Pitfalls" : "문체 팁 — 자주 나오는 함정"}
             </div>
             <div className="ss-tip warning">
-              <h4>AI 문체 증상 1: 과잉 전환어</h4>
-              <p>하지만 / 그러나 / 그럼에도 불구하고 — 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라.</p>
+              <h4>{en ? "AI Style Symptom 1: Transition Overload" : "AI 문체 증상 1: 과잉 전환어"}</h4>
+              <p>{en
+                ? "However / Nevertheless / Despite — consecutive use makes prose sound like an essay. Replace with action."
+                : "하지만 / 그러나 / 그럼에도 불구하고 — 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라."}</p>
             </div>
             <div className="ss-tip warning">
-              <h4>AI 문체 증상 2: 감정 직접 명시</h4>
-              <p>&quot;두려움이 몰려왔다&quot; 대신 신체 반응으로: 손끝이 모니터 엣지를 긁었다. 0.3초. 다시 긁었다.</p>
+              <h4>{en ? "AI Style Symptom 2: Stating Emotions Directly" : "AI 문체 증상 2: 감정 직접 명시"}</h4>
+              <p>{en
+                ? "Instead of 'Fear washed over him,' use physical reactions: His fingertips scraped the edge of the monitor. 0.3 seconds. Again."
+                : "\"두려움이 몰려왔다\" 대신 신체 반응으로: 손끝이 모니터 엣지를 긁었다. 0.3초. 다시 긁었다."}</p>
             </div>
             <div className="ss-tip">
-              <h4>HP 작가 문체 강점: 데이터의 서사화</h4>
-              <p>희망호에서 D+일수, φ값, 예산 수치가 단순 정보가 아니라 캐릭터의 감정 온도계 역할을 한다.</p>
+              <h4>{en ? "Technique: Data as Narrative" : "기법 활용: 데이터의 서사화"}</h4>
+              <p>{en
+                ? "Numbers, dates, and measurements aren't just information — they can serve as emotional thermometers for your characters."
+                : "숫자·날짜·측정값이 단순 정보가 아니라 캐릭터의 감정 온도계 역할을 할 수 있다. 수치에 맥락을 부여하라."}</p>
             </div>
             <div className="ss-tip">
-              <h4>활용 포인트: 행동 마커의 반복</h4>
-              <p>Brian의 마커, Vasquez의 A5, 김미래의 CTRL+SHIFT+D. 반복 행동 모티프로 독자가 설명 없이도 누군지 안다.</p>
+              <h4>{en ? "Technique: Behavioral Markers" : "기법 활용: 행동 마커의 반복"}</h4>
+              <p>{en
+                ? "Give each character a repeated habit or gesture. Readers learn to identify them without explicit description."
+                : "인물마다 고유한 반복 습관을 부여하라. 독자가 설명 없이도 누구인지 식별할 수 있게 된다."}</p>
             </div>
           </div>
         )}
@@ -508,16 +546,18 @@ export default function StyleStudioView({ isKO = true }: Props) {
                 </div>
                 <div className="ss-profile-items">
                   <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Main Project" : "주력 프로젝트"}</span>
-                    <span>희망호 (브릿G)</span>
+                    <span className="ss-profile-key">{en ? "Selected Styles" : "선택 문체"}</span>
+                    <span>{selectedCards.size > 0
+                      ? Array.from(selectedCards).map((i) => DNA_CARDS[i].title).join(" + ")
+                      : (en ? "Not set" : "미설정")}</span>
                   </div>
                   <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Scale" : "연재 규모"}</span>
-                    <span>Part 1 100화 완성</span>
+                    <span className="ss-profile-key">{en ? "Techniques" : "습득 기법"}</span>
+                    <span>{totalChecked} / {totalItems} {en ? "mastered" : "완료"}</span>
                   </div>
                   <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Workflow" : "작업 방식"}</span>
-                    <span>3-캔버스 시스템</span>
+                    <span className="ss-profile-key">{en ? "Lab Usage" : "실험실 사용"}</span>
+                    <span>{resultText ? (en ? "Active" : "활성") : (en ? "Not yet" : "미사용")}</span>
                   </div>
                 </div>
               </div>
@@ -539,11 +579,41 @@ export default function StyleStudioView({ isKO = true }: Props) {
               <div className="ss-author-dna-bg">DNA</div>
               <h3>{en ? "Author Style DNA Statement" : "작가 문체 DNA 선언문"}</h3>
               <div className="ss-dna-statement">
-                나는 <em className="ss-hl">시스템의 언어</em>로 인간의 감정을 쓴다.<br />
-                숫자와 프로토콜 사이에서{" "}
-                <em className="ss-hl2">살아남는 것들</em>을 포착하고,<br />
-                독자가 이해하기 전에{" "}
-                <em className="ss-hl">먼저 느끼게</em> 만드는 것이 내 문체다.
+                {selectedCards.size === 0 ? (
+                  <span style={{ color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                    {en
+                      ? "Select your style identity in Step 01 to generate your DNA statement."
+                      : "Step 01에서 문체 정체성을 선택하면 DNA 선언문이 생성됩니다."}
+                  </span>
+                ) : (
+                  <>
+                    {en ? "I write " : "나는 "}
+                    <em className="ss-hl">
+                      {selectedCards.has(0) && (en ? "the language of systems" : "시스템의 언어")}
+                      {selectedCards.has(1) && (selectedCards.has(0) ? (en ? " and rhythm" : "와 리듬") : (en ? "fast-paced rhythm" : "빠른 호흡의 리듬"))}
+                      {selectedCards.has(2) && ((selectedCards.has(0) || selectedCards.has(1)) ? (en ? " and sensory depth" : "과 감각의 깊이") : (en ? "sensory depth" : "감각의 깊이"))}
+                      {selectedCards.has(3) && ((selectedCards.has(0) || selectedCards.has(1) || selectedCards.has(2)) ? (en ? " across genres" : "을 장르 너머") : (en ? "genre-crossing craft" : "장르를 넘나드는 문장"))}
+                    </em>
+                    {en ? " to capture " : "으로 "}
+                    <em className="ss-hl2">
+                      {sliderVals.s2 <= 2
+                        ? (en ? "what data reveals" : "데이터가 드러내는 것들")
+                        : sliderVals.s2 >= 4
+                          ? (en ? "the weight of emotion" : "감정의 무게")
+                          : (en ? "the tension between logic and feeling" : "논리와 감정 사이의 긴장")}
+                    </em>
+                    {en ? ", and my sentences make readers " : "을 포착하고,"}<br />
+                    {en ? "" : "독자가 이해하기 전에 "}
+                    <em className="ss-hl">
+                      {sliderVals.s4 >= 4
+                        ? (en ? "feel before they understand" : "먼저 느끼게")
+                        : sliderVals.s4 <= 2
+                          ? (en ? "see the whole picture" : "전체를 조망하게")
+                          : (en ? "step into the story" : "이야기 안으로 걸어 들어가게")}
+                    </em>
+                    {en ? "." : " 만드는 것이 내 문체다."}
+                  </>
+                )}
               </div>
             </div>
 
@@ -551,18 +621,19 @@ export default function StyleStudioView({ isKO = true }: Props) {
 
             <div className="ss-section-title">{en ? "Reference Authors" : "참고할 작가 — 문체 레퍼런스"}</div>
             <div className="ss-ref-grid">
-              <div className="ss-tip">
-                <h4>킴 스탠리 로빈슨</h4>
-                <p>과학적 정밀함과 생태적 감수성. 데이터가 시가 되는 문장.</p>
-              </div>
-              <div className="ss-tip">
-                <h4>테드 창</h4>
-                <p>철학적 질문을 SF 논리로 풀어냄. 냉정하고 아름다운 구조.</p>
-              </div>
-              <div className="ss-tip">
-                <h4>듀나</h4>
-                <p>한국 SF의 건조한 감각. 설명하지 않고 제시한다.</p>
-              </div>
+              {(() => {
+                const authors = new Map<string, RefAuthor>();
+                Array.from(selectedCards).forEach((cardIdx) => {
+                  REF_AUTHORS[cardIdx]?.forEach((a) => authors.set(a.name, a));
+                });
+                const list = authors.size > 0 ? Array.from(authors.values()).slice(0, 3) : REF_AUTHORS[0];
+                return list.map((a, i) => (
+                  <div key={i} className="ss-tip">
+                    <h4>{en ? a.nameEN : a.name}</h4>
+                    <p>{en ? a.descEN : a.desc}</p>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
