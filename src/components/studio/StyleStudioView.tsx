@@ -7,6 +7,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { StyleProfile } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
+import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
 
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
@@ -242,12 +243,23 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
       : `다음 원문을 "${selectedStyleNames}" 스타일로 재작성해주세요.\n\n원문:\n"${sourceText}"\n\n지침:\n- 같은 내용과 사건, 동일한 인물을 유지하면서 문체만 변환\n- 변환 방향에 맞는 구체적인 기법 적용\n- 한국어로만 작성\n- 결과물만 출력 (설명 없이)\n- 2~4문단 분량으로 자연스럽게`;
 
     try {
+      const provider = getActiveProvider();
+      const model = getActiveModel();
+      const apiKey = getApiKey(provider);
+
+      if (!apiKey) {
+        setResultText(en ? "Please set your API key in Settings first." : "설정에서 API 키를 먼저 등록해주세요.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider: "claude",
-          model: "claude-sonnet-4-20250514",
+          provider,
+          model,
+          apiKey,
           systemInstruction,
           messages: [{ role: "user", content: userPrompt }],
           temperature: 0.8,
@@ -283,6 +295,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
           try {
             const parsed = JSON.parse(data);
             const delta =
+              parsed.candidates?.[0]?.content?.parts?.[0]?.text ??
               parsed.delta?.text ??
               parsed.choices?.[0]?.delta?.content ??
               "";
