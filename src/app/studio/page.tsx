@@ -40,6 +40,7 @@ import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
 import { syncAllProjects } from '@/services/driveService';
+import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 // BYOK provider info available via '@/lib/ai-providers'
 
 const INITIAL_CONFIG: StoryConfig = {
@@ -114,6 +115,27 @@ export default function StudioPage() {
   const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
+  // UX: unsaved changes warning
+  useUnsavedWarning(isGenerating);
+
+  // UX: error toast state
+  const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
+
+  // UX: confirm modal state
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean; title: string; message: string;
+    confirmLabel?: string; cancelLabel?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', onConfirm: () => {} });
+
+  const showConfirm = useCallback((opts: Omit<typeof confirmState, 'open'>) => {
+    setConfirmState({ ...opts, open: true });
+  }, []);
+  const closeConfirm = useCallback(() => {
+    setConfirmState(prev => ({ ...prev, open: false }));
+  }, []);
+
   // ============================================================
   // SYNC STATE
   // ============================================================
@@ -178,15 +200,24 @@ export default function StudioPage() {
   }, [language]);
 
   const deleteProject = useCallback((projectId: string) => {
-    const tp = t.project || {};
-    if (!window.confirm(tp.confirmDelete || 'Delete this project?')) return;
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-    if (currentProjectId === projectId) {
-      const remaining = projects.filter(p => p.id !== projectId);
-      setCurrentProjectId(remaining[0]?.id || null);
-      setCurrentSessionId(null);
-    }
-  }, [currentProjectId, projects, t]);
+    const projName = projects.find(p => p.id === projectId)?.name || '';
+    showConfirm({
+      title: isKO ? '작품 삭제' : 'Delete Project',
+      message: isKO ? `'${projName}'을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.` : `Delete '${projName}'? This cannot be undone.`,
+      confirmLabel: isKO ? '삭제' : 'Delete',
+      cancelLabel: isKO ? '취소' : 'Cancel',
+      variant: 'danger',
+      onConfirm: () => {
+        closeConfirm();
+        setProjects(prev => prev.filter(p => p.id !== projectId));
+        if (currentProjectId === projectId) {
+          const remaining = projects.filter(p => p.id !== projectId);
+          setCurrentProjectId(remaining[0]?.id || null);
+          setCurrentSessionId(null);
+        }
+      },
+    });
+  }, [currentProjectId, projects, isKO, showConfirm, closeConfirm]);
 
   const renameProject = useCallback((projectId: string, newName: string) => {
     setProjects(prev => prev.map(p =>
@@ -285,24 +316,38 @@ export default function StudioPage() {
   const deleteSession = (sessionIdToDelete: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);
     if (!sessionToDelete) return;
-    const confirmMsg = ({ KO: `'${sessionToDelete.title}' 아카이브를 삭제하시겠습니까?`, EN: `Delete '${sessionToDelete.title}'?`, JP: `'${sessionToDelete.title}'を削除しますか？`, CN: `删除 '${sessionToDelete.title}'？` })[language];
-    if (window.confirm(confirmMsg)) {
-      const newSessions = sessions.filter(s => s.id !== sessionIdToDelete);
-      setSessions(newSessions);
-      if (currentSessionId === sessionIdToDelete) {
-        setCurrentSessionId(newSessions.length > 0 ? newSessions[0].id : null);
-        if (newSessions.length === 0) setActiveTab('world');
-      }
-    }
+    showConfirm({
+      title: isKO ? '세션 삭제' : 'Delete Session',
+      message: isKO ? `'${sessionToDelete.title}'을(를) 삭제하시겠습니까?` : `Delete '${sessionToDelete.title}'?`,
+      confirmLabel: isKO ? '삭제' : 'Delete',
+      cancelLabel: isKO ? '취소' : 'Cancel',
+      variant: 'danger',
+      onConfirm: () => {
+        closeConfirm();
+        const newSessions = sessions.filter(s => s.id !== sessionIdToDelete);
+        setSessions(newSessions);
+        if (currentSessionId === sessionIdToDelete) {
+          setCurrentSessionId(newSessions.length > 0 ? newSessions[0].id : null);
+          if (newSessions.length === 0) setActiveTab('world');
+        }
+      },
+    });
   };
 
   const clearAllSessions = () => {
-    const confirmMsg = ({ KO: "모든 세션을 삭제하시겠습니까?", EN: "Delete all sessions?", JP: "すべてのセッションを削除しますか？", CN: "删除所有会话？" })[language];
-    if (window.confirm(confirmMsg)) {
-      setSessions([]);
-      setCurrentSessionId(null);
-      setActiveTab('world');
-    }
+    showConfirm({
+      title: isKO ? '전체 삭제' : 'Delete All',
+      message: isKO ? '모든 세션을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.' : 'Delete all sessions? This cannot be undone.',
+      confirmLabel: isKO ? '전체 삭제' : 'Delete All',
+      cancelLabel: isKO ? '취소' : 'Cancel',
+      variant: 'danger',
+      onConfirm: () => {
+        closeConfirm();
+        setSessions([]);
+        setCurrentSessionId(null);
+        setActiveTab('world');
+      },
+    });
   };
 
   // ============================================================
@@ -553,7 +598,11 @@ export default function StudioPage() {
         return s;
       }));
     } catch (error: unknown) {
-      if (error instanceof Error && error.name !== 'AbortError') console.error(error);
+      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
+      else {
+        console.error(error);
+        setUxError({ error, retry: () => handleSend(input) });
+      }
     } finally {
       // 3패스 캔버스 모드: 단계 완료 시 JSON 제거 후 자동 주입
       if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
@@ -634,7 +683,11 @@ export default function StudioPage() {
         return s;
       }));
     } catch (error: unknown) {
-      if (error instanceof Error && error.name !== 'AbortError') console.error(error);
+      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
+      else {
+        console.error(error);
+        setUxError({ error, retry: () => handleRegenerate(assistantMsgId) });
+      }
     } finally {
       setIsGenerating(false);
       abortControllerRef.current = null;
@@ -1834,6 +1887,28 @@ export default function StudioPage() {
 
       {showApiKeyModal && (
         <ApiKeyModal language={language} onClose={() => setShowApiKeyModal(false)} onSave={() => {}} />
+      )}
+
+      {/* UX: Confirm Modal */}
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        cancelLabel={confirmState.cancelLabel}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={closeConfirm}
+      />
+
+      {/* UX: Error Toast */}
+      {uxError && (
+        <ErrorToast
+          error={uxError.error}
+          isKO={isKO}
+          onDismiss={() => setUxError(null)}
+          onRetry={uxError.retry ? () => { setUxError(null); uxError.retry?.(); } : undefined}
+        />
       )}
     </div>
   );

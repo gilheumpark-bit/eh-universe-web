@@ -6,6 +6,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { StyleProfile } from "@/lib/studio-types";
+import { CopyButton } from "./UXHelpers";
 
 const STYLE_NAMES = [
   "건조·SF 문체",
@@ -475,7 +476,10 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                 />
               </div>
               <div>
-                <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
+                  {resultText && <CopyButton text={resultText} isKO={!en} />}
+                </div>
                 <div className="ss-result-box">
                   {resultText ? (
                     resultText.split("\n").map((line, i) => (

@@ -12,6 +12,7 @@ import {
 import { AppLanguage } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
+import { classifyError } from './UXHelpers';
 
 interface InlineRewriterProps {
   content: string;
@@ -140,7 +141,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      alert(isKO ? 'API 키를 설정해주세요.' : 'Please set your API key.');
+      setPreview(isKO ? '⚠️ API 키가 설정되지 않았습니다.\n설정(Settings) 탭에서 API 키를 입력해주세요.' : '⚠️ API key not set.\nGo to Settings tab to enter your key.');
       return;
     }
 
@@ -174,8 +175,10 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         },
       });
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        setPreview(isKO ? '⚠️ 오류 발생' : '⚠️ Error occurred');
+      if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
+      else {
+        const info = classifyError(err, isKO);
+        setPreview(`⚠️ ${info.title}\n${info.message}${info.action ? `\n\n💡 ${info.action}` : ''}`);
       }
     } finally {
       setIsStreaming(false);
@@ -196,8 +199,16 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     setCustomPrompt('');
   }, [customPrompt, selection, executeAction]);
 
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+
   const applyPreview = useCallback(() => {
     if (preview == null || !selection) return;
+    // Show confirmation for non-trivial replacements
+    if (selection.text.length > 50 && !showApplyConfirm) {
+      setShowApplyConfirm(true);
+      return;
+    }
+    setShowApplyConfirm(false);
     const isInsertAfter = preview && !selection.text;
     let newContent: string;
     if (isInsertAfter) {
@@ -210,7 +221,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     setSelection(null);
     setShowActions(false);
     onApply(newContent);
-  }, [preview, selection, editableContent, onApply]);
+  }, [preview, selection, editableContent, onApply, showApplyConfirm]);
 
   const cancelPreview = () => {
     abortRef.current?.abort();
@@ -270,10 +281,21 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               {isStreaming ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '미리보기' : 'Preview')}
             </span>
             <div className="flex gap-1.5">
-              {!isStreaming && preview && (
+              {!isStreaming && preview && !showApplyConfirm && (
                 <button onClick={applyPreview} className="flex items-center gap-1 px-2.5 py-1 bg-green-600/20 border border-green-500/30 rounded-lg text-[9px] font-bold text-green-400 hover:bg-green-600/30 font-[family-name:var(--font-mono)]">
                   <Check className="w-3 h-3" /> {isKO ? '적용' : 'Apply'}
                 </button>
+              )}
+              {showApplyConfirm && (
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[8px] text-amber-400 font-[family-name:var(--font-mono)]">{isKO ? '교체할까요?' : 'Replace?'}</span>
+                  <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
+                    {isKO ? '확인' : 'Yes'}
+                  </button>
+                  <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-zinc-700/30 border border-zinc-600/40 rounded text-[9px] text-zinc-400 hover:bg-zinc-700/50">
+                    {isKO ? '취소' : 'No'}
+                  </button>
+                </span>
               )}
               <button onClick={cancelPreview} className="flex items-center gap-1 px-2.5 py-1 bg-red-600/10 border border-red-500/20 rounded-lg text-[9px] font-bold text-red-400 hover:bg-red-600/20 font-[family-name:var(--font-mono)]">
                 {isStreaming ? <X className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}

@@ -5,10 +5,11 @@
 // ============================================================
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck } from 'lucide-react';
+import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
+import { ErrorToast, StreamingIndicator } from './UXHelpers';
 
 interface Suggestion {
   id: string;
@@ -135,16 +136,20 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
   const [expanded, setExpanded] = useState(true);
   const [workingContent, setWorkingContent] = useState(content);
   const abortRef = useRef<AbortController | null>(null);
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [refinerError, setRefinerError] = useState<unknown>(null);
+  const [streamingChars, setStreamingChars] = useState(0);
 
   // Step 1: AI analyzes the manuscript
   const startAnalysis = useCallback(async () => {
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      alert(isKO ? 'API 키를 설정해주세요.' : 'Please set your API key.');
+      setRefinerError(new Error(isKO ? 'API 키가 설정되지 않았습니다. 설정(Settings) 탭에서 API 키를 입력해주세요.' : 'API key not set. Please enter your API key in the Settings tab.'));
       return;
     }
 
     setPhase('analyzing');
+    setStreamingChars(0);
     setSuggestions([]);
     setWorkingContent(content);
     const controller = new AbortController();
@@ -162,7 +167,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         messages,
         temperature: 0.3,
         signal: controller.signal,
-        onChunk: (chunk) => { raw += chunk; },
+        onChunk: (chunk) => { raw += chunk; setStreamingChars(prev => prev + chunk.length); },
       });
 
       // Parse JSON from response
@@ -193,9 +198,8 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         alert(isKO ? '개선할 부분을 찾지 못했습니다. 원고 상태가 좋습니다!' : 'No improvements found. Your manuscript looks good!');
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        alert(isKO ? '분석 중 오류 발생' : 'Analysis error');
-      }
+      if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
+      else { setRefinerError(err); }
       setPhase('idle');
     } finally {
       abortRef.current = null;
@@ -250,10 +254,13 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     }
   }, [suggestions, workingContent, isKO]);
 
-  // Apply a single fix
+  // Apply a single fix (with undo support)
   const applySuggestion = useCallback((idx: number) => {
     const sug = suggestions[idx];
     if (!sug?.result) return;
+
+    // Save current state to undo stack
+    setUndoStack(prev => [...prev, workingContent]);
 
     const paragraphs = workingContent.split('\n\n').filter(p => p.trim());
     const pIdx = sug.paragraphIndex;
@@ -268,6 +275,21 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     setWorkingContent(newContent);
     setSuggestions(prev => prev.map((s, i) => i === idx ? { ...s, status: 'applied' } : s));
   }, [suggestions, workingContent]);
+
+  // Undo last applied fix
+  const undoLast = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setUndoStack(s => s.slice(0, -1));
+    setWorkingContent(prev);
+    // Revert last applied suggestion
+    setSuggestions(prevSugs => {
+      const lastApplied = [...prevSugs].reverse().findIndex(s => s.status === 'applied');
+      if (lastApplied === -1) return prevSugs;
+      const realIdx = prevSugs.length - 1 - lastApplied;
+      return prevSugs.map((s, i) => i === realIdx ? { ...s, status: 'ready' } : s);
+    });
+  }, [undoStack]);
 
   // Skip a suggestion
   const skipSuggestion = (idx: number) => {
@@ -331,13 +353,21 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {phase === 'analyzing' && (
-            <span className="flex items-center gap-1.5 text-[10px] text-accent-purple font-bold font-[family-name:var(--font-mono)]">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> {isKO ? '원고 분석 중...' : 'Analyzing...'}
-            </span>
+            <>
+              <StreamingIndicator charCount={streamingChars} isKO={isKO} />
+              <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-red-600/30 transition-colors">
+                <X className="w-3 h-3" /> {isKO ? '중단' : 'Stop'}
+              </button>
+            </>
           )}
           {phase === 'ready' && pendingCount > 0 && (
             <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-blue-600/30 transition-colors">
               <Play className="w-3 h-3" /> {isKO ? '전체 생성' : 'Generate All'}
+            </button>
+          )}
+          {undoStack.length > 0 && (
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-zinc-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={isKO ? '되돌리기' : 'Undo'}>
+              <Undo2 className="w-3 h-3" />
             </button>
           )}
           {appliedCount > 0 && (
@@ -431,6 +461,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
               : 'AI analyzes your manuscript paragraph by paragraph and auto-rewrites weak spots.'}
           </p>
         </div>
+      )}
+      {/* Error toast */}
+      {refinerError && (
+        <ErrorToast error={refinerError} isKO={isKO} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS } from '@/lib/token-utils';
+import { classifyError } from './UXHelpers';
 
 interface TabMessage {
   id: string;
@@ -119,7 +120,8 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      alert(isKO ? 'API 키를 설정해주세요.' : 'Please set your API key.');
+      const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: isKO ? '⚠️ API 키가 설정되지 않았습니다.\n\n설정(Settings) 탭 → API Key에서 키를 입력해주세요.' : '⚠️ API key not set.\n\nGo to Settings tab → API Key to enter your key.' };
+      setMessages(prev => [...prev, errMsg]);
       return;
     }
 
@@ -155,9 +157,12 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
         },
       });
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== 'AbortError') {
+      if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
+      else {
+        const info = classifyError(err, isKO);
+        const detail = info.action ? `\n\n💡 ${info.action}` : '';
         setMessages(prev => prev.map(m =>
-          m.id === aiMsgId ? { ...m, content: isKO ? '⚠️ 오류가 발생했습니다.' : '⚠️ An error occurred.' } : m
+          m.id === aiMsgId ? { ...m, content: `⚠️ ${info.title}\n${info.message}${detail}` } : m
         ));
       }
     } finally {
