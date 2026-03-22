@@ -4,7 +4,7 @@
 // PART 1 — 상태 및 상수 정의
 // ============================================================
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 
 const STYLE_NAMES = [
   "건조·SF 문체",
@@ -131,7 +131,7 @@ export default function StyleStudioView({ isKO = true }: Props) {
     if (!sourceText.trim()) return;
     if (activeStyles.size === 0) return;
 
-    const selectedStyleNames = Array.from(activeStyles)
+    const selectedStyleNames = (Array.from(activeStyles) as number[])
       .map((i) => STYLE_NAMES[i])
       .join(", ");
 
