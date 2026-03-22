@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -299,9 +299,11 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure || '');
 
   // Sync to parent whenever data changes
+  const onDirectionUpdateRef = useRef(onDirectionUpdate);
+  onDirectionUpdateRef.current = onDirectionUpdate;
   const syncDirection = useCallback(() => {
-    onDirectionUpdate?.({ goguma: gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure });
-  }, [onDirectionUpdate, gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure]);
+    onDirectionUpdateRef.current?.({ goguma: gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure });
+  }, [gogumas, hooks, emotions, dialogueRules, dopamines, cliffs, foreshadows, pacings, tensionPoints, canons, transitions, writerNotes, plotStructure]);
 
   // Simulator reference checkpoints
   const [simRef, setSimRef] = useState({

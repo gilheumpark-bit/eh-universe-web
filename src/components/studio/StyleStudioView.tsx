@@ -160,20 +160,23 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
 
-  // Sync profile changes to parent
+  // Sync profile changes to parent (stable ref to avoid infinite loops)
+  const onProfileChangeRef = useRef(onProfileChange);
+  onProfileChangeRef.current = onProfileChange;
   const isInitialMount = useRef(true);
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    onProfileChange?.({
+    onProfileChangeRef.current?.({
       selectedDNA: Array.from(selectedCards),
       sliders: { ...sliderVals },
       checkedSF: Array.from(checkedSF),
       checkedWeb: Array.from(checkedWeb),
     });
-  }, [selectedCards, sliderVals, checkedSF, checkedWeb, onProfileChange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCards, sliderVals, checkedSF, checkedWeb]);
 
   const toggleSet = useCallback(
     (setter: React.Dispatch<React.SetStateAction<Set<number>>>, idx: number) => {

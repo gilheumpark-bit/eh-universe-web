@@ -272,11 +272,12 @@ export default function StudioPage() {
     saveProjects(projects);
   }, [projects]);
 
+  const messageCount = currentSession?.messages?.length ?? 0;
   useEffect(() => {
     if (activeTab === 'writing') {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [currentSession?.messages, isGenerating, activeTab]);
+  }, [messageCount, isGenerating, activeTab]);
 
   const createNewSession = useCallback(() => {
     const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
