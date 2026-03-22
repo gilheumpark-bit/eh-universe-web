@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
         // third-party storage partitioning issues in modern browsers.
         // The FIREBASE_PROJECT is read from the env var at build time.
         source: '/__/auth/:path*',
-        destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'eh-universe.firebaseapp.com'}/__/auth/:path*`,
+        destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'gen-lang-client-0645063497.firebaseapp.com'}/__/auth/:path*`,
       },
     ];
   },
