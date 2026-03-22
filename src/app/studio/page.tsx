@@ -39,6 +39,7 @@ const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScene
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
+const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -1739,6 +1740,17 @@ export default function StudioPage() {
                           ))
                         )}
                       </div>
+
+                      {/* Genre×Level Reviewer Chat */}
+                      {currentSession && (
+                        <div className="mt-8">
+                          <GenreReviewChat
+                            language={language}
+                            config={currentSession.config}
+                            manuscriptText={currentSession.messages.filter(m => m.role === 'assistant').map(m => m.content).join('\n\n')}
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
