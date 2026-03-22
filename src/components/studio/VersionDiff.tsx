@@ -126,7 +126,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
 
       {/* Diff view */}
       {showDiff && currentIndex > 0 && (
-        <div className="mt-2 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
+        <div className="mt-2 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono leading-relaxed max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
           <div className="text-[8px] text-zinc-600 uppercase tracking-widest mb-2">
             v{currentIndex} → v{currentIndex + 1}
           </div>

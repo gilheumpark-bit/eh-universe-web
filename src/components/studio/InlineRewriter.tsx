@@ -295,7 +295,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
           setShowActions(false);
         }}
         onSelect={handleSelect}
-        className="w-full min-h-[55vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple/30 transition-colors resize-y"
+        className="w-full min-h-[40vh] sm:min-h-[55vh] bg-bg-primary border border-border rounded-xl p-4 sm:p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple/30 transition-colors resize-y"
         placeholder={isKO ? '텍스트를 드래그해서 선택 → 액션 선택' : 'Select text by dragging → choose action'}
       />
 

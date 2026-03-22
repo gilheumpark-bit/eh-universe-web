@@ -197,7 +197,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       {!collapsed && (
         <>
           {/* Messages */}
-          <div className="max-h-80 overflow-y-auto px-4 py-2 space-y-3 custom-scrollbar">
+          <div className="max-h-60 sm:max-h-80 overflow-y-auto px-4 py-2 space-y-3 custom-scrollbar">
             {messages.length === 0 && (
               <p className="text-[11px] text-text-tertiary italic text-center py-6">
                 {isKO ? `${ctx.ko}에게 무엇이든 물어보세요.` : `Ask the ${ctx.en} anything.`}
@@ -210,7 +210,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
                 }`}>
                   {msg.role === 'user' ? <User className="w-3 h-3 text-zinc-500" /> : <Bot className="w-3 h-3 text-accent-purple" />}
                 </div>
-                <div className={`max-w-[80%] px-3 py-2 rounded-xl text-[12px] leading-relaxed ${
+                <div className={`max-w-[90%] sm:max-w-[80%] px-3 py-2 rounded-xl text-[12px] leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-zinc-800/80 text-zinc-300'
                     : 'bg-transparent text-zinc-300'

@@ -312,7 +312,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
   return (
     <div className="border border-accent-purple/20 bg-accent-purple/5 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-purple" />
           <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
@@ -356,7 +356,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
       {/* Suggestion list */}
       {expanded && suggestions.length > 0 && (
-        <div className="px-4 pb-4 space-y-2 max-h-[50vh] overflow-y-auto custom-scrollbar">
+        <div className="px-4 pb-4 space-y-2 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto custom-scrollbar">
           {suggestions.map((sug, idx) => {
             const actionInfo = ACTION_LABEL[sug.action] ?? ACTION_LABEL.rewrite;
             return (
