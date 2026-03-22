@@ -33,6 +33,7 @@ const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
+const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -906,6 +907,9 @@ export default function StudioPage() {
                 {activeTab === 'world' && currentSession && (
                   <>
                     <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
+                    <div className="max-w-4xl mx-auto px-4 pb-4">
+                      <TabAssistant tab="world" language={language} config={currentSession.config} />
+                    </div>
                     <div className="max-w-4xl mx-auto px-4 pb-8 flex justify-end">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
@@ -940,6 +944,9 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    <div className="mt-4">
+                      <TabAssistant tab="critique" language={language} config={currentSession?.config ?? null} />
+                    </div>
                     <div className="flex justify-end mt-4">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
@@ -950,6 +957,9 @@ export default function StudioPage() {
                 {activeTab === 'characters' && currentSession && (
                   <>
                     <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                    <div className="max-w-[1400px] mx-auto px-4 pb-4">
+                      <TabAssistant tab="characters" language={language} config={currentSession.config} />
+                    </div>
                     <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
@@ -1000,6 +1010,9 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    <div className="mt-4">
+                      <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} />
+                    </div>
                     <div className="flex justify-end mt-4">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
@@ -1368,15 +1381,20 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'style' && currentSession && (
-                  <StyleStudioView
-                    isKO={isKO}
-                    initialProfile={currentSession.config.styleProfile}
-                    onProfileChange={(profile) => {
-                      updateCurrentSession({
-                        config: { ...currentSession.config, styleProfile: profile },
-                      });
-                    }}
-                  />
+                  <>
+                    <StyleStudioView
+                      isKO={isKO}
+                      initialProfile={currentSession.config.styleProfile}
+                      onProfileChange={(profile) => {
+                        updateCurrentSession({
+                          config: { ...currentSession.config, styleProfile: profile },
+                        });
+                      }}
+                    />
+                    <div className="max-w-4xl mx-auto px-4 pb-4">
+                      <TabAssistant tab="style" language={language} config={currentSession.config} />
+                    </div>
+                  </>
                 )}
                 {activeTab === 'history' && (() => {
                   const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
