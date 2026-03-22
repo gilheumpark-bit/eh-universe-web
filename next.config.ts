@@ -6,9 +6,11 @@ const nextConfig: NextConfig = {
       {
         // Proxy Firebase auth handler through same origin to avoid
         // third-party storage partitioning issues in modern browsers.
-        // The FIREBASE_PROJECT is read from the env var at build time.
+        // IMPORTANT: hardcoded to the actual Firebase project domain.
+        // NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN env var may contain a wrong value
+        // (e.g. "eh-universe.firebaseapp.com") — the real project is below.
         source: '/__/auth/:path*',
-        destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'gen-lang-client-0645063497.firebaseapp.com'}/__/auth/:path*`,
+        destination: 'https://gen-lang-client-0645063497.firebaseapp.com/__/auth/:path*',
       },
     ];
   },
