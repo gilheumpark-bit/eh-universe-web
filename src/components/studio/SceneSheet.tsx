@@ -95,19 +95,23 @@ const DOPAMINE_DEVICES = [
 const EMOTIONS = ["분노", "슬픔", "기쁨", "공포", "희망", "절망", "결의", "불안", "통쾌", "안도"];
 
 const TAB_DEF: { id: SheetTab; ko: string; en: string; emoji: string }[] = [
+  // 1. 전체 구조
+  { id: "plot", ko: "플롯 구조", en: "Plot Structure", emoji: "📊" },
+  { id: "tension", ko: "텐션 곡선", en: "Tension Curve", emoji: "📈" },
+  { id: "pacing", ko: "분량 배분", en: "Pacing", emoji: "📏" },
+  // 2. 장면 설계
   { id: "goguma", ko: "고구마/사이다", en: "Tension/Release", emoji: "🍠" },
   { id: "hook", ko: "훅 배치", en: "Hook Design", emoji: "🪝" },
+  { id: "cliff", ko: "클리프행어", en: "Cliffhanger", emoji: "🔚" },
+  { id: "dopamine", ko: "도파민 루프", en: "Dopamine Loop", emoji: "⚡" },
+  { id: "transition", ko: "장면 전환", en: "Scene Transition", emoji: "🔄" },
+  // 3. 캐릭터·감정 디테일
   { id: "emotion", ko: "감정선", en: "Emotion Arc", emoji: "💓" },
   { id: "dialogue", ko: "대사 톤", en: "Dialogue Tone", emoji: "💬" },
-  { id: "dopamine", ko: "도파민 루프", en: "Dopamine Loop", emoji: "⚡" },
-  { id: "cliff", ko: "클리프행어", en: "Cliffhanger", emoji: "🔚" },
-  { id: "foreshadow", ko: "떡밥/복선", en: "Foreshadow", emoji: "🧩" },
-  { id: "pacing", ko: "분량 배분", en: "Pacing", emoji: "📏" },
-  { id: "tension", ko: "텐션 곡선", en: "Tension Curve", emoji: "📈" },
   { id: "canon", ko: "캐릭터 규칙", en: "Canon Rules", emoji: "📌" },
-  { id: "transition", ko: "장면 전환", en: "Scene Transition", emoji: "🔄" },
+  // 4. 복선·메모
+  { id: "foreshadow", ko: "떡밥/복선", en: "Foreshadow", emoji: "🧩" },
   { id: "notes", ko: "작가 메모", en: "Writer Notes", emoji: "📝" },
-  { id: "plot", ko: "플롯 구조", en: "Plot Structure", emoji: "📊" },
 ];
 
 // ============================================================
