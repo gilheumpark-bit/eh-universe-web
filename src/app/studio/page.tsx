@@ -42,6 +42,8 @@ import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
 import { syncAllProjects } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
+import DirectorPanel from '@/components/studio/DirectorPanel';
+import { analyzeManuscript, type DirectorReport } from '@/engine/director';
 // BYOK provider info available via '@/lib/ai-providers'
 
 const INITIAL_CONFIG: StoryConfig = {
@@ -86,6 +88,7 @@ export default function StudioPage() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
+  const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -593,6 +596,9 @@ export default function StudioPage() {
       }
 
       setLastReport(result.report);
+      // NOD Director analysis
+      const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
+      setDirectorReport(analyzeManuscript(dirClean));
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
           const msgs = s.messages.map(m =>
@@ -1830,7 +1836,10 @@ export default function StudioPage() {
                       </div>
                     </details>
 
-                    {/* ⑤ 대화 온도 */}
+                    {/* ⑤ NOD 감독 */}
+                    <DirectorPanel report={directorReport} language={language} />
+
+                    {/* ⑥ 대화 온도 */}
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-xs text-text-tertiary">🌡️</span>
                       <span className={`text-xs font-bold ${
