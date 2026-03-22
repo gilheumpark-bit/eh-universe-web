@@ -8,20 +8,22 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { StyleProfile } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 
-const STYLE_NAMES = [
-  "건조·SF 문체",
-  "감각적 묘사 강화",
-  "웹소설 리듬감",
-  "캐릭터 목소리 강화",
-  "긴장감 압축",
-] as const;
+const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
+const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
 
-const PARAM_LABELS: Record<string, string[]> = {
+const PARAM_LABELS_KO: Record<string, string[]> = {
   s1: ["단문 위주", "단문 선호", "균형", "장문 선호", "장문 위주"],
   s2: ["극도로 건조", "건조·분석적", "균형", "감성적", "매우 감성적"],
   s3: ["직접 서술", "직접 선호", "균형", "이미지 선호", "감각적 이미지"],
   s4: ["전지적 관찰", "전지적 선호", "균형", "인물 밀착", "극밀착 내면"],
   s5: ["구어체", "평이함", "중간", "전문적·정밀", "고도 전문"],
+};
+const PARAM_LABELS_EN: Record<string, string[]> = {
+  s1: ["Short only", "Short-leaning", "Balanced", "Long-leaning", "Long only"],
+  s2: ["Very dry", "Dry / Analytical", "Balanced", "Emotional", "Highly emotional"],
+  s3: ["Direct narration", "Direct-leaning", "Balanced", "Image-leaning", "Sensory imagery"],
+  s4: ["Omniscient", "Omni-leaning", "Balanced", "Close POV", "Deep interior"],
+  s5: ["Colloquial", "Plain", "Moderate", "Technical", "Highly technical"],
 };
 
 interface SliderDef {
@@ -32,39 +34,44 @@ interface SliderDef {
   defaultVal: number;
 }
 
-const SLIDERS: SliderDef[] = [
-  { id: "s1", label: "문장 길이", left: "단문 중심", right: "장문 중심", defaultVal: 3 },
-  { id: "s2", label: "감정 밀도", left: "건조·객관적", right: "감성·주관적", defaultVal: 2 },
-  { id: "s3", label: "묘사 방식", left: "직접 서술", right: "감각적 이미지", defaultVal: 3 },
-  { id: "s4", label: "서술 시점", left: "전지적 신", right: "인물 밀착", defaultVal: 3 },
-  { id: "s5", label: "어휘 수준", left: "구어체·평이함", right: "전문어·정밀함", defaultVal: 4 },
+interface SliderDefI18n { id: string; ko: string; en: string; leftKO: string; leftEN: string; rightKO: string; rightEN: string; defaultVal: number; }
+const SLIDERS_I18N: SliderDefI18n[] = [
+  { id: "s1", ko: "문장 길이", en: "Sentence Length", leftKO: "단문 중심", leftEN: "Short", rightKO: "장문 중심", rightEN: "Long", defaultVal: 3 },
+  { id: "s2", ko: "감정 밀도", en: "Emotional Density", leftKO: "건조·객관적", leftEN: "Dry / Objective", rightKO: "감성·주관적", rightEN: "Emotional / Subjective", defaultVal: 2 },
+  { id: "s3", ko: "묘사 방식", en: "Description Style", leftKO: "직접 서술", leftEN: "Direct", rightKO: "감각적 이미지", rightEN: "Sensory Imagery", defaultVal: 3 },
+  { id: "s4", ko: "서술 시점", en: "POV Distance", leftKO: "전지적 신", leftEN: "Omniscient", rightKO: "인물 밀착", rightEN: "Close POV", defaultVal: 3 },
+  { id: "s5", ko: "어휘 수준", en: "Vocabulary Level", leftKO: "구어체·평이함", leftEN: "Colloquial", rightKO: "전문어·정밀함", rightEN: "Technical", defaultVal: 4 },
 ];
+// Compat alias used throughout
+const SLIDERS: SliderDef[] = SLIDERS_I18N.map(s => ({ id: s.id, label: s.ko, left: s.leftKO, right: s.rightKO, defaultVal: s.defaultVal }));
 
 interface CheckItem {
   title: string;
+  titleEN: string;
   desc: string;
+  descEN: string;
 }
 
 const SF_CHECKS: CheckItem[] = [
-  { title: "숫자의 서사화", desc: "D+127일, φ=0.73 같은 데이터를 감정처럼 읽히게 쓰기" },
-  { title: "시스템 관점 서술", desc: "캐릭터 대신 프로세스가 주어가 되는 문장 연습" },
-  { title: "기술용어 자연화", desc: "독자가 모르는 단어도 문맥으로 이해하게 만들기" },
-  { title: "시간축 병렬 서술", desc: "과거·현재·미래 타임라인을 겹쳐 긴장감 만들기" },
-  { title: "오류 미학", desc: "결함·이상신호·예외값을 문학적 상징으로 활용" },
-  { title: "침묵의 데이터", desc: "로그가 기록하지 않은 것, 센서가 잡지 못한 것으로 감정 표현" },
-  { title: "캐릭터 행동 마커", desc: "인물 고유의 반복 습관(펜 돌리기, 손톱 물어뜯기 등)으로 설명 없이 개성 각인" },
-  { title: "스케일 전환", desc: "우주적 규모 ↔ 손가락 하나의 진동 — 줌인·줌아웃 기법" },
+  { title: "숫자의 서사화", titleEN: "Data as Narrative", desc: "D+127일, φ=0.73 같은 데이터를 감정처럼 읽히게 쓰기", descEN: "Make data like D+127 or φ=0.73 read like emotion." },
+  { title: "시스템 관점 서술", titleEN: "System-POV Writing", desc: "캐릭터 대신 프로세스가 주어가 되는 문장 연습", descEN: "Practice sentences where processes — not characters — are the subject." },
+  { title: "기술용어 자연화", titleEN: "Naturalizing Jargon", desc: "독자가 모르는 단어도 문맥으로 이해하게 만들기", descEN: "Make unfamiliar terms understandable through context alone." },
+  { title: "시간축 병렬 서술", titleEN: "Parallel Timelines", desc: "과거·현재·미래 타임라인을 겹쳐 긴장감 만들기", descEN: "Layer past, present, and future timelines to build tension." },
+  { title: "오류 미학", titleEN: "Aesthetics of Error", desc: "결함·이상신호·예외값을 문학적 상징으로 활용", descEN: "Use defects, anomalies, and exceptions as literary symbols." },
+  { title: "침묵의 데이터", titleEN: "Silent Data", desc: "로그가 기록하지 않은 것, 센서가 잡지 못한 것으로 감정 표현", descEN: "Express emotion through what logs didn't record and sensors didn't catch." },
+  { title: "캐릭터 행동 마커", titleEN: "Behavioral Markers", desc: "인물 고유의 반복 습관(펜 돌리기, 손톱 물어뜯기 등)으로 설명 없이 개성 각인", descEN: "Give each character a repeated habit to imprint personality without exposition." },
+  { title: "스케일 전환", titleEN: "Scale Shifts", desc: "우주적 규모 ↔ 손가락 하나의 진동 — 줌인·줌아웃 기법", descEN: "Cosmic scale ↔ a single finger's tremor — zoom in/out technique." },
 ];
 
 const WEB_CHECKS: CheckItem[] = [
-  { title: "첫 문장 훅 공식", desc: "행동·충돌·의문 중 하나로 시작. 설명은 나중에." },
-  { title: "단락 끊기 전략", desc: "긴장 최고조 직전에 자르기. 독자가 스크롤하게." },
-  { title: "3단 호흡 리듬", desc: "긴 문장 → 중간 → 짧다. 반복하면 리듬이 된다." },
-  { title: "독자 시점 중계", desc: "주인공이 느끼기 전에 독자가 먼저 불안해지게 설계" },
-  { title: "대화의 밀도 조절", desc: "말 사이의 행동 서술로 캐릭터 심리 드러내기" },
-  { title: "감각 레이어링", desc: "시각 + 청각 + 촉각 조합. 단, 3개 이상 겹치면 과부하." },
-  { title: "반복 어구의 리프레인", desc: "같은 단어·구절 재등장으로 감정 증폭 및 구조 통일" },
-  { title: "에필로그의 여운", desc: "챕터 끝을 해결이 아닌 새로운 질문으로 닫기" },
+  { title: "첫 문장 훅 공식", titleEN: "First-Line Hook", desc: "행동·충돌·의문 중 하나로 시작. 설명은 나중에.", descEN: "Start with action, conflict, or a question. Exposition comes later." },
+  { title: "단락 끊기 전략", titleEN: "Paragraph Break Strategy", desc: "긴장 최고조 직전에 자르기. 독자가 스크롤하게.", descEN: "Cut right before peak tension. Make the reader scroll." },
+  { title: "3단 호흡 리듬", titleEN: "3-Beat Rhythm", desc: "긴 문장 → 중간 → 짧다. 반복하면 리듬이 된다.", descEN: "Long → medium → short. Repeat and it becomes rhythm." },
+  { title: "독자 시점 중계", titleEN: "Reader-POV Relay", desc: "주인공이 느끼기 전에 독자가 먼저 불안해지게 설계", descEN: "Design so readers feel uneasy before the protagonist does." },
+  { title: "대화의 밀도 조절", titleEN: "Dialogue Density Control", desc: "말 사이의 행동 서술로 캐릭터 심리 드러내기", descEN: "Reveal character psychology through actions between dialogue." },
+  { title: "감각 레이어링", titleEN: "Sensory Layering", desc: "시각 + 청각 + 촉각 조합. 단, 3개 이상 겹치면 과부하.", descEN: "Combine sight + sound + touch. More than 3 layers overloads." },
+  { title: "반복 어구의 리프레인", titleEN: "Refrain Technique", desc: "같은 단어·구절 재등장으로 감정 증폭 및 구조 통일", descEN: "Repeat words/phrases to amplify emotion and unify structure." },
+  { title: "에필로그의 여운", titleEN: "Epilogue Resonance", desc: "챕터 끝을 해결이 아닌 새로운 질문으로 닫기", descEN: "Close chapters with new questions, not resolutions." },
 ];
 
 interface RefAuthor {
@@ -99,16 +106,19 @@ const REF_AUTHORS: Record<number, RefAuthor[]> = {
 
 interface DnaCard {
   label: string;
+  labelEN: string;
   labelClass: string;
   title: string;
+  titleEN: string;
   desc: string;
+  descEN: string;
 }
 
 const DNA_CARDS: DnaCard[] = [
-  { label: "Hard SF", labelClass: "ss-label-sf", title: "냉정한 관찰자", desc: "기술적 정확성이 곧 아름다움. 감정보다 시스템. 독자가 세계를 이해하게 만드는 문장." },
-  { label: "웹소설", labelClass: "ss-label-web", title: "빠른 호흡의 이야기꾼", desc: "첫 문장에 훅. 짧은 단락, 강한 리듬. 독자를 다음 장으로 끌어당기는 마력." },
-  { label: "문학적", labelClass: "ss-label-lit", title: "감각의 설계자", desc: "세부 묘사가 감정을 만든다. 은유와 여백. 독자가 스스로 느끼게 하는 문장." },
-  { label: "멀티장르", labelClass: "ss-label-all", title: "장르를 넘나드는 작가", desc: "SF의 논리 + 웹소설의 속도 + 문학의 깊이. 각 장르의 장점을 혼합." },
+  { label: "Hard SF", labelEN: "Hard SF", labelClass: "ss-label-sf", title: "냉정한 관찰자", titleEN: "The Cold Observer", desc: "기술적 정확성이 곧 아름다움. 감정보다 시스템. 독자가 세계를 이해하게 만드는 문장.", descEN: "Technical precision as beauty. Systems over emotion. Sentences that make readers understand the world." },
+  { label: "웹소설", labelEN: "Web Novel", labelClass: "ss-label-web", title: "빠른 호흡의 이야기꾼", titleEN: "The Fast-Paced Storyteller", desc: "첫 문장에 훅. 짧은 단락, 강한 리듬. 독자를 다음 장으로 끌어당기는 마력.", descEN: "Hook in the first line. Short paragraphs, strong rhythm. The magic that pulls readers to the next chapter." },
+  { label: "문학적", labelEN: "Literary", labelClass: "ss-label-lit", title: "감각의 설계자", titleEN: "The Sensory Architect", desc: "세부 묘사가 감정을 만든다. 은유와 여백. 독자가 스스로 느끼게 하는 문장.", descEN: "Detail creates emotion. Metaphor and white space. Sentences that let readers feel on their own." },
+  { label: "멀티장르", labelEN: "Multi-Genre", labelClass: "ss-label-all", title: "장르를 넘나드는 작가", titleEN: "The Genre-Crossing Writer", desc: "SF의 논리 + 웹소설의 속도 + 문학의 깊이. 각 장르의 장점을 혼합.", descEN: "SF logic + web novel speed + literary depth. Blending the best of each genre." },
 ];
 
 // ============================================================
@@ -189,27 +199,21 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
     if (!sourceText.trim()) return;
     if (activeStyles.size === 0) return;
 
+    const NAMES = en ? STYLE_NAMES_EN : STYLE_NAMES_KO;
     const selectedStyleNames = (Array.from(activeStyles) as number[])
-      .map((i) => STYLE_NAMES[i])
+      .map((i) => NAMES[i])
       .join(", ");
 
     setLoading(true);
     setResultText("");
 
-    const systemInstruction =
-      "당신은 한국어 문체 전문가입니다. 지시된 문체 방향에 맞춰 원문을 재작성합니다. 결과물만 출력하고, 설명이나 메타 코멘트는 붙이지 않습니다.";
+    const systemInstruction = en
+      ? "You are an expert writing style consultant. Rewrite the original text to match the specified style direction. Output only the result — no explanations or meta-commentary."
+      : "당신은 한국어 문체 전문가입니다. 지시된 문체 방향에 맞춰 원문을 재작성합니다. 결과물만 출력하고, 설명이나 메타 코멘트는 붙이지 않습니다.";
 
-    const userPrompt = `다음 원문을 "${selectedStyleNames}" 스타일로 재작성해주세요.
-
-원문:
-"${sourceText}"
-
-지침:
-- 같은 내용과 사건, 동일한 인물을 유지하면서 문체만 변환
-- 변환 방향에 맞는 구체적인 기법 적용
-- 한국어로만 작성
-- 결과물만 출력 (설명 없이)
-- 2~4문단 분량으로 자연스럽게`;
+    const userPrompt = en
+      ? `Rewrite the following text in "${selectedStyleNames}" style.\n\nOriginal:\n"${sourceText}"\n\nInstructions:\n- Keep the same content, events, and characters — change only the style\n- Apply specific techniques matching the selected direction\n- Output only the result (no explanation)\n- 2–4 paragraphs, natural flow`
+      : `다음 원문을 "${selectedStyleNames}" 스타일로 재작성해주세요.\n\n원문:\n"${sourceText}"\n\n지침:\n- 같은 내용과 사건, 동일한 인물을 유지하면서 문체만 변환\n- 변환 방향에 맞는 구체적인 기법 적용\n- 한국어로만 작성\n- 결과물만 출력 (설명 없이)\n- 2~4문단 분량으로 자연스럽게`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -225,13 +229,13 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
       });
 
       if (!res.ok) {
-        setResultText("API 오류가 발생했습니다. 다시 시도해주세요.");
+        setResultText(en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요.");
         return;
       }
 
       const reader = res.body?.getReader();
       if (!reader) {
-        setResultText("스트림을 읽을 수 없습니다.");
+        setResultText(en ? "Cannot read stream." : "스트림을 읽을 수 없습니다.");
         return;
       }
 
@@ -266,9 +270,9 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
         }
       }
 
-      if (!accumulated) setResultText("변환 결과가 비어있습니다.");
+      if (!accumulated) setResultText(en ? "Transform result is empty." : "변환 결과가 비어있습니다.");
     } catch {
-      setResultText("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+      setResultText(en ? "Network error. Please try again." : "네트워크 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -338,9 +342,9 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   onClick={() => toggleSet(setSelectedCards, i)}
                 >
                   {selectedCards.has(i) && <span className="ss-dna-check">✓</span>}
-                  <span className={`ss-dna-label ${card.labelClass}`}>{card.label}</span>
-                  <h3>{card.title}</h3>
-                  <p>{card.desc}</p>
+                  <span className={`ss-dna-label ${card.labelClass}`}>{en ? card.labelEN : card.label}</span>
+                  <h3>{en ? card.titleEN : card.title}</h3>
+                  <p>{en ? card.descEN : card.desc}</p>
                 </button>
               ))}
             </div>
@@ -349,9 +353,9 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             <div className="ss-section-title">Step 02 — {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
 
             <div className="ss-slider-group">
-              {SLIDERS.map((s) => (
+              {SLIDERS_I18N.map((s) => (
                 <div key={s.id} className="ss-slider-row">
-                  <div className="ss-slider-label">{s.label}</div>
+                  <div className="ss-slider-label">{en ? s.en : s.ko}</div>
                   <div className="ss-slider-ends">
                     <input
                       type="range"
@@ -362,8 +366,8 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                       className="ss-range"
                     />
                     <div className="ss-slider-end-labels">
-                      <span>{s.left}</span>
-                      <span>{s.right}</span>
+                      <span>{en ? s.leftEN : s.leftKO}</span>
+                      <span>{en ? s.rightEN : s.rightKO}</span>
                     </div>
                   </div>
                 </div>
@@ -408,8 +412,8 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   >
                     <span className="ss-check-box">{checkedSF.has(i) ? "✓" : ""}</span>
                     <span className="ss-check-text">
-                      <strong>{item.title}</strong>
-                      <span>{item.desc}</span>
+                      <strong>{en ? item.titleEN : item.title}</strong>
+                      <span>{en ? item.descEN : item.desc}</span>
                     </span>
                   </button>
                 ))}
@@ -425,8 +429,8 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   >
                     <span className="ss-check-box">{checkedWeb.has(i) ? "✓" : ""}</span>
                     <span className="ss-check-text">
-                      <strong>{item.title}</strong>
-                      <span>{item.desc}</span>
+                      <strong>{en ? item.titleEN : item.title}</strong>
+                      <span>{en ? item.descEN : item.desc}</span>
                     </span>
                   </button>
                 ))}
@@ -451,7 +455,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
               {en ? "Transform Direction" : "변환 방향 선택"}
             </div>
             <div className="ss-style-toggles">
-              {STYLE_NAMES.map((name, i) => (
+              {(en ? STYLE_NAMES_EN : STYLE_NAMES_KO).map((name, i) => (
                 <button
                   key={i}
                   className={`ss-style-toggle ${activeStyles.has(i) ? "on" : ""}`}
@@ -579,7 +583,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   <div className="ss-profile-item">
                     <span className="ss-profile-key">{en ? "Selected Styles" : "선택 문체"}</span>
                     <span>{selectedCards.size > 0
-                      ? Array.from(selectedCards).map((i) => DNA_CARDS[i].title).join(" + ")
+                      ? Array.from(selectedCards).map((i) => en ? DNA_CARDS[i].titleEN : DNA_CARDS[i].title).join(" + ")
                       : (en ? "Not set" : "미설정")}</span>
                   </div>
                   <div className="ss-profile-item">
@@ -596,10 +600,10 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
               <div className="ss-profile-card">
                 <h3>{en ? "Style Parameters" : "문체 파라미터"}</h3>
                 <div className="ss-profile-items">
-                  {SLIDERS.map((s) => (
+                  {SLIDERS_I18N.map((s) => (
                     <div key={s.id} className="ss-profile-item">
-                      <span className="ss-profile-key">{s.label}</span>
-                      <span>{PARAM_LABELS[s.id][sliderVals[s.id] - 1]}</span>
+                      <span className="ss-profile-key">{en ? s.en : s.ko}</span>
+                      <span>{(en ? PARAM_LABELS_EN : PARAM_LABELS_KO)[s.id][sliderVals[s.id] - 1]}</span>
                     </div>
                   ))}
                 </div>

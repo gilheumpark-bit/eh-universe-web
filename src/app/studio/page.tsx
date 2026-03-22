@@ -1092,8 +1092,9 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
-                  <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6 flex flex-col min-h-full">
-                    {/* Applied Settings Summary */}
+                  <div className={`max-w-4xl mx-auto px-4 md:px-6 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-8 md:py-12 space-y-6 min-h-full'}`}>
+                    {/* Applied Settings Summary — hide when empty */}
+                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
                     <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
                       <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-secondary transition-colors">
                         <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
@@ -1205,8 +1206,10 @@ export default function StudioPage() {
                         </div>
                       </div>
                     </details>
+                    )}
 
-                    {/* AI / Edit sub-tabs */}
+                    {/* AI / Edit sub-tabs + Directive — hide when empty AI mode */}
+                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (<>
                     <div className="flex gap-1 items-center">
                       <button onClick={() => setWritingMode('ai')}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
@@ -1272,15 +1275,16 @@ export default function StudioPage() {
                         <button onClick={() => setPromptDirective('')} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
                       )}
                     </div>
+                    </>)}
 
                     {writingMode === 'ai' && (
                       <>
                         <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                         {currentSession.messages.length === 0 ? (
-                          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 min-h-[40vh]">
-                            <Sparkles className="w-12 h-12 text-accent-purple/20 mx-auto" />
-                            <p className="text-text-tertiary text-sm font-medium">{t.engine.startPrompt}</p>
-                            <p className="text-text-tertiary/40 text-[10px] font-[family-name:var(--font-mono)] max-w-xs">
+                          <div className="flex flex-col items-center justify-center text-center space-y-4">
+                            <Sparkles className="w-14 h-14 text-accent-purple/20 mx-auto" />
+                            <p className="text-text-tertiary text-base font-medium">{t.engine.startPrompt}</p>
+                            <p className="text-text-tertiary/40 text-xs font-[family-name:var(--font-mono)] max-w-sm">
                               {isKO ? '아래 입력창에 첫 장면을 묘사하세요' : 'Describe the first scene in the input below'}
                             </p>
                           </div>
