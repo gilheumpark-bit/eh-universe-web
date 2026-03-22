@@ -11,6 +11,7 @@ import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
 import { streamChat, getApiKey, getActiveProvider, ChatMsg } from "../lib/ai-providers";
+import { HISTORY_LIMITS } from "../lib/token-utils";
 
 export interface GenerateOptions {
   previousContent?: string;
@@ -35,7 +36,7 @@ function buildChatMessages(
   currentUserPrompt: string
 ): ChatMsg[] {
   const msgs: ChatMsg[] = [];
-  const recent = history.slice(-20);
+  const recent = history.slice(-HISTORY_LIMITS.STORY_API);
 
   for (const msg of recent) {
     if (msg.role === 'assistant' && !msg.content) continue;

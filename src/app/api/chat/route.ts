@@ -62,7 +62,8 @@ async function streamOpenAICompat(
 
 async function streamClaude(
   apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number
+  system: string, messages: { role: string; content: string }[], temperature: number,
+  maxTokens?: number
 ): Promise<ReadableStream> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -71,7 +72,7 @@ async function streamClaude(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({ model, max_tokens: 8192, system, messages, temperature, stream: true }),
+    body: JSON.stringify({ model, max_tokens: maxTokens ?? 8192, system, messages, temperature, stream: true }),
   });
 
   if (!res.ok) {
@@ -122,7 +123,7 @@ async function streamGemini(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey } = body;
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body;
 
     // Resolve API key: client BYOK > server env
     const apiKey = clientKey || ENV_KEYS[provider];
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
         stream = await streamOpenAICompat(provider, apiKey, model, systemInstruction, messages, temperature);
         break;
       case 'claude':
-        stream = await streamClaude(apiKey, model, systemInstruction, messages, temperature);
+        stream = await streamClaude(apiKey, model, systemInstruction, messages, temperature, maxTokens);
         break;
       default:
         return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 });

@@ -2,6 +2,8 @@
 // PART 0: TYPES
 // ============================================================
 
+import { truncateMessages, getMaxOutputTokens } from './token-utils';
+
 export type ProviderId = "gemini" | "openai" | "claude" | "groq" | "mistral";
 
 export interface ProviderDef {
@@ -24,6 +26,7 @@ export interface StreamOptions {
   systemInstruction: string;
   messages: ChatMsg[];
   temperature?: number;
+  maxTokens?: number;
   signal?: AbortSignal;
   onChunk: (text: string) => void;
 }
@@ -173,6 +176,7 @@ async function streamViaProxy(
       systemInstruction: opts.systemInstruction,
       messages: opts.messages,
       temperature: opts.temperature ?? 0.9,
+      maxTokens: opts.maxTokens,
       apiKey: apiKey || undefined, // BYOK: send key to proxy, proxy uses it server-side
     }),
     signal: opts.signal,
@@ -230,27 +234,69 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   const apiKey = getApiKey(provider);
   const model = getActiveModel();
 
-  // Try server-side proxy first (/api/chat)
-  // Falls back to client-side if proxy unavailable
-  try {
-    return await streamViaProxy(provider, model, apiKey, opts);
-  } catch {
-    // If proxy 404 or network error, fall back to direct client call
-    if (!apiKey) throw new Error("API_KEY_MISSING");
+  // Truncate messages to fit context window
+  const { messages: trimmedMessages, truncated, systemTokens, messageTokens } =
+    truncateMessages(opts.systemInstruction, opts.messages, model);
+
+  if (truncated) {
+    console.warn(`[token-guard] Messages truncated to fit ${model} context window. System: ~${systemTokens} tokens, Messages: ~${messageTokens} tokens`);
   }
 
-  switch (provider) {
-    case "gemini":
-      return streamGemini(apiKey, model, opts);
-    case "openai":
-    case "groq":
-    case "mistral":
-      return streamOpenAICompat(provider, apiKey, model, opts);
-    case "claude":
-      return streamClaude(apiKey, model, opts);
-    default:
-      throw new Error(`Unknown provider: ${provider}`);
+  const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);
+  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens };
+
+  // Retry wrapper: up to 2 retries on transient errors (429, 500, 503, network)
+  const MAX_RETRIES = 2;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      await new Promise(r => setTimeout(r, delay));
+    }
+
+    try {
+      // Try server-side proxy first
+      return await streamViaProxy(provider, model, apiKey, safeOpts);
+    } catch (proxyErr) {
+      // If AbortError, don't retry
+      if (proxyErr instanceof DOMException && proxyErr.name === 'AbortError') throw proxyErr;
+
+      // Check if retryable (429 rate limit, 5xx server error, network)
+      const errMsg = proxyErr instanceof Error ? proxyErr.message : '';
+      const isRetryable = /429|500|502|503|504|fetch|network/i.test(errMsg);
+
+      if (isRetryable && attempt < MAX_RETRIES) {
+        lastError = proxyErr instanceof Error ? proxyErr : new Error(errMsg);
+        console.warn(`[retry] Attempt ${attempt + 1} failed: ${errMsg}. Retrying...`);
+        continue;
+      }
+
+      // Fall back to direct client call
+      if (!apiKey) throw new Error("API_KEY_MISSING");
+
+      try {
+        switch (provider) {
+          case "gemini":
+            return await streamGemini(apiKey, model, safeOpts);
+          case "openai":
+          case "groq":
+          case "mistral":
+            return await streamOpenAICompat(provider, apiKey, model, safeOpts);
+          case "claude":
+            return await streamClaude(apiKey, model, safeOpts);
+          default:
+            throw new Error(`Unknown provider: ${provider}`);
+        }
+      } catch (directErr) {
+        if (directErr instanceof DOMException && directErr.name === 'AbortError') throw directErr;
+        lastError = directErr instanceof Error ? directErr : new Error(String(directErr));
+        if (attempt < MAX_RETRIES) continue;
+      }
+    }
   }
+
+  throw lastError ?? new Error('Stream failed after retries');
 }
 
 // ============================================================
@@ -381,7 +427,7 @@ async function streamClaude(apiKey: string, model: string, opts: StreamOptions):
     },
     body: JSON.stringify({
       model,
-      max_tokens: 8192,
+      max_tokens: opts.maxTokens ?? 8192,
       system: opts.systemInstruction,
       messages,
       temperature: opts.temperature ?? 0.9,

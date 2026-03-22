@@ -9,6 +9,7 @@ import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles }
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
+import { HISTORY_LIMITS } from '@/lib/token-utils';
 
 interface TabMessage {
   id: string;
@@ -104,7 +105,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
   // Persist messages
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(`${STORAGE_PREFIX}${tab}`, JSON.stringify(messages.slice(-50)));
+    localStorage.setItem(`${STORAGE_PREFIX}${tab}`, JSON.stringify(messages.slice(-HISTORY_LIMITS.STORAGE)));
   }, [messages, tab]);
 
   // Auto-scroll
@@ -134,7 +135,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     abortRef.current = controller;
 
     const systemPrompt = (isKO ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
-    const chatHistory: ChatMsg[] = messages.slice(-10).map(m => ({
+    const chatHistory: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
