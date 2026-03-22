@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
     if (!provider || typeof provider !== 'string' || !VALID_PROVIDERS.has(provider)) {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
-    if (!model || typeof model !== 'string') {
+    if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
       return NextResponse.json({ error: 'Invalid model' }, { status: 400 });
     }
     if (!messages || !Array.isArray(messages) || messages.length === 0) {

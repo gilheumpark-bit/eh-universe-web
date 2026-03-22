@@ -479,6 +479,10 @@ export default function StudioPage() {
   const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large (max 10MB)');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
