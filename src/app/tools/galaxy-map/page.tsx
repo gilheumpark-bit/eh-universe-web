@@ -53,7 +53,7 @@ const TIERS: TierData[] = [
       { val: "6", label: { ko: "\ud5c8\ube0c \uc218", en: "HUBS" } },
     ],
   },
-  { tier: "TIER 2", zone: "GREEN \u2192 BLUE", name: { ko: "RADIAL CORRIDOR GATE \u2014 \ubc29\uc0ac\ud615 \uc911\uacc4", en: "RADIAL CORRIDOR GATE" }, color: "#2980b9",
+  { tier: "TIER 2", zone: "GREEN → BLUE", name: { ko: "RADIAL CORRIDOR GATE \u2014 \ubc29\uc0ac\ud615 \uc911\uacc4", en: "RADIAL CORRIDOR GATE" }, color: "#2980b9",
     desc: {
       ko: "\ud5c8\ube0c\uc5d0\uc11c \ubc14\uae65\uc73c\ub85c \ubc29\uc0ac\ud615 Corridor 12\uac1c. BLUE \uad6c\uc5ed \uc911\uacc4 Gate \uc5f0\uacb0.\nDirect Warp \uc2e4\uc6a9 \uad6c\uac04. 4.7\uad11\ub144 \uc810\ud504 \ubc18\ubcf5. \ud45c\uc900 \ud56d\ud589 \ub8e8\ud2b8.",
       en: "12 radial corridors extending from hubs outward. Standard transit route.\nDirect Warp practical zone. 4.7 ly jumps. Freight/passenger main arteries.",
@@ -66,7 +66,7 @@ const TIERS: TierData[] = [
       { val: "12", label: { ko: "\ub178\uc120", en: "CORRIDORS" } },
     ],
   },
-  { tier: "TIER 3", zone: "BLUE \u2192 YELLOW", name: { ko: "FRONTIER GATE \u2014 \uc804\ucd08", en: "FRONTIER GATE" }, color: "#d4a017",
+  { tier: "TIER 3", zone: "BLUE → YELLOW", name: { ko: "FRONTIER GATE \u2014 \uc804\ucd08", en: "FRONTIER GATE" }, color: "#d4a017",
     desc: {
       ko: "\ubc29\uc0ac\ud615 Corridor \ub05d\uc5d0\uc11c \ubcc0\uacbd\uc73c\ub85c \uc5f0\uc7a5. Gate \uac04\uaca9 \ub113\uc5b4\uc9d0.\nCorridor \ubbf8\uc644\uc131 \uad6c\uac04. Multi-hop \ud544\uc694. \ud56d\ud589 \uc2dc\uac04 \uae09\uc99d.\n\ud574\ubc29\uc5f0\ub300\uac00 \uc774 \uad6c\uac04\uc758 Gate\ub97c \ube44\uacf5\uc2dd \uc0ac\uc6a9\ud558\ub294 \uacbd\uc6b0 \uc788\uc74c.",
       en: "Extensions beyond radial corridors. Widening intervals.\nIncomplete corridors. Multi-hop required. Transit time increases sharply.\nLiberation Alliance occasionally uses these gates unofficially.",
@@ -239,7 +239,7 @@ export default function GalaxyMapPage() {
                 {en ? "II. GATE INFRASTRUCTURE \u2014 TIER SYSTEM" : "II. GATE 인프라 \u2014 계층 체계"}
               </h2>
               <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
-                {en ? "Inward \u2192 Outward \u00b7 Denser inside, sparser outside" : "안에서 밖으로 \u00b7 안쪽일수록 촘촘, 바깥일수록 희소"}
+                {en ? "Inward → Outward \u00b7 Denser inside, sparser outside" : "안에서 밖으로 \u00b7 안쪽일수록 촘촘, 바깥일수록 희소"}
               </p>
 
               <div className="space-y-4">
@@ -299,8 +299,8 @@ export default function GalaxyMapPage() {
 
               <div className="mt-4 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
                 {en
-                  ? "\"Warp does not shine. No sound. No explosion. 12 seconds of silence \u2192 ALLOW \u2192 Already arrived.\""
-                  : "\"워프는 빛나지 않고 소리 없고 폭발 없다. HOLD 12초의 침묵 \u2192 ALLOW \u2192 이미 도착해 있다.\""}
+                  ? "\"Warp does not shine. No sound. No explosion. 12 seconds of silence → ALLOW → Already arrived.\""
+                  : "\"워프는 빛나지 않고 소리 없고 폭발 없다. HOLD 12초의 침묵 → ALLOW → 이미 도착해 있다.\""}
                 <br /><br />
                 <strong className="text-text-secondary not-italic">
                   {en
@@ -355,16 +355,16 @@ export default function GalaxyMapPage() {
                 {en ? "IV. GATE INSTALLATION PRINCIPLE" : "IV. GATE 설치 원칙"}
               </h2>
               <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
-                {en ? "Inward \u2192 Outward. Dense at heart, sparse at edge." : "방향: 안에서 밖으로. 안쪽일수록 촘촘, 바깥일수록 희소."}
+                {en ? "Inward → Outward. Dense at heart, sparse at edge." : "방향: 안에서 밖으로. 안쪽일수록 촘촘, 바깥일수록 희소."}
               </p>
 
               <div className="text-center text-sm mb-4 space-x-2">
                 <span className="font-bold" style={{ color: "#4488cc" }}>Core</span>
-                <span className="text-text-tertiary">\u2192</span>
+                <span className="text-text-tertiary">→</span>
                 <span className="font-bold" style={{ color: "#2980b9" }}>Radial</span>
-                <span className="text-text-tertiary">\u2192</span>
+                <span className="text-text-tertiary">→</span>
                 <span className="font-bold" style={{ color: "#d4a017" }}>Frontier</span>
-                <span className="text-text-tertiary">\u2192</span>
+                <span className="text-text-tertiary">→</span>
                 <span className="font-bold" style={{ color: "#c0392b" }}>Emergency</span>
               </div>
 

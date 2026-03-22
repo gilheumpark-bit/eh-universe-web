@@ -13,7 +13,7 @@ export default function ReferencePage() {
       <main className="pt-14">
         <div className="mx-auto max-w-4xl px-4 py-16">
           <div className="doc-header rounded-t mb-0">
-            <span className="badge badge-allow mr-2">ALLOW</span>
+            <span className="badge badge-allow mr-2">PUBLIC</span>
             {en ? "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" : "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국"}
           </div>
 

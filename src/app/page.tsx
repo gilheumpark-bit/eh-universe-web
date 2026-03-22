@@ -126,7 +126,7 @@ export default function Home() {
           <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
             {stats[lang].map((s) => (
               <div key={s.label} className="card-glow rounded border border-border bg-bg-primary p-6">
-                <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary">
+                <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary whitespace-nowrap">
                   {s.value}<span className="ml-1 text-base font-normal text-text-tertiary">{s.unit}</span>
                 </div>
                 <p className="mt-2 font-[family-name:var(--font-mono)] text-xs text-text-secondary tracking-wider uppercase">{s.label}</p>
