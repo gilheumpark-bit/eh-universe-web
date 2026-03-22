@@ -122,8 +122,22 @@ async function streamGemini(
 
 export async function POST(req: NextRequest) {
   try {
+    // Request size guard (1MB max)
+    const contentLength = parseInt(req.headers.get('content-length') || '0');
+    if (contentLength > 1_048_576) {
+      return NextResponse.json({ error: 'Request too large' }, { status: 413 });
+    }
+
     const body = await req.json();
     const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body;
+
+    // Input validation
+    if (!provider || typeof provider !== 'string') {
+      return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
+    }
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
+    }
 
     // Resolve API key: client BYOK > server env
     const apiKey = clientKey || ENV_KEYS[provider];
@@ -160,7 +174,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const raw = error instanceof Error ? error.message : 'Unknown error';
+    // Sanitize: strip API keys, internal paths, and verbose details
+    const safeMsg = raw.replace(/key[=:]\s*\S+/gi, 'key=[REDACTED]').slice(0, 200);
+    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : 500;
+    return NextResponse.json({ error: safeMsg }, { status });
   }
 }

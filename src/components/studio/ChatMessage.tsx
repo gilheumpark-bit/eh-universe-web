@@ -79,6 +79,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
           ) : (
             <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-p:font-serif prose-p:text-zinc-300 prose-p:leading-[1.8]">
               <ReactMarkdown
+                skipHtml
+                disallowedElements={['script', 'iframe', 'object', 'embed', 'form']}
                 components={{
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
                   h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,

@@ -272,27 +272,9 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
         continue;
       }
 
-      // Fall back to direct client call
-      if (!apiKey) throw new Error("API_KEY_MISSING");
-
-      try {
-        switch (provider) {
-          case "gemini":
-            return await streamGemini(apiKey, model, safeOpts);
-          case "openai":
-          case "groq":
-          case "mistral":
-            return await streamOpenAICompat(provider, apiKey, model, safeOpts);
-          case "claude":
-            return await streamClaude(apiKey, model, safeOpts);
-          default:
-            throw new Error(`Unknown provider: ${provider}`);
-        }
-      } catch (directErr) {
-        if (directErr instanceof DOMException && directErr.name === 'AbortError') throw directErr;
-        lastError = directErr instanceof Error ? directErr : new Error(String(directErr));
-        if (attempt < MAX_RETRIES) continue;
-      }
+      // No client-side fallback — all requests must go through server proxy
+      lastError = proxyErr instanceof Error ? proxyErr : new Error(errMsg);
+      break;
     }
   }
 

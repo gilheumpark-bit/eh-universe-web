@@ -454,7 +454,8 @@ export default function StudioPage() {
     }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<html><head><title>${currentSession.title}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${currentSession.title}</h1><p style="color:#888;">${currentSession.config.genre} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}</p><hr>${printContent}</body></html>`);
+    const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}</p><hr>${printContent}</body></html>`);
     w.document.close();
     w.print();
   }, [currentSession]);
