@@ -1,19 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        // Proxy Firebase auth handler through same origin to avoid
-        // third-party storage partitioning issues in modern browsers.
-        // IMPORTANT: hardcoded to the actual Firebase project domain.
-        // NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN env var may contain a wrong value
-        // (e.g. "eh-universe.firebaseapp.com") — the real project is below.
-        source: '/__/auth/:path*',
-        destination: 'https://gen-lang-client-0645063497.firebaseapp.com/__/auth/:path*',
-      },
-    ];
-  },
   async headers() {
     return [
       {
