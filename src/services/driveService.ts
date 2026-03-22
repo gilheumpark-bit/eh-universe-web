@@ -239,3 +239,101 @@ export async function syncAllProjects(
 
   return { merged, uploaded, downloaded, conflicts };
 }
+
+// ============================================================
+// PART 4: API KEY SETTINGS SYNC
+// ============================================================
+
+const SETTINGS_FILE_NAME = 'noa_settings.json';
+
+interface ApiKeySettings {
+  noa_api_key?: string;
+  noa_openai_key?: string;
+  noa_claude_key?: string;
+  noa_groq_key?: string;
+  noa_mistral_key?: string;
+}
+
+const API_KEY_STORAGE_KEYS: (keyof ApiKeySettings)[] = [
+  'noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key',
+];
+
+/**
+ * Save current API keys from localStorage to Drive.
+ */
+export async function saveApiKeysToDrive(token: string): Promise<void> {
+  const folderId = await getOrCreateAppFolder(token);
+  const settings: ApiKeySettings = {};
+  let hasKeys = false;
+
+  for (const key of API_KEY_STORAGE_KEYS) {
+    const val = localStorage.getItem(key);
+    if (val) { settings[key] = val; hasKeys = true; }
+  }
+  if (!hasKeys) return;
+
+  // Find existing settings file
+  const query = `name='${SETTINGS_FILE_NAME}' and '${folderId}' in parents and trashed=false`;
+  const searchRes = await driveRequest(
+    `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=files(id)&spaces=drive`,
+    token,
+  );
+  const searchData = searchRes.ok ? await searchRes.json() : { files: [] };
+  const existingId: string | undefined = searchData.files?.[0]?.id;
+
+  const jsonContent = JSON.stringify(settings);
+  const boundary = '---noa-settings-' + Date.now();
+  const metadata = JSON.stringify(
+    existingId ? { name: SETTINGS_FILE_NAME } : { name: SETTINGS_FILE_NAME, parents: [folderId] },
+  );
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonContent}\r\n` +
+    `--${boundary}--`;
+
+  const url = existingId
+    ? `${UPLOAD_API}/files/${existingId}?uploadType=multipart`
+    : `${UPLOAD_API}/files?uploadType=multipart`;
+
+  const res = await driveRequest(url, token, {
+    method: existingId ? 'PATCH' : 'POST',
+    headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+    body,
+  });
+  if (!res.ok) throw new Error(`Drive settings save failed: ${res.status}`);
+}
+
+/**
+ * Load API keys from Drive and restore to localStorage.
+ * Returns true if keys were restored.
+ */
+export async function loadApiKeysFromDrive(token: string): Promise<boolean> {
+  try {
+    const folderId = await getOrCreateAppFolder(token);
+    const query = `name='${SETTINGS_FILE_NAME}' and '${folderId}' in parents and trashed=false`;
+    const searchRes = await driveRequest(
+      `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=files(id)&spaces=drive`,
+      token,
+    );
+    if (!searchRes.ok) return false;
+    const searchData = await searchRes.json();
+    const fileId: string | undefined = searchData.files?.[0]?.id;
+    if (!fileId) return false;
+
+    const res = await driveRequest(`${DRIVE_API}/files/${fileId}?alt=media`, token);
+    if (!res.ok) return false;
+    const settings: ApiKeySettings = await res.json();
+
+    let restored = false;
+    for (const key of API_KEY_STORAGE_KEYS) {
+      const val = settings[key];
+      if (typeof val === 'string' && val.length > 0) {
+        localStorage.setItem(key, val);
+        restored = true;
+      }
+    }
+    return restored;
+  } catch {
+    return false;
+  }
+}

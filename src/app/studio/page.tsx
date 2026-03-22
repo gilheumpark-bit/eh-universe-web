@@ -40,7 +40,7 @@ const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { s
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
-import { syncAllProjects } from '@/services/driveService';
+import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
@@ -131,6 +131,21 @@ export default function StudioPage() {
   }, []);
 
   // ============================================================
+  // AUTO-RESTORE API KEYS ON LOGIN
+  // ============================================================
+  useEffect(() => {
+    if (!user || !accessToken) return;
+    const alreadyHasKey = localStorage.getItem('noa_api_key');
+    if (alreadyHasKey) return;
+    loadApiKeysFromDrive(accessToken).then(restored => {
+      if (restored) {
+        console.log('[Settings] API keys restored from Drive');
+        window.dispatchEvent(new Event('storage'));
+      }
+    });
+  }, [user, accessToken]);
+
+  // ============================================================
   // SYNC STATE
   // ============================================================
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
@@ -146,6 +161,8 @@ export default function StudioPage() {
     try {
       const result = await syncAllProjects(token, projects);
       setProjects(result.merged);
+      // Also sync API keys to Drive
+      saveApiKeysToDrive(token).catch(e => console.warn('[Sync] API keys save failed', e));
       setLastSyncTime(Date.now());
       setSyncStatus('done');
       setTimeout(() => setSyncStatus('idle'), 3000);
@@ -159,6 +176,7 @@ export default function StudioPage() {
           try {
             const retryResult = await syncAllProjects(newToken, projects);
             setProjects(retryResult.merged);
+            saveApiKeysToDrive(newToken).catch(e => console.warn('[Sync] API keys save failed', e));
             setLastSyncTime(Date.now());
             setSyncStatus('done');
             setTimeout(() => setSyncStatus('idle'), 3000);
@@ -317,10 +335,10 @@ export default function StudioPage() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [language, projects.length, setSessions]);
 
-  const handleTabChange = (tab: AppTab) => {
+  const handleTabChange = useCallback((tab: AppTab) => {
     setActiveTab(tab);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  };
+  }, []);
 
   const deleteSession = (sessionIdToDelete: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);
@@ -502,8 +520,12 @@ export default function StudioPage() {
     }));
   }, [currentSessionId]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (F1~F9: tab switch, F11: focus, F12: shortcuts help)
   useEffect(() => {
+    const tabByFKey: Record<string, AppTab> = {
+      F1: 'world', F2: 'critique', F3: 'characters', F4: 'rulebook',
+      F5: 'writing', F6: 'style', F7: 'manuscript', F8: 'history', F9: 'settings',
+    };
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && e.key === 'f') { e.preventDefault(); setShowSearch(prev => !prev); }
@@ -511,11 +533,15 @@ export default function StudioPage() {
       if (ctrl && e.key === 'p') { e.preventDefault(); handlePrint(); }
       if (ctrl && e.key === 'n') { e.preventDefault(); createNewSession(); }
       if (e.key === 'F11') { e.preventDefault(); setFocusMode(prev => !prev); }
+      if (e.key === 'F12') { e.preventDefault(); setShowShortcuts(prev => !prev); }
       if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
+      // F1~F9 tab switching
+      const targetTab = tabByFKey[e.key];
+      if (targetTab) { e.preventDefault(); handleTabChange(targetTab); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [exportTXT, handlePrint, createNewSession]);
+  }, [exportTXT, handlePrint, createNewSession, handleTabChange]);
 
   const updateCurrentSession = (updates: Partial<ChatSession>) => {
     if (!currentSessionId) return;
@@ -819,7 +845,12 @@ export default function StudioPage() {
                   {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || '?'}
                 </div>
                 <span className="text-[9px] text-text-secondary truncate flex-1">{user.displayName || user.email}</span>
-                <button onClick={signOut} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{isKO ? '로그아웃' : 'Logout'}</button>
+                <button onClick={() => showConfirm({
+                  title: isKO ? '로그아웃' : 'Logout',
+                  message: isKO ? '로그아웃하시겠습니까? 저장되지 않은 API 키가 초기화됩니다.' : 'Are you sure you want to logout? Unsaved API keys will be cleared.',
+                  variant: 'warning',
+                  onConfirm: signOut,
+                })} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{isKO ? '로그아웃' : 'Logout'}</button>
               </>
             ) : (
               <button onClick={() => {
@@ -922,19 +953,28 @@ export default function StudioPage() {
         {/* Shortcuts modal */}
         {showShortcuts && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
-            <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center">
                 <h3 className="font-black text-sm">{isKO ? '키보드 단축키' : 'Keyboard Shortcuts'}</h3>
                 <button onClick={() => setShowShortcuts(false)}><X className="w-4 h-4 text-text-tertiary" /></button>
               </div>
               <div className="space-y-2 text-xs">
                 {[
+                  ['F1', isKO ? '세계관 설계' : 'World Design'],
+                  ['F2', isKO ? '세계관 시뮬레이터' : 'World Simulator'],
+                  ['F3', isKO ? '캐릭터 스튜디오' : 'Character Studio'],
+                  ['F4', isKO ? '룰북' : 'Rulebook'],
+                  ['F5', isKO ? '집필 스튜디오' : 'Writing Studio'],
+                  ['F6', isKO ? '문체 스튜디오' : 'Style Studio'],
+                  ['F7', isKO ? '원고 관리' : 'Manuscript'],
+                  ['F8', isKO ? '아카이브' : 'Archive'],
+                  ['F9', isKO ? '설정' : 'Settings'],
+                  ['F11', isKO ? '집중 모드' : 'Focus mode'],
+                  ['F12', isKO ? '단축키 도움말' : 'Shortcuts help'],
                   ['Ctrl+N', isKO ? '새 세션' : 'New session'],
                   ['Ctrl+F', isKO ? '검색' : 'Search'],
                   ['Ctrl+E', isKO ? 'TXT 내보내기' : 'Export TXT'],
                   ['Ctrl+P', isKO ? '인쇄' : 'Print'],
-                  ['F11', isKO ? '집중 모드' : 'Focus mode'],
-                  ['Ctrl+/', isKO ? '단축키 도움말' : 'Shortcuts help'],
                   ['Enter', isKO ? '메시지 전송' : 'Send message'],
                   ['Shift+Enter', isKO ? '줄바꿈' : 'New line'],
                 ].map(([key, desc]) => (
