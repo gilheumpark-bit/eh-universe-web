@@ -28,6 +28,7 @@ import { generateStoryStream } from '@/services/geminiService';
 import dynamic from 'next/dynamic';
 const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
+const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -655,17 +656,13 @@ export default function StudioPage() {
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
+              { tab: 'style' as AppTab, icon: Edit3, label: t.sidebar.styleStudio },
+              { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
                 <Icon className="w-4 h-4" /> {label}
               </button>
             ))}
-            <Link href="/tools/style-studio" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] text-text-tertiary hover:bg-bg-secondary">
-              <Edit3 className="w-4 h-4" /> {isKO ? '문체 스튜디오' : 'Style Studio'}
-            </Link>
-            <button onClick={() => handleTabChange('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === 'history' ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
-              <History className="w-4 h-4" /> {t.sidebar.archives}
-            </button>
           </nav>
         </div>
 
@@ -825,7 +822,7 @@ export default function StudioPage() {
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            {!currentSessionId && !['settings', 'history', 'rulebook', 'critique'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook', 'critique', 'style'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
                 <div className="absolute inset-0 z-0">
@@ -1290,6 +1287,9 @@ export default function StudioPage() {
                       </div>
                     )}
                   </div>
+                )}
+                {activeTab === 'style' && (
+                  <StyleStudioView isKO={isKO} />
                 )}
                 {activeTab === 'history' && (
                   <div className="p-4 md:p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
