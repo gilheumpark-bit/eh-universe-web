@@ -1864,7 +1864,7 @@ export default function StudioPage() {
                       <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📎 {isKO ? '이전 화' : 'Bridge'}</summary>
                       {(() => {
                         const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
-                        const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
+                        const txt = prev?.content.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique)"[\s\S]*?\n\s*\}/g, '').trim() || '';
                         return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed break-words overflow-hidden">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
                       })()}
                     </details>

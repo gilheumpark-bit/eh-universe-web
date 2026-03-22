@@ -95,23 +95,26 @@ const DOPAMINE_DEVICES = [
 const EMOTIONS = ["분노", "슬픔", "기쁨", "공포", "희망", "절망", "결의", "불안", "통쾌", "안도"];
 
 const TAB_DEF: { id: SheetTab; ko: string; en: string; emoji: string }[] = [
-  // 1. 전체 구조
   { id: "plot", ko: "플롯 구조", en: "Plot Structure", emoji: "📊" },
   { id: "tension", ko: "텐션 곡선", en: "Tension Curve", emoji: "📈" },
   { id: "pacing", ko: "분량 배분", en: "Pacing", emoji: "📏" },
-  // 2. 장면 설계
   { id: "goguma", ko: "고구마/사이다", en: "Tension/Release", emoji: "🍠" },
   { id: "hook", ko: "훅 배치", en: "Hook Design", emoji: "🪝" },
   { id: "cliff", ko: "클리프행어", en: "Cliffhanger", emoji: "🔚" },
   { id: "dopamine", ko: "도파민 루프", en: "Dopamine Loop", emoji: "⚡" },
   { id: "transition", ko: "장면 전환", en: "Scene Transition", emoji: "🔄" },
-  // 3. 캐릭터·감정 디테일
   { id: "emotion", ko: "감정선", en: "Emotion Arc", emoji: "💓" },
   { id: "dialogue", ko: "대사 톤", en: "Dialogue Tone", emoji: "💬" },
   { id: "canon", ko: "캐릭터 규칙", en: "Canon Rules", emoji: "📌" },
-  // 4. 복선·메모
   { id: "foreshadow", ko: "떡밥/복선", en: "Foreshadow", emoji: "🧩" },
   { id: "notes", ko: "작가 메모", en: "Writer Notes", emoji: "📝" },
+];
+
+const TAB_GROUPS: { ko: string; en: string; tabs: SheetTab[] }[] = [
+  { ko: "전체 구조", en: "Structure", tabs: ["plot", "tension", "pacing"] },
+  { ko: "장면 설계", en: "Scene Design", tabs: ["goguma", "hook", "cliff", "dopamine", "transition"] },
+  { ko: "캐릭터·감정", en: "Character", tabs: ["emotion", "dialogue", "canon"] },
+  { ko: "복선·메모", en: "Notes", tabs: ["foreshadow", "notes"] },
 ];
 
 // ============================================================
@@ -500,18 +503,38 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">
-        {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {TAB_DEF.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-2 rounded-t text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-accent-purple/10 text-accent-purple border-b-2 border-accent-purple"
-                  : "text-text-tertiary hover:text-text-secondary"
-              }`}>
-              {tab.emoji} {lang === "ko" ? tab.ko : tab.en}
-            </button>
-          ))}
+        {/* Tabs — grouped with collapsible sections */}
+        <div className="space-y-1">
+          {TAB_GROUPS.map((group, gi) => {
+            const hasActive = group.tabs.includes(activeTab);
+            const groupLabel = lang === "ko" ? group.ko : group.en;
+            return (
+              <details key={gi} open={hasActive} className="group/tab">
+                <summary className={`flex items-center gap-1 cursor-pointer text-[10px] font-bold tracking-wider select-none py-1 ${
+                  hasActive ? "text-accent-purple" : "text-text-tertiary hover:text-text-secondary"
+                }`}>
+                  <span className="text-[8px] group-open/tab:rotate-90 transition-transform">▶</span>
+                  {groupLabel}
+                </summary>
+                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5">
+                  {group.tabs.map(tabId => {
+                    const tab = TAB_DEF.find(t => t.id === tabId);
+                    if (!tab) return null;
+                    return (
+                      <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                        className={`px-2.5 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
+                            : "text-text-tertiary hover:text-text-secondary border border-transparent"
+                        }`}>
+                        {tab.emoji} {lang === "ko" ? tab.ko : tab.en}
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          })}
         </div>
 
         {/* ====== GOGUMA / CIDER TAB ====== */}

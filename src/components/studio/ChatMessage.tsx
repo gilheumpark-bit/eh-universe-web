@@ -48,11 +48,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
     }
     mainContent = mainContent.replace(jsonObjRe, '').trim();
 
-    // 3) Remove any remaining lines that look like raw metrics output
+    // 3) Remove any remaining standalone JSON objects (greedy: outermost braces)
     mainContent = mainContent
+      .replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique|eosScore|serialization)"[\s\S]*?\n\s*\}/g, '')
       .replace(/^\s*\{[\s\S]*?"grade"\s*:[\s\S]*?\}\s*$/gm, '')
       .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')
       .replace(/^\s*"(?:grade|metrics|tension|pacing|immersion|eos)"[\s:].*/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
   }
 
