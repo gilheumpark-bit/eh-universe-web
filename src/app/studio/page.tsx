@@ -41,6 +41,7 @@ const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { s
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
+const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -264,8 +265,14 @@ export default function StudioPage() {
   }, [currentSessionId]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
-  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine'>('ai');
+  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'>('ai');
   const [editDraft, setEditDraft] = useState('');
+  const [advancedSettings, setAdvancedSettings] = useState<import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings>({
+    sceneGoals: [], constraints: { pov: '3rd-limited', dialogueRatio: 40, tempo: 'stable', sentenceLen: 'normal', emotionExposure: 'normal' },
+    references: { prevEpisodes: 3, characterCards: true, worldSetting: true, styleProfile: false, sceneSheet: false, platformPreset: false },
+    locks: { speechStyle: false, worldRules: false, charRelations: false, bannedWords: false },
+    outputMode: 'draft', includes: '', excludes: '',
+  });
   const [canvasContent, setCanvasContent] = useState('');
   const [canvasPass, setCanvasPass] = useState(0);
   const [promptDirective, setPromptDirective] = useState('');
@@ -1342,6 +1349,12 @@ export default function StudioPage() {
                         }`}>
                         ⚡ {isKO ? 'AUTO 30%' : 'AUTO 30%'}
                       </button>
+                      <button onClick={() => setWritingMode('advanced')}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                          writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                        }`}>
+                        🎯 {isKO ? '정밀 집필' : 'Advanced'}
+                      </button>
                       {writingMode === 'edit' && (
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
@@ -1600,6 +1613,37 @@ export default function StudioPage() {
                         </div>
                         <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
                           {isKO ? '※ 각 단계 클릭 → AI 채팅에서 결과 확인 → 📋 캔버스로 가져와서 편집 → 다음 단계' : '※ Click pass → Check result in AI chat → 📋 Pull to canvas for editing → Next pass'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ====== ADVANCED WRITING MODE ====== */}
+                    {writingMode === 'advanced' && currentSession && (
+                      <div className="space-y-4">
+                        <AdvancedWritingPanel
+                          language={language}
+                          config={currentSession.config}
+                          settings={advancedSettings}
+                          onSettingsChange={setAdvancedSettings}
+                        />
+                        <div className="flex gap-2 items-center">
+                          <input
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { handleSend(); } }}
+                            placeholder={isKO ? '🎯 정밀 지시 (설정된 제약 조건이 자동 반영됩니다)' : '🎯 Precise instruction (configured constraints auto-applied)'}
+                            className="flex-1 bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
+                            disabled={isGenerating}
+                          />
+                          <button onClick={() => { if (input.trim()) handleSend(); }} disabled={isGenerating || !input.trim()}
+                            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
+                            {isKO ? '정밀 생성' : 'Generate'}
+                          </button>
+                        </div>
+                        <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                          {isKO
+                            ? '※ 장면 목표·서술 제약·참조 범위·고정 규칙이 프롬프트에 자동 결합됩니다. "고급 집필 = 작가가 더 세밀하게 제어하는 모드"'
+                            : '※ Scene goals, narrative constraints, references, and locks are auto-combined into the prompt.'}
                         </p>
                       </div>
                     )}
