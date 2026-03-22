@@ -21,13 +21,37 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
   let analysisData: any = null;
 
   if (!report && !isUser) {
-    const jsonMatch = message.content.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch) {
-      mainContent = message.content.replace(jsonMatch[0], '').trim();
+    // 1) ```json ... ``` blocks (case-insensitive, with or without newlines)
+    const jsonBlockRe = /```(?:json|JSON)?\s*\n?([\s\S]*?)\n?\s*```/g;
+    let blockMatch: RegExpExecArray | null;
+    while ((blockMatch = jsonBlockRe.exec(mainContent)) !== null) {
       try {
-        analysisData = JSON.parse(jsonMatch[1]);
-      } catch { /* ignore */ }
+        const parsed = JSON.parse(blockMatch[1]);
+        if (parsed && typeof parsed === 'object') {
+          analysisData = analysisData || parsed;
+        }
+      } catch { /* not valid JSON, leave it */ }
     }
+    // Remove ALL code blocks (json, JSON, unmarked)
+    mainContent = mainContent.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').trim();
+
+    // 2) Standalone JSON objects at end of content: { "grade": ..., "metrics": ... }
+    const trailingJson = mainContent.match(/\n?\s*(\{[\s\S]*"(?:grade|metrics|critique|tension|eos)"[\s\S]*\})\s*$/);
+    if (trailingJson) {
+      try {
+        const parsed = JSON.parse(trailingJson[1]);
+        if (parsed && typeof parsed === 'object') {
+          analysisData = analysisData || parsed;
+          mainContent = mainContent.replace(trailingJson[0], '').trim();
+        }
+      } catch { /* not valid JSON */ }
+    }
+
+    // 3) Remove any remaining lines that look like raw metrics output
+    mainContent = mainContent
+      .replace(/^\s*\{[\s\S]*?"grade"\s*:[\s\S]*?\}\s*$/gm, '')
+      .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')
+      .trim();
   }
 
   const displayGrade = report?.grade ?? analysisData?.grade;
