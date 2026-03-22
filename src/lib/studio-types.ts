@@ -1,4 +1,4 @@
-import { EngineReport, PlatformType, EpisodeState } from '../engine/types';
+import { EngineReport, PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
 
 export enum Genre {
   SF = "SF",
@@ -111,6 +111,7 @@ export interface StoryConfig {
   characters: Character[];
   charRelations?: CharRelation[];
   platform: PlatformType;
+  publishPlatform?: PublishPlatform;
   episodeState?: EpisodeState;
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;
@@ -193,5 +194,5 @@ export interface Project {
   sessions: ChatSession[];
 }
 
-export { PlatformType, EpisodeState } from '../engine/types';
+export { PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
 export type { EngineReport } from '../engine/types';

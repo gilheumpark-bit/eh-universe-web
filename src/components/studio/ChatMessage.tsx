@@ -69,6 +69,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
       </div>
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
+        {!isUser && (
+          <span className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-[family-name:var(--font-mono)]">
+            NOW — Narrative Origin Writer
+          </span>
+        )}
         <div className={`transition-all ${
           isUser
             ? 'bg-zinc-900/80 border border-zinc-800 px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-zinc-300'

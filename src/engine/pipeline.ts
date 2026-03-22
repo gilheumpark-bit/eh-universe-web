@@ -1,5 +1,5 @@
 import { StoryConfig, AppLanguage, StyleProfile } from '../lib/studio-types';
-import { EngineReport, PlatformType, getActFromEpisode } from './types';
+import { EngineReport, PlatformType, getActFromEpisode, PublishPlatform, PLATFORM_PRESETS } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
 import { getTargetCharRange } from './serialization';
@@ -175,6 +175,77 @@ function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string
   }
 
   return '\n[STYLE DNA — 문체 스튜디오]\n' + parts.join('\n');
+}
+
+// ============================================================
+// Publish Platform Prompt Builder
+// ============================================================
+
+function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined, isKO: boolean): string {
+  if (!publishPlatform || publishPlatform === PublishPlatform.NONE) return '';
+  const preset = PLATFORM_PRESETS[publishPlatform];
+  if (!preset) return '';
+
+  const platformNames: Record<string, string> = {
+    MUNPIA: '문피아',
+    NOVELPIA: '노벨피아',
+    KAKAOPAGE: '카카오페이지',
+    SERIES: '시리즈',
+  };
+  const name = platformNames[publishPlatform] || publishPlatform;
+
+  if (isKO) {
+    const parts = [
+      `[연재 플랫폼: ${name}]`,
+      `- 독자층: ${preset.targetReader}`,
+      `- 과금 모델: ${preset.billingModel}`,
+      `- 권장 분량: ${preset.episodeLength.min.toLocaleString()}~${preset.episodeLength.max.toLocaleString()}자`,
+      `- 전개 호흡: ${preset.pace}`,
+      `- 회차 엔딩 훅 강도: ${preset.endingHook}`,
+      `- 세계관 복잡도: ${preset.worldComplexity}`,
+    ];
+
+    if (publishPlatform === 'MUNPIA') {
+      parts.push(
+        `[문피아 특화 규칙]`,
+        `- 편당결제 구조: 매화 100원의 가치를 증명해야 한다. 늘여쓰기 금지.`,
+        `- 투베(투데이베스트) 의식: 1화부터 강한 훅으로 조회수 확보.`,
+        `- 대화 비율 높게, 내면 독백은 짧고 강렬하게.`,
+        `- 에피소드 끝은 반드시 다음 화 결제를 유도하는 클리프행어.`,
+      );
+    } else if (publishPlatform === 'NOVELPIA') {
+      parts.push(
+        `[노벨피아 특화 규칙]`,
+        `- 짧은 분량, 빠른 전개. 2000~4000자로 밀도 높게.`,
+        `- 라노벨/서브컬쳐 감성 허용. 독자층이 젊음.`,
+        `- 무거운 세계관 설명은 최소화. 액션·감정 위주.`,
+      );
+    } else if (publishPlatform === 'KAKAOPAGE') {
+      parts.push(
+        `[카카오페이지 특화 규칙]`,
+        `- 기다리면 무료 구조: 매화 끝에 강한 훅이 필수 (다음 화를 기다리지 않고 결제하게).`,
+        `- 성인 콘텐츠 불가. 전 연령 대상 톤 유지.`,
+        `- 빠른 전개, 짧은 단락. 모바일 최적화 필수.`,
+      );
+    } else if (publishPlatform === 'SERIES') {
+      parts.push(
+        `[시리즈 특화 규칙]`,
+        `- 완결작 선호 플랫폼. 전체 구조의 완성도를 의식할 것.`,
+        `- 감정선의 일관성 중요. 급격한 톤 변화 지양.`,
+        `- 메인스트림 독자 대상. 지나치게 마니아적인 설정 자제.`,
+      );
+    }
+
+    return '\n' + parts.join('\n');
+  }
+
+  return `\n[Publish Platform: ${name}]
+- Target: ${preset.targetReader}
+- Billing: ${preset.billingModel}
+- Length: ${preset.episodeLength.min}-${preset.episodeLength.max} chars
+- Pace: ${preset.pace}
+- Ending hook: ${preset.endingHook}
+- World complexity: ${preset.worldComplexity}`;
 }
 
 // ============================================================
@@ -387,6 +458,9 @@ export function buildSystemInstruction(
   // Style DNA injection
   const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
 
+  // Publish platform injection
+  const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, isKO);
+
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
 
@@ -420,6 +494,7 @@ ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
 ${styleDnaBlock}
+${publishPlatformBlock}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}

@@ -33,6 +33,69 @@ export enum PlatformType {
   WEB = 'WEB',
 }
 
+// 연재 플랫폼 (publishing platform)
+export enum PublishPlatform {
+  NONE = 'NONE',
+  MUNPIA = 'MUNPIA',
+  NOVELPIA = 'NOVELPIA',
+  KAKAOPAGE = 'KAKAOPAGE',
+  SERIES = 'SERIES',
+}
+
+export interface PlatformPreset {
+  targetReader: string;
+  episodeLength: { min: number; max: number };
+  billingModel: string;
+  worldComplexity: 'low' | 'medium' | 'high';
+  pace: string;
+  endingHook: 'low' | 'medium' | 'high';
+  allowedMature: boolean;
+  nodChecks: string[];
+}
+
+export const PLATFORM_PRESETS: Record<string, PlatformPreset> = {
+  [PublishPlatform.MUNPIA]: {
+    targetReader: '30~40대 헤비유저, 장르 마니아',
+    episodeLength: { min: 5000, max: 8000 },
+    billingModel: 'episode_paid',
+    worldComplexity: 'high',
+    pace: 'long_breath',
+    endingHook: 'medium',
+    allowedMature: true,
+    nodChecks: ['length_min_warning', 'density_check'],
+  },
+  [PublishPlatform.NOVELPIA]: {
+    targetReader: '10~20대, 라이트 유저',
+    episodeLength: { min: 2000, max: 4000 },
+    billingModel: 'free_serial_coin',
+    worldComplexity: 'low',
+    pace: 'fast',
+    endingHook: 'medium',
+    allowedMature: true,
+    nodChecks: ['heavy_world_warning', 'pace_check'],
+  },
+  [PublishPlatform.KAKAOPAGE]: {
+    targetReader: '20~30대, 캐주얼',
+    episodeLength: { min: 3000, max: 5000 },
+    billingModel: 'wait_or_free',
+    worldComplexity: 'medium',
+    pace: 'fast',
+    endingHook: 'high',
+    allowedMature: false,
+    nodChecks: ['hook_missing_warning', 'ending_intensity_check'],
+  },
+  [PublishPlatform.SERIES]: {
+    targetReader: '전 연령, 메인스트림',
+    episodeLength: { min: 4000, max: 6000 },
+    billingModel: 'paid_plus_complete',
+    worldComplexity: 'medium',
+    pace: 'stable',
+    endingHook: 'medium',
+    allowedMature: false,
+    nodChecks: ['completion_structure_check', 'emotion_consistency_check'],
+  },
+};
+
 export enum EpisodeState {
   OPEN = 'OPEN',
   TRANSITION_ONLY = 'TRANSITION_ONLY',

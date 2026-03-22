@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
+import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
+import { PLATFORM_PRESETS } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2 } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
@@ -222,6 +223,51 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               </button>
             </div>
           </div>
+        </div>
+
+        {/* 연재 플랫폼 선택 */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+            {isKO ? '연재 플랫폼' : 'PUBLISH PLATFORM'}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {Object.values(PublishPlatform).map(pp => {
+              const labels: Record<string, string> = {
+                NONE: isKO ? '미선택' : 'None',
+                MUNPIA: '문피아',
+                NOVELPIA: '노벨피아',
+                KAKAOPAGE: '카카오페이지',
+                SERIES: '시리즈',
+              };
+              const selected = (config.publishPlatform || PublishPlatform.NONE) === pp;
+              const preset = PLATFORM_PRESETS[pp];
+              return (
+                <button key={pp}
+                  onClick={() => {
+                    const updates: Partial<StoryConfig> = { publishPlatform: pp };
+                    if (preset) {
+                      updates.guardrails = { min: preset.episodeLength.min, max: preset.episodeLength.max };
+                    }
+                    setConfig(prev => ({ ...prev, ...updates }));
+                  }}
+                  className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                    selected
+                      ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple'
+                      : 'bg-black border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                  }`}
+                >
+                  {labels[pp] || pp}
+                </button>
+              );
+            })}
+          </div>
+          {config.publishPlatform && config.publishPlatform !== PublishPlatform.NONE && PLATFORM_PRESETS[config.publishPlatform] && (
+            <div className="mt-2 p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-[10px] text-zinc-500 space-y-1">
+              <div><span className="text-zinc-400 font-bold">{isKO ? '독자층' : 'Target'}:</span> {PLATFORM_PRESETS[config.publishPlatform].targetReader}</div>
+              <div><span className="text-zinc-400 font-bold">{isKO ? '권장 분량' : 'Length'}:</span> {PLATFORM_PRESETS[config.publishPlatform].episodeLength.min.toLocaleString()}~{PLATFORM_PRESETS[config.publishPlatform].episodeLength.max.toLocaleString()}{isKO ? '자' : ' chars'}</div>
+              <div><span className="text-zinc-400 font-bold">{isKO ? '전개 호흡' : 'Pace'}:</span> {PLATFORM_PRESETS[config.publishPlatform].pace}</div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">

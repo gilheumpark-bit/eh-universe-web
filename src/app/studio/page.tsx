@@ -367,7 +367,7 @@ export default function StudioPage() {
   const exportTXT = useCallback(() => {
     if (!currentSession) return;
     const lines = currentSession.messages.map(m => {
-      const prefix = m.role === 'user' ? '[USER]' : '[NOA]';
+      const prefix = m.role === 'user' ? '[USER]' : '[NOW]';
       return `${prefix}\n${m.content}\n`;
     });
     const header = `# ${currentSession.config.title || currentSession.title}\n# Genre: ${currentSession.config.genre} | Episode: ${currentSession.config.episode}\n# Exported: ${new Date().toISOString()}\n\n`;
@@ -598,7 +598,7 @@ export default function StudioPage() {
       setLastReport(result.report);
       // NOD Director analysis
       const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-      setDirectorReport(analyzeManuscript(dirClean));
+      setDirectorReport(analyzeManuscript(dirClean, currentSession?.config?.publishPlatform));
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
           const msgs = s.messages.map(m =>
