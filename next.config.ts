@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        // Proxy Firebase auth handler through same origin to avoid
+        // third-party storage partitioning issues in modern browsers.
+        // The FIREBASE_PROJECT is read from the env var at build time.
+        source: '/__/auth/:path*',
+        destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'eh-universe.firebaseapp.com'}/__/auth/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -19,8 +30,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.groq.com https://api.mistral.ai https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com",
-              "frame-src 'self' https://accounts.google.com",
+              "connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.groq.com https://api.mistral.ai https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.firebaseapp.com https://apis.google.com",
+              "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
               "object-src 'none'",
               "base-uri 'self'",
             ].join('; '),

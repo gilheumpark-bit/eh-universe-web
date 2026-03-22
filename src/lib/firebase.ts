@@ -3,7 +3,13 @@ import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  // Use the site's own domain as authDomain so the OAuth popup runs on
+  // the same origin. This avoids "missing initial state" errors caused by
+  // third-party storage partitioning in modern browsers (Chrome 115+).
+  // The /__/auth/* paths are reverse-proxied to Firebase via next.config.ts rewrites.
+  authDomain: typeof window !== 'undefined'
+    ? window.location.host
+    : (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || ''),
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
