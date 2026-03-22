@@ -158,6 +158,7 @@ export interface StoryConfig {
   magicSystems?: MagicSystem[];
   savedSlots?: SavedSlot[];
   manuscripts?: EpisodeManuscript[];
+  episodeSceneSheets?: EpisodeSceneSheet[];
 }
 
 // Episode manuscript entry
@@ -166,6 +167,28 @@ export interface EpisodeManuscript {
   title: string;
   content: string;
   charCount: number;
+  lastUpdate: number;
+}
+
+// Episode scene sheet entry (per-scene row in the table)
+export interface EpisodeSceneEntry {
+  sceneId: string;       // "1-1", "1-2", "2-1"
+  sceneName: string;
+  characters: string;
+  tone: string;          // "감동", "긴장", "개그", "액션" etc.
+  summary: string;
+  keyDialogue: string;
+  emotionPoint: string;
+  nextScene: string;
+}
+
+// Episode scene sheet (per-episode scene table)
+export interface EpisodeSceneSheet {
+  episode: number;
+  title: string;
+  arc: string;
+  characters: string;
+  scenes: EpisodeSceneEntry[];
   lastUpdate: number;
 }
 

@@ -35,6 +35,7 @@ const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioVie
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
+const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
@@ -1869,6 +1870,31 @@ export default function StudioPage() {
                             </button>
                           </div>
                         )}
+                      </div>
+                    </details>
+
+                    {/* ②-B 에피소드 씬시트 */}
+                    <details className="group">
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📋 {isKO ? '에피소드 씬시트' : 'Episode Scenes'} ({(currentSession.config.episodeSceneSheets ?? []).length})</summary>
+                      <div className="mt-1.5 pl-2 min-w-0">
+                        <EpisodeScenePanel
+                          lang={language}
+                          currentEpisode={currentSession.config.episode}
+                          episodeSceneSheets={currentSession.config.episodeSceneSheets ?? []}
+                          onSave={(sheet) => {
+                            const existing = currentSession.config.episodeSceneSheets ?? [];
+                            const filtered = existing.filter(s => s.episode !== sheet.episode);
+                            setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
+                          }}
+                          onDelete={(ep) => {
+                            setConfig({ ...currentSession.config, episodeSceneSheets: (currentSession.config.episodeSceneSheets ?? []).filter(s => s.episode !== ep) });
+                          }}
+                          onUpdate={(sheet) => {
+                            const existing = currentSession.config.episodeSceneSheets ?? [];
+                            const filtered = existing.filter(s => s.episode !== sheet.episode);
+                            setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
+                          }}
+                        />
                       </div>
                     </details>
 
