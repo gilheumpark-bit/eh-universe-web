@@ -1588,6 +1588,30 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
     ],
     relations: [{ type: "alliance" as RelationType }, { type: "vassal" as RelationType }],
   },
+  "Post-Apocalypse": {
+    civs: [
+      { name: "뉴 헤이븐", era: "post", color: "#16a34a", traits: ["생존자 커뮤니티", "농업"], x: 30, y: 35 },
+      { name: "워로드 군벌", era: "post", color: "#dc2626", traits: ["약탈", "군사력"], x: 70, y: 30 },
+      { name: "테크 벙커", era: "info", color: "#2563eb", traits: ["구시대 기술", "고립"], x: 50, y: 75 },
+    ],
+    relations: [{ type: "war" as RelationType }, { type: "trade" as RelationType }],
+  },
+  "Wuxia": {
+    civs: [
+      { name: "천산파", era: "ancient", color: "#7c3aed", traits: ["검술", "무림 정파"], x: 30, y: 30 },
+      { name: "혈교", era: "ancient", color: "#991b1b", traits: ["마공", "사파"], x: 70, y: 30 },
+      { name: "황실 무림원", era: "medieval", color: "#d97706", traits: ["관부", "중립"], x: 50, y: 70 },
+    ],
+    relations: [{ type: "war" as RelationType }, { type: "vassal" as RelationType }],
+  },
+  "Historical": {
+    civs: [
+      { name: "왕국 궁정", era: "renaissance", color: "#7c3aed", traits: ["왕권", "궁중 정치"], x: 35, y: 30 },
+      { name: "귀족 연합", era: "renaissance", color: "#0891b2", traits: ["영지", "세력 다툼"], x: 65, y: 35 },
+      { name: "민중 세력", era: "industrial", color: "#d97706", traits: ["혁명", "민란"], x: 50, y: 70 },
+    ],
+    relations: [{ type: "alliance" as RelationType }, { type: "war" as RelationType }],
+  },
 };
 
 interface WorldSimProps {
@@ -1612,6 +1636,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
   const selectedLevel = genreSelections[0]?.level || 1;
 
   const [ruleLevel, setRuleLevel] = useState(initialData?.ruleLevel || 1);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [civs, setCivs] = useState<Civilization[]>(() => {
     if (initialData?.civs && initialData.civs.length > 0) {
       return initialData.civs.map((c, i) => ({ ...c, id: `saved-${i}`, x: 50 + 25 * Math.cos((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2), y: 50 + 25 * Math.sin((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2) }));
@@ -1739,11 +1764,35 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
           </div>
 
           {/* Generate Buttons */}
-          <div className="flex gap-2 shrink-0">
-            <button onClick={handleAutoGenerate}
-              className="px-3 py-2 bg-bg-secondary border border-border text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:text-text-primary transition-colors">
+          <div className="flex gap-2 shrink-0 relative">
+            <button onClick={() => setShowPresetMenu(v => !v)}
+              className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
               ⚡ {lang === "ko" ? '프리셋' : 'Preset'}
             </button>
+            {showPresetMenu && (
+              <div className="absolute bottom-full mb-2 right-0 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
+                {Object.keys(AUTO_WORLD_TEMPLATES).map(key => (
+                  <button key={key} onClick={() => {
+                    const template = AUTO_WORLD_TEMPLATES[key];
+                    if (!template) return;
+                    const newCivs = template.civs.map((c, i) => ({ ...c, id: `auto-${Date.now()}-${i}` }));
+                    setCivs(newCivs);
+                    const newRels: CivRelation[] = [];
+                    template.relations.forEach((r, i) => {
+                      if (newCivs[i] && newCivs[i + 1]) {
+                        newRels.push({ from: newCivs[i].id, to: newCivs[i + 1].id, type: r.type });
+                      }
+                    });
+                    setRelations(newRels);
+                    setTransitions([]);
+                    setShowPresetMenu(false);
+                  }}
+                    className="w-full text-left px-4 py-2.5 text-[11px] text-text-secondary hover:bg-accent-purple/20 hover:text-text-primary transition-colors border-b border-border/50 last:border-0">
+                    {key}
+                  </button>
+                ))}
+              </div>
+            )}
             <button onClick={async () => {
               if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
               try {

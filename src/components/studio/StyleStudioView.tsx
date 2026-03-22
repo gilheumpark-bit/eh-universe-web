@@ -156,6 +156,29 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   const [sourceText, setSourceText] = useState("");
   const [resultText, setResultText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showStylePresetMenu, setShowStylePresetMenu] = useState(false);
+
+  // 10 style presets — each sets slider values + DNA card selection
+  const STYLE_PRESETS: { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
+    { key: "hard-sf", ko: "하드 SF 문체", en: "Hard SF Style", sliders: { s1: 2, s2: 1, s3: 2, s4: 1, s5: 5 }, dna: [0] },
+    { key: "web-novel", ko: "웹소설 리듬형", en: "Web Novel Rhythm", sliders: { s1: 1, s2: 3, s3: 3, s4: 4, s5: 2 }, dna: [1] },
+    { key: "literary", ko: "순문학 감성", en: "Literary Emotional", sliders: { s1: 4, s2: 5, s3: 5, s4: 5, s5: 4 }, dna: [2] },
+    { key: "action", ko: "액션/전투 압축", en: "Action/Battle Compact", sliders: { s1: 1, s2: 2, s3: 3, s4: 4, s5: 3 }, dna: [4] },
+    { key: "romance", ko: "로맨스 감정선", en: "Romance Emotion Line", sliders: { s1: 3, s2: 5, s3: 4, s4: 5, s5: 2 }, dna: [3] },
+    { key: "thriller", ko: "스릴러 건조체", en: "Thriller Dry Style", sliders: { s1: 1, s2: 1, s3: 2, s4: 3, s5: 3 }, dna: [0, 4] },
+    { key: "fantasy", ko: "판타지 서사체", en: "Fantasy Epic", sliders: { s1: 4, s2: 3, s3: 4, s4: 3, s5: 3 }, dna: [2, 3] },
+    { key: "horror", ko: "호러/괴담체", en: "Horror/Ghost Story", sliders: { s1: 2, s2: 4, s3: 5, s4: 5, s5: 2 }, dna: [4] },
+    { key: "essay", ko: "에세이/수필", en: "Essay/Memoir", sliders: { s1: 3, s2: 4, s3: 3, s4: 2, s5: 3 }, dna: [2] },
+    { key: "cinematic", ko: "시네마틱 묘사", en: "Cinematic Description", sliders: { s1: 3, s2: 3, s3: 5, s4: 4, s5: 3 }, dna: [1, 2] },
+  ];
+
+  const applyStylePreset = useCallback((presetKey: string) => {
+    const preset = STYLE_PRESETS.find(p => p.key === presetKey);
+    if (!preset) return;
+    setSliderVals(prev => ({ ...prev, ...preset.sliders }));
+    setSelectedCards(new Set(preset.dna));
+    setShowStylePresetMenu(false);
+  }, []);
 
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
@@ -309,6 +332,26 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
             : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
         </p>
+      </div>
+
+      {/* Style Preset Dropdown */}
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 16px 8px", position: "relative" }}>
+        <button onClick={() => setShowStylePresetMenu(v => !v)}
+          style={{ padding: "6px 14px", background: "var(--accent-purple, #7c3aed)", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}>
+          ⚡ {en ? "Preset" : "프리셋"}
+        </button>
+        {showStylePresetMenu && (
+          <div style={{ position: "absolute", top: "100%", right: 16, background: "var(--bg-secondary, #1a1a2e)", border: "1px solid var(--border, #333)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 50, minWidth: 200, maxHeight: 300, overflowY: "auto" }}>
+            {STYLE_PRESETS.map(p => (
+              <button key={p.key} onClick={() => applyStylePreset(p.key)}
+                style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", fontSize: 11, color: "var(--text-secondary, #aaa)", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)"; (e.target as HTMLButtonElement).style.color = "#fff"; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.color = "var(--text-secondary, #aaa)"; }}>
+                {en ? p.en : p.ko}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

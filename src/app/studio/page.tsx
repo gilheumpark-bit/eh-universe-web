@@ -1093,7 +1093,7 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
-                  <div className={`max-w-4xl mx-auto px-4 md:px-6 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-8 md:py-12 space-y-6 min-h-full'}`}>
+                  <div className={`max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
                     {/* Applied Settings Summary — hide when empty */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
                     <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
@@ -1288,15 +1288,29 @@ export default function StudioPage() {
                             <p className="text-text-tertiary/40 text-xs font-[family-name:var(--font-mono)] max-w-sm">
                               {isKO ? '아래 입력창에 첫 장면을 묘사하세요' : 'Describe the first scene in the input below'}
                             </p>
-                            <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-lg">
+                            <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-2xl">
                               {(isKO ? [
                                 "주인공이 처음 등장하는 장면을 써줘",
                                 "긴박한 추격전으로 시작해줘",
                                 "일상 속 작은 이상 징후로 시작해줘",
+                                "두 캐릭터의 첫 만남을 써줘",
+                                "비밀이 드러나는 대화 장면을 써줘",
+                                "전투 직전의 긴장감 있는 장면을 써줘",
+                                "과거 회상으로 시작하는 장면을 써줘",
+                                "편지나 일지 형식으로 시작해줘",
+                                "절체절명의 위기 장면을 써줘",
+                                "고요한 풍경 묘사로 시작해줘",
                               ] : [
                                 "Write the protagonist's first appearance",
                                 "Start with a tense chase scene",
                                 "Begin with a subtle anomaly in daily life",
+                                "Write the first meeting of two characters",
+                                "Write a dialogue scene revealing a secret",
+                                "Write a tense moment before battle",
+                                "Start with a flashback scene",
+                                "Begin in letter or journal format",
+                                "Write a life-or-death crisis scene",
+                                "Start with a quiet landscape description",
                               ]).map((preset, i) => (
                                 <button key={i} onClick={() => handleSend(preset)}
                                   className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)]">
@@ -1884,7 +1898,7 @@ export default function StudioPage() {
         {/* Writing Input */}
         {activeTab === 'writing' && currentSessionId && (
           <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
-            <div className="max-w-4xl mx-auto relative px-0">
+            <div className="max-w-6xl mx-auto relative px-0">
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
                 <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
                   {t.engine.nextChapter}

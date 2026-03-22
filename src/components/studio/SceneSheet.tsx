@@ -340,49 +340,105 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
     syncDirection();
   }, [syncDirection]);
 
-  // Auto-generate full scene sheet
-  const autoGenerate = useCallback(() => {
+  // Scene direction presets (10 genres)
+  const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, isKO: boolean) => { gogumas: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogue: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] } }[] = [
+    { key: "thriller", ko: "스릴러/서스펜스", en: "Thriller/Suspense", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "거짓 단서 투척" : "Red herring planted", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "반전 폭탄" : "Twist bomb", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "긴박한 상황 중간 진입" : "Enter mid-crisis" }, { id: `h-${ts}-2`, position: "ending", hookType: "question", desc: k ? "범인 실루엣 노출" : "Culprit silhouette revealed" }],
+      emotions: [{ id: `e-${ts}-1`, position: 10, emotion: k ? "불안" : "Anxiety", intensity: 50 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "공포" : "Fear", intensity: 90 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "건조한 단문" : "Dry, short", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 발견" : "Clue found", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "\"그 사람은 이미—\" (암전)" : "\"That person already—\" (blackout)", episode: 1 }],
+    }) },
+    { key: "romance", ko: "로맨스", en: "Romance", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "오해로 인한 감정 틀어짐" : "Misunderstanding causes rift", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "고백/화해" : "Confession/reconciliation", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "운명적 재회" : "Fateful reunion" }],
+      emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "설렘" : "Flutter", intensity: 60 }, { id: `e-${ts}-2`, position: 70, emotion: k ? "절절함" : "Longing", intensity: 85 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "여주" : "Heroine", tone: k ? "츤데레 반말" : "Tsundere informal", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "감정 인지 순간" : "Moment of realization", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "뒤돌아선 눈물" : "Tears turned away", episode: 1 }],
+    }) },
+    { key: "action", ko: "액션/전투", en: "Action/Battle", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "아군 배신" : "Ally betrayal", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "폭발 장면으로 시작" : "Open with explosion" }],
+      emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "분노" : "Rage", intensity: 80 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "승리감" : "Victory", intensity: 95 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "짧은 전투 대사" : "Short battle lines", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "각성/레벨업" : "Awakening/Level up", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "더 강한 적 등장" : "Stronger foe appears", episode: 1 }],
+    }) },
+    { key: "mystery", ko: "미스터리/추리", en: "Mystery", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "핵심 증거 은폐" : "Key evidence hidden", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "시체 발견" : "Body discovered" }],
+      emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "의심" : "Suspicion", intensity: 65 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "논리적 경어" : "Logical formal", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 연결" : "Clue connection", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "알리바이 붕괴" : "Alibi collapse", episode: 1 }],
+    }) },
+    { key: "fantasy", ko: "판타지/모험", en: "Fantasy/Adventure", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "예언의 이중 해석" : "Prophecy double meaning", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "진정한 힘 각성" : "True power awakening", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "고대 유적 발견" : "Ancient ruins found" }],
+      emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "경이" : "Wonder", intensity: 70 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "결의" : "Resolve", intensity: 85 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "멘토" : "Mentor", tone: k ? "격식 있는 경어" : "Formal speech", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "새 마법/스킬 습득" : "New spell/skill acquired", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "봉인 해제" : "Seal broken", episode: 1 }],
+    }) },
+    { key: "horror", ko: "공포/호러", en: "Horror", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "탈출구가 함정" : "Escape route is a trap", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "일상 속 미세한 이상" : "Subtle anomaly in daily life" }],
+      emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "불안" : "Dread", intensity: 60 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "공포" : "Terror", intensity: 95 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "생존자" : "Survivor", tone: k ? "떨리는 단문" : "Trembling short lines", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "진실에 한 발짝" : "One step closer to truth", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "뒤에 누군가 서 있다" : "Someone standing behind", episode: 1 }],
+    }) },
+    { key: "sf", ko: "SF/우주", en: "Sci-Fi/Space", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "AI 판단 오류" : "AI judgment error", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "미지 신호 수신" : "Unknown signal received" }],
+      emotions: [{ id: `e-${ts}-1`, position: 25, emotion: k ? "경외" : "Awe", intensity: 70 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "함장" : "Captain", tone: k ? "군사적 간결체" : "Military concise", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "기술 돌파" : "Tech breakthrough", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "행성 소멸 감지" : "Planet vanishing detected", episode: 1 }],
+    }) },
+    { key: "slice", ko: "일상/힐링", en: "Slice of Life", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "사소한 오해" : "Minor misunderstanding", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "새로운 이웃/전학생" : "New neighbor/transfer student" }],
+      emotions: [{ id: `e-${ts}-1`, position: 50, emotion: k ? "따뜻함" : "Warmth", intensity: 75 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "친구" : "Friend", tone: k ? "편한 반말" : "Casual informal", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "작은 성취감" : "Small accomplishment", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "예상 못한 편지" : "Unexpected letter", episode: 1 }],
+    }) },
+    { key: "wuxia", ko: "무협", en: "Wuxia/Martial Arts", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "사부의 비밀" : "Master's secret", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "무림 맹주 암살" : "Alliance leader assassinated" }],
+      emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "비장" : "Solemn resolve", intensity: 80 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "무협 고어체" : "Classical martial tone", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "비급 체득" : "Secret technique mastered", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "독에 당함" : "Poisoned", episode: 1 }],
+    }) },
+    { key: "dark", ko: "다크/디스토피아", en: "Dark/Dystopia", gen: (ts, k) => ({
+      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "체제의 거짓 폭로" : "System's lie exposed", episode: 1 }],
+      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "reversal", desc: k ? "유토피아의 균열" : "Crack in utopia" }],
+      emotions: [{ id: `e-${ts}-1`, position: 60, emotion: k ? "절망" : "Despair", intensity: 85 }, { id: `e-${ts}-2`, position: 95, emotion: k ? "저항" : "Defiance", intensity: 90 }],
+      dialogue: [{ id: `d-${ts}-1`, character: k ? "반역자" : "Rebel", tone: k ? "냉소적 단문" : "Cynical short", notes: "" }],
+      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "info", desc: k ? "진실 한 조각" : "A piece of truth", resolved: false }],
+      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "체포 직전" : "Moments before arrest", episode: 1 }],
+    }) },
+  ];
+
+  const [showScenePresetMenu, setShowScenePresetMenu] = useState(false);
+
+  const applyScenePreset = useCallback((presetKey: string) => {
+    const preset = SCENE_PRESETS.find(p => p.key === presetKey);
+    if (!preset) return;
     const ts = Date.now();
-
-    const newGogumas: GogumaEntry[] = [
-      { id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: lang === "ko" ? "오해/의심 씨앗" : "Seed of misunderstanding", episode: 1 },
-      { id: `g-${ts}-2`, type: "goguma", intensity: "medium", desc: lang === "ko" ? "진실 은폐/배신 암시" : "Hidden truth / betrayal hint", episode: 1 },
-      { id: `g-${ts}-3`, type: "cider", intensity: "large", desc: lang === "ko" ? "반격/진실 폭로" : "Counterattack / truth reveal", episode: 1 },
-    ];
-
-    const newHooks: HookEntry[] = [
-      { id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: lang === "ko" ? "긴박한 상황 중간 진입" : "Enter mid-crisis" },
-      { id: `h-${ts}-2`, position: "middle", hookType: "reversal", desc: lang === "ko" ? "예상치 못한 반전" : "Unexpected twist" },
-      { id: `h-${ts}-3`, position: "ending", hookType: "question", desc: lang === "ko" ? "정체 미상의 인물 등장" : "Unknown figure appears" },
-    ];
-
-    const newEmotions: EmotionPoint[] = [
-      { id: `e-${ts}-1`, position: 10, emotion: lang === "ko" ? "불안" : "Anxiety", intensity: 40 },
-      { id: `e-${ts}-2`, position: 45, emotion: lang === "ko" ? "분노" : "Anger", intensity: 75 },
-      { id: `e-${ts}-3`, position: 70, emotion: lang === "ko" ? "결의" : "Resolve", intensity: 85 },
-      { id: `e-${ts}-4`, position: 95, emotion: lang === "ko" ? "긴장" : "Tension", intensity: 90 },
-    ];
-
-    const newDialogue: DialogueRule[] = [
-      { id: `d-${ts}-1`, character: lang === "ko" ? "주인공" : "Protagonist", tone: lang === "ko" ? "짧고 날카로운 반말" : "Short, sharp, informal", notes: lang === "ko" ? "긴장 시 한 줄 이하" : "One line max in tension" },
-      { id: `d-${ts}-2`, character: lang === "ko" ? "악역" : "Antagonist", tone: lang === "ko" ? "여유롭고 조롱하는 경어" : "Relaxed, mocking, formal", notes: lang === "ko" ? "절대 다급하지 않게" : "Never rushed" },
-    ];
-
-    const newDopamines: DopamineEntry[] = [
-      { id: `dp-${ts}-1`, scale: "micro", device: "info", desc: lang === "ko" ? "단서 발견 → 2문단 후 해석" : "Clue found → explained 2 paragraphs later", resolved: false },
-      { id: `dp-${ts}-2`, scale: "medium", device: "growth", desc: lang === "ko" ? "에피소드 후반 능력 각성/승리" : "Late episode awakening/victory", resolved: false },
-    ];
-
-    const newCliffs: CliffEntry[] = [
-      { id: `cl-${ts}-1`, cliffType: "info-before", desc: lang === "ko" ? "\"사실 너는—\" (말 끊김)" : "\"The truth is, you—\" (cut off)", episode: 1 },
-    ];
-
-    setGogumas(newGogumas);
-    setHooks(newHooks);
-    setEmotions(newEmotions);
-    setDialogueRules(newDialogue);
-    setDopamines(newDopamines);
-    setCliffs(newCliffs);
+    const isKO = lang === "ko";
+    const data = preset.gen(ts, isKO);
+    setGogumas(data.gogumas);
+    setHooks(data.hooks);
+    setEmotions(data.emotions);
+    setDialogueRules(data.dialogue);
+    setDopamines(data.dopamines);
+    setCliffs(data.cliffs);
+    setShowScenePresetMenu(false);
   }, [lang]);
 
   // Validation summary
@@ -405,11 +461,21 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
           <span className="badge badge-amber mr-2">SCENE</span>
           {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
         </div>
-        <div className="flex gap-2">
-          <button onClick={autoGenerate}
-            className="px-3 py-1.5 bg-bg-secondary border border-border text-text-secondary rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:text-text-primary transition-colors">
+        <div className="flex gap-2 relative">
+          <button onClick={() => setShowScenePresetMenu(v => !v)}
+            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
             ⚡ {lang === "ko" ? "프리셋" : "Preset"}
           </button>
+          {showScenePresetMenu && (
+            <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 min-w-[180px] max-h-[300px] overflow-y-auto">
+              {SCENE_PRESETS.map(p => (
+                <button key={p.key} onClick={() => applyScenePreset(p.key)}
+                  className="w-full text-left px-4 py-2.5 text-[11px] text-text-secondary hover:bg-accent-purple/20 hover:text-text-primary transition-colors border-b border-border/50 last:border-0">
+                  {lang === "ko" ? p.ko : p.en}
+                </button>
+              ))}
+            </div>
+          )}
           <button onClick={async () => {
             if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
             try {
