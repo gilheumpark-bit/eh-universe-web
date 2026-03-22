@@ -84,6 +84,14 @@ export interface SimulatorRef {
   genreSelections?: GenreSelection[];
 }
 
+// Style Studio profile data
+export interface StyleProfile {
+  selectedDNA: number[];       // DNA_CARDS indices (0=SF, 1=웹소설, 2=문학, 3=멀티장르)
+  sliders: Record<string, number>; // s1~s5, values 1~5
+  checkedSF: number[];         // completed SF technique indices
+  checkedWeb: number[];        // completed web novel technique indices
+}
+
 export interface StoryConfig {
   genre: Genre;
   povCharacter: string;
@@ -101,6 +109,7 @@ export interface StoryConfig {
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;
   worldSimData?: WorldSimData;
+  styleProfile?: StyleProfile;
   savedSlots?: SavedSlot[];
 }
 

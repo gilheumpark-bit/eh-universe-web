@@ -1288,8 +1288,16 @@ export default function StudioPage() {
                     )}
                   </div>
                 )}
-                {activeTab === 'style' && (
-                  <StyleStudioView isKO={isKO} />
+                {activeTab === 'style' && currentSession && (
+                  <StyleStudioView
+                    isKO={isKO}
+                    initialProfile={currentSession.config.styleProfile}
+                    onProfileChange={(profile) => {
+                      updateCurrentSession({
+                        config: { ...currentSession.config, styleProfile: profile },
+                      });
+                    }}
+                  />
                 )}
                 {activeTab === 'history' && (
                   <div className="p-4 md:p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">

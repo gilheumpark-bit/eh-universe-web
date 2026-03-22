@@ -1,4 +1,4 @@
-import { StoryConfig, AppLanguage } from '../lib/studio-types';
+import { StoryConfig, AppLanguage, StyleProfile } from '../lib/studio-types';
 import { EngineReport, PlatformType, getActFromEpisode } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
@@ -102,6 +102,79 @@ function buildGenrePreset(genre: string, isKO: boolean): string {
 - Dialogue ratio 30-50%
 - Scene transitions: min 2, max 5 per episode
 - No 3+ consecutive sentences of same length`;
+}
+
+// ============================================================
+// Style DNA Builder — from Style Studio settings
+// ============================================================
+
+const DNA_NAMES = ['Hard SF', '웹소설', '문학적', '멀티장르'];
+const DNA_NAMES_EN = ['Hard SF', 'Web Novel', 'Literary', 'Multi-Genre'];
+
+const SLIDER_LABELS: Record<string, { name: string; nameEN: string; levels: string[]; levelsEN: string[] }> = {
+  s1: { name: '문장 길이', nameEN: 'Sentence Length', levels: ['단문 위주', '단문 선호', '균형', '장문 선호', '장문 위주'], levelsEN: ['Short', 'Mostly short', 'Balanced', 'Mostly long', 'Long'] },
+  s2: { name: '감정 밀도', nameEN: 'Emotional Density', levels: ['극도로 건조', '건조·분석적', '균형', '감성적', '매우 감성적'], levelsEN: ['Very dry', 'Dry/analytical', 'Balanced', 'Emotional', 'Very emotional'] },
+  s3: { name: '묘사 방식', nameEN: 'Description', levels: ['직접 서술', '직접 선호', '균형', '이미지 선호', '감각적 이미지'], levelsEN: ['Direct', 'Mostly direct', 'Balanced', 'Mostly imagery', 'Sensory imagery'] },
+  s4: { name: '서술 시점', nameEN: 'Narrative Distance', levels: ['전지적 관찰', '전지적 선호', '균형', '인물 밀착', '극밀착 내면'], levelsEN: ['Omniscient', 'Mostly omniscient', 'Balanced', 'Close 3rd', 'Deep POV'] },
+  s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['구어체', '평이함', '중간', '전문적·정밀', '고도 전문'], levelsEN: ['Colloquial', 'Simple', 'Mid-level', 'Technical', 'Highly technical'] },
+};
+
+function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string {
+  if (!profile || profile.selectedDNA.length === 0) return '';
+
+  const parts: string[] = [];
+
+  // DNA identity
+  const dnaNames = profile.selectedDNA.map(i => isKO ? DNA_NAMES[i] : DNA_NAMES_EN[i]).join(' + ');
+  parts.push(isKO
+    ? `- 문체 정체성: ${dnaNames}`
+    : `- Style identity: ${dnaNames}`);
+
+  // Slider parameters
+  if (profile.sliders) {
+    const sliderParts: string[] = [];
+    for (const [key, val] of Object.entries(profile.sliders)) {
+      const meta = SLIDER_LABELS[key];
+      if (!meta) continue;
+      const label = isKO ? meta.levels[val - 1] : meta.levelsEN[val - 1];
+      sliderParts.push(`${isKO ? meta.name : meta.nameEN}: ${label} (${val}/5)`);
+    }
+    if (sliderParts.length > 0) {
+      parts.push(isKO
+        ? `- 문체 파라미터: ${sliderParts.join(', ')}`
+        : `- Style parameters: ${sliderParts.join(', ')}`);
+    }
+  }
+
+  // Style directives based on DNA selections
+  const directives: string[] = [];
+  if (profile.selectedDNA.includes(0)) {
+    directives.push(isKO
+      ? '기술적 정확성이 곧 아름다움. 시스템과 데이터를 감정처럼 묘사하라.'
+      : 'Technical accuracy is beauty. Describe systems and data as if they carry emotion.');
+  }
+  if (profile.selectedDNA.includes(1)) {
+    directives.push(isKO
+      ? '첫 문장에 훅. 짧은 단락, 강한 리듬. 독자를 다음 장으로 끌어당기는 구조.'
+      : 'Hook in the first sentence. Short paragraphs, strong rhythm. Pull readers to the next chapter.');
+  }
+  if (profile.selectedDNA.includes(2)) {
+    directives.push(isKO
+      ? '세부 묘사가 감정을 만든다. 은유와 여백. 독자가 스스로 느끼게 하라.'
+      : 'Detail creates emotion. Use metaphor and white space. Let readers feel on their own.');
+  }
+  if (profile.selectedDNA.includes(3)) {
+    directives.push(isKO
+      ? 'SF의 논리 + 웹소설의 속도 + 문학의 깊이를 혼합하라. 단일 장르에 갇히지 마라.'
+      : 'Blend SF logic + web novel speed + literary depth. Do not confine to a single genre.');
+  }
+  if (directives.length > 0) {
+    parts.push(isKO
+      ? `- 문체 지침:\n  ${directives.join('\n  ')}`
+      : `- Style directives:\n  ${directives.join('\n  ')}`);
+  }
+
+  return '\n[STYLE DNA — 문체 스튜디오]\n' + parts.join('\n');
 }
 
 // ============================================================
@@ -311,6 +384,9 @@ export function buildSystemInstruction(
     }
   }
 
+  // Style DNA injection
+  const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
+
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
 
@@ -343,6 +419,7 @@ ${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
 ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
+${styleDnaBlock}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}

@@ -4,7 +4,8 @@
 // PART 1 — 상태 및 상수 정의
 // ============================================================
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import type { StyleProfile } from "@/lib/studio-types";
 
 const STYLE_NAMES = [
   "건조·SF 문체",
@@ -115,20 +116,31 @@ const DNA_CARDS: DnaCard[] = [
 
 interface Props {
   isKO?: boolean;
+  initialProfile?: StyleProfile;
+  onProfileChange?: (profile: StyleProfile) => void;
 }
 
-export default function StyleStudioView({ isKO = true }: Props) {
+export default function StyleStudioView({ isKO = true, initialProfile, onProfileChange }: Props) {
   const en = !isKO;
 
   const [tab, setTab] = useState(0);
-  const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
+  const [selectedCards, setSelectedCards] = useState<Set<number>>(
+    () => new Set(initialProfile?.selectedDNA ?? [])
+  );
   const [sliderVals, setSliderVals] = useState<Record<string, number>>(() => {
+    if (initialProfile?.sliders && Object.keys(initialProfile.sliders).length > 0) {
+      return { ...Object.fromEntries(SLIDERS.map(s => [s.id, s.defaultVal])), ...initialProfile.sliders };
+    }
     const init: Record<string, number> = {};
     SLIDERS.forEach((s) => (init[s.id] = s.defaultVal));
     return init;
   });
-  const [checkedSF, setCheckedSF] = useState<Set<number>>(new Set());
-  const [checkedWeb, setCheckedWeb] = useState<Set<number>>(new Set());
+  const [checkedSF, setCheckedSF] = useState<Set<number>>(
+    () => new Set(initialProfile?.checkedSF ?? [])
+  );
+  const [checkedWeb, setCheckedWeb] = useState<Set<number>>(
+    () => new Set(initialProfile?.checkedWeb ?? [])
+  );
   const [activeStyles, setActiveStyles] = useState<Set<number>>(new Set([0]));
   const [sourceText, setSourceText] = useState("");
   const [resultText, setResultText] = useState("");
@@ -136,6 +148,21 @@ export default function StyleStudioView({ isKO = true }: Props) {
 
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
+
+  // Sync profile changes to parent
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    onProfileChange?.({
+      selectedDNA: Array.from(selectedCards),
+      sliders: { ...sliderVals },
+      checkedSF: Array.from(checkedSF),
+      checkedWeb: Array.from(checkedWeb),
+    });
+  }, [selectedCards, sliderVals, checkedSF, checkedWeb, onProfileChange]);
 
   const toggleSet = useCallback(
     (setter: React.Dispatch<React.SetStateAction<Set<number>>>, idx: number) => {
