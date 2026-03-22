@@ -107,6 +107,8 @@ export default function StudioPage() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [archiveFilter, setArchiveFilter] = useState<string>('ALL');
+  const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   // ============================================================
@@ -1376,55 +1378,121 @@ export default function StudioPage() {
                     }}
                   />
                 )}
-                {activeTab === 'history' && (
-                  <div className="p-4 md:p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                    {sessions.length === 0 ? (
-                      <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-[family-name:var(--font-mono)]">{t.engine.noArchive}</div>
-                    ) : (
-                      sessions.map(s => (
-                        <div
-                          key={s.id}
-                          onClick={() => { setCurrentSessionId(s.id); setActiveTab('writing'); }}
-                          className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
-                        >
-                          <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
-                            <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
-                            {projects.length > 1 && (
-                              <button onClick={(e) => {
-                                e.stopPropagation();
-                                const others = projects.filter(p => p.id !== currentProjectId);
-                                if (others.length === 1) {
-                                  moveSessionToProject(s.id, others[0].id);
-                                } else {
-                                  const choice = window.prompt(
-                                    (t.project?.moveSession || 'Move to') + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
-                                    '1'
-                                  );
-                                  const idx = parseInt(choice || '', 10) - 1;
-                                  if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
-                                }
-                              }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
-                            )}
-                            <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
+                {activeTab === 'history' && (() => {
+                  const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
+                    ? projects.flatMap(p => p.sessions.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })))
+                    : sessions.map(s => ({ ...s, _projectName: currentProject?.name, _projectId: currentProjectId ?? undefined }));
+
+                  const genres = Array.from(new Set(allSessions.map(s => s.config.genre)));
+                  const hasWorldData = allSessions.some(s => s.config.worldSimData?.civs?.length);
+
+                  const categories = [
+                    { key: 'ALL', label: isKO ? '전체' : 'All' },
+                    ...genres.map(g => ({ key: g, label: g })),
+                    ...(hasWorldData ? [{ key: 'WORLD', label: isKO ? '세계관' : 'World' }] : []),
+                  ];
+
+                  const filtered = allSessions.filter(s => {
+                    if (archiveFilter === 'ALL') return true;
+                    if (archiveFilter === 'WORLD') return (s.config.worldSimData?.civs?.length ?? 0) > 0;
+                    return s.config.genre === archiveFilter;
+                  }).sort((a, b) => b.lastUpdate - a.lastUpdate);
+
+                  return (
+                    <div className="p-4 md:p-10">
+                      {/* Archive Header: scope toggle + category filter */}
+                      <div className="mb-6 space-y-3">
+                        {projects.length > 1 && (
+                          <div className="flex gap-1.5">
+                            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                              {isKO ? '현재 프로젝트' : 'Current Project'}
+                            </button>
+                            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                              {isKO ? '전체 프로젝트' : 'All Projects'}
+                            </button>
                           </div>
-                          {renamingSessionId === s.id ? (
-                            <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingSessionId(null); }}
-                              onBlur={confirmRename} onClick={e => e.stopPropagation()}
-                              className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none" />
-                          ) : (
-                            <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
-                          )}
-                          <div className="flex gap-2">
-                            <span className="text-[9px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
-                            <span className="text-[9px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
-                          </div>
+                        )}
+                        <div className="flex gap-1.5 flex-wrap">
+                          {categories.map(cat => (
+                            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                              {cat.label}
+                              <span className="ml-1 text-[8px] opacity-50">
+                                {cat.key === 'ALL' ? allSessions.length : cat.key === 'WORLD' ? allSessions.filter(s => (s.config.worldSimData?.civs?.length ?? 0) > 0).length : allSessions.filter(s => s.config.genre === cat.key).length}
+                              </span>
+                            </button>
+                          ))}
                         </div>
-                      ))
-                    )}
-                  </div>
-                )}
+                      </div>
+
+                      {/* Session Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                        {filtered.length === 0 ? (
+                          <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-[family-name:var(--font-mono)]">{t.engine.noArchive}</div>
+                        ) : (
+                          filtered.map(s => (
+                            <div
+                              key={s.id}
+                              onClick={() => {
+                                if (s._projectId && s._projectId !== currentProjectId) setCurrentProjectId(s._projectId);
+                                setCurrentSessionId(s.id);
+                                setActiveTab('writing');
+                              }}
+                              className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
+                            >
+                              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
+                                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
+                                {projects.length > 1 && (
+                                  <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    const others = projects.filter(p => p.id !== (s._projectId || currentProjectId));
+                                    if (others.length === 1) {
+                                      moveSessionToProject(s.id, others[0].id);
+                                    } else if (others.length > 1) {
+                                      const choice = window.prompt(
+                                        (t.project?.moveSession || 'Move to') + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
+                                        '1'
+                                      );
+                                      const idx = parseInt(choice || '', 10) - 1;
+                                      if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
+                                    }
+                                  }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
+                                )}
+                                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
+                              </div>
+                              {renamingSessionId === s.id ? (
+                                <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingSessionId(null); }}
+                                  onBlur={confirmRename} onClick={e => e.stopPropagation()}
+                                  className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none" />
+                              ) : (
+                                <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
+                              )}
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
+                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
+                                {s.messages.length > 0 && (
+                                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
+                                )}
+                                {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
+                                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
+                                    {isKO ? '세계관' : 'WORLD'} · {s.config.worldSimData!.civs!.length}
+                                  </span>
+                                )}
+                                {archiveScope === 'all' && s._projectName && (
+                                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
+                                )}
+                              </div>
+                              <div className="mt-2 text-[8px] text-zinc-600 font-[family-name:var(--font-mono)]">
+                                {new Date(s.lastUpdate).toLocaleDateString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>
