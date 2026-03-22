@@ -120,7 +120,7 @@ export default function ArchiveClient() {
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";
-    setActiveCategory(cat);
+    setTimeout(() => setActiveCategory(cat), 0);
   }, [searchParams]);
 
   const changeCategory = useCallback((id: string) => {

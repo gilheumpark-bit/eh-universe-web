@@ -354,9 +354,8 @@ const STORAGE_PREFIX = 'noa_tab_chat_';
 
 const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) => {
   const ctx = TAB_CONTEXT[tab];
-  if (!ctx) return null;
-
   const isKO = language === 'KO';
+
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -382,6 +381,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
   }, [messages, collapsed]);
 
   const handleSend = useCallback(async () => {
+    if (!ctx) return;
     const text = input.trim();
     if (!text || isStreaming) return;
 
@@ -447,6 +447,8 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     setMessages([]);
     localStorage.removeItem(`${STORAGE_PREFIX}${tab}`);
   };
+
+  if (!ctx) return null;
 
   return (
     <div className="border border-border rounded-2xl bg-bg-secondary/50 overflow-hidden flex flex-col">

@@ -1092,7 +1092,7 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
-                  <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6">
+                  <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6 flex flex-col min-h-full">
                     {/* Applied Settings Summary */}
                     <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
                       <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-secondary transition-colors">
@@ -1277,9 +1277,12 @@ export default function StudioPage() {
                       <>
                         <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                         {currentSession.messages.length === 0 ? (
-                          <div className="py-20 text-center space-y-4">
-                            <Sparkles className="w-10 h-10 text-accent-purple/30 mx-auto" />
+                          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 min-h-[40vh]">
+                            <Sparkles className="w-12 h-12 text-accent-purple/20 mx-auto" />
                             <p className="text-text-tertiary text-sm font-medium">{t.engine.startPrompt}</p>
+                            <p className="text-text-tertiary/40 text-[10px] font-[family-name:var(--font-mono)] max-w-xs">
+                              {isKO ? '아래 입력창에 첫 장면을 묘사하세요' : 'Describe the first scene in the input below'}
+                            </p>
                           </div>
                         ) : (
                           (searchQuery ? filteredMessages : currentSession.messages).map(msg => (

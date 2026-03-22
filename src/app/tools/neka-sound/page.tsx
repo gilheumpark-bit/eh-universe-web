@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
 
@@ -552,12 +553,12 @@ export default function NekaSoundPage() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <a
+            <Link
               href="/archive/neka-language"
               className="font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:underline tracking-wider"
             >
               ← {en ? "BACK TO NEKA LANGUAGE ARTICLE" : "네카 언어 문서로 돌아가기"}
-            </a>
+            </Link>
           </div>
         </div>
       </main>

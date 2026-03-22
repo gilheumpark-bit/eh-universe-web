@@ -19,7 +19,9 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("eh-lang") as Lang | null;
-    if (saved === "en" || saved === "ko") setLang(saved);
+    if (saved === "en" || saved === "ko") {
+      setTimeout(() => setLang(saved), 0);
+    }
   }, []);
 
   const toggleLang = () => {

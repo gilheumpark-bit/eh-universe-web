@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 'use client';
 
 // ============================================================
@@ -133,7 +133,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
   const isKO = language === 'KO';
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'ready' | 'fixing'>('idle');
-  const [currentFixIdx, setCurrentFixIdx] = useState(-1);
+  const [, setCurrentFixIdx] = useState(-1);
   const [expanded, setExpanded] = useState(true);
   const [workingContent, setWorkingContent] = useState(content);
   const abortRef = useRef<AbortController | null>(null);
@@ -299,14 +299,6 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
   // Apply all ready fixes and finalize
   const applyAll = () => {
-    let result = workingContent;
-    const paragraphs = result.split('\n\n').filter(p => p.trim());
-
-    // Apply from back to front to preserve indices
-    const readySugs = suggestions
-      .filter(s => s.status === 'applied')
-      .sort((a, b) => b.paragraphIndex - a.paragraphIndex);
-
     // workingContent already has applied changes, just push it
     onApply(workingContent);
     setPhase('idle');
@@ -330,7 +322,6 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
   const pendingCount = suggestions.filter(s => s.status === 'pending').length;
   const appliedCount = suggestions.filter(s => s.status === 'applied').length;
-  const readyCount = suggestions.filter(s => s.status === 'ready').length;
 
   return (
     <div className="border border-accent-purple/20 bg-accent-purple/5 rounded-2xl overflow-hidden">
@@ -464,7 +455,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         </div>
       )}
       {/* Error toast */}
-      {refinerError && (
+      {refinerError !== null && (
         <ErrorToast error={refinerError} isKO={isKO} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
       )}
     </div>

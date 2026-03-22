@@ -10,12 +10,12 @@ test.describe('NOA Studio', () => {
     await page.goto('/studio');
     await page.waitForTimeout(1000);
     // Click the "새로운 소설 시작" button
-    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ });
+    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ }).first();
     if (await newBtn.isVisible()) {
       await newBtn.click();
     }
     // A session should now exist — verify world design tab is active
-    await expect(page.locator('text=/세계관 설계|World Design/')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=/세계관 설계|World Design/').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('switch between sidebar tabs', async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe('NOA Studio', () => {
     await page.waitForTimeout(1000);
 
     // Create session first
-    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ });
+    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ }).first();
     if (await newBtn.isVisible()) await newBtn.click();
 
     // Check tabs exist
@@ -55,14 +55,14 @@ test.describe('NOA Studio', () => {
     await page.waitForTimeout(500);
 
     // Should show English text
-    await expect(page.locator('text=Start New Novel')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('text=Start New Novel').first()).toBeVisible({ timeout: 3000 });
 
     // Switch back to KO
     const koBtn = page.locator('button', { hasText: 'KO' }).first();
     await koBtn.click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('text=새로운 소설 시작')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('text=새로운 소설 시작').first()).toBeVisible({ timeout: 3000 });
   });
 
   test('project selector is visible', async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('NOA Studio', () => {
     await page.waitForTimeout(1000);
 
     // Create a session to ensure a project exists
-    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ });
+    const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ }).first();
     if (await newBtn.isVisible()) await newBtn.click();
 
     // Project dropdown should be in the sidebar

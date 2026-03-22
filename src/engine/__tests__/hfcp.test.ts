@@ -79,6 +79,36 @@ describe('NRG', () => {
     resolveNRG(state, '이건 뭐야?');
     expect(resolveNRG(state, '이건 뭐야?')).not.toBe('normal');
   });
+
+  it('디테일하게 회수 마다 다른 각도 검증 (detailed verification of different angles per iteration)', () => {
+    // 1) score < 70 -> light_variation
+    const state1 = createHFCPState();
+    state1.score = 60;
+    resolveNRG(state1, '반복 질문');
+    expect(resolveNRG(state1, '반복 질문')).toBe('light_variation');
+    expect(verdictToPromptModifier('normal_free', 'light_variation', true)).toContain('이전과 다른 구조로');
+
+    // 2) 70 <= score < 100 -> frame_shift
+    const state2 = createHFCPState();
+    state2.score = 80;
+    resolveNRG(state2, '반복 질문');
+    expect(resolveNRG(state2, '반복 질문')).toBe('frame_shift');
+    expect(verdictToPromptModifier('normal_free', 'frame_shift', true)).toContain('다른 관점에서');
+
+    // 3) 100 <= score < 130 -> perspective_shift
+    const state3 = createHFCPState();
+    state3.score = 110;
+    resolveNRG(state3, '반복 질문');
+    expect(resolveNRG(state3, '반복 질문')).toBe('perspective_shift');
+    expect(verdictToPromptModifier('normal_free', 'perspective_shift', true)).toContain('비평적 시점');
+
+    // 4) 130 <= score -> meta_ack
+    const state4 = createHFCPState();
+    state4.score = 140;
+    resolveNRG(state4, '반복 질문');
+    expect(resolveNRG(state4, '반복 질문')).toBe('meta_ack');
+    expect(verdictToPromptModifier('normal_free', 'meta_ack', true)).toContain('다른 각도에서');
+  });
 });
 
 describe('processHFCPTurn', () => {
