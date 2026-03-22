@@ -7,9 +7,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
-import { HISTORY_LIMITS } from '@/lib/token-utils';
+import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
 import { classifyError } from './UXHelpers';
 
 interface TabMessage {
@@ -471,11 +471,13 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     abortRef.current = controller;
 
     const systemPrompt = (isKO ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
-    const chatHistory: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
+    const recentMsgs: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
-    chatHistory.push({ role: 'user', content: text });
+    const model = getActiveModel();
+    const { messages: trimmedHistory } = truncateMessages(systemPrompt, recentMsgs, model);
+    const chatHistory: ChatMsg[] = [...trimmedHistory, { role: 'user', content: text }];
 
     let fullContent = '';
     try {
