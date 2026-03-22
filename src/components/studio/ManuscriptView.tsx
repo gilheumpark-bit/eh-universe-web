@@ -241,7 +241,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
   const progressPercent = totalTarget > 0 ? Math.min(100, Math.round((totalChars / totalTarget) * 100)) : 0;
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6">
+    <div className="max-w-6xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">

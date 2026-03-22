@@ -965,10 +965,10 @@ export default function StudioPage() {
                 {activeTab === 'world' && currentSession && (
                   <>
                     <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
-                    <div className="max-w-4xl mx-auto px-4 pb-4">
+                    <div className="max-w-6xl mx-auto px-4 pb-4">
                       <TabAssistant tab="world" language={language} config={currentSession.config} />
                     </div>
-                    <div className="max-w-4xl mx-auto px-4 pb-8 flex justify-end">
+                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
                       </button>
@@ -1528,7 +1528,7 @@ export default function StudioPage() {
                         });
                       }}
                     />
-                    <div className="max-w-4xl mx-auto px-4 pb-4">
+                    <div className="max-w-6xl mx-auto px-4 pb-4">
                       <TabAssistant tab="style" language={language} config={currentSession.config} />
                     </div>
                   </>
@@ -1774,9 +1774,9 @@ export default function StudioPage() {
               </button>
 
               {rightPanelOpen && (
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
                   {/* 도우미 섹션 */}
-                  <div className="p-4 space-y-3 border-b border-border">
+                  <div className="p-4 space-y-3 border-b border-border min-w-0">
                     <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
                       {isKO ? '집필 참고' : 'Reference'}
                     </div>
@@ -1787,7 +1787,7 @@ export default function StudioPage() {
                       {(() => {
                         const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
                         const txt = prev?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                        return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
+                        return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed break-words overflow-hidden">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
                       })()}
                     </details>
 
@@ -1798,10 +1798,10 @@ export default function StudioPage() {
                           ? 'text-text-tertiary hover:text-text-secondary'
                           : 'text-amber-400 hover:text-amber-300'
                       }`}>🎬 {isKO ? '씬시트' : 'Scene'} {!currentSession.config.sceneDirection && <span className="text-[9px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{isKO ? '미설정' : 'Not set'}</span>}</summary>
-                      <div className="mt-1.5 pl-4 space-y-1">
-                        {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400">🪝 {h.desc}</div>)}
-                        {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
-                        {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
+                      <div className="mt-1.5 pl-4 space-y-1 min-w-0">
+                        {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400 break-words">🪝 {h.desc}</div>)}
+                        {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
+                        {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400 break-words">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                         {!currentSession.config.sceneDirection && (
                           <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
                             <p className="text-[10px] text-amber-300">{isKO ? '씬시트 없이 집필하면 AI 품질이 떨어집니다' : 'Writing without scene direction reduces AI quality'}</p>
@@ -1816,9 +1816,9 @@ export default function StudioPage() {
                     {/* ③ 캐릭터 */}
                     <details className="group">
                       <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">👤 {isKO ? '캐릭터' : 'Chars'} ({currentSession.config.characters.length})</summary>
-                      <div className="mt-1.5 pl-4 space-y-1.5">
+                      <div className="mt-1.5 pl-4 space-y-1.5 min-w-0">
                         {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
-                          <div key={c.id} className="text-[10px]">
+                          <div key={c.id} className="text-[10px] break-words">
                             <span className="font-bold text-text-primary">{c.name}</span> <span className="text-text-tertiary">({c.role})</span>
                             {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
                           </div>

@@ -35,22 +35,24 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
     // Remove ALL code blocks (json, JSON, unmarked)
     mainContent = mainContent.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').trim();
 
-    // 2) Standalone JSON objects at end of content: { "grade": ..., "metrics": ... }
-    const trailingJson = mainContent.match(/\n?\s*(\{[\s\S]*"(?:grade|metrics|critique|tension|eos)"[\s\S]*\})\s*$/);
-    if (trailingJson) {
+    // 2) Standalone JSON objects anywhere in content: { "grade": ..., "metrics": ... }
+    const jsonObjRe = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*"(?:grade|metrics|critique|tension|eos(?:_score|Score)?|pacing|immersion)"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+    let jsonMatch: RegExpExecArray | null;
+    while ((jsonMatch = jsonObjRe.exec(mainContent)) !== null) {
       try {
-        const parsed = JSON.parse(trailingJson[1]);
+        const parsed = JSON.parse(jsonMatch[0]);
         if (parsed && typeof parsed === 'object') {
           analysisData = analysisData || parsed;
-          mainContent = mainContent.replace(trailingJson[0], '').trim();
         }
       } catch { /* not valid JSON */ }
     }
+    mainContent = mainContent.replace(jsonObjRe, '').trim();
 
     // 3) Remove any remaining lines that look like raw metrics output
     mainContent = mainContent
       .replace(/^\s*\{[\s\S]*?"grade"\s*:[\s\S]*?\}\s*$/gm, '')
       .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')
+      .replace(/^\s*"(?:grade|metrics|tension|pacing|immersion|eos)"[\s:].*/gm, '')
       .trim();
   }
 

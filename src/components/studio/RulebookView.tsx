@@ -12,7 +12,7 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
   const t = TRANSLATIONS[language]?.rulebook || TRANSLATIONS['KO'].rulebook;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
+    <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
       <div className="flex items-center gap-4 md:gap-6">
         <div className="p-4 md:p-5 bg-zinc-900 border border-zinc-800 rounded-2xl md:rounded-3xl">
           <FileText className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />

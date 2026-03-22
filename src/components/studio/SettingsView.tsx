@@ -31,7 +31,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   const [temperature, setTemperature] = useState<number>(() => typeof window !== 'undefined' ? parseFloat(localStorage.getItem('noa_temperature') || '0.7') : 0.7);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
+    <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
       <div>
         <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{isKO ? "설정 및 계정" : "Settings & Account"}</h2>
         <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">System Control Center</p>
