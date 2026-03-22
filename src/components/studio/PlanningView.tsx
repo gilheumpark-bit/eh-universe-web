@@ -164,6 +164,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.projectTitle}</label>
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
+              aria-label={t.projectTitle}
               value={config.title}
               onChange={e => setConfig({ ...config, title: e.target.value })}
             />
@@ -172,6 +173,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.primaryGenre}</label>
             <select
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none cursor-pointer"
+              aria-label={t.primaryGenre}
               value={config.genre}
               onChange={e => setConfig({ ...config, genre: e.target.value as Genre })}
             >
@@ -302,7 +304,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         {/* Guardrails */}
         <div className="space-y-6 pt-6 border-t border-zinc-800">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" /> Narrative Guardrails
+            <BarChart3 className="w-4 h-4" /> {isKO ? '서사 가드라인' : 'Narrative Guardrails'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div className="space-y-4">
@@ -310,14 +312,14 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 <span>{t.minDensity}</span>
                 <span>{config.guardrails.min}{language === 'KO' ? '자' : ' chars'}</span>
               </div>
-              <input type="range" min="1000" max="10000" step="500" className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
+              <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
             </div>
             <div className="space-y-4">
               <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
                 <span>{t.maxCapacity}</span>
                 <span>{config.guardrails.max}{language === 'KO' ? '자' : ' chars'}</span>
               </div>
-              <input type="range" min="2000" max="15000" step="500" className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
+              <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
             </div>
           </div>
         </div>

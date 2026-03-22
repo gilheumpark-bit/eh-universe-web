@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { useAuth } from '@/lib/AuthContext';
@@ -26,9 +26,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   const isKO = language === 'KO';
   const l = LABELS[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') || 'MOBILE' : 'MOBILE');
-  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => typeof window !== 'undefined' ? parseInt(localStorage.getItem('noa_default_episodes') || '25') : 25);
-  const [temperature, setTemperature] = useState<number>(() => typeof window !== 'undefined' ? parseFloat(localStorage.getItem('noa_temperature') || '0.7') : 0.7);
+  const [defaultPlatform, setDefaultPlatform] = useState<string>('MOBILE');
+  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(25);
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [apiKeyStatus, setApiKeyStatus] = useState<boolean>(false);
+
+  useEffect(() => {
+    setDefaultPlatform(localStorage.getItem('noa_default_platform') || 'MOBILE');
+    setDefaultEpisodes(parseInt(localStorage.getItem('noa_default_episodes') || '25'));
+    setTemperature(parseFloat(localStorage.getItem('noa_temperature') || '0.7'));
+    setApiKeyStatus(!!localStorage.getItem('noa_api_key'));
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
@@ -81,7 +89,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
                 </div>
               </div>
               <div className="text-[10px] font-black text-blue-500 uppercase shrink-0 ml-2">
-                {localStorage.getItem('noa_api_key') ? (isKO ? '설정됨' : 'Set') : (isKO ? '미설정' : 'Not Set')}
+                {apiKeyStatus ? (isKO ? '설정됨' : 'Set') : (isKO ? '미설정' : 'Not Set')}
               </div>
             </div>
 

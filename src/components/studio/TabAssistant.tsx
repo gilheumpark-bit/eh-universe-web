@@ -26,8 +26,8 @@ interface TabAssistantProps {
 
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
   world: {
-    ko: '세계관 어시스턴트',
-    en: 'World Assistant',
+    ko: 'NOL — Narrative Origin Lore',
+    en: 'NOL — Narrative Origin Lore',
     temperature: 0.7,
     systemKo: `당신은 소설 세계관 설계 전문가입니다.
 
@@ -72,8 +72,8 @@ Evaluate settings on 5 axes:
 - Always include concrete examples`,
   },
   critique: {
-    ko: '시뮬레이터 어시스턴트',
-    en: 'Simulator Assistant',
+    ko: 'NOS — Narrative Origin Simulator',
+    en: 'NOS — Narrative Origin Simulator',
     temperature: 0.5,
     systemKo: `당신은 세계관 시뮬레이션 분석가입니다.
 
@@ -112,8 +112,8 @@ Evaluate settings on 5 axes:
 - Propose "What if faction X does Y?" scenarios`,
   },
   characters: {
-    ko: '캐릭터 어시스턴트',
-    en: 'Character Assistant',
+    ko: 'NOC — Narrative Origin Character',
+    en: 'NOC — Narrative Origin Character',
     temperature: 0.8,
     systemKo: `당신은 소설 캐릭터 심리 분석 전문가입니다.
 
@@ -157,8 +157,8 @@ Evaluate settings on 5 axes:
 - Describe both directions in relationship analysis`,
   },
   rulebook: {
-    ko: '연출 어시스턴트',
-    en: 'Direction Assistant',
+    ko: 'NOP — Narrative Origin Producer',
+    en: 'NOP — Narrative Origin Producer',
     temperature: 0.7,
     systemKo: `당신은 소설 장면 연출 전문 편집자입니다.
 
@@ -199,8 +199,8 @@ Evaluate settings on 5 axes:
 - Suggest specific techniques (e.g., "Insert 2 lines of inner monologue here for tension +2")`,
   },
   style: {
-    ko: '문체 어시스턴트',
-    en: 'Style Assistant',
+    ko: 'NOE — Narrative Origin Expression',
+    en: 'NOE — Narrative Origin Expression',
     temperature: 0.6,
     systemKo: `당신은 소설 문체 분석 전문가입니다.
 

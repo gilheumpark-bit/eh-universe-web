@@ -6,7 +6,7 @@ import {
   Sparkles, Menu, Globe, UserCircle,
   Zap, Ghost, X, PenTool, History, StopCircle,
   Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon,
-  FileType
+  FileType, Key
 } from 'lucide-react';
 import {
   Message, StoryConfig, Genre,
@@ -61,15 +61,9 @@ export default function StudioPage() {
   // ============================================================
   // PROJECT-BASED STATE MANAGEMENT
   // ============================================================
-  const [projects, setProjects] = useState<Project[]>(() => {
-    if (typeof window === 'undefined') return [];
-    return loadProjects();
-  });
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const loaded = loadProjects();
-    return loaded.length > 0 ? loaded[0].id : null;
-  });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const currentProject = projects.find(p => p.id === currentProjectId) || null;
 
   // Sessions derived from current project
@@ -82,11 +76,7 @@ export default function StudioPage() {
     }));
   }, [currentProjectId]);
 
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => {
-    const loaded = loadProjects();
-    const firstProject = loaded[0];
-    return firstProject?.sessions?.[0]?.id || null;
-  });
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -268,9 +258,21 @@ export default function StudioPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Hydration: localStorage → state (클라이언트 전용, 서버 렌더링 불일치 방지)
   useEffect(() => {
+    const loaded = loadProjects();
+    if (loaded.length > 0) {
+      setProjects(loaded);
+      setCurrentProjectId(loaded[0].id);
+      setCurrentSessionId(loaded[0].sessions?.[0]?.id || null);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     saveProjects(projects);
-  }, [projects]);
+  }, [projects, hydrated]);
 
   const messageCount = currentSession?.messages?.length ?? 0;
   useEffect(() => {
@@ -939,6 +941,16 @@ export default function StudioPage() {
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
+            {/* API 키 미설정 안내 배너 */}
+            {hydrated && !localStorage.getItem('noa_api_key') && (
+              <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
+                <Key className="w-4 h-4 shrink-0" />
+                <span className="flex-1">{isKO ? 'AI 기능을 사용하려면 API 키를 설정하세요.' : 'Set your API key to use AI features.'}</span>
+                <button onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
+                  {isKO ? '설정하기' : 'Set Up'}
+                </button>
+              </div>
+            )}
             {!currentSessionId && !['settings', 'history', 'rulebook', 'critique', 'style'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
@@ -1883,7 +1895,7 @@ export default function StudioPage() {
                           return false;
                         }).slice(-6).map(msg => (
                           <div key={msg.id} className={`text-[11px] leading-relaxed ${msg.role === 'user' ? 'text-accent-purple' : 'text-text-secondary'}`}>
-                            <span className="font-bold">{msg.role === 'user' ? '나' : 'AI'}:</span> {msg.content.slice(0, 200)}{msg.content.length > 200 ? '...' : ''}
+                            <span className="font-bold">{msg.role === 'user' ? '나' : 'NOW'}:</span> {msg.content.slice(0, 200)}{msg.content.length > 200 ? '...' : ''}
                           </div>
                         ))
                       )}
