@@ -49,7 +49,7 @@ import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/ser
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
-// BYOK provider info available via '@/lib/ai-providers'
+import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 const INITIAL_CONFIG: StoryConfig = {
   genre: Genre.SYSTEM_HUNTER,
@@ -102,6 +102,9 @@ export default function StudioPage() {
   const currentSession = sessions.find(s => s.id === currentSessionId) || null;
   const t = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const isKO = language === 'KO';
+
+  // API 키 존재 여부 (렌더링용, hydrated 이후만 체크)
+  const hasApiKey = hydrated && !!getApiKey(getActiveProvider());
 
   // UX feature states
   const [searchQuery, setSearchQuery] = useState('');
@@ -348,9 +351,26 @@ export default function StudioPage() {
   }, [language, projects.length, setSessions]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
+    // 수동 편집 중 탭 전환 시 미저장 경고
+    if (activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
+      showConfirm({
+        title: isKO ? '편집 내용 미저장' : 'Unsaved Edits',
+        message: isKO
+          ? '수동 편집 내용이 저장되지 않았습니다. 탭을 전환하시겠습니까?'
+          : 'Your manual edits have not been saved. Switch tabs anyway?',
+        variant: 'warning',
+        confirmLabel: isKO ? '전환' : 'Switch',
+        cancelLabel: isKO ? '계속 편집' : 'Keep Editing',
+        onConfirm: () => {
+          setActiveTab(tab);
+          if (window.innerWidth < 768) setIsSidebarOpen(false);
+        }
+      });
+      return;
+    }
     setActiveTab(tab);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, []);
+  }, [activeTab, writingMode, editDraft, isKO, showConfirm]);
 
   const deleteSession = (sessionIdToDelete: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);
@@ -578,6 +598,12 @@ export default function StudioPage() {
   const handleSend = async (customPrompt?: string) => {
     const text = customPrompt || input;
     if (!text.trim() || isGenerating || !currentSessionId) return;
+
+    // API 키 사전 검증 — 네트워크 실패 전에 차단
+    if (!getApiKey(getActiveProvider())) {
+      setShowApiKeyModal(true);
+      return;
+    }
 
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
@@ -1307,11 +1333,12 @@ export default function StudioPage() {
                     {/* AI / Edit sub-tabs + Directive — hide when empty AI mode */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (<>
                     <div className="flex gap-1 items-center">
-                      <button onClick={() => setWritingMode('ai')}
+                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🤖 {isKO ? '초안 생성' : 'Draft'}
+                        } ${!hasApiKey && writingMode !== 'ai' ? 'opacity-50' : ''}`}
+                        title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                        🤖 {isKO ? '초안 생성' : 'Draft'}{!hasApiKey && ' 🔒'}
                       </button>
                       <button onClick={() => {
                         setWritingMode('edit');
@@ -1328,13 +1355,15 @@ export default function StudioPage() {
                         }`}>
                         ✏️ {isKO ? '직접 편집' : 'Manual Edit'}
                       </button>
-                      <button onClick={() => { setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
+                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🎨 {isKO ? '3단계 작성' : '3-Step Write'}
+                        } ${!hasApiKey && writingMode !== 'canvas' ? 'opacity-50' : ''}`}
+                        title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                        🎨 {isKO ? '3단계 작성' : '3-Step Write'}{!hasApiKey && ' 🔒'}
                       </button>
                       <button onClick={() => {
+                        if (!hasApiKey) { setShowApiKeyModal(true); return; }
                         setWritingMode('refine');
                         if (!editDraft && currentSession.messages.length > 0) {
                           const allText = currentSession.messages
@@ -1346,14 +1375,16 @@ export default function StudioPage() {
                       }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        ⚡ {isKO ? 'AUTO 30%' : 'AUTO 30%'}
+                        } ${!hasApiKey && writingMode !== 'refine' ? 'opacity-50' : ''}`}
+                        title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                        ⚡ {isKO ? 'AUTO 30%' : 'AUTO 30%'}{!hasApiKey && ' 🔒'}
                       </button>
-                      <button onClick={() => setWritingMode('advanced')}
+                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🎯 {isKO ? '정밀 집필' : 'Advanced'}
+                        } ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-50' : ''}`}
+                        title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                        🎯 {isKO ? '정밀 집필' : 'Advanced'}{!hasApiKey && ' 🔒'}
                       </button>
                       {writingMode === 'edit' && (
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
@@ -1469,12 +1500,33 @@ export default function StudioPage() {
                             </button>
                           </div>
                         </div>
-                        <InlineRewriter
-                          content={editDraft}
-                          language={language}
-                          context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined}
-                          onApply={(newContent) => setEditDraft(newContent)}
-                        />
+                        {!editDraft.trim() ? (
+                          /* ====== EMPTY EDIT ONBOARDING ====== */
+                          <div className="text-center py-16 space-y-4">
+                            <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
+                            <p className="text-sm text-text-secondary font-[family-name:var(--font-mono)]">
+                              {isKO ? '원고를 직접 작성하세요' : 'Write your manuscript here'}
+                            </p>
+                            <p className="text-[10px] text-text-tertiary max-w-md mx-auto">
+                              {isKO
+                                ? 'AI 없이 직접 글을 쓸 수 있습니다. 아래 영역에 텍스트를 붙여넣거나 입력하세요. 텍스트 선택 후 AI 리라이트 액션도 사용 가능합니다.'
+                                : 'Write directly without AI. Paste or type text below. You can also select text for AI rewrite actions.'}
+                            </p>
+                            <textarea
+                              value={editDraft}
+                              onChange={e => setEditDraft(e.target.value)}
+                              placeholder={isKO ? '여기에 원고를 입력하세요...' : 'Type your manuscript here...'}
+                              className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] resize-y"
+                            />
+                          </div>
+                        ) : (
+                          <InlineRewriter
+                            content={editDraft}
+                            language={language}
+                            context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined}
+                            onApply={(newContent) => setEditDraft(newContent)}
+                          />
+                        )}
                       </div>
                     )}
 
@@ -1676,6 +1728,11 @@ export default function StudioPage() {
                     config={currentSession.config}
                     setConfig={setConfig}
                     messages={currentSession.messages}
+                    onEditInStudio={(content) => {
+                      setEditDraft(content);
+                      setWritingMode('edit');
+                      setActiveTab('writing');
+                    }}
                   />
                 )}
                 {activeTab === 'history' && (() => {

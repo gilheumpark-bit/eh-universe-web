@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3 } from "lucide-react";
+import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool } from "lucide-react";
 import type { StoryConfig, EpisodeManuscript, AppLanguage } from "@/lib/studio-types";
 
 // ============================================================
@@ -13,6 +13,7 @@ interface ManuscriptViewProps {
   config: StoryConfig;
   setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   messages: { role: string; content: string }[];
+  onEditInStudio?: (content: string) => void;
 }
 
 function stripJSON(text: string): string {
@@ -147,7 +148,7 @@ ${manuscripts
 // PART 2 — COMPONENT
 // ============================================================
 
-export default function ManuscriptView({ language, config, setConfig, messages }: ManuscriptViewProps) {
+export default function ManuscriptView({ language, config, setConfig, messages, onEditInStudio }: ManuscriptViewProps) {
   const isKO = language === "KO";
   const manuscripts = config.manuscripts || [];
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
@@ -392,6 +393,11 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                   ) : (
                     <div className="p-4">
                       <div className="flex justify-end gap-2 mb-3">
+                        {onEditInStudio && (
+                          <button onClick={() => onEditInStudio(m.content)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-green transition-colors" title={isKO ? '스튜디오에서 편집' : 'Edit in Studio'}>
+                            <PenTool className="w-3 h-3" />
+                          </button>
+                        )}
                         <button onClick={() => startEdit(m)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
                           <Edit3 className="w-3 h-3" />
                         </button>
