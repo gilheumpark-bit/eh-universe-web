@@ -1,13 +1,13 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 
+// IMPORTANT: authDomain and projectId are hardcoded because the Vercel env vars
+// contain wrong values ("eh-universe" instead of "gen-lang-client-0645063497").
+// The real Firebase project is gen-lang-client-0645063497.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  // IMPORTANT: hardcoded because env var NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-  // may contain wrong value ("eh-universe.firebaseapp.com").
-  // The real Firebase project domain is gen-lang-client-0645063497.
   authDomain: 'gen-lang-client-0645063497.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  projectId: 'gen-lang-client-0645063497',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
