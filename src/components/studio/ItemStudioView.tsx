@@ -1,0 +1,833 @@
+// ============================================================
+// PART 0 — IMPORTS & TYPES
+// ============================================================
+import React, { useState, useMemo } from 'react';
+import {
+  Item, Skill, MagicSystem, ItemRarity, ItemCategory,
+  StoryConfig, AppLanguage,
+} from '@/lib/studio-types';
+import {
+  Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
+  BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
+} from 'lucide-react';
+
+// ============================================================
+// PART 1 — CONSTANTS & LABELS
+// ============================================================
+
+const RARITY_CONFIG: Record<ItemRarity, { label: Record<'ko' | 'en', string>; color: string; bg: string }> = {
+  common:    { label: { ko: '일반', en: 'Common' },    color: '#9ca3af', bg: 'bg-gray-500/10' },
+  uncommon:  { label: { ko: '고급', en: 'Uncommon' },   color: '#22c55e', bg: 'bg-green-500/10' },
+  rare:      { label: { ko: '희귀', en: 'Rare' },       color: '#3b82f6', bg: 'bg-blue-500/10' },
+  epic:      { label: { ko: '영웅', en: 'Epic' },       color: '#a855f7', bg: 'bg-purple-500/10' },
+  legendary: { label: { ko: '전설', en: 'Legendary' },  color: '#f59e0b', bg: 'bg-amber-500/10' },
+  mythic:    { label: { ko: '신화', en: 'Mythic' },     color: '#ef4444', bg: 'bg-red-500/10' },
+};
+
+const CATEGORY_CONFIG: Record<ItemCategory, { label: Record<'ko' | 'en', string>; icon: React.ElementType }> = {
+  weapon:     { label: { ko: '무기', en: 'Weapon' },     icon: Sword },
+  armor:      { label: { ko: '방어구', en: 'Armor' },    icon: Shield },
+  accessory:  { label: { ko: '장신구', en: 'Accessory' }, icon: Sparkles },
+  consumable: { label: { ko: '소모품', en: 'Consumable' }, icon: Zap },
+  material:   { label: { ko: '재료', en: 'Material' },   icon: Package },
+  quest:      { label: { ko: '퀘스트', en: 'Quest' },    icon: ScrollText },
+  misc:       { label: { ko: '기타', en: 'Misc' },       icon: Package },
+};
+
+const SKILL_TYPES = [
+  { value: 'active' as const, ko: '액티브', en: 'Active' },
+  { value: 'passive' as const, ko: '패시브', en: 'Passive' },
+  { value: 'ultimate' as const, ko: '궁극기', en: 'Ultimate' },
+];
+
+// ============================================================
+// PART 1B — EH UNIVERSE REFERENCE PRESETS
+// ============================================================
+
+const PRESET_MAGIC_SYSTEMS: MagicSystem[] = [
+  {
+    id: 'preset-eh-force',
+    name: '존재력 (Existence Heft)',
+    source: '생명체 내부 근원 에너지 — 세계와의 공명으로 발현',
+    rules: '체내 존재력을 압축·방출하여 전투에 활용. 수련과 전투 경험으로 성장. 검술(내부 밀도 강화)과 마법(외부 마나 조작)으로 분기.',
+    limitations: '과다 사용 시 의식 상실. 4파동 후반부터 불안정, 5파동 미완성 시 폭주 위험(주변 파괴). GH 달성 후 안정화.',
+    ranks: ['1파동 — 일반인', '2파동 — 숙련 전사', '3파동 — 상위 기사', '4파동 — 왕국급 전력', '5파동(GH) — 세계 공명 완성'],
+  },
+  {
+    id: 'preset-divine-force',
+    name: '신성력 (Divine Force)',
+    source: '성녀 전용 감정 기반 에너지 — 소환 시 자동 부여',
+    rules: '감정 상태와 직결. 사랑·신뢰로 증가, 공포·분노로 감소. 치유·정화·결계 발현. 권위(Authority) 능력은 세계 법칙 예외 코드.',
+    limitations: '과다 사용 시 인간성 감소·감정 둔화. 분노 극한 시 성력 폭주. 권위 명령은 마족에게 무효.',
+    ranks: ['1급 — 기본 치유 (10m)', '2급 — 집단 치유 (50m)', '3급 — 정화 능력', '4급 — 신성 결계', '5급 — 권위 완전 각성'],
+  },
+  {
+    id: 'preset-eh-heart',
+    name: 'EH (Error Heart)',
+    source: '결정론적 계산에서 발생하는 의미 잔차 — 예측 불가 선택에서 생성',
+    rules: '측정 가능하나 역산·재현 불가. 은하계 기축통화(단위: Hart). Type A(감정형/높은 강도), Type B(윤리형/장기 지속), Type C(존재형/극희귀).',
+    limitations: '복제 지구 유지비가 EH 수입 초과 시 파산. 일부 개체 매매 금지. NOA 안드로이드는 EH=0 환경에서 부팅 불가.',
+    ranks: ['Type A — 순수 감정형', 'Type B — 윤리적', 'Type C — 존재형·창의적'],
+  },
+  {
+    id: 'preset-magic-mana',
+    name: '마법 체계 (Mana System)',
+    source: '세계에 존재하는 기본 에너지(마나) — 체내 마나 코어에서 발현',
+    rules: '원소(화·수·풍·토), 강화, 정신계, 소환, 특수의 5분류. 외부 마나 조작이 핵심. 코어 등급에 따라 성장 속도 차이.',
+    limitations: '검술과 상호배타(마나 외부 방출 vs 존재력 내부 밀도). 비마법 체계(검술)와 공존하나 동시 사용 불가.',
+    ranks: ['1급 — 초급', '3급 — 중급', '5급 — 상급', '7급 — 왕국급 전력', '10급 — 전설급 대마법사'],
+  },
+];
+
+const PRESET_SKILLS: Skill[] = [
+  {
+    id: 'preset-skill-wave-sever',
+    name: '파동절단 (Wave Sever)',
+    type: 'active',
+    owner: '민시영',
+    description: '존재력을 직선으로 극압축 후 방출하는 대형 베기. 보스급 몬스터 전용 기술.',
+    cost: '존재력 대량 소모',
+    cooldown: '장기전 불가',
+    rank: '4파동+',
+  },
+  {
+    id: 'preset-skill-phantom-step',
+    name: '잔영가속 (Phantom Step)',
+    type: 'active',
+    owner: '민시영',
+    description: '체력계 존재력을 극압축하여 초고속 이동. 잔상이 남을 정도의 속도.',
+    cost: '체력계 존재력',
+    cooldown: '연속 3회 제한',
+    rank: '3파동+',
+  },
+  {
+    id: 'preset-skill-resonance-counter',
+    name: '공명역베기 (Resonance Counter)',
+    type: 'active',
+    owner: '민시영',
+    description: '상대 파동의 역위상을 포착하여 붕괴시키는 카운터 기술. 파동 자체를 무력화.',
+    cost: '정밀 타이밍 필요',
+    cooldown: '상대 파동 발현 시에만',
+    rank: '4파동+',
+  },
+  {
+    id: 'preset-skill-density-collapse',
+    name: '밀도붕괴 (Density Collapse)',
+    type: 'ultimate',
+    owner: '민시영',
+    description: '5파동 미완성 상태에서 공간을 압박하는 위험 기술. 부작용 있음.',
+    cost: '5파동 불안정 소모',
+    cooldown: '1회성 (부작용 위험)',
+    rank: '5파동 미완성',
+  },
+  {
+    id: 'preset-skill-completion',
+    name: '완결 (Completion)',
+    type: 'ultimate',
+    owner: '민시영',
+    description: '아크 형태 변환 + 5파동 완전 공명. 존재를 원래 자리로 재정렬(파괴가 아닌 안정화).',
+    cost: 'GH 완전 각성 필요',
+    cooldown: '최종 비기',
+    rank: 'GH (5파동 완성)',
+  },
+  {
+    id: 'preset-skill-authority-kneel',
+    name: '권위: 꿇어라',
+    type: 'active',
+    owner: '이지영',
+    description: '성녀의 권위 명령 — 대상을 강제로 무릎 꿇림. 마족에게는 무효.',
+    cost: '신성력',
+    cooldown: '없음',
+    rank: '권위 1단계+',
+  },
+  {
+    id: 'preset-skill-purification',
+    name: '정화 (Purification)',
+    type: 'active',
+    owner: '이지영',
+    description: '왜곡된 존재를 정화하는 성녀 전용 능력. 마족 왜곡 제거 가능.',
+    cost: '신성력 대량 소모',
+    cooldown: '성력 회복 필요',
+    rank: '3급+',
+  },
+];
+
+const PRESET_ITEMS: Item[] = [
+  {
+    id: 'preset-item-arc-sword',
+    name: '민시영의 검 (아크)',
+    category: 'weapon',
+    rarity: 'legendary',
+    description: '아크 형태 변환이 가능한 민시영의 주력 검. 5파동 완전 공명 시 "완결" 발동 매체.',
+    effect: '존재력 압축 효율 극대화, 아크 형태 변환',
+    obtainedFrom: '이세계 소환 직후 획득',
+  },
+  {
+    id: 'preset-item-divine-vestment',
+    name: '성녀복 (Divine Vestment)',
+    category: 'armor',
+    rarity: 'epic',
+    description: '소환 시 자동 변환되는 백색 성녀 의복. 신성력 증폭 효과.',
+    effect: '신성력 증폭, 정화 범위 확장',
+    obtainedFrom: '성녀 소환 시 자동 부여',
+  },
+  {
+    id: 'preset-item-summoning-circle',
+    name: '대성당 소환 마법진',
+    category: 'quest',
+    rarity: 'mythic',
+    description: '루미나 대성당 지하의 성녀 소환용 대형 마법진. 활성화에 3개월 소요.',
+    effect: '이세계 성녀 소환 (18~20세 지구인 대상)',
+    obtainedFrom: '루미나 대성당 지하',
+  },
+  {
+    id: 'preset-item-mana-core',
+    name: '마나 코어 (상급)',
+    category: 'material',
+    rarity: 'rare',
+    description: '마법사의 체내에서 형성되는 마나 결정체. 등급에 따라 성장 속도 결정.',
+    effect: '마법 등급 상한 결정, 마나 회복량 증가',
+    obtainedFrom: '선천적 보유 또는 던전 보스 드롭',
+  },
+  {
+    id: 'preset-item-eh-token',
+    name: 'EH 토큰 (1,000 Hart)',
+    category: 'misc',
+    rarity: 'uncommon',
+    description: '은하계 기축통화 Error Heart의 소액 토큰. 일상 거래용.',
+    effect: '은하계 표준 결제 수단',
+    obtainedFrom: '예측 불가 선택 수행 시 생성',
+  },
+  {
+    id: 'preset-item-gate-key',
+    name: 'Gate 액세스 키',
+    category: 'quest',
+    rarity: 'epic',
+    description: 'HPG 게이트 인프라 접근 권한 키. 광년 단위 도약 이동에 필요.',
+    effect: '게이트 v4.7 접근 허가, 최대 27,500광년 점프',
+    obtainedFrom: '중앙협의회 발급',
+  },
+];
+
+type PresetCategory = 'all' | 'magic' | 'skills' | 'items';
+
+function getPresetSummary(isKO: boolean): { magic: number; skills: number; items: number } {
+  return {
+    magic: PRESET_MAGIC_SYSTEMS.length,
+    skills: PRESET_SKILLS.length,
+    items: PRESET_ITEMS.length,
+  };
+}
+
+interface ItemStudioViewProps {
+  language: AppLanguage;
+  config: StoryConfig;
+  setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
+}
+
+type SubTab = 'items' | 'skills' | 'magic' | 'balance';
+
+// ============================================================
+// PART 2 — HELPER: BALANCE ANALYSIS
+// ============================================================
+
+function analyzeBalance(items: Item[], skills: Skill[]): {
+  rarityDist: Record<ItemRarity, number>;
+  categoryDist: Record<ItemCategory, number>;
+  skillTypeDist: Record<string, number>;
+  warnings: string[];
+  isKO: boolean;
+} {
+  const rarityDist = {} as Record<ItemRarity, number>;
+  const categoryDist = {} as Record<ItemCategory, number>;
+  const skillTypeDist = {} as Record<string, number>;
+  const warnings: string[] = [];
+  const isKO = true;
+
+  for (const item of items) {
+    rarityDist[item.rarity] = (rarityDist[item.rarity] ?? 0) + 1;
+    categoryDist[item.category] = (categoryDist[item.category] ?? 0) + 1;
+  }
+  for (const skill of skills) {
+    skillTypeDist[skill.type] = (skillTypeDist[skill.type] ?? 0) + 1;
+  }
+
+  const legendary = (rarityDist.legendary ?? 0) + (rarityDist.mythic ?? 0);
+  const total = items.length;
+  if (total > 0 && legendary / total > 0.3) {
+    warnings.push(isKO ? '⚠️ 전설급 이상 아이템 비율이 30%를 초과합니다 — 희소성이 떨어질 수 있습니다' : '⚠️ Legendary+ items exceed 30% — rarity dilution risk');
+  }
+  if (total > 5 && !rarityDist.common) {
+    warnings.push(isKO ? '⚠️ 일반 등급 아이템이 없습니다 — 기본 아이템이 필요합니다' : '⚠️ No common items — consider adding basic items');
+  }
+  const ultimates = skillTypeDist['ultimate'] ?? 0;
+  if (ultimates > 3) {
+    warnings.push(isKO ? '⚠️ 궁극기가 3개 이상입니다 — 파워 인플레이션 주의' : '⚠️ More than 3 ultimate skills — power inflation risk');
+  }
+  if (skills.length > 0) {
+    const owners = new Set(skills.map(s => s.owner));
+    const avgPerChar = skills.length / owners.size;
+    if (avgPerChar > 5) {
+      warnings.push(isKO ? `⚠️ 캐릭터당 평균 스킬 ${avgPerChar.toFixed(1)}개 — 복잡도가 높습니다` : `⚠️ Avg ${avgPerChar.toFixed(1)} skills per character — high complexity`);
+    }
+  }
+
+  return { rarityDist, categoryDist, skillTypeDist, warnings, isKO };
+}
+
+// ============================================================
+// PART 3 — MAIN COMPONENT
+// ============================================================
+
+const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setConfig }) => {
+  const [subTab, setSubTab] = useState<SubTab>('items');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const isKO = language === 'KO';
+  const lang = isKO ? 'ko' : 'en';
+
+  const items = config.items ?? [];
+  const skills = config.skills ?? [];
+  const magicSystems = config.magicSystems ?? [];
+
+  const setItems = (fn: (prev: Item[]) => Item[]) =>
+    setConfig(prev => ({ ...prev, items: fn(prev.items ?? []) }));
+  const setSkills = (fn: (prev: Skill[]) => Skill[]) =>
+    setConfig(prev => ({ ...prev, skills: fn(prev.skills ?? []) }));
+  const setMagicSystems = (fn: (prev: MagicSystem[]) => MagicSystem[]) =>
+    setConfig(prev => ({ ...prev, magicSystems: fn(prev.magicSystems ?? []) }));
+
+  // ============================================================
+  // PART 3A — ITEM FORM STATE
+  // ============================================================
+  const [newItem, setNewItem] = useState<Partial<Item>>({
+    name: '', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '',
+  });
+  const [itemFilter, setItemFilter] = useState<'all' | ItemCategory>('all');
+
+  const filteredItems = useMemo(() => {
+    if (itemFilter === 'all') return items;
+    return items.filter(i => i.category === itemFilter);
+  }, [items, itemFilter]);
+
+  const addItem = () => {
+    if (!newItem.name) return;
+    const item: Item = {
+      id: `item-${Date.now()}`,
+      name: newItem.name ?? '',
+      category: (newItem.category ?? 'weapon') as ItemCategory,
+      rarity: (newItem.rarity ?? 'common') as ItemRarity,
+      description: newItem.description ?? '',
+      effect: newItem.effect ?? '',
+      obtainedFrom: newItem.obtainedFrom ?? '',
+    };
+    setItems(prev => [...prev, item]);
+    setNewItem({ name: '', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '' });
+  };
+
+  // ============================================================
+  // PART 3B — SKILL FORM STATE
+  // ============================================================
+  const [newSkill, setNewSkill] = useState<Partial<Skill>>({
+    name: '', type: 'active', owner: '', description: '', cost: '', cooldown: '', rank: '',
+  });
+
+  const addSkill = () => {
+    if (!newSkill.name) return;
+    const skill: Skill = {
+      id: `skill-${Date.now()}`,
+      name: newSkill.name ?? '',
+      type: (newSkill.type ?? 'active') as 'active' | 'passive' | 'ultimate',
+      owner: newSkill.owner ?? '',
+      description: newSkill.description ?? '',
+      cost: newSkill.cost ?? '',
+      cooldown: newSkill.cooldown ?? '',
+      rank: newSkill.rank ?? '',
+    };
+    setSkills(prev => [...prev, skill]);
+    setNewSkill({ name: '', type: 'active', owner: '', description: '', cost: '', cooldown: '', rank: '' });
+  };
+
+  // ============================================================
+  // PART 3C — MAGIC SYSTEM FORM STATE
+  // ============================================================
+  const [newMagic, setNewMagic] = useState<Partial<MagicSystem>>({
+    name: '', source: '', rules: '', limitations: '',
+  });
+  const [newRank, setNewRank] = useState('');
+
+  const addMagic = () => {
+    if (!newMagic.name) return;
+    const magic: MagicSystem = {
+      id: `magic-${Date.now()}`,
+      name: newMagic.name ?? '',
+      source: newMagic.source ?? '',
+      rules: newMagic.rules ?? '',
+      limitations: newMagic.limitations ?? '',
+      ranks: [],
+    };
+    setMagicSystems(prev => [...prev, magic]);
+    setNewMagic({ name: '', source: '', rules: '', limitations: '' });
+  };
+
+  // ============================================================
+  // PART 3D-0 — PRESET LOADER
+  // ============================================================
+  const loadPreset = (category: PresetCategory) => {
+    const existingIds = new Set([
+      ...items.map(i => i.id),
+      ...skills.map(s => s.id),
+      ...magicSystems.map(m => m.id),
+    ]);
+
+    if (category === 'all' || category === 'magic') {
+      const newMagics = PRESET_MAGIC_SYSTEMS.filter(m => !existingIds.has(m.id));
+      if (newMagics.length > 0) setMagicSystems(prev => [...prev, ...newMagics]);
+    }
+    if (category === 'all' || category === 'skills') {
+      const newSkills = PRESET_SKILLS.filter(s => !existingIds.has(s.id));
+      if (newSkills.length > 0) setSkills(prev => [...prev, ...newSkills]);
+    }
+    if (category === 'all' || category === 'items') {
+      const newItems = PRESET_ITEMS.filter(i => !existingIds.has(i.id));
+      if (newItems.length > 0) setItems(prev => [...prev, ...newItems]);
+    }
+    setShowPresetMenu(false);
+  };
+
+  // ============================================================
+  // PART 3D — AI GENERATION STUB
+  // ============================================================
+  const handleAIGenerate = async () => {
+    if (!config.synopsis) {
+      alert(isKO ? '먼저 시놉시스를 작성해주세요.' : 'Please write the synopsis first.');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      // AI generation would call the LLM with config context
+      // For now, generate sample items based on genre
+      const genre = config.genre;
+      const sampleItems: Item[] = [
+        {
+          id: `item-ai-${Date.now()}`,
+          name: genre === 'SYSTEM_HUNTER' ? (isKO ? '각성자의 단검' : "Awakener's Dagger") : (isKO ? '마법의 검' : 'Magic Sword'),
+          category: 'weapon',
+          rarity: 'rare',
+          description: isKO ? 'AI가 시놉시스 기반으로 생성한 아이템입니다' : 'AI-generated item based on synopsis',
+          effect: genre === 'SYSTEM_HUNTER' ? (isKO ? '크리티컬 확률 +15%' : 'Crit chance +15%') : (isKO ? '마력 증폭 20%' : 'Magic amp +20%'),
+          obtainedFrom: isKO ? '1화 던전 보상' : 'Episode 1 dungeon reward',
+        },
+        {
+          id: `item-ai-${Date.now() + 1}`,
+          name: genre === 'SYSTEM_HUNTER' ? (isKO ? '회복 물약 (하급)' : 'Healing Potion (Low)') : (isKO ? '엘릭서' : 'Elixir'),
+          category: 'consumable',
+          rarity: 'common',
+          description: isKO ? '기본 회복 아이템' : 'Basic recovery item',
+          effect: isKO ? 'HP 30% 회복' : 'Restores 30% HP',
+          obtainedFrom: isKO ? '상점 구매' : 'Shop purchase',
+        },
+      ];
+      setItems(prev => [...prev, ...sampleItems]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // ============================================================
+  // PART 4 — SUB-TAB NAV
+  // ============================================================
+  const subTabs: { key: SubTab; label: string; icon: React.ElementType }[] = [
+    { key: 'items', label: isKO ? '아이템 도감' : 'Item Archive', icon: Sword },
+    { key: 'skills', label: isKO ? '스킬 트리' : 'Skill Tree', icon: Zap },
+    { key: 'magic', label: isKO ? '마법 체계' : 'Magic System', icon: Wand2 },
+    { key: 'balance', label: isKO ? '밸런스 분석' : 'Balance Analysis', icon: BarChart3 },
+  ];
+
+  // ============================================================
+  // PART 5 — BALANCE TAB
+  // ============================================================
+  const balance = useMemo(() => analyzeBalance(items, skills), [items, skills]);
+
+  // ============================================================
+  // PART 6 — RENDER
+  // ============================================================
+  return (
+    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-black tracking-tight">
+            {isKO ? '아이템 스튜디오' : 'Item Studio'}
+          </h2>
+          <p className="text-xs text-text-tertiary mt-1">
+            {isKO ? '아이템 · 스킬 · 마법체계를 설계하고 밸런스를 분석합니다' : 'Design items, skills, magic systems and analyze balance'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Preset Loader */}
+          <div className="relative">
+            <button
+              onClick={() => setShowPresetMenu(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all"
+            >
+              <ScrollText className="w-4 h-4" />
+              {isKO ? 'EH 프리셋' : 'EH Presets'}
+            </button>
+            {showPresetMenu && (
+              <div className="absolute right-0 top-full mt-2 z-50 bg-bg-secondary border border-border rounded-xl shadow-2xl p-2 min-w-[200px]">
+                <button onClick={() => loadPreset('all')} className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold hover:bg-accent-purple/20 transition-colors">
+                  🌐 {isKO ? '전체 로드 (마법+스킬+아이템)' : 'Load All (Magic+Skills+Items)'}
+                </button>
+                <button onClick={() => loadPreset('magic')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
+                  🔮 {isKO ? `마법 체계 (${getPresetSummary(isKO).magic}종)` : `Magic Systems (${getPresetSummary(isKO).magic})`}
+                </button>
+                <button onClick={() => loadPreset('skills')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
+                  ⚡ {isKO ? `스킬 (${getPresetSummary(isKO).skills}종)` : `Skills (${getPresetSummary(isKO).skills})`}
+                </button>
+                <button onClick={() => loadPreset('items')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
+                  ⚔️ {isKO ? `아이템 (${getPresetSummary(isKO).items}종)` : `Items (${getPresetSummary(isKO).items})`}
+                </button>
+                <div className="border-t border-border mt-1 pt-1">
+                  <p className="px-3 py-1 text-[9px] text-text-tertiary">
+                    {isKO ? '※ 존재력·신성력·EH·마법 4대 체계 + 민시영/이지영 스킬 포함' : '※ 4 power systems + character skills included'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* AI Generate */}
+          <button
+            onClick={handleAIGenerate}
+            disabled={isGenerating}
+            className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isKO ? 'AI 생성' : 'AI Generate'}
+          </button>
+        </div>
+      </div>
+
+      {/* Sub-tab Navigation */}
+      <div className="flex gap-2">
+        {subTabs.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setSubTab(key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              subTab === key
+                ? 'bg-accent-purple/20 text-accent-purple'
+                : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ====== ITEMS TAB ====== */}
+      {subTab === 'items' && (
+        <div className="space-y-4">
+          {/* Category Filter */}
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setItemFilter('all')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === 'all' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+              {isKO ? '전체' : 'All'} ({items.length})
+            </button>
+            {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
+              const count = items.filter(i => i.category === cat).length;
+              return (
+                <button key={cat} onClick={() => setItemFilter(cat)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === cat ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+                  {CATEGORY_CONFIG[cat].label[lang]} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Item Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredItems.map(item => {
+              const rCfg = RARITY_CONFIG[item.rarity];
+              const cCfg = CATEGORY_CONFIG[item.category];
+              const CatIcon = cCfg.icon;
+              return (
+                <div key={item.id} className={`${rCfg.bg} border border-border rounded-xl p-4 space-y-2`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CatIcon className="w-4 h-4" style={{ color: rCfg.color }} />
+                      <span className="font-bold text-sm">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color: rCfg.color, border: `1px solid ${rCfg.color}40` }}>
+                        {rCfg.label[lang]}
+                      </span>
+                      <button onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="text-text-tertiary hover:text-accent-red">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
+                  {item.effect && <p className="text-[10px] text-accent-purple font-bold">✦ {item.effect}</p>}
+                  {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add Item Form */}
+          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+            <h4 className="text-xs font-bold">{isKO ? '+ 새 아이템 추가' : '+ Add New Item'}</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '이름' : 'Name'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+                {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => (
+                  <option key={cat} value={cat}>{CATEGORY_CONFIG[cat].label[lang]}</option>
+                ))}
+              </select>
+              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+                {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => (
+                  <option key={r} value={r}>{RARITY_CONFIG[r].label[lang]}</option>
+                ))}
+              </select>
+              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={isKO ? '효과' : 'Effect'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={isKO ? '설명' : 'Description'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={isKO ? '획득처' : 'Obtained from'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
+                <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== SKILLS TAB ====== */}
+      {subTab === 'skills' && (
+        <div className="space-y-4">
+          {/* Skill Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {skills.map(skill => (
+              <div key={skill.id} className="bg-bg-secondary border border-border rounded-xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-amber-400' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
+                    <span className="font-bold text-sm">{skill.name}</span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-primary text-text-tertiary">
+                      {SKILL_TYPES.find(t => t.value === skill.type)?.[lang] ?? skill.type}
+                    </span>
+                  </div>
+                  <button onClick={() => setSkills(prev => prev.filter(s => s.id !== skill.id))} className="text-text-tertiary hover:text-accent-red">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {skill.owner && <p className="text-[10px] text-text-tertiary">👤 {skill.owner}</p>}
+                {skill.description && <p className="text-xs text-text-secondary">{skill.description}</p>}
+                <div className="flex gap-3 text-[10px] text-text-tertiary">
+                  {skill.cost && <span>💎 {skill.cost}</span>}
+                  {skill.cooldown && <span>⏱ {skill.cooldown}</span>}
+                  {skill.rank && <span>🏅 {skill.rank}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add Skill Form */}
+          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+            <h4 className="text-xs font-bold">{isKO ? '+ 새 스킬 추가' : '+ Add New Skill'}</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '스킬명' : 'Skill name'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+                {SKILL_TYPES.map(t => <option key={t.value} value={t.value}>{t[lang]}</option>)}
+              </select>
+              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={isKO ? '소유자' : 'Owner'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={isKO ? '등급' : 'Rank'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={isKO ? '설명' : 'Description'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs col-span-2" />
+              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={isKO ? '비용 (마나 50)' : 'Cost (50 mana)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
+                <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== MAGIC SYSTEM TAB ====== */}
+      {subTab === 'magic' && (
+        <div className="space-y-4">
+          {magicSystems.map(magic => (
+            <MagicSystemCard
+              key={magic.id}
+              magic={magic}
+              lang={lang}
+              isKO={isKO}
+              onDelete={() => setMagicSystems(prev => prev.filter(m => m.id !== magic.id))}
+              onAddRank={(rank) => setMagicSystems(prev => prev.map(m =>
+                m.id === magic.id ? { ...m, ranks: [...m.ranks, rank] } : m
+              ))}
+              onRemoveRank={(idx) => setMagicSystems(prev => prev.map(m =>
+                m.id === magic.id ? { ...m, ranks: m.ranks.filter((_, i) => i !== idx) } : m
+              ))}
+            />
+          ))}
+
+          {/* Add Magic System Form */}
+          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+            <h4 className="text-xs font-bold">{isKO ? '+ 새 마법 체계 추가' : '+ Add Magic System'}</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '체계명 (예: 마나 시스템)' : 'Name (e.g. Mana System)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={isKO ? '원천 (예: 정령의 힘)' : 'Source (e.g. Elemental force)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={isKO ? '규칙' : 'Rules'} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
+              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={isKO ? '제한사항' : 'Limitations'} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
+            </div>
+            <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
+              <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ====== BALANCE TAB ====== */}
+      {subTab === 'balance' && (
+        <div className="space-y-6">
+          {items.length === 0 && skills.length === 0 ? (
+            <div className="text-center py-16 text-text-tertiary text-sm">
+              {isKO ? '아이템이나 스킬을 먼저 추가해주세요' : 'Add items or skills first'}
+            </div>
+          ) : (
+            <>
+              {/* Warnings */}
+              {balance.warnings.length > 0 && (
+                <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-bold text-amber-400">{isKO ? '밸런스 경고' : 'Balance Warnings'}</h4>
+                  {balance.warnings.map((w, i) => <p key={i} className="text-xs text-amber-300">{w}</p>)}
+                </div>
+              )}
+
+              {/* Rarity Distribution */}
+              <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-bold">{isKO ? '등급별 아이템 분포' : 'Item Rarity Distribution'}</h4>
+                <div className="space-y-2">
+                  {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => {
+                    const count = balance.rarityDist[r] ?? 0;
+                    const pct = items.length > 0 ? (count / items.length) * 100 : 0;
+                    return (
+                      <div key={r} className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold w-12" style={{ color: RARITY_CONFIG[r].color }}>{RARITY_CONFIG[r].label[lang]}</span>
+                        <div className="flex-1 h-4 bg-bg-primary rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: RARITY_CONFIG[r].color }} />
+                        </div>
+                        <span className="text-[10px] text-text-tertiary w-8 text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Skill Type Distribution */}
+              {skills.length > 0 && (
+                <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+                  <h4 className="text-xs font-bold">{isKO ? '스킬 타입 분포' : 'Skill Type Distribution'}</h4>
+                  <div className="flex gap-4">
+                    {SKILL_TYPES.map(t => {
+                      const count = balance.skillTypeDist[t.value] ?? 0;
+                      return (
+                        <div key={t.value} className="text-center">
+                          <div className="text-2xl font-black">{count}</div>
+                          <div className="text-[10px] text-text-tertiary">{t[lang]}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: isKO ? '총 아이템' : 'Total Items', value: items.length, icon: Sword },
+                  { label: isKO ? '총 스킬' : 'Total Skills', value: skills.length, icon: Zap },
+                  { label: isKO ? '마법 체계' : 'Magic Systems', value: magicSystems.length, icon: Wand2 },
+                  { label: isKO ? '경고 수' : 'Warnings', value: balance.warnings.length, icon: BarChart3 },
+                ].map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="bg-bg-secondary rounded-xl p-4 text-center">
+                    <Icon className="w-5 h-5 mx-auto text-text-tertiary mb-2" />
+                    <div className="text-xl font-black">{value}</div>
+                    <div className="text-[10px] text-text-tertiary">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================
+// PART 7 — MAGIC SYSTEM CARD SUB-COMPONENT
+// ============================================================
+
+const MagicSystemCard: React.FC<{
+  magic: MagicSystem;
+  lang: 'ko' | 'en';
+  isKO: boolean;
+  onDelete: () => void;
+  onAddRank: (rank: string) => void;
+  onRemoveRank: (idx: number) => void;
+}> = ({ magic, lang, isKO, onDelete, onAddRank, onRemoveRank }) => {
+  const [expanded, setExpanded] = useState(true);
+  const [rankInput, setRankInput] = useState('');
+
+  return (
+    <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-accent-purple" />
+          <span className="font-bold text-sm">{magic.name}</span>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
+        </button>
+        <button onClick={onDelete} className="text-text-tertiary hover:text-accent-red">
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {expanded && (
+        <>
+          {magic.source && <p className="text-xs text-text-secondary">🔮 {isKO ? '원천' : 'Source'}: {magic.source}</p>}
+          {magic.rules && <p className="text-xs text-text-secondary">📜 {isKO ? '규칙' : 'Rules'}: {magic.rules}</p>}
+          {magic.limitations && <p className="text-xs text-accent-red/80">⛔ {isKO ? '제한' : 'Limits'}: {magic.limitations}</p>}
+
+          {/* Ranks */}
+          <div className="space-y-2">
+            <h5 className="text-[10px] font-bold text-text-tertiary uppercase">{isKO ? '등급 체계' : 'Rank System'}</h5>
+            <div className="flex flex-wrap gap-1.5">
+              {magic.ranks.map((rank, i) => (
+                <span key={i} className="flex items-center gap-1 px-2 py-1 bg-bg-primary rounded-lg text-[10px] font-bold">
+                  {i + 1}. {rank}
+                  <button onClick={() => onRemoveRank(i)} className="text-text-tertiary hover:text-accent-red ml-1">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={rankInput}
+                onChange={e => setRankInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
+                placeholder={isKO ? '등급 추가 (Enter)' : 'Add rank (Enter)'}
+                className="bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] flex-1"
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ItemStudioView;

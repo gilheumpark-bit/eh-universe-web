@@ -37,6 +37,7 @@ const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: 
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
+const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -81,6 +82,7 @@ export default function StudioPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
+  const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>('KO');
@@ -1075,7 +1077,24 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'characters' && currentSession && (
                   <>
-                    <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                    {/* 서브탭 토글: 캐릭터 / 아이템 */}
+                    <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
+                      <div className="flex gap-1 bg-bg-secondary rounded-xl p-1 w-fit">
+                        <button onClick={() => setCharSubTab('characters')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'characters' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
+                          👥 {isKO ? '캐릭터' : 'Characters'}
+                        </button>
+                        <button onClick={() => setCharSubTab('items')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'items' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
+                          ⚔️ {isKO ? '아이템 스튜디오' : 'Item Studio'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {charSubTab === 'characters' ? (
+                      <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                    ) : (
+                      <ItemStudioView language={language} config={currentSession.config} setConfig={setConfig} />
+                    )}
+
                     <div className="max-w-[1400px] mx-auto px-4 pb-4">
                       <TabAssistant tab="characters" language={language} config={currentSession.config} />
                     </div>

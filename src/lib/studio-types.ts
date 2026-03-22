@@ -98,6 +98,42 @@ export interface StyleProfile {
   checkedWeb: number[];        // completed web novel technique indices
 }
 
+// Item / Skill / Magic System (아이템 스튜디오)
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
+export type ItemCategory = 'weapon' | 'armor' | 'accessory' | 'consumable' | 'material' | 'quest' | 'misc';
+
+export interface Item {
+  id: string;
+  name: string;
+  category: ItemCategory;
+  rarity: ItemRarity;
+  description: string;
+  effect: string;
+  obtainedFrom: string;
+  owner?: string;
+  episode?: number;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  type: 'active' | 'passive' | 'ultimate';
+  owner: string;
+  description: string;
+  cost: string;
+  cooldown: string;
+  rank: string;
+}
+
+export interface MagicSystem {
+  id: string;
+  name: string;
+  source: string;
+  rules: string;
+  limitations: string;
+  ranks: string[];
+}
+
 export interface StoryConfig {
   genre: Genre;
   povCharacter: string;
@@ -117,6 +153,9 @@ export interface StoryConfig {
   simulatorRef?: SimulatorRef;
   worldSimData?: WorldSimData;
   styleProfile?: StyleProfile;
+  items?: Item[];
+  skills?: Skill[];
+  magicSystems?: MagicSystem[];
   savedSlots?: SavedSlot[];
   manuscripts?: EpisodeManuscript[];
 }
