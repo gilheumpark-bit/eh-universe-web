@@ -1924,7 +1924,7 @@ export default function StudioPage() {
           )}
 
           {/* Right Panel — Save Slots (all tabs except writing) */}
-          {activeTab !== 'writing' && activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && currentSession && (
+          {activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && !(activeTab === 'writing' && writingMode === 'ai' && !showDashboard) && currentSession && (
             <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
               <div className="p-4 space-y-3">
                 <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
@@ -2260,6 +2260,10 @@ export default function StudioPage() {
                       sceneDirection: currentSession?.config.sceneDirection,
                       worldSimData: currentSession?.config.worldSimData,
                       simulatorRef: currentSession?.config.simulatorRef,
+                      styleProfile: currentSession?.config.styleProfile,
+                      items: currentSession?.config.items,
+                      skills: currentSession?.config.skills,
+                      magicSystems: currentSession?.config.magicSystems,
                     },
                   };
                   updateCurrentSession({
@@ -2298,6 +2302,10 @@ export default function StudioPage() {
                       sceneDirection: currentSession?.config.sceneDirection,
                       worldSimData: currentSession?.config.worldSimData,
                       simulatorRef: currentSession?.config.simulatorRef,
+                      styleProfile: currentSession?.config.styleProfile,
+                      items: currentSession?.config.items,
+                      skills: currentSession?.config.skills,
+                      magicSystems: currentSession?.config.magicSystems,
                     },
                   };
                   updateCurrentSession({
