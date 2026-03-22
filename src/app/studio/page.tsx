@@ -34,6 +34,7 @@ const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioVie
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
+const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -1226,38 +1227,30 @@ export default function StudioPage() {
                     )}
 
                     {writingMode === 'edit' && (
-                      /* ====== EDIT MODE ====== */
+                      /* ====== INLINE REWRITE MODE ====== */
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <p className="text-[10px] text-text-tertiary">
-                            {isKO ? 'AI가 생성한 텍스트를 직접 수정할 수 있습니다. 수정 후 원고에 반영됩니다.' : 'Directly edit AI-generated text. Changes will be applied to your manuscript.'}
+                            {isKO ? '텍스트를 드래그 선택 → 리라이트/살붙이기/압축 등 AI 액션 실행. 직접 수정도 가능.' : 'Select text → run AI rewrite/expand/compress actions. Direct editing also available.'}
                           </p>
                           <div className="flex gap-2">
                             <button onClick={() => {
                               if (!editDraft.trim()) return;
                               const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
-                              updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[작가 직접 편집]' : '[Manual Edit]', timestamp: Date.now() }, editMsg] });
+                              updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[인라인 편집 완료]' : '[Inline Edit Complete]', timestamp: Date.now() }, editMsg] });
                               setWritingMode('ai');
                             }}
                               className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
                               {isKO ? '💾 원고에 반영' : '💾 Apply to Manuscript'}
                             </button>
-                            <button onClick={() => setEditDraft('')}
-                              className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-accent-red transition-colors">
-                              {isKO ? '초기화' : 'Clear'}
-                            </button>
                           </div>
                         </div>
-                        <textarea
-                          value={editDraft}
-                          onChange={e => setEditDraft(e.target.value)}
-                          className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-                          placeholder={isKO ? '여기에 직접 소설을 쓰거나, AI 집필 탭에서 생성된 텍스트를 편집하세요...' : 'Write your novel here directly, or edit AI-generated text...'}
+                        <InlineRewriter
+                          content={editDraft}
+                          language={language}
+                          context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined}
+                          onApply={(newContent) => setEditDraft(newContent)}
                         />
-                        <div className="flex justify-between items-center text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                          <span>{editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'} | ~{Math.round(editDraft.length / 2).toLocaleString()} tokens</span>
-                          <span>{isKO ? '자동저장 활성' : 'Autosave active'}</span>
-                        </div>
                       </div>
                     )}
 
