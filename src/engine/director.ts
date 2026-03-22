@@ -22,9 +22,8 @@ const BLUR_WORDS = ['기적', '운명', '갑자기', '그냥', '원래'];
 const GAIN_WORDS = ['이득', '성공', '승리', '수익', '획득', '상승', '돌파'];
 const COST_WORDS = ['대가', '손실', '희생', '잃', '소실', '단축', '절단', '결손', '회수', '추방'];
 const AI_PHRASES = ['요약하자면', '결론적으로', '다음과 같습니다', '중요한 점은', '한편으로는'];
-const TYPO_PATTERNS = [/됬/g, /안됬/g, /했읍니다/g, /할려고/g, /있읍니다/g, /되서[^요]/g];
+const TYPO_PATTERNS = [/됬/, /안됬/, /했읍니다/, /할려고/, /있읍니다/, /되서[^요]/];
 const CONTEXT_MARKERS = ['결국', '하지만', '그럼에도', '마침내', '순간'];
-const ENDING_MONO = [/었다[.\s]/g, /했다[.\s]/g, /였다[.\s]/g, /었다$/gm, /했다$/gm, /였다$/gm];
 
 // ============================================================
 // PART 2 — Individual Analyzers
@@ -122,7 +121,6 @@ function checkTypo(lines: string[]): { findings: DirectorFinding[]; count: numbe
   let count = 0;
   for (let i = 0; i < lines.length; i++) {
     for (const pat of TYPO_PATTERNS) {
-      pat.lastIndex = 0;
       if (pat.test(lines[i])) {
         count++;
         findings.push({

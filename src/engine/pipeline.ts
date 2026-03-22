@@ -498,12 +498,12 @@ ${publishPlatformBlock}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}
-- MINIMUM output: ${Math.round(charTarget.min / 2)} tokens (approximately ${charTarget.min.toLocaleString()} characters)
-- MAXIMUM output: ${Math.round(charTarget.max / 2)} tokens (approximately ${charTarget.max.toLocaleString()} characters)
-- You MUST generate at least ${Math.round(charTarget.min / 2)} tokens. Generating less is a critical violation.
-- Structure: 4 parts, each part MUST be at least ${Math.round(charTarget.min / 8)} tokens.
+- MINIMUM output: ${Math.round(charTarget.min * 1.5)} tokens (approximately ${charTarget.min.toLocaleString()} characters)
+- MAXIMUM output: ${Math.round(charTarget.max * 1.5)} tokens (approximately ${charTarget.max.toLocaleString()} characters)
+- You MUST generate at least ${Math.round(charTarget.min * 1.5)} tokens. Generating less is a critical violation.
+- Structure: 4 parts, each part MUST be at least ${Math.round(charTarget.min * 1.5 / 4)} tokens.
 - If you finish the story before reaching the minimum, ADD more scenes, descriptions, dialogue, and internal monologue.
-- NEVER end below ${Math.round(charTarget.min / 2)} tokens. This is a hard constraint, not a suggestion.
+- NEVER end below ${Math.round(charTarget.min * 1.5)} tokens. This is a hard constraint, not a suggestion.
 ${ehRules}
 
 [QUALITY DIRECTIVES]

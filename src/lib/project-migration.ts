@@ -74,8 +74,24 @@ export function loadProjects(): Project[] {
 
 /**
  * Save projects to localStorage.
+ * Returns false if save failed (e.g. QuotaExceededError).
  */
-export function saveProjects(projects: Project[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+export function saveProjects(projects: Project[]): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+    return true;
+  } catch (e) {
+    console.error('[NOA] localStorage write failed:', e);
+    return false;
+  }
+}
+
+/**
+ * Estimate current localStorage usage for NOA data (bytes).
+ */
+export function getStorageUsageBytes(): number {
+  if (typeof window === 'undefined') return 0;
+  const raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
+  return raw ? raw.length * 2 : 0; // UTF-16 = 2 bytes per char
 }

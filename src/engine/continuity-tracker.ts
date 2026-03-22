@@ -229,10 +229,12 @@ export function buildContinuityReport(
 
       const stateFlags: string[] = [];
       if (present) {
-        if (/부상|상처|피를|다쳤/.test(text) && text.includes(c.name)) stateFlags.push('부상');
-        if (/분노|격분|화가/.test(text) && text.includes(c.name)) stateFlags.push('분노');
-        if (/슬[퍼픔]|눈물|울[었며]/.test(text) && text.includes(c.name)) stateFlags.push('슬픔');
-        if (/죽|사망|전사/.test(text) && text.includes(c.name)) stateFlags.push('사망');
+        const sentences = text.split(/[.!?。！？\n]+/).filter(s => s.includes(c.name));
+        const joined = sentences.join(' ');
+        if (/부상|상처|피를|다쳤/.test(joined)) stateFlags.push('부상');
+        if (/분노|격분|화가/.test(joined)) stateFlags.push('분노');
+        if (/슬[퍼픔]|눈물|울[었며]/.test(joined)) stateFlags.push('슬픔');
+        if (/죽|사망|전사/.test(joined)) stateFlags.push('사망');
       }
       return { name: c.name, present, stateFlags, dialogueCount };
     });
@@ -241,7 +243,21 @@ export function buildContinuityReport(
     const threads = extractThreads(text);
     allOpenThreads.push(...threads.planted);
     for (const r of threads.resolved) {
-      const idx = allOpenThreads.indexOf(r);
+      const MIN_OVERLAP = 10;
+      const idx = allOpenThreads.findIndex(open => {
+        if (open === r) return true;
+        if (r.length >= MIN_OVERLAP && open.includes(r)) return true;
+        if (open.length >= MIN_OVERLAP && r.includes(open)) return true;
+        // Check substring overlap: sliding window of MIN_OVERLAP chars
+        const shorter = r.length <= open.length ? r : open;
+        const longer = r.length <= open.length ? open : r;
+        if (shorter.length >= MIN_OVERLAP) {
+          for (let i = 0; i <= shorter.length - MIN_OVERLAP; i++) {
+            if (longer.includes(shorter.slice(i, i + MIN_OVERLAP))) return true;
+          }
+        }
+        return false;
+      });
       if (idx >= 0) allOpenThreads.splice(idx, 1);
       allResolvedThreads.push(r);
     }

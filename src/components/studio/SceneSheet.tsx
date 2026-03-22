@@ -342,9 +342,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
     setCliffs(prev => [...prev, { id: `cl-${Date.now()}`, cliffType: "crisis-cut", desc: "", episode: 1 }]);
   };
 
-  // Auto-sync all direction data to parent
+  // Auto-sync all direction data to parent (debounced)
   useEffect(() => {
-    syncDirection();
+    const timer = setTimeout(() => {
+      syncDirection();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [syncDirection]);
 
   // Scene direction presets (10 genres)
@@ -436,6 +439,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const applyScenePreset = useCallback((presetKey: string) => {
     const preset = SCENE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
+    const confirmMsg = lang === "ko"
+      ? "현재 씬시트 데이터를 프리셋으로 덮어쓰시겠습니까?"
+      : "Overwrite current scene sheet data with this preset?";
+    if (!window.confirm(confirmMsg)) return;
     const ts = Date.now();
     const isKO = lang === "ko";
     const data = preset.gen(ts, isKO);

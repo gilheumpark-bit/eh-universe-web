@@ -115,10 +115,9 @@ function hysteresis(delta: number): number {
 export function updateScore(state: HFCPState, signal: TurnSignal): number {
   const delta = computeDelta(signal);
   const M = updateMomentum(state, delta);
-  const raw = state.score + (delta * M);
   const L = loadLeveling(state.score);
   const H = hysteresis(delta);
-  const newScore = clamp(raw * L * H, 50, 150);
+  const newScore = clamp(state.score + (delta * M * L * H), 50, 150);
   state.lastDelta = delta;
   state.score = newScore;
   state.turns += 1;

@@ -44,7 +44,7 @@ const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGrap
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
-import { loadProjects, saveProjects } from '@/lib/project-migration';
+import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-migration';
 import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
@@ -97,6 +97,9 @@ export default function StudioPage() {
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup: abort streaming on unmount
+  useEffect(() => () => { abortControllerRef.current?.abort(); }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -314,7 +317,15 @@ export default function StudioPage() {
 
   useEffect(() => {
     if (!hydrated) return;
-    saveProjects(projects);
+    const timer = setTimeout(() => {
+      const ok = saveProjects(projects);
+      if (!ok) {
+        const bytes = getStorageUsageBytes();
+        const mb = (bytes / 1024 / 1024).toFixed(1);
+        console.warn(`[NOA] Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, [projects, hydrated]);
 
   const messageCount = currentSession?.messages?.length ?? 0;
@@ -478,10 +489,17 @@ export default function StudioPage() {
             alert(isKO ? '유효한 세션 데이터가 없습니다.' : 'No valid session data found.');
             return;
           }
-          setSessions(prev => [...valid, ...prev]);
-          setCurrentSessionId(valid[0].id);
+          setSessions(prev => {
+            const existingIds = new Set(prev.map(s => s.id));
+            const deduped = valid.filter(s => !existingIds.has(s.id));
+            if (deduped.length > 0) setCurrentSessionId(deduped[0].id);
+            return [...deduped, ...prev];
+          });
         } else if (isValidSession(data)) {
-          setSessions(prev => [data, ...prev]);
+          setSessions(prev => {
+            if (prev.some(s => s.id === data.id)) return prev;
+            return [data, ...prev];
+          });
           setCurrentSessionId(data.id);
         } else {
           alert(isKO ? '유효하지 않은 세션 형식입니다. (id, messages 필수)' : 'Invalid session format. (id and messages required)');
@@ -647,15 +665,17 @@ export default function StudioPage() {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    const capturedSessionId = currentSessionId;
+    const capturedConfig = currentSession!.config;
 
     let fullContent = '';
     try {
       // Inject genreSelections from worldSimData into simulatorRef for AI prompt
       const configForAI = {
-        ...currentSession!.config,
+        ...capturedConfig,
         simulatorRef: {
-          ...currentSession!.config.simulatorRef,
-          genreSelections: currentSession!.config.worldSimData?.genreSelections || currentSession!.config.simulatorRef?.genreSelections,
+          ...capturedConfig.simulatorRef,
+          genreSelections: capturedConfig.worldSimData?.genreSelections || capturedConfig.simulatorRef?.genreSelections,
         },
       };
       const result = await generateStoryStream(
@@ -663,14 +683,14 @@ export default function StudioPage() {
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
-            if (s.id === currentSessionId) {
+            if (s.id === capturedSessionId) {
               const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m);
               return { ...s, messages: msgs };
             }
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: currentSession!.config.platform, history: existingMessages }
+        { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages }
       );
 
       // Trademark/IP filter — 상표 자동 치환
@@ -684,9 +704,9 @@ export default function StudioPage() {
       setLastReport(result.report);
       // NOD Director analysis
       const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-      setDirectorReport(analyzeManuscript(dirClean, currentSession?.config?.publishPlatform));
+      setDirectorReport(analyzeManuscript(dirClean, capturedConfig.publishPlatform));
       setSessions(prev => prev.map(s => {
-        if (s.id === currentSessionId) {
+        if (s.id === capturedSessionId) {
           const msgs = s.messages.map(m =>
             m.id === aiMsgId
               ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
@@ -700,7 +720,7 @@ export default function StudioPage() {
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
         console.error(error);
-        setUxError({ error, retry: () => handleSend(input) });
+        setUxError({ error, retry: () => handleSend(text) });
       }
     } finally {
       // 3패스 캔버스 모드: 단계 완료 시 JSON 제거 후 자동 주입
@@ -737,14 +757,16 @@ export default function StudioPage() {
     setIsGenerating(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    const capturedSessionId2 = currentSessionId;
+    const capturedConfig2 = currentSession.config;
 
     let fullContent = '';
     try {
       const configForChat = {
-        ...currentSession.config,
+        ...capturedConfig2,
         simulatorRef: {
-          ...currentSession.config.simulatorRef,
-          genreSelections: currentSession.config.worldSimData?.genreSelections || currentSession.config.simulatorRef?.genreSelections,
+          ...capturedConfig2.simulatorRef,
+          genreSelections: capturedConfig2.worldSimData?.genreSelections || capturedConfig2.simulatorRef?.genreSelections,
         },
       };
       const result = await generateStoryStream(
@@ -752,14 +774,14 @@ export default function StudioPage() {
         (chunk) => {
           fullContent += chunk;
           setSessions(prev => prev.map(s => {
-            if (s.id === currentSessionId) {
+            if (s.id === capturedSessionId2) {
               const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: fullContent } : m);
               return { ...s, messages: msgs };
             }
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: currentSession.config.platform, history: historyMessages }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages }
       );
 
       // Trademark/IP filter
@@ -771,7 +793,7 @@ export default function StudioPage() {
 
       setLastReport(result.report);
       setSessions(prev => prev.map(s => {
-        if (s.id === currentSessionId) {
+        if (s.id === capturedSessionId2) {
           const msgs = s.messages.map(m => {
             if (m.id !== assistantMsgId) return m;
             const updatedVersions = [...(m.versions ?? []), fullContent];

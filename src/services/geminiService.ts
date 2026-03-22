@@ -10,8 +10,8 @@ import { StoryConfig, Character, AppLanguage, Message } from "../lib/studio-type
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getActiveProvider, ChatMsg } from "../lib/ai-providers";
-import { HISTORY_LIMITS } from "../lib/token-utils";
+import { streamChat, getApiKey, getActiveProvider, getActiveModel, ChatMsg } from "../lib/ai-providers";
+import { HISTORY_LIMITS, truncateMessages } from "../lib/token-utils";
 
 export interface GenerateOptions {
   previousContent?: string;
@@ -33,26 +33,32 @@ export interface GenerateResult {
 
 function buildChatMessages(
   history: Message[],
-  currentUserPrompt: string
+  currentUserPrompt: string,
+  systemInstruction: string
 ): ChatMsg[] {
-  const msgs: ChatMsg[] = [];
-  const recent = history.slice(-HISTORY_LIMITS.STORY_API);
+  // Convert all history to ChatMsg format (cap at STORAGE limit for sanity)
+  const allMsgs: ChatMsg[] = [];
+  const capped = history.slice(-HISTORY_LIMITS.STORAGE);
 
-  for (const msg of recent) {
+  for (const msg of capped) {
     if (msg.role === 'assistant' && !msg.content) continue;
     let text = msg.content;
     if (msg.role === 'assistant') {
       text = text.replace(/```json\n[\s\S]*?\n```/g, '').trim();
       if (!text) continue;
     }
-    msgs.push({
+    allMsgs.push({
       role: msg.role === 'user' ? 'user' : 'assistant',
       content: text,
     });
   }
 
-  msgs.push({ role: 'user', content: currentUserPrompt });
-  return msgs;
+  // Token-aware truncation instead of arbitrary message count
+  const model = getActiveModel();
+  const { messages: trimmed } = truncateMessages(systemInstruction, allMsgs, model);
+
+  trimmed.push({ role: 'user', content: currentUserPrompt });
+  return trimmed;
 }
 
 // ============================================================
@@ -69,7 +75,7 @@ export const generateStoryStream = async (
   const platform = options.platform ?? config.platform ?? PlatformType.MOBILE;
   const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.9');
 
-  const systemInstruction = buildSystemInstruction(config, language, platform);
+  const systemInstruction = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
   const userPrompt = buildUserPrompt(config, draft, {
     previousContent: options.previousContent,
     language,
@@ -77,7 +83,7 @@ export const generateStoryStream = async (
 
   const history = options.history ?? [];
   const messages = history.filter(m => m.content).length > 0
-    ? buildChatMessages(history, userPrompt)
+    ? buildChatMessages(history, userPrompt, systemInstruction)
     : [{ role: 'user' as const, content: userPrompt }];
 
   try {
