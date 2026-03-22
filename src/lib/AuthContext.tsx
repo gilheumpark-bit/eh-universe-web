@@ -83,6 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     if (!auth) return;
     setAccessToken(null);
+    // Clear all stored API keys on logout
+    const API_KEY_STORAGE_KEYS = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
+    API_KEY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
     await firebaseSignOut(auth);
   };
 
