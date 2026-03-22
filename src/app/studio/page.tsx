@@ -938,7 +938,7 @@ export default function StudioPage() {
         )}
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
             {!currentSessionId && !['settings', 'history', 'rulebook', 'critique', 'style'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}

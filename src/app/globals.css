@@ -60,12 +60,15 @@ body::after {
   );
 }
 
-/* Scrollbar */
+/* Scrollbar — Edge/Chrome cross-browser fix */
+* {
+  scrollbar-gutter: stable;
+}
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-primary);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
@@ -73,6 +76,13 @@ body::after {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-purple);
+}
+/* Firefox scrollbar */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
 }
 
 /* Glitch hover effect */
