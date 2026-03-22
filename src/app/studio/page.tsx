@@ -1287,6 +1287,22 @@ export default function StudioPage() {
                             <p className="text-text-tertiary/40 text-xs font-[family-name:var(--font-mono)] max-w-sm">
                               {isKO ? '아래 입력창에 첫 장면을 묘사하세요' : 'Describe the first scene in the input below'}
                             </p>
+                            <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-lg">
+                              {(isKO ? [
+                                "주인공이 처음 등장하는 장면을 써줘",
+                                "긴박한 추격전으로 시작해줘",
+                                "일상 속 작은 이상 징후로 시작해줘",
+                              ] : [
+                                "Write the protagonist's first appearance",
+                                "Start with a tense chase scene",
+                                "Begin with a subtle anomaly in daily life",
+                              ]).map((preset, i) => (
+                                <button key={i} onClick={() => handleSend(preset)}
+                                  className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)]">
+                                  {preset}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         ) : (
                           (searchQuery ? filteredMessages : currentSession.messages).map(msg => (

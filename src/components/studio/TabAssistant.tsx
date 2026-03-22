@@ -248,6 +248,73 @@ Evaluate text on 5 metrics:
   },
 };
 
+// ============================================================
+// PART 1.5 — Tab Presets (10 per tab)
+// ============================================================
+
+const TAB_PRESETS: Record<string, { ko: string; en: string }[]> = {
+  world: [
+    { ko: "현재 세계관 설정에 모순이 있는지 검토해줘", en: "Check my worldbuilding for contradictions" },
+    { ko: "이 세계의 경제 시스템을 설계해줘", en: "Design an economic system for this world" },
+    { ko: "마법/기술 체계의 비용-제한을 제안해줘", en: "Suggest costs and limits for the magic/tech system" },
+    { ko: "이 배경에서 가능한 종교/신앙 체계는?", en: "What religion/belief systems fit this setting?" },
+    { ko: "세계관 확장 가능한 미개척 영역을 제안해줘", en: "Suggest unexplored areas for worldbuilding expansion" },
+    { ko: "이 설정에서 발생할 수 있는 사회적 갈등은?", en: "What social conflicts could arise from this setting?" },
+    { ko: "독자가 이해하기 어려운 설정을 짚어줘", en: "Flag settings that might confuse readers" },
+    { ko: "역사적 사건 타임라인을 정리해줘", en: "Organize a historical event timeline" },
+    { ko: "이 세계의 일상생활은 어떤 모습일까?", en: "What does daily life look like in this world?" },
+    { ko: "다른 SF/판타지 작품과 차별화할 점을 제안해줘", en: "How can I differentiate from other SF/fantasy works?" },
+  ],
+  critique: [
+    { ko: "현재 세력 균형을 분석해줘", en: "Analyze the current power balance" },
+    { ko: "가장 불안정한 세력 관계는?", en: "Which faction relationship is most unstable?" },
+    { ko: "A 세력이 B를 공격하면 어떻게 될까?", en: "What happens if Faction A attacks Faction B?" },
+    { ko: "문명 간 경제 의존도를 평가해줘", en: "Evaluate economic interdependence between civilizations" },
+    { ko: "현재 균형이 깨질 트리거 3개를 찾아줘", en: "Find 3 triggers that could break the current balance" },
+    { ko: "시대 전환의 인과 체인을 분석해줘", en: "Analyze the cause-effect chain of the era transition" },
+    { ko: "약소 세력이 강대 세력을 이길 시나리오는?", en: "Scenario where a weak faction defeats a strong one?" },
+    { ko: "동맹이 깨질 수 있는 조건은?", en: "Under what conditions could the alliance break?" },
+    { ko: "장르 규칙과 시뮬레이터 데이터가 일치하는지 확인", en: "Check if genre rules match simulator data" },
+    { ko: "100년 후 이 세계는 어떤 모습일까?", en: "What does this world look like 100 years later?" },
+  ],
+  characters: [
+    { ko: "이 캐릭터의 3층 성격을 분석해줘", en: "Analyze this character's 3-layer personality" },
+    { ko: "캐릭터별 대사 DNA를 정의해줘", en: "Define each character's dialogue DNA" },
+    { ko: "두 캐릭터 사이의 관계 동역학을 분석해줘", en: "Analyze the relationship dynamics between two characters" },
+    { ko: "이 캐릭터의 성장 아크를 설계해줘", en: "Design this character's growth arc" },
+    { ko: "캐릭터의 want vs need를 분리해줘", en: "Separate this character's want vs need" },
+    { ko: "이 캐릭터만의 말버릇/습관을 3개 만들어줘", en: "Create 3 unique speech habits for this character" },
+    { ko: "위기 상황에서 이 캐릭터는 어떻게 반응할까?", en: "How would this character react in a crisis?" },
+    { ko: "캐릭터 간 갈등 축을 정리해줘", en: "Map out the conflict axes between characters" },
+    { ko: "빌런/적대자의 동기를 더 입체적으로 만들어줘", en: "Make the villain/antagonist's motivation more dimensional" },
+    { ko: "새 조연 캐릭터를 제안해줘", en: "Suggest a new supporting character" },
+  ],
+  rulebook: [
+    { ko: "현재 장면의 텐션 스코어를 평가해줘", en: "Evaluate the tension score of the current scene" },
+    { ko: "오프닝 후크를 강화할 방법은?", en: "How can I strengthen the opening hook?" },
+    { ko: "고구마-사이다 밸런스를 분석해줘", en: "Analyze the frustration-relief balance" },
+    { ko: "클리프행어 아이디어를 3개 제안해줘", en: "Suggest 3 cliffhanger ideas" },
+    { ko: "이 장면에 넣을 도파민 장치를 추천해줘", en: "Recommend dopamine devices for this scene" },
+    { ko: "씬 비트를 카드로 정리해줘", en: "Organize scene beats into cards" },
+    { ko: "독자가 지루해질 구간을 찾아줘", en: "Find sections where readers might get bored" },
+    { ko: "감정 곡선이 단조로운 부분을 수정해줘", en: "Fix sections with flat emotional curves" },
+    { ko: "반전을 위한 복선을 어디에 깔아야 할까?", en: "Where should I plant foreshadowing for a twist?" },
+    { ko: "이 에피소드의 긴장 곡선을 설계해줘", en: "Design the tension curve for this episode" },
+  ],
+  style: [
+    { ko: "내 문장의 리듬을 분석해줘", en: "Analyze the rhythm of my sentences" },
+    { ko: "AI 문체 증상이 있는지 체크해줘", en: "Check for AI-style writing symptoms" },
+    { ko: "이 단락을 더 감각적으로 바꿔줘", en: "Rewrite this paragraph with more sensory detail" },
+    { ko: "반복되는 단어/표현을 찾아줘", en: "Find repeated words or expressions" },
+    { ko: "대화문의 캐릭터별 차별화를 평가해줘", en: "Evaluate dialogue differentiation per character" },
+    { ko: "묘사 밀도가 높은/낮은 구간을 찾아줘", en: "Find over-described and under-described sections" },
+    { ko: "서술 시점이 흔들리는 곳을 잡아줘", en: "Catch POV shifts or inconsistencies" },
+    { ko: "문장을 더 간결하게 압축하는 방법은?", en: "How can I compress sentences to be more concise?" },
+    { ko: "하드보일드 문체로 변환 연습을 해보자", en: "Let's practice converting to hardboiled style" },
+    { ko: "5가지 지표로 내 문체를 종합 평가해줘", en: "Give me a comprehensive 5-metric style evaluation" },
+  ],
+};
+
 function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
   if (!config) return '';
   const parts: string[] = [];
@@ -474,9 +541,24 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
           {/* Messages */}
           <div className="max-h-60 sm:max-h-80 overflow-y-auto px-4 py-2 space-y-3 custom-scrollbar">
             {messages.length === 0 && (
-              <p className="text-[11px] text-text-tertiary italic text-center py-6">
-                {isKO ? `${ctx.ko}에게 무엇이든 물어보세요.` : `Ask the ${ctx.en} anything.`}
-              </p>
+              <div className="py-4 space-y-3">
+                <p className="text-[11px] text-text-tertiary italic text-center">
+                  {isKO ? `${ctx.ko}에게 무엇이든 물어보세요.` : `Ask the ${ctx.en} anything.`}
+                </p>
+                {TAB_PRESETS[tab] && (
+                  <div className="flex flex-wrap gap-1.5 justify-center px-2">
+                    {TAB_PRESETS[tab].map((preset, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setInput(isKO ? preset.ko : preset.en); }}
+                        className="px-2.5 py-1 bg-bg-tertiary/50 border border-border rounded-lg text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)] leading-tight"
+                      >
+                        {isKO ? preset.ko : preset.en}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
