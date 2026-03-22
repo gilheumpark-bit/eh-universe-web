@@ -38,8 +38,9 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
         <div className="flex items-center shrink-0 border-r border-white/5 px-2 min-w-[100px] lg:min-w-[120px]">
           <User className="w-3 h-3 text-zinc-700" />
           <input 
-            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-800 outline-none w-full focus:text-blue-400 transition-colors uppercase"
+            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-600 outline-none w-full focus:text-blue-400 transition-colors uppercase"
             placeholder={t.pov}
+            aria-label={t.pov}
             value={config.povCharacter}
             onChange={e => setConfig({...config, povCharacter: e.target.value})}
           />
@@ -47,8 +48,9 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
         <div className="flex items-center shrink-0 border-r border-white/5 px-2 min-w-[100px] lg:min-w-[120px]">
           <MapPin className="w-3 h-3 text-zinc-700" />
           <input 
-            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-800 outline-none w-full focus:text-blue-400 transition-colors uppercase"
+            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-600 outline-none w-full focus:text-blue-400 transition-colors uppercase"
             placeholder={t.loc}
+            aria-label={t.loc}
             value={config.setting}
             onChange={e => setConfig({...config, setting: e.target.value})}
           />
@@ -56,8 +58,9 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
         <div className="flex items-center shrink-0 flex-1 px-2 min-w-[140px]">
           <Bookmark className="w-3 h-3 text-zinc-700" />
           <input 
-            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-800 outline-none w-full focus:text-blue-400 transition-colors uppercase"
+            className="bg-transparent px-2 py-3 text-[9px] lg:text-[10px] font-black text-zinc-400 placeholder-zinc-600 outline-none w-full focus:text-blue-400 transition-colors uppercase"
             placeholder={t.epTitle}
+            aria-label={t.epTitle}
             value={config.title}
             onChange={e => setConfig({...config, title: e.target.value})}
           />
@@ -71,7 +74,8 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={t.inputPlaceholder}
-          className="w-full bg-transparent px-6 py-6 text-sm lg:text-base text-zinc-200 placeholder-zinc-800 outline-none min-h-[100px] lg:min-h-[160px] max-h-[300px] resize-none leading-relaxed font-serif disabled:opacity-30 scrollbar-hide"
+          aria-label={t.inputPlaceholder}
+          className="w-full bg-transparent px-6 py-6 text-sm lg:text-base text-zinc-200 placeholder-zinc-600 outline-none min-h-[100px] lg:min-h-[160px] max-h-[300px] resize-none leading-relaxed font-serif disabled:opacity-30 scrollbar-hide"
         />
         
         <div className="px-6 py-4 bg-zinc-950/60 border-t border-white/5 flex justify-between items-center">
