@@ -25,6 +25,7 @@ import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
+import ManuscriptView from '@/components/studio/ManuscriptView';
 import { generateStoryStream } from '@/services/geminiService';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import dynamic from 'next/dynamic';
@@ -763,6 +764,7 @@ export default function StudioPage() {
               { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
               { tab: 'style' as AppTab, icon: Edit3, label: t.sidebar.styleStudio },
+              { tab: 'manuscript' as AppTab, icon: FileText, label: isKO ? '원고 관리' : 'Manuscript' },
               { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
@@ -1032,12 +1034,19 @@ export default function StudioPage() {
                       synopsis={currentSession?.config.synopsis}
                       characterNames={currentSession?.config.characters.map(c => c.name)}
                       initialDirection={currentSession?.config.sceneDirection ? {
-                        goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: 1 })),
+                        goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
                         hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
-                        emotions: currentSession.config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: i * 25, emotion: e.emotion, intensity: e.intensity })),
+                        emotions: currentSession.config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: e.position ?? i * 25, emotion: e.emotion, intensity: e.intensity })),
                         dialogueRules: currentSession.config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
-                        dopamines: currentSession.config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: false })),
-                        cliffs: currentSession.config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: currentSession.config.sceneDirection.cliffhanger.cliffType, desc: currentSession.config.sceneDirection.cliffhanger.desc, episode: 1 }] : [],
+                        dopamines: currentSession.config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
+                        cliffs: currentSession.config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: currentSession.config.sceneDirection.cliffhanger.cliffType, desc: currentSession.config.sceneDirection.cliffhanger.desc, episode: currentSession.config.sceneDirection.cliffhanger.episode || 1 }] : [],
+                        foreshadows: currentSession.config.sceneDirection.foreshadows?.map((f, i) => ({ id: `r-${i}`, planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
+                        pacings: currentSession.config.sceneDirection.pacings?.map((p, i) => ({ id: `r-${i}`, section: p.section, percent: p.percent, desc: p.desc })),
+                        tensionPoints: currentSession.config.sceneDirection.tensionCurve?.map((t, i) => ({ id: `r-${i}`, position: t.position, level: t.level, label: t.label })),
+                        canons: currentSession.config.sceneDirection.canonRules?.map((c, i) => ({ id: `r-${i}`, character: c.character, rule: c.rule })),
+                        transitions: currentSession.config.sceneDirection.sceneTransitions?.map((t, i) => ({ id: `r-${i}`, fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
+                        writerNotes: currentSession.config.sceneDirection.writerNotes,
+                        plotStructure: currentSession.config.sceneDirection.plotStructure,
                       } : undefined}
                       onDirectionUpdate={(data) => {
                         if (!currentSessionId) return;
@@ -1045,12 +1054,19 @@ export default function StudioPage() {
                           config: {
                             ...(currentSession?.config || INITIAL_CONFIG),
                             sceneDirection: {
-                              goguma: data.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc })),
+                              goguma: data.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc, episode: g.episode })),
                               hooks: data.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
-                              emotionTargets: data.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity })),
+                              emotionTargets: data.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity, position: e.position })),
                               dialogueTones: data.dialogueRules.map(d => ({ character: d.character, tone: d.tone, notes: d.notes })),
-                              dopamineDevices: data.dopamines.map(dp => ({ scale: dp.scale, device: dp.device, desc: dp.desc })),
-                              cliffhanger: data.cliffs.length > 0 ? { cliffType: data.cliffs[0].cliffType, desc: data.cliffs[0].desc } : undefined,
+                              dopamineDevices: data.dopamines.map(dp => ({ scale: dp.scale, device: dp.device, desc: dp.desc, resolved: dp.resolved })),
+                              cliffhanger: data.cliffs.length > 0 ? { cliffType: data.cliffs[0].cliffType, desc: data.cliffs[0].desc, episode: data.cliffs[0].episode } : undefined,
+                              foreshadows: data.foreshadows.map(f => ({ planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
+                              pacings: data.pacings.map(p => ({ section: p.section, percent: p.percent, desc: p.desc })),
+                              tensionCurve: data.tensionPoints.map(t => ({ position: t.position, level: t.level, label: t.label })),
+                              canonRules: data.canons.map(c => ({ character: c.character, rule: c.rule })),
+                              sceneTransitions: data.transitions.map(t => ({ fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
+                              writerNotes: data.writerNotes,
+                              plotStructure: data.plotStructure,
                             },
                           },
                         });
@@ -1479,6 +1495,14 @@ export default function StudioPage() {
                     </div>
                   </>
                 )}
+                {activeTab === 'manuscript' && currentSession && (
+                  <ManuscriptView
+                    language={language}
+                    config={currentSession.config}
+                    setConfig={setConfig}
+                    messages={currentSession.messages}
+                  />
+                )}
                 {activeTab === 'history' && (() => {
                   const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
                     ? projects.flatMap(p => p.sessions.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })))
@@ -1603,7 +1627,7 @@ export default function StudioPage() {
           )}
 
           {/* Right Panel — Save Slots (all tabs except writing) */}
-          {activeTab !== 'writing' && activeTab !== 'history' && activeTab !== 'settings' && currentSession && (
+          {activeTab !== 'writing' && activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && currentSession && (
             <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
               <div className="p-4 space-y-3">
                 <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
