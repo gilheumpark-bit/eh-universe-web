@@ -21,18 +21,23 @@ const AUTO_PRESETS: Record<string, { ko: { title: string; pov: string; setting: 
   ],
   [Genre.ROMANCE]: [
     { ko: { title: "카페 라떼에 적힌 이름", pov: "서하은", setting: "서울 연남동 카페거리", emotion: "설렘과 불안", synopsis: "매일 같은 시간에 같은 카페에서 마주치는 두 사람. 서하은은 그의 라떼 잔에 적힌 이름을 보고 심장이 멈춘다. 3년 전 편지 한 장 남기고 사라진 첫사랑의 이름이었다." }, en: { title: "The Name on the Latte", pov: "Haeun Seo", setting: "Yeonnam-dong cafe street, Seoul", emotion: "Flutter and anxiety", synopsis: "Two people meet at the same cafe, same time, every day. When Haeun sees the name on his latte cup, her heart stops. It's the name of her first love who vanished three years ago." } },
+    { ko: { title: "우산 하나의 거리", pov: "정민준", setting: "부산 해운대 비 오는 거리", emotion: "그리움과 용기", synopsis: "비 오는 날에만 나타나는 우산 가게 주인. 민준은 매번 우산을 사러 가지만 진짜 이유는 그녀의 미소 때문이다. 장마가 끝나면 가게도 사라진다는 소문." }, en: { title: "One Umbrella Apart", pov: "Minjun Jung", setting: "Rainy streets of Haeundae, Busan", emotion: "Longing and courage", synopsis: "An umbrella shop owner who only appears on rainy days. Minjun buys umbrellas every time, but the real reason is her smile. Rumor says the shop vanishes when the rainy season ends." } },
   ],
   [Genre.THRILLER]: [
     { ko: { title: "12번째 증인", pov: "검사 한서진", setting: "서울중앙지방법원", emotion: "집착과 의심", synopsis: "연쇄살인범 재판의 12번째 증인이 법정에서 사라졌다. 검사 한서진은 증인을 추적하지만, 증인이 남긴 메모에는 '판사가 범인이다'라고 적혀있다." }, en: { title: "The 12th Witness", pov: "Prosecutor Han Seojin", setting: "Seoul Central District Court", emotion: "Obsession and suspicion", synopsis: "The 12th witness in a serial killer trial vanishes from the courtroom. Prosecutor Han tracks the witness, but their note reads: 'The judge is the killer.'" } },
+    { ko: { title: "마지막 통화", pov: "형사 박태호", setting: "서울 용산구 폐공장", emotion: "긴장과 죄책감", synopsis: "납치된 딸의 마지막 통화 녹음 3분 47초. 배경 소음 분석으로 위치를 추적하지만, 녹음 속 목소리 중 하나는 자신의 동료였다." }, en: { title: "The Last Call", pov: "Detective Park Taeho", setting: "Abandoned factory, Yongsan, Seoul", emotion: "Tension and guilt", synopsis: "3 minutes 47 seconds of his kidnapped daughter's last call. Background noise analysis leads to a location, but one voice in the recording belongs to his own partner." } },
   ],
   [Genre.HORROR]: [
     { ko: { title: "505호의 초대", pov: "이수아", setting: "1970년대 아파트 단지", emotion: "공포와 호기심", synopsis: "새로 이사 온 아파트 505호에서 매일 밤 초대장이 문틈으로 밀려들어온다. '오세요'라는 한 마디만 적힌 초대장. 505호는 30년 전 폐쇄된 방이다." }, en: { title: "Invitation from 505", pov: "Sua Lee", setting: "1970s apartment complex", emotion: "Terror and curiosity", synopsis: "Every night, an invitation slides under the door of unit 505. Just two words: 'Please come.' Unit 505 was sealed shut 30 years ago." } },
+    { ko: { title: "거울 속의 나", pov: "한지연", setting: "시골 외가댁 다락방", emotion: "혼란과 공포", synopsis: "외할머니 장례 후 다락방에서 발견한 거울. 거울 속의 나는 0.5초 늦게 움직인다. 밤이 되면 그 차이는 점점 벌어진다." }, en: { title: "Me in the Mirror", pov: "Jiyeon Han", setting: "Grandmother's attic in the countryside", emotion: "Confusion and terror", synopsis: "A mirror found in the attic after grandmother's funeral. The reflection moves 0.5 seconds late. At night, the gap grows wider." } },
   ],
   [Genre.SYSTEM_HUNTER]: [
     { ko: { title: "최하위 사냥꾼의 각성", pov: "강도현", setting: "서울 강남 게이트 구역", emotion: "절망에서 결의로", synopsis: "E랭크 최하위 헌터 강도현. 모두가 포기한 레드게이트에 홀로 남겨진 그는 죽음의 순간, 아무도 가져본 적 없는 '오류 시스템'을 각성한다. 버그인가, 축복인가." }, en: { title: "Awakening of the Lowest Hunter", pov: "Dohyeon Kang", setting: "Gangnam Gate Zone, Seoul", emotion: "Despair to resolve", synopsis: "E-rank bottom hunter Dohyeon Kang. Left alone in an abandoned Red Gate, at the moment of death he awakens the 'Error System' no one has ever possessed. Bug or blessing?" } },
+    { ko: { title: "듀얼 시스템", pov: "윤세라", setting: "인천 블루게이트 단지", emotion: "갈등과 성장", synopsis: "두 개의 시스템을 동시에 가진 유일한 헌터. 하나는 치유, 하나는 파괴. 동시에 쓰면 몸이 버티지 못한다. 최강의 보스 앞에서 그녀는 선택해야 한다." }, en: { title: "Dual System", pov: "Sera Yoon", setting: "Incheon Blue Gate complex", emotion: "Conflict and growth", synopsis: "The only hunter with two systems. One heals, one destroys. Using both breaks the body. Before the ultimate boss, she must choose." } },
   ],
   [Genre.FANTASY_ROMANCE]: [
     { ko: { title: "악녀는 두 번 죽지 않는다", pov: "아리아 벨몬트", setting: "크로노아 제국 황궁", emotion: "분노와 사랑", synopsis: "독살당한 악녀 아리아가 3년 전으로 회귀했다. 이번 생에서는 나를 죽인 약혼자 대신, 나를 지켜봤던 북방 공작을 선택한다. 그런데 그 공작이 전생의 기억을 가지고 있다." }, en: { title: "The Villainess Won't Die Twice", pov: "Aria Belmont", setting: "Imperial Palace, Chronoa Empire", emotion: "Rage and love", synopsis: "Poisoned villainess Aria regresses 3 years. This time, instead of the fiancé who killed her, she chooses the northern duke who watched over her. But he has memories of the past life too." } },
+    { ko: { title: "계약 결혼의 조건", pov: "엘레나 크로스", setting: "아르테미아 공작저", emotion: "경계와 설렘", synopsis: "사교계 최악의 공작에게 온 계약 결혼 제안. 조건: 1년간 완벽한 부부 연기. 대가: 자유. 그런데 연기가 진심이 되어간다." }, en: { title: "Terms of the Contract Marriage", pov: "Elena Cross", setting: "Ducal estate of Artemia", emotion: "Wariness and excitement", synopsis: "A contract marriage proposal from society's worst duke. Terms: one year of perfect couple performance. Reward: freedom. But the act is becoming real." } },
   ],
 };
 
@@ -52,6 +57,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
   const [autoGenGenre, setAutoGenGenre] = useState<Genre>(config.genre);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
 
   const handleAIGenerate = async () => {
     setAiGenerating(true);
@@ -115,9 +121,35 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               <option key={g} value={g}>{GENRE_LABELS[language][g]}</option>
             ))}
           </select>
-          <button onClick={injectDemoData} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-95">
-            <Shuffle className="w-3.5 h-3.5" /> {isKO ? '프리셋' : 'Preset'}
-          </button>
+          <div className="relative">
+            <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-95">
+              <Shuffle className="w-3.5 h-3.5" /> {isKO ? '프리셋' : 'Preset'}
+            </button>
+            {showPresetMenu && (
+              <div className="absolute top-full mt-1 right-0 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
+                {(AUTO_PRESETS[autoGenGenre] || []).map((preset, i) => {
+                  const data = isKO ? preset.ko : preset.en;
+                  return (
+                    <button key={i} onClick={() => {
+                      setConfig((prev: StoryConfig) => ({
+                        ...prev, title: data.title, genre: autoGenGenre, povCharacter: data.pov,
+                        setting: data.setting, primaryEmotion: data.emotion, totalEpisodes: 25,
+                        synopsis: data.synopsis, guardrails: { min: 4000, max: 6000 },
+                      }));
+                      setShowPresetMenu(false);
+                    }}
+                      className="w-full text-left px-4 py-3 text-[11px] text-zinc-400 hover:bg-blue-600/20 hover:text-white transition-colors border-b border-zinc-800 last:border-0">
+                      <div className="font-bold text-zinc-200">{data.title}</div>
+                      <div className="text-[9px] mt-0.5 opacity-70">{data.pov} · {data.emotion}</div>
+                    </button>
+                  );
+                })}
+                {(!AUTO_PRESETS[autoGenGenre] || AUTO_PRESETS[autoGenGenre].length === 0) && (
+                  <div className="px-4 py-3 text-[11px] text-zinc-500">{isKO ? '해당 장르 프리셋 없음' : 'No presets for this genre'}</div>
+                )}
+              </div>
+            )}
+          </div>
           <button onClick={handleAIGenerate} disabled={aiGenerating}
             className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
             {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
