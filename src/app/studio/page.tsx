@@ -245,6 +245,8 @@ export default function StudioPage() {
   const [promptDirective, setPromptDirective] = useState('');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [saveFlash, setSaveFlash] = useState(false);
+  const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
+  const [saveSlotName, setSaveSlotName] = useState('');
   const triggerSave = useCallback(() => {
     // Data is already auto-saved via localStorage, this is visual feedback
     setSaveFlash(true);
@@ -1543,6 +1545,11 @@ export default function StudioPage() {
                     <div className="max-w-6xl mx-auto px-4 pb-4">
                       <TabAssistant tab="style" language={language} config={currentSession.config} />
                     </div>
+                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
+                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
+                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
+                      </button>
+                    </div>
                   </>
                 )}
                 {activeTab === 'manuscript' && currentSession && (
@@ -1686,34 +1693,8 @@ export default function StudioPage() {
 
                 {/* Save current */}
                 <button onClick={() => {
-                  const name = prompt(isKO ? '저장 이름을 입력하세요:' : 'Enter save name:');
-                  if (!name) return;
-                  const slot: import('@/lib/studio-types').SavedSlot = {
-                    id: `slot-${Date.now()}`,
-                    name,
-                    tab: activeTab,
-                    timestamp: Date.now(),
-                    data: {
-                      genre: currentSession.config.genre,
-                      title: currentSession.config.title,
-                      povCharacter: currentSession.config.povCharacter,
-                      setting: currentSession.config.setting,
-                      primaryEmotion: currentSession.config.primaryEmotion,
-                      synopsis: currentSession.config.synopsis,
-                      characters: currentSession.config.characters,
-                      charRelations: currentSession.config.charRelations,
-                      sceneDirection: currentSession.config.sceneDirection,
-                      worldSimData: currentSession.config.worldSimData,
-                      simulatorRef: currentSession.config.simulatorRef,
-                    },
-                  };
-                  updateCurrentSession({
-                    config: {
-                      ...currentSession.config,
-                      savedSlots: [...(currentSession.config.savedSlots || []), slot],
-                    },
-                  });
-                  triggerSave();
+                  setSaveSlotName('');
+                  setSaveSlotModalOpen(true);
                 }}
                   className="w-full py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity active:scale-95">
                   💾 {isKO ? '현재 설정 저장' : 'Save Current'}
@@ -1974,6 +1955,90 @@ export default function StudioPage() {
         onConfirm={confirmState.onConfirm}
         onCancel={closeConfirm}
       />
+
+      {/* Save Slot Name Modal */}
+      {saveSlotModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSaveSlotModalOpen(false)}>
+          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-[360px] space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-text-primary">{isKO ? '저장 이름 입력' : 'Enter Save Name'}</h3>
+            <input
+              autoFocus
+              type="text"
+              value={saveSlotName}
+              onChange={e => setSaveSlotName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && saveSlotName.trim()) {
+                  const slot: import('@/lib/studio-types').SavedSlot = {
+                    id: `slot-${Date.now()}`,
+                    name: saveSlotName.trim(),
+                    tab: activeTab,
+                    timestamp: Date.now(),
+                    data: {
+                      genre: currentSession?.config.genre,
+                      title: currentSession?.config.title,
+                      povCharacter: currentSession?.config.povCharacter,
+                      setting: currentSession?.config.setting,
+                      primaryEmotion: currentSession?.config.primaryEmotion,
+                      synopsis: currentSession?.config.synopsis,
+                      characters: currentSession?.config.characters,
+                      charRelations: currentSession?.config.charRelations,
+                      sceneDirection: currentSession?.config.sceneDirection,
+                      worldSimData: currentSession?.config.worldSimData,
+                      simulatorRef: currentSession?.config.simulatorRef,
+                    },
+                  };
+                  updateCurrentSession({
+                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
+                  });
+                  triggerSave();
+                  setSaveSlotModalOpen(false);
+                }
+                if (e.key === 'Escape') setSaveSlotModalOpen(false);
+              }}
+              placeholder={isKO ? '예: 초기 설정 백업' : 'e.g. Initial setup backup'}
+              className="w-full px-3 py-2 bg-bg-secondary border border-border rounded-lg text-sm text-text-primary placeholder-zinc-500 focus:outline-none focus:border-accent-purple"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setSaveSlotModalOpen(false)} className="px-4 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors">
+                {isKO ? '취소' : 'Cancel'}
+              </button>
+              <button
+                disabled={!saveSlotName.trim()}
+                onClick={() => {
+                  if (!saveSlotName.trim()) return;
+                  const slot: import('@/lib/studio-types').SavedSlot = {
+                    id: `slot-${Date.now()}`,
+                    name: saveSlotName.trim(),
+                    tab: activeTab,
+                    timestamp: Date.now(),
+                    data: {
+                      genre: currentSession?.config.genre,
+                      title: currentSession?.config.title,
+                      povCharacter: currentSession?.config.povCharacter,
+                      setting: currentSession?.config.setting,
+                      primaryEmotion: currentSession?.config.primaryEmotion,
+                      synopsis: currentSession?.config.synopsis,
+                      characters: currentSession?.config.characters,
+                      charRelations: currentSession?.config.charRelations,
+                      sceneDirection: currentSession?.config.sceneDirection,
+                      worldSimData: currentSession?.config.worldSimData,
+                      simulatorRef: currentSession?.config.simulatorRef,
+                    },
+                  };
+                  updateCurrentSession({
+                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
+                  });
+                  triggerSave();
+                  setSaveSlotModalOpen(false);
+                }}
+                className="px-4 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isKO ? '저장' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* UX: Error Toast */}
       {uxError && (
