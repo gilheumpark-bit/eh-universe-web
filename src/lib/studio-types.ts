@@ -158,6 +158,7 @@ export interface StoryConfig {
   magicSystems?: MagicSystem[];
   savedSlots?: SavedSlot[];
   manuscripts?: EpisodeManuscript[];
+  chapterAnalyses?: ChapterAnalysis[];
   episodeSceneSheets?: EpisodeSceneSheet[];
 }
 
@@ -190,6 +191,85 @@ export interface EpisodeSceneSheet {
   characters: string;
   scenes: EpisodeSceneEntry[];
   lastUpdate: number;
+}
+
+// ============================================================
+// Chapter Analysis (챕터 분석) types
+// ============================================================
+
+export type EmotionIntensity = 'low' | 'mid' | 'high' | 'extreme';
+export type PresenceType = 'direct' | 'indirect' | 'mentioned' | 'absent';
+
+export interface CharacterStateEntry {
+  name: string;
+  presence: PresenceType;
+  sceneRole: string;
+  emotion: { primary: string; intensity: EmotionIntensity };
+  expression: string;
+  gaze: { direction: string; target: string };
+  pose: string;
+  actionState: string;
+  bodyState: string[];
+  outfitDelta: string[];
+  heldItem: string[];
+  relationContext: string;
+  aura: string[];
+}
+
+export interface BackgroundState {
+  location: string;
+  spaceType: string;
+  time: string;
+  weather: string;
+  lighting: string;
+  mood: string[];
+  keyObjects: string[];
+  environmentCondition: string[];
+}
+
+export interface SceneAnalysisState {
+  summary: string;
+  phase: string;
+  tension: EmotionIntensity;
+  conflictType: string[];
+  characterGoal: string;
+  obstacle: string;
+  turningPoint: string;
+  symbolicTags: string[];
+}
+
+export interface SoundState {
+  ambient: string[];
+  effects: string[];
+  voiceTone: string[];
+  audioMood: string[];
+  bgmTags: string[];
+}
+
+export interface ImagePromptPack {
+  characterFocus: string;
+  backgroundFocus: string;
+  sceneFocus: string;
+  styleHints: string[];
+}
+
+export interface MusicPromptPack {
+  mood: string;
+  emotionFlow: string;
+  soundKeywords: string[];
+  musicStyle: string[];
+}
+
+export interface ChapterAnalysis {
+  id: string;
+  episode: number;
+  timestamp: number;
+  characterState: CharacterStateEntry[];
+  backgroundState: BackgroundState;
+  sceneState: SceneAnalysisState;
+  soundState: SoundState;
+  imagePromptPack: ImagePromptPack;
+  musicPromptPack: MusicPromptPack;
 }
 
 export interface SavedSlot {

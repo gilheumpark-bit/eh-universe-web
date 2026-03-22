@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool } from "lucide-react";
-import type { StoryConfig, EpisodeManuscript, AppLanguage } from "@/lib/studio-types";
+import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles } from "lucide-react";
+import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
+import ChapterAnalysisView from "./ChapterAnalysisView";
 
 // ============================================================
 // PART 1 — TYPES & HELPERS
@@ -155,6 +156,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
   const [editingEp, setEditingEp] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editTitle, setEditTitle] = useState("");
+  const [analysisEp, setAnalysisEp] = useState<number | null>(null);
 
   const totalChars = useMemo(() => manuscripts.reduce((sum, m) => sum + m.charCount, 0), [manuscripts]);
   const targetPerEp = config.guardrails.min;
@@ -222,6 +224,26 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     if (!window.confirm(msg)) return;
     updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
   };
+
+  const saveAnalysis = useCallback(
+    (analysis: ChapterAnalysis) => {
+      const existing = config.chapterAnalyses || [];
+      const idx = existing.findIndex((a) => a.episode === analysis.episode);
+      const updated = idx >= 0
+        ? existing.map((a, i) => (i === idx ? analysis : a))
+        : [...existing, analysis];
+      setConfig((prev) => ({ ...prev, chapterAnalyses: updated }));
+      setAnalysisEp(null);
+    },
+    [config.chapterAnalyses, setConfig]
+  );
+
+  const getAnalysis = useCallback(
+    (ep: number): ChapterAnalysis | null => {
+      return (config.chapterAnalyses || []).find((a) => a.episode === ep) ?? null;
+    },
+    [config.chapterAnalyses]
+  );
 
   const exportEpub = () => {
     if (manuscripts.length === 0) return;
@@ -393,6 +415,19 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                   ) : (
                     <div className="p-4">
                       <div className="flex justify-end gap-2 mb-3">
+                        <button
+                          onClick={() => setAnalysisEp(analysisEp === m.episode ? null : m.episode)}
+                          className={`p-1.5 rounded transition-colors ${
+                            analysisEp === m.episode
+                              ? "bg-accent-amber/20 text-accent-amber"
+                              : getAnalysis(m.episode)
+                                ? "bg-accent-amber/10 text-accent-amber/60 hover:text-accent-amber"
+                                : "bg-bg-tertiary/50 text-text-tertiary hover:text-accent-amber"
+                          }`}
+                          title={isKO ? "챕터 분석" : "Chapter Analysis"}
+                        >
+                          <Sparkles className="w-3 h-3" />
+                        </button>
                         {onEditInStudio && (
                           <button onClick={() => onEditInStudio(m.content)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-green transition-colors" title={isKO ? '스튜디오에서 편집' : 'Edit in Studio'}>
                             <PenTool className="w-3 h-3" />
@@ -405,6 +440,21 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
+
+                      {/* Chapter Analysis Panel */}
+                      {analysisEp === m.episode && (
+                        <div className="mb-4 border border-accent-amber/20 rounded-xl p-4 bg-bg-primary">
+                          <ChapterAnalysisView
+                            language={language}
+                            episode={m.episode}
+                            manuscriptContent={m.content}
+                            analysis={getAnalysis(m.episode)}
+                            onSaveAnalysis={saveAnalysis}
+                            onClose={() => setAnalysisEp(null)}
+                          />
+                        </div>
+                      )}
+
                       <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-sm">
                         {m.content}
                       </div>
