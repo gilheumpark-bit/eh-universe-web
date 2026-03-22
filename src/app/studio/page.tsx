@@ -5,7 +5,8 @@ import {
   Plus, Settings, Send,
   Sparkles, Menu, Globe, UserCircle,
   Zap, Ghost, X, PenTool, History, StopCircle,
-  Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon
+  Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon,
+  FileType
 } from 'lucide-react';
 import {
   Message, StoryConfig, Genre,
@@ -25,10 +26,13 @@ import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import { generateStoryStream } from '@/services/geminiService';
+import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import dynamic from 'next/dynamic';
 const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
+const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
+const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -399,6 +403,45 @@ export default function StudioPage() {
     w.print();
   }, [currentSession]);
 
+  // Export as EPUB
+  const handleExportEPUB = useCallback(() => {
+    if (!currentSession) return;
+    exportEPUB(currentSession);
+  }, [currentSession]);
+
+  // Export as DOCX
+  const handleExportDOCX = useCallback(() => {
+    if (!currentSession) return;
+    exportDOCX(currentSession);
+  }, [currentSession]);
+
+  // Switch message version
+  const handleVersionSwitch = useCallback((messageId: string, versionIndex: number) => {
+    setSessions(prev => prev.map(s => {
+      if (s.id !== currentSessionId) return s;
+      const msgs = s.messages.map(m => {
+        if (m.id !== messageId || !m.versions) return m;
+        const content = m.versions[versionIndex];
+        if (content == null) return m;
+        return { ...m, content, currentVersionIndex: versionIndex };
+      });
+      return { ...s, messages: msgs };
+    }));
+  }, [currentSessionId]);
+
+  // Apply single typo fix to a message
+  const handleTypoFix = useCallback((messageId: string, index: number, original: string, suggestion: string) => {
+    setSessions(prev => prev.map(s => {
+      if (s.id !== currentSessionId) return s;
+      const msgs = s.messages.map(m => {
+        if (m.id !== messageId) return m;
+        const fixed = m.content.slice(0, index) + suggestion + m.content.slice(index + original.length);
+        return { ...m, content: fixed };
+      });
+      return { ...s, messages: msgs };
+    }));
+  }, [currentSessionId]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -526,9 +569,14 @@ export default function StudioPage() {
     if (userMsg.role !== 'user') return;
     const historyMessages = currentSession.messages.slice(0, msgIndex - 1);
 
+    // Save current content to versions before regenerating
+    const currentMsg = currentSession.messages[msgIndex];
+    const prevVersions = currentMsg.versions ?? [];
+    const savedVersions = currentMsg.content ? [...prevVersions, currentMsg.content] : prevVersions;
+
     setSessions(prev => prev.map(s => {
       if (s.id === currentSessionId) {
-        const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: '', meta: undefined } : m);
+        const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: '', meta: undefined, versions: savedVersions, currentVersionIndex: savedVersions.length } : m);
         return { ...s, messages: msgs };
       }
       return s;
@@ -571,11 +619,11 @@ export default function StudioPage() {
       setLastReport(result.report);
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
-          const msgs = s.messages.map(m =>
-            m.id === assistantMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
-              : m
-          );
+          const msgs = s.messages.map(m => {
+            if (m.id !== assistantMsgId) return m;
+            const updatedVersions = [...(m.versions ?? []), fullContent];
+            return { ...m, content: fullContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
+          });
           return { ...s, messages: msgs };
         }
         return s;
@@ -679,6 +727,14 @@ export default function StudioPage() {
               <Upload className="w-3 h-3" /> {isKO ? '불러오기' : 'Import'}
             </button>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
+          </div>
+          <div className="flex gap-1.5">
+            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <FileText className="w-3 h-3" /> EPUB
+            </button>
+            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <FileType className="w-3 h-3" /> DOCX
+            </button>
           </div>
           <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
             {isKO ? '📦 전체 백업 (JSON)' : '📦 Full Backup (JSON)'}
@@ -1126,7 +1182,28 @@ export default function StudioPage() {
                           </div>
                         ) : (
                           (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
-                            <ChatMessage key={msg.id} message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
+                            <div key={msg.id}>
+                              <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
+                              {msg.role === 'assistant' && msg.versions && msg.versions.length > 1 && (
+                                <div className="ml-11 md:ml-12">
+                                  <VersionDiff
+                                    versions={msg.versions}
+                                    currentIndex={msg.currentVersionIndex ?? msg.versions.length - 1}
+                                    language={language}
+                                    onSwitch={(idx) => handleVersionSwitch(msg.id, idx)}
+                                  />
+                                </div>
+                              )}
+                              {msg.role === 'assistant' && msg.content && (
+                                <div className="ml-11 md:ml-12">
+                                  <TypoPanel
+                                    text={msg.content}
+                                    language={language}
+                                    onApplyFix={(idx, orig, sug) => handleTypoFix(msg.id, idx, orig, sug)}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           ))
                         )}
                         <div ref={messagesEndRef} className="h-32" />
