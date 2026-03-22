@@ -1304,7 +1304,7 @@ export default function StudioPage() {
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
                         }`}>
-                        🤖 {isKO ? 'AI 집필' : 'AI Writing'}
+                        🤖 {isKO ? '초안 생성' : 'Draft'}
                       </button>
                       <button onClick={() => {
                         setWritingMode('edit');
@@ -1325,7 +1325,7 @@ export default function StudioPage() {
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
                         }`}>
-                        🎨 {isKO ? '3패스 캔버스' : '3-Pass Canvas'}
+                        🎨 {isKO ? '3단계 작성' : '3-Step Write'}
                       </button>
                       <button onClick={() => {
                         setWritingMode('refine');
