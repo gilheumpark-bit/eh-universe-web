@@ -40,6 +40,7 @@ const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
+const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
@@ -1176,6 +1177,11 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'writing' && currentSession && (
                   <div className={`max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
+                    {/* Continuity Tracker Graph — 맥락 추적 */}
+                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
+                      <ContinuityGraph language={language} config={currentSession.config} />
+                    )}
+
                     {/* Applied Settings Summary — hide when empty */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
                     <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
