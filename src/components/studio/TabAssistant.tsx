@@ -591,10 +591,12 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={isKO ? '질문을 입력하세요...' : 'Ask a question...'}
-                className="flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2 text-[12px] text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-20 transition-colors"
+                placeholder={!getApiKey(getActiveProvider())
+                  ? (isKO ? '🔒 API 키 설정 후 사용 가능합니다' : '🔒 API key required')
+                  : (isKO ? '질문을 입력하세요...' : 'Ask a question...')}
+                className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2 text-[12px] text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-20 transition-colors ${!getApiKey(getActiveProvider()) ? 'opacity-60' : ''}`}
                 rows={1}
-                disabled={isStreaming}
+                disabled={isStreaming || !getApiKey(getActiveProvider())}
               />
               {isStreaming ? (
                 <button onClick={handleCancel} className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">

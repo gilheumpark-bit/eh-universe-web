@@ -92,6 +92,7 @@ export default function StudioPage() {
   const [language, setLanguage] = useState<AppLanguage>('KO');
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyVersion, setApiKeyVersion] = useState(0);
   const [showDashboard, setShowDashboard] = useState(false);
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
@@ -103,14 +104,18 @@ export default function StudioPage() {
   const t = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const isKO = language === 'KO';
 
-  // API 키 존재 여부 (렌더링용, hydrated 이후만 체크)
-  const hasApiKey = hydrated && !!getApiKey(getActiveProvider());
+  // API 키 존재 여부 (렌더링용, hydrated 이후만 체크, apiKeyVersion으로 갱신 트리거)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const hasApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(getActiveProvider());
 
   // UX feature states
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [lightTheme, setLightTheme] = useState(false);
+  const [lightTheme, setLightTheme] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('noa_light_theme') === 'true';
+  });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -454,6 +459,12 @@ export default function StudioPage() {
   }, [sessions]);
 
   // Import JSON backup
+  const isValidSession = (s: unknown): s is ChatSession => {
+    if (!s || typeof s !== 'object') return false;
+    const obj = s as Record<string, unknown>;
+    return typeof obj.id === 'string' && Array.isArray(obj.messages);
+  };
+
   const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -462,13 +473,19 @@ export default function StudioPage() {
       try {
         const data = JSON.parse(ev.target?.result as string);
         if (Array.isArray(data)) {
-          // Multiple sessions
-          setSessions(prev => [...data, ...prev]);
-          setCurrentSessionId(data[0]?.id || null);
-        } else if (data.id && data.messages) {
-          // Single session
+          const valid = data.filter(isValidSession);
+          if (valid.length === 0) {
+            alert(isKO ? '유효한 세션 데이터가 없습니다.' : 'No valid session data found.');
+            return;
+          }
+          setSessions(prev => [...valid, ...prev]);
+          setCurrentSessionId(valid[0].id);
+        } else if (isValidSession(data)) {
           setSessions(prev => [data, ...prev]);
           setCurrentSessionId(data.id);
+        } else {
+          alert(isKO ? '유효하지 않은 세션 형식입니다. (id, messages 필수)' : 'Invalid session format. (id and messages required)');
+          return;
         }
         setActiveTab('writing');
       } catch {
@@ -497,21 +514,26 @@ export default function StudioPage() {
   const filteredMessages = currentSession?.messages.filter(m =>
     !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+  const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
 
   // Print
   const handlePrint = useCallback(() => {
     if (!currentSession) return;
-    const printContent = currentSession.messages.map(m => {
-      const prefix = m.role === 'user' ? '📝 ' : '🤖 ';
-      return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
-    }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
+    const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    // 수동 편집 중이면 editDraft 내용을 인쇄
+    const isEditMode = writingMode === 'edit' && editDraft.trim();
+    const printContent = isEditMode
+      ? `<div style="white-space:pre-wrap;font-family:serif;line-height:1.8;">${escHtml(editDraft)}</div>`
+      : currentSession.messages.map(m => {
+        const prefix = m.role === 'user' ? '📝 ' : '🤖 ';
+        return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
+      }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
     const w = window.open('', '_blank');
     if (!w) return;
-    const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}</p><hr>${printContent}</body></html>`);
+    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
     w.document.close();
     w.print();
-  }, [currentSession]);
+  }, [currentSession, writingMode, editDraft, language]);
 
   // Export as EPUB
   const handleExportEPUB = useCallback(() => {
@@ -939,6 +961,13 @@ export default function StudioPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
+        {focusMode && (
+          <button onClick={() => setFocusMode(false)}
+            className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[9px] text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] opacity-30 hover:opacity-100"
+            title="F11">
+            <Minimize2 className="w-3 h-3 inline mr-1" />{isKO ? '포커스 해제' : 'Exit Focus'}
+          </button>
+        )}
         <header className={`h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
           <div className="flex items-center gap-2 md:gap-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors">
@@ -972,7 +1001,7 @@ export default function StudioPage() {
             <div className="flex items-center gap-1">
               <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '검색 (Ctrl+F)' : 'Search (Ctrl+F)'} aria-label={isKO ? '검색' : 'Search'}><Search className="w-4 h-4" /></button>
               <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '집중 모드 (F11)' : 'Focus Mode (F11)'} aria-label={isKO ? '집중 모드' : 'Focus mode'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={() => setLightTheme(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '테마 전환' : 'Toggle Theme'} aria-label={isKO ? '테마 전환' : 'Toggle theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={() => setLightTheme(prev => { const next = !prev; localStorage.setItem('noa_light_theme', String(next)); return next; })} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '테마 전환' : 'Toggle Theme'} aria-label={isKO ? '테마 전환' : 'Toggle theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
               <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={isKO ? '단축키 도움말' : 'Keyboard shortcuts'}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
@@ -984,6 +1013,11 @@ export default function StudioPage() {
             <Search className="w-4 h-4 text-text-tertiary shrink-0" />
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={isKO ? '메시지 검색...' : 'Search messages...'} autoFocus
               className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
+            {searchMatchesEditDraft && (
+              <button onClick={() => setWritingMode('edit')} className="text-[9px] text-accent-green font-bold font-[family-name:var(--font-mono)] shrink-0">
+                {isKO ? '✏️ 편집 중 원고에서 발견' : '✏️ Found in draft'}
+              </button>
+            )}
             <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
           </div>
         )}
@@ -1333,8 +1367,8 @@ export default function StudioPage() {
                     </details>
                     )}
 
-                    {/* AI / Edit sub-tabs + Directive — hide when empty AI mode */}
-                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (<>
+                    {/* AI / Edit sub-tabs + Directive — show when: has messages, not in default ai mode, or no API key (so manual users can find edit) */}
+                    {(currentSession.messages.length > 0 || writingMode !== 'ai' || !hasApiKey) && (<>
                     <div className="flex gap-1 items-center">
                       <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
@@ -1508,8 +1542,12 @@ export default function StudioPage() {
                             <button onClick={() => {
                               if (!editDraft.trim()) return;
                               const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
-                              updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[인라인 편집 완료]' : '[Inline Edit Complete]', timestamp: Date.now() }, editMsg] });
-                              setWritingMode('ai');
+                              updateCurrentSession({
+                                messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[인라인 편집 완료]' : '[Inline Edit Complete]', timestamp: Date.now() }, editMsg],
+                                title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title
+                              });
+                              if (hasApiKey) setWritingMode('ai');
+                              setEditDraft('');
                             }}
                               className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
                               {isKO ? '💾 원고에 반영' : '💾 Apply to Manuscript'}
@@ -2178,7 +2216,7 @@ export default function StudioPage() {
       </main>
 
       {showApiKeyModal && (
-        <ApiKeyModal language={language} onClose={() => setShowApiKeyModal(false)} onSave={() => {}} />
+        <ApiKeyModal language={language} onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }} onSave={() => setApiKeyVersion(v => v + 1)} />
       )}
 
       {/* UX: Confirm Modal */}
