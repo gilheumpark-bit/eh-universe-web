@@ -95,6 +95,15 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
         </div>
 
         {/* Engine Report */}
+        {!report && !isGenerating && (
+          <div className="space-y-2 text-center py-4">
+            <BarChart3 className="w-5 h-5 text-zinc-700 mx-auto" />
+            <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">No Report Yet</p>
+            <p className="text-[8px] text-zinc-700 max-w-[200px] mx-auto">
+              AI 생성 후 등급·메트릭·분석 리포트가 여기에 표시됩니다.
+            </p>
+          </div>
+        )}
         {report && (
           <div className="space-y-3">
             <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">

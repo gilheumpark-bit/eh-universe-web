@@ -6,6 +6,7 @@ import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2 } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
+import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 // ============================================================
 // Genre-specific auto-generation presets
@@ -61,6 +62,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const [showPresetMenu, setShowPresetMenu] = useState(false);
 
   const handleAIGenerate = async () => {
+    if (!getApiKey(getActiveProvider())) {
+      alert(isKO ? 'API 키를 먼저 설정해주세요. (설정 탭 → API 키)' : 'Please set your API key first. (Settings → API Key)');
+      return;
+    }
     setAiGenerating(true);
     try {
       // 사용자가 입력한 값을 힌트로 전달

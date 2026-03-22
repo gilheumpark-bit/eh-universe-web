@@ -1053,8 +1053,11 @@ export default function StudioPage() {
                   </div>
                   <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">{t.engine.noActiveNarrative}</h2>
                   <p className="text-text-tertiary text-sm mb-2">{t.engine.startPrompt}</p>
-                  <p className="text-text-tertiary/50 text-[10px] mb-8 max-w-sm font-[family-name:var(--font-mono)]">
+                  <p className="text-text-tertiary/50 text-[10px] mb-2 max-w-sm font-[family-name:var(--font-mono)]">
                     {isKO ? '세계관 설계 → 캐릭터 생성 → 연출 설정 → 집필 순서로 진행하세요' : 'World Design → Characters → Direction → Writing — follow the workflow'}
+                  </p>
+                  <p className="text-text-tertiary/30 text-[9px] mb-8 max-w-sm font-[family-name:var(--font-mono)]">
+                    {isKO ? '💡 API 키 없이도 세계관·캐릭터·연출 설계와 수동 편집이 가능합니다' : '💡 World/character/direction design and manual editing work without API key'}
                   </p>
                   <button onClick={createNewSession} className="px-8 py-3 md:px-10 md:py-4 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">{t.sidebar.newProject}</button>
                 </div>
@@ -1450,6 +1453,17 @@ export default function StudioPage() {
                                 </button>
                               ))}
                             </div>
+                            {!hasApiKey && (
+                              <div className="mt-6 pt-4 border-t border-border/30">
+                                <p className="text-text-tertiary/60 text-[10px] font-[family-name:var(--font-mono)] mb-2">
+                                  {isKO ? 'API 키 없이 시작하려면:' : 'To start without API key:'}
+                                </p>
+                                <button onClick={() => setWritingMode('edit')}
+                                  className="px-4 py-2 bg-bg-secondary border border-accent-purple/30 rounded-xl text-[10px] font-bold text-accent-purple hover:bg-accent-purple/10 transition-all font-[family-name:var(--font-mono)]">
+                                  ✏️ {isKO ? '직접 편집 모드로 시작' : 'Start in Manual Edit mode'}
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
@@ -1486,7 +1500,9 @@ export default function StudioPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <p className="text-[10px] text-text-tertiary">
-                            {isKO ? '텍스트를 드래그 선택 → 리라이트/살붙이기/압축 등 AI 액션 실행. 직접 수정도 가능.' : 'Select text → run AI rewrite/expand/compress actions. Direct editing also available.'}
+                            {isKO
+                              ? `직접 수정 가능.${hasApiKey ? ' 텍스트 드래그 선택 → 리라이트/살붙이기/압축 등 AI 액션도 사용 가능.' : ' (AI 리라이트 액션은 API 키 설정 후 사용 가능)'}`
+                              : `Direct editing available.${hasApiKey ? ' Select text → run AI rewrite/expand/compress actions.' : ' (AI rewrite actions require API key)'}`}
                           </p>
                           <div className="flex gap-2">
                             <button onClick={() => {
@@ -2107,11 +2123,15 @@ export default function StudioPage() {
           <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
             <div className="max-w-6xl mx-auto relative px-0">
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-                <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.nextChapter}
+                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t.engine.nextChapterPrompt); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
+                  title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                  {t.engine.nextChapter}{!hasApiKey && ' 🔒'}
                 </button>
-                <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.plotTwist}
+                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t.engine.plotTwistPrompt); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
+                  title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                  {t.engine.plotTwist}{!hasApiKey && ' 🔒'}
                 </button>
                 {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
                   <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
@@ -2119,9 +2139,10 @@ export default function StudioPage() {
                   </button>
                 )}
                 <span className="text-border">|</span>
-                <button onClick={() => { setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
-                  className="px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  🎨 {isKO ? '캔버스 실행' : 'Open Canvas'}
+                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
+                  className={`px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
+                  title={!hasApiKey ? (isKO ? 'API 키 필요' : 'API key required') : ''}>
+                  {!hasApiKey ? '🔒' : '🎨'} {isKO ? '캔버스 실행' : 'Open Canvas'}
                 </button>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
@@ -2129,10 +2150,12 @@ export default function StudioPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder={t.writing.inputPlaceholder}
-                  className="flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed"
+                  placeholder={!hasApiKey
+                    ? (isKO ? '🔒 AI 생성에는 API 키가 필요합니다. 직접 편집 모드(✏️)를 이용하세요.' : '🔒 API key required for AI generation. Use Manual Edit (✏️) mode instead.')
+                    : t.writing.inputPlaceholder}
+                  className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${!hasApiKey ? 'cursor-not-allowed opacity-60' : ''}`}
                   rows={1}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !hasApiKey}
                 />
                 {input.length > 0 && (
                   <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
