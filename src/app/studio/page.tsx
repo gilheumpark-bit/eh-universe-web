@@ -1046,6 +1046,15 @@ export default function StudioPage() {
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
                       synopsis={currentSession?.config.synopsis}
                       characterNames={currentSession?.config.characters.map(c => c.name)}
+                      tierContext={{
+                        charProfiles: currentSession?.config.characters.map(c => ({
+                          name: c.name, desire: c.desire, conflict: c.conflict,
+                          changeArc: c.changeArc, values: c.values,
+                        })),
+                        corePremise: currentSession?.config.corePremise,
+                        powerStructure: currentSession?.config.powerStructure,
+                        currentConflict: currentSession?.config.currentConflict,
+                      }}
                       initialDirection={currentSession?.config.sceneDirection ? {
                         goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
                         hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),

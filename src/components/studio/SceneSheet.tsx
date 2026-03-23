@@ -275,16 +275,24 @@ interface FullDirectionData {
   plotStructure: string;
 }
 
+interface TierContext {
+  charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[];
+  corePremise?: string;
+  powerStructure?: string;
+  currentConflict?: string;
+}
+
 interface SceneSheetProps {
   lang?: Lang;
   synopsis?: string;
   characterNames?: string[];
+  tierContext?: TierContext;
   onDirectionUpdate?: (data: FullDirectionData) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: Partial<FullDirectionData>;
 }
 
-export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
@@ -467,6 +475,31 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   };
   const passCount = Object.values(validation).filter(Boolean).length;
 
+  // 3-tier 연동 검증
+  const tierWarnings: string[] = [];
+  if (tierContext) {
+    const hasCharData = tierContext.charProfiles?.some(c => c.desire || c.conflict);
+    if (!hasCharData) {
+      tierWarnings.push(lang === "ko" ? "캐릭터 뼈대(욕망/갈등)가 비어있어 연출이 서사와 연결되지 않습니다" : "Character skeleton (desire/conflict) is empty — direction won't connect to narrative");
+    }
+    if (!tierContext.corePremise) {
+      tierWarnings.push(lang === "ko" ? "세계관 핵심 전제가 없어 훅/클리프행어가 세계관과 무관합니다" : "No world premise — hooks/cliffs won't relate to the world");
+    }
+    if (!tierContext.currentConflict) {
+      tierWarnings.push(lang === "ko" ? "세계 갈등이 없어 긴장 장치가 맥락을 잃습니다" : "No world conflict — tension devices lose context");
+    }
+    // 대사 톤이 있는데 해당 캐릭터의 values가 없으면
+    if (tierContext.charProfiles?.length) {
+      for (const rule of dialogueRules) {
+        const profile = tierContext.charProfiles.find(c => c.name === rule.character);
+        if (profile && !profile.values) {
+          tierWarnings.push(lang === "ko" ? `${rule.character}의 가치관/금지선이 없어 대사 톤이 캐릭터와 분리됩니다` : `${rule.character} has no values — dialogue tone disconnected from character`);
+          break;
+        }
+      }
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -494,7 +527,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
-              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN');
+              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
               const ts = Date.now();
               if (result.hook) setHooks([{ id: `ai-h-${ts}`, position: (result.hook.position || 'opening') as "opening" | "middle" | "ending", hookType: result.hook.type || 'question', desc: result.hook.desc || '' }]);
               if (result.tension) setGogumas([{ id: `ai-g-${ts}`, type: 'goguma', intensity: 'medium', desc: result.tension.desc || '', episode: 1 }]);
@@ -957,6 +990,18 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
               </div>
             ))}
           </div>
+
+          {/* 3-tier 서사 연동 경고 */}
+          {tierWarnings.length > 0 && (
+            <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-1">
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider">
+                ⚠ {lang === "ko" ? "서사 연동 경고" : "Narrative Link Warning"}
+              </span>
+              {tierWarnings.map((w, i) => (
+                <p key={i} className="text-[9px] text-amber-300/70">{w}</p>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ============================================================ */}

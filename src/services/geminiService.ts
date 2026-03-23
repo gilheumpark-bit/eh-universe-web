@@ -282,7 +282,17 @@ export const generateWorldSim = async (synopsis: string, genre: string, language
 // PART 6: AI SCENE DIRECTION GENERATION
 // ============================================================
 
-export const generateSceneDirection = async (synopsis: string, characters: string[], language: AppLanguage = 'KO'): Promise<{
+export const generateSceneDirection = async (
+  synopsis: string,
+  characters: string[],
+  language: AppLanguage = 'KO',
+  tierContext?: {
+    charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[];
+    corePremise?: string;
+    powerStructure?: string;
+    currentConflict?: string;
+  }
+): Promise<{
   hook: { position: string; type: string; desc: string };
   tension: { type: string; desc: string };
   cliffhanger: { type: string; desc: string };
@@ -294,10 +304,25 @@ export const generateSceneDirection = async (synopsis: string, characters: strin
   const ai = new GoogleGenAI({ apiKey });
   const langName = language === 'KO' ? 'Korean' : 'English';
 
+  // 3-tier 컨텍스트 빌드
+  const contextParts: string[] = [];
+  if (tierContext?.corePremise) contextParts.push(`World Premise: ${tierContext.corePremise}`);
+  if (tierContext?.powerStructure) contextParts.push(`Power Structure: ${tierContext.powerStructure}`);
+  if (tierContext?.currentConflict) contextParts.push(`World Conflict: ${tierContext.currentConflict}`);
+  if (tierContext?.charProfiles?.length) {
+    const charBlock = tierContext.charProfiles
+      .map(c => `  - ${c.name}: wants "${c.desire || '?'}", conflicts with "${c.conflict || '?'}", arc toward "${c.changeArc || '?'}", forbidden line "${c.values || '?'}"`)
+      .join('\n');
+    contextParts.push(`Character Profiles:\n${charBlock}`);
+  }
+  const tierBlock = contextParts.length > 0
+    ? `\n\n[NARRATIVE FRAMEWORK]\n${contextParts.join('\n')}\n\nIMPORTANT RULES:\n- Hooks must connect to character desires or world conflicts\n- Cliffhangers must threaten character values or exploit their deficiencies\n- Tension devices must escalate toward the character's change arc\n- Dialogue tone must reflect each character's core conflict\n`
+    : '';
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-pro',
-      contents: `Based on this story, generate scene direction elements in ${langName}.\n\nSynopsis: ${synopsis}\nCharacters: ${characters.join(', ')}`,
+      contents: `Based on this story, generate scene direction elements in ${langName}.\n\nSynopsis: ${synopsis}\nCharacters: ${characters.join(', ')}${tierBlock}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
