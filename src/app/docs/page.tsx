@@ -14,7 +14,7 @@ const sectionsKo = [
 BYOK(Bring Your Own Key): Gemini, OpenAI, Claude, Groq, Mistral \uc9c0\uc6d0
 \ud504\ub85c\uc81d\ud2b8 \uc0dd\uc131: \uc81c\ubaa9\uc744 \uc785\ub825\ud558\uba74 AI\uac00 \ucd08\uae30 \uc124\uc815\uc744 \uc81c\uc548\ud569\ub2c8\ub2e4.
 
-[NEW] \uc628\ubcf4\ub529 \uac00\uc774\ub4dc \ud22c\uc5b4 (5\ub2e8\uacc4)
+\uc628\ubcf4\ub529 \uac00\uc774\ub4dc \ud22c\uc5b4 (5\ub2e8\uacc4)
 \ucc98\uc74c \uc811\uc18d \uc2dc 5\ub2e8\uacc4 \uc548\ub0b4 \ud22c\uc5b4\uac00 \uc790\ub3d9 \uc2dc\uc791\ub429\ub2c8\ub2e4.
 \ud504\ub85c\uc81d\ud2b8 \uc0dd\uc131 \u2192 \uc138\uacc4\uad00 \uc124\uacc4 \u2192 \uce90\ub9ad\ud130 \uc2a4\ud29c\ub514\uc624 \u2192 \uc9d1\ud544 \uc2a4\ud29c\ub514\uc624 \u2192 \ub0b4\ubcf4\ub0b4\uae30
 
@@ -26,10 +26,10 @@ Google \uacc4\uc815\uc73c\ub85c \ub85c\uadf8\uc778\ud558\uba74 \ubaa8\ub4e0 \ud5
 \uc2dc\ub18d\uc2dc\uc2a4, \uce90\ub9ad\ud130, \uc2dc\ub300 \ubc30\uacbd \uc124\uc815
 \ud150\uc158 \ucee4\ube0c \ucc28\ud2b8: \ud68c\ucc28\ubcc4 \uae34\uc7a5\uac10 \uc2dc\uac01\ud654
 
-[NEW] \ucd1d \ud68c\ucc28 \ucd5c\ub300 300\ud654
+\ucd1d \ud68c\ucc28 \ucd5c\ub300 300\ud654
 \uc7a5\ud3b8 \uc5f0\uc7ac\ub97c \uc704\ud574 \ucd5c\ub300 300\ud68c\ucc28\uae4c\uc9c0 \uacc4\ud68d \uac00\ub2a5
 
-[NEW] \ud50c\ub7ab\ud3fc \ud504\ub9ac\uc14b 4\uc885
+\ud50c\ub7ab\ud3fc \ud504\ub9ac\uc14b 4\uc885
 \ubb38\ud53c\uc544 / \ub178\ubca8\ud53c\uc544 / \uce74\uce74\uc624\ud398\uc774\uc9c0 / \ub124\uc774\ubc84 \uc2dc\ub9ac\uc988
 \uac01 \ud50c\ub7ab\ud3fc\uc5d0 \ub9de\ub294 \uae00\uc790 \uc218\u00b7\ud68c\ucc28 \uad6c\uc131\uc744 \uc790\ub3d9 \uc124\uc815
 
@@ -40,11 +40,11 @@ NOL AI \ucc44\ud305: \uc138\uacc4\uad00 \uc124\uacc4 \uc804\uc6a9 AI \uc5b4\uc2d
 \ubb38\uba85/\uc138\ub825 \uad00\uacc4 \uc2dc\uac01\ud654: \uc138\ub825 \uad00\uacc4\ub3c4 \uc790\ub3d9 \uc0dd\uc131
 \ud5e5\uc2a4 \ub9f5 \ud398\uc778\ud305: \uc9c0\ub3c4 \uc704\uc5d0 \uc601\uc5ed\u00b7\uc138\ub825 \ubc30\uce58
 
-[NEW] EH \uc5d4\uc9c4 9\ub2e8\uacc4 \uc801\uc6a9\ub960
+EH \uc5d4\uc9c4 9\ub2e8\uacc4 \uc801\uc6a9\ub960
 \ubbf8\uc801\uc6a9(0%) ~ \ud480EH(100%)\uae4c\uc9c0 9\ub2e8\uacc4\ub85c \uc870\uc808
 \uac01 \ub2e8\uacc4\ub9c8\ub2e4 \ud65c\uc131\ud654\ub418\ub294 \ubaa8\ub4c8\uc774 \ub2e4\ub984
 
-[NEW] \uc7a5\ub974\ubcc4 \uad8c\uc7a5 \uad6c\uac04
+\uc7a5\ub974\ubcc4 \uad8c\uc7a5 \uad6c\uac04
 \uba3c\uce58\ud0a8 15% / \ud310\ud0c0\uc9c0 30% / SF 60% / \uc21c\ubb38\ud559 100%
 \uc7a5\ub974\uc5d0 \ub9de\ub294 \ucd5c\uc801 \uc5d4\uc9c4 \uc801\uc6a9\ub960\uc744 \uac00\uc774\ub4dc\ud569\ub2c8\ub2e4.` },
 
@@ -65,7 +65,7 @@ NOC AI \ucc44\ud305: \uce90\ub9ad\ud130 \uc124\uacc4 \uc804\uc6a9 AI \uc5b4\uc2d
 4\uc885 \ud50c\ub86f \uad6c\uc870:
 3\ub9c9 \uad6c\uc870 / \uc601\uc6c5\uc5ec\uc815 / \uae30\uc2b9\uc804\uacb0 / \ud53c\ud788\ud150 \uace1\uc120
 
-[NEW] \uc5d0\ud53c\uc18c\ub4dc \uc52c\uc2dc\ud2b8 \uc800\uc7a5/\uc870\ud68c
+\uc5d0\ud53c\uc18c\ub4dc \uc52c\uc2dc\ud2b8 \uc800\uc7a5/\uc870\ud68c
 \ud68c\ucc28\ubcc4 \uc52c \uad6c\uc131\uc744 \uc800\uc7a5\ud558\uace0 \uc5b8\uc81c\ub4e0 \uc870\ud68c \uac00\ub2a5
 \uc52c \ub2e8\uc704\ub85c \ud50c\ub86f \ud750\ub984\uc744 \uc138\ubc00\ud558\uac8c \uad00\ub9ac\ud569\ub2c8\ub2e4.` },
 
@@ -79,16 +79,16 @@ NOC AI \ucc44\ud305: \uce90\ub9ad\ud130 \uc124\uacc4 \uc804\uc6a9 AI \uc5b4\uc2d
 3\ud328\uc2a4 \uce94\ubc84\uc2a4: \ucd08\uace0 \u2192 \uad6c\uc870\uac80\uc99d \u2192 \ubb38\uccb4\uc218\uc815
 \uc778\ub77c\uc778 \ub9ac\ub77c\uc774\ud130: \uc120\ud0dd \uc601\uc5ed \uc989\uc2dc \ub9ac\ub77c\uc774\ud2b8
 
-[NEW] Engine Report \uc778\ub77c\uc778 \ud45c\uc2dc
+Engine Report \uc778\ub77c\uc778 \ud45c\uc2dc
 Grade / Tension / Pacing / EOS \uc810\uc218\uac00 \uc6d0\uace0 \uc606\uc5d0 \uc2e4\uc2dc\uac04 \ud45c\uc2dc
 
-[NEW] \uc790\ub3d9 \uc218\uc815 \ubc84\ud2bc
+\uc790\ub3d9 \uc218\uc815 \ubc84\ud2bc
 \uc5d4\uc9c4 \ub9ac\ud3ec\ud2b8 \uae30\ubc18\uc73c\ub85c \ubb38\uc81c \uad6c\uac04 \uc790\ub3d9 \uc218\uc815
 
-[NEW] NOD \uac10\ub3c5 \uc2e4\uc2dc\uac04 \ubd84\uc11d
+NOD \uac10\ub3c5 \uc2e4\uc2dc\uac04 \ubd84\uc11d
 \uc791\uc131 \uc911 \uc2e4\uc2dc\uac04 \ud53c\ub4dc\ubc31 \uc81c\uacf5
 
-[NEW] \ud560\ub8e8\uc2dc\ub124\uc774\uc158 \ud0d0\uc9c0
+\ud560\ub8e8\uc2dc\ub124\uc774\uc158 \ud0d0\uc9c0
 \uc138\uacc4\uad00 \uc124\uc815\uacfc \ubaa8\uc21c\ub418\ub294 \ub0b4\uc6a9 \uc790\ub3d9 \uac10\uc9c0
 
 NOW AI \ucc44\ud305: \uc9d1\ud544 \uc804\uc6a9 AI \uc5b4\uc2dc\uc2a4\ud134\ud2b8` },
@@ -154,7 +154,7 @@ const sectionsEn = [
 BYOK (Bring Your Own Key): Gemini, OpenAI, Claude, Groq, Mistral supported
 Project creation: Enter a title and AI suggests initial settings.
 
-[NEW] Onboarding Guide Tour (5 steps)
+Onboarding Guide Tour (5 steps)
 A 5-step guided tour starts automatically on first visit.
 Create project > World design > Character studio > Writing studio > Export
 
@@ -166,10 +166,10 @@ Sign in with Google to auto-sync all projects to Google Drive.` },
 Synopsis, characters, and era settings
 Tension curve chart: visualize tension per episode
 
-[NEW] Up to 300 episodes
+Up to 300 episodes
 Plan up to 300 episodes for long-running series.
 
-[NEW] 4 Platform Presets
+4 Platform Presets
 Munpia / Novelpia / KakaoPage / Naver Series
 Auto-configures word count and episode structure per platform.
 
@@ -180,11 +180,11 @@ NOL AI Chat: AI assistant dedicated to world design` },
 Civilization/faction relationship visualization: auto-generated relation maps
 Hex map painting: place territories and factions on a map
 
-[NEW] EH Engine 9-Level Application Rate
+EH Engine 9-Level Application Rate
 Adjustable from 0% (none) to 100% (full EH) in 9 levels.
 Different modules activate at each level.
 
-[NEW] Genre-Recommended Ranges
+Genre-Recommended Ranges
 Munchkin 15% / Fantasy 30% / SF 60% / Literary Fiction 100%
 Guides you to the optimal engine rate for your genre.` },
 
@@ -205,7 +205,7 @@ Plot / Tension / Pacing / Sweet Potato / Hook / Cliffhanger / Dopamine / Transit
 4 Plot Structures:
 3-Act / Hero's Journey / Ki-Seung-Jeon-Gyeol / Fichtean Curve
 
-[NEW] Episode Scene Sheet Save/View
+Episode Scene Sheet Save/View
 Save per-episode scene compositions and review them anytime.
 Manage plot flow at the scene level with fine granularity.` },
 
@@ -219,16 +219,16 @@ Manage plot flow at the scene level with fine granularity.` },
 3-Pass Canvas: draft > structure validation > style refinement
 Inline Rewriter: instantly rewrite selected text
 
-[NEW] Engine Report Inline Display
+Engine Report Inline Display
 Grade / Tension / Pacing / EOS scores shown in real-time next to the manuscript.
 
-[NEW] Auto-Fix Button
+Auto-Fix Button
 Automatically fix problem areas based on engine report.
 
-[NEW] NOD Director Real-time Analysis
+NOD Director Real-time Analysis
 Real-time feedback while writing.
 
-[NEW] Hallucination Detection
+Hallucination Detection
 Auto-detect content that contradicts world settings.
 
 NOW AI Chat: AI assistant dedicated to writing` },
