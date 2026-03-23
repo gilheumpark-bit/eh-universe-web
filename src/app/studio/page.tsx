@@ -138,6 +138,27 @@ export default function StudioPage() {
   // ============================================================
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [showSyncReminder, setShowSyncReminder] = useState(false);
+
+  // 2-hour sync reminder
+  const SYNC_REMINDER_MS = 2 * 60 * 60 * 1000; // 2h
+  useEffect(() => {
+    if (!user) {
+      // Non-logged-in users: remind to log in for backup after 2 hours
+      const timer = setTimeout(() => {
+        console.info('[NOA] 💡 Google 로그인 후 Drive 동기화를 사용하면 작업물을 안전하게 백업할 수 있습니다.');
+        setShowSyncReminder(true);
+      }, SYNC_REMINDER_MS);
+      return () => clearTimeout(timer);
+    }
+    const timer = setInterval(() => {
+      const gap = lastSyncTime ? Date.now() - lastSyncTime : Infinity;
+      if (gap >= SYNC_REMINDER_MS) {
+        setShowSyncReminder(true);
+      }
+    }, 60_000); // check every minute
+    return () => clearInterval(timer);
+  }, [user, lastSyncTime]);
 
   const handleSync = useCallback(async () => {
     let token = accessToken;
@@ -1889,6 +1910,37 @@ export default function StudioPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* UX: Sync reminder (every 2 hours) */}
+      {showSyncReminder && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-lg">
+          <span className="text-sm">
+            {user
+              ? (isKO
+                ? `☁️ 마지막 동기화: ${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '없음'}. 작업물을 Google Drive에 백업하세요.`
+                : `☁️ Last sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Never'}. Back up your work to Google Drive.`)
+              : (isKO
+                ? '☁️ 작업물이 브라우저에만 저장되어 있습니다. 로그인하면 Google Drive에 백업할 수 있습니다.'
+                : '☁️ Your work is saved only in this browser. Sign in to back up to Google Drive.')}
+          </span>
+          {user ? (
+            <button
+              onClick={() => { setShowSyncReminder(false); handleSync(); }}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors"
+            >
+              {isKO ? '동기화' : 'Sync'}
+            </button>
+          ) : (
+            <button
+              onClick={() => { setShowSyncReminder(false); signInWithGoogle(); }}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors"
+            >
+              {isKO ? '로그인' : 'Sign in'}
+            </button>
+          )}
+          <button onClick={() => setShowSyncReminder(false)} className="text-blue-400 hover:text-blue-200 shrink-0" aria-label={isKO ? '닫기' : 'Close'}>&times;</button>
         </div>
       )}
 
