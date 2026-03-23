@@ -188,10 +188,10 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                   >
                     {m}
                     {m === currentProvider.defaultModel && (
-                      <span className="ml-2 text-[8px] text-text-tertiary uppercase">{isKO ? '기본' : 'Default'}</span>
+                      <span className="ml-2 text-[10px] text-text-tertiary uppercase">{isKO ? '기본' : 'Default'}</span>
                     )}
                     {isPreviewModel(m) && (
-                      <span className="ml-2 text-[8px] text-accent-amber uppercase">⚠ Preview</span>
+                      <span className="ml-2 text-[10px] text-accent-amber uppercase">⚠ Preview</span>
                     )}
                   </button>
                 ))}
@@ -269,7 +269,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                     {p.name}
                   </span>
                   {isCurrentActive && hasKey && (
-                    <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-black uppercase">
+                    <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-black uppercase">
                       Active
                     </span>
                   )}

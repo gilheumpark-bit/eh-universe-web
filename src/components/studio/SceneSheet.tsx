@@ -241,6 +241,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             <div className="flex items-center gap-2">
               <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "비중" : "Weight"}:</span>
               <input type="range" min={5} max={80} value={seg.width}
+                aria-label={lang === "ko" ? `${seg.label} 비중` : `${seg.label} weight`}
                 onChange={e => {
                   const newW = parseInt(e.target.value);
                   const diff = newW - seg.width;
@@ -655,7 +656,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                     <div key={i} className="p-2 bg-accent-green/5 border border-accent-green/10 rounded-lg">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold text-accent-green">{r.name}</span>
-                        <span className="text-[8px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">{r.interval}</span>
+                        <span className="text-[10px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">{r.interval}</span>
                       </div>
                       <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
                     </div>
@@ -704,15 +705,17 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 <summary className={`flex items-center gap-1 cursor-pointer text-[10px] font-bold tracking-wider select-none py-1 ${
                   hasActive ? "text-accent-purple" : "text-text-tertiary hover:text-text-secondary"
                 }`}>
-                  <span className="text-[8px] group-open/tab:rotate-90 transition-transform">▶</span>
+                  <span className="text-[10px] group-open/tab:rotate-90 transition-transform">▶</span>
                   {groupLabel}
                 </summary>
-                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5">
+                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5" role="tablist">
                   {group.tabs.map(tabId => {
                     const tab = TAB_DEF.find(t => t.id === tabId);
                     if (!tab) return null;
                     return (
                       <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
                         className={`px-2.5 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
                           activeTab === tab.id
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
@@ -828,10 +831,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 </select>
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}:</span>
                 <input type="range" min={0} max={100} value={em.position}
+                  aria-label={lang === "ko" ? "감정 위치" : "Emotion position"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, position: parseInt(e.target.value) } : ee))}
                   className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Int"}:</span>
                 <input type="range" min={0} max={100} value={em.intensity}
+                  aria-label={lang === "ko" ? "감정 강도" : "Emotion intensity"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, intensity: parseInt(e.target.value) } : ee))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-purple w-6 text-right">{em.intensity}</span>
@@ -967,7 +972,9 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
             {pacings.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3 border border-border rounded px-3 py-2 bg-bg-primary">
                 <span className="text-[10px] font-bold w-16">{p.section}</span>
-                <input type="range" min={5} max={80} value={p.percent} onChange={e => {
+                <input type="range" min={5} max={80} value={p.percent}
+                  aria-label={lang === "ko" ? "페이싱 비중" : "Pacing weight"}
+                  onChange={e => {
                   setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, percent: parseInt(e.target.value) } : pp));
                 }} className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
@@ -1003,10 +1010,14 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
                   placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
-                <input type="range" min={0} max={100} value={tp.position} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.position}
+                  aria-label={lang === "ko" ? "텐션 위치" : "Tension position"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Lv"}</span>
-                <input type="range" min={0} max={100} value={tp.level} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.level}
+                  aria-label={lang === "ko" ? "텐션 강도" : "Tension level"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
                 <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -1084,7 +1095,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
             <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
               🗺️ {lang === "ko" ? "세계관 시뮬레이터 참고" : "World Simulator Reference"}
             </span>
-            <span className="text-[8px] text-text-tertiary">
+            <span className="text-[10px] text-text-tertiary">
               {lang === "ko" ? "체크한 항목이 연출에 반영됩니다" : "Checked items will be referenced in direction"}
             </span>
           </div>
@@ -1192,7 +1203,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                   <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase">{card.label}</span>
                   <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
                 </div>
-                <div className="text-[8px] text-text-tertiary truncate">
+                <div className="text-[10px] text-text-tertiary truncate">
                   {card.detail || (lang === "ko" ? "미설정" : "Not set")}
                 </div>
               </button>
@@ -1256,7 +1267,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                   </pre>
                   {parts.length > 0 && (
                     <button onClick={() => { navigator.clipboard.writeText(preview); }}
-                      className="absolute top-2 right-2 text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
+                      className="absolute top-2 right-2 text-[10px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
                       {lang === "ko" ? "복사" : "Copy"}
                     </button>
                   )}

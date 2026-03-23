@@ -391,8 +391,8 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
+                    <span className="text-[10px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
                       {isKO ? actionInfo.ko : actionInfo.en}
                     </span>
                     <span className="text-[10px] text-zinc-400">{sug.issue}</span>

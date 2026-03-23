@@ -537,13 +537,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         <div className="space-y-4">
           {/* Category Filter */}
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setItemFilter('all')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === 'all' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === 'all' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
               {isKO ? '전체' : 'All'} ({items.length})
             </button>
             {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
               const count = items.filter(i => i.category === cat).length;
               return (
-                <button key={cat} onClick={() => setItemFilter(cat)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === cat ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === cat ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
                   {CATEGORY_CONFIG[cat].label[lang]} ({count})
                 </button>
               );

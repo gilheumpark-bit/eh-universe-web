@@ -112,7 +112,7 @@ const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({
       {activeChars.map(c => (
         <span
           key={c.name}
-          className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-bg-primary border border-border"
+          className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-bg-primary border border-border"
           title={c.stateFlags.length > 0 ? c.stateFlags.join(', ') : undefined}
         >
           {c.name}
@@ -204,7 +204,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
               <span className="text-emerald-400 font-bold">✅</span>
             )}
           </div>
-          <div className="text-[8px] text-text-tertiary">
+          <div className="text-[10px] text-text-tertiary">
             {isKO ? `떡밥 ${report.threadStatus.open}↗ ${report.threadStatus.resolved}✓` : `Threads ${report.threadStatus.open}↗ ${report.threadStatus.resolved}✓`}
           </div>
           {expanded ? <ChevronUp className="w-3 h-3 text-text-tertiary" /> : <ChevronDown className="w-3 h-3 text-text-tertiary" />}
@@ -273,12 +273,12 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
                   </span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedEp.openThreads.slice(0, 5).map((t, i) => (
-                      <span key={i} className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[8px] text-amber-400">
+                      <span key={i} className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400">
                         {t}
                       </span>
                     ))}
                     {selectedEp.openThreads.length > 5 && (
-                      <span className="text-[8px] text-text-tertiary">+{selectedEp.openThreads.length - 5}</span>
+                      <span className="text-[10px] text-text-tertiary">+{selectedEp.openThreads.length - 5}</span>
                     )}
                   </div>
                 </div>

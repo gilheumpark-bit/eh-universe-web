@@ -105,7 +105,7 @@ export const WarningBadge: React.FC<WarningBadgeProps> = ({ warnings, language, 
 
   if (compact) {
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-bold ${
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
         tier1.length > 0 ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'
       }`}>
         <AlertTriangle className="w-2.5 h-2.5" />

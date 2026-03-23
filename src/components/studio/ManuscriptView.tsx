@@ -406,11 +406,11 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                     {m.charCount.toLocaleString()}{isKO ? "자" : " chars"}
                   </span>
                   {m.charCount >= targetPerEp ? (
-                    <span className="text-[8px] text-accent-green font-bold px-1.5 py-0.5 bg-accent-green/10 rounded">
+                    <span className="text-[10px] text-accent-green font-bold px-1.5 py-0.5 bg-accent-green/10 rounded">
                       {isKO ? "달성" : "Done"}
                     </span>
                   ) : (
-                    <span className="text-[8px] text-accent-amber font-bold px-1.5 py-0.5 bg-accent-amber/10 rounded">
+                    <span className="text-[10px] text-accent-amber font-bold px-1.5 py-0.5 bg-accent-amber/10 rounded">
                       {Math.round((m.charCount / targetPerEp) * 100)}%
                     </span>
                   )}
@@ -540,7 +540,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                       <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-sm">
                         {m.content}
                       </div>
-                      <div className="mt-3 text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                      <div className="mt-3 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
                         {isKO ? "최종 수정" : "Last update"}: {new Date(m.lastUpdate).toLocaleString()}
                       </div>
                     </div>

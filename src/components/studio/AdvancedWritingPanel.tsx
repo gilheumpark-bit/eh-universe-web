@@ -147,26 +147,26 @@ const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ 
 
       <div className="flex flex-wrap gap-1">
         {hasWorld && (
-          <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[8px] text-emerald-400 font-bold">
+          <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] text-emerald-400 font-bold">
             🌍 {isKO ? '세계관' : 'World'}
           </span>
         )}
         {hasScene && (
-          <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[8px] text-blue-400 font-bold">
+          <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[10px] text-blue-400 font-bold">
             🎬 {isKO ? '씬시트' : 'Scene'}
           </span>
         )}
         {chars.length > 0 && (
-          <span className="px-1.5 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[8px] text-purple-400 font-bold">
+          <span className="px-1.5 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] text-purple-400 font-bold">
             👥 {chars.length}{isKO ? '명' : ' chars'}
           </span>
         )}
         {hasStyle && (
-          <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[8px] text-amber-400 font-bold">
+          <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400 font-bold">
             ✍️ {isKO ? '문체' : 'Style'}
           </span>
         )}
-        <span className="px-1.5 py-0.5 bg-zinc-500/10 border border-zinc-500/20 rounded text-[8px] text-text-tertiary font-bold">
+        <span className="px-1.5 py-0.5 bg-zinc-500/10 border border-zinc-500/20 rounded text-[10px] text-text-tertiary font-bold">
           {config.genre} · EP.{config.episode}
         </span>
       </div>
@@ -175,11 +175,11 @@ const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ 
       {chars.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {chars.slice(0, 6).map((c: Character) => (
-            <span key={c.id} className="text-[8px] text-text-tertiary">
+            <span key={c.id} className="text-[10px] text-text-tertiary">
               {c.name}({c.role?.slice(0, 4)})
             </span>
           ))}
-          {chars.length > 6 && <span className="text-[8px] text-text-tertiary">+{chars.length - 6}</span>}
+          {chars.length > 6 && <span className="text-[10px] text-text-tertiary">+{chars.length - 6}</span>}
         </div>
       )}
     </div>

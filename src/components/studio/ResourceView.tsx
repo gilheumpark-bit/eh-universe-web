@@ -103,7 +103,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
           </div>
           <div className="min-w-0">
             <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase truncate">{t.title}</h2>
-            <p className="text-zinc-500 text-[8px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
+            <p className="text-zinc-500 text-[10px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
           </div>
         </div>
 
@@ -309,7 +309,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
                     {/* 1단계 뼈대 — 3-tier framework */}
                     <div className="space-y-2 mb-4 pt-3 border-t border-zinc-800/50">
-                      <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">{t.tier1}</span>
+                      <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{t.tier1}</span>
                       <input
                         value={char.desire || ''}
                         onChange={e => setConfig((prev: StoryConfig) => ({
@@ -364,7 +364,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         type="button"
                         onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t2: !prev[char.id]?.t2 } }))}
-                        className="text-[8px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
                       >
                         {expandedTiers[char.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         {t.tier2}
@@ -426,7 +426,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         type="button"
                         onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t3: !prev[char.id]?.t3 } }))}
-                        className="text-[8px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2"
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2"
                       >
                         {expandedTiers[char.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         {language === 'KO' ? '3단계 — 디테일' : 'Tier 3 — Detail'}
@@ -485,7 +485,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     {/* 한 줄 요약 공식 (자동 생성) */}
                     {(char.desire || char.deficiency || char.conflict) && (
                       <div className="mb-4 p-3 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
-                        <span className="text-[8px] font-black text-accent-purple/60 uppercase tracking-widest">{t.formulaLabel}</span>
+                        <span className="text-[10px] font-black text-accent-purple/60 uppercase tracking-widest">{t.formulaLabel}</span>
                         <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">
                           {language === 'KO'
                             ? `${char.name}은(는) ${getRoleLabel(char.role)} 역할로, ${char.desire || '___'}을(를) 원하며, ${char.deficiency || '___'}이(가) 부족하고, ${char.conflict || '___'} 때문에 갈등하며, ${char.changeArc || '___'}(으)로 변한다.`

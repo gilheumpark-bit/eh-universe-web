@@ -356,7 +356,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           {/* 세계관 한 줄 요약 */}
           {(config.corePremise || config.currentConflict) && (
             <div className="p-4 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
-              <span className="text-[8px] font-black text-accent-purple/60 uppercase tracking-widest">{t.worldFormula}</span>
+              <span className="text-[10px] font-black text-accent-purple/60 uppercase tracking-widest">{t.worldFormula}</span>
               <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
                 {isKO
                   ? `이 세계는 "${config.corePremise || '___'}"라는 전제를 가진 ${config.genre} 장르의 배경이며, ${config.powerStructure || '___'}한 권력 구조 속에서, "${config.currentConflict || '___'}"라는 갈등을 중심으로 돌아간다.`
@@ -566,7 +566,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 );
               })}
             </div>
-            <div className="flex justify-between text-[8px] text-zinc-700 mt-2">
+            <div className="flex justify-between text-[10px] text-zinc-700 mt-2">
               <span>EP.1</span>
               <span>EP.{totalEpisodes}</span>
             </div>

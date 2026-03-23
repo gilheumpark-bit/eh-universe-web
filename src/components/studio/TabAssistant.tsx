@@ -546,7 +546,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
         </span>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
-            <span className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">{messages.length} msg</span>
+            <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">{messages.length} msg</span>
           )}
           {collapsed ? <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" />}
         </div>

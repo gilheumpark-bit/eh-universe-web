@@ -288,7 +288,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               )}
               {showApplyConfirm && (
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[8px] text-amber-400 font-[family-name:var(--font-mono)]">{isKO ? '교체할까요?' : 'Replace?'}</span>
+                  <span className="text-[10px] text-amber-400 font-[family-name:var(--font-mono)]">{isKO ? '교체할까요?' : 'Replace?'}</span>
                   <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
                     {isKO ? '확인' : 'Yes'}
                   </button>

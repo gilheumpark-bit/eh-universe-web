@@ -115,7 +115,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         )}
 
         {/* Stats summary */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-zinc-800/50 text-[8px] text-zinc-600 font-[family-name:var(--font-mono)]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-zinc-800/50 text-[10px] text-zinc-600 font-[family-name:var(--font-mono)]">
           {report.stats.ending_mono > 0 && <span>종결{report.stats.ending_mono}%</span>}
           {report.stats.blur > 0 && <span>흐림{report.stats.blur}</span>}
           {report.stats.gain_no_cost > 0 && <span>무대가{report.stats.gain_no_cost}</span>}

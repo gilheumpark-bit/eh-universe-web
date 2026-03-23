@@ -45,7 +45,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
         <div className="px-3 pb-3 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
           {typos.map((typo, i) => (
             <div key={i} className="flex items-center gap-2 text-[10px]">
-              <span className="px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 text-[8px] font-mono">
+              <span className="px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 text-[10px] font-mono">
                 {isKO ? TYPE_LABEL[typo.type].ko : TYPE_LABEL[typo.type].en}
               </span>
               <span className="text-red-400/70 line-through font-mono">{typo.original}</span>
