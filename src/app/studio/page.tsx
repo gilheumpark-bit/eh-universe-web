@@ -15,8 +15,8 @@ import {
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { useAuth } from '@/lib/AuthContext';
-import { createHFCPState, processHFCPTurn, type HFCPState as HFCPStateType } from '@/engine/hfcp';
-import { EngineReport } from '@/engine/types';
+import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
+// EngineReport type inferred from useStudioAI hook return
 import ChatMessage from '@/components/studio/ChatMessage';
 const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 import ResourceView from '@/components/studio/ResourceView';
@@ -27,10 +27,11 @@ import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
-import { generateStoryStream } from '@/services/geminiService';
-import { exportEPUB, exportDOCX } from '@/lib/export-utils';
+// generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
+import { useStudioAI } from '@/hooks/useStudioAI';
+import { useStudioExport } from '@/hooks/useStudioExport';
 import dynamic from 'next/dynamic';
 const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
@@ -50,7 +51,7 @@ import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
 import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
-import { analyzeManuscript, type DirectorReport } from '@/engine/director';
+// analyzeManuscript + DirectorReport → moved to useStudioAI hook
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 export default function StudioPage() {
@@ -74,17 +75,10 @@ export default function StudioPage() {
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
   const [showDashboard, setShowDashboard] = useState(false);
-  const [lastReport, setLastReport] = useState<EngineReport | null>(null);
-  const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Cleanup: abort streaming on unmount
-  useEffect(() => () => { abortControllerRef.current?.abort(); }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -299,97 +293,16 @@ export default function StudioPage() {
   };
 
   // ============================================================
-  // EXPORT / IMPORT / RENAME / SEARCH / SHORTCUTS
+  // EXPORT / IMPORT / RENAME / SEARCH (extracted to hook)
   // ============================================================
-
-  // Export session as TXT
-  const exportTXT = useCallback(() => {
-    if (!currentSession) return;
-    const lines = currentSession.messages.map(m => {
-      const prefix = m.role === 'user' ? '[USER]' : '[NOW]';
-      return `${prefix}\n${m.content}\n`;
-    });
-    const header = `# ${currentSession.config.title || currentSession.title}\n# Genre: ${currentSession.config.genre} | Episode: ${currentSession.config.episode}\n# Exported: ${new Date().toISOString()}\n\n`;
-    const blob = new Blob([header + lines.join('\n---\n\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentSession.title || 'noa-story'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [currentSession]);
-
-  // Export session as JSON backup
-  const exportJSON = useCallback(() => {
-    if (!currentSession) return;
-    const blob = new Blob([JSON.stringify(currentSession, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentSession.title || 'noa-session'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [currentSession]);
-
-  // Export ALL sessions as JSON
-  const exportAllJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `noa-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [sessions]);
-
-  // Import JSON backup
-  const isValidSession = (s: unknown): s is ChatSession => {
-    if (!s || typeof s !== 'object') return false;
-    const obj = s as Record<string, unknown>;
-    return typeof obj.id === 'string' && Array.isArray(obj.messages);
-  };
-
-  const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File too large (max 10MB)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string);
-        if (Array.isArray(data)) {
-          const valid = data.filter(isValidSession);
-          if (valid.length === 0) {
-            alert(isKO ? '유효한 세션 데이터가 없습니다.' : 'No valid session data found.');
-            return;
-          }
-          setSessions(prev => {
-            const existingIds = new Set(prev.map(s => s.id));
-            const deduped = valid.filter(s => !existingIds.has(s.id));
-            if (deduped.length > 0) setCurrentSessionId(deduped[0].id);
-            return [...deduped, ...prev];
-          });
-        } else if (isValidSession(data)) {
-          setSessions(prev => {
-            if (prev.some(s => s.id === data.id)) return prev;
-            return [data, ...prev];
-          });
-          setCurrentSessionId(data.id);
-        } else {
-          alert(isKO ? '유효하지 않은 세션 형식입니다. (id, messages 필수)' : 'Invalid session format. (id and messages required)');
-          return;
-        }
-        setActiveTab('writing');
-      } catch {
-        alert(isKO ? '유효하지 않은 JSON 파일입니다.' : 'Invalid JSON file.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  }, [isKO]);
+  const {
+    exportTXT, exportJSON, exportAllJSON, handleImportJSON,
+    handlePrint, handleExportEPUB, handleExportDOCX,
+  } = useStudioExport({
+    currentSession, sessions, currentSessionId,
+    setSessions, setCurrentSessionId, setActiveTab,
+    isKO, language, writingMode, editDraft,
+  });
 
   // Rename session
   const startRename = (sessionId: string, currentTitle: string) => {
@@ -410,37 +323,6 @@ export default function StudioPage() {
     !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
   const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
-
-  // Print
-  const handlePrint = useCallback(() => {
-    if (!currentSession) return;
-    const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    // 수동 편집 중이면 editDraft 내용을 인쇄
-    const isEditMode = writingMode === 'edit' && editDraft.trim();
-    const printContent = isEditMode
-      ? `<div style="white-space:pre-wrap;font-family:serif;line-height:1.8;">${escHtml(editDraft)}</div>`
-      : currentSession.messages.map(m => {
-        const prefix = m.role === 'user' ? '📝 ' : '🤖 ';
-        return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
-      }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
-    w.document.close();
-    w.print();
-  }, [currentSession, writingMode, editDraft, language]);
-
-  // Export as EPUB
-  const handleExportEPUB = useCallback(() => {
-    if (!currentSession) return;
-    exportEPUB(currentSession);
-  }, [currentSession]);
-
-  // Export as DOCX
-  const handleExportDOCX = useCallback(() => {
-    if (!currentSession) return;
-    exportDOCX(currentSession);
-  }, [currentSession]);
 
   // Switch message version
   const handleVersionSwitch = useCallback((messageId: string, versionIndex: number) => {
@@ -481,192 +363,21 @@ export default function StudioPage() {
     disabled: showApiKeyModal || showShortcuts || confirmState.open,
   });
 
-  // updateCurrentSession and setConfig provided by useProjectManager hook
+  // ============================================================
+  // AI STREAMING (extracted to hook)
+  // ============================================================
+  const {
+    isGenerating, lastReport, directorReport, handleCancel,
+    handleSend: doHandleSend, handleRegenerate,
+  } = useStudioAI({
+    currentSession, currentSessionId, setSessions, updateCurrentSession,
+    hfcpState, promptDirective, language, canvasPass,
+    setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
+  });
 
-  const handleCancel = () => {
-    abortControllerRef.current?.abort();
-    setIsGenerating(false);
-  };
-
-  const handleSend = async (customPrompt?: string) => {
-    const text = customPrompt || input;
-    if (!text.trim() || isGenerating || !currentSessionId) return;
-
-    // API 키 사전 검증 — 네트워크 실패 전에 차단
-    if (!getApiKey(getActiveProvider())) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
-    // HFCP: classify input and get prompt modifier
-    const hfcpResult = processHFCPTurn(hfcpState, text);
-    const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
-    const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
-
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
-    const aiMsgId = `a-${Date.now()}`;
-    const initialAiMsg: Message = { id: aiMsgId, role: 'assistant', content: '', timestamp: Date.now() };
-    const existingMessages = currentSession?.messages || [];
-    const updatedMessages = [...existingMessages, userMsg, initialAiMsg];
-
-    updateCurrentSession({
-      messages: updatedMessages,
-      title: existingMessages.length === 0 ? text.substring(0, 15) : currentSession?.title
-    });
-    setInput('');
-    setIsGenerating(true);
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    const capturedSessionId = currentSessionId;
-    const capturedConfig = currentSession!.config;
-
-    let fullContent = '';
-    try {
-      // Inject genreSelections from worldSimData into simulatorRef for AI prompt
-      const configForAI = {
-        ...capturedConfig,
-        simulatorRef: {
-          ...capturedConfig.simulatorRef,
-          genreSelections: capturedConfig.worldSimData?.genreSelections || capturedConfig.simulatorRef?.genreSelections,
-        },
-      };
-      const result = await generateStoryStream(
-        configForAI, directivePrefix + hfcpPrefix + text,
-        (chunk) => {
-          fullContent += chunk;
-          setSessions(prev => prev.map(s => {
-            if (s.id === capturedSessionId) {
-              const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m);
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        },
-        { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages }
-      );
-
-      // Trademark/IP filter — 상표 자동 치환
-      const { filterTrademarks } = await import('@/engine/validator');
-      const ipCheck = filterTrademarks(fullContent);
-      if (ipCheck.matches.length > 0) {
-        fullContent = ipCheck.filtered;
-        console.info(`[IP Filter] ${ipCheck.matches.length}건 치환: ${[...new Set(ipCheck.matches.map(m => m.original))].join(', ')}`);
-      }
-
-      setLastReport(result.report);
-      // NOD Director analysis
-      const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-      setDirectorReport(analyzeManuscript(dirClean, capturedConfig.publishPlatform));
-      setSessions(prev => prev.map(s => {
-        if (s.id === capturedSessionId) {
-          const msgs = s.messages.map(m =>
-            m.id === aiMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
-              : m
-          );
-          return { ...s, messages: msgs };
-        }
-        return s;
-      }));
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
-      else {
-        console.error(error);
-        setUxError({ error, retry: () => handleSend(text) });
-      }
-    } finally {
-      // 3패스 캔버스 모드: 단계 완료 시 JSON 제거 후 자동 주입
-      if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
-        const clean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-        if (clean) setCanvasContent(clean);
-        setWritingMode('canvas');
-      }
-      setIsGenerating(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const handleRegenerate = async (assistantMsgId: string) => {
-    if (isGenerating || !currentSessionId || !currentSession) return;
-    const msgIndex = currentSession.messages.findIndex(m => m.id === assistantMsgId);
-    if (msgIndex <= 0) return;
-    const userMsg = currentSession.messages[msgIndex - 1];
-    if (userMsg.role !== 'user') return;
-    const historyMessages = currentSession.messages.slice(0, msgIndex - 1);
-
-    // Save current content to versions before regenerating
-    const currentMsg = currentSession.messages[msgIndex];
-    const prevVersions = currentMsg.versions ?? [];
-    const savedVersions = currentMsg.content ? [...prevVersions, currentMsg.content] : prevVersions;
-
-    setSessions(prev => prev.map(s => {
-      if (s.id === currentSessionId) {
-        const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: '', meta: undefined, versions: savedVersions, currentVersionIndex: savedVersions.length } : m);
-        return { ...s, messages: msgs };
-      }
-      return s;
-    }));
-    setIsGenerating(true);
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    const capturedSessionId2 = currentSessionId;
-    const capturedConfig2 = currentSession.config;
-
-    let fullContent = '';
-    try {
-      const configForChat = {
-        ...capturedConfig2,
-        simulatorRef: {
-          ...capturedConfig2.simulatorRef,
-          genreSelections: capturedConfig2.worldSimData?.genreSelections || capturedConfig2.simulatorRef?.genreSelections,
-        },
-      };
-      const result = await generateStoryStream(
-        configForChat, userMsg.content,
-        (chunk) => {
-          fullContent += chunk;
-          setSessions(prev => prev.map(s => {
-            if (s.id === capturedSessionId2) {
-              const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: fullContent } : m);
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages }
-      );
-
-      // Trademark/IP filter
-      const { filterTrademarks } = await import('@/engine/validator');
-      const ipCheck = filterTrademarks(fullContent);
-      if (ipCheck.matches.length > 0) {
-        fullContent = ipCheck.filtered;
-      }
-
-      setLastReport(result.report);
-      setSessions(prev => prev.map(s => {
-        if (s.id === capturedSessionId2) {
-          const msgs = s.messages.map(m => {
-            if (m.id !== assistantMsgId) return m;
-            const updatedVersions = [...(m.versions ?? []), fullContent];
-            return { ...m, content: fullContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
-          });
-          return { ...s, messages: msgs };
-        }
-        return s;
-      }));
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
-      else {
-        console.error(error);
-        setUxError({ error, retry: () => handleRegenerate(assistantMsgId) });
-      }
-    } finally {
-      setIsGenerating(false);
-      abortControllerRef.current = null;
-    }
-  };
+  const handleSend = useCallback((customPrompt?: string) => {
+    doHandleSend(customPrompt, input, () => setInput(''));
+  }, [doHandleSend, input]);
 
   const handleNextEpisode = () => {
     if (!currentSession) return;
