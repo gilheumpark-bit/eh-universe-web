@@ -131,7 +131,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                 onClick={() => handleProviderSwitch(p.id)}
                 aria-label={`Select ${p.name} provider`}
                 aria-pressed={isActive}
-                className={`relative px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border transition-all font-[family-name:var(--font-mono)] ${
+                className={`relative px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-wider whitespace-nowrap border transition-all font-[family-name:var(--font-mono)] ${
                   isActive
                     ? 'text-white border-transparent'
                     : 'text-text-tertiary border-border hover:border-text-tertiary bg-bg-primary'
@@ -182,7 +182,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${showModels ? 'rotate-180' : ''}`} />
             </button>
             {showModels && (
-              <div className="absolute z-10 mt-1 w-full bg-bg-primary border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="absolute z-[110] mt-1 w-full bg-bg-primary border border-border rounded-xl shadow-xl overflow-hidden">
                 {currentProvider.models.map(m => (
                   <button
                     key={m}

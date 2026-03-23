@@ -797,6 +797,7 @@ function HexMapView({ lang, civs }: {
     return pts.join(" ");
   };
 
+  const [hexHint, setHexHint] = useState('');
   const handleHexClick = (key: string) => {
     if (paintCiv) {
       setHexMap(prev => {
@@ -808,6 +809,10 @@ function HexMapView({ lang, civs }: {
         }
         return next;
       });
+      setHexHint('');
+    } else {
+      setHexHint(lang === "ko" ? '먼저 세력을 선택하세요' : 'Select a faction first');
+      setTimeout(() => setHexHint(''), 2000);
     }
   };
 
@@ -868,6 +873,11 @@ function HexMapView({ lang, civs }: {
               );
             })}
           </svg>
+          {hexHint && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-amber-900/80 text-amber-200 text-[11px] rounded-lg font-[family-name:var(--font-mono)] animate-pulse z-10">
+              {hexHint}
+            </div>
+          )}
         </div>
       )}
 
@@ -1640,6 +1650,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
 
   const [ruleLevel, setRuleLevel] = useState(initialData?.ruleLevel || 1);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [civs, setCivs] = useState<Civilization[]>(() => {
     if (initialData?.civs && initialData.civs.length > 0) {
       return initialData.civs.map((c, i) => ({ ...c, id: `saved-${i}`, x: 50 + 25 * Math.cos((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2), y: 50 + 25 * Math.sin((i / Math.max(initialData.civs!.length, 1)) * Math.PI * 2) }));
@@ -1683,7 +1694,10 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
         return prev.map(s => s.genre === genre ? { ...s, level } : s);
       }
       // New genre — check max
-      if (prev.length >= MAX_GENRE_SELECTIONS) return prev;
+      if (prev.length >= MAX_GENRE_SELECTIONS) {
+        alert(lang === "ko" ? `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다` : `Max ${MAX_GENRE_SELECTIONS} genres allowed`);
+        return prev;
+      }
       return [...prev, { genre, level }];
     });
   }, []);
@@ -1799,8 +1813,12 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                 ))}
               </div>
             )}
-            <button onClick={async () => {
+            <button
+              type="button"
+              disabled={aiGenerating}
+              onClick={async () => {
               if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
+              setAiGenerating(true);
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
                 const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN', worldContext);
@@ -1815,9 +1833,10 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                   setRelations([]);
                 }
               } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+              finally { setAiGenerating(false); }
             }}
-              className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-              🤖 {lang === "ko" ? 'AI 생성' : 'AI Generate'}
+              className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
+              {aiGenerating ? '⏳' : '🤖'} {lang === "ko" ? (aiGenerating ? '생성 중...' : 'AI 생성') : (aiGenerating ? 'Generating...' : 'AI Generate')}
             </button>
           </div>
         </div>
