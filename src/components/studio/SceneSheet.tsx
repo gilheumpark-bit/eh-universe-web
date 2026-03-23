@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
 
 // ============================================================
@@ -315,6 +315,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
   const [transitions, setTransitions] = useState<TransitionEntry[]>(initialDirection?.transitions || []);
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes || '');
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure || '');
+
+  // Memoized sorted arrays for SVG polyline rendering (avoid re-sort on every render)
+  const sortedEmotions = useMemo(
+    () => [...emotions].sort((a, b) => a.position - b.position),
+    [emotions],
+  );
+  const sortedTensionPoints = useMemo(
+    () => [...tensionPoints].sort((a, b) => a.position - b.position),
+    [tensionPoints],
+  );
 
   // Sync to parent whenever data changes
   const onDirectionUpdateRef = useRef(onDirectionUpdate);
@@ -802,7 +812,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
                   {emotions.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-purple)" strokeWidth="0.5"
-                      points={emotions.sort((a, b) => a.position - b.position).map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
+                      points={sortedEmotions.map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
                   )}
                   {emotions.map(e => (
                     <circle key={e.id} cx={e.position} cy={50 - e.intensity / 2} r="1.5" fill="var(--color-accent-purple)" />
@@ -980,7 +990,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
                   {tensionPoints.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
-                      points={tensionPoints.sort((a, b) => a.position - b.position).map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
+                      points={sortedTensionPoints.map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
                   )}
                   {tensionPoints.map(t => (
                     <circle key={t.id} cx={t.position} cy={50 - t.level / 2} r="2" fill="var(--color-accent-red)" />
