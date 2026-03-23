@@ -6,7 +6,7 @@ import {
   Sparkles, Menu, Globe, UserCircle,
   Zap, Ghost, X, PenTool, History, StopCircle,
   Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon,
-  FileType, Key
+  FileType, Key, BookOpen
 } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -43,6 +43,7 @@ const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: 
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
 const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false });
+const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
@@ -504,6 +505,7 @@ export default function StudioPage() {
               { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio') },
               { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript') },
               { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives') },
+              { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide' },
             ]).map(({ tab, icon: Icon, label }) => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
                 <Icon className="w-4 h-4" /> {label}
@@ -715,7 +717,7 @@ export default function StudioPage() {
                 </button>
               </div>
             )}
-            {!currentSessionId && !['settings', 'history', 'rulebook', 'style'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook', 'style', 'docs'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
                 <div className="absolute inset-0 z-0">
@@ -1542,6 +1544,9 @@ export default function StudioPage() {
                     </div>
                   );
                 })()}
+                {activeTab === 'docs' && (
+                  <StudioDocsView lang={language === 'KO' ? 'ko' : 'en'} />
+                )}
               </>
             )}
           </div>
