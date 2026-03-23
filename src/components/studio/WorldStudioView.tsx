@@ -21,6 +21,7 @@ interface WorldStudioViewProps {
   config: StoryConfig;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
   onStart: () => void;
+  startLabel?: string;
   onSave: () => void;
   saveFlash: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +56,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   config,
   setConfig,
   onStart,
+  startLabel,
   onSave,
   saveFlash,
   handleWorldSimChange,
@@ -93,7 +95,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       {/* Sub-tab content */}
       {subTab === 'design' && (
         <>
-          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} />
+          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
             <TabAssistant tab="world" language={language} config={config} />
           </div>

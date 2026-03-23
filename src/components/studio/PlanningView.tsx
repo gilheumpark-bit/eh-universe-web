@@ -50,9 +50,10 @@ interface PlanningViewProps {
   config: StoryConfig;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
   onStart: () => void;
+  startLabel?: string;
 }
 
-const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart }) => {
+const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel }) => {
   const tl = createT(language);
   const t = TRANSLATIONS[language].planning;
   const te = TRANSLATIONS[language].engine;
@@ -604,7 +605,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
       <div className="flex justify-center">
         <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-white text-black rounded-2xl font-black hover:scale-105 active:scale-95 transition-all shadow-2xl">
           <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-          {t.commence}
+          {startLabel ?? t.commence}
         </button>
       </div>
     </div>

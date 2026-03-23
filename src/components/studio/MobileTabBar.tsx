@@ -8,6 +8,7 @@ interface MobileTabBarProps {
   activeTab: AppTab;
   onTabChange: (tab: AppTab) => void;
   language: 'KO' | 'EN' | 'JP' | 'CN';
+  mode?: 'guided' | 'free';
 }
 
 const LABELS: Record<string, Record<AppLanguage, string>> = {
@@ -37,23 +38,33 @@ const PRIMARY_TABS: { key: AppTab | 'more'; icon: React.ElementType }[] = [
   { key: 'more',       icon: Menu },
 ];
 
-export default function MobileTabBar({ activeTab, onTabChange, language }: MobileTabBarProps) {
+const GUIDED_TABS: { key: AppTab; icon: React.ElementType }[] = [
+  { key: 'world',      icon: Globe },
+  { key: 'characters', icon: UserCircle },
+  { key: 'rulebook',   icon: FileText },
+  { key: 'settings',   icon: Settings },
+];
+
+export default function MobileTabBar({ activeTab, onTabChange, language, mode = 'free' }: MobileTabBarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const isGuided = mode === 'guided';
+  const primaryTabs = isGuided ? GUIDED_TABS : PRIMARY_TABS;
 
   const handleTab = useCallback((key: AppTab | 'more') => {
+    if (isGuided) { onTabChange(key as AppTab); return; }
     if (key === 'more') {
       setMoreOpen(prev => !prev);
     } else {
       setMoreOpen(false);
       onTabChange(key);
     }
-  }, [onTabChange]);
+  }, [isGuided, onTabChange]);
 
-  const isMoreActive = moreOpen || MORE_TABS.some(t => t.key === activeTab);
+  const isMoreActive = !isGuided && (moreOpen || MORE_TABS.some(t => t.key === activeTab));
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden">
-      {moreOpen && (
+      {!isGuided && moreOpen && (
         <>
           <div className="fixed inset-0 bg-black/40" onClick={() => setMoreOpen(false)} />
           <div className="relative mx-2 mb-1 rounded-xl bg-bg-primary border border-border p-2 grid grid-cols-5 gap-1">
@@ -71,9 +82,9 @@ export default function MobileTabBar({ activeTab, onTabChange, language }: Mobil
 
       <div className="bg-bg-primary border-t border-border flex justify-around items-center px-1 pt-1.5"
            style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}>
-        {PRIMARY_TABS.map(({ key, icon: Icon }) => {
+        {primaryTabs.map(({ key, icon: Icon }) => {
           const active = key === 'more' ? isMoreActive : activeTab === key;
-          const TabIcon = key === 'more' && moreOpen ? X : Icon;
+          const TabIcon = !isGuided && key === 'more' && moreOpen ? X : Icon;
           return (
             <button key={key} onClick={() => handleTab(key)} type="button"
               className={`flex flex-col items-center gap-0.5 py-2 px-3 text-[11px] leading-tight min-h-[44px]
