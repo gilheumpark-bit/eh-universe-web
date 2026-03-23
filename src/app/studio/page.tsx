@@ -456,6 +456,13 @@ export default function StudioPage() {
     setConfig({ ...currentSession.config, episode: nextEp });
   };
 
+  const writingColumnShell = 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
+  const writingInputDockOffset = activeTab === 'writing' && !showDashboard
+    ? (writingMode === 'ai'
+        ? (rightPanelOpen ? 'lg:pr-80' : 'lg:pr-10')
+        : 'lg:pr-64')
+    : '';
+
   return (
     <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
     <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={{ fontFamily: 'var(--font-sans)' }}>
@@ -931,7 +938,7 @@ export default function StudioPage() {
                   </div>
                 )}
                 {activeTab === 'writing' && currentSession && (
-                  <div className={`max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
+                  <div className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
                     {/* Continuity Tracker Graph — 맥락 추적 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
                       <ContinuityGraph language={language} config={currentSession.config} />
@@ -1823,8 +1830,8 @@ export default function StudioPage() {
 
         {/* Writing Input */}
         {activeTab === 'writing' && currentSessionId && (
-          <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
-            <div className="max-w-6xl mx-auto relative px-0">
+          <div className={`pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0 transition-[padding] duration-300 ${writingInputDockOffset}`}>
+            <div className={`${writingColumnShell} relative`}>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
                 <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }}
                   className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}

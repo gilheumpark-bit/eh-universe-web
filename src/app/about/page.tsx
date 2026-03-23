@@ -10,15 +10,16 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-3xl px-4 py-16">
-          <div className="doc-header rounded-t mb-0">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <div className="mx-auto max-w-3xl">
+            <div className="doc-header rounded-t-[24px] mb-0">
             <span className="badge badge-allow mr-2">ALLOW</span>
             {en ? "Document Level: PUBLIC — Level 0" : "문서 등급: PUBLIC — Level 0"}
-          </div>
+            </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
-            <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-8">ABOUT</h1>
+            <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
+              <h1 className="site-title text-3xl font-bold tracking-tight mb-8">ABOUT</h1>
 
             <section className="mb-10">
               <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
@@ -66,10 +67,10 @@ export default function AboutPage() {
               <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {en ? "Links" : "링크"}
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer"
                   aria-label="GitHub Repository (opens in new tab)"
-                  className="flex items-center gap-2 text-text-secondary hover:text-accent-purple transition-colors text-sm">
+                  className="premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-amber transition-colors text-sm">
                   <span className="font-[family-name:var(--font-mono)]" aria-hidden="true">→</span> GitHub Repository
                 </a>
               </div>
@@ -90,6 +91,7 @@ export default function AboutPage() {
               <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
                 &ldquo;{en ? "Records of deleted personnel are processed as typos." : "삭제된 인원의 기록은 오타로 처리된다."}&rdquo;
               </p>
+            </div>
             </div>
           </div>
         </div>

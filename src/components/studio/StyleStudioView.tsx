@@ -12,39 +12,106 @@ import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
 
-const PARAM_LABELS_KO: Record<string, string[]> = {
-  s1: ["단문 위주", "단문 선호", "균형", "장문 선호", "장문 위주"],
-  s2: ["극도로 건조", "건조·분석적", "균형", "감성적", "매우 감성적"],
-  s3: ["직접 서술", "직접 선호", "균형", "이미지 선호", "감각적 이미지"],
-  s4: ["전지적 관찰", "전지적 선호", "균형", "인물 밀착", "극밀착 내면"],
-  s5: ["구어체", "평이함", "중간", "전문적·정밀", "고도 전문"],
-};
-const PARAM_LABELS_EN: Record<string, string[]> = {
-  s1: ["Short only", "Short-leaning", "Balanced", "Long-leaning", "Long only"],
-  s2: ["Very dry", "Dry / Analytical", "Balanced", "Emotional", "Highly emotional"],
-  s3: ["Direct narration", "Direct-leaning", "Balanced", "Image-leaning", "Sensory imagery"],
-  s4: ["Omniscient", "Omni-leaning", "Balanced", "Close POV", "Deep interior"],
-  s5: ["Colloquial", "Plain", "Moderate", "Technical", "Highly technical"],
-};
-
-interface SliderDef {
+interface SliderDefI18n {
   id: string;
-  label: string;
-  left: string;
-  right: string;
+  ko: string;
+  en: string;
+  leftKO: string;
+  leftEN: string;
+  rightKO: string;
+  rightEN: string;
   defaultVal: number;
+  stepsKO: string[];
+  stepsEN: string[];
+  noteKO: string;
+  noteEN: string;
 }
 
-interface SliderDefI18n { id: string; ko: string; en: string; leftKO: string; leftEN: string; rightKO: string; rightEN: string; defaultVal: number; }
 const SLIDERS_I18N: SliderDefI18n[] = [
-  { id: "s1", ko: "문장 길이", en: "Sentence Length", leftKO: "단문 중심", leftEN: "Short", rightKO: "장문 중심", rightEN: "Long", defaultVal: 3 },
-  { id: "s2", ko: "감정 밀도", en: "Emotional Density", leftKO: "건조·객관적", leftEN: "Dry / Objective", rightKO: "감성·주관적", rightEN: "Emotional / Subjective", defaultVal: 2 },
-  { id: "s3", ko: "묘사 방식", en: "Description Style", leftKO: "직접 서술", leftEN: "Direct", rightKO: "감각적 이미지", rightEN: "Sensory Imagery", defaultVal: 3 },
-  { id: "s4", ko: "서술 시점", en: "POV Distance", leftKO: "전지적 신", leftEN: "Omniscient", rightKO: "인물 밀착", rightEN: "Close POV", defaultVal: 3 },
-  { id: "s5", ko: "어휘 수준", en: "Vocabulary Level", leftKO: "구어체·평이함", leftEN: "Colloquial", rightKO: "전문어·정밀함", rightEN: "Technical", defaultVal: 4 },
+  {
+    id: "s1",
+    ko: "문장 길이",
+    en: "Sentence Length",
+    leftKO: "속도 중심",
+    leftEN: "Faster pace",
+    rightKO: "여백 중심",
+    rightEN: "More spacious",
+    defaultVal: 3,
+    stepsKO: ["짧고 단단하게", "짧은 호흡", "균형", "긴 호흡", "길게 밀어붙이기"],
+    stepsEN: ["Tight and short", "Short breath", "Balanced", "Long breath", "Extended flow"],
+    noteKO: "호흡이 짧을수록 추진력이, 길수록 사유와 여운이 커집니다.",
+    noteEN: "Shorter sentences push momentum, while longer ones create reflection and aftertaste.",
+  },
+  {
+    id: "s2",
+    ko: "감정 밀도",
+    en: "Emotional Density",
+    leftKO: "객관·절제",
+    leftEN: "Restrained",
+    rightKO: "주관·정서",
+    rightEN: "Emotive",
+    defaultVal: 2,
+    stepsKO: ["감정 절제", "건조한 편", "균형", "정서 강조", "감정 밀도 높음"],
+    stepsEN: ["Restrained", "Dry-leaning", "Balanced", "Emotion-forward", "Emotion-rich"],
+    noteKO: "감정을 직접 드러낼지, 문장 아래에 눌러둘지 결정하는 축입니다.",
+    noteEN: "This controls whether emotion stays under the prose or rises visibly to the surface.",
+  },
+  {
+    id: "s3",
+    ko: "묘사 방식",
+    en: "Description Style",
+    leftKO: "직설 서술",
+    leftEN: "Direct",
+    rightKO: "감각 이미지",
+    rightEN: "Sensory",
+    defaultVal: 3,
+    stepsKO: ["사실 위주", "직설 묘사", "균형", "이미지 강조", "감각 몰입"],
+    stepsEN: ["Factual", "Direct", "Balanced", "Image-leaning", "Sensory immersion"],
+    noteKO: "정보 전달에 무게를 둘지, 장면의 촉감과 이미지에 무게를 둘지 조절합니다.",
+    noteEN: "Choose between efficient delivery and a stronger sensory, image-driven scene feel.",
+  },
+  {
+    id: "s4",
+    ko: "서술 시점",
+    en: "POV Distance",
+    leftKO: "거리감",
+    leftEN: "Distant",
+    rightKO: "밀착감",
+    rightEN: "Intimate",
+    defaultVal: 3,
+    stepsKO: ["멀리 조망", "관찰자 시점", "균형", "인물 밀착", "내면 침투"],
+    stepsEN: ["Panoramic", "Observer", "Balanced", "Close POV", "Deep interior"],
+    noteKO: "독자와 인물 사이 거리를 바꿔, 조망형 서술과 몰입형 서술 사이를 조정합니다.",
+    noteEN: "Adjusts how close readers stay to the character, from panoramic to immersive interiority.",
+  },
+  {
+    id: "s5",
+    ko: "어휘 수준",
+    en: "Vocabulary Level",
+    leftKO: "평이함",
+    leftEN: "Plain",
+    rightKO: "정밀함",
+    rightEN: "Precise",
+    defaultVal: 4,
+    stepsKO: ["편한 말맛", "담백한 어휘", "균형", "정교한 어휘", "전문적 질감"],
+    stepsEN: ["Plainspoken", "Clean", "Balanced", "Refined", "Specialized"],
+    noteKO: "문장의 격과 전문성을 얼마나 끌어올릴지 정합니다.",
+    noteEN: "This sets how elevated or specialized your vocabulary should feel.",
+  },
 ];
-// Compat alias used throughout
-const SLIDERS: SliderDef[] = SLIDERS_I18N.map(s => ({ id: s.id, label: s.ko, left: s.leftKO, right: s.rightKO, defaultVal: s.defaultVal }));
+
+const getSliderDescriptor = (slider: SliderDefI18n, value: number, en: boolean) => {
+  const labels = en ? slider.stepsEN : slider.stepsKO;
+  const safeIndex = Math.max(0, Math.min(labels.length - 1, value - 1));
+  return labels[safeIndex];
+};
+
+const getSliderTrackStyle = (value: number): React.CSSProperties => {
+  const progress = ((value - 1) / 4) * 100;
+  return {
+    background: `linear-gradient(90deg, var(--color-accent-amber) 0%, var(--color-accent-amber) ${progress}%, rgba(107, 114, 142, 0.34) ${progress}%, rgba(107, 114, 142, 0.34) 100%)`,
+  };
+};
 
 interface CheckItem {
   title: string;
@@ -141,10 +208,12 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   );
   const [sliderVals, setSliderVals] = useState<Record<string, number>>(() => {
     if (initialProfile?.sliders && Object.keys(initialProfile.sliders).length > 0) {
-      return { ...Object.fromEntries(SLIDERS.map(s => [s.id, s.defaultVal])), ...initialProfile.sliders };
+      return { ...Object.fromEntries(SLIDERS_I18N.map((s) => [s.id, s.defaultVal])), ...initialProfile.sliders };
     }
     const init: Record<string, number> = {};
-    SLIDERS.forEach((s) => (init[s.id] = s.defaultVal));
+    SLIDERS_I18N.forEach((s) => {
+      init[s.id] = s.defaultVal;
+    });
     return init;
   });
   const [checkedSF, setCheckedSF] = useState<Set<number>>(
@@ -328,58 +397,63 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
     <div>
       {/* Hero */}
       <div className="ss-header">
-        <div className="ss-header-bg">STYLE</div>
-        <div className="ss-header-label">
-          Writing Studio · {en ? "Style Development" : "문체 개발"}
+        <div className="ss-shell ss-header-shell">
+          <div className="ss-header-bg">STYLE</div>
+          <div className="ss-header-label">
+            Writing Studio · {en ? "Style Development" : "문체 개발"}
+          </div>
+          <h1 className="ss-header-title">
+            {en ? (
+              <>Define Your <span>Style</span></>
+            ) : (
+              <>나만의 <span>문체</span>를<br />정의하다</>
+            )}
+          </h1>
+          <p className="ss-header-desc">
+            {en
+              ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
+              : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
+          </p>
         </div>
-        <h1 className="ss-header-title">
-          {en ? (
-            <>Define Your <span>Style</span></>
-          ) : (
-            <>나만의 <span>문체</span>를<br />정의하다</>
-          )}
-        </h1>
-        <p className="ss-header-desc">
-          {en
-            ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
-            : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
-        </p>
       </div>
 
       {/* Style Preset Dropdown */}
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 16px 8px", position: "relative" }}>
-        <button onClick={() => setShowStylePresetMenu(v => !v)}
-          style={{ padding: "6px 14px", background: "var(--accent-purple, #7c3aed)", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}>
-          ⚡ {en ? "Preset" : "프리셋"}
-        </button>
-        {showStylePresetMenu && (
-          <div style={{ position: "absolute", top: "100%", right: 16, background: "var(--bg-secondary, #1a1a2e)", border: "1px solid var(--border, #333)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 50, minWidth: 200, maxHeight: 300, overflowY: "auto" }}>
-            {STYLE_PRESETS.map(p => (
-              <button key={p.key} onClick={() => applyStylePreset(p.key)}
-                style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", fontSize: 11, color: "var(--text-secondary, #aaa)", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)"; (e.target as HTMLButtonElement).style.color = "#fff"; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.color = "var(--text-secondary, #aaa)"; }}>
-                {en ? p.en : p.ko}
-              </button>
-            ))}
+      <div className="ss-toolbar">
+        <div className="ss-shell ss-toolbar-shell">
+          <div className="ss-toolbar-anchor">
+            <button className="ss-preset-trigger" onClick={() => setShowStylePresetMenu((v) => !v)}>
+              ⚡ {en ? "Preset" : "프리셋"}
+            </button>
+            {showStylePresetMenu && (
+              <div className="ss-preset-menu">
+                {STYLE_PRESETS.map((p) => (
+                  <button key={p.key} className="ss-preset-item" onClick={() => applyStylePreset(p.key)}>
+                    {en ? p.en : p.ko}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="ss-tabs">
-        {tabLabels.map((label, i) => (
-          <button
-            key={i}
-            className={`ss-tab ${tab === i ? "active" : ""}`}
-            onClick={() => setTab(i)}
-          >
-            {label}
-          </button>
-        ))}
+        <div className="ss-shell ss-tabs-shell">
+          {tabLabels.map((label, i) => (
+            <button
+              key={i}
+              className={`ss-tab ${tab === i ? "active" : ""}`}
+              onClick={() => setTab(i)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="ss-main">
+        <div className="ss-shell ss-main-shell">
         {/* ============================================================ */}
         {/* PART 5 — 패널 1: 문체 DNA 진단                              */}
         {/* ============================================================ */}
@@ -411,25 +485,39 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             <div className="ss-section-title">Step 02 — {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
 
             <div className="ss-slider-group">
-              {SLIDERS_I18N.map((s) => (
-                <div key={s.id} className="ss-slider-row">
-                  <div className="ss-slider-label">{en ? s.en : s.ko}</div>
-                  <div className="ss-slider-ends">
-                    <input
-                      type="range"
-                      min={1}
-                      max={5}
-                      value={sliderVals[s.id]}
-                      onChange={(e) => handleSlider(s.id, Number(e.target.value))}
-                      className="ss-range"
-                    />
-                    <div className="ss-slider-end-labels">
-                      <span>{en ? s.leftEN : s.leftKO}</span>
-                      <span>{en ? s.rightEN : s.rightKO}</span>
+              {SLIDERS_I18N.map((s) => {
+                const currentLabel = getSliderDescriptor(s, sliderVals[s.id], en);
+
+                return (
+                  <div key={s.id} className="ss-slider-row">
+                    <div className="ss-slider-topline">
+                      <div className="ss-slider-meta">
+                        <div className="ss-slider-label">{en ? s.en : s.ko}</div>
+                        <p className="ss-slider-note">{en ? s.noteEN : s.noteKO}</p>
+                      </div>
+                      <span className="ss-slider-current">{currentLabel}</span>
+                    </div>
+
+                    <div className="ss-slider-ends">
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        value={sliderVals[s.id]}
+                        onChange={(e) => handleSlider(s.id, Number(e.target.value))}
+                        className="ss-range"
+                        aria-valuetext={currentLabel}
+                        style={getSliderTrackStyle(sliderVals[s.id])}
+                      />
+                      <div className="ss-slider-end-labels">
+                        <span>{en ? s.leftEN : s.leftKO}</span>
+                        <strong>{currentLabel}</strong>
+                        <span>{en ? s.rightEN : s.rightKO}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <button className="ss-btn-primary" onClick={() => setTab(1)}>
@@ -661,7 +749,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   {SLIDERS_I18N.map((s) => (
                     <div key={s.id} className="ss-profile-item">
                       <span className="ss-profile-key">{en ? s.en : s.ko}</span>
-                      <span>{(en ? PARAM_LABELS_EN : PARAM_LABELS_KO)[s.id][sliderVals[s.id] - 1]}</span>
+                      <span>{getSliderDescriptor(s, sliderVals[s.id], en)}</span>
                     </div>
                   ))}
                 </div>
@@ -730,6 +818,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

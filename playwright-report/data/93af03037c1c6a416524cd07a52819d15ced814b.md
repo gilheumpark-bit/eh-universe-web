@@ -1,0 +1,142 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7]:
+      - img [ref=e8]
+    - generic [ref=e11]:
+      - button "Open issues overlay" [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: "0"
+          - generic [ref=e15]: "1"
+        - generic [ref=e16]: Issue
+      - button "Collapse issues badge" [ref=e17]:
+        - img [ref=e18]
+  - alert [ref=e20]
+  - banner [ref=e21]:
+    - generic [ref=e22]:
+      - link "EH Universe — Home" [ref=e23] [cursor=pointer]:
+        - /url: /
+        - text: EH UNIVERSE
+      - navigation "Main navigation" [ref=e24]:
+        - link "HOME" [ref=e25] [cursor=pointer]:
+          - /url: /
+        - link "ARCHIVE" [ref=e26] [cursor=pointer]:
+          - /url: /archive
+        - link "RULEBOOK" [ref=e27] [cursor=pointer]:
+          - /url: /rulebook
+        - link "REFERENCE" [ref=e28] [cursor=pointer]:
+          - /url: /reference
+        - link "STUDIO" [ref=e29] [cursor=pointer]:
+          - /url: /studio
+        - link "ABOUT" [ref=e30] [cursor=pointer]:
+          - /url: /about
+        - link "DOCS" [ref=e31] [cursor=pointer]:
+          - /url: /docs
+        - button "Tools menu" [ref=e33]: TOOLS
+        - link "GitHub repository (opens in new tab)" [ref=e34] [cursor=pointer]:
+          - /url: https://github.com/gilheumpark-bit/eh-universe-web
+          - text: GITHUB
+        - button "Toggle language" [ref=e35]: EN
+  - generic [ref=e36]:
+    - generic [ref=e37]:
+      - generic [ref=e38]: Error Heart Universe
+      - heading "EH UNIVERSE" [level=1] [ref=e39]
+      - paragraph [ref=e40]: “당신의 이야기가 거짓말을 하는 순간을 기록한다.”
+      - paragraph [ref=e41]: 세계관 설계 → AI 집필 → 엔진 검증 → 출판. 한 곳에서.
+      - generic [ref=e42]:
+        - link "Start Writing — open NOA Studio" [ref=e43] [cursor=pointer]:
+          - /url: /studio
+          - text: 집필 시작
+        - link "Explore the Universe — browse the archive" [ref=e44] [cursor=pointer]:
+          - /url: /archive
+          - text: Explore the Universe
+        - link "GitHub repository (opens in new tab)" [ref=e45] [cursor=pointer]:
+          - /url: https://github.com/gilheumpark-bit/eh-universe-web
+          - text: GitHub
+    - img [ref=e47]
+  - generic [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]: INFO
+      - text: "문서 등급: PUBLIC — Level 0"
+    - heading "WHAT IS EH?" [level=2] [ref=e53]
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - paragraph [ref=e56]: EH = Error Heart = Human Error
+        - paragraph [ref=e57]: 인간이 비합리적 선택을 할 수 있는 잔여 가능성의 총량.
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - generic [ref=e60]: HIGH
+          - paragraph [ref=e61]: EH가 높다 = 인간답다 = 서사는 불안정하다
+        - generic [ref=e62]:
+          - generic [ref=e63]: LOW
+          - paragraph [ref=e64]: EH가 낮다 = 정확하다 = 서사는 메말라간다
+  - generic [ref=e66]:
+    - heading "Numbers of the Universe" [level=2] [ref=e67]
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]: 1945~7000년
+        - paragraph [ref=e71]: 타임라인
+      - generic [ref=e72]:
+        - generic [ref=e73]: 4개 장르
+        - paragraph [ref=e74]: 하나의 우주
+      - generic [ref=e75]:
+        - generic [ref=e76]: 200+
+        - paragraph [ref=e77]: 아티클 아카이브
+      - generic [ref=e78]:
+        - generic [ref=e79]: "1"
+        - paragraph [ref=e80]: 엔진 — EH Rulebook v1.0
+  - generic [ref=e82]:
+    - heading "3단계로 시작" [level=2] [ref=e83]
+    - paragraph [ref=e84]: 세계관 설계부터 출판까지 — NOA Studio 하나로.
+    - generic [ref=e85]:
+      - link "1️⃣ 세계관 설계 AI가 장르에 맞는 세계관을 생성합니다." [ref=e86] [cursor=pointer]:
+        - /url: /studio
+        - generic [ref=e87]: 1️⃣
+        - generic [ref=e88]:
+          - heading "세계관 설계" [level=3] [ref=e89]
+          - paragraph [ref=e90]: AI가 장르에 맞는 세계관을 생성합니다.
+      - link "2️⃣ 첫 에피소드 집필 AI와 함께 첫 화를 완성하세요." [ref=e91] [cursor=pointer]:
+        - /url: /studio
+        - generic [ref=e92]: 2️⃣
+        - generic [ref=e93]:
+          - heading "첫 에피소드 집필" [level=3] [ref=e94]
+          - paragraph [ref=e95]: AI와 함께 첫 화를 완성하세요.
+      - link "3️⃣ EPUB/DOCX 내보내기 완성된 원고를 바로 출판 형식으로." [ref=e96] [cursor=pointer]:
+        - /url: /studio
+        - generic [ref=e97]: 3️⃣
+        - generic [ref=e98]:
+          - heading "EPUB/DOCX 내보내기" [level=3] [ref=e99]
+          - paragraph [ref=e100]: 완성된 원고를 바로 출판 형식으로.
+    - heading "세계관 탐색" [level=2] [ref=e101]
+    - generic [ref=e102]:
+      - link "📖 EH Open Reference 4페이지 요약. 여기서 시작." [ref=e103] [cursor=pointer]:
+        - /url: /reference
+        - generic [ref=e104]: 📖
+        - generic [ref=e105]:
+          - heading "EH Open Reference" [level=3] [ref=e106]
+          - paragraph [ref=e107]: 4페이지 요약. 여기서 시작.
+      - link "📜 EH Rulebook v1.0 서사 엔진 전문." [ref=e108] [cursor=pointer]:
+        - /url: /rulebook
+        - generic [ref=e109]: 📜
+        - generic [ref=e110]:
+          - heading "EH Rulebook v1.0" [level=3] [ref=e111]
+          - paragraph [ref=e112]: 서사 엔진 전문.
+      - link "🔬 설정집 아카이브 세계관 위키." [ref=e113] [cursor=pointer]:
+        - /url: /archive
+        - generic [ref=e114]: 🔬
+        - generic [ref=e115]:
+          - heading "설정집 아카이브" [level=3] [ref=e116]
+          - paragraph [ref=e117]: 세계관 위키.
+      - link "GitHub (opens in new tab)" [ref=e118] [cursor=pointer]:
+        - /url: https://github.com/gilheumpark-bit/eh-universe-web
+        - generic [ref=e119]: 💻
+        - generic [ref=e120]:
+          - heading "GitHub" [level=3] [ref=e121]
+          - paragraph [ref=e122]: 오픈소스.
+  - contentinfo [ref=e123]:
+    - generic [ref=e124]:
+      - paragraph [ref=e125]: EH UNIVERSE — CC-BY-NC-4.0
+      - paragraph [ref=e126]: “All systems operational.”
+```

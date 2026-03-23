@@ -296,24 +296,24 @@ export default function VesselPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           <Link
             href="#"
             onClick={(e) => { e.preventDefault(); window.history.length > 1 ? window.history.back() : (window.location.href = "/archive"); }}
             aria-label="Go back to previous page"
-            className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
+            className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
           >
             &larr; BACK
           </Link>
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
             {en ? "Vessel Classification: CLASSIFIED | Bureau of Investigation" : "\uD568\uAE09 \uBD84\uB958\uCCB4\uACC4: \uAE30\uBC00 | \uBE44\uBC00\uC870\uC0AC\uAD6D"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
-            <h1 className="font-[family-name:var(--font-mono)] text-2xl font-bold tracking-tight mb-1">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
+            <h1 className="site-title text-2xl font-bold tracking-tight mb-1">
               {en ? "VESSEL CLASSIFICATION FULL REFERENCE" : "\uD568\uAE09 \uBD84\uB958 \uC804\uCCB4 \uCC38\uC870"}
             </h1>
             <p className="text-text-tertiary text-sm mb-8 font-[family-name:var(--font-mono)]">

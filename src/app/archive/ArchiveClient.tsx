@@ -136,12 +136,12 @@ export default function ArchiveClient() {
   return (
     <>
       <Header />
-      <main className="pt-14 flex min-h-screen">
-        <button className="fixed bottom-4 right-4 z-40 md:hidden rounded-full bg-accent-purple p-3 text-white shadow-lg" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+      <main className="flex min-h-screen pt-24">
+        <button className="fixed bottom-4 right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 p-3 text-accent-amber shadow-lg backdrop-blur" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5H17M3 10H12M3 15H17" /></svg>
         </button>
 
-        <aside className={`fixed md:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto border-r border-border bg-bg-secondary p-4 transition-transform md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-[24px] border border-white/8 bg-[rgba(15,20,28,0.92)] p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">Archive</h2>
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
@@ -184,15 +184,15 @@ export default function ArchiveClient() {
           </div>
         </aside>
 
-        <div className="flex-1 p-6 md:p-10">
+        <div className="flex-1 p-6 md:p-10 md:pl-[19rem]">
           <div className="mx-auto max-w-4xl">
-            <div className="doc-header rounded-t mb-0">
+            <div className="doc-header rounded-t-[24px] mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
               {t('archivePage.category')}: {currentCategory.label} — {currentCategory.sublabel[lang]}
             </div>
 
-            <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-8">
-              <h1 className="font-[family-name:var(--font-mono)] text-2xl font-bold tracking-tight mb-6">
+            <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-8">
+              <h1 className="site-title text-2xl font-bold tracking-tight mb-6">
                 {currentCategory.icon} {currentCategory.label}
               </h1>
 
@@ -202,7 +202,7 @@ export default function ArchiveClient() {
                   return (
                     <Link key={article.slug} href={href}
                       aria-label={`${article.title[lang]} — ${article.level}`}
-                      className="card-glow group flex items-center justify-between gap-4 rounded border border-border bg-bg-primary p-4 transition hover:border-accent-purple/50">
+                      className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
                       <div className="flex items-center gap-3">
                         <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>
                         <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{article.title[lang]}</span>

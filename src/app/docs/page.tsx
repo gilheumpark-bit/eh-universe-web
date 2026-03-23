@@ -314,12 +314,12 @@ export default function DocsPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar TOC */}
             <aside className="lg:w-56 shrink-0">
-              <div className="lg:sticky lg:top-20">
+              <div className="premium-panel-soft motion-rise rounded-[24px] p-4 lg:sticky lg:top-24">
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
                   {en ? "Contents" : "\ubaa9\ucc28"}
                 </h2>
@@ -332,8 +332,8 @@ export default function DocsPage() {
                       aria-current={activeId === s.id ? "location" : undefined}
                       className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
                         activeId === s.id
-                          ? "text-accent-purple bg-accent-purple/10 font-bold border-l-2 border-accent-purple"
-                          : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+                          ? "text-accent-amber bg-accent-amber/10 font-bold"
+                          : "text-text-secondary hover:text-text-primary hover:bg-white/[0.04]"
                       }`}
                     >
                       {s.title}
@@ -345,14 +345,14 @@ export default function DocsPage() {
 
             {/* Main content */}
             <div className="flex-1 min-w-0">
-              <div className="doc-header rounded-t mb-0">
+              <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
                 <span className="badge badge-classified mr-2">PUBLIC</span>
                 {en
                   ? "Document Level: PUBLIC | Version: 2.0 | NOA Studio User Manual"
                   : "\ubb38\uc11c \ub4f1\uae09: PUBLIC | \ubc84\uc804: 2.0 | NOA Studio \uc0ac\uc6a9\uc790 \ub9e4\ub274\uc5bc"}
               </div>
-              <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-                <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">
+              <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
+                <h1 className="site-title text-3xl font-bold tracking-tight mb-2">
                   NOA STUDIO MANUAL
                 </h1>
                 <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">

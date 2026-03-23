@@ -307,21 +307,21 @@ export default function NekaSoundPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           {/* Doc Header */}
-          <Link href="/archive" aria-label="Back to Archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
+          <Link href="/archive" aria-label="Back to Archive" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
             ← ARCHIVE
           </Link>
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-blue mr-2">TOOL</span>
             {en
               ? "Document Level: PUBLIC — Level 0 — Interactive Interface"
               : "문서 등급: PUBLIC — Level 0 — 인터랙티브 인터페이스"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             {/* Title */}
             <div className="text-center mb-10">
               <p className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.4em] text-text-tertiary uppercase mb-2">

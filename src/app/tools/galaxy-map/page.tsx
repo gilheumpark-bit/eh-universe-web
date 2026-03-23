@@ -175,18 +175,18 @@ export default function GalaxyMapPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-16">
-          <Link href="/archive" aria-label="Back to Archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <Link href="/archive" aria-label="Back to Archive" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
             ← ARCHIVE
           </Link>
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
             {en ? "Galaxy Zone & Gate Infrastructure | Bureau of Investigation" : "은하 구역 분류 & Gate 인프라 | 비밀조사국"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
 
             {/* ═══ SECTION 1: GALAXY ZONES ═══ */}
             <section className="mb-16">
@@ -231,7 +231,7 @@ export default function GalaxyMapPage() {
                 </table>
               </div>
 
-              <div className="mt-6 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
                 <strong className="text-text-secondary not-italic">GREEN → RED:</strong> {en ? "Civilization\u2193 NET\u2193 Gate\u2193 Solitude\u2191 War\u2191" : "문명\u2193 NET\u2193 Gate\u2193 고독\u2191 전쟁\u2191"}
                 <br /><br />
                 {en
@@ -251,7 +251,7 @@ export default function GalaxyMapPage() {
 
               <div className="space-y-4">
                 {TIERS.map((t) => (
-                  <div key={t.tier} className="rounded-md border border-border bg-bg-primary p-5" style={{ borderLeftWidth: 3, borderLeftColor: t.color }}>
+                  <div key={t.tier} className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: t.color }}>
                     <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: t.color }}>
                       {t.tier} / {t.zone}
                     </div>
@@ -273,7 +273,7 @@ export default function GalaxyMapPage() {
                 ))}
 
                 {/* RED - No Gate */}
-                <div className="rounded-md border border-border bg-bg-primary p-5" style={{ borderLeftWidth: 3, borderLeftColor: "#cc2222" }}>
+                <div className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: "#cc2222" }}>
                   <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: "#cc2222" }}>
                     RED ZONE
                   </div>
@@ -345,7 +345,7 @@ export default function GalaxyMapPage() {
                 ))}
               </div>
 
-              <div className="mt-6 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
                 {en
                   ? "\"The warzone is 753 light-years wide. It contains 6,000 human systems. The Bureau fights this war alone.\""
                   : "\"전장은 753 광년 폭이다. 그 안에 6,000개의 인류 행성계가 있다. 비밀조사국이 이 전쟁을 혼자 치른다.\""}

@@ -16,7 +16,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
     return (
       <>
         <Header />
-        <main className="pt-14 flex items-center justify-center min-h-screen">
+        <main className="pt-24 flex min-h-screen items-center justify-center">
           <div className="text-center">
             <h1 className="font-[family-name:var(--font-mono)] text-4xl font-bold text-text-tertiary mb-4">████████</h1>
             <p className="text-text-secondary mb-2">
@@ -41,29 +41,29 @@ export default function ArticleClient({ slug }: { slug: string }) {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-4xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           <Link
             href={`/archive?cat=${article.category.toLowerCase()}`}
-            className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
+            className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
           >
             ← ARCHIVE / {article.category}
           </Link>
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className={`badge ${levelClass} mr-2`}>{article.level}</span>
             {en
               ? `Document Level: ${article.level} | Last Updated: 7000s | Author: Bureau of Investigation`
               : `문서 등급: ${article.level} | 최종 갱신: 7000년대 | 작성: 비밀조사국`}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-            <h1 className="font-[family-name:var(--font-mono)] text-2xl font-bold tracking-tight mb-8">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
+            <h1 className="site-title text-2xl font-bold tracking-tight mb-8">
               {article.title[lang]}
             </h1>
 
             {article.image && (
-              <div className="mb-8 rounded border border-border overflow-hidden">
+              <div className="mb-8 overflow-hidden rounded-[22px] border border-white/8 shadow-2xl">
                 <Image src={article.image} alt={article.title[lang]} width={800} height={450} className="w-full h-auto" />
               </div>
             )}
@@ -91,7 +91,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
                       <Link
                         key={relSlug}
                         href={`/archive/${relSlug}`}
-                        className="inline-flex items-center gap-1.5 rounded border border-border bg-bg-primary px-3 py-1.5 text-xs text-text-secondary hover:text-accent-purple hover:border-accent-purple/50 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-xs text-text-secondary hover:text-accent-amber hover:border-accent-amber/30 transition-colors"
                       >
                         <span className={`badge ${relLvl} text-[10px] px-1 py-0`}>
                           {rel.level.charAt(0)}

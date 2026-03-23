@@ -53,11 +53,11 @@ export default function RulebookPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-56 shrink-0">
-              <div className="lg:sticky lg:top-20">
+              <div className="premium-panel-soft rounded-[24px] p-4 lg:sticky lg:top-24">
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
                   {en ? "Contents" : "목차"}
                 </h2>
@@ -65,8 +65,8 @@ export default function RulebookPage() {
                   {secs.map((s) => (
                     <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
                       activeId === s.id
-                        ? "text-accent-purple bg-accent-purple/10 font-bold border-l-2 border-accent-purple"
-                        : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+                        ? "text-accent-amber bg-accent-amber/10 font-bold"
+                        : "text-text-secondary hover:text-text-primary hover:bg-white/[0.04]"
                     }`}>
                       {s.title}
                     </a>
@@ -76,12 +76,12 @@ export default function RulebookPage() {
             </aside>
 
             <div className="flex-1 min-w-0">
-              <div className="doc-header rounded-t mb-0">
+              <div className="doc-header rounded-t-[24px] mb-0">
                 <span className="badge badge-classified mr-2">RESTRICTED</span>
                 {en ? "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" : "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국"}
               </div>
-              <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-                <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
+              <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
+                <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
                 <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">A Narrative Engine That Prevents Story Collapse</p>
 
                 {secs.map((s) => (

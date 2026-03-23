@@ -10,7 +10,7 @@ export default function StyleStudioPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
+      <main className="pt-24">
         <StyleStudioView isKO={lang === "ko"} />
       </main>
     </>

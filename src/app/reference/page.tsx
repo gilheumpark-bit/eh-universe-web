@@ -10,15 +10,15 @@ export default function ReferencePage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-4xl px-4 py-16">
-          <div className="doc-header rounded-t mb-0">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <div className="doc-header rounded-t-[24px] mb-0">
             <span className="badge badge-allow mr-2">PUBLIC</span>
             {en ? "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" : "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
-            <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
+          <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
+            <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
             <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
               A Narrative Engine That Prevents Story Collapse — {en ? "4-Page Summary" : "4-Page Summary"}
             </p>
@@ -83,7 +83,7 @@ export default function ReferencePage() {
                       { type: "Type 5", name: "육체형", pct: "24%", desc: "신체적 반응으로 판단하는 유형" },
                     ]
                 ).map((item) => (
-                  <div key={item.type} className="flex items-center gap-4 rounded border border-border bg-bg-primary p-4">
+                  <div key={item.type} className="premium-panel-soft flex items-center gap-4 rounded-[20px] p-4">
                     <span className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-purple w-16">{item.type}</span>
                     <span className="font-semibold text-text-primary text-sm w-20">{item.name}</span>
                     <span className="font-[family-name:var(--font-mono)] text-xs text-accent-amber w-10">{item.pct}</span>
@@ -139,7 +139,7 @@ export default function ReferencePage() {
                       { name: "수오", title: "The Human God", role: "선택하는 신", desc: "인간이었다. 그래서 가장 위험하다." },
                     ]
                 ).map((g) => (
-                  <div key={g.name} className="card-glow rounded border border-border bg-bg-primary p-5">
+                  <div key={g.name} className="premium-link-card card-glow p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-[family-name:var(--font-mono)] text-sm font-bold text-text-primary">{g.name}</span>
                       <span className="badge badge-classified">{g.title}</span>

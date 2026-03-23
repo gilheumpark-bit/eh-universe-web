@@ -103,11 +103,11 @@ const DNA_NAMES = ['Hard SF', '웹소설', '문학적', '멀티장르'];
 const DNA_NAMES_EN = ['Hard SF', 'Web Novel', 'Literary', 'Multi-Genre'];
 
 const SLIDER_LABELS: Record<string, { name: string; nameEN: string; levels: string[]; levelsEN: string[] }> = {
-  s1: { name: '문장 길이', nameEN: 'Sentence Length', levels: ['단문 위주', '단문 선호', '균형', '장문 선호', '장문 위주'], levelsEN: ['Short', 'Mostly short', 'Balanced', 'Mostly long', 'Long'] },
-  s2: { name: '감정 밀도', nameEN: 'Emotional Density', levels: ['극도로 건조', '건조·분석적', '균형', '감성적', '매우 감성적'], levelsEN: ['Very dry', 'Dry/analytical', 'Balanced', 'Emotional', 'Very emotional'] },
-  s3: { name: '묘사 방식', nameEN: 'Description', levels: ['직접 서술', '직접 선호', '균형', '이미지 선호', '감각적 이미지'], levelsEN: ['Direct', 'Mostly direct', 'Balanced', 'Mostly imagery', 'Sensory imagery'] },
-  s4: { name: '서술 시점', nameEN: 'Narrative Distance', levels: ['전지적 관찰', '전지적 선호', '균형', '인물 밀착', '극밀착 내면'], levelsEN: ['Omniscient', 'Mostly omniscient', 'Balanced', 'Close 3rd', 'Deep POV'] },
-  s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['구어체', '평이함', '중간', '전문적·정밀', '고도 전문'], levelsEN: ['Colloquial', 'Simple', 'Mid-level', 'Technical', 'Highly technical'] },
+  s1: { name: '문장 길이', nameEN: 'Sentence Length', levels: ['짧고 단단하게', '짧은 호흡', '균형', '긴 호흡', '길게 밀어붙이기'], levelsEN: ['Tight and short', 'Short breath', 'Balanced', 'Long breath', 'Extended flow'] },
+  s2: { name: '감정 밀도', nameEN: 'Emotional Density', levels: ['감정 절제', '건조한 편', '균형', '정서 강조', '감정 밀도 높음'], levelsEN: ['Restrained', 'Dry-leaning', 'Balanced', 'Emotion-forward', 'Emotion-rich'] },
+  s3: { name: '묘사 방식', nameEN: 'Description', levels: ['사실 위주', '직설 묘사', '균형', '이미지 강조', '감각 몰입'], levelsEN: ['Factual', 'Direct', 'Balanced', 'Image-leaning', 'Sensory immersion'] },
+  s4: { name: '서술 시점', nameEN: 'Narrative Distance', levels: ['멀리 조망', '관찰자 시점', '균형', '인물 밀착', '내면 침투'], levelsEN: ['Panoramic', 'Observer', 'Balanced', 'Close POV', 'Deep interior'] },
+  s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['편한 말맛', '담백한 어휘', '균형', '정교한 어휘', '전문적 질감'], levelsEN: ['Plainspoken', 'Clean', 'Balanced', 'Refined', 'Specialized'] },
 };
 
 function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string {
