@@ -177,7 +177,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
       else {
-        const info = classifyError(err, isKO);
+        const info = classifyError(err, language);
         setPreview(`⚠️ ${info.title}\n${info.message}${info.action ? `\n\n💡 ${info.action}` : ''}`);
       }
     } finally {

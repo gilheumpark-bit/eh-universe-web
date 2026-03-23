@@ -346,7 +346,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
           )}
           {phase === 'analyzing' && (
             <>
-              <StreamingIndicator charCount={streamingChars} isKO={isKO} />
+              <StreamingIndicator charCount={streamingChars} language={language} />
               <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-red-600/30 transition-colors">
                 <X className="w-3 h-3" /> {isKO ? '중단' : 'Stop'}
               </button>
@@ -456,7 +456,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       )}
       {/* Error toast */}
       {refinerError !== null && (
-        <ErrorToast error={refinerError} isKO={isKO} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
+        <ErrorToast error={refinerError} language={language} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
       )}
     </div>
   );

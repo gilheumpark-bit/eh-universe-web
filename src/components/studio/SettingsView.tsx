@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
+import { createT } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
@@ -23,7 +24,7 @@ const LABELS: Record<AppLanguage, Record<string, string>> = {
 };
 
 const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onManageApiKey }) => {
-  const isKO = language === 'KO';
+  const t = createT(language);
   const l = LABELS[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [defaultPlatform, setDefaultPlatform] = useState<string>('MOBILE');
@@ -41,13 +42,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{isKO ? "설정 및 계정" : "Settings & Account"}</h2>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{t('settings.settingsAccount')}</h2>
         <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">System Control Center</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* Profile Card */}
-        <ProfileCard isKO={isKO} />
+        <ProfileCard language={language} />
 
         {/* Engine Status Card */}
         <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
@@ -56,15 +57,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{isKO ? "엔진 버전" : "Engine Version"}</span>
+              <span className="text-xs text-zinc-400">{t('settings.engineVersion')}</span>
               <span className="text-xs font-black text-blue-400">ANS {ENGINE_VERSION}</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{isKO ? "AI 모델" : "AI Model"}</span>
+              <span className="text-xs text-zinc-400">{t('settings.aiModel')}</span>
               <span className="text-xs font-black text-white">Gemini 2.5 Pro</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{isKO ? "지연 시간" : "Latency"}</span>
+              <span className="text-xs text-zinc-400">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
             </div>
           </div>
@@ -73,7 +74,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
         {/* Global Settings */}
         <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-blue-500" /> {isKO ? "일반 설정" : "General Preferences"}
+            <Shield className="w-4 h-4 text-blue-500" /> {t('settings.generalPreferences')}
           </h3>
 
           <div className="space-y-2">
@@ -84,12 +85,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl"><Key className="w-5 h-5 text-zinc-500" /></div>
                 <div>
-                  <div className="text-sm font-bold">{isKO ? "API 키 관리" : "API Key Management"}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{isKO ? "Gemini API 키를 설정하고 관리합니다." : "Configure and manage your Gemini API key."}</div>
+                  <div className="text-sm font-bold">{t('settings.apiKeyManagement')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.apiKeyDesc')}</div>
                 </div>
               </div>
               <div className="text-[10px] font-black text-blue-500 uppercase shrink-0 ml-2">
-                {apiKeyStatus ? (isKO ? '설정됨' : 'Set') : (isKO ? '미설정' : 'Not Set')}
+                {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
               </div>
             </div>
 
@@ -100,8 +101,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl"><Bell className="w-5 h-5 text-zinc-500" /></div>
                 <div>
-                  <div className="text-sm font-bold">{isKO ? "알림 설정" : "Notifications"}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{isKO ? "엔진 정산 완료 및 시스템 업데이트 알림" : "Engine settlement and system update notifications"}</div>
+                  <div className="text-sm font-bold">{t('settings.notifications')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-zinc-700 justify-start'}`}>
@@ -116,8 +117,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl group-hover:bg-red-500/20 transition-colors"><Trash2 className="w-5 h-5 text-red-500" /></div>
                 <div>
-                  <div className="text-sm font-bold text-red-500">{isKO ? "데이터 초기화" : "Reset Data"}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{isKO ? "저장된 모든 소설 설계도와 아카이브를 영구 삭제합니다." : "Permanently delete all saved blueprints and archives."}</div>
+                  <div className="text-sm font-bold text-red-500">{t('settings.resetData')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.resetDataDesc')}</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-red-500" />
@@ -215,7 +216,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   );
 };
 
-function ProfileCard({ isKO }: { isKO: boolean }) {
+function ProfileCard({ language }: { language: AppLanguage }) {
+  const t = createT(language);
   const { user, signInWithGoogle, signOut, isConfigured, error } = useAuth();
 
   if (user) {
@@ -230,13 +232,13 @@ function ProfileCard({ isKO }: { isKO: boolean }) {
             )}
           </div>
           <div>
-            <h3 className="font-black text-base md:text-lg">{user.displayName || (isKO ? '작가' : 'Writer')}</h3>
+            <h3 className="font-black text-base md:text-lg">{user.displayName || t('settings.writer')}</h3>
             <p className="text-zinc-500 text-xs">{user.email}</p>
           </div>
         </div>
         <button onClick={signOut}
           className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-all active:scale-[0.98]">
-          {isKO ? '로그아웃' : 'Sign Out'} <ChevronRight className="w-4 h-4" />
+          {t('settings.signOut')} <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     );
@@ -249,19 +251,19 @@ function ProfileCard({ isKO }: { isKO: boolean }) {
           <User className="w-6 h-6 md:w-8 md:h-8 text-zinc-500" />
         </div>
         <div>
-          <h3 className="font-black text-base md:text-lg">{isKO ? '게스트' : 'Guest'}</h3>
-          <p className="text-zinc-600 text-xs">{isKO ? '로그인하면 세션이 계정에 연동됩니다' : 'Sign in to sync sessions to your account'}</p>
+          <h3 className="font-black text-base md:text-lg">{t('settings.guest')}</h3>
+          <p className="text-zinc-600 text-xs">{t('settings.guestDesc')}</p>
         </div>
       </div>
       <button onClick={() => {
         if (!isConfigured) {
-          alert(isKO ? 'Firebase 설정이 필요합니다.' : 'Firebase configuration required.');
+          alert(t('settings.firebaseRequired'));
           return;
         }
         signInWithGoogle();
       }}
         className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all active:scale-[0.98] text-blue-400">
-        🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'} <ChevronRight className="w-4 h-4" />
+        🔑 {t('settings.googleSignIn')} <ChevronRight className="w-4 h-4" />
       </button>
       {error && (
         <p className="text-red-400 text-xs px-2">{error}</p>
@@ -271,4 +273,3 @@ function ProfileCard({ isKO }: { isKO: boolean }) {
 }
 
 export default SettingsView;
-

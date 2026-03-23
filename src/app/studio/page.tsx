@@ -1921,7 +1921,7 @@ export default function StudioPage() {
       {uxError && (
         <ErrorToast
           error={uxError.error}
-          isKO={isKO}
+          language={language}
           onDismiss={() => setUxError(null)}
           onRetry={uxError.retry ? () => { setUxError(null); uxError.retry?.(); } : undefined}
         />

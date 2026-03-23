@@ -540,7 +540,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
-                  {resultText && <CopyButton text={resultText} isKO={!en} />}
+                  {resultText && <CopyButton text={resultText} language={isKO ? 'KO' : 'EN'} />}
                 </div>
                 <div className="ss-result-box">
                   {resultText ? (

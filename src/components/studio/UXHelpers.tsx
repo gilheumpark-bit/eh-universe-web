@@ -6,6 +6,8 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { AlertTriangle, X, Copy, Check } from 'lucide-react';
+import type { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -71,62 +73,64 @@ interface ErrorInfo {
   action?: string;
 }
 
-function classifyError(err: unknown, isKO: boolean): ErrorInfo {
+function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
+  const t = createT(language);
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
 
   if (lower.includes('api_key') || lower.includes('401') || lower.includes('unauthorized')) {
     return {
       type: 'api_key',
-      title: isKO ? 'API 키 오류' : 'API Key Error',
-      message: isKO ? 'API 키가 없거나 만료되었습니다.' : 'API key is missing or expired.',
-      action: isKO ? '설정 탭에서 API 키를 확인하세요' : 'Check your API key in Settings tab',
+      title: t('uxHelpers.apiKeyErrorTitle'),
+      message: t('uxHelpers.apiKeyErrorMsg'),
+      action: t('uxHelpers.apiKeyErrorAction'),
     };
   }
   if (lower.includes('429') || lower.includes('rate')) {
     return {
       type: 'rate_limit',
-      title: isKO ? '요청 한도 초과' : 'Rate Limit',
-      message: isKO ? 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' : 'API rate limit exceeded. Please wait and try again.',
+      title: t('uxHelpers.rateLimitTitle'),
+      message: t('uxHelpers.rateLimitMsg'),
     };
   }
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
     return {
       type: 'network',
-      title: isKO ? '네트워크 오류' : 'Network Error',
-      message: isKO ? '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.' : 'Cannot connect to server. Check your internet connection.',
+      title: t('uxHelpers.networkErrorTitle'),
+      message: t('uxHelpers.networkErrorMsg'),
     };
   }
   if (lower.includes('timeout') || lower.includes('timed out')) {
     return {
       type: 'timeout',
-      title: isKO ? '시간 초과' : 'Timeout',
-      message: isKO ? '응답 시간이 초과되었습니다. 다시 시도해주세요.' : 'Response timed out. Please try again.',
+      title: t('uxHelpers.timeoutTitle'),
+      message: t('uxHelpers.timeoutMsg'),
     };
   }
   if (lower.includes('json') || lower.includes('parse') || lower.includes('unexpected token')) {
     return {
       type: 'parse',
-      title: isKO ? '응답 파싱 오류' : 'Parse Error',
-      message: isKO ? 'AI 응답을 처리할 수 없습니다. 다시 시도해주세요.' : 'Cannot parse AI response. Please try again.',
+      title: t('uxHelpers.parseErrorTitle'),
+      message: t('uxHelpers.parseErrorMsg'),
     };
   }
   return {
     type: 'unknown',
-    title: isKO ? '오류 발생' : 'Error',
-    message: msg.slice(0, 200) || (isKO ? '알 수 없는 오류가 발생했습니다.' : 'An unknown error occurred.'),
+    title: t('uxHelpers.unknownErrorTitle'),
+    message: msg.slice(0, 200) || t('uxHelpers.unknownErrorMsg'),
   };
 }
 
 interface ErrorToastProps {
   error: unknown;
-  isKO: boolean;
+  language: AppLanguage;
   onDismiss: () => void;
   onRetry?: () => void;
 }
 
-export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, onRetry }) => {
-  const info = classifyError(error, isKO);
+export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismiss, onRetry }) => {
+  const t = createT(language);
+  const info = classifyError(error, language);
 
   useEffect(() => {
     const timer = setTimeout(onDismiss, 8000);
@@ -150,7 +154,7 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, 
         </div>
         {onRetry && (
           <button onClick={onRetry} className="mt-3 w-full px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-300 hover:bg-red-500/30 transition-colors">
-            {isKO ? '다시 시도' : 'Retry'}
+            {t('uxHelpers.retry')}
           </button>
         )}
       </div>
@@ -164,11 +168,12 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, 
 
 interface CopyButtonProps {
   text: string;
-  isKO: boolean;
+  language: AppLanguage;
   className?: string;
 }
 
-export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = '' }) => {
+export const CopyButton: React.FC<CopyButtonProps> = ({ text, language, className = '' }) => {
+  const t = createT(language);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -193,8 +198,8 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = 
     <button
       onClick={handleCopy}
       className={`p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors ${className}`}
-      title={isKO ? '복사' : 'Copy'}
-      aria-label={isKO ? '복사' : 'Copy'}
+      title={t('uxHelpers.copy')}
+      aria-label={language === 'KO' ? '복사' : 'Copy'}
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
@@ -207,17 +212,20 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = 
 
 interface StreamingIndicatorProps {
   charCount: number;
-  isKO: boolean;
+  language: AppLanguage;
 }
 
-export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({ charCount, isKO }) => (
-  <span className="inline-flex items-center gap-1.5 text-[10px] text-accent-purple font-mono">
-    <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-pulse" />
-    {charCount > 0
-      ? `${charCount.toLocaleString()}${isKO ? '자 생성 중...' : ' chars generating...'}`
-      : (isKO ? '생성 중...' : 'Generating...')}
-  </span>
-);
+export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({ charCount, language }) => {
+  const t = createT(language);
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[10px] text-accent-purple font-mono">
+      <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-pulse" />
+      {charCount > 0
+        ? `${charCount.toLocaleString()}${t('uxHelpers.charsGenerating')}`
+        : t('uxHelpers.generating')}
+    </span>
+  );
+};
 
 // ============================================================
 // PART 5 — useUnsavedWarning hook

@@ -509,7 +509,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
       else {
-        const info = classifyError(err, isKO);
+        const info = classifyError(err, language);
         const detail = info.action ? `\n\n💡 ${info.action}` : '';
         setMessages(prev => prev.map(m =>
           m.id === aiMsgId ? { ...m, content: `⚠️ ${info.title}\n${info.message}${detail}` } : m
