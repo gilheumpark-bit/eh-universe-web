@@ -11,6 +11,7 @@ const navItems = [
   { href: "/reference", label: "REFERENCE" },
   { href: "/studio", label: "STUDIO" },
   { href: "/about", label: "ABOUT" },
+  { href: "/docs", label: "DOCS" },
 ];
 
 const toolItems = [
