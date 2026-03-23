@@ -34,6 +34,18 @@ export interface Character {
   personality?: string;
   speechStyle?: string;
   speechExample?: string;
+  // 1단계 뼈대 (3-tier framework)
+  desire?: string;         // 욕망 / 추진력
+  deficiency?: string;     // 결핍 / 부족한 것
+  conflict?: string;       // 이야기 속 갈등
+  changeArc?: string;      // 변화 방향 (서사 아크)
+  values?: string;         // 가치관 / 금지선
+  // 2단계 작동
+  strength?: string;       // 강점
+  weakness?: string;       // 약점
+  backstory?: string;      // 현재를 만든 과거
+  failureCost?: string;    // 실패 대가
+  currentProblem?: string; // 현재 문제
 }
 
 export type CharRelationType = "lover" | "rival" | "friend" | "enemy" | "family" | "mentor" | "subordinate";
@@ -115,6 +127,15 @@ export interface Item {
   obtainedFrom: string;
   owner?: string;
   episode?: number;
+  // 1단계 뼈대 (3-tier framework)
+  purpose?: string;          // 용도 / 사용 목적
+  activationCond?: string;   // 발동 조건
+  costWeakness?: string;     // 대가 / 약점 / 카운터
+  storyFunction?: string;    // 스토리 기능 (맥거핀, 성장 촉매 등)
+  // 2단계 작동
+  worldConnection?: string;  // 세계관 연결성
+  misuse?: string;           // 오용/폭주 시 결과
+  lore?: string;             // 배경 서사 / 전설
 }
 
 export interface Skill {
@@ -151,6 +172,10 @@ export interface StoryConfig {
   charRelations?: CharRelation[];
   platform: PlatformType;
   publishPlatform?: PublishPlatform;
+  // 세계관 1단계 뼈대 (3-tier framework)
+  corePremise?: string;       // 현실과 다른 핵심 전제
+  powerStructure?: string;    // 권력 구조
+  currentConflict?: string;   // 현재 갈등
   episodeState?: EpisodeState;
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;

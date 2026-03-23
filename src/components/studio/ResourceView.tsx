@@ -302,6 +302,71 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       />
                     </div>
 
+                    {/* 1단계 뼈대 — 3-tier framework */}
+                    <div className="space-y-2 mb-4 pt-3 border-t border-zinc-800/50">
+                      <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">{t.tier1}</span>
+                      <input
+                        value={char.desire || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, desire: e.target.value } : c)
+                        }))}
+                        placeholder={t.desirePH}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-700"
+                      />
+                      <input
+                        value={char.deficiency || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, deficiency: e.target.value } : c)
+                        }))}
+                        placeholder={t.deficiencyPH}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-700"
+                      />
+                      <input
+                        value={char.conflict || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, conflict: e.target.value } : c)
+                        }))}
+                        placeholder={t.conflictPH}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-700"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={char.values || ''}
+                          onChange={e => setConfig((prev: StoryConfig) => ({
+                            ...prev,
+                            characters: prev.characters.map(c => c.id === char.id ? { ...c, values: e.target.value } : c)
+                          }))}
+                          placeholder={t.valuesPH}
+                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-700"
+                        />
+                        <input
+                          value={char.changeArc || ''}
+                          onChange={e => setConfig((prev: StoryConfig) => ({
+                            ...prev,
+                            characters: prev.characters.map(c => c.id === char.id ? { ...c, changeArc: e.target.value } : c)
+                          }))}
+                          placeholder={t.changeArcPH}
+                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-700"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 한 줄 요약 공식 (자동 생성) */}
+                    {(char.desire || char.deficiency || char.conflict) && (
+                      <div className="mb-4 p-3 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
+                        <span className="text-[8px] font-black text-accent-purple/60 uppercase tracking-widest">{t.formulaLabel}</span>
+                        <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">
+                          {language === 'KO'
+                            ? `${char.name}은(는) ${getRoleLabel(char.role)} 역할로, ${char.desire || '___'}을(를) 원하며, ${char.deficiency || '___'}이(가) 부족하고, ${char.conflict || '___'} 때문에 갈등하며, ${char.changeArc || '___'}(으)로 변한다.`
+                            : `${char.name} serves as ${getRoleLabel(char.role)}, wants ${char.desire || '___'}, lacks ${char.deficiency || '___'}, conflicts over ${char.conflict || '___'}, and transforms into ${char.changeArc || '___'}.`
+                          }
+                        </p>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />

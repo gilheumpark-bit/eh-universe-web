@@ -569,6 +569,28 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
                   {item.effect && <p className="text-[10px] text-accent-purple font-bold">✦ {item.effect}</p>}
                   {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
+                  {/* 1단계 뼈대 필드 */}
+                  <div className="space-y-1.5 pt-2 border-t border-border/50">
+                    <input value={item.purpose ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, purpose: e.target.value } : i))}
+                      placeholder={isKO ? '용도...' : 'Purpose...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.activationCond ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, activationCond: e.target.value } : i))}
+                      placeholder={isKO ? '발동 조건...' : 'Activation condition...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.costWeakness ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, costWeakness: e.target.value } : i))}
+                      placeholder={isKO ? '대가 / 약점 / 카운터...' : 'Cost / weakness / counter...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.storyFunction ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, storyFunction: e.target.value } : i))}
+                      placeholder={isKO ? '스토리 기능 (맥거핀, 성장 촉매...)' : 'Story function (MacGuffin, catalyst...)'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                  </div>
+                  {/* 한 줄 요약 */}
+                  {(item.purpose || item.effect) && (
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-[9px] text-text-tertiary italic leading-relaxed">
+                        {isKO
+                          ? `${item.name}은(는) ${item.purpose || item.description || '___'}용으로, ${item.owner || '___'}가 사용하며, ${item.effect || '___'} 능력을 지녔지만, ${item.costWeakness || '___'}라는 대가를 가진다.`
+                          : `${item.name} is for ${item.purpose || item.description || '___'}, used by ${item.owner || '___'}, with ${item.effect || '___'} ability, but costs ${item.costWeakness || '___'}.`
+                        }
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}

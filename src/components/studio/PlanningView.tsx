@@ -85,6 +85,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         setting: result.setting || prev.setting,
         primaryEmotion: result.primaryEmotion || prev.primaryEmotion,
         synopsis: result.synopsis || prev.synopsis,
+        corePremise: result.corePremise || prev.corePremise,
+        powerStructure: result.powerStructure || prev.powerStructure,
+        currentConflict: result.currentConflict || prev.currentConflict,
         totalEpisodes: 25,
         guardrails: { min: 4000, max: 6000 },
       }));
@@ -313,6 +316,52 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             value={config.synopsis}
             onChange={e => setConfig({ ...config, synopsis: e.target.value })}
           />
+        </div>
+
+        {/* 세계관 뼈대 — 3-tier framework */}
+        <div className="space-y-4 pt-6 border-t border-zinc-800">
+          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{t.worldTier1}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.corePremise}</label>
+              <textarea
+                className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed"
+                placeholder={t.corePremisePH}
+                value={config.corePremise ?? ''}
+                onChange={e => setConfig({ ...config, corePremise: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.powerStructure}</label>
+              <textarea
+                className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed"
+                placeholder={t.powerStructurePH}
+                value={config.powerStructure ?? ''}
+                onChange={e => setConfig({ ...config, powerStructure: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.currentConflict}</label>
+              <textarea
+                className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed"
+                placeholder={t.currentConflictPH}
+                value={config.currentConflict ?? ''}
+                onChange={e => setConfig({ ...config, currentConflict: e.target.value })}
+              />
+            </div>
+          </div>
+          {/* 세계관 한 줄 요약 */}
+          {(config.corePremise || config.currentConflict) && (
+            <div className="p-4 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
+              <span className="text-[8px] font-black text-accent-purple/60 uppercase tracking-widest">{t.worldFormula}</span>
+              <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
+                {isKO
+                  ? `이 세계는 "${config.corePremise || '___'}"라는 전제를 가진 ${config.genre} 장르의 배경이며, ${config.powerStructure || '___'}한 권력 구조 속에서, "${config.currentConflict || '___'}"라는 갈등을 중심으로 돌아간다.`
+                  : `This is a ${config.genre} world premised on "${config.corePremise || '___'}", with a power structure of ${config.powerStructure || '___'}, revolving around the conflict: "${config.currentConflict || '___'}".`
+                }
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tension Curve Preview */}

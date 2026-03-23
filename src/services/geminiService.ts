@@ -130,6 +130,13 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
     generate 4 multidimensional characters in JSON format.
     IMPORTANT: All character names, roles, traits, and appearance descriptions MUST be written in ${langNames[language]}.
     Each character must have a unique narrative role and high narrative potential (dna score 0-100).
+
+    For each character, also provide:
+    - desire: What they desperately want (their core drive)
+    - deficiency: What they fundamentally lack
+    - conflict: The central conflict they face in the story
+    - changeArc: How they transform by the end of the story
+    - values: Their core beliefs and lines they never cross
   `;
 
   try {
@@ -147,7 +154,12 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
               role: { type: Type.STRING },
               traits: { type: Type.STRING },
               appearance: { type: Type.STRING },
-              dna: { type: Type.NUMBER }
+              dna: { type: Type.NUMBER },
+              desire: { type: Type.STRING },
+              deficiency: { type: Type.STRING },
+              conflict: { type: Type.STRING },
+              changeArc: { type: Type.STRING },
+              values: { type: Type.STRING },
             },
             required: ["name", "role", "traits", "appearance", "dna"]
           }
@@ -177,6 +189,7 @@ export const generateWorldDesign = async (
   hints?: { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string }
 ): Promise<{
   title: string; povCharacter: string; setting: string; primaryEmotion: string; synopsis: string;
+  corePremise?: string; powerStructure?: string; currentConflict?: string;
 }> => {
   const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
   if (!apiKey) throw new Error("API_KEY_INVALID");
@@ -198,7 +211,12 @@ export const generateWorldDesign = async (
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-pro',
-      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.${hintBlock}`,
+      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.
+Include:
+- corePremise: The one key rule that makes this world different from reality
+- powerStructure: Who holds power and how it is maintained
+- currentConflict: The central conflict driving the world right now
+${hintBlock}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -209,6 +227,9 @@ export const generateWorldDesign = async (
             setting: { type: Type.STRING },
             primaryEmotion: { type: Type.STRING },
             synopsis: { type: Type.STRING },
+            corePremise: { type: Type.STRING },
+            powerStructure: { type: Type.STRING },
+            currentConflict: { type: Type.STRING },
           },
           required: ["title", "povCharacter", "setting", "primaryEmotion", "synopsis"]
         }
