@@ -9,9 +9,9 @@ import {
   FileType, Key
 } from 'lucide-react';
 import {
-  Message, StoryConfig, Genre,
-  AppLanguage, AppTab, PlatformType,
-  ChatSession, Project
+  Message, StoryConfig,
+  AppLanguage, AppTab,
+  ChatSession
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { useAuth } from '@/lib/AuthContext';
@@ -21,13 +21,16 @@ import ChatMessage from '@/components/studio/ChatMessage';
 import PlanningView from '@/components/studio/PlanningView';
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
-// RulebookView removed — available at /rulebook site-wide
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import ManuscriptView from '@/components/studio/ManuscriptView';
+import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
+import MobileTabBar from '@/components/studio/MobileTabBar';
 import { generateStoryStream } from '@/services/geminiService';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
+import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import dynamic from 'next/dynamic';
 const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
@@ -44,52 +47,34 @@ const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGrap
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
-import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-migration';
 import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
-const INITIAL_CONFIG: StoryConfig = {
-  genre: Genre.SYSTEM_HUNTER,
-  povCharacter: "",
-  setting: "",
-  primaryEmotion: "",
-  episode: 1,
-  title: "",
-  totalEpisodes: 25,
-  guardrails: { min: 3000, max: 5000 },
-  characters: [],
-  platform: PlatformType.MOBILE,
-};
-
 export default function StudioPage() {
   // ============================================================
-  // PROJECT-BASED STATE MANAGEMENT
+  // PROJECT-BASED STATE MANAGEMENT (extracted to hook)
   // ============================================================
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const currentProject = projects.find(p => p.id === currentProjectId) || null;
-
-  // Sessions derived from current project
-  const sessions = currentProject?.sessions || [];
-  const setSessions = useCallback((updater: ChatSession[] | ((prev: ChatSession[]) => ChatSession[])) => {
-    setProjects(prev => prev.map(p => {
-      if (p.id !== currentProjectId) return p;
-      const newSessions = typeof updater === 'function' ? updater(p.sessions) : updater;
-      return { ...p, sessions: newSessions, lastUpdate: Date.now() };
-    }));
-  }, [currentProjectId]);
-
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [language, setLanguage] = useState<AppLanguage>('KO');
+  const pm = useProjectManager(language);
+  const {
+    projects, setProjects,
+    currentProjectId, setCurrentProjectId,
+    currentSessionId, setCurrentSessionId,
+    hydrated,
+    currentProject, sessions, currentSession,
+    setSessions,
+    createNewProject, deleteProject: doDeleteProject, renameProject, moveSessionToProject,
+    createNewSession: doCreateNewSession, deleteSession: doDeleteSession, clearAllSessions: doClearAllSessions,
+    updateCurrentSession, setConfig,
+  } = pm;
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [language, setLanguage] = useState<AppLanguage>('KO');
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
@@ -103,7 +88,6 @@ export default function StudioPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentSession = sessions.find(s => s.id === currentSessionId) || null;
   const t = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const isKO = language === 'KO';
 
@@ -210,24 +194,8 @@ export default function StudioPage() {
   }, [accessToken, refreshAccessToken, projects]);
 
   // ============================================================
-  // PROJECT MANAGEMENT
+  // PROJECT MANAGEMENT (confirm-wrapped actions)
   // ============================================================
-  const createNewProject = useCallback(() => {
-    const names: Record<AppLanguage, string> = { KO: '새 작품', EN: 'New Project', JP: '新しい作品', CN: '新作品' };
-    const p: Project = {
-      id: `project-${Date.now()}`,
-      name: names[language],
-      description: '',
-      genre: Genre.SF,
-      createdAt: Date.now(),
-      lastUpdate: Date.now(),
-      sessions: [],
-    };
-    setProjects(prev => [...prev, p]);
-    setCurrentProjectId(p.id);
-    setCurrentSessionId(null);
-  }, [language]);
-
   const deleteProject = useCallback((projectId: string) => {
     const projName = projects.find(p => p.id === projectId)?.name || '';
     showConfirm({
@@ -236,44 +204,9 @@ export default function StudioPage() {
       confirmLabel: isKO ? '삭제' : 'Delete',
       cancelLabel: isKO ? '취소' : 'Cancel',
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        setProjects(prev => prev.filter(p => p.id !== projectId));
-        if (currentProjectId === projectId) {
-          const remaining = projects.filter(p => p.id !== projectId);
-          setCurrentProjectId(remaining[0]?.id || null);
-          setCurrentSessionId(null);
-        }
-      },
+      onConfirm: () => { closeConfirm(); doDeleteProject(projectId); },
     });
-  }, [currentProjectId, projects, isKO, showConfirm, closeConfirm]);
-
-  const renameProject = useCallback((projectId: string, newName: string) => {
-    setProjects(prev => prev.map(p =>
-      p.id === projectId ? { ...p, name: newName, lastUpdate: Date.now() } : p
-    ));
-  }, []);
-
-  const moveSessionToProject = useCallback((sessionId: string, targetProjectId: string) => {
-    setProjects(prev => {
-      const sourceProject = prev.find(p => p.sessions.some(s => s.id === sessionId));
-      if (!sourceProject || sourceProject.id === targetProjectId) return prev;
-      const session = sourceProject.sessions.find(s => s.id === sessionId);
-      if (!session) return prev;
-      return prev.map(p => {
-        if (p.id === sourceProject.id) {
-          return { ...p, sessions: p.sessions.filter(s => s.id !== sessionId), lastUpdate: Date.now() };
-        }
-        if (p.id === targetProjectId) {
-          return { ...p, sessions: [session, ...p.sessions], lastUpdate: Date.now() };
-        }
-        return p;
-      });
-    });
-    if (currentSessionId === sessionId) {
-      setCurrentProjectId(targetProjectId);
-    }
-  }, [currentSessionId]);
+  }, [projects, isKO, showConfirm, closeConfirm, doDeleteProject]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'>('ai');
@@ -304,29 +237,7 @@ export default function StudioPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Hydration: localStorage → state (클라이언트 전용, 서버 렌더링 불일치 방지)
-  useEffect(() => {
-    const loaded = loadProjects();
-    if (loaded.length > 0) {
-      setProjects(loaded);
-      setCurrentProjectId(loaded[0].id);
-      setCurrentSessionId(loaded[0].sessions?.[0]?.id || null);
-    }
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    const timer = setTimeout(() => {
-      const ok = saveProjects(projects);
-      if (!ok) {
-        const bytes = getStorageUsageBytes();
-        const mb = (bytes / 1024 / 1024).toFixed(1);
-        console.warn(`[NOA] Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [projects, hydrated]);
+  // Hydration + auto-save handled by useProjectManager hook
 
   const messageCount = currentSession?.messages?.length ?? 0;
   useEffect(() => {
@@ -336,35 +247,10 @@ export default function StudioPage() {
   }, [messageCount, isGenerating, activeTab]);
 
   const createNewSession = useCallback(() => {
-    const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
-    const newSession: ChatSession = {
-      id: `session-${Date.now()}`,
-      title: sessionTitles[language],
-      messages: [],
-      config: { ...INITIAL_CONFIG },
-      lastUpdate: Date.now()
-    };
-
-    if (projects.length === 0) {
-      // Auto-create default project with the new session inside
-      const p: Project = {
-        id: 'project-default',
-        name: '미분류',
-        description: '',
-        genre: Genre.SF,
-        createdAt: Date.now(),
-        lastUpdate: Date.now(),
-        sessions: [newSession],
-      };
-      setProjects([p]);
-      setCurrentProjectId(p.id);
-    } else {
-      setSessions(prev => [newSession, ...prev]);
-    }
-    setCurrentSessionId(newSession.id);
+    doCreateNewSession();
     setActiveTab('world');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, [language, projects.length, setSessions]);
+  }, [doCreateNewSession]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
     // 수동 편집 중 탭 전환 시 미저장 경고
@@ -397,15 +283,7 @@ export default function StudioPage() {
       confirmLabel: isKO ? '삭제' : 'Delete',
       cancelLabel: isKO ? '취소' : 'Cancel',
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        const newSessions = sessions.filter(s => s.id !== sessionIdToDelete);
-        setSessions(newSessions);
-        if (currentSessionId === sessionIdToDelete) {
-          setCurrentSessionId(newSessions.length > 0 ? newSessions[0].id : null);
-          if (newSessions.length === 0) setActiveTab('world');
-        }
-      },
+      onConfirm: () => { closeConfirm(); doDeleteSession(sessionIdToDelete); if (sessions.length <= 1) setActiveTab('world'); },
     });
   };
 
@@ -416,12 +294,7 @@ export default function StudioPage() {
       confirmLabel: isKO ? '전체 삭제' : 'Delete All',
       cancelLabel: isKO ? '취소' : 'Cancel',
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        setSessions([]);
-        setCurrentSessionId(null);
-        setActiveTab('world');
-      },
+      onConfirm: () => { closeConfirm(); doClearAllSessions(); setActiveTab('world'); },
     });
   };
 
@@ -596,43 +469,18 @@ export default function StudioPage() {
     }));
   }, [currentSessionId]);
 
-  // Keyboard shortcuts (F1~F9: tab switch, F11: focus, F12: shortcuts help)
-  useEffect(() => {
-    const tabByFKey: Record<string, AppTab> = {
-      F1: 'world', F2: 'critique', F3: 'characters', F4: 'rulebook',
-      F5: 'writing', F6: 'style', F7: 'manuscript', F8: 'history', F9: 'settings',
-    };
-    const handler = (e: KeyboardEvent) => {
-      const ctrl = e.ctrlKey || e.metaKey;
-      if (ctrl && e.key === 'f') { e.preventDefault(); setShowSearch(prev => !prev); }
-      if (ctrl && e.key === 'e') { e.preventDefault(); exportTXT(); }
-      if (ctrl && e.key === 'p') { e.preventDefault(); handlePrint(); }
-      if (ctrl && e.key === 'n') { e.preventDefault(); createNewSession(); }
-      if (e.key === 'F11') { e.preventDefault(); setFocusMode(prev => !prev); }
-      if (e.key === 'F12') { e.preventDefault(); setShowShortcuts(prev => !prev); }
-      if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
-      // F1~F9 tab switching
-      const targetTab = tabByFKey[e.key];
-      if (targetTab) { e.preventDefault(); handleTabChange(targetTab); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [exportTXT, handlePrint, createNewSession, handleTabChange]);
+  // Keyboard shortcuts (extracted to hook)
+  useStudioKeyboard({
+    onTabChange: handleTabChange,
+    onToggleSearch: () => setShowSearch(prev => !prev),
+    onExportTXT: exportTXT,
+    onPrint: handlePrint,
+    onNewSession: createNewSession,
+    onToggleFocus: () => setFocusMode(prev => !prev),
+    onToggleShortcuts: () => setShowShortcuts(prev => !prev),
+  });
 
-  const updateCurrentSession = (updates: Partial<ChatSession>) => {
-    if (!currentSessionId) return;
-    setSessions(prev => prev.map(s =>
-      s.id === currentSessionId ? { ...s, ...updates, lastUpdate: Date.now() } : s
-    ));
-  };
-
-  const setConfig = (newConfig: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => {
-    if (typeof newConfig === 'function') {
-      updateCurrentSession({ config: newConfig(currentSession?.config || INITIAL_CONFIG) });
-    } else {
-      updateCurrentSession({ config: newConfig });
-    }
-  };
+  // updateCurrentSession and setConfig provided by useProjectManager hook
 
   const handleCancel = () => {
     abortControllerRef.current?.abort();
@@ -826,8 +674,12 @@ export default function StudioPage() {
   };
 
   return (
+    <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
     <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={{ fontFamily: 'var(--font-sans)' }}>
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
+
+      {/* Mobile bottom tab bar */}
+      <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} />
 
       {/* Sidebar */}
       <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${focusMode ? '-translate-x-full md:translate-x-0 md:w-0' : isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
@@ -2359,5 +2211,6 @@ export default function StudioPage() {
         />
       )}
     </div>
+    </ErrorBoundary>
   );
 }

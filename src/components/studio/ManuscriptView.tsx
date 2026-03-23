@@ -1,9 +1,33 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles } from "lucide-react";
+import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare } from "lucide-react";
 import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
 import ChapterAnalysisView from "./ChapterAnalysisView";
+
+// ============================================================
+// PART 0 — DIFF UTILITY (line-level LCS)
+// ============================================================
+
+interface DiffLine { type: 'same' | 'add' | 'remove'; text: string }
+
+function computeDiff(oldText: string, newText: string): DiffLine[] {
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+  const m = oldLines.length, n = newLines.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = oldLines[i-1] === newLines[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+  let i = m, j = n;
+  const stack: DiffLine[] = [];
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i-1] === newLines[j-1]) { stack.push({ type: 'same', text: oldLines[i-1] }); i--; j--; }
+    else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) { stack.push({ type: 'add', text: newLines[j-1] }); j--; }
+    else { stack.push({ type: 'remove', text: oldLines[i-1] }); i--; }
+  }
+  return stack.reverse();
+}
 
 // ============================================================
 // PART 1 — TYPES & HELPERS
@@ -157,6 +181,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
   const [editContent, setEditContent] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [analysisEp, setAnalysisEp] = useState<number | null>(null);
+  const [diffEp, setDiffEp] = useState<number | null>(null);
 
   const totalChars = useMemo(() => manuscripts.reduce((sum, m) => sum + m.charCount, 0), [manuscripts]);
   const targetPerEp = config.guardrails.min;
@@ -259,6 +284,15 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Get the latest AI-generated content for diff comparison
+  const getAiSourceForEp = useCallback(() => {
+    const aiTexts = messages
+      .filter((m) => m.role === "assistant" && m.content)
+      .map((m) => stripJSON(m.content))
+      .filter(Boolean);
+    return aiTexts.join("\n\n---\n\n");
+  }, [messages]);
 
   const sorted = [...manuscripts].sort((a, b) => a.episode - b.episode);
   const progressPercent = totalTarget > 0 ? Math.min(100, Math.round((totalChars / totalTarget) * 100)) : 0;
@@ -433,6 +467,15 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                             <PenTool className="w-3 h-3" />
                           </button>
                         )}
+                        <button
+                          onClick={() => setDiffEp(diffEp === m.episode ? null : m.episode)}
+                          className={`p-1.5 rounded transition-colors ${
+                            diffEp === m.episode ? 'bg-blue-600/20 text-blue-400' : 'bg-bg-tertiary/50 text-text-tertiary hover:text-blue-400'
+                          }`}
+                          title={isKO ? 'AI 원문과 비교' : 'Compare with AI source'}
+                        >
+                          <GitCompare className="w-3 h-3" />
+                        </button>
                         <button onClick={() => startEdit(m)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
                           <Edit3 className="w-3 h-3" />
                         </button>
@@ -440,6 +483,45 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
+
+                      {/* Diff View */}
+                      {diffEp === m.episode && (() => {
+                        const aiSource = getAiSourceForEp();
+                        if (!aiSource) return (
+                          <div className="mb-4 px-4 py-3 bg-bg-primary border border-border rounded-lg text-[10px] text-text-tertiary">
+                            {isKO ? 'AI 원문이 없어 비교할 수 없습니다.' : 'No AI source text to compare.'}
+                          </div>
+                        );
+                        const diff = computeDiff(aiSource, m.content);
+                        const adds = diff.filter(d => d.type === 'add').length;
+                        const removes = diff.filter(d => d.type === 'remove').length;
+                        return (
+                          <div className="mb-4 border border-blue-500/20 rounded-xl overflow-hidden">
+                            <div className="px-4 py-2 bg-blue-600/10 flex items-center justify-between">
+                              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                                {isKO ? 'AI 원문 ↔ 현재 원고' : 'AI Source ↔ Current'}
+                              </span>
+                              <span className="text-[9px] font-[family-name:var(--font-mono)]">
+                                <span className="text-green-400">+{adds}</span>{' '}
+                                <span className="text-red-400">-{removes}</span>
+                              </span>
+                            </div>
+                            <div className="p-3 bg-bg-primary max-h-60 overflow-y-auto text-[11px] font-mono leading-relaxed custom-scrollbar">
+                              {diff.map((line, i) => (
+                                <div key={i} className={`whitespace-pre-wrap ${
+                                  line.type === 'add' ? 'text-green-400/80 bg-green-900/10' :
+                                  line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-zinc-500'
+                                }`}>
+                                  <span className="inline-block w-4 text-zinc-700 select-none">
+                                    {line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}
+                                  </span>
+                                  {line.text || '\u00A0'}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Chapter Analysis Panel */}
                       {analysisEp === m.episode && (

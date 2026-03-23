@@ -118,12 +118,23 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
-function storyContentToXhtml(messages: ChatSession['messages']): string {
-  const paragraphs = messages
-    .filter(m => m.role === 'assistant')
-    .map(m => m.content.split('\n').filter(l => l.trim()).map(l => `    <p>${escapeXml(l)}</p>`).join('\n'))
-    .join('\n    <hr />\n');
-  return paragraphs;
+function textToXhtmlParagraphs(text: string): string {
+  return text.split('\n').filter(l => l.trim()).map(l => `    <p>${escapeXml(l)}</p>`).join('\n');
+}
+
+function buildChapterXhtml(chTitle: string, content: string, styleHref: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>${escapeXml(chTitle)}</title>
+  <link rel="stylesheet" href="${styleHref}"/>
+</head>
+<body>
+  <h1>${escapeXml(chTitle)}</h1>
+${textToXhtmlParagraphs(content)}
+</body>
+</html>`;
 }
 
 export function exportEPUB(session: ChatSession): void {
@@ -131,6 +142,34 @@ export function exportEPUB(session: ChatSession): void {
   const title = session.config.title || session.title || 'NOA Story';
   const safeTitle = escapeXml(title);
   const uid = `noa-${session.id}`;
+  const genre = session.config.genre || '';
+  const platform = session.config.publishPlatform || '';
+
+  // Build chapters: prefer manuscripts, fallback to assistant messages
+  const manuscripts = session.config.manuscripts ?? [];
+  interface Chapter { id: string; title: string; content: string }
+  let chapters: Chapter[];
+
+  if (manuscripts.length > 0) {
+    chapters = manuscripts
+      .filter(m => m.content.trim())
+      .sort((a, b) => a.episode - b.episode)
+      .map(m => ({ id: `ch${m.episode}`, title: m.title || `EP.${m.episode}`, content: m.content }));
+  } else {
+    const assistantMsgs = session.messages.filter(m => m.role === 'assistant' && m.content.trim());
+    if (assistantMsgs.length <= 1) {
+      const combined = assistantMsgs.map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim()).join('\n\n');
+      chapters = [{ id: 'ch1', title: title, content: combined }];
+    } else {
+      chapters = assistantMsgs.map((m, i) => ({
+        id: `ch${i + 1}`,
+        title: `EP.${i + 1}`,
+        content: m.content.replace(/```json[\s\S]*?```/g, '').trim(),
+      }));
+    }
+  }
+
+  if (chapters.length === 0) return;
 
   const mimetype = encoder.encode('application/epub+zip');
   const container = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
@@ -140,32 +179,40 @@ export function exportEPUB(session: ChatSession): void {
   </rootfiles>
 </container>`);
 
+  const manifestItems = chapters.map(ch => `    <item id="${ch.id}" href="${ch.id}.xhtml" media-type="application/xhtml+xml"/>`).join('\n');
+  const spineItems = chapters.map(ch => `    <itemref idref="${ch.id}"/>`).join('\n');
+  const descParts = [genre, platform].filter(Boolean);
+  const descMeta = descParts.length > 0 ? `\n    <dc:description>${escapeXml(descParts.join(' | '))}</dc:description>` : '';
+
   const contentOpf = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="uid">${uid}</dc:identifier>
     <dc:title>${safeTitle}</dc:title>
     <dc:language>ko</dc:language>
-    <dc:creator>NOA Studio</dc:creator>
+    <dc:creator>NOA Studio</dc:creator>${descMeta}
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z/, 'Z')}</meta>
   </metadata>
   <manifest>
-    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
+${manifestItems}
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="style" href="style.css" media-type="text/css"/>
   </manifest>
   <spine>
-    <itemref idref="chapter"/>
+${spineItems}
   </spine>
 </package>`);
 
+  const tocItems = chapters.map(ch => `      <li><a href="${ch.id}.xhtml">${escapeXml(ch.title)}</a></li>`).join('\n');
   const nav = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <head><title>Navigation</title></head>
 <body>
   <nav epub:type="toc">
-    <ol><li><a href="chapter.xhtml">${safeTitle}</a></li></ol>
+    <ol>
+${tocItems}
+    </ol>
   </nav>
 </body>
 </html>`);
@@ -173,20 +220,13 @@ export function exportEPUB(session: ChatSession): void {
   const style = encoder.encode(`body { font-family: serif; line-height: 1.8; margin: 1em; color: #222; }
 p { text-indent: 1em; margin: 0.5em 0; }
 hr { border: none; border-top: 1px solid #ccc; margin: 2em 0; }
-h1 { font-size: 1.4em; margin-bottom: 0.5em; }`);
+h1 { font-size: 1.4em; margin-bottom: 0.5em; }
+h2 { font-size: 1.2em; margin-top: 1.5em; margin-bottom: 0.5em; }`);
 
-  const chapter = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <title>${safeTitle}</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <h1>${safeTitle}</h1>
-${storyContentToXhtml(session.messages)}
-</body>
-</html>`);
+  const chapterFiles = chapters.map(ch => ({
+    name: `OEBPS/${ch.id}.xhtml`,
+    data: encoder.encode(buildChapterXhtml(ch.title, ch.content, 'style.css')),
+  }));
 
   const zipData = buildZip([
     { name: 'mimetype', data: mimetype, store: true },
@@ -194,7 +234,7 @@ ${storyContentToXhtml(session.messages)}
     { name: 'OEBPS/content.opf', data: contentOpf },
     { name: 'OEBPS/nav.xhtml', data: nav },
     { name: 'OEBPS/style.css', data: style },
-    { name: 'OEBPS/chapter.xhtml', data: chapter },
+    ...chapterFiles,
   ]);
 
   downloadBlob(zipData, `${title}.epub`, 'application/epub+zip');
