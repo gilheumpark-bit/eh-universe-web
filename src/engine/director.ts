@@ -24,6 +24,8 @@ const COST_WORDS = ['대가', '손실', '희생', '잃', '소실', '단축', '�
 const AI_PHRASES = ['요약하자면', '결론적으로', '다음과 같습니다', '중요한 점은', '한편으로는'];
 const TYPO_PATTERNS = [/됬/, /안됬/, /했읍니다/, /할려고/, /있읍니다/, /되서[^요]/];
 const CONTEXT_MARKERS = ['결국', '하지만', '그럼에도', '마침내', '순간'];
+const CERTAINTY_MARKERS = ['확실히', '반드시', '항상', '절대', '100%', '완전히'];
+const NUANCE_MARKERS = ['아마도', '일 수 있', '가능성', '추정', '일부'];
 
 // ============================================================
 // PART 2 — Individual Analyzers
@@ -156,6 +158,29 @@ function checkEndingMono(text: string): { findings: DirectorFinding[]; ratio: nu
     });
   }
   return { findings, ratio };
+}
+
+function checkHallucinationRisk(text: string): { findings: DirectorFinding[]; certaintyCount: number; nuanceCount: number } {
+  const findings: DirectorFinding[] = [];
+  let certaintyCount = 0;
+  let nuanceCount = 0;
+
+  for (const marker of CERTAINTY_MARKERS) {
+    certaintyCount += (text.split(marker).length - 1);
+  }
+  for (const marker of NUANCE_MARKERS) {
+    nuanceCount += (text.split(marker).length - 1);
+  }
+
+  if (certaintyCount > 2 && nuanceCount === 0) {
+    findings.push({
+      kind: 'hallucination_risk',
+      severity: 4,
+      message: `높은 확신 표현 ${certaintyCount}회, 뉘앙스 표현 0회 — 할루시네이션 위험`,
+    });
+  }
+
+  return { findings, certaintyCount, nuanceCount };
 }
 
 // ============================================================
@@ -317,6 +342,9 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
   const ending = checkEndingMono(text);
   allFindings.push(...ending.findings);
 
+  const hallucination = checkHallucinationRisk(text);
+  allFindings.push(...hallucination.findings);
+
   // Platform-specific checks
   const platformFindings = checkPlatformRules(text, publishPlatform);
   allFindings.push(...platformFindings);
@@ -340,6 +368,8 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
     ai_tone: aiTone.count,
     typo: typo.count,
     ending_mono: ending.ratio,
+    certainty: hallucination.certaintyCount,
+    nuance: hallucination.nuanceCount,
   };
 
   return { findings: allFindings, stats, score };
@@ -354,4 +384,36 @@ export function gradeFromScore(score: number): string {
   if (score >= 70) return 'B';
   if (score >= 60) return 'C+';
   return 'C';
+}
+
+// ============================================================
+// PART 6 — Adaptive Learner
+// ============================================================
+
+export interface AdaptiveThresholds {
+  [checkType: string]: number; // adjustment delta, starts at 0
+}
+
+export function adjustThreshold(
+  thresholds: AdaptiveThresholds,
+  checkType: string,
+  wasFalsePositive: boolean
+): AdaptiveThresholds {
+  const delta = wasFalsePositive ? 0.5 : -0.2;
+  return {
+    ...thresholds,
+    [checkType]: (thresholds[checkType] ?? 0) + delta,
+  };
+}
+
+// ============================================================
+// PART 7 — Session EMA (Exponential Moving Average)
+// ============================================================
+
+export function calculateSessionEMA(
+  previousEMA: number,
+  currentScore: number,
+  alpha: number = 0.3
+): number {
+  return alpha * currentScore + (1 - alpha) * previousEMA;
 }
