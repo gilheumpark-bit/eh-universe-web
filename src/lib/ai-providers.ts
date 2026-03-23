@@ -128,8 +128,35 @@ export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string
 }
 
 // ============================================================
-// PART 2: KEY MANAGEMENT
+// PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
+
+// Simple reversible obfuscation to prevent casual DevTools/extension snooping.
+// NOT cryptographic — XSS can still extract keys from memory.
+// For true security, use server-side key storage.
+const _OBFUSCATION_PREFIX = 'noa:1:';
+
+function obfuscateKey(plain: string): string {
+  if (!plain) return '';
+  try {
+    return _OBFUSCATION_PREFIX + btoa(unescape(encodeURIComponent(plain)));
+  } catch {
+    return plain;
+  }
+}
+
+function deobfuscateKey(stored: string): string {
+  if (!stored) return '';
+  if (stored.startsWith(_OBFUSCATION_PREFIX)) {
+    try {
+      return decodeURIComponent(escape(atob(stored.slice(_OBFUSCATION_PREFIX.length))));
+    } catch {
+      return '';
+    }
+  }
+  // Backward compat: read plaintext keys from before this change
+  return stored;
+}
 
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
@@ -143,12 +170,12 @@ export function setActiveProvider(id: ProviderId): void {
 export function getApiKey(providerId: ProviderId): string {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
-  return localStorage.getItem(def.storageKey) || "";
+  return deobfuscateKey(localStorage.getItem(def.storageKey) || "");
 }
 
 export function setApiKey(providerId: ProviderId, key: string): void {
   const def = PROVIDERS[providerId];
-  localStorage.setItem(def.storageKey, key);
+  localStorage.setItem(def.storageKey, obfuscateKey(key));
 }
 
 export function getActiveModel(): string {

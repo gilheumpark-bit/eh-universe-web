@@ -33,43 +33,80 @@ export interface ConflictInfo {
 // PART 1: FOLDER MANAGEMENT
 // ============================================================
 
+/** Optional token refresh callback — set by callers to enable auto-retry on 401. */
+let _tokenRefresher: (() => Promise<string | null>) | null = null;
+
+export function setTokenRefresher(fn: (() => Promise<string | null>) | null): void {
+  _tokenRefresher = fn;
+}
+
 async function driveRequest(url: string, token: string, options: RequestInit = {}): Promise<Response> {
   const res = await fetch(url, {
     ...options,
     headers: {
       'Authorization': `Bearer ${token}`,
-      ...options.headers,
+      ...(options.headers ?? {}),
     },
   });
+
+  // Auto-retry on 401 with refreshed token
+  if (res.status === 401 && _tokenRefresher) {
+    const newToken = await _tokenRefresher();
+    if (newToken && newToken !== token) {
+      return fetch(url, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          ...(options.headers ?? {}),
+        },
+      });
+    }
+  }
+
   return res;
 }
 
 /**
  * Get or create the "NOA Studio" app folder in user's Drive.
+ * Uses module-level cache to prevent TOCTOU race (concurrent calls creating duplicate folders).
  */
+let _folderPromise: Promise<string> | null = null;
+
 export async function getOrCreateAppFolder(token: string): Promise<string> {
-  // Search for existing folder
-  const query = `name='${FOLDER_NAME}' and mimeType='${FOLDER_MIME}' and trashed=false`;
-  const searchRes = await driveRequest(
-    `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=files(id,name)&spaces=drive`,
-    token,
-  );
-  if (!searchRes.ok) throw new Error(`Drive search failed: ${searchRes.status}`);
-  const searchData = await searchRes.json();
+  // Deduplicate concurrent calls — only the first call actually hits Drive API
+  if (_folderPromise) return _folderPromise;
 
-  if (searchData.files && searchData.files.length > 0) {
-    return searchData.files[0].id;
-  }
+  _folderPromise = (async () => {
+    try {
+      // Search for existing folder
+      const query = `name='${FOLDER_NAME}' and mimeType='${FOLDER_MIME}' and trashed=false`;
+      const searchRes = await driveRequest(
+        `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=files(id,name)&spaces=drive`,
+        token,
+      );
+      if (!searchRes.ok) throw new Error(`Drive search failed: ${searchRes.status}`);
+      const searchData = await searchRes.json();
 
-  // Create folder
-  const createRes = await driveRequest(`${DRIVE_API}/files`, token, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_MIME }),
-  });
-  if (!createRes.ok) throw new Error(`Drive folder creation failed: ${createRes.status}`);
-  const created = await createRes.json();
-  return created.id;
+      if (searchData.files && searchData.files.length > 0) {
+        return searchData.files[0].id;
+      }
+
+      // Create folder
+      const createRes = await driveRequest(`${DRIVE_API}/files`, token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_MIME }),
+      });
+      if (!createRes.ok) throw new Error(`Drive folder creation failed: ${createRes.status}`);
+      const created = await createRes.json();
+      return created.id as string;
+    } finally {
+      // Clear cache after completion so next call with fresh token works
+      _folderPromise = null;
+    }
+  })();
+
+  return _folderPromise;
 }
 
 // ============================================================
@@ -220,8 +257,16 @@ export async function syncAllProjects(
       const remote = await loadProjectFile(token, remoteFile.id);
       merged[i] = remote;
       downloaded++;
+    } else if (Math.abs(local.lastUpdate - remoteTime) <= 5000 && local.lastUpdate !== remoteTime) {
+      // Within tolerance but not identical — record as conflict for visibility
+      conflicts.push({
+        projectId: local.id,
+        projectName: local.name,
+        localUpdate: local.lastUpdate,
+        remoteUpdate: remoteTime,
+      });
     }
-    // Within 5s tolerance — skip (same)
+    // Exactly same — skip
   }
 
   // Remote-only projects — download
@@ -231,8 +276,8 @@ export async function syncAllProjects(
         const remote = await loadProjectFile(token, file.id);
         merged.push(remote);
         downloaded++;
-      } catch {
-        // Skip corrupted remote files
+      } catch (err) {
+        console.warn(`[Drive Sync] Skipped corrupted remote file: ${file.name} (${file.id})`, err);
       }
     }
   }

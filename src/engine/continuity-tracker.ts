@@ -128,6 +128,49 @@ function extractThreads(text: string): { planted: string[]; resolved: string[] }
   return { planted, resolved };
 }
 
+/**
+ * Find matching open thread for a resolved thread using n-gram index.
+ * Replaces O(n⁴) sliding-window scan with O(n) hash lookup.
+ */
+const NGRAM_SIZE = 6;
+
+function buildNgramSet(text: string): Set<string> {
+  const ngrams = new Set<string>();
+  for (let i = 0; i <= text.length - NGRAM_SIZE; i++) {
+    ngrams.add(text.slice(i, i + NGRAM_SIZE));
+  }
+  return ngrams;
+}
+
+function findMatchingThread(openThreads: string[], resolved: string): number {
+  // Exact match first (fast path)
+  const exactIdx = openThreads.indexOf(resolved);
+  if (exactIdx >= 0) return exactIdx;
+
+  // Substring containment check
+  for (let i = 0; i < openThreads.length; i++) {
+    const open = openThreads[i];
+    if (resolved.length >= NGRAM_SIZE && open.includes(resolved)) return i;
+    if (open.length >= NGRAM_SIZE && resolved.includes(open)) return i;
+  }
+
+  // N-gram overlap fallback: build ngrams for resolved once, check against each open thread
+  if (resolved.length >= NGRAM_SIZE) {
+    const resolvedNgrams = buildNgramSet(resolved);
+    for (let i = 0; i < openThreads.length; i++) {
+      const open = openThreads[i];
+      if (open.length < NGRAM_SIZE) continue;
+      const openNgrams = buildNgramSet(open);
+      // Check if any n-gram overlaps
+      for (const ng of resolvedNgrams) {
+        if (openNgrams.has(ng)) return i;
+      }
+    }
+  }
+
+  return -1;
+}
+
 // ============================================================
 // PART 2 — CONTINUITY ANALYSIS
 // ============================================================
@@ -243,21 +286,7 @@ export function buildContinuityReport(
     const threads = extractThreads(text);
     allOpenThreads.push(...threads.planted);
     for (const r of threads.resolved) {
-      const MIN_OVERLAP = 10;
-      const idx = allOpenThreads.findIndex(open => {
-        if (open === r) return true;
-        if (r.length >= MIN_OVERLAP && open.includes(r)) return true;
-        if (open.length >= MIN_OVERLAP && r.includes(open)) return true;
-        // Check substring overlap: sliding window of MIN_OVERLAP chars
-        const shorter = r.length <= open.length ? r : open;
-        const longer = r.length <= open.length ? open : r;
-        if (shorter.length >= MIN_OVERLAP) {
-          for (let i = 0; i <= shorter.length - MIN_OVERLAP; i++) {
-            if (longer.includes(shorter.slice(i, i + MIN_OVERLAP))) return true;
-          }
-        }
-        return false;
-      });
+      const idx = findMatchingThread(allOpenThreads, r);
       if (idx >= 0) allOpenThreads.splice(idx, 1);
       allResolvedThreads.push(r);
     }

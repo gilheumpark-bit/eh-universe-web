@@ -1,7 +1,7 @@
 // ============================================================
 // PART 0 — IMPORTS & TYPES
 // ============================================================
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Item, Skill, MagicSystem, ItemRarity, ItemCategory,
   StoryConfig, AppLanguage,
@@ -298,6 +298,11 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const setMagicSystems = (fn: (prev: MagicSystem[]) => MagicSystem[]) =>
     setConfig(prev => ({ ...prev, magicSystems: fn(prev.magicSystems ?? []) }));
 
+  // Generic field updater — replaces 14+ individual onChange handlers
+  const updateItemField = useCallback((id: string, field: string, value: string) =>
+    setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i)),
+  []);
+
   // ============================================================
   // PART 3A — ITEM FORM STATE
   // ============================================================
@@ -572,13 +577,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
                   {/* 1단계 뼈대 필드 */}
                   <div className="space-y-1.5 pt-2 border-t border-border/50">
-                    <input value={item.purpose ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, purpose: e.target.value } : i))}
+                    <input value={item.purpose ?? ''} onChange={e => updateItemField(item.id, 'purpose', e.target.value)}
                       placeholder={isKO ? '용도...' : 'Purpose...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                    <input value={item.activationCond ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, activationCond: e.target.value } : i))}
+                    <input value={item.activationCond ?? ''} onChange={e => updateItemField(item.id, 'activationCond', e.target.value)}
                       placeholder={isKO ? '발동 조건...' : 'Activation condition...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                    <input value={item.costWeakness ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, costWeakness: e.target.value } : i))}
+                    <input value={item.costWeakness ?? ''} onChange={e => updateItemField(item.id, 'costWeakness', e.target.value)}
                       placeholder={isKO ? '대가 / 약점 / 카운터...' : 'Cost / weakness / counter...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                    <input value={item.storyFunction ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, storyFunction: e.target.value } : i))}
+                    <input value={item.storyFunction ?? ''} onChange={e => updateItemField(item.id, 'storyFunction', e.target.value)}
                       placeholder={isKO ? '스토리 기능 (맥거핀, 성장 촉매...)' : 'Story function (MacGuffin, catalyst...)'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
                   </div>
                   {/* 2단계 — 작동 */}
@@ -593,19 +598,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     </button>
                     {tierExpanded[item.id]?.t2 && (
                       <div className="space-y-1.5 pt-1.5">
-                        <input value={item.worldConnection ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, worldConnection: e.target.value } : i))}
+                        <input value={item.worldConnection ?? ''} onChange={e => updateItemField(item.id, 'worldConnection', e.target.value)}
                           placeholder={isKO ? '세계관 연결성...' : 'World connection...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.misuse ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, misuse: e.target.value } : i))}
+                        <input value={item.misuse ?? ''} onChange={e => updateItemField(item.id, 'misuse', e.target.value)}
                           placeholder={isKO ? '오용/폭주 시 결과...' : 'Misuse / rampage result...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.lore ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, lore: e.target.value } : i))}
+                        <input value={item.lore ?? ''} onChange={e => updateItemField(item.id, 'lore', e.target.value)}
                           placeholder={isKO ? '배경 서사...' : 'Lore...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.material ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, material: e.target.value } : i))}
+                        <input value={item.material ?? ''} onChange={e => updateItemField(item.id, 'material', e.target.value)}
                           placeholder={isKO ? '재료...' : 'Material...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.craftMethod ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, craftMethod: e.target.value } : i))}
+                        <input value={item.craftMethod ?? ''} onChange={e => updateItemField(item.id, 'craftMethod', e.target.value)}
                           placeholder={isKO ? '제작 방식...' : 'Craft method...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.valueRarity ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, valueRarity: e.target.value } : i))}
+                        <input value={item.valueRarity ?? ''} onChange={e => updateItemField(item.id, 'valueRarity', e.target.value)}
                           placeholder={isKO ? '가치와 희소성...' : 'Value & rarity...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.whoTargets ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, whoTargets: e.target.value } : i))}
+                        <input value={item.whoTargets ?? ''} onChange={e => updateItemField(item.id, 'whoTargets', e.target.value)}
                           placeholder={isKO ? '누가 노리는지...' : 'Who targets it...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
                       </div>
                     )}
@@ -622,19 +627,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     </button>
                     {tierExpanded[item.id]?.t3 && (
                       <div className="space-y-1.5 pt-1.5">
-                        <input value={item.itemAppearance ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, itemAppearance: e.target.value } : i))}
+                        <input value={item.itemAppearance ?? ''} onChange={e => updateItemField(item.id, 'itemAppearance', e.target.value)}
                           placeholder={isKO ? '외형...' : 'Appearance...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.symbolism ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, symbolism: e.target.value } : i))}
+                        <input value={item.symbolism ?? ''} onChange={e => updateItemField(item.id, 'symbolism', e.target.value)}
                           placeholder={isKO ? '상징성...' : 'Symbolism...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.currentLocation ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, currentLocation: e.target.value } : i))}
+                        <input value={item.currentLocation ?? ''} onChange={e => updateItemField(item.id, 'currentLocation', e.target.value)}
                           placeholder={isKO ? '현재 위치...' : 'Current location...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.ownershipCond ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, ownershipCond: e.target.value } : i))}
+                        <input value={item.ownershipCond ?? ''} onChange={e => updateItemField(item.id, 'ownershipCond', e.target.value)}
                           placeholder={isKO ? '소유권 조건...' : 'Ownership condition...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.durability ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, durability: e.target.value } : i))}
+                        <input value={item.durability ?? ''} onChange={e => updateItemField(item.id, 'durability', e.target.value)}
                           placeholder={isKO ? '내구성과 수명...' : 'Durability & lifespan...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.evolution ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, evolution: e.target.value } : i))}
+                        <input value={item.evolution ?? ''} onChange={e => updateItemField(item.id, 'evolution', e.target.value)}
                           placeholder={isKO ? '성장/진화 여부...' : 'Evolution / growth...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
-                        <input value={item.maintenance ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, maintenance: e.target.value } : i))}
+                        <input value={item.maintenance ?? ''} onChange={e => updateItemField(item.id, 'maintenance', e.target.value)}
                           placeholder={isKO ? '유지·수리 방식...' : 'Maintenance / repair...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
                       </div>
                     )}
