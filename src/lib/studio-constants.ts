@@ -300,7 +300,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     },
     writingMode: {
       draftGen: "초안 생성",
-      manualEdit: "직접 편집",
+      manualEdit: "글쓰기",
       threeStep: "3단계 작성",
       auto30: "AUTO 30%",
       advanced: "정밀 집필",
@@ -309,7 +309,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       directivePlaceholder: "프롬프트 지침 (예: \"문체를 하드보일드로\", \"대화 비율 50%\", \"1인칭 시점\")",
       describeFirstScene: "아래 입력창에 첫 장면을 묘사하세요",
       noApiKeyStart: "API 키 없이 시작하려면:",
-      startManualEdit: "직접 편집 모드로 시작",
+      startManualEdit: "글쓰기 모드로 시작",
       inlineEditComplete: "[인라인 편집 완료]",
       applyToManuscript: "💾 원고에 반영",
       writeManuscript: "원고를 직접 작성하세요",
@@ -322,7 +322,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       preciseGenerate: "정밀 생성",
       preciseInstruction: "🎯 정밀 지시 (설정된 제약 조건이 자동 반영됩니다)",
       advancedGuide: "※ 장면 목표·서술 제약·참조 범위·고정 규칙이 프롬프트에 자동 결합됩니다. \"고급 집필 = 작가가 더 세밀하게 제어하는 모드\"",
-      apiKeyPlaceholder: "🔒 AI 생성에는 API 키가 필요합니다. 직접 편집 모드(✏️)를 이용하세요.",
+      apiKeyPlaceholder: "🔒 AI 생성에는 API 키가 필요합니다. 글쓰기 모드(✏️)를 이용하세요.",
       openCanvas: "캔버스 실행",
     },
     canvas: {
@@ -1345,7 +1345,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     },
     writingMode: {
       draftGen: "Draft",
-      manualEdit: "Manual Edit",
+      manualEdit: "Write",
       threeStep: "3-Step Write",
       auto30: "AUTO 30%",
       advanced: "Advanced",
@@ -1354,7 +1354,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       directivePlaceholder: "Prompt directive (e.g. \"hardboiled style\", \"50% dialogue\", \"1st person POV\")",
       describeFirstScene: "Describe the first scene in the input below",
       noApiKeyStart: "To start without API key:",
-      startManualEdit: "Start in Manual Edit mode",
+      startManualEdit: "Start in Write mode",
       inlineEditComplete: "[Inline Edit Complete]",
       applyToManuscript: "💾 Apply to Manuscript",
       writeManuscript: "Write your manuscript here",
@@ -1367,7 +1367,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       preciseGenerate: "Generate",
       preciseInstruction: "🎯 Precise instruction (configured constraints auto-applied)",
       advancedGuide: "※ Scene goals, narrative constraints, references, and locks are auto-combined into the prompt.",
-      apiKeyPlaceholder: "🔒 API key required for AI generation. Use Manual Edit (✏️) mode instead.",
+      apiKeyPlaceholder: "🔒 API key required for AI generation. Use Write (✏️) mode instead.",
       openCanvas: "Open Canvas",
     },
     canvas: {
