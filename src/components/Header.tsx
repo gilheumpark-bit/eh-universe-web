@@ -51,10 +51,10 @@ export default function Header() {
               TOOLS
             </button>
             {toolsOpen && (
-              <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded shadow-lg min-w-[140px] z-50">
+              <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded shadow-lg min-w-[140px] z-[100]">
                 {toolItems.map(t => (
                   <Link key={t.href} href={t.href} onClick={() => setToolsOpen(false)}
-                    className="block px-4 py-2 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors tracking-wider">
+                    className="block px-4 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors tracking-wider">
                     {t.label}
                   </Link>
                 ))}
