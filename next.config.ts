@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  compress: true,
   async headers() {
     return [
       {
@@ -15,7 +17,6 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // unsafe-inline needed for Next.js inline scripts; unsafe-eval removed for XSS hardening
               "script-src 'self' 'unsafe-inline' https://apis.google.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",

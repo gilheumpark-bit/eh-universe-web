@@ -19,8 +19,18 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
 if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
+  const missing = (
+    ['apiKey', 'authDomain', 'projectId', 'appId'] as const
+  ).filter((k) => !firebaseConfig[k]);
+
+  if (missing.length > 0) {
+    console.warn(
+      `[EH Universe] Firebase config incomplete — missing: ${missing.join(', ')}. Auth features disabled.`
+    );
+  } else {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    auth = getAuth(app);
+  }
 }
 
 export { auth, app };
