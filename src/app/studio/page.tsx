@@ -465,7 +465,7 @@ export default function StudioPage() {
 
   return (
     <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
-    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={lightTheme ? { fontFamily: 'var(--font-sans)', '--color-bg-primary': '#ffffff', '--color-bg-secondary': '#f3f4f6', '--color-bg-tertiary': '#e5e7eb', '--color-text-primary': '#111827', '--color-text-secondary': '#4b5563', '--color-text-tertiary': '#9ca3af', '--color-border': '#d1d5db' } as React.CSSProperties : { fontFamily: 'var(--font-sans)' }}>
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
       {/* Mobile bottom tab bar */}
