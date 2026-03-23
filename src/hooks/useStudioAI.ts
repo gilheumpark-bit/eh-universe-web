@@ -139,6 +139,17 @@ export function useStudioAI({
               ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
               : m
           );
+          // Auto-collect manuscript on generation complete
+          const cleanText = result.content.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').replace(/\{[^{}]*"(?:grade|metrics)"[^{}]*\}/g, '').trim();
+          if (cleanText.length > 100) {
+            const ep = capturedConfig.episode;
+            const existing = (s.config.manuscripts || []).find(m => m.episode === ep);
+            const manuscript = { episode: ep, title: capturedConfig.title ? `${capturedConfig.title} EP.${ep}` : `EP.${ep}`, content: cleanText, charCount: cleanText.length, lastUpdate: Date.now() };
+            const manuscripts = existing
+              ? (s.config.manuscripts || []).map(m => m.episode === ep ? manuscript : m)
+              : [...(s.config.manuscripts || []), manuscript];
+            return { ...s, messages: msgs, config: { ...s.config, manuscripts } };
+          }
           return { ...s, messages: msgs };
         }
         return s;

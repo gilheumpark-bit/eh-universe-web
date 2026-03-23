@@ -4,6 +4,7 @@ import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
 import { getTargetCharRange } from './serialization';
 import { createT } from '@/lib/i18n';
+import { GENRE_BENCHMARKS } from './genre-review';
 
 // ============================================================
 // Dynamic System Instruction Builder
@@ -482,6 +483,12 @@ export function buildSystemInstruction(
   // Publish platform injection
   const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, isKO);
 
+  // Genre-based dialogue ratio guide
+  const genreBenchmark = GENRE_BENCHMARKS[config.genre];
+  const dialogueGuide = genreBenchmark?.benchmarks?.dialogueRatio
+    ? `\n[${isKO ? '대화문 비율 가이드' : 'Dialogue Ratio Guide'}]\n- ${isKO ? '장르' : 'Genre'}: ${genreBenchmark.label[isKO ? 'ko' : 'en']}\n- ${isKO ? '권장 대화 비율' : 'Target dialogue ratio'}: ${genreBenchmark.benchmarks.dialogueRatio.min}%~${genreBenchmark.benchmarks.dialogueRatio.max}%\n- ${isKO ? '대화문이 부족하면 답답하고, 과하면 가벼워짐. 장르에 맞는 균형 유지.' : 'Too little dialogue feels heavy; too much feels shallow. Keep genre-appropriate balance.'}`
+    : '';
+
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
 
@@ -517,6 +524,7 @@ ${simulatorBlock}
 ${worldTierBlock}
 ${styleDnaBlock}
 ${publishPlatformBlock}
+${dialogueGuide}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}
@@ -600,8 +608,22 @@ export function postProcessResponse(
   language: AppLanguage,
   platform: PlatformType = PlatformType.MOBILE
 ): { content: string; report: EngineReport } {
-  // Extract and preserve the content (don't modify the generated text)
   const report = generateEngineReport(text, config, language, platform);
-  return { content: text, report };
+
+  // Strip JSON metrics blocks from content
+  let clean = text
+    .replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '')
+    .replace(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*"(?:grade|metrics|critique|tension|eos(?:_score|Score)?|pacing|immersion)"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '')
+    .replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique|eosScore|serialization)"[\s\S]*?\n\s*\}/g, '')
+    .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')
+    .replace(/^\s*"(?:grade|metrics|tension|pacing|immersion|eos)"[\s:].*/gm, '');
+
+  // Strip AI engine prefixes (e.g. "알겠습니다, 작가님...", "네, 이어서 작성하겠습니다...")
+  clean = clean
+    .replace(/^(?:알겠습니다[,.]?\s*작가님[.!]?\s*|네[,.]?\s*(?:이어서|계속|작성|시작)\s*(?:하겠습니다|합니다|할게요)[.!]?\s*|(?:Sure|Okay|Got it)[,.]?\s*(?:I'll|Let me)\s*(?:continue|start|write)[.!]?\s*)/i, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return { content: clean, report };
 }
 
