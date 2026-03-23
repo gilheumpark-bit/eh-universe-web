@@ -356,6 +356,7 @@ export default function StudioPage() {
     handlePrint, handleExportEPUB, handleExportDOCX,
   } = useStudioExport({
     currentSession, sessions, currentSessionId,
+    currentProjectId, projects, setProjects, setCurrentProjectId,
     setSessions, setCurrentSessionId, setActiveTab,
     isKO, language, writingMode, editDraft,
   });
@@ -416,7 +417,7 @@ export default function StudioPage() {
     onNewSession: createNewSession,
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
-    disabled: showApiKeyModal || showShortcuts || confirmState.open,
+    disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 
   // ============================================================
@@ -432,7 +433,7 @@ export default function StudioPage() {
   });
 
   // UX: unsaved changes warning (must be after useStudioAI which provides isGenerating)
-  useUnsavedWarning(isGenerating);
+  useUnsavedWarning(isGenerating || (writingMode === 'edit' && editDraft.trim().length > 0));
 
   // Auto-scroll to bottom when generating (moved here — needs isGenerating from useStudioAI)
   useEffect(() => {
@@ -735,7 +736,7 @@ export default function StudioPage() {
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
                 <div className="absolute inset-0 z-0">
-                  <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
+                  <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill priority={true} className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
                 </div>
                 {/* Noise overlay matching landing */}
                 <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />

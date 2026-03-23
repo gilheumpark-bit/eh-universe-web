@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import { ChatSession, AppLanguage, AppTab, SavedSlot } from '@/lib/studio-types';
+import { ChatSession, AppLanguage, AppTab, SavedSlot, Project, Genre } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
@@ -14,6 +14,10 @@ interface UseStudioExportParams {
   currentSession: ChatSession | null;
   sessions: ChatSession[];
   currentSessionId: string | null;
+  currentProjectId: string | null;
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setCurrentProjectId: (id: string | null) => void;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>> | ((updater: (prev: ChatSession[]) => ChatSession[]) => void);
   setCurrentSessionId: (id: string | null) => void;
   setActiveTab: React.Dispatch<React.SetStateAction<AppTab>>;
@@ -41,6 +45,10 @@ export function useStudioExport({
   currentSession,
   sessions,
   currentSessionId,
+  currentProjectId,
+  projects,
+  setProjects,
+  setCurrentProjectId,
   setSessions,
   setCurrentSessionId,
   setActiveTab,
@@ -80,16 +88,32 @@ export function useStudioExport({
     URL.revokeObjectURL(url);
   }, [currentSession]);
 
-  // Export ALL sessions as JSON
+  // Export ALL projects (full backup) as JSON
   const exportAllJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json;charset=utf-8' });
+    const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `noa-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [sessions]);
+  }, [projects]);
+
+  // Helper: ensure a project exists before importing sessions
+  const ensureProject = useCallback((): void => {
+    if (currentProjectId != null) return;
+    const p: Project = {
+      id: 'project-default',
+      name: '미분류',
+      description: '',
+      genre: Genre.SF,
+      createdAt: Date.now(),
+      lastUpdate: Date.now(),
+      sessions: [],
+    };
+    setProjects(prev => [...prev, p]);
+    setCurrentProjectId(p.id);
+  }, [currentProjectId, setProjects, setCurrentProjectId]);
 
   // Import JSON backup
   const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +127,8 @@ export function useStudioExport({
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
+        // Auto-create a default project if none exists
+        ensureProject();
         if (Array.isArray(data)) {
           const valid = data.filter(isValidSession);
           if (valid.length === 0) {
@@ -132,7 +158,7 @@ export function useStudioExport({
     };
     reader.readAsText(file);
     e.target.value = '';
-  }, [t, setSessions, setCurrentSessionId, setActiveTab]);
+  }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab]);
 
   // Print
   const handlePrint = useCallback(() => {

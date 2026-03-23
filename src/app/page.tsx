@@ -77,7 +77,7 @@ export default function Home() {
         <StarField />
         {/* Hero character image */}
         <div className="absolute bottom-0 right-0 z-[1] pointer-events-none select-none hidden md:block opacity-30 lg:opacity-40">
-          <Image src="/images/hero-mina.jpg" alt="" width={400} height={600} className="h-[45vh] lg:h-[55vh] w-auto object-contain object-bottom" style={{ maskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", WebkitMaskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", maskComposite: "intersect", WebkitMaskComposite: "source-in" }} />
+          <Image src="/images/hero-mina.jpg" alt="" width={400} height={600} priority={true} className="h-[45vh] lg:h-[55vh] w-auto object-contain object-bottom" style={{ maskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", WebkitMaskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", maskComposite: "intersect", WebkitMaskComposite: "source-in" }} />
         </div>
         <div className="relative z-10 flex flex-col items-center gap-8 px-4 text-center mb-[15vh]">
           <div className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-[0.3em] uppercase">
