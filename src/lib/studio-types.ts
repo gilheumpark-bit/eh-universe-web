@@ -46,6 +46,12 @@ export interface Character {
   backstory?: string;      // 현재를 만든 과거
   failureCost?: string;    // 실패 대가
   currentProblem?: string; // 현재 문제
+  // 3단계 디테일
+  emotionStyle?: string;       // 감정 표현 방식
+  relationPattern?: string;    // 인간관계 패턴
+  symbol?: string;             // 상징 요소
+  secret?: string;             // 비밀 요소
+  externalPerception?: string; // 타인이 보는 인상
 }
 
 export type CharRelationType = "lover" | "rival" | "friend" | "enemy" | "family" | "mentor" | "subordinate";
@@ -136,6 +142,18 @@ export interface Item {
   worldConnection?: string;  // 세계관 연결성
   misuse?: string;           // 오용/폭주 시 결과
   lore?: string;             // 배경 서사 / 전설
+  material?: string;         // 재료
+  craftMethod?: string;      // 제작 방식
+  valueRarity?: string;      // 가치와 희소성
+  whoTargets?: string;       // 누가 노리는지
+  // 3단계 디테일
+  itemAppearance?: string;   // 외형
+  symbolism?: string;        // 상징성
+  currentLocation?: string;  // 현재 위치
+  ownershipCond?: string;    // 소유권 조건
+  durability?: string;       // 내구성과 수명
+  evolution?: string;        // 성장/진화 여부
+  maintenance?: string;      // 유지·수리 방식
 }
 
 export interface Skill {
@@ -176,6 +194,22 @@ export interface StoryConfig {
   corePremise?: string;       // 현실과 다른 핵심 전제
   powerStructure?: string;    // 권력 구조
   currentConflict?: string;   // 현재 갈등
+  // 세계관 2단계 작동
+  worldHistory?: string;         // 역사
+  socialSystem?: string;         // 사회 시스템
+  economy?: string;              // 경제와 생활 방식
+  magicTechSystem?: string;      // 마법 / 기술 체계
+  factionRelations?: string;     // 종족 / 세력 관계
+  survivalEnvironment?: string;  // 생존 환경
+  // 세계관 3단계 디테일
+  culture?: string;              // 문화
+  religion?: string;             // 종교와 신화
+  education?: string;            // 교육과 지식 전달
+  lawOrder?: string;             // 법과 질서
+  taboo?: string;                // 금기와 규범
+  dailyLife?: string;            // 평범한 사람의 하루
+  travelComm?: string;           // 이동/통신 속도
+  truthVsBeliefs?: string;       // 사람들이 믿는 진실 vs 실제 진실
   episodeState?: EpisodeState;
   sceneDirection?: SceneDirectionData;
   simulatorRef?: SimulatorRef;

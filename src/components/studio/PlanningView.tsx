@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
 import { PLATFORM_PRESETS } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
-import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2 } from 'lucide-react';
+import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
+import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -60,6 +61,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const [autoGenGenre, setAutoGenGenre] = useState<Genre>(config.genre);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [showWorldTier2, setShowWorldTier2] = useState(false);
+  const [showWorldTier3, setShowWorldTier3] = useState(false);
 
   const handleAIGenerate = async () => {
     if (!getApiKey(getActiveProvider())) {
@@ -360,6 +363,175 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                   : `This is a ${config.genre} world premised on "${config.corePremise || '___'}", with a power structure of ${config.powerStructure || '___'}, revolving around the conflict: "${config.currentConflict || '___'}".`
                 }
               </p>
+            </div>
+          )}
+          {/* 세계관 검증 */}
+          {(() => {
+            const warnings = validateWorld(config, language);
+            const score = calcCompletionScore(warnings, 11);
+            return (
+              <div className="space-y-2 mt-4">
+                <CompletionBar score={score} language={language} />
+                <WarningBadge warnings={warnings} language={language} />
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* 세계관 2단계 — 작동 */}
+        <div className="space-y-4 pt-6 border-t border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setShowWorldTier2(v => !v)}
+            className="text-[10px] font-black text-zinc-600 uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:text-zinc-400 transition-colors"
+          >
+            {showWorldTier2 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {t.worldTier2}
+          </button>
+          {showWorldTier2 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.worldHistory}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.worldHistoryPH}
+                  value={config.worldHistory ?? ''}
+                  onChange={e => setConfig({ ...config, worldHistory: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.socialSystem}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.socialSystemPH}
+                  value={config.socialSystem ?? ''}
+                  onChange={e => setConfig({ ...config, socialSystem: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.economy}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.economyPH}
+                  value={config.economy ?? ''}
+                  onChange={e => setConfig({ ...config, economy: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.magicTechSystem}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.magicTechSystemPH}
+                  value={config.magicTechSystem ?? ''}
+                  onChange={e => setConfig({ ...config, magicTechSystem: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.factionRelations}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.factionRelationsPH}
+                  value={config.factionRelations ?? ''}
+                  onChange={e => setConfig({ ...config, factionRelations: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.survivalEnvironment}</label>
+                <textarea
+                  className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed"
+                  placeholder={t.survivalEnvironmentPH}
+                  value={config.survivalEnvironment ?? ''}
+                  onChange={e => setConfig({ ...config, survivalEnvironment: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 세계관 3단계 — 디테일 */}
+        <div className="space-y-4 pt-6 border-t border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setShowWorldTier3(v => !v)}
+            className="text-[10px] font-black text-zinc-600 uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:text-zinc-400 transition-colors"
+          >
+            {showWorldTier3 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {t.worldTier3}
+          </button>
+          {showWorldTier3 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.culture}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.culturePH}
+                  value={config.culture ?? ''}
+                  onChange={e => setConfig({ ...config, culture: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.religion}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.religionPH}
+                  value={config.religion ?? ''}
+                  onChange={e => setConfig({ ...config, religion: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.education}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.educationPH}
+                  value={config.education ?? ''}
+                  onChange={e => setConfig({ ...config, education: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.lawOrder}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.lawOrderPH}
+                  value={config.lawOrder ?? ''}
+                  onChange={e => setConfig({ ...config, lawOrder: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.taboo}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.tabooPH}
+                  value={config.taboo ?? ''}
+                  onChange={e => setConfig({ ...config, taboo: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.dailyLife}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.dailyLifePH}
+                  value={config.dailyLife ?? ''}
+                  onChange={e => setConfig({ ...config, dailyLife: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.travelComm}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.travelCommPH}
+                  value={config.travelComm ?? ''}
+                  onChange={e => setConfig({ ...config, travelComm: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.truthVsBeliefs}</label>
+                <textarea
+                  className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed"
+                  placeholder={t.truthVsBeliefsPH}
+                  value={config.truthVsBeliefs ?? ''}
+                  onChange={e => setConfig({ ...config, truthVsBeliefs: e.target.value })}
+                />
+              </div>
             </div>
           )}
         </div>

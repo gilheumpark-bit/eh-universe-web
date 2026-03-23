@@ -2,8 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-constants';
-import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2 } from 'lucide-react';
+import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
+import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 
 const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
   lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
@@ -27,6 +28,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const [activeCategory, setActiveCategory] = useState('all');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [expandedTiers, setExpandedTiers] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
   const t = TRANSLATIONS[language].resource;
   const te = TRANSLATIONS[language].engine;
 
@@ -354,6 +356,129 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       </div>
                     </div>
 
+                    {/* 2단계 작동 — collapsible */}
+                    <div className="mb-4 pt-2 border-t border-amber-500/10">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t2: !prev[char.id]?.t2 } }))}
+                        className="text-[8px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
+                      >
+                        {expandedTiers[char.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {t.tier2}
+                      </button>
+                      {expandedTiers[char.id]?.t2 && (
+                        <div className="space-y-2">
+                          <input
+                            value={char.strength || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, strength: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '💪 강점 (예: 뛰어난 관찰력)' : '💪 Strength (e.g. keen observation)'}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.weakness || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, weakness: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🩹 약점 (예: 타인을 믿지 못함)' : '🩹 Weakness (e.g. inability to trust)'}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <textarea
+                            value={char.backstory || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, backstory: e.target.value } : c)
+                            }))}
+                            rows={2}
+                            placeholder={language === 'KO' ? '📜 과거 — 현재를 만든 사건' : '📜 Backstory — the event that shaped them'}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-zinc-700 resize-none"
+                          />
+                          <input
+                            value={char.failureCost || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, failureCost: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '⚠️ 실패 대가 (예: 가족을 잃는다)' : '⚠️ Failure cost (e.g. loses family)'}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.currentProblem || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, currentProblem: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🔥 현재 문제 (예: 조직의 배신자 색출)' : '🔥 Current problem (e.g. finding the traitor)'}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-zinc-700"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3단계 디테일 — collapsible */}
+                    <div className="mb-4 pt-2 border-t border-emerald-500/10">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t3: !prev[char.id]?.t3 } }))}
+                        className="text-[8px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2"
+                      >
+                        {expandedTiers[char.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {language === 'KO' ? '3단계 — 디테일' : 'Tier 3 — Detail'}
+                      </button>
+                      {expandedTiers[char.id]?.t3 && (
+                        <div className="space-y-2">
+                          <input
+                            value={char.emotionStyle || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, emotionStyle: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '😶 감정 표현 방식 (예: 웃으면서 우는 타입)' : '😶 Emotion style (e.g. smiles while crying)'}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.relationPattern || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, relationPattern: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🤝 인간관계 패턴 (예: 밀당, 의존형)' : '🤝 Relation pattern (e.g. push-pull, dependent)'}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.symbol || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, symbol: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🔮 상징 요소 (예: 항상 끼고 있는 반지)' : '🔮 Symbol (e.g. a ring they always wear)'}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.secret || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, secret: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🤫 비밀 요소 (예: 과거에 사람을 죽인 적 있음)' : '🤫 Secret (e.g. once killed someone)'}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-700"
+                          />
+                          <input
+                            value={char.externalPerception || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, externalPerception: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '👁️ 타인이 보는 인상 (예: 차갑고 무관심해 보임)' : '👁️ External perception (e.g. seems cold and indifferent)'}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-700"
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     {/* 한 줄 요약 공식 (자동 생성) */}
                     {(char.desire || char.deficiency || char.conflict) && (
                       <div className="mb-4 p-3 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
@@ -366,6 +491,18 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         </p>
                       </div>
                     )}
+
+                    {/* 3-tier 검증 */}
+                    {(() => {
+                      const warnings = validateCharacter(char, language);
+                      const score = calcCompletionScore(warnings, 13);
+                      return (
+                        <div className="space-y-2 mb-3">
+                          <CompletionBar score={score} language={language} />
+                          <WarningBadge warnings={warnings} language={language} />
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">

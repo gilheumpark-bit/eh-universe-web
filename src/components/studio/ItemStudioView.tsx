@@ -285,6 +285,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const isKO = language === 'KO';
   const lang = isKO ? 'ko' : 'en';
+  const [tierExpanded, setTierExpanded] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
 
   const items = config.items ?? [];
   const skills = config.skills ?? [];
@@ -579,6 +580,64 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       placeholder={isKO ? '대가 / 약점 / 카운터...' : 'Cost / weakness / counter...'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
                     <input value={item.storyFunction ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, storyFunction: e.target.value } : i))}
                       placeholder={isKO ? '스토리 기능 (맥거핀, 성장 촉매...)' : 'Story function (MacGuffin, catalyst...)'} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                  </div>
+                  {/* 2단계 — 작동 */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t2: !prev[item.id]?.t2 } }))}
+                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
+                    >
+                      {tierExpanded[item.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {isKO ? '2단계 — 작동' : 'Tier 2 — Mechanics'}
+                    </button>
+                    {tierExpanded[item.id]?.t2 && (
+                      <div className="space-y-1.5 pt-1.5">
+                        <input value={item.worldConnection ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, worldConnection: e.target.value } : i))}
+                          placeholder={isKO ? '세계관 연결성...' : 'World connection...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.misuse ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, misuse: e.target.value } : i))}
+                          placeholder={isKO ? '오용/폭주 시 결과...' : 'Misuse / rampage result...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.lore ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, lore: e.target.value } : i))}
+                          placeholder={isKO ? '배경 서사...' : 'Lore...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.material ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, material: e.target.value } : i))}
+                          placeholder={isKO ? '재료...' : 'Material...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.craftMethod ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, craftMethod: e.target.value } : i))}
+                          placeholder={isKO ? '제작 방식...' : 'Craft method...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.valueRarity ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, valueRarity: e.target.value } : i))}
+                          placeholder={isKO ? '가치와 희소성...' : 'Value & rarity...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.whoTargets ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, whoTargets: e.target.value } : i))}
+                          placeholder={isKO ? '누가 노리는지...' : 'Who targets it...'} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                      </div>
+                    )}
+                  </div>
+                  {/* 3단계 — 디테일 */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t3: !prev[item.id]?.t3 } }))}
+                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
+                    >
+                      {tierExpanded[item.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {isKO ? '3단계 — 디테일' : 'Tier 3 — Detail'}
+                    </button>
+                    {tierExpanded[item.id]?.t3 && (
+                      <div className="space-y-1.5 pt-1.5">
+                        <input value={item.itemAppearance ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, itemAppearance: e.target.value } : i))}
+                          placeholder={isKO ? '외형...' : 'Appearance...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.symbolism ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, symbolism: e.target.value } : i))}
+                          placeholder={isKO ? '상징성...' : 'Symbolism...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.currentLocation ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, currentLocation: e.target.value } : i))}
+                          placeholder={isKO ? '현재 위치...' : 'Current location...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.ownershipCond ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, ownershipCond: e.target.value } : i))}
+                          placeholder={isKO ? '소유권 조건...' : 'Ownership condition...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.durability ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, durability: e.target.value } : i))}
+                          placeholder={isKO ? '내구성과 수명...' : 'Durability & lifespan...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.evolution ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, evolution: e.target.value } : i))}
+                          placeholder={isKO ? '성장/진화 여부...' : 'Evolution / growth...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.maintenance ?? ''} onChange={e => setItems(prev => prev.map(i => i.id === item.id ? { ...i, maintenance: e.target.value } : i))}
+                          placeholder={isKO ? '유지·수리 방식...' : 'Maintenance / repair...'} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                      </div>
+                    )}
                   </div>
                   {/* 한 줄 요약 */}
                   {(item.purpose || item.effect) && (
