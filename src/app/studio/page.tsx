@@ -605,10 +605,10 @@ export default function StudioPage() {
             )}
             {/* Tool buttons */}
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.searchCtrlF')} aria-label={isKO ? '검색' : 'Search'}><Search className="w-4 h-4" /></button>
-              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.focusMode')} aria-label={isKO ? '집중 모드' : 'Focus mode'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={() => setLightTheme(prev => { const next = !prev; localStorage.setItem('noa_light_theme', String(next)); return next; })} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.toggleTheme')} aria-label={isKO ? '테마 전환' : 'Toggle theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
-              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={isKO ? '단축키 도움말' : 'Keyboard shortcuts'}><Keyboard className="w-4 h-4" /></button>
+              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.searchCtrlF')} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
+              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.focusMode')} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+              <button onClick={() => setLightTheme(prev => { const next = !prev; localStorage.setItem('noa_light_theme', String(next)); return next; })} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.toggleTheme')} aria-label={t('ui.toggleThemeLabel')}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
         </header>
@@ -695,16 +695,16 @@ export default function StudioPage() {
                     <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
                   </div>
                   <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">
-                    {isKO ? '첫 소설을 시작해 볼까요?' : 'Ready to write your first story?'}
+                    {t('ui.firstStoryPrompt')}
                   </h2>
                   <p className="text-text-tertiary text-sm mb-6">{t('engine.startPrompt')}</p>
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <button onClick={createNewSession} className="px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">
-                      {isKO ? '✍️ 직접 설정하고 시작' : '✍️ Set Up Manually'}
+                      {t('ui.setupManually')}
                     </button>
                   </div>
                   <p className="text-text-tertiary/50 text-[10px] max-w-sm font-[family-name:var(--font-mono)]">
-                    {isKO ? '세계관 설계 → 캐릭터 → 연출 → AI 집필 → EPUB 내보내기' : 'World Design → Characters → Direction → AI Writing → EPUB Export'}
+                    {t('ui.workflowOverview')}
                   </p>
                 </div>
               </div>
@@ -1917,7 +1917,7 @@ export default function StudioPage() {
               {t('syncReminder.signIn')}
             </button>
           )}
-          <button onClick={() => setShowSyncReminder(false)} className="text-blue-400 hover:text-blue-200 shrink-0" aria-label={isKO ? '닫기' : 'Close'}>&times;</button>
+          <button onClick={() => setShowSyncReminder(false)} className="text-blue-400 hover:text-blue-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
         </div>
       )}
 
@@ -1925,7 +1925,7 @@ export default function StudioPage() {
       {storageFull && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span className="text-sm">{t('ui.storageFull')}</span>
-          <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={isKO ? '닫기' : 'Close'}>&times;</button>
+          <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
         </div>
       )}
 

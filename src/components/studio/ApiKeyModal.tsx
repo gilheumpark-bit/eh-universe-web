@@ -107,7 +107,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               </p>
             </div>
           </div>
-          <button onClick={onClose} aria-label={isKO ? "닫기" : "Close"} className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
+          <button onClick={onClose} aria-label={t('ui.close')} className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
             <X className="w-5 h-5 text-text-tertiary" />
           </button>
         </div>
@@ -232,7 +232,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
           <button
             onClick={handleTest}
             disabled={!currentKey.trim() || status === 'testing'}
-            aria-label={isKO ? "API 키 테스트" : "Test API key"}
+            aria-label={t('ui.testApiKey')}
             className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-[family-name:var(--font-mono)]"
           >
             {status === 'testing' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -241,7 +241,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
           <button
             onClick={handleSave}
             disabled={!currentKey.trim()}
-            aria-label={isKO ? "API 키 저장" : "Save API key"}
+            aria-label={t('ui.saveApiKey')}
             className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
             {t('apiKeyModal.save')}
@@ -254,7 +254,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
             }}
             disabled={!currentKey.trim()}
-            aria-label={isKO ? "API 키 삭제" : "Delete API key"}
+            aria-label={t('ui.deleteApiKey')}
             className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
             {t('apiKeyModal.delete')}

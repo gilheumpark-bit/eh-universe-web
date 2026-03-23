@@ -360,7 +360,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {undoStack.length > 0 && (
-            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-zinc-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={isKO ? '되돌리기' : 'Undo'}>
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-zinc-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={t('ui.undo')}>
               <Undo2 className="w-3 h-3" />
             </button>
           )}
@@ -402,10 +402,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                   <div className="flex items-center gap-1">
                     {sug.status === 'pending' && (
                       <>
-                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={isKO ? '생성' : 'Generate'}>
+                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={t('ui.generate')}>
                           <Play className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={isKO ? '건너뛰기' : 'Skip'}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -415,10 +415,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                     )}
                     {sug.status === 'ready' && (
                       <>
-                        <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={isKO ? '적용' : 'Apply'}>
+                        <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={t('ui.apply')}>
                           <Check className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={isKO ? '건너뛰기' : 'Skip'}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
