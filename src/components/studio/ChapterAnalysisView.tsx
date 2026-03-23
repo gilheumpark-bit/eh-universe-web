@@ -443,30 +443,30 @@ export default function ChapterAnalysisView({
         {openSections.background && (
           <div className="p-4 pt-0 space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <FieldRow label={isKO ? "장소" : "Location"}>
+              <FieldRow label={t('chapterAnalysis.location')}>
                 <TextInput value={background.location} onChange={(v) => setBackground((p) => ({ ...p, location: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "공간 유형" : "Space"}>
+              <FieldRow label={t('chapterAnalysis.space')}>
                 <TextInput value={background.spaceType} onChange={(v) => setBackground((p) => ({ ...p, spaceType: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "시간대" : "Time"}>
+              <FieldRow label={t('chapterAnalysis.time')}>
                 <TextInput value={background.time} onChange={(v) => setBackground((p) => ({ ...p, time: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "날씨" : "Weather"}>
+              <FieldRow label={t('chapterAnalysis.weather')}>
                 <TextInput value={background.weather} onChange={(v) => setBackground((p) => ({ ...p, weather: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "조명" : "Lighting"}>
+              <FieldRow label={t('chapterAnalysis.lighting')}>
                 <TextInput value={background.lighting} onChange={(v) => setBackground((p) => ({ ...p, lighting: v }))} />
               </FieldRow>
             </div>
-            <FieldRow label={isKO ? "분위기" : "Mood"}>
-              <ArrayInput value={background.mood} onChange={(v) => setBackground((p) => ({ ...p, mood: v }))} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+            <FieldRow label={t('chapterAnalysis.mood')}>
+              <ArrayInput value={background.mood} onChange={(v) => setBackground((p) => ({ ...p, mood: v }))} placeholder={t('chapterAnalysis.commaSeparated')} />
             </FieldRow>
-            <FieldRow label={isKO ? "핵심 오브젝트" : "Key Objects"}>
-              <ArrayInput value={background.keyObjects} onChange={(v) => setBackground((p) => ({ ...p, keyObjects: v }))} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+            <FieldRow label={t('chapterAnalysis.keyObjects')}>
+              <ArrayInput value={background.keyObjects} onChange={(v) => setBackground((p) => ({ ...p, keyObjects: v }))} placeholder={t('chapterAnalysis.commaSeparated')} />
             </FieldRow>
-            <FieldRow label={isKO ? "환경 상태" : "Condition"}>
-              <ArrayInput value={background.environmentCondition} onChange={(v) => setBackground((p) => ({ ...p, environmentCondition: v }))} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+            <FieldRow label={t('chapterAnalysis.condition')}>
+              <ArrayInput value={background.environmentCondition} onChange={(v) => setBackground((p) => ({ ...p, environmentCondition: v }))} placeholder={t('chapterAnalysis.commaSeparated')} />
             </FieldRow>
           </div>
         )}
@@ -478,36 +478,36 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Clapperboard className="w-3.5 h-3.5" />}
-          title={isKO ? "장면 상황" : "Scene State"}
+          title={t('chapterAnalysis.sceneState')}
           open={openSections.scene}
           onToggle={() => toggleSection("scene")}
         />
         {openSections.scene && (
           <div className="p-4 pt-0 space-y-2">
-            <FieldRow label={isKO ? "요약" : "Summary"}>
+            <FieldRow label={t('chapterAnalysis.summary')}>
               <TextInput value={scene.summary} onChange={(v) => setScene((p) => ({ ...p, summary: v }))} />
             </FieldRow>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <FieldRow label={isKO ? "사건 단계" : "Phase"}>
+              <FieldRow label={t('chapterAnalysis.phase')}>
                 <TextInput value={scene.phase} onChange={(v) => setScene((p) => ({ ...p, phase: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "긴장도" : "Tension"}>
-                <IntensitySelect value={scene.tension} onChange={(v) => setScene((p) => ({ ...p, tension: v }))} isKO={isKO} />
+              <FieldRow label={t('chapterAnalysis.tension')}>
+                <IntensitySelect value={scene.tension} onChange={(v) => setScene((p) => ({ ...p, tension: v }))} language={language} />
               </FieldRow>
-              <FieldRow label={isKO ? "목표" : "Goal"}>
+              <FieldRow label={t('chapterAnalysis.goal')}>
                 <TextInput value={scene.characterGoal} onChange={(v) => setScene((p) => ({ ...p, characterGoal: v }))} />
               </FieldRow>
-              <FieldRow label={isKO ? "방해 요소" : "Obstacle"}>
+              <FieldRow label={t('chapterAnalysis.obstacle')}>
                 <TextInput value={scene.obstacle} onChange={(v) => setScene((p) => ({ ...p, obstacle: v }))} />
               </FieldRow>
             </div>
-            <FieldRow label={isKO ? "갈등 종류" : "Conflict"}>
+            <FieldRow label={t('chapterAnalysis.conflict')}>
               <ArrayInput value={scene.conflictType} onChange={(v) => setScene((p) => ({ ...p, conflictType: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "전환 포인트" : "Turning"}>
+            <FieldRow label={t('chapterAnalysis.turning')}>
               <TextInput value={scene.turningPoint} onChange={(v) => setScene((p) => ({ ...p, turningPoint: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "상징 태그" : "Symbols"}>
+            <FieldRow label={t('chapterAnalysis.symbols')}>
               <ArrayInput value={scene.symbolicTags} onChange={(v) => setScene((p) => ({ ...p, symbolicTags: v }))} />
             </FieldRow>
           </div>
@@ -520,25 +520,25 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Volume2 className="w-3.5 h-3.5" />}
-          title={isKO ? "소리 / 분위기" : "Sound / Ambience"}
+          title={t('chapterAnalysis.soundAmbience')}
           open={openSections.sound}
           onToggle={() => toggleSection("sound")}
         />
         {openSections.sound && (
           <div className="p-4 pt-0 space-y-2">
-            <FieldRow label={isKO ? "환경음" : "Ambient"}>
+            <FieldRow label={t('chapterAnalysis.ambient')}>
               <ArrayInput value={sound.ambient} onChange={(v) => setSound((p) => ({ ...p, ambient: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "효과음" : "Effects"}>
+            <FieldRow label={t('chapterAnalysis.effects')}>
               <ArrayInput value={sound.effects} onChange={(v) => setSound((p) => ({ ...p, effects: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "음성 톤" : "Voice"}>
+            <FieldRow label={t('chapterAnalysis.voice')}>
               <ArrayInput value={sound.voiceTone} onChange={(v) => setSound((p) => ({ ...p, voiceTone: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "음향 인상" : "Audio Mood"}>
+            <FieldRow label={t('chapterAnalysis.audioMood')}>
               <ArrayInput value={sound.audioMood} onChange={(v) => setSound((p) => ({ ...p, audioMood: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "BGM 태그" : "BGM Tags"}>
+            <FieldRow label={t('chapterAnalysis.bgmTags')}>
               <ArrayInput value={sound.bgmTags} onChange={(v) => setSound((p) => ({ ...p, bgmTags: v }))} />
             </FieldRow>
           </div>
@@ -551,13 +551,13 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Image className="w-3.5 h-3.5" />}
-          title={isKO ? "이미지 프롬프트" : "Image Prompt"}
+          title={t('chapterAnalysis.imagePrompt')}
           open={openSections.image}
           onToggle={() => toggleSection("image")}
         />
         {openSections.image && (
           <div className="p-4 pt-0 space-y-2">
-            <FieldRow label={isKO ? "캐릭터" : "Character"}>
+            <FieldRow label={t('chapterAnalysis.character')}>
               <div className="flex gap-1">
                 <textarea
                   value={imagePrompt.characterFocus}
@@ -565,10 +565,10 @@ export default function ChapterAnalysisView({
                   rows={2}
                   className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
                 />
-                <CopyButton text={imagePrompt.characterFocus} isKO={isKO} />
+                <CopyButton text={imagePrompt.characterFocus} language={language} />
               </div>
             </FieldRow>
-            <FieldRow label={isKO ? "배경" : "Background"}>
+            <FieldRow label={t('chapterAnalysis.background')}>
               <div className="flex gap-1">
                 <textarea
                   value={imagePrompt.backgroundFocus}
@@ -576,10 +576,10 @@ export default function ChapterAnalysisView({
                   rows={2}
                   className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
                 />
-                <CopyButton text={imagePrompt.backgroundFocus} isKO={isKO} />
+                <CopyButton text={imagePrompt.backgroundFocus} language={language} />
               </div>
             </FieldRow>
-            <FieldRow label={isKO ? "장면" : "Scene"}>
+            <FieldRow label={t('chapterAnalysis.scene')}>
               <div className="flex gap-1">
                 <textarea
                   value={imagePrompt.sceneFocus}
@@ -587,18 +587,18 @@ export default function ChapterAnalysisView({
                   rows={2}
                   className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
                 />
-                <CopyButton text={imagePrompt.sceneFocus} isKO={isKO} />
+                <CopyButton text={imagePrompt.sceneFocus} language={language} />
               </div>
             </FieldRow>
-            <FieldRow label={isKO ? "스타일" : "Style"}>
+            <FieldRow label={t('chapterAnalysis.style')}>
               <ArrayInput value={imagePrompt.styleHints} onChange={(v) => setImagePrompt((p) => ({ ...p, styleHints: v }))} />
             </FieldRow>
             {/* Combined prompt for quick copy */}
             {(imagePrompt.characterFocus || imagePrompt.backgroundFocus || imagePrompt.sceneFocus) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-purple/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[9px] font-bold text-accent-purple font-[family-name:var(--font-mono)] uppercase">{isKO ? "통합 프롬프트" : "Combined Prompt"}</span>
-                  <CopyButton text={[imagePrompt.characterFocus, imagePrompt.backgroundFocus, imagePrompt.sceneFocus, imagePrompt.styleHints.join(", ")].filter(Boolean).join(". ")} isKO={isKO} />
+                  <span className="text-[9px] font-bold text-accent-purple font-[family-name:var(--font-mono)] uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
+                  <CopyButton text={[imagePrompt.characterFocus, imagePrompt.backgroundFocus, imagePrompt.sceneFocus, imagePrompt.styleHints.join(", ")].filter(Boolean).join(". ")} language={language} />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed">
                   {[imagePrompt.characterFocus, imagePrompt.backgroundFocus, imagePrompt.sceneFocus, imagePrompt.styleHints.join(", ")].filter(Boolean).join(". ")}
@@ -615,36 +615,36 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Music className="w-3.5 h-3.5" />}
-          title={isKO ? "음악 프롬프트" : "Music Prompt"}
+          title={t('chapterAnalysis.musicPrompt')}
           open={openSections.music}
           onToggle={() => toggleSection("music")}
         />
         {openSections.music && (
           <div className="p-4 pt-0 space-y-2">
-            <FieldRow label={isKO ? "분위기" : "Mood"}>
+            <FieldRow label={t('chapterAnalysis.mood')}>
               <div className="flex gap-1">
                 <TextInput value={musicPrompt.mood} onChange={(v) => setMusicPrompt((p) => ({ ...p, mood: v }))} />
-                <CopyButton text={musicPrompt.mood} isKO={isKO} />
+                <CopyButton text={musicPrompt.mood} language={language} />
               </div>
             </FieldRow>
-            <FieldRow label={isKO ? "감정 흐름" : "Emotion"}>
+            <FieldRow label={t('chapterAnalysis.emotionFlow')}>
               <div className="flex gap-1">
                 <TextInput value={musicPrompt.emotionFlow} onChange={(v) => setMusicPrompt((p) => ({ ...p, emotionFlow: v }))} />
-                <CopyButton text={musicPrompt.emotionFlow} isKO={isKO} />
+                <CopyButton text={musicPrompt.emotionFlow} language={language} />
               </div>
             </FieldRow>
-            <FieldRow label={isKO ? "사운드" : "Sound"}>
+            <FieldRow label={t('chapterAnalysis.sound')}>
               <ArrayInput value={musicPrompt.soundKeywords} onChange={(v) => setMusicPrompt((p) => ({ ...p, soundKeywords: v }))} />
             </FieldRow>
-            <FieldRow label={isKO ? "음악 스타일" : "Style"}>
+            <FieldRow label={t('chapterAnalysis.musicStyle')}>
               <ArrayInput value={musicPrompt.musicStyle} onChange={(v) => setMusicPrompt((p) => ({ ...p, musicStyle: v }))} />
             </FieldRow>
             {/* Combined music prompt */}
             {(musicPrompt.mood || musicPrompt.emotionFlow) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-blue/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[9px] font-bold text-accent-blue font-[family-name:var(--font-mono)] uppercase">{isKO ? "통합 프롬프트" : "Combined Prompt"}</span>
-                  <CopyButton text={[musicPrompt.mood, musicPrompt.emotionFlow, musicPrompt.soundKeywords.join(", "), musicPrompt.musicStyle.join(", ")].filter(Boolean).join(". ")} isKO={isKO} />
+                  <span className="text-[9px] font-bold text-accent-blue font-[family-name:var(--font-mono)] uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
+                  <CopyButton text={[musicPrompt.mood, musicPrompt.emotionFlow, musicPrompt.soundKeywords.join(", "), musicPrompt.musicStyle.join(", ")].filter(Boolean).join(". ")} language={language} />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed">
                   {[musicPrompt.mood, musicPrompt.emotionFlow, musicPrompt.soundKeywords.join(", "), musicPrompt.musicStyle.join(", ")].filter(Boolean).join(". ")}
