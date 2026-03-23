@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
@@ -226,7 +227,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
             {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+              <Image src={user.photoURL} alt="" width={64} height={64} className="w-full h-full object-cover" />
             ) : (
               <span className="text-white text-xl font-black">{user.displayName?.[0] || '?'}</span>
             )}

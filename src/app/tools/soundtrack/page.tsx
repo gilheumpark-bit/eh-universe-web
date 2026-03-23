@@ -177,6 +177,7 @@ export default function SoundtrackPage() {
           <Link
             href="#"
             onClick={(e) => { e.preventDefault(); window.history.length > 1 ? window.history.back() : window.location.href = '/archive'; }}
+            aria-label="Go back to previous page"
             className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
           >
             ← BACK
@@ -229,6 +230,7 @@ export default function SoundtrackPage() {
                       <div className="flex items-start gap-4">
                         <button
                           onClick={() => toggle(track.id)}
+                          aria-label={isPlaying ? `Pause ${track.title[lang]}` : `Play ${track.title[lang]}`}
                           className="flex-shrink-0 w-12 h-12 rounded-full border border-border flex items-center justify-center hover:border-accent-purple transition-colors mt-0.5"
                           style={{
                             background: isPlaying ? track.theme : "transparent",
@@ -263,6 +265,11 @@ export default function SoundtrackPage() {
                         </span>
                         <div
                           className="flex-1 h-1 rounded-full bg-border cursor-pointer relative group/bar"
+                          role="progressbar"
+                          aria-label={`${track.title[lang]} progress`}
+                          aria-valuenow={Math.round(prog * 100)}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
                           onClick={(e) => seek(track.id, e)}
                         >
                           <div

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
 import { useLang } from "@/lib/LangContext";
@@ -63,7 +64,7 @@ export default function Home() {
         <StarField />
         {/* Hero character image */}
         <div className="absolute bottom-0 right-0 z-[1] pointer-events-none select-none hidden md:block opacity-30 lg:opacity-40">
-          <img src="/images/hero-mina.jpg" alt="" className="h-[45vh] lg:h-[55vh] w-auto object-contain object-bottom" style={{ maskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", WebkitMaskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", maskComposite: "intersect", WebkitMaskComposite: "source-in" }} />
+          <Image src="/images/hero-mina.jpg" alt="" width={400} height={600} className="h-[45vh] lg:h-[55vh] w-auto object-contain object-bottom" style={{ maskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", WebkitMaskImage: "linear-gradient(to top, transparent 5%, black 50%), linear-gradient(to left, transparent 0%, black 60%)", maskComposite: "intersect", WebkitMaskComposite: "source-in" }} />
         </div>
         <div className="relative z-10 flex flex-col items-center gap-8 px-4 text-center mb-[15vh]">
           <div className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-[0.3em] uppercase">
@@ -76,18 +77,18 @@ export default function Home() {
             &ldquo;{t.hero}&rdquo;
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-4">
-            <Link href="/archive" className="rounded border border-accent-purple bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-accent-purple transition hover:bg-accent-purple/20 uppercase">
+            <Link href="/archive" aria-label="Explore the Universe — browse the archive" className="rounded border border-accent-purple bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-accent-purple transition hover:bg-accent-purple/20 uppercase">
               Explore the Universe
             </Link>
-            <Link href="/rulebook" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
+            <Link href="/rulebook" aria-label="Read the Rulebook" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
               Read the Rulebook
             </Link>
-            <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
+            <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in new tab)" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
               GitHub
             </a>
           </div>
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce" aria-hidden="true">
           <svg width="16" height="24" viewBox="0 0 16 24" fill="none" className="text-text-tertiary">
             <path d="M8 4V20M8 20L2 14M8 20L14 14" stroke="currentColor" strokeWidth="1.5" />
           </svg>

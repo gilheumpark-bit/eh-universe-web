@@ -11,7 +11,9 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[EH Universe] Runtime error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[EH Universe] Runtime error:", error);
+    }
   }, [error]);
 
   return (
@@ -34,6 +36,7 @@ export default function Error({
           </p>
           <button
             onClick={reset}
+            aria-label="Retry — reset the page after error"
             className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
           >
             RETRY

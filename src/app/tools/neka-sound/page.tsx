@@ -268,6 +268,8 @@ export default function NekaSoundPage() {
   const ConsCell = ({ c, onClick, isActive }: { c: Consonant; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
+      aria-label={`Consonant ${c.roman} (${c.id})`}
+      aria-pressed={isActive}
       className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10 shadow-[0_0_12px_rgba(212,160,23,0.2)]"
@@ -287,6 +289,8 @@ export default function NekaSoundPage() {
   const VowCell = ({ v, onClick, isActive }: { v: Vowel; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
+      aria-label={`Vowel ${v.roman} (${v.id})`}
+      aria-pressed={isActive}
       className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10"
@@ -306,7 +310,7 @@ export default function NekaSoundPage() {
       <main className="pt-14">
         <div className="mx-auto max-w-5xl px-4 py-16">
           {/* Doc Header */}
-          <Link href="/archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
+          <Link href="/archive" aria-label="Back to Archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
             ← ARCHIVE
           </Link>
 
@@ -332,9 +336,12 @@ export default function NekaSoundPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border mb-8 gap-0">
+            <div className="flex border-b border-border mb-8 gap-0" role="tablist" aria-label="Sound mode selection">
               <button
                 onClick={() => setTab("tts")}
+                aria-label={en ? "TTS Pronunciation tab" : "TTS 발음 탭"}
+                aria-selected={tab === "tts"}
+                role="tab"
                 className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "tts" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
@@ -343,6 +350,9 @@ export default function NekaSoundPage() {
               </button>
               <button
                 onClick={() => setTab("sig")}
+                aria-label={en ? "Signal Sound tab" : "신호음 탭"}
+                aria-selected={tab === "sig"}
+                role="tab"
                 className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "sig" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
@@ -432,10 +442,10 @@ export default function NekaSoundPage() {
                     </div>
                     {/* Buttons */}
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={speakAll} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
+                      <button onClick={speakAll} aria-label={en ? "Play all syllables" : "전체 재생"} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
                         ▶ {en ? "PLAY ALL" : "전체 재생"}
                       </button>
-                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
+                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
                         SPACE
                       </button>
                       <button
@@ -443,12 +453,14 @@ export default function NekaSoundPage() {
                           if (selectedCons) setSelectedCons(null);
                           else setSyllables(prev => prev.slice(0, -1));
                         }}
+                        aria-label={en ? "Delete last syllable" : "마지막 음절 삭제"}
                         className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded"
                       >
                         ← DEL
                       </button>
                       <button
                         onClick={() => { setSyllables([]); setSelectedCons(null); }}
+                        aria-label={en ? "Clear all syllables" : "전체 삭제"}
                         className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-all rounded"
                       >
                         CLEAR
@@ -567,6 +579,7 @@ export default function NekaSoundPage() {
           <div className="mt-8 text-center">
             <Link
               href="/archive/neka-language"
+              aria-label={en ? "Back to Neka language article" : "네카 언어 문서로 돌아가기"}
               className="font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:underline tracking-wider"
             >
               ← {en ? "BACK TO NEKA LANGUAGE ARTICLE" : "네카 언어 문서로 돌아가기"}

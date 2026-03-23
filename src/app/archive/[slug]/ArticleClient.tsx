@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import Image from "next/image";
 import Link from "next/link";
 import { useLang } from "@/lib/LangContext";
 import { articles, getArticleTitle } from "@/lib/articles";
@@ -63,7 +64,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
 
             {article.image && (
               <div className="mb-8 rounded border border-border overflow-hidden">
-                <img src={article.image} alt={article.title[lang]} className="w-full h-auto" />
+                <Image src={article.image} alt={article.title[lang]} width={800} height={450} className="w-full h-auto" />
               </div>
             )}
 

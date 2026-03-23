@@ -62,7 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const msg = (err as { message?: string })?.message ?? '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
       setError(`로그인 실패: ${code || msg}`);
-      console.error('[Auth] signInWithGoogle error', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Auth] signInWithGoogle error', err);
+      }
     }
   };
 

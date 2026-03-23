@@ -29,13 +29,14 @@ export default function Header() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link
           href="/"
+          aria-label="EH Universe — Home"
           className="font-[family-name:var(--font-mono)] text-sm font-bold tracking-widest text-accent-purple glitch-hover"
         >
           EH UNIVERSE
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6" role="navigation" aria-label="Main navigation">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -46,7 +47,7 @@ export default function Header() {
             </Link>
           ))}
           <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={() => setToolsOpen(false)}>
-            <button className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest">
+            <button aria-expanded={toolsOpen} aria-haspopup="true" aria-label="Tools menu" className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest">
               TOOLS
             </button>
             {toolsOpen && (
@@ -64,6 +65,7 @@ export default function Header() {
             href="https://github.com/gilheumpark-bit/eh-universe-web"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="GitHub repository (opens in new tab)"
             className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors tracking-widest"
           >
             GITHUB
@@ -82,6 +84,7 @@ export default function Header() {
         <div className="flex md:hidden items-center gap-2">
           <button
             onClick={toggleLang}
+            aria-label="Toggle language"
             className="rounded border border-border px-2 py-1 font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-accent-purple"
           >
             {lang === "ko" ? "EN" : "KR"}
@@ -115,7 +118,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <nav className="md:hidden border-t border-border bg-bg-primary/95 backdrop-blur-sm">
+        <nav className="md:hidden border-t border-border bg-bg-primary/95 backdrop-blur-sm" role="navigation" aria-label="Mobile navigation">
           {navItems.map((item) => (
             <Link
               key={item.href}

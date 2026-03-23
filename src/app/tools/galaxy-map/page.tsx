@@ -105,7 +105,7 @@ const CALCS = [
 /* ─── SVG COMPONENTS ─── */
 function GalaxyMapSVG() {
   return (
-    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[600px] mx-auto" style={{ fontFamily: "var(--font-mono, monospace)" }}>
+    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Galaxy zone map showing concentric zones from BLACK core to RED warzone" className="w-full max-w-[600px] mx-auto" style={{ fontFamily: "var(--font-mono, monospace)" }}>
       <circle cx="250" cy="250" r="245" fill="none" stroke="#cc2222" strokeWidth="8" opacity="0.5"/>
       <circle cx="250" cy="250" r="245" fill="none" stroke="#cc2222" strokeWidth="1" opacity="0.3"/>
       <circle cx="250" cy="250" r="237" fill="#1a0f08" stroke="#cc6622" strokeWidth="0.5" opacity="0.4"/>
@@ -154,7 +154,7 @@ function GalaxyMapSVG() {
 
 function WarzoneCalcSVG() {
   return (
-    <svg viewBox="0 0 400 400" className="w-full max-w-[350px] mx-auto" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: "var(--font-mono, monospace)" }}>
+    <svg viewBox="0 0 400 400" role="img" aria-label="Warzone diagram showing outer 3% ring of the galaxy" className="w-full max-w-[350px] mx-auto" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: "var(--font-mono, monospace)" }}>
       <circle cx="200" cy="200" r="195" fill="#1a1a22" stroke="#cc2222" strokeWidth="6" opacity="0.6"/>
       <circle cx="200" cy="200" r="183" fill="#14141e"/>
       <circle cx="200" cy="200" r="2" fill="#555566"/>
@@ -177,7 +177,7 @@ export default function GalaxyMapPage() {
       <Header />
       <main className="pt-14">
         <div className="mx-auto max-w-5xl px-4 py-16">
-          <Link href="/archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
+          <Link href="/archive" aria-label="Back to Archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
             ← ARCHIVE
           </Link>
 

@@ -10,7 +10,9 @@ export default function StudioError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[NOA Studio Error]", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[NOA Studio Error]", error);
+    }
   }, [error]);
 
   return (

@@ -89,7 +89,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
   // ============================================================
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title" onClick={onClose}>
       <div
         className="w-full max-w-lg bg-bg-primary border border-border rounded-2xl p-6 space-y-5 mx-4"
         onClick={e => e.stopPropagation()}
@@ -101,13 +101,13 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               <Key className="w-5 h-5 text-accent-purple" />
             </div>
             <div>
-              <h3 className="font-black text-base">{t('apiKeyModal.title')}</h3>
+              <h3 id="api-key-modal-title" className="font-black text-base">{t('apiKeyModal.title')}</h3>
               <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-wider uppercase">
                 Bring Your Own Key
               </p>
             </div>
           </div>
-          <button onClick={onClose} aria-label="닫기" className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
+          <button onClick={onClose} aria-label={isKO ? "닫기" : "Close"} className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
             <X className="w-5 h-5 text-text-tertiary" />
           </button>
         </div>
@@ -129,6 +129,8 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               <button
                 key={p.id}
                 onClick={() => handleProviderSwitch(p.id)}
+                aria-label={`Select ${p.name} provider`}
+                aria-pressed={isActive}
                 className={`relative px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border transition-all font-[family-name:var(--font-mono)] ${
                   isActive
                     ? 'text-white border-transparent'
@@ -171,6 +173,9 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
           <div className="relative">
             <button
               onClick={() => setShowModels(!showModels)}
+              aria-expanded={showModels}
+              aria-haspopup="listbox"
+              aria-label={`Select model: ${selectedModel}`}
               className="w-full flex items-center justify-between bg-bg-secondary border border-border rounded-xl p-3 text-xs font-bold font-[family-name:var(--font-mono)] hover:border-text-tertiary transition-colors"
             >
               <span>{selectedModel}</span>
@@ -227,6 +232,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
           <button
             onClick={handleTest}
             disabled={!currentKey.trim() || status === 'testing'}
+            aria-label={isKO ? "API 키 테스트" : "Test API key"}
             className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-[family-name:var(--font-mono)]"
           >
             {status === 'testing' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -235,6 +241,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
           <button
             onClick={handleSave}
             disabled={!currentKey.trim()}
+            aria-label={isKO ? "API 키 저장" : "Save API key"}
             className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
             {t('apiKeyModal.save')}
@@ -247,6 +254,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
             }}
             disabled={!currentKey.trim()}
+            aria-label={isKO ? "API 키 삭제" : "Delete API key"}
             className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
             {t('apiKeyModal.delete')}

@@ -61,9 +61,9 @@ export default function RulebookPage() {
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
                   {en ? "Contents" : "목차"}
                 </h2>
-                <nav className="space-y-1">
+                <nav className="space-y-1" role="navigation" aria-label={en ? "Table of contents" : "목차"}>
                   {secs.map((s) => (
-                    <a key={s.id} href={`#${s.id}`} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
+                    <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
                       activeId === s.id
                         ? "text-accent-purple bg-accent-purple/10 font-bold border-l-2 border-accent-purple"
                         : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"

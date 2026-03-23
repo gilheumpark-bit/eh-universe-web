@@ -143,11 +143,13 @@ export default function ArchiveClient() {
 
         <aside className={`fixed md:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto border-r border-border bg-bg-secondary p-4 transition-transform md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">Archive</h2>
-          <nav className="space-y-1">
+          <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
               <button key={cat.id} onClick={() => changeCategory(cat.id)}
+                aria-label={`${cat.label} — ${cat.sublabel[lang]}`}
+                aria-current={activeCategory === cat.id ? "true" : undefined}
                 className={`w-full text-left flex items-center gap-2 py-2 px-3 rounded text-sm transition-colors ${activeCategory === cat.id ? "bg-bg-tertiary text-accent-purple" : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"}`}>
-                <span>{cat.icon}</span>
+                <span aria-hidden="true">{cat.icon}</span>
                 <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider">{cat.label}</span>
                 <span className="text-text-tertiary text-xs ml-auto">{cat.sublabel[lang]}</span>
               </button>
@@ -199,6 +201,7 @@ export default function ArchiveClient() {
                   const href = `/archive/${article.slug}`;
                   return (
                     <Link key={article.slug} href={href}
+                      aria-label={`${article.title[lang]} — ${article.level}`}
                       className="card-glow group flex items-center justify-between gap-4 rounded border border-border bg-bg-primary p-4 transition hover:border-accent-purple/50">
                       <div className="flex items-center gap-3">
                         <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>

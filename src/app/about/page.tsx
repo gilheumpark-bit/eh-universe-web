@@ -68,8 +68,9 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-2">
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer"
+                  aria-label="GitHub Repository (opens in new tab)"
                   className="flex items-center gap-2 text-text-secondary hover:text-accent-purple transition-colors text-sm">
-                  <span className="font-[family-name:var(--font-mono)]">→</span> GitHub Repository
+                  <span className="font-[family-name:var(--font-mono)]" aria-hidden="true">→</span> GitHub Repository
                 </a>
               </div>
             </section>

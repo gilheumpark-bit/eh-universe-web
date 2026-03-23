@@ -29,6 +29,7 @@ export default function NotFound() {
           </p>
           <Link
             href="/"
+            aria-label={en ? "Return to home page" : "홈으로 돌아가기"}
             className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
           >
             {en ? "RETURN TO BASE" : "기지로 귀환"}
