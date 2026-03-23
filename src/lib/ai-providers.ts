@@ -333,35 +333,7 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
   try {
     const def = PROVIDERS[providerId];
 
-    if (providerId === "gemini") {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: key });
-      await ai.models.generateContent({
-        model: def.defaultModel,
-        contents: def.testPrompt,
-      });
-      return true;
-    }
-
-    if (providerId === "claude") {
-      // Route through server proxy to avoid exposing key in browser network tab
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: "claude",
-          model: def.defaultModel,
-          messages: [{ role: "user", content: def.testPrompt }],
-          max_tokens: 16,
-          apiKey: key,
-        }),
-      });
-      return res.ok;
-    }
-
-    // OpenAI-compatible (OpenAI, Groq, Mistral)
-    const url = OPENAI_COMPAT_URLS[providerId];
-    if (!url) return false;
+    // All providers route through server proxy to avoid key exposure in network tab
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

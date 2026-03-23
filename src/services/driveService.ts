@@ -233,15 +233,16 @@ export async function syncAllProjects(
   // Track which remote files we've processed
   const processedRemoteIds = new Set<string>();
 
-  // Compare each local project
+  // Compare each local project — build tasks first, then execute in parallel
+  type SyncTask = { type: 'upload'; index: number; fileId?: string } | { type: 'download'; index: number; fileId: string } | { type: 'conflict'; info: ConflictInfo };
+  const tasks: SyncTask[] = [];
+
   for (let i = 0; i < merged.length; i++) {
     const local = merged[i];
     const remoteFile = remoteMap.get(local.id);
 
     if (!remoteFile) {
-      // Local only — upload
-      await saveProjectFile(token, folderId, local);
-      uploaded++;
+      tasks.push({ type: 'upload', index: i });
       continue;
     }
 
@@ -249,35 +250,48 @@ export async function syncAllProjects(
     const remoteTime = new Date(remoteFile.modifiedTime).getTime();
 
     if (local.lastUpdate > remoteTime + 5000) {
-      // Local is newer — upload
-      await saveProjectFile(token, folderId, local, remoteFile.id);
-      uploaded++;
+      tasks.push({ type: 'upload', index: i, fileId: remoteFile.id });
     } else if (remoteTime > local.lastUpdate + 5000) {
-      // Remote is newer — download
-      const remote = await loadProjectFile(token, remoteFile.id);
-      merged[i] = remote;
-      downloaded++;
+      tasks.push({ type: 'download', index: i, fileId: remoteFile.id });
     } else if (Math.abs(local.lastUpdate - remoteTime) <= 5000 && local.lastUpdate !== remoteTime) {
-      // Within tolerance but not identical — record as conflict for visibility
-      conflicts.push({
-        projectId: local.id,
-        projectName: local.name,
-        localUpdate: local.lastUpdate,
-        remoteUpdate: remoteTime,
-      });
+      tasks.push({ type: 'conflict', info: { projectId: local.id, projectName: local.name, localUpdate: local.lastUpdate, remoteUpdate: remoteTime } });
     }
-    // Exactly same — skip
   }
 
-  // Remote-only projects — download
-  for (const [projectId, file] of remoteMap) {
-    if (!processedRemoteIds.has(projectId)) {
-      try {
-        const remote = await loadProjectFile(token, file.id);
-        merged.push(remote);
+  // Execute uploads/downloads in parallel (batched by 5 to respect rate limits)
+  const BATCH_SIZE = 5;
+  for (let b = 0; b < tasks.length; b += BATCH_SIZE) {
+    const batch = tasks.slice(b, b + BATCH_SIZE);
+    const results = await Promise.allSettled(batch.map(async (task) => {
+      if (task.type === 'upload') {
+        await saveProjectFile(token, folderId, merged[task.index], task.fileId);
+        uploaded++;
+      } else if (task.type === 'download') {
+        const remote = await loadProjectFile(token, task.fileId);
+        merged[task.index] = remote;
         downloaded++;
-      } catch (err) {
-        console.warn(`[Drive Sync] Skipped corrupted remote file: ${file.name} (${file.id})`, err);
+      } else {
+        conflicts.push(task.info);
+      }
+    }));
+    for (const r of results) {
+      if (r.status === 'rejected' && process.env.NODE_ENV === 'development') {
+        console.warn('[Drive Sync] Batch task failed:', r.reason);
+      }
+    }
+  }
+
+  // Remote-only projects — download in parallel
+  const remoteOnly = [...remoteMap.entries()].filter(([pid]) => !processedRemoteIds.has(pid));
+  if (remoteOnly.length > 0) {
+    const dlResults = await Promise.allSettled(remoteOnly.map(async ([, file]) => {
+      const remote = await loadProjectFile(token, file.id);
+      merged.push(remote);
+      downloaded++;
+    }));
+    for (const r of dlResults) {
+      if (r.status === 'rejected' && process.env.NODE_ENV === 'development') {
+        console.warn('[Drive Sync] Remote download failed:', r.reason);
       }
     }
   }

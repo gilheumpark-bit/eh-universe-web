@@ -29,11 +29,22 @@ const RATE_LIMIT_MAX_REQUESTS = 30;
 const RATE_LIMIT_MAX_ENTRIES = 10_000;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
+let lastCleanup = Date.now();
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+
+  // Lazy cleanup — runs inline every RATE_LIMIT_WINDOW_MS instead of setInterval
+  // (setInterval is unreliable in serverless/edge environments)
+  if (now - lastCleanup > RATE_LIMIT_WINDOW_MS) {
+    for (const [k, v] of rateLimitMap) {
+      if (now > v.resetAt) rateLimitMap.delete(k);
+    }
+    lastCleanup = now;
+  }
+
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
-    // Evict oldest entries if map exceeds cap (LRU-style)
     if (rateLimitMap.size >= RATE_LIMIT_MAX_ENTRIES) {
       const firstKey = rateLimitMap.keys().next().value;
       if (firstKey !== undefined) rateLimitMap.delete(firstKey);
@@ -45,14 +56,6 @@ function checkRateLimit(ip: string): boolean {
   entry.count++;
   return true;
 }
-
-// Periodic cleanup to prevent memory leak
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(ip);
-  }
-}, RATE_LIMIT_WINDOW_MS);
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
