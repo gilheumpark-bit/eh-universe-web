@@ -84,7 +84,8 @@ export function useStudioAI({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const capturedSessionId = currentSessionId;
-    const capturedConfig = currentSession!.config;
+    if (!currentSession) return;
+    const capturedConfig = currentSession.config;
 
     let fullContent = '';
     try {

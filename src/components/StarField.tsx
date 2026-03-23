@@ -11,21 +11,21 @@ export default function StarField() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const stars = Array.from({ length: 200 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      r: Math.random() * 1.2 + 0.3,
+      speed: Math.random() * 0.5 + 0.1,
+      opacity: Math.random() * 0.5 + 0.2,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
     resize();
     window.addEventListener("resize", resize);
-
-    const stars = Array.from({ length: 200 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + 0.3,
-      speed: Math.random() * 0.5 + 0.1,
-      opacity: Math.random() * 0.5 + 0.2,
-      phase: Math.random() * Math.PI * 2,
-    }));
 
     let animId: number;
     const draw = (time: number) => {
@@ -34,7 +34,7 @@ export default function StarField() {
         const twinkle =
           0.3 + 0.7 * Math.abs(Math.sin(time * 0.001 * s.speed + s.phase));
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(200, 200, 230, ${s.opacity * twinkle})`;
         ctx.fill();
       }

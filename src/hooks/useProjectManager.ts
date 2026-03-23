@@ -101,7 +101,7 @@ export function useProjectManager(language: AppLanguage) {
 
   const createNewProject = useCallback(() => {
     const p: Project = {
-      id: `project-${Date.now()}`,
+      id: `project-${crypto.randomUUID()}`,
       name: PROJECT_NAMES[language],
       description: '',
       genre: Genre.SF,
@@ -154,7 +154,7 @@ export function useProjectManager(language: AppLanguage) {
 
   const createNewSession = useCallback(() => {
     const newSession: ChatSession = {
-      id: `session-${Date.now()}`,
+      id: `session-${crypto.randomUUID()}`,
       title: SESSION_TITLES[language],
       messages: [],
       config: { ...INITIAL_CONFIG },

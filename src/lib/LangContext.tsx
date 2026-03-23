@@ -21,6 +21,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("eh-lang") as Lang | null;
     if (saved === "en" || saved === "ko") {
       setTimeout(() => setLang(saved), 0);
+      document.documentElement.lang = saved;
     }
   }, []);
 
@@ -28,6 +29,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     setLang((prev) => {
       const next = prev === "ko" ? "en" : "ko";
       localStorage.setItem("eh-lang", next);
+      document.documentElement.lang = next;
       return next;
     });
   };

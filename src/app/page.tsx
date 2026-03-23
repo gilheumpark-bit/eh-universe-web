@@ -141,15 +141,22 @@ export default function Home() {
         <div className="mx-auto max-w-4xl">
           <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-12">Get Started</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {startLinks[lang].map((item) => (
-              <Link key={item.title} href={item.href} className="card-glow group flex items-start gap-4 rounded border border-border bg-bg-secondary p-5 transition hover:border-accent-purple/50">
+            {startLinks[lang].map((item) => {
+              const isExternal = item.href.startsWith('http');
+              const cls = "card-glow group flex items-start gap-4 rounded border border-border bg-bg-secondary p-5 transition hover:border-accent-purple/50";
+              const inner = (<>
                 <span className="text-2xl">{item.icon}</span>
                 <div>
                   <h3 className="font-[family-name:var(--font-mono)] text-sm font-semibold text-text-primary group-hover:text-accent-purple transition-colors tracking-wide">{item.title}</h3>
                   <p className="mt-1 text-xs text-text-secondary">{item.desc}</p>
                 </div>
-              </Link>
-            ))}
+              </>);
+              return isExternal ? (
+                <a key={item.title} href={item.href} target="_blank" rel="noopener noreferrer" className={cls} aria-label={`${item.title} (opens in new tab)`}>{inner}</a>
+              ) : (
+                <Link key={item.title} href={item.href} className={cls}>{inner}</Link>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -47,7 +47,7 @@ export default function Header() {
             </Link>
           ))}
           <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={() => setToolsOpen(false)}>
-            <button aria-expanded={toolsOpen} aria-haspopup="true" aria-label="Tools menu" className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest">
+            <button onClick={() => setToolsOpen(p => !p)} aria-expanded={toolsOpen} aria-haspopup="true" aria-label="Tools menu" className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest">
               TOOLS
             </button>
             {toolsOpen && (
