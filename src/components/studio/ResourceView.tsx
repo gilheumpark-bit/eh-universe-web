@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-constants';
+import { createT } from '@/lib/i18n';
 import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
@@ -541,6 +542,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
 function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
   const isKO = language === 'KO';
+  const tl = createT(language);
   const chars = config.characters;
   const relations = config.charRelations || [];
 
@@ -588,19 +590,19 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
           <Link2 className="w-6 h-6 text-pink-400" />
         </div>
         <div>
-          <h3 className="text-xl font-black tracking-tighter uppercase">{isKO ? '캐릭터 관계도' : 'Character Relations'}</h3>
-          <p className="text-zinc-500 text-[9px] font-bold tracking-widest uppercase">{isKO ? '인물 간 관계 시각화' : 'Visual relationship map'}</p>
+          <h3 className="text-xl font-black tracking-tighter uppercase">{tl('resourceExtra.charRelations')}</h3>
+          <p className="text-zinc-500 text-[9px] font-bold tracking-widest uppercase">{tl('resourceExtra.visualMap')}</p>
         </div>
       </div>
 
       {/* Add relation controls */}
       <div className="flex flex-wrap gap-2 items-end">
         <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
-          <option value="">{isKO ? '캐릭터 A' : 'Character A'}</option>
+          <option value="">{tl('resourceExtra.characterA')}</option>
           {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
-          <option value="">{isKO ? '캐릭터 B' : 'Character B'}</option>
+          <option value="">{tl('resourceExtra.characterB')}</option>
           {chars.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="flex gap-1">
@@ -615,10 +617,10 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
             </button>
           ))}
         </div>
-        <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={isKO ? '관계 설명...' : 'Description...'}
+        <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={tl('resourceExtra.description')}
           className="flex-1 min-w-[120px] bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none" />
         <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
-          {isKO ? '추가' : 'Add'}
+          {tl('resourceExtra.add')}
         </button>
       </div>
 

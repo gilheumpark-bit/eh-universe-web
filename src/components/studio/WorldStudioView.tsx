@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { Compass, Cpu, Search } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
 import TabAssistant from './TabAssistant';
 import WorldAnalysisView from './WorldAnalysisView';
@@ -60,6 +61,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
   const isKO = language === 'KO';
+  const t = createT(language);
   const labels = SUB_TABS[language];
 
   return (
@@ -97,7 +99,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           </div>
           <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
             <button onClick={onSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-              💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
+              💾 {saveFlash ? t('worldStudio.saved') : t('worldStudio.saveSettings')}
             </button>
           </div>
         </>
@@ -119,7 +121,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           />
           <div className="flex justify-end mt-4">
             <button onClick={onSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-              💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
+              💾 {saveFlash ? t('worldStudio.saved') : t('worldStudio.saveSettings')}
             </button>
           </div>
         </div>

@@ -889,6 +889,156 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       copy: "복사",
       charsGenerating: "자 생성 중...",
       generating: "생성 중..."
+    },
+    inlineRewriter: {
+      selected: "선택: {n}자",
+      customPlaceholder: '커스텀 지시 (예: "이 부분 더 슬프게")',
+      generating: "생성 중...",
+      preview: "미리보기",
+      apply: "적용",
+      replaceConfirm: "교체할까요?",
+      confirmYes: "확인",
+      confirmNo: "취소",
+      stop: "중단",
+      cancel: "취소",
+      editorPlaceholder: "텍스트를 드래그해서 선택 → 액션 선택",
+      charCount: "자",
+      tip: "💡 텍스트 선택 → 리라이트 액션",
+      apiKeyMissing: "⚠️ API 키가 설정되지 않았습니다.\n설정(Settings) 탭에서 API 키를 입력해주세요."
+    },
+    planningExtra: {
+      preset: "프리셋",
+      noPreset: "해당 장르 프리셋 없음",
+      aiGenerating: "AI 생성 중...",
+      aiGenerate: "AI 생성",
+      publishPlatform: "연재 플랫폼",
+      none: "미선택",
+      target: "독자층",
+      length: "권장 분량",
+      pace: "전개 호흡",
+      chars: "자",
+      povCharacter: "시점 캐릭터",
+      povPlaceholder: "주인공 이름...",
+      settingLabel: "주요 배경",
+      settingPlaceholder: "장소, 시대...",
+      coreEmotion: "핵심 감정",
+      emotionPlaceholder: "공포, 사랑, 분노...",
+      narrativeGuardrails: "서사 가드라인",
+      worldFormulaSentence: '이 세계는 "{premise}"라는 전제를 가진 {genre} 장르의 배경이며, {power}한 권력 구조 속에서, "{conflict}"라는 갈등을 중심으로 돌아간다.',
+      apiKeyAlert: "API 키를 먼저 설정해주세요. (설정 탭 → API 키)",
+      aiFailed: "AI 생성 실패. API 키를 확인하세요."
+    },
+    resourceExtra: {
+      charRelations: "캐릭터 관계도",
+      visualMap: "인물 간 관계 시각화",
+      characterA: "캐릭터 A",
+      characterB: "캐릭터 B",
+      description: "관계 설명...",
+      add: "추가"
+    },
+    continuity: {
+      activate: "맥락 추적: 원고 저장 후 활성화",
+      context: "맥락",
+      threads: "떡밥",
+      window: "추적 범위",
+      episode: "화",
+      point: "점",
+      noIssues: "맥락 이탈 없음",
+      openThreads: "미해결 떡밥",
+      clickBar: "막대를 클릭하면 에피소드 상세를 볼 수 있습니다"
+    },
+    worldAnalysis: {
+      title: "세계관 분석",
+      inputLabel: "분석할 텍스트 (소설 본문, 시놉시스, 설정집 등)",
+      inputPlaceholder: "분석하고 싶은 소설의 텍스트를 붙여넣으세요...\n\n예: 소설 1~3화 본문, 시놉시스, 세계관 설정집 등",
+      chars: "자",
+      cancelBtn: "취소",
+      analyzing: "분석 중...",
+      analyze: "세계관 분석",
+      results: "분석 결과",
+      copied: "복사됨",
+      copyAll: "전체 복사",
+      apiKeyAlert: "API 키를 먼저 설정해주세요. (설정 탭 → API 키)",
+      parseFailed: "분석 결과를 파싱할 수 없습니다. 다시 시도해주세요.",
+      analysisFailed: "분석 실패. API 키를 확인하세요."
+    },
+    apiKeyModal: {
+      title: "BYOK — API 키 관리",
+      geminiRecommend: "Gemini 권장 — 캐릭터 자동생성, 구조화 JSON 출력 등 일부 고급 기능은 Gemini에서만 지원됩니다. 다른 프로바이더는 소설 집필(스트리밍)에 사용 가능합니다.",
+      modelSelect: "모델 선택",
+      defaultModel: "기본",
+      verified: "API 키 검증 완료",
+      invalid: "유효하지 않은 API 키",
+      test: "테스트",
+      save: "저장",
+      delete: "삭제",
+      savedKeys: "등록된 키",
+      notSet: "미설정"
+    },
+    autoRefiner: {
+      header: "AUTO 30% — AI 자동 리파인",
+      analyzeStart: "분석 시작",
+      stop: "중단",
+      generateAll: "전체 생성",
+      applyToMs: "원고 반영",
+      emptyState: "AI가 원고를 문단별로 분석하고, 약한 부분을 찾아 자동으로 리라이트합니다.",
+      parseFailed: "분석 결과를 파싱할 수 없습니다.",
+      noImprovements: "개선할 부분을 찾지 못했습니다. 원고 상태가 좋습니다!",
+      apiKeyMissing: "API 키가 설정되지 않았습니다. 설정(Settings) 탭에서 API 키를 입력해주세요."
+    },
+    tabAssistant: {
+      apiKeyMissing: "⚠️ API 키가 설정되지 않았습니다.\n\n설정(Settings) 탭 → API Key에서 키를 입력해주세요.",
+      askAnything: "{name}에게 무엇이든 물어보세요.",
+      clearChat: "대화 초기화",
+      apiKeyRequired: "🔒 API 키 설정 후 사용 가능합니다",
+      askQuestion: "질문을 입력하세요..."
+    },
+    genreReview: {
+      title: "장르×레벨 리뷰어",
+      insufficientMs: "⚠️ 분석할 원고가 부족합니다. 집필 탭에서 먼저 글을 작성해주세요.",
+      insufficientShort: "⚠️ 분석할 원고가 부족합니다.",
+      requestReview: "리뷰 요청",
+      fullReview: "풀 리뷰 (1~4)",
+      collapseDetail: "상세 접기",
+      expandDetail: "상세 보기"
+    },
+    director: {
+      nodDirector: "NOD 감독",
+      autoAnalysis: "AI 응답 후 자동 분석됩니다",
+      noIssues: "이슈 없음",
+      more: "건 더"
+    },
+    typoPanel: {
+      detected: "오타 감지",
+      applyFix: "수정 적용"
+    },
+    sceneSheet: {
+      aiGenerate: "AI 생성",
+      synopsisRequired: "세계관 설계에서 시놉시스를 먼저 작성하세요.",
+      aiFailed: "AI 생성 실패. API 키를 확인하세요.",
+      beatSheet: "비트시트",
+      rhythmRules: "리듬 규칙",
+      readerReward: "독자 보상 패턴",
+      mustHave: "필수 요소",
+      taboo: "금기",
+      episodeUnit: "화",
+      worldSimRef: "세계관 시뮬레이터 참고",
+      simRefDesc: "체크한 항목이 연출에 반영됩니다",
+      writerNotesPlaceholder: "이번 화에서 꼭 넣고 싶은 장면, 대사, 분위기, 전개 방향 등을 자유롭게 적으세요...\n\n예시:\n- 주인공이 처음으로 울어야 함\n- 악역과의 재회 장면 필수\n- 비 오는 밤 배경\n- 마지막에 반드시 떡밥 회수",
+      chars: "자"
+    },
+    worldSim: {
+      ehRules: "EH 규칙",
+      narrativeSummary: "세계관 서술 요약",
+      copy: "복사",
+      traitsTBD: "특성 미정"
+    },
+    worldStudio: {
+      saved: "저장 완료!",
+      saveSettings: "설정 저장"
+    },
+    versionDiff: {
+      diff: "비교"
     }
   },
   EN: {
@@ -1711,6 +1861,156 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       copy: "Copy",
       charsGenerating: " chars generating...",
       generating: "Generating..."
+    },
+    inlineRewriter: {
+      selected: "Selected: {n} chars",
+      customPlaceholder: 'Custom instruction (e.g. "make this sadder")',
+      generating: "Generating...",
+      preview: "Preview",
+      apply: "Apply",
+      replaceConfirm: "Replace?",
+      confirmYes: "Yes",
+      confirmNo: "No",
+      stop: "Stop",
+      cancel: "Cancel",
+      editorPlaceholder: "Select text by dragging → choose action",
+      charCount: " chars",
+      tip: "💡 Select text → Rewrite action",
+      apiKeyMissing: "⚠️ API key not set.\nGo to Settings tab to enter your key."
+    },
+    planningExtra: {
+      preset: "Preset",
+      noPreset: "No presets for this genre",
+      aiGenerating: "Generating...",
+      aiGenerate: "AI Generate",
+      publishPlatform: "PUBLISH PLATFORM",
+      none: "None",
+      target: "Target",
+      length: "Length",
+      pace: "Pace",
+      chars: " chars",
+      povCharacter: "POV Character",
+      povPlaceholder: "Protagonist name...",
+      settingLabel: "Setting",
+      settingPlaceholder: "Place, era...",
+      coreEmotion: "Core Emotion",
+      emotionPlaceholder: "Fear, love, rage...",
+      narrativeGuardrails: "Narrative Guardrails",
+      worldFormulaSentence: 'This is a {genre} world premised on "{premise}", with a power structure of {power}, revolving around the conflict: "{conflict}".',
+      apiKeyAlert: "Please set your API key first. (Settings → API Key)",
+      aiFailed: "AI generation failed. Check API key."
+    },
+    resourceExtra: {
+      charRelations: "Character Relations",
+      visualMap: "Visual relationship map",
+      characterA: "Character A",
+      characterB: "Character B",
+      description: "Description...",
+      add: "Add"
+    },
+    continuity: {
+      activate: "Continuity: saves manuscript to activate",
+      context: "CTX",
+      threads: "Threads",
+      window: "Window",
+      episode: "ep",
+      point: "pt",
+      noIssues: "No continuity issues",
+      openThreads: "Open Threads",
+      clickBar: "Click a bar to see episode details"
+    },
+    worldAnalysis: {
+      title: "World Analysis",
+      inputLabel: "Text to analyze (novel excerpt, synopsis, lore doc, etc.)",
+      inputPlaceholder: "Paste the text you want to analyze...\n\nEx: novel chapters 1-3, synopsis, worldbuilding docs, etc.",
+      chars: " chars",
+      cancelBtn: "Cancel",
+      analyzing: "Analyzing...",
+      analyze: "Analyze",
+      results: "Analysis Results",
+      copied: "Copied",
+      copyAll: "Copy All",
+      apiKeyAlert: "Set API key first. (Settings → API Key)",
+      parseFailed: "Could not parse analysis result. Please try again.",
+      analysisFailed: "Analysis failed. Check API key."
+    },
+    apiKeyModal: {
+      title: "BYOK — API Key Manager",
+      geminiRecommend: "Gemini recommended — Some advanced features (auto character generation, structured JSON output) are Gemini-only. Other providers can be used for story writing (streaming).",
+      modelSelect: "Model",
+      defaultModel: "Default",
+      verified: "API key verified",
+      invalid: "Invalid API key",
+      test: "Test",
+      save: "Save",
+      delete: "Delete",
+      savedKeys: "Saved Keys",
+      notSet: "Not set"
+    },
+    autoRefiner: {
+      header: "AUTO 30% — AI Auto-Refine",
+      analyzeStart: "Analyze",
+      stop: "Stop",
+      generateAll: "Generate All",
+      applyToMs: "Apply to MS",
+      emptyState: "AI analyzes your manuscript paragraph by paragraph and auto-rewrites weak spots.",
+      parseFailed: "Could not parse analysis result.",
+      noImprovements: "No improvements found. Your manuscript looks good!",
+      apiKeyMissing: "API key not set. Please enter your API key in the Settings tab."
+    },
+    tabAssistant: {
+      apiKeyMissing: "⚠️ API key not set.\n\nGo to Settings tab → API Key to enter your key.",
+      askAnything: "Ask the {name} anything.",
+      clearChat: "Clear chat",
+      apiKeyRequired: "🔒 API key required",
+      askQuestion: "Ask a question..."
+    },
+    genreReview: {
+      title: "Genre×Level Reviewer",
+      insufficientMs: "⚠️ Not enough manuscript text. Write in the Writing tab first.",
+      insufficientShort: "⚠️ Not enough manuscript text.",
+      requestReview: "Request Review",
+      fullReview: "Full (1~4)",
+      collapseDetail: "Collapse",
+      expandDetail: "Expand"
+    },
+    director: {
+      nodDirector: "NOD Director",
+      autoAnalysis: "Auto-analyzed after AI response",
+      noIssues: "No issues",
+      more: " more"
+    },
+    typoPanel: {
+      detected: "Typos detected",
+      applyFix: "Apply fix"
+    },
+    sceneSheet: {
+      aiGenerate: "AI Generate",
+      synopsisRequired: "Write synopsis first.",
+      aiFailed: "AI failed. Check API key.",
+      beatSheet: "Beat Sheet",
+      rhythmRules: "Rhythm Rules",
+      readerReward: "Reader Reward Patterns",
+      mustHave: "Must Have",
+      taboo: "Taboo",
+      episodeUnit: "ep",
+      worldSimRef: "World Simulator Reference",
+      simRefDesc: "Checked items will be referenced in direction",
+      writerNotesPlaceholder: "Write freely about scenes, dialogue, mood, direction you want...\n\nExample:\n- Protagonist must cry for first time\n- Reunion with antagonist required\n- Rainy night setting\n- Must resolve foreshadow at end",
+      chars: " chars"
+    },
+    worldSim: {
+      ehRules: "EH Rules",
+      narrativeSummary: "World Narrative Summary",
+      copy: "Copy",
+      traitsTBD: "traits TBD"
+    },
+    worldStudio: {
+      saved: "Saved!",
+      saveSettings: "Save Settings"
+    },
+    versionDiff: {
+      diff: "Diff"
     }
   },
   JP: {
@@ -2533,6 +2833,156 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       copy: "コピー",
       charsGenerating: "文字生成中...",
       generating: "生成中..."
+    },
+    inlineRewriter: {
+      selected: "選択: {n}文字",
+      customPlaceholder: 'カスタム指示 (例: "もっと悲しく")',
+      generating: "生成中...",
+      preview: "プレビュー",
+      apply: "適用",
+      replaceConfirm: "置換しますか？",
+      confirmYes: "確認",
+      confirmNo: "キャンセル",
+      stop: "停止",
+      cancel: "キャンセル",
+      editorPlaceholder: "テキストをドラッグして選択 → アクション選択",
+      charCount: "文字",
+      tip: "💡 テキスト選択 → リライトアクション",
+      apiKeyMissing: "⚠️ APIキーが設定されていません。\n設定タブでAPIキーを入力してください。"
+    },
+    planningExtra: {
+      preset: "プリセット",
+      noPreset: "このジャンルのプリセットなし",
+      aiGenerating: "AI生成中...",
+      aiGenerate: "AI生成",
+      publishPlatform: "連載プラットフォーム",
+      none: "未選択",
+      target: "ターゲット読者",
+      length: "推奨文字数",
+      pace: "展開テンポ",
+      chars: "文字",
+      povCharacter: "視点キャラクター",
+      povPlaceholder: "主人公の名前...",
+      settingLabel: "主要舞台",
+      settingPlaceholder: "場所、時代...",
+      coreEmotion: "核心感情",
+      emotionPlaceholder: "恐怖、愛、怒り...",
+      narrativeGuardrails: "ナラティブガードレール",
+      worldFormulaSentence: 'この世界は「{premise}」を前提とした{genre}ジャンルの舞台であり、{power}の権力構造の中で「{conflict}」という葛藤を中心に展開する。',
+      apiKeyAlert: "先にAPIキーを設定してください。(設定タブ → APIキー)",
+      aiFailed: "AI生成に失敗しました。APIキーを確認してください。"
+    },
+    resourceExtra: {
+      charRelations: "キャラクター関係図",
+      visualMap: "人物間関係の可視化",
+      characterA: "キャラクターA",
+      characterB: "キャラクターB",
+      description: "関係の説明...",
+      add: "追加"
+    },
+    continuity: {
+      activate: "文脈追跡: 原稿保存後に有効化",
+      context: "文脈",
+      threads: "伏線",
+      window: "追跡範囲",
+      episode: "話",
+      point: "点",
+      noIssues: "文脈の逸脱なし",
+      openThreads: "未解決の伏線",
+      clickBar: "バーをクリックしてエピソード詳細を表示"
+    },
+    worldAnalysis: {
+      title: "世界観分析",
+      inputLabel: "分析するテキスト（小説本文、シノプシス、設定集など）",
+      inputPlaceholder: "分析したい小説のテキストを貼り付けてください...\n\n例: 小説1~3話本文、シノプシス、世界観設定集など",
+      chars: "文字",
+      cancelBtn: "キャンセル",
+      analyzing: "分析中...",
+      analyze: "世界観分析",
+      results: "分析結果",
+      copied: "コピー済み",
+      copyAll: "全体コピー",
+      apiKeyAlert: "先にAPIキーを設定してください。(設定タブ → APIキー)",
+      parseFailed: "分析結果をパースできません。再試行してください。",
+      analysisFailed: "分析に失敗しました。APIキーを確認してください。"
+    },
+    apiKeyModal: {
+      title: "BYOK — APIキー管理",
+      geminiRecommend: "Gemini推奨 — キャラクター自動生成、構造化JSON出力などの高度な機能はGemini専用です。他のプロバイダーは小説執筆(ストリーミング)に使用できます。",
+      modelSelect: "モデル選択",
+      defaultModel: "デフォルト",
+      verified: "APIキー検証完了",
+      invalid: "無効なAPIキー",
+      test: "テスト",
+      save: "保存",
+      delete: "削除",
+      savedKeys: "登録済みキー",
+      notSet: "未設定"
+    },
+    autoRefiner: {
+      header: "AUTO 30% — AI自動リファイン",
+      analyzeStart: "分析開始",
+      stop: "停止",
+      generateAll: "全体生成",
+      applyToMs: "原稿に反映",
+      emptyState: "AIが原稿を段落ごとに分析し、弱い部分を自動的にリライトします。",
+      parseFailed: "分析結果をパースできません。",
+      noImprovements: "改善点が見つかりませんでした。原稿の状態は良好です！",
+      apiKeyMissing: "APIキーが設定されていません。設定タブでAPIキーを入力してください。"
+    },
+    tabAssistant: {
+      apiKeyMissing: "⚠️ APIキーが設定されていません。\n\n設定タブ → APIキーで入力してください。",
+      askAnything: "{name}に何でも聞いてください。",
+      clearChat: "チャット初期化",
+      apiKeyRequired: "🔒 APIキー設定後に使用可能",
+      askQuestion: "質問を入力してください..."
+    },
+    genreReview: {
+      title: "ジャンル×レベルレビュアー",
+      insufficientMs: "⚠️ 分析する原稿が不足しています。執筆タブで先に書いてください。",
+      insufficientShort: "⚠️ 分析する原稿が不足しています。",
+      requestReview: "レビュー依頼",
+      fullReview: "フルレビュー (1~4)",
+      collapseDetail: "詳細を閉じる",
+      expandDetail: "詳細を見る"
+    },
+    director: {
+      nodDirector: "NOD監督",
+      autoAnalysis: "AI応答後に自動分析されます",
+      noIssues: "問題なし",
+      more: "件追加"
+    },
+    typoPanel: {
+      detected: "誤字検出",
+      applyFix: "修正適用"
+    },
+    sceneSheet: {
+      aiGenerate: "AI生成",
+      synopsisRequired: "先にシノプシスを書いてください。",
+      aiFailed: "AI生成に失敗。APIキーを確認してください。",
+      beatSheet: "ビートシート",
+      rhythmRules: "リズムルール",
+      readerReward: "読者報酬パターン",
+      mustHave: "必須要素",
+      taboo: "禁忌",
+      episodeUnit: "話",
+      worldSimRef: "世界観シミュレーター参照",
+      simRefDesc: "チェックした項目が演出に反映されます",
+      writerNotesPlaceholder: "今回の話に入れたいシーン、台詞、雰囲気、展開方向などを自由に書いてください...",
+      chars: "文字"
+    },
+    worldSim: {
+      ehRules: "EHルール",
+      narrativeSummary: "世界観叙述要約",
+      copy: "コピー",
+      traitsTBD: "特性未定"
+    },
+    worldStudio: {
+      saved: "保存完了！",
+      saveSettings: "設定保存"
+    },
+    versionDiff: {
+      diff: "比較"
     }
   },
   CN: {
@@ -3287,6 +3737,156 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       copy: "复制",
       charsGenerating: "字符生成中...",
       generating: "生成中..."
+    },
+    inlineRewriter: {
+      selected: "已选: {n}字",
+      customPlaceholder: '自定义指令 (例: "让这段更悲伤")',
+      generating: "生成中...",
+      preview: "预览",
+      apply: "应用",
+      replaceConfirm: "替换吗？",
+      confirmYes: "确认",
+      confirmNo: "取消",
+      stop: "停止",
+      cancel: "取消",
+      editorPlaceholder: "拖拽选择文本 → 选择操作",
+      charCount: "字",
+      tip: "💡 选择文本 → 重写操作",
+      apiKeyMissing: "⚠️ 未设置API密钥。\n请在设置标签页中输入您的密钥。"
+    },
+    planningExtra: {
+      preset: "预设",
+      noPreset: "该类型无预设",
+      aiGenerating: "AI生成中...",
+      aiGenerate: "AI生成",
+      publishPlatform: "发布平台",
+      none: "未选择",
+      target: "目标读者",
+      length: "推荐字数",
+      pace: "节奏",
+      chars: "字",
+      povCharacter: "视角角色",
+      povPlaceholder: "主角名...",
+      settingLabel: "主要背景",
+      settingPlaceholder: "地点、时代...",
+      coreEmotion: "核心情感",
+      emotionPlaceholder: "恐惧、爱、愤怒...",
+      narrativeGuardrails: "叙事护栏",
+      worldFormulaSentence: '这个世界以"{premise}"为前提，是{genre}类型的背景，在{power}的权力结构中，围绕"{conflict}"的冲突展开。',
+      apiKeyAlert: "请先设置API密钥。(设置 → API密钥)",
+      aiFailed: "AI生成失败。请检查API密钥。"
+    },
+    resourceExtra: {
+      charRelations: "角色关系图",
+      visualMap: "人物关系可视化",
+      characterA: "角色A",
+      characterB: "角色B",
+      description: "关系描述...",
+      add: "添加"
+    },
+    continuity: {
+      activate: "连续性追踪：保存稿件后激活",
+      context: "上下文",
+      threads: "伏笔",
+      window: "追踪范围",
+      episode: "集",
+      point: "分",
+      noIssues: "无连续性问题",
+      openThreads: "未解决的伏笔",
+      clickBar: "点击柱状图查看剧集详情"
+    },
+    worldAnalysis: {
+      title: "世界观分析",
+      inputLabel: "要分析的文本（小说正文、大纲、设定集等）",
+      inputPlaceholder: "粘贴您要分析的小说文本...\n\n例：小说1~3章正文、大纲、世界观设定集等",
+      chars: "字",
+      cancelBtn: "取消",
+      analyzing: "分析中...",
+      analyze: "分析",
+      results: "分析结果",
+      copied: "已复制",
+      copyAll: "全部复制",
+      apiKeyAlert: "请先设置API密钥。(设置 → API密钥)",
+      parseFailed: "无法解析分析结果。请重试。",
+      analysisFailed: "分析失败。请检查API密钥。"
+    },
+    apiKeyModal: {
+      title: "BYOK — API密钥管理",
+      geminiRecommend: "推荐Gemini — 角色自动生成、结构化JSON输出等高级功能仅限Gemini。其他提供商可用于小说写作（流式传输）。",
+      modelSelect: "模型选择",
+      defaultModel: "默认",
+      verified: "API密钥验证完成",
+      invalid: "无效的API密钥",
+      test: "测试",
+      save: "保存",
+      delete: "删除",
+      savedKeys: "已注册密钥",
+      notSet: "未设置"
+    },
+    autoRefiner: {
+      header: "AUTO 30% — AI自动精炼",
+      analyzeStart: "开始分析",
+      stop: "停止",
+      generateAll: "全部生成",
+      applyToMs: "应用到稿件",
+      emptyState: "AI逐段分析您的稿件，自动重写薄弱部分。",
+      parseFailed: "无法解析分析结果。",
+      noImprovements: "未发现需要改进的部分。稿件状态良好！",
+      apiKeyMissing: "未设置API密钥。请在设置标签页中输入您的API密钥。"
+    },
+    tabAssistant: {
+      apiKeyMissing: "⚠️ 未设置API密钥。\n\n请前往设置标签页 → API密钥输入。",
+      askAnything: "向{name}提问任何问题。",
+      clearChat: "清除对话",
+      apiKeyRequired: "🔒 需要先设置API密钥",
+      askQuestion: "输入问题..."
+    },
+    genreReview: {
+      title: "类型×等级审阅者",
+      insufficientMs: "⚠️ 稿件不足。请先在写作标签页中编写。",
+      insufficientShort: "⚠️ 稿件不足。",
+      requestReview: "请求审阅",
+      fullReview: "完整审阅 (1~4)",
+      collapseDetail: "收起详情",
+      expandDetail: "展开详情"
+    },
+    director: {
+      nodDirector: "NOD导演",
+      autoAnalysis: "AI响应后自动分析",
+      noIssues: "无问题",
+      more: "条更多"
+    },
+    typoPanel: {
+      detected: "检测到错别字",
+      applyFix: "应用修正"
+    },
+    sceneSheet: {
+      aiGenerate: "AI生成",
+      synopsisRequired: "请先编写大纲。",
+      aiFailed: "AI生成失败。请检查API密钥。",
+      beatSheet: "节拍表",
+      rhythmRules: "节奏规则",
+      readerReward: "读者奖励模式",
+      mustHave: "必备要素",
+      taboo: "禁忌",
+      episodeUnit: "集",
+      worldSimRef: "世界观模拟器参考",
+      simRefDesc: "勾选的项目将在演出中被参考",
+      writerNotesPlaceholder: "自由写下本集想要的场景、台词、氛围、展开方向...",
+      chars: "字"
+    },
+    worldSim: {
+      ehRules: "EH规则",
+      narrativeSummary: "世界观叙述摘要",
+      copy: "复制",
+      traitsTBD: "特性待定"
+    },
+    worldStudio: {
+      saved: "保存成功！",
+      saveSettings: "保存设置"
+    },
+    versionDiff: {
+      diff: "对比"
     }
   }
 };

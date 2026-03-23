@@ -4,6 +4,7 @@ import React from 'react';
 import { Film, AlertCircle, ChevronDown } from 'lucide-react';
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 
 interface DirectorPanelProps {
   report: DirectorReport | null;
@@ -37,15 +38,16 @@ const KIND_LABELS: Record<string, { ko: string; en: string }> = {
 
 const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
   const isKO = language === 'KO';
+  const t = createT(language);
 
   if (!report) {
     return (
       <details className="group">
         <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">
-          <Film className="w-3 h-3" /> {isKO ? 'NOD 감독' : 'NOD Director'}
+          <Film className="w-3 h-3" /> {t('director.nodDirector')}
         </summary>
         <p className="mt-1.5 text-[10px] text-text-tertiary pl-4 italic">
-          {isKO ? 'AI 응답 후 자동 분석됩니다' : 'Auto-analyzed after AI response'}
+          {t('director.autoAnalysis')}
         </p>
       </details>
     );
@@ -59,7 +61,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
     <details className="group" open={report.findings.length > 0}>
       <summary className="flex items-center justify-between cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <Film className="w-3 h-3" /> {isKO ? 'NOD 감독' : 'NOD Director'}
+          <Film className="w-3 h-3" /> {t('director.nodDirector')}
         </span>
         <span className="flex items-center gap-2">
           <span className={`text-[9px] font-black ${gradeColor}`}>{grade}</span>
@@ -87,7 +89,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         {/* Findings */}
         {findingsToShow.length === 0 ? (
           <p className="text-[10px] text-accent-green italic">
-            {isKO ? '이슈 없음' : 'No issues'}
+            {t('director.noIssues')}
           </p>
         ) : (
           <div className="space-y-1.5">
@@ -108,7 +110,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
             ))}
             {report.findings.length > 6 && (
               <div className="text-[9px] text-text-tertiary">
-                +{report.findings.length - 6} {isKO ? '건 더' : ' more'}
+                +{report.findings.length - 6}{t('director.more')}
               </div>
             )}
           </div>

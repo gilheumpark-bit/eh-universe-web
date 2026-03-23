@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Key, X, Loader2, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import {
   PROVIDER_LIST, ProviderId, PROVIDERS,
   getActiveProvider, setActiveProvider,
@@ -27,6 +28,7 @@ interface ApiKeyModalProps {
 
 const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) => {
   const isKO = language === 'KO';
+  const t = createT(language);
 
   const [activeId, setActiveId] = useState<ProviderId>(getActiveProvider());
   const [keys, setKeys] = useState<Record<ProviderId, string>>(() => {
@@ -99,7 +101,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               <Key className="w-5 h-5 text-accent-purple" />
             </div>
             <div>
-              <h3 className="font-black text-base">{isKO ? 'BYOK — API 키 관리' : 'BYOK — API Key Manager'}</h3>
+              <h3 className="font-black text-base">{t('apiKeyModal.title')}</h3>
               <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-wider uppercase">
                 Bring Your Own Key
               </p>
@@ -114,9 +116,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
         <div className="flex items-start gap-2 px-3 py-2 bg-accent-blue/5 border border-accent-blue/20 rounded-lg">
           <span className="text-accent-blue text-xs mt-0.5">💡</span>
           <p className="text-[10px] text-text-secondary leading-relaxed">
-            {isKO
-              ? 'Gemini 권장 — 캐릭터 자동생성, 구조화 JSON 출력 등 일부 고급 기능은 Gemini에서만 지원됩니다. 다른 프로바이더는 소설 집필(스트리밍)에 사용 가능합니다.'
-              : 'Gemini recommended — Some advanced features (auto character generation, structured JSON output) are Gemini-only. Other providers can be used for story writing (streaming).'}
+            {t('apiKeyModal.geminiRecommend')}
           </p>
         </div>
 
@@ -166,7 +166,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
         {/* Model selector */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-            {isKO ? '모델 선택' : 'Model'}
+            {t('apiKeyModal.modelSelect')}
           </label>
           <div className="relative">
             <button
@@ -188,7 +188,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                   >
                     {m}
                     {m === currentProvider.defaultModel && (
-                      <span className="ml-2 text-[10px] text-text-tertiary uppercase">{isKO ? '기본' : 'Default'}</span>
+                      <span className="ml-2 text-[10px] text-text-tertiary uppercase">{t('apiKeyModal.defaultModel')}</span>
                     )}
                     {isPreviewModel(m) && (
                       <span className="ml-2 text-[10px] text-accent-amber uppercase">⚠ Preview</span>
@@ -213,12 +213,12 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
         {/* Status */}
         {status === 'success' && (
           <div className="flex items-center gap-2 text-accent-green text-xs font-bold">
-            <CheckCircle2 className="w-4 h-4" /> {isKO ? 'API 키 검증 완료' : 'API key verified'}
+            <CheckCircle2 className="w-4 h-4" /> {t('apiKeyModal.verified')}
           </div>
         )}
         {status === 'error' && (
           <div className="flex items-center gap-2 text-accent-red text-xs font-bold">
-            <AlertCircle className="w-4 h-4" /> {isKO ? '유효하지 않은 API 키' : 'Invalid API key'}
+            <AlertCircle className="w-4 h-4" /> {t('apiKeyModal.invalid')}
           </div>
         )}
 
@@ -230,14 +230,14 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
             className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-[family-name:var(--font-mono)]"
           >
             {status === 'testing' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {isKO ? '테스트' : 'Test'}
+            {t('apiKeyModal.test')}
           </button>
           <button
             onClick={handleSave}
             disabled={!currentKey.trim()}
             className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
-            {isKO ? '저장' : 'Save'}
+            {t('apiKeyModal.save')}
           </button>
           <button
             onClick={() => {
@@ -249,14 +249,14 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
             disabled={!currentKey.trim()}
             className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
           >
-            {isKO ? '삭제' : 'Delete'}
+            {t('apiKeyModal.delete')}
           </button>
         </div>
 
         {/* Saved keys overview */}
         <div className="pt-3 border-t border-border space-y-1.5">
           <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-            {isKO ? '등록된 키' : 'Saved Keys'}
+            {t('apiKeyModal.savedKeys')}
           </div>
           {PROVIDER_LIST.map(p => {
             const hasKey = !!(keys[p.id]?.trim());
@@ -275,7 +275,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
                   )}
                 </div>
                 <span className="text-text-tertiary font-[family-name:var(--font-mono)]">
-                  {hasKey ? `${keys[p.id].slice(0, 6)}...` : (isKO ? '미설정' : 'Not set')}
+                  {hasKey ? `${keys[p.id].slice(0, 6)}...` : t('apiKeyModal.notSet')}
                 </span>
               </div>
             );

@@ -8,6 +8,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { ErrorToast, StreamingIndicator } from './UXHelpers';
@@ -131,6 +132,7 @@ const ACTION_LABEL: Record<string, { ko: string; en: string; color: string }> = 
 
 const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, onApply }) => {
   const isKO = language === 'KO';
+  const t = createT(language);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'ready' | 'fixing'>('idle');
   const [, setCurrentFixIdx] = useState(-1);
@@ -145,7 +147,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
   const startAnalysis = useCallback(async () => {
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      setRefinerError(new Error(isKO ? 'API 키가 설정되지 않았습니다. 설정(Settings) 탭에서 API 키를 입력해주세요.' : 'API key not set. Please enter your API key in the Settings tab.'));
+      setRefinerError(new Error(t('autoRefiner.apiKeyMissing')));
       return;
     }
 
@@ -175,7 +177,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         setPhase('idle');
-        alert(isKO ? '분석 결과를 파싱할 수 없습니다.' : 'Could not parse analysis result.');
+        alert(t('autoRefiner.parseFailed'));
         return;
       }
 
@@ -196,7 +198,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       setSuggestions(sugs);
       setPhase(sugs.length > 0 ? 'ready' : 'idle');
       if (sugs.length === 0) {
-        alert(isKO ? '개선할 부분을 찾지 못했습니다. 원고 상태가 좋습니다!' : 'No improvements found. Your manuscript looks good!');
+        alert(t('autoRefiner.noImprovements'));
       }
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
@@ -330,7 +332,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-purple" />
           <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
-            {isKO ? 'AUTO 30% — AI 자동 리파인' : 'AUTO 30% — AI Auto-Refine'}
+            {t('autoRefiner.header')}
           </span>
           {suggestions.length > 0 && (
             <span className="text-[9px] text-zinc-500 font-[family-name:var(--font-mono)]">
@@ -341,20 +343,20 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         <div className="flex items-center gap-2">
           {phase === 'idle' && (
             <button onClick={startAnalysis} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity">
-              <Play className="w-3 h-3" /> {isKO ? '분석 시작' : 'Analyze'}
+              <Play className="w-3 h-3" /> {t('autoRefiner.analyzeStart')}
             </button>
           )}
           {phase === 'analyzing' && (
             <>
               <StreamingIndicator charCount={streamingChars} language={language} />
               <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-red-600/30 transition-colors">
-                <X className="w-3 h-3" /> {isKO ? '중단' : 'Stop'}
+                <X className="w-3 h-3" /> {t('autoRefiner.stop')}
               </button>
             </>
           )}
           {phase === 'ready' && pendingCount > 0 && (
             <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-blue-600/30 transition-colors">
-              <Play className="w-3 h-3" /> {isKO ? '전체 생성' : 'Generate All'}
+              <Play className="w-3 h-3" /> {t('autoRefiner.generateAll')}
             </button>
           )}
           {undoStack.length > 0 && (
@@ -364,7 +366,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
           )}
           {appliedCount > 0 && (
             <button onClick={applyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-green-600/30 transition-colors">
-              <CheckCheck className="w-3 h-3" /> {isKO ? '원고 반영' : 'Apply to MS'}
+              <CheckCheck className="w-3 h-3" /> {t('autoRefiner.applyToMs')}
             </button>
           )}
           {phase !== 'idle' && (
@@ -448,9 +450,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       {expanded && phase === 'idle' && suggestions.length === 0 && (
         <div className="px-4 pb-4 text-center">
           <p className="text-[11px] text-zinc-600 italic">
-            {isKO
-              ? 'AI가 원고를 문단별로 분석하고, 약한 부분을 찾아 자동으로 리라이트합니다.'
-              : 'AI analyzes your manuscript paragraph by paragraph and auto-rewrites weak spots.'}
+            {t('autoRefiner.emptyState')}
           </p>
         </div>
       )}

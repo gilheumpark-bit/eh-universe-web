@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
@@ -436,6 +437,7 @@ const STORAGE_PREFIX = 'noa_tab_chat_';
 const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) => {
   const ctx = TAB_CONTEXT[tab];
   const isKO = language === 'KO';
+  const tl = createT(language);
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -468,7 +470,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: isKO ? '⚠️ API 키가 설정되지 않았습니다.\n\n설정(Settings) 탭 → API Key에서 키를 입력해주세요.' : '⚠️ API key not set.\n\nGo to Settings tab → API Key to enter your key.' };
+      const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: tl('tabAssistant.apiKeyMissing') };
       setMessages(prev => [...prev, errMsg]);
       return;
     }
@@ -559,7 +561,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
             {messages.length === 0 && (
               <div className="py-4 space-y-3">
                 <p className="text-[11px] text-text-tertiary italic text-center">
-                  {isKO ? `${ctx.ko}에게 무엇이든 물어보세요.` : `Ask the ${ctx.en} anything.`}
+                  {tl('tabAssistant.askAnything').replace('{name}', isKO ? ctx.ko : ctx.en)}
                 </p>
                 {TAB_PRESETS[tab] && (
                   <div className="flex flex-wrap gap-1.5 justify-center px-2">
@@ -599,7 +601,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
           <div className="p-3 border-t border-border">
             <div className="flex items-end gap-2">
               {messages.length > 0 && (
-                <button onClick={clearChat} className="p-2 rounded-lg text-zinc-700 hover:text-accent-red hover:bg-zinc-800/50 transition-colors shrink-0" title={isKO ? '대화 초기화' : 'Clear chat'}>
+                <button onClick={clearChat} className="p-2 rounded-lg text-zinc-700 hover:text-accent-red hover:bg-zinc-800/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -608,8 +610,8 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={!getApiKey(getActiveProvider())
-                  ? (isKO ? '🔒 API 키 설정 후 사용 가능합니다' : '🔒 API key required')
-                  : (isKO ? '질문을 입력하세요...' : 'Ask a question...')}
+                  ? tl('tabAssistant.apiKeyRequired')
+                  : tl('tabAssistant.askQuestion')}
                 className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2 text-[12px] text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-20 transition-colors ${!getApiKey(getActiveProvider()) ? 'opacity-60' : ''}`}
                 rows={1}
                 disabled={isStreaming || !getApiKey(getActiveProvider())}

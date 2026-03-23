@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { detectTypos, type TypoMatch } from '@/lib/typo-detector';
 
 interface TypoPanelProps {
@@ -21,6 +22,7 @@ const TYPE_LABEL: Record<TypoMatch['type'], { ko: string; en: string }> = {
 const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => {
   const [expanded, setExpanded] = useState(false);
   const isKO = language === 'KO';
+  const t = createT(language);
 
   const typos = useMemo(() => detectTypos(text), [text]);
 
@@ -35,7 +37,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
       >
         <span className="flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" />
-          {isKO ? '오타 감지' : 'Typos detected'}: {typos.length}
+          {t('typoPanel.detected')}: {typos.length}
         </span>
         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
@@ -55,7 +57,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
                 <button
                   onClick={() => onApplyFix(typo.index, typo.original, typo.suggestion)}
                   className="ml-auto p-0.5 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors"
-                  title={isKO ? '수정 적용' : 'Apply fix'}
+                  title={t('typoPanel.applyFix')}
                 >
                   <Check className="w-3 h-3" />
                 </button>

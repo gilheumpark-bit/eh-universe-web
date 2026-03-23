@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
+import { createT } from '@/lib/i18n';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -295,6 +296,7 @@ interface SceneSheetProps {
 }
 
 export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+  const tl = createT(lang === 'ko' ? 'KO' : 'EN');
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');
@@ -560,7 +562,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
             </div>
           )}
           <button onClick={async () => {
-            if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
+            if (!synopsis) { alert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
               const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
@@ -570,10 +572,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.type || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
               if (result.emotionTarget) setEmotions([{ id: `ai-e-${ts}`, position: 50, emotion: result.emotionTarget, intensity: 80 }]);
               if (result.dialogueTone) setDialogueRules([{ id: `ai-d-${ts}`, character: result.dialogueTone.character, tone: result.dialogueTone.tone, notes: '' }]);
-            } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+            } catch { alert(tl('sceneSheet.aiFailed')); }
           }}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-            🤖 {lang === "ko" ? "AI 생성" : "AI Generate"}
+            🤖 {tl('sceneSheet.aiGenerate')}
           </button>
         </div>
       </div>
@@ -581,7 +583,6 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
       {/* 국가별 문법 패널 */}
       {showGrammarPanel && (() => {
         const pack = GRAMMAR_PACKS[grammarRegion];
-        const isKO = lang === 'ko';
         return (
           <div className="border border-t-0 border-border bg-bg-secondary/50 p-4 sm:p-6 space-y-5 animate-in fade-in duration-300">
             {/* 팩 헤더 */}
@@ -589,21 +590,21 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               <div>
                 <h3 className="text-sm font-black flex items-center gap-2">
                   <span className="text-lg">{pack.flag}</span>
-                  {isKO ? pack.label.ko : pack.label.en}
+                  {lang === 'ko' ? pack.label.ko : pack.label.en}
                 </h3>
                 <p className="text-[9px] text-text-tertiary font-bold tracking-wider uppercase mt-0.5">
-                  {isKO ? pack.subtitle.ko : pack.subtitle.en}
+                  {lang === 'ko' ? pack.subtitle.ko : pack.subtitle.en}
                 </p>
               </div>
               <div className="text-[9px] text-text-tertiary">
-                {pack.episodeLength.min.toLocaleString()}~{pack.episodeLength.max.toLocaleString()} {pack.episodeLength.unit}/{isKO ? '화' : 'ep'}
+                {pack.episodeLength.min.toLocaleString()}~{pack.episodeLength.max.toLocaleString()} {pack.episodeLength.unit}/{tl('sceneSheet.episodeUnit')}
               </div>
             </div>
 
             {/* 비트시트 타임라인 */}
             <div className="space-y-2">
               <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">
-                {isKO ? '비트시트' : 'Beat Sheet'} ({pack.beatSheet.length} beats)
+                {tl('sceneSheet.beatSheet')} ({pack.beatSheet.length} beats)
               </span>
               <div className="relative">
                 <div className="h-2 bg-bg-primary rounded-full overflow-hidden flex">
@@ -634,7 +635,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               {/* 리듬 규칙 */}
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
-                  {isKO ? '리듬 규칙' : 'Rhythm Rules'}
+                  {tl('sceneSheet.rhythmRules')}
                 </span>
                 <div className="space-y-1.5">
                   {pack.rhythmRules.map((r, i) => (
@@ -649,7 +650,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               {/* 보상 패턴 */}
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
-                  {isKO ? '독자 보상 패턴' : 'Reader Reward Patterns'}
+                  {tl('sceneSheet.readerReward')}
                 </span>
                 <div className="space-y-1.5">
                   {pack.rewardPatterns.map((r, i) => (
@@ -668,7 +669,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
-                    {isKO ? '필수 요소' : 'Must Have'}
+                    {tl('sceneSheet.mustHave')}
                   </span>
                   {pack.mustHave.map((m, i) => (
                     <div key={i} className="flex items-center gap-1.5 text-[9px]">
@@ -679,7 +680,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-[9px] font-black text-accent-red uppercase tracking-widest">
-                    {isKO ? '금기' : 'Taboo'}
+                    {tl('sceneSheet.taboo')}
                   </span>
                   {pack.taboo.map((t, i) => (
                     <div key={i} className="flex items-center gap-1.5 text-[9px]">
@@ -1077,10 +1078,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}
               className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-              placeholder={lang === "ko" ? "이번 화에서 꼭 넣고 싶은 장면, 대사, 분위기, 전개 방향 등을 자유롭게 적으세요...\n\n예시:\n- 주인공이 처음으로 울어야 함\n- 악역과의 재회 장면 필수\n- 비 오는 밤 배경\n- 마지막에 반드시 떡밥 회수" : "Write freely about scenes, dialogue, mood, direction you want...\n\nExample:\n- Protagonist must cry for first time\n- Reunion with antagonist required\n- Rainy night setting\n- Must resolve foreshadow at end"}
+              placeholder={tl('sceneSheet.writerNotesPlaceholder')}
             />
             <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-              {writerNotes.length.toLocaleString()}{lang === "ko" ? "자" : " chars"}
+              {writerNotes.length.toLocaleString()}{tl('sceneSheet.chars')}
             </div>
           </div>
         )}
@@ -1093,10 +1094,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
         <div className="border border-border rounded-xl p-4 bg-bg-primary space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-              🗺️ {lang === "ko" ? "세계관 시뮬레이터 참고" : "World Simulator Reference"}
+              🗺️ {tl('sceneSheet.worldSimRef')}
             </span>
             <span className="text-[10px] text-text-tertiary">
-              {lang === "ko" ? "체크한 항목이 연출에 반영됩니다" : "Checked items will be referenced in direction"}
+              {tl('sceneSheet.simRefDesc')}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

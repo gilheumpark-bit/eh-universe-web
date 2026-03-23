@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
 import { PLATFORM_PRESETS } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
+import { createT } from '@/lib/i18n';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
@@ -52,6 +53,7 @@ interface PlanningViewProps {
 }
 
 const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart }) => {
+  const tl = createT(language);
   const t = TRANSLATIONS[language].planning;
   const te = TRANSLATIONS[language].engine;
   const isKO = language === 'KO';
@@ -66,7 +68,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
 
   const handleAIGenerate = async () => {
     if (!getApiKey(getActiveProvider())) {
-      alert(isKO ? 'API 키를 먼저 설정해주세요. (설정 탭 → API 키)' : 'Please set your API key first. (Settings → API Key)');
+      alert(tl('planningExtra.apiKeyAlert'));
       return;
     }
     setAiGenerating(true);
@@ -95,7 +97,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         guardrails: { min: 4000, max: 6000 },
       }));
     } catch {
-      alert(isKO ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI generation failed. Check API key.');
+      alert(tl('planningExtra.aiFailed'));
     } finally {
       setAiGenerating(false);
     }
@@ -135,7 +137,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </select>
           <div className="relative">
             <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-95">
-              <Shuffle className="w-3.5 h-3.5" /> {isKO ? '프리셋' : 'Preset'}
+              <Shuffle className="w-3.5 h-3.5" /> {tl('planningExtra.preset')}
             </button>
             {showPresetMenu && (
               <div className="absolute top-full mt-1 right-0 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
@@ -157,7 +159,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                   );
                 })}
                 {(!AUTO_PRESETS[autoGenGenre] || AUTO_PRESETS[autoGenGenre].length === 0) && (
-                  <div className="px-4 py-3 text-[11px] text-zinc-500">{isKO ? '해당 장르 프리셋 없음' : 'No presets for this genre'}</div>
+                  <div className="px-4 py-3 text-[11px] text-zinc-500">{tl('planningExtra.noPreset')}</div>
                 )}
               </div>
             )}
@@ -165,7 +167,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <button onClick={handleAIGenerate} disabled={aiGenerating}
             className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
             {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
-            {aiGenerating ? (isKO ? 'AI 생성 중...' : 'Generating...') : (isKO ? 'AI 생성' : 'AI Generate')}
+            {aiGenerating ? tl('planningExtra.aiGenerating') : tl('planningExtra.aiGenerate')}
           </button>
         </div>
       </div>
@@ -239,12 +241,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         {/* 연재 플랫폼 선택 */}
         <div className="space-y-2">
           <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
-            {isKO ? '연재 플랫폼' : 'PUBLISH PLATFORM'}
+            {tl('planningExtra.publishPlatform')}
           </label>
           <div className="flex flex-wrap gap-2">
             {Object.values(PublishPlatform).map(pp => {
               const labels: Record<string, string> = {
-                NONE: isKO ? '미선택' : 'None',
+                NONE: tl('planningExtra.none'),
                 MUNPIA: '문피아',
                 NOVELPIA: '노벨피아',
                 KAKAOPAGE: '카카오페이지',
@@ -274,37 +276,37 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </div>
           {config.publishPlatform && config.publishPlatform !== PublishPlatform.NONE && PLATFORM_PRESETS[config.publishPlatform] && (
             <div className="mt-2 p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-[10px] text-zinc-500 space-y-1">
-              <div><span className="text-zinc-400 font-bold">{isKO ? '독자층' : 'Target'}:</span> {PLATFORM_PRESETS[config.publishPlatform].targetReader}</div>
-              <div><span className="text-zinc-400 font-bold">{isKO ? '권장 분량' : 'Length'}:</span> {PLATFORM_PRESETS[config.publishPlatform].episodeLength.min.toLocaleString()}~{PLATFORM_PRESETS[config.publishPlatform].episodeLength.max.toLocaleString()}{isKO ? '자' : ' chars'}</div>
-              <div><span className="text-zinc-400 font-bold">{isKO ? '전개 호흡' : 'Pace'}:</span> {PLATFORM_PRESETS[config.publishPlatform].pace}</div>
+              <div><span className="text-zinc-400 font-bold">{tl('planningExtra.target')}:</span> {PLATFORM_PRESETS[config.publishPlatform].targetReader}</div>
+              <div><span className="text-zinc-400 font-bold">{tl('planningExtra.length')}:</span> {PLATFORM_PRESETS[config.publishPlatform].episodeLength.min.toLocaleString()}~{PLATFORM_PRESETS[config.publishPlatform].episodeLength.max.toLocaleString()}{tl('planningExtra.chars')}</div>
+              <div><span className="text-zinc-400 font-bold">{tl('planningExtra.pace')}:</span> {PLATFORM_PRESETS[config.publishPlatform].pace}</div>
             </div>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{language === 'KO' ? '시점 캐릭터' : 'POV Character'}</label>
+            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
-              placeholder={language === 'KO' ? '주인공 이름...' : 'Protagonist name...'}
+              placeholder={tl('planningExtra.povPlaceholder')}
               value={config.povCharacter}
               onChange={e => setConfig({ ...config, povCharacter: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{language === 'KO' ? '주요 배경' : 'Setting'}</label>
+            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
-              placeholder={language === 'KO' ? '장소, 시대...' : 'Place, era...'}
+              placeholder={tl('planningExtra.settingPlaceholder')}
               value={config.setting}
               onChange={e => setConfig({ ...config, setting: e.target.value })}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{language === 'KO' ? '핵심 감정' : 'Core Emotion'}</label>
+            <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
-              placeholder={language === 'KO' ? '공포, 사랑, 분노...' : 'Fear, love, rage...'}
+              placeholder={tl('planningExtra.emotionPlaceholder')}
               value={config.primaryEmotion}
               onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })}
             />
@@ -358,9 +360,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <div className="p-4 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
               <span className="text-[10px] font-black text-accent-purple/60 uppercase tracking-widest">{t.worldFormula}</span>
               <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
-                {isKO
-                  ? `이 세계는 "${config.corePremise || '___'}"라는 전제를 가진 ${config.genre} 장르의 배경이며, ${config.powerStructure || '___'}한 권력 구조 속에서, "${config.currentConflict || '___'}"라는 갈등을 중심으로 돌아간다.`
-                  : `This is a ${config.genre} world premised on "${config.corePremise || '___'}", with a power structure of ${config.powerStructure || '___'}, revolving around the conflict: "${config.currentConflict || '___'}".`
+                {tl('planningExtra.worldFormulaSentence')
+                  .replace('{premise}', config.corePremise || '___')
+                  .replace('{genre}', config.genre)
+                  .replace('{power}', config.powerStructure || '___')
+                  .replace('{conflict}', config.currentConflict || '___')
                 }
               </p>
             </div>
@@ -576,20 +580,20 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         {/* Guardrails */}
         <div className="space-y-6 pt-6 border-t border-zinc-800">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" /> {isKO ? '서사 가드라인' : 'Narrative Guardrails'}
+            <BarChart3 className="w-4 h-4" /> {tl('planningExtra.narrativeGuardrails')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div className="space-y-4">
               <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
                 <span>{t.minDensity}</span>
-                <span>{config.guardrails.min}{language === 'KO' ? '자' : ' chars'}</span>
+                <span>{config.guardrails.min}{tl('planningExtra.chars')}</span>
               </div>
               <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
             </div>
             <div className="space-y-4">
               <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
                 <span>{t.maxCapacity}</span>
-                <span>{config.guardrails.max}{language === 'KO' ? '자' : ' chars'}</span>
+                <span>{config.guardrails.max}{tl('planningExtra.chars')}</span>
               </div>
               <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
             </div>

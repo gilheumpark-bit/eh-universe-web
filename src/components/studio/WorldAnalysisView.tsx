@@ -7,6 +7,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Search, Loader2, BookOpen, Layers, Map, Users, Zap, AlertTriangle, Copy, Check } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 
@@ -110,6 +111,7 @@ const SECTION_LABELS: Record<AppLanguage, Record<string, string>> = {
 
 const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
   const isKO = language === 'KO';
+  const t = createT(language);
   const [inputText, setInputText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -123,7 +125,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
 
     const provider = getActiveProvider();
     if (!getApiKey(provider)) {
-      setError(isKO ? 'API 키를 먼저 설정해주세요. (설정 탭 → API 키)' : 'Set API key first. (Settings → API Key)');
+      setError(t('worldAnalysis.apiKeyAlert'));
       return;
     }
 
@@ -159,11 +161,11 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
         const parsed = JSON.parse(jsonMatch[0]) as AnalysisResult;
         setResult(parsed);
       } else {
-        setError(isKO ? '분석 결과를 파싱할 수 없습니다. 다시 시도해주세요.' : 'Could not parse analysis result. Please try again.');
+        setError(t('worldAnalysis.parseFailed'));
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setError(isKO ? '분석 실패. API 키를 확인하세요.' : 'Analysis failed. Check API key.');
+        setError(t('worldAnalysis.analysisFailed'));
       }
     } finally {
       setAnalyzing(false);
@@ -191,7 +193,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
       {/* Header */}
       <div>
         <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
-          {isKO ? '세계관 분석' : language === 'JP' ? '世界観分析' : language === 'CN' ? '世界观分析' : 'World Analysis'}
+          {t('worldAnalysis.title')}
         </h2>
         <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">
           WORLDBUILDING REVERSE ENGINEER
@@ -201,25 +203,23 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
       {/* Input */}
       <div className="space-y-3">
         <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
-          {isKO ? '분석할 텍스트 (소설 본문, 시놉시스, 설정집 등)' : 'Text to analyze (novel excerpt, synopsis, lore doc, etc.)'}
+          {t('worldAnalysis.inputLabel')}
         </label>
         <textarea
           className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
-          placeholder={isKO
-            ? '분석하고 싶은 소설의 텍스트를 붙여넣으세요...\n\n예: 소설 1~3화 본문, 시놉시스, 세계관 설정집 등'
-            : 'Paste the text you want to analyze...\n\nEx: novel chapters 1-3, synopsis, worldbuilding docs, etc.'}
+          placeholder={t('worldAnalysis.inputPlaceholder')}
           value={inputText}
           onChange={e => setInputText(e.target.value)}
         />
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-zinc-600 font-mono">
-            {inputText.length.toLocaleString()}{isKO ? '자' : ' chars'}
+            {inputText.length.toLocaleString()}{t('worldAnalysis.chars')}
           </span>
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
                 className="px-4 py-2 bg-zinc-800 text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
-                {isKO ? '취소' : 'Cancel'}
+                {t('worldAnalysis.cancelBtn')}
               </button>
             )}
             <button
@@ -228,7 +228,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
               className="flex items-center gap-2 px-6 py-2.5 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-40"
             >
               {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-              {analyzing ? (isKO ? '분석 중...' : 'Analyzing...') : (isKO ? '세계관 분석' : 'Analyze')}
+              {analyzing ? t('worldAnalysis.analyzing') : t('worldAnalysis.analyze')}
             </button>
           </div>
         </div>
@@ -246,12 +246,12 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-              {isKO ? '분석 결과' : 'Analysis Results'}
+              {t('worldAnalysis.results')}
             </h3>
             <button onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[9px] font-bold text-zinc-400 hover:text-white transition-colors">
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-              {copied ? (isKO ? '복사됨' : 'Copied') : (isKO ? '전체 복사' : 'Copy All')}
+              {copied ? t('worldAnalysis.copied') : t('worldAnalysis.copyAll')}
             </button>
           </div>
 

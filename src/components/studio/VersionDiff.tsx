@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, GitCompare, Copy, Check } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 
 interface VersionDiffProps {
   versions: string[];
@@ -67,6 +68,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
   const isKO = language === 'KO';
+  const t = createT(language);
   const total = versions.length;
 
   if (total <= 1) return null;
@@ -114,7 +116,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
             }`}
           >
             <GitCompare className="w-2.5 h-2.5" />
-            {isKO ? '비교' : 'Diff'}
+            {t('versionDiff.diff')}
           </button>
         )}
 
