@@ -1532,13 +1532,39 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
 // PART 8-A: EH RULE LEVEL DESCRIPTIONS
 // ============================================================
 
-const RULE_LEVELS: { lv: number; ko: string; en: string; desc_ko: string; desc_en: string; pct: number }[] = [
-  { lv: 1, ko: "미적용", en: "Off", desc_ko: "EH 규칙 없음. 자유 집필", desc_en: "No EH rules. Free writing", pct: 0 },
-  { lv: 2, ko: "소프트", en: "Soft", desc_ko: "금지어 차단만 적용", desc_en: "Banned words only", pct: 10 },
-  { lv: 3, ko: "미디엄", en: "Medium", desc_ko: "금지어 + 대가 정산 시스템", desc_en: "Bans + cost infliction", pct: 20 },
-  { lv: 4, ko: "하드", en: "Hard", desc_ko: "금지어 + 대가 + 시점잠금 + 마스킹", desc_en: "Bans + cost + POV lock + masking", pct: 30 },
-  { lv: 5, ko: "익스트림", en: "Extreme", desc_ko: "전체 적용: 인지비용 + 자격박탈 + 이중로그", desc_en: "Full: cognitive cost + dequalification + dual-log", pct: 40 },
+const RULE_LEVELS: { lv: number; ko: string; en: string; desc_ko: string; desc_en: string; pct: number; genre_ko: string; genre_en: string; color: string }[] = [
+  { lv: 1, ko: "미적용", en: "Off", desc_ko: "EH 규칙 없음. 자유 집필", desc_en: "No EH rules. Free writing", pct: 0, genre_ko: "자유", genre_en: "Free", color: "#6b7280" },
+  { lv: 2, ko: "먼치킨", en: "Munchkin", desc_ko: "금지어 경고만. 대가 거의 없음", desc_en: "Soft warnings only. Minimal cost", pct: 15, genre_ko: "먼치킨/무쌍", genre_en: "OP/Power Fantasy", color: "#22c55e" },
+  { lv: 3, ko: "로맨스", en: "Romance", desc_ko: "금지어 차단 + 관계 갈등 대가", desc_en: "Bans + relationship cost only", pct: 25, genre_ko: "로맨스/로판", genre_en: "Romance", color: "#a855f7" },
+  { lv: 4, ko: "아카데미", en: "Academy", desc_ko: "금지어 + 성장통 대가 + EH 추적 시작", desc_en: "Bans + growth cost + EH tracking", pct: 35, genre_ko: "아카데미물", genre_en: "Academy", color: "#3b82f6" },
+  { lv: 5, ko: "헌터", en: "Hunter", desc_ko: "금지어 + 신체/관계 대가 + 시점 제한 시작", desc_en: "Bans + body/relation cost + POV limit", pct: 50, genre_ko: "헌터/각성물", genre_en: "Hunter/Awakening", color: "#eab308" },
+  { lv: 6, ko: "회귀", en: "Regression", desc_ko: "기억/시간 대가 + 문체 변환 시작", desc_en: "Memory/time cost + style morphing", pct: 65, genre_ko: "회귀물", genre_en: "Regression", color: "#f97316" },
+  { lv: 7, ko: "다크", en: "Dark", desc_ko: "전 영역 대가 + 이중 로그 + 글리치", desc_en: "Full cost + dual-log + glitch", pct: 75, genre_ko: "다크 판타지", genre_en: "Dark Fantasy", color: "#ef4444" },
+  { lv: 8, ko: "디스토피아", en: "Dystopia", desc_ko: "풀 엔진 + 자격 박탈 + 세계 붕괴", desc_en: "Full engine + dequalification + system crash", pct: 90, genre_ko: "디스토피아/SF", genre_en: "Dystopia/SF", color: "#991b1b" },
+  { lv: 9, ko: "풀 EH", en: "Full EH", desc_ko: "v1.0 원본 100% 적용. 자비 없음", desc_en: "v1.0 original 100%. No mercy", pct: 100, genre_ko: "순문학", genre_en: "Literary Fiction", color: "#1f2937" },
 ];
+
+// EH 엔진 강도 공식 — 적용률(R)에 따른 모듈별 승수 계산
+function getEHModuleIntensity(pct: number) {
+  const R = pct;
+  return {
+    bannedWordWarn: R >= 5,                              // 금지어 경고
+    bannedWordBlock: R >= 15,                            // 금지어 차단
+    costHint: R >= 10,                                   // 대가 힌트
+    costEnforce: R >= 25,                                // 대가 강제
+    ehTracking: R >= 20,                                 // EH 수치 추적
+    stabilityTracking: R >= 30,                          // 세계 안정도
+    povLock: R >= 45,                                    // 시점 제한
+    choiceCollapse: R >= 55,                             // 선택지 붕괴
+    styleMorph: R >= 60,                                 // 문체 자동 변환
+    dualLog: R >= 70,                                    // 이중 로그
+    glitchTrigger: R >= 80,                              // 글리치 트리거
+    dequalification: R >= 90,                            // 자격 박탈
+    costMultiplier: Math.max(0, (R - 25) / 75),          // 0.0 ~ 1.0
+    ehDecayMultiplier: Math.max(0, (R - 20) / 80),       // 0.0 ~ 1.0
+    stabilityDecayMultiplier: Math.max(0, (R - 30) / 70), // 0.0 ~ 1.0
+  };
+}
 
 // ============================================================
 // PART 8-B: WORLD AUTO-GENERATOR
@@ -1753,22 +1779,22 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
               </h3>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)]"
                 style={{
-                  background: ruleLevel <= 1 ? "var(--color-border)" : ruleLevel <= 2 ? "#22c55e20" : ruleLevel <= 3 ? "#eab30820" : ruleLevel <= 4 ? "#f9731620" : "#ef444420",
-                  color: ruleLevel <= 1 ? "var(--color-text-tertiary)" : ruleLevel <= 2 ? "#22c55e" : ruleLevel <= 3 ? "#eab308" : ruleLevel <= 4 ? "#f97316" : "#ef4444",
+                  background: `${RULE_LEVELS[ruleLevel - 1].color}20`,
+                  color: RULE_LEVELS[ruleLevel - 1].color,
                 }}>
-                {RULE_LEVELS[ruleLevel - 1].pct}%
+                {RULE_LEVELS[ruleLevel - 1].pct}% — {lang === "ko" ? RULE_LEVELS[ruleLevel - 1].genre_ko : RULE_LEVELS[ruleLevel - 1].genre_en}
               </span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               {RULE_LEVELS.map(rl => (
-                <button key={rl.lv} onClick={() => setRuleLevel(rl.lv)}
-                  className={`flex-1 py-2 rounded text-[9px] font-bold border transition-all ${
+                <button key={rl.lv} type="button" onClick={() => setRuleLevel(rl.lv)}
+                  className={`py-1.5 px-2 rounded text-[8px] font-bold border transition-all min-w-[60px] ${
                     ruleLevel === rl.lv
                       ? "text-white border-transparent"
                       : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
                   }`}
                   style={ruleLevel === rl.lv ? {
-                    background: rl.lv <= 1 ? "#6b7280" : rl.lv <= 2 ? "#22c55e" : rl.lv <= 3 ? "#eab308" : rl.lv <= 4 ? "#f97316" : "#ef4444",
+                    background: rl.color,
                     borderColor: "transparent",
                   } : undefined}
                   title={lang === "ko" ? rl.desc_ko : rl.desc_en}

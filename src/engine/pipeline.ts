@@ -232,27 +232,59 @@ function buildEHRules(ruleLevel: number, isKO: boolean): string {
   const t = createT(language);
   const sections: string[] = [];
 
+  // 9단계 적용률 매핑: lv1=0%, lv2=15%, lv3=25%, lv4=35%, lv5=50%, lv6=65%, lv7=75%, lv8=90%, lv9=100%
+  const PCT_MAP: Record<number, number> = { 1: 0, 2: 15, 3: 25, 4: 35, 5: 50, 6: 65, 7: 75, 8: 90, 9: 100 };
+  const GENRE_MAP: Record<number, string> = { 2: "먼치킨/무쌍", 3: "로맨스", 4: "아카데미", 5: "헌터/각성", 6: "회귀물", 7: "다크 판타지", 8: "디스토피아", 9: "순문학" };
+  const pct = PCT_MAP[ruleLevel] ?? 0;
+  const costMul = Math.max(0, (pct - 25) / 75);  // 대가 승수 0.0~1.0
+
   // Lv2+: 금지어 차단 (The Enforcer)
   if (ruleLevel >= 2) {
     sections.push(`[${t('pipeline.enforcerHeader')} Lv${ruleLevel}]\n${t('pipeline.enforcerBody')}`);
   }
 
-  // Lv3+: 대가 정산 (Cost Infliction)
+  // Lv3+: 대가 정산 (Cost Infliction) — 승수 적용
   if (ruleLevel >= 3) {
-    sections.push(`[${t('pipeline.costInflictionHeader')}]\n${t('pipeline.costInflictionBody')}`);
+    const costNote = isKO
+      ? `대가 강도: ${Math.round(costMul * 100)}%. 이 비율만큼 주인공의 성장/이득에 대한 손실을 서술에 반영하라.`
+      : `Cost intensity: ${Math.round(costMul * 100)}%. Apply this ratio of loss against protagonist's gains.`;
+    sections.push(`[${t('pipeline.costInflictionHeader')}]\n${t('pipeline.costInflictionBody')}\n${costNote}`);
   }
 
-  // Lv4+: 시점 잠금 + 마스킹 레이어
-  if (ruleLevel >= 4) {
-    sections.push(`[${t('pipeline.narrativeLockHeader')}]\n${t('pipeline.narrativeLockBody')}\n[NARRATIVE MASKING LAYER]\n${t('pipeline.narrativeMaskingBody')}`);
-  }
-
-  // Lv5: 풀 강제 + 인지 리소스 + 자격 박탈
+  // Lv5+: 시점 제한 시작
   if (ruleLevel >= 5) {
-    sections.push(`[${t('pipeline.systemPressureHeader')}]\n${t('pipeline.systemPressureBody')}\n[DEQUALIFICATION]\n${t('pipeline.dequalificationBody')}\n[DUAL-LOG SYSTEM]\n${t('pipeline.dualLogBody')}`);
+    sections.push(`[${t('pipeline.narrativeLockHeader')}]\n${t('pipeline.narrativeLockBody')}`);
   }
 
-  const header = `\n[${t('pipeline.ehRuleHeader')}: Lv${ruleLevel}/5 (${ruleLevel * 10}% ${t('pipeline.applied')})]`;
+  // Lv6+: 문체 변환 + 마스킹
+  if (ruleLevel >= 6) {
+    const morphNote = isKO
+      ? `EH 수치가 낮아질수록 감정 형용사를 줄이고 행동/팩트 위주로 서술하라.`
+      : `As EH drops, reduce emotional adjectives. Focus on actions and facts.`;
+    sections.push(`[NARRATIVE MASKING LAYER]\n${t('pipeline.narrativeMaskingBody')}\n${morphNote}`);
+  }
+
+  // Lv7+: 이중 로그 + 글리치
+  if (ruleLevel >= 7) {
+    sections.push(`[DUAL-LOG SYSTEM]\n${t('pipeline.dualLogBody')}`);
+  }
+
+  // Lv8+: 자격 박탈 + 세계 붕괴
+  if (ruleLevel >= 8) {
+    sections.push(`[${t('pipeline.systemPressureHeader')}]\n${t('pipeline.systemPressureBody')}\n[DEQUALIFICATION]\n${t('pipeline.dequalificationBody')}`);
+  }
+
+  // Lv9: v1.0 풀적용
+  if (ruleLevel >= 9) {
+    const fullNote = isKO
+      ? `EH v1.0 원본 100% 적용. 모든 보상에 등가의 대가를 강제. 자비 없음.`
+      : `EH v1.0 original 100% applied. Every reward demands equivalent cost. No mercy.`;
+    sections.push(fullNote);
+  }
+
+  const genre = GENRE_MAP[ruleLevel] || '';
+  const genreTag = genre ? ` (${genre})` : '';
+  const header = `\n[${t('pipeline.ehRuleHeader')}: Lv${ruleLevel}/9 (${pct}% ${t('pipeline.applied')})${genreTag}]`;
 
   return header + '\n' + sections.join('\n\n');
 }
