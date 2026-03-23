@@ -46,18 +46,20 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={() => setToolsOpen(false)}>
-            <button onClick={() => setToolsOpen(p => !p)} aria-expanded={toolsOpen} aria-haspopup="true" aria-label="Tools menu" className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest">
+          <div className="relative group" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={() => setToolsOpen(false)}>
+            <button onClick={() => setToolsOpen(p => !p)} aria-expanded={toolsOpen} aria-haspopup="true" aria-label="Tools menu" className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-secondary hover:text-text-primary transition-colors tracking-widest py-2">
               TOOLS
             </button>
             {toolsOpen && (
-              <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded shadow-lg min-w-[140px] z-[100]">
-                {toolItems.map(t => (
-                  <Link key={t.href} href={t.href} onClick={() => setToolsOpen(false)}
-                    className="block px-4 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors tracking-wider">
-                    {t.label}
-                  </Link>
-                ))}
+              <div className="absolute top-full left-0 pt-0 z-[100]">
+                <div className="py-1 bg-bg-primary border border-border rounded shadow-lg min-w-[160px]">
+                  {toolItems.map(ti => (
+                    <Link key={ti.href} href={ti.href} onClick={() => setToolsOpen(false)}
+                      className="block px-4 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors tracking-wider">
+                      {ti.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
