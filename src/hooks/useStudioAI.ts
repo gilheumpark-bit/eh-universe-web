@@ -12,6 +12,7 @@ import { canGenerate, incrementGenerationCount } from '@/lib/tier';
 import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
+import { stripEngineArtifacts } from '@/engine/pipeline';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -108,9 +109,10 @@ export function useStudioAI({
         configForAI, directivePrefix + hfcpPrefix + text,
         (chunk) => {
           fullContent += chunk;
+          const displayContent = stripEngineArtifacts(fullContent);
           setSessions(prev => prev.map(s => {
             if (s.id === capturedSessionId) {
-              const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m);
+              const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: displayContent } : m);
               return { ...s, messages: msgs };
             }
             return s;
@@ -127,20 +129,20 @@ export function useStudioAI({
         console.info(`[IP Filter] ${ipCheck.matches.length}건 치환: ${[...new Set(ipCheck.matches.map(m => m.original))].join(', ')}`);
       }
 
+      const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
       incrementGenerationCount();
       // NOD Director analysis
-      const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-      setDirectorReport(analyzeManuscript(dirClean, capturedConfig.publishPlatform));
+      setDirectorReport(analyzeManuscript(finalContent, capturedConfig.publishPlatform));
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId) {
           const msgs = s.messages.map(m =>
             m.id === aiMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
+              ? { ...m, content: finalContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
               : m
           );
           // Auto-collect manuscript on generation complete
-          const cleanText = result.content.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').replace(/\{[^{}]*"(?:grade|metrics)"[^{}]*\}/g, '').trim();
+          const cleanText = finalContent;
           if (cleanText.length > 100) {
             const ep = capturedConfig.episode;
             const existing = (s.config.manuscripts || []).find(m => m.episode === ep);
@@ -169,7 +171,7 @@ export function useStudioAI({
     } finally {
       // 3-pass canvas mode: auto-inject on pass completion
       if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
-        const clean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
+        const clean = stripEngineArtifacts(fullContent);
         if (clean) setCanvasContent(clean);
         setWritingMode('canvas');
       }
@@ -218,9 +220,10 @@ export function useStudioAI({
         configForChat, userMsg.content,
         (chunk) => {
           fullContent += chunk;
+          const displayContent = stripEngineArtifacts(fullContent);
           setSessions(prev => prev.map(s => {
             if (s.id === capturedSessionId2) {
-              const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: fullContent } : m);
+              const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: displayContent } : m);
               return { ...s, messages: msgs };
             }
             return s;
@@ -236,13 +239,14 @@ export function useStudioAI({
         fullContent = ipCheck.filtered;
       }
 
+      const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId2) {
           const msgs = s.messages.map(m => {
             if (m.id !== assistantMsgId) return m;
-            const updatedVersions = [...(m.versions ?? []), fullContent];
-            return { ...m, content: fullContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
+            const updatedVersions = [...(m.versions ?? []), finalContent];
+            return { ...m, content: finalContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
           });
           return { ...s, messages: msgs };
         }

@@ -7,20 +7,11 @@
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isServerProviderId, resolveServerProviderKey } from '@/lib/server-ai';
 
 // ============================================================
 // PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
-
-const ENV_KEYS: Record<string, string | undefined> = {
-  gemini:  process.env.GEMINI_API_KEY,
-  openai:  process.env.OPENAI_API_KEY,
-  claude:  process.env.CLAUDE_API_KEY,
-  groq:    process.env.GROQ_API_KEY,
-  mistral: process.env.MISTRAL_API_KEY,
-};
-
-const VALID_PROVIDERS = new Set(['gemini', 'openai', 'claude', 'groq', 'mistral']);
 const MAX_REQUEST_BYTES = 1_048_576; // 1MB
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
@@ -199,7 +190,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Input validation
-    if (!provider || typeof provider !== 'string' || !VALID_PROVIDERS.has(provider)) {
+    if (!isServerProviderId(provider)) {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
     if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
@@ -213,7 +204,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolve API key: client BYOK > server env
-    const apiKey = (typeof clientKey === 'string' && clientKey) || ENV_KEYS[provider];
+    const apiKey = resolveServerProviderKey(provider, clientKey);
     if (!apiKey) {
       return NextResponse.json(
         { error: 'API key not configured. Set via BYOK or server environment variable.' },

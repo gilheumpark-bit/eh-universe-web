@@ -111,6 +111,8 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
 };
 
 export const PROVIDER_LIST = Object.values(PROVIDERS);
+const LEGACY_PROVIDER_KEY = "eh-active-provider";
+const LEGACY_MODEL_KEY = "eh-active-model";
 
 // Preview/experimental model detection
 const PREVIEW_PATTERNS = ["preview", "nano", "experimental", "beta"];
@@ -160,11 +162,16 @@ function deobfuscateKey(stored: string): string {
 
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
-  return (localStorage.getItem("noa_active_provider") as ProviderId) || "gemini";
+  const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
+  const provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "gemini";
+  localStorage.setItem("noa_active_provider", provider);
+  localStorage.removeItem(LEGACY_PROVIDER_KEY);
+  return provider;
 }
 
 export function setActiveProvider(id: ProviderId): void {
   localStorage.setItem("noa_active_provider", id);
+  localStorage.removeItem(LEGACY_PROVIDER_KEY);
 }
 
 export function getApiKey(providerId: ProviderId): string {
@@ -178,13 +185,36 @@ export function setApiKey(providerId: ProviderId, key: string): void {
   localStorage.setItem(def.storageKey, obfuscateKey(key));
 }
 
+function getStoredModelForProvider(providerId: ProviderId): string {
+  if (typeof window === "undefined") return PROVIDERS[providerId].defaultModel;
+
+  const stored = localStorage.getItem("noa_active_model") || localStorage.getItem(LEGACY_MODEL_KEY);
+  const provider = PROVIDERS[providerId];
+  const model = stored && provider.models.includes(stored) ? stored : provider.defaultModel;
+
+  if (providerId === getActiveProvider()) {
+    localStorage.setItem("noa_active_model", model);
+  }
+  localStorage.removeItem(LEGACY_MODEL_KEY);
+  return model;
+}
+
 export function getActiveModel(): string {
-  if (typeof window === "undefined") return PROVIDERS.gemini.defaultModel;
-  return localStorage.getItem("noa_active_model") || PROVIDERS[getActiveProvider()].defaultModel;
+  return getStoredModelForProvider(getActiveProvider());
+}
+
+export function getPreferredModel(providerId: ProviderId): string {
+  const activeProvider = getActiveProvider();
+  return activeProvider === providerId
+    ? getStoredModelForProvider(providerId)
+    : PROVIDERS[providerId].defaultModel;
 }
 
 export function setActiveModel(model: string): void {
-  localStorage.setItem("noa_active_model", model);
+  const provider = getActiveProvider();
+  const safeModel = PROVIDERS[provider].models.includes(model) ? model : PROVIDERS[provider].defaultModel;
+  localStorage.setItem("noa_active_model", safeModel);
+  localStorage.removeItem(LEGACY_MODEL_KEY);
 }
 
 // ============================================================

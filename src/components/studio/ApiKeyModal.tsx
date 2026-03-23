@@ -18,6 +18,7 @@ import {
 
 interface ApiKeyModalProps {
   language: AppLanguage;
+  hostedProviders?: Partial<Record<ProviderId, boolean>>;
   onClose: () => void;
   onSave: (key: string) => void;
 }
@@ -26,7 +27,7 @@ interface ApiKeyModalProps {
 // PART 1: COMPONENT
 // ============================================================
 
-const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) => {
+const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, onClose, onSave }) => {
   const isKO = language === 'KO';
   const t = createT(language);
 
@@ -46,6 +47,16 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
 
   const currentProvider = PROVIDERS[activeId];
   const currentKey = keys[activeId] || '';
+  const hostedReady = Boolean(hostedProviders?.[activeId]);
+  const hostedGeminiReady = Boolean(hostedProviders?.gemini);
+  const subtitle = hostedReady
+    ? (isKO ? '기본 AI 사용 가능 · 원하면 개인 키 추가' : 'Base AI ready · add your own key anytime')
+    : 'Bring Your Own Key';
+  const helperCopy = hostedGeminiReady
+    ? (isKO
+      ? '기본 Gemini가 준비되어 있어 바로 시작할 수 있어요. 개인 키를 추가하면 모델 선택과 사용량을 직접 관리할 수 있습니다.'
+      : 'Hosted Gemini is ready, so you can start immediately. Add your own key if you want direct model control and personal usage management.')
+    : t('apiKeyModal.geminiRecommend');
 
   // ============================================================
   // PART 2: HANDLERS
@@ -103,7 +114,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
             <div>
               <h3 id="api-key-modal-title" className="font-black text-base">{t('apiKeyModal.title')}</h3>
               <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-wider uppercase">
-                Bring Your Own Key
+                {subtitle}
               </p>
             </div>
           </div>
@@ -116,7 +127,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
         <div className="flex items-start gap-2 px-3 py-2 bg-accent-blue/5 border border-accent-blue/20 rounded-lg">
           <span className="text-accent-blue text-xs mt-0.5">💡</span>
           <p className="text-[10px] text-text-secondary leading-relaxed">
-            {t('apiKeyModal.geminiRecommend')}
+            {helperCopy}
           </p>
         </div>
 

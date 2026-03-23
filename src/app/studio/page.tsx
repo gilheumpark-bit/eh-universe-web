@@ -50,13 +50,18 @@ const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
+const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
+import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import Link from 'next/link';
-import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
+import { FileText, Map, Cloud, CloudOff, Wand2 } from 'lucide-react';
 import { syncAllProjects } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
-import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
+
+type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
+const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
 
 export default function StudioPage() {
   // ============================================================
@@ -87,6 +92,11 @@ export default function StudioPage() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
+  const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
+
+  const [showQuickStartModal, setShowQuickStartModal] = useState(false);
+  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,7 +106,20 @@ export default function StudioPage() {
 
   // API 키 존재 여부 (렌더링용, hydrated 이후만 체크, apiKeyVersion으로 갱신 트리거)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const hasApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(getActiveProvider());
+  const activeProviderId = getActiveProvider();
+  const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(activeProviderId);
+  const hasAiAccess = hydrated && (hasLocalApiKey || Boolean(hostedProviders[activeProviderId]));
+  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || Boolean(hostedProviders.gemini));
+  const showAiLock = aiCapabilitiesLoaded && !hasAiAccess;
+  const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
+  const apiBannerMessage = Boolean(hostedProviders[activeProviderId])
+    ? (isKO
+      ? '기본 AI가 준비되어 있어요. 바로 써보고, 원하면 개인 키를 추가하세요.'
+      : 'Base AI is ready. Start now, and add your own key anytime.')
+    : t('ui.apiKeyBanner');
+  const apiSetupLabel = Boolean(hostedProviders[activeProviderId])
+    ? (isKO ? '개인 키 추가' : 'Add Key')
+    : t('ui.apiKeySetUp');
 
   // UX feature states
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,6 +152,42 @@ export default function StudioPage() {
     if (!hydrated) return;
     setIsSidebarOpen(window.innerWidth >= 768);
     setLightTheme(localStorage.getItem('noa_light_theme') === 'true');
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+
+    const loadCapabilities = async () => {
+      try {
+        const response = await fetch('/api/ai-capabilities', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Capability check failed: ${response.status}`);
+
+        const data = await response.json() as { hosted?: Record<string, unknown> };
+        if (cancelled) return;
+
+        const nextHosted: HostedAiAvailability = {};
+        for (const providerId of PROVIDER_IDS) {
+          nextHosted[providerId] = Boolean(data.hosted?.[providerId]);
+        }
+        setHostedProviders(nextHosted);
+      } catch (error) {
+        console.warn('[AI] Capability check failed', error);
+        if (!cancelled) {
+          setHostedProviders({});
+        }
+      } finally {
+        if (!cancelled) {
+          setAiCapabilitiesLoaded(true);
+        }
+      }
+    };
+
+    void loadCapabilities();
+
+    return () => {
+      cancelled = true;
+    };
   }, [hydrated]);
 
   // UX: confirm modal state
@@ -269,11 +328,41 @@ export default function StudioPage() {
   const messageCount = currentSession?.messages?.length ?? 0;
   // NOTE: scroll effect moved after useStudioAI (needs isGenerating)
 
-  const createNewSession = useCallback(() => {
-    doCreateNewSession();
-    setActiveTab('world');
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, [doCreateNewSession]);
+  const createNewSession = useCallback((nextTab: AppTab = 'world') => {
+    const commitNewSession = () => {
+      doCreateNewSession();
+      setActiveTab(nextTab);
+      if (window.innerWidth < 768) setIsSidebarOpen(false);
+    };
+
+    const hasCurrentWork = Boolean(
+      currentSession?.messages.some(message => message.content.trim()) ||
+      editDraft.trim() ||
+      currentSession?.config.title?.trim() ||
+      currentSession?.config.synopsis?.trim() ||
+      currentSession?.config.setting?.trim() ||
+      currentSession?.config.povCharacter?.trim()
+    );
+
+    if (!hasCurrentWork) {
+      commitNewSession();
+      return;
+    }
+
+    showConfirm({
+      title: language === 'KO' ? '새로운 소설 시작' : 'Start New Story',
+      message: language === 'KO'
+        ? '현재 작업이 초기화됩니다. 진행하시겠습니까?'
+        : 'Current work will be reset. Do you want to continue?',
+      confirmLabel: language === 'KO' ? '진행' : 'Continue',
+      cancelLabel: t('confirm.cancel'),
+      variant: 'warning',
+      onConfirm: () => {
+        closeConfirm();
+        commitNewSession();
+      },
+    });
+  }, [closeConfirm, currentSession, doCreateNewSession, editDraft, language, showConfirm, t]);
 
   const createDemoSession = useCallback(() => {
     const isKO = language === 'KO';
@@ -307,6 +396,71 @@ export default function StudioPage() {
     }, 50);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [language, doCreateNewSession, updateCurrentSession]);
+
+  const handleQuickStart = async (genre: Genre, userPrompt: string) => {
+    if (showQuickStartLock) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    setIsQuickGenerating(true);
+    try {
+      const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
+      const config: StoryConfig = {
+        ...INITIAL_CONFIG,
+        title: world.title,
+        genre: genre,
+        synopsis: world.synopsis,
+        povCharacter: world.povCharacter,
+        setting: world.setting,
+        primaryEmotion: world.primaryEmotion,
+        corePremise: world.corePremise,
+        powerStructure: world.powerStructure,
+        currentConflict: world.currentConflict,
+      };
+
+      const characters = await generateCharacters(config, language);
+      config.characters = characters;
+
+      // Create session and set it up
+      const newSessionId = `s-${Date.now()}`;
+      const newSession: ChatSession = {
+        id: newSessionId,
+        title: config.title,
+        config: config,
+        messages: [],
+        lastUpdate: Date.now(),
+      };
+
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentSessionId(newSessionId);
+      setActiveTab('writing');
+      setShowQuickStartModal(false);
+
+      // Trigger first generation
+      setTimeout(() => {
+        doHandleSend(`${userPrompt}\n\n첫 장면을 써줘.`, '', () => {});
+      }, 500);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '';
+      if (/401|api key|not configured/i.test(errorMessage)) {
+        setShowApiKeyModal(true);
+      } else {
+        console.error("Quick Start Failed:", err);
+        setUxError({ error: err });
+      }
+    } finally {
+      setIsQuickGenerating(false);
+    }
+  };
+
+  const openQuickStart = useCallback(() => {
+    if (showQuickStartLock) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    setShowQuickStartModal(true);
+  }, [showQuickStartLock]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
     // 수동 편집 중 탭 전환 시 미저장 경고
@@ -518,7 +672,7 @@ export default function StudioPage() {
             )}
           </div>
 
-          <button onClick={createNewSession} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
+          <button onClick={() => createNewSession()} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
             <Plus className="w-4 h-4" /> {t('sidebar.newProject')}
           </button>
 
@@ -746,12 +900,12 @@ export default function StudioPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {/* API 키 미설정 안내 배너 */}
-            {hydrated && !hasApiKey && !localStorage.getItem('noa_api_banner_dismissed') && (
+            {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !localStorage.getItem('noa_api_banner_dismissed') && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
-                <span className="flex-1">{t('ui.apiKeyBanner')}</span>
+                <span className="flex-1">{apiBannerMessage}</span>
                 <button onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
-                  {t('ui.apiKeySetUp')}
+                  {apiSetupLabel}
                 </button>
                 <button onClick={() => { localStorage.setItem('noa_api_banner_dismissed', '1'); window.dispatchEvent(new Event('storage')); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
                   ✕
@@ -772,7 +926,8 @@ export default function StudioPage() {
                     <OnboardingGuide
                       lang={language === 'KO' ? 'ko' : 'en'}
                       onComplete={() => { window.dispatchEvent(new Event('storage')); }}
-                      onNavigate={(tab) => { createNewSession(); setActiveTab(tab as AppTab); }}
+                      onNavigate={(tab) => { createNewSession(tab as AppTab); }}
+                      onQuickStart={openQuickStart}
                     />
                   ) : (
                     <>
@@ -784,11 +939,14 @@ export default function StudioPage() {
                       </h2>
                       <p className="text-text-tertiary text-sm mb-6">{t('engine.startPrompt')}</p>
                       <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                        <button onClick={createNewSession} className="px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">
-                          {t('ui.setupManually')}
+                        <button onClick={openQuickStart} className={`px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20 flex items-center gap-2 ${showQuickStartLock ? 'opacity-80' : ''}`}>
+                          <Wand2 className="w-4 h-4" /> {isKO ? '쾌속 시작' : 'Quick Start'}{showQuickStartLock && ' · BYOK'}
                         </button>
-                        <button onClick={createDemoSession} className="px-8 py-3 border-2 border-accent-purple/40 text-accent-purple rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:bg-accent-purple/10 hover:scale-105 active:scale-95 transition-all">
-                          {language === 'KO' ? '🚀 데모 체험' : '🚀 Try Demo'}
+                        <button onClick={() => createNewSession()} className="px-8 py-3 border border-border text-text-secondary rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:bg-bg-secondary hover:scale-105 active:scale-95 transition-transform flex items-center gap-2">
+                          <Plus className="w-4 h-4" /> {t('ui.setupManually')}
+                        </button>
+                        <button onClick={createDemoSession} className="px-8 py-3 border border-border text-text-secondary rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:bg-bg-secondary hover:scale-105 active:scale-95 transition-all">
+                          🚀 {language === 'KO' ? '데모 체험' : 'Try Demo'}
                         </button>
                       </div>
                       <p className="text-text-tertiary/50 text-[10px] max-w-sm font-[family-name:var(--font-mono)]">
@@ -1060,14 +1218,14 @@ export default function StudioPage() {
                     )}
 
                     {/* AI / Edit sub-tabs + Directive — show when: has messages, not in default ai mode, or no API key (so manual users can find edit) */}
-                    {(currentSession.messages.length > 0 || writingMode !== 'ai' || !hasApiKey) && (<>
+                    {(currentSession.messages.length > 0 || writingMode !== 'ai' || showAiLock) && (<>
                     <div className="flex gap-1 items-center">
-                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }}
+                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${!hasApiKey && writingMode !== 'ai' ? 'opacity-50' : ''}`}
-                        title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                        🤖 {t('writingMode.draftGen')}{!hasApiKey && ' 🔒'}
+                        } ${showAiLock && writingMode !== 'ai' ? 'opacity-50' : ''}`}
+                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                        🤖 {t('writingMode.draftGen')}{showAiLock && ' 🔒'}
                       </button>
                       <button onClick={() => {
                         setWritingMode('edit');
@@ -1084,15 +1242,15 @@ export default function StudioPage() {
                         }`}>
                         ✏️ {t('writingMode.manualEdit')}
                       </button>
-                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
+                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${!hasApiKey && writingMode !== 'canvas' ? 'opacity-50' : ''}`}
-                        title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                        🎨 {t('writingMode.threeStep')}{!hasApiKey && ' 🔒'}
+                        } ${showAiLock && writingMode !== 'canvas' ? 'opacity-50' : ''}`}
+                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                        🎨 {t('writingMode.threeStep')}{showAiLock && ' 🔒'}
                       </button>
                       <button onClick={() => {
-                        if (!hasApiKey) { setShowApiKeyModal(true); return; }
+                        if (showAiLock) { setShowApiKeyModal(true); return; }
                         setWritingMode('refine');
                         if (!editDraft && currentSession.messages.length > 0) {
                           const allText = currentSession.messages
@@ -1104,16 +1262,16 @@ export default function StudioPage() {
                       }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${!hasApiKey && writingMode !== 'refine' ? 'opacity-50' : ''}`}
-                        title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                        ⚡ {t('writingMode.auto30')}{!hasApiKey && ' 🔒'}
+                        } ${showAiLock && writingMode !== 'refine' ? 'opacity-50' : ''}`}
+                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                        ⚡ {t('writingMode.auto30')}{showAiLock && ' 🔒'}
                       </button>
-                      <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }}
+                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }}
                         className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
                           writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-50' : ''}`}
-                        title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                        🎯 {t('writingMode.advanced')}{!hasApiKey && ' 🔒'}
+                        } ${showAiLock && writingMode !== 'advanced' ? 'opacity-50' : ''}`}
+                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                        🎯 {t('writingMode.advanced')}{showAiLock && ' 🔒'}
                       </button>
                       {writingMode === 'edit' && (
                         <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
@@ -1157,7 +1315,7 @@ export default function StudioPage() {
                                 </button>
                               ))}
                             </div>
-                            {!hasApiKey && (
+                            {showAiLock && (
                               <div className="mt-6 pt-4 border-t border-border/30">
                                 <p className="text-text-tertiary/60 text-[10px] font-[family-name:var(--font-mono)] mb-2">
                                   {t('writingMode.noApiKeyStart')}
@@ -1212,7 +1370,7 @@ export default function StudioPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <p className="text-[10px] text-text-tertiary">
-                            {hasApiKey ? t('writingMode.editDescWithApi') : t('writingMode.editDescNoApi')}
+                            {showAiLock ? t('writingMode.editDescNoApi') : t('writingMode.editDescWithApi')}
                           </p>
                           <div className="flex gap-2">
                             <button onClick={() => {
@@ -1222,7 +1380,7 @@ export default function StudioPage() {
                                 messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg],
                                 title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title
                               });
-                              if (hasApiKey) setWritingMode('ai');
+                              if (!showAiLock) setWritingMode('ai');
                               setEditDraft('');
                             }}
                               className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
@@ -1838,15 +1996,15 @@ export default function StudioPage() {
           <div className={`pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0 transition-[padding] duration-300 ${writingInputDockOffset}`}>
             <div className={`${writingColumnShell} relative`}>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }}
-                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
-                  title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                  {t('engine.nextChapter')}{!hasApiKey && ' 🔒'}
+                <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                  title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                  {t('engine.nextChapter')}{showAiLock && ' 🔒'}
                 </button>
-                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }}
-                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
-                  title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                  {t('engine.plotTwist')}{!hasApiKey && ' 🔒'}
+                <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                  title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                  {t('engine.plotTwist')}{showAiLock && ' 🔒'}
                 </button>
                 {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
                   <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
@@ -1854,23 +2012,23 @@ export default function StudioPage() {
                   </button>
                 )}
                 <span className="text-border">|</span>
-                <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
-                  className={`px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}
-                  title={!hasApiKey ? (t('ui.apiKeyRequired')) : ''}>
-                  {!hasApiKey ? '🔒' : '🎨'} {t('writingMode.openCanvas')}
-                </button>
+                  <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
+                    className={`px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                    title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                    {showAiLock ? '🔒' : '🎨'} {t('writingMode.openCanvas')}
+                  </button>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder={!hasApiKey
+                  placeholder={showAiLock
                     ? t('writingMode.apiKeyPlaceholder')
                     : t('writing.inputPlaceholder')}
-                  className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${!hasApiKey ? 'cursor-not-allowed opacity-60' : ''}`}
+                  className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${showAiLock ? 'cursor-not-allowed opacity-60' : ''}`}
                   rows={1}
-                  disabled={isGenerating || !hasApiKey}
+                  disabled={isGenerating || showAiLock}
                 />
                 {input.length > 0 && (
                   <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
@@ -1892,8 +2050,21 @@ export default function StudioPage() {
         )}
       </main>
 
+      <QuickStartModal 
+        language={language}
+        isOpen={showQuickStartModal}
+        onClose={() => setShowQuickStartModal(false)}
+        onStart={handleQuickStart}
+        isGenerating={isQuickGenerating}
+      />
+
       {showApiKeyModal && (
-        <ApiKeyModal language={language} onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }} onSave={() => setApiKeyVersion(v => v + 1)} />
+        <ApiKeyModal
+          language={language}
+          hostedProviders={hostedProviders}
+          onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
+          onSave={() => setApiKeyVersion(v => v + 1)}
+        />
       )}
 
       {/* UX: Confirm Modal */}

@@ -79,7 +79,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             NOW — Narrative Origin Writer
           </span>
         )}
-        <div className={`transition-all ${
+        <div className={`overflow-hidden transition-all ${
           isUser
             ? 'bg-zinc-900/80 border border-zinc-800 px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-zinc-300'
             : 'bg-transparent text-zinc-200'
@@ -87,7 +87,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
           {isUser ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{mainContent}</p>
           ) : (
-            <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-p:font-serif prose-p:text-zinc-300 prose-p:leading-[1.8]">
+            <div className="prose prose-sm sm:prose-base prose-invert max-w-none break-words prose-p:font-serif prose-p:text-zinc-300 prose-p:leading-[1.8]">
               <ReactMarkdown
                 skipHtml
                 rehypePlugins={[rehypeSanitize]}
@@ -95,7 +95,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                 components={{
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
                   h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,
-                  hr: () => <div className="my-10 h-px bg-zinc-900"></div>
+                  hr: () => <div className="my-10 h-px bg-zinc-900"></div>,
+                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-xs text-zinc-300" {...props} />,
+                  code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
                 }}
               >
                 {mainContent}

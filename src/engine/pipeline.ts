@@ -609,8 +609,32 @@ export function postProcessResponse(
   platform: PlatformType = PlatformType.MOBILE
 ): { content: string; report: EngineReport } {
   const report = generateEngineReport(text, config, language, platform);
+  return { content: stripEngineArtifacts(text), report };
+}
 
-  // Strip JSON metrics blocks from content
+function stripTrailingReportJson(text: string): string {
+  const gradeIndex = text.lastIndexOf('"grade"');
+  if (gradeIndex === -1 || !/"metrics"\s*:/.test(text.slice(gradeIndex))) {
+    return text;
+  }
+
+  for (let braceIndex = text.lastIndexOf('{', gradeIndex); braceIndex >= 0; braceIndex = text.lastIndexOf('{', braceIndex - 1)) {
+    const candidate = text.slice(braceIndex).trim();
+    if (!candidate.startsWith('{')) continue;
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === 'object' && 'grade' in parsed && 'metrics' in parsed) {
+        return text.slice(0, braceIndex).trimEnd();
+      }
+    } catch {
+      // keep scanning earlier braces until a valid trailing report object is found
+    }
+  }
+
+  return text;
+}
+
+export function stripEngineArtifacts(text: string): string {
   let clean = text
     .replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '')
     .replace(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*"(?:grade|metrics|critique|tension|eos(?:_score|Score)?|pacing|immersion)"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '')
@@ -619,11 +643,13 @@ export function postProcessResponse(
     .replace(/^\s*"(?:grade|metrics|tension|pacing|immersion|eos)"[\s:].*/gm, '');
 
   // Strip AI engine prefixes (e.g. "알겠습니다, 작가님...", "네, 이어서 작성하겠습니다...")
+  clean = stripTrailingReportJson(clean);
+
   clean = clean
     .replace(/^(?:알겠습니다[,.]?\s*작가님[.!]?\s*|네[,.]?\s*(?:이어서|계속|작성|시작)\s*(?:하겠습니다|합니다|할게요)[.!]?\s*|(?:Sure|Okay|Got it)[,.]?\s*(?:I'll|Let me)\s*(?:continue|start|write)[.!]?\s*)/i, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  return { content: clean, report };
+  return clean;
 }
 
