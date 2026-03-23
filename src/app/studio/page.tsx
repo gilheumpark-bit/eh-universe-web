@@ -78,6 +78,10 @@ export default function StudioPage() {
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
+  const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('noa_studio_mode') as 'guided' | 'free') || 'guided';
+    return 'guided';
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -458,7 +462,7 @@ export default function StudioPage() {
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
       {/* Mobile bottom tab bar */}
-      <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} />
+      <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
 
       {/* Sidebar */}
       <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${focusMode ? '-translate-x-full md:translate-x-0 md:w-0' : isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
@@ -467,7 +471,7 @@ export default function StudioPage() {
             <Zap className="w-6 h-6 text-accent-purple" />
             <div>
               <h1 className="text-lg font-black italic tracking-tighter font-[family-name:var(--font-mono)]">NOA STUDIO</h1>
-              <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase">← EH UNIVERSE</span>
+              <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase">← EH UNIVERSE</span>
             </div>
           </Link>
           {/* Project Selector */}
@@ -493,7 +497,7 @@ export default function StudioPage() {
                   </button>
                 </div>
                 {currentProject && (
-                  <div className="flex gap-1 text-[8px] font-[family-name:var(--font-mono)]">
+                  <div className="flex gap-1 text-[10px] font-[family-name:var(--font-mono)]">
                     <button onClick={() => {
                       const name = window.prompt(t('project.renameProject'), currentProject.name);
                       if (name) renameProject(currentProject.id, name);
@@ -511,18 +515,33 @@ export default function StudioPage() {
             <Plus className="w-4 h-4" /> {t('sidebar.newProject')}
           </button>
 
+          {/* Mode toggle */}
+          <div className="flex items-center justify-between mb-3 px-2">
+            <span className="text-[11px] font-bold text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
+              {studioMode === 'guided' ? (language === 'KO' ? '가이드' : 'Guided') : (language === 'KO' ? '자유' : 'Free')}
+            </span>
+            <button type="button" onClick={() => {
+              const next = studioMode === 'guided' ? 'free' : 'guided';
+              setStudioMode(next);
+              localStorage.setItem('noa_studio_mode', next);
+            }} className={`relative w-10 h-5 rounded-full transition-colors ${studioMode === 'free' ? 'bg-accent-purple' : 'bg-border'}`}
+              aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}>
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${studioMode === 'free' ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+
           <nav className="space-y-1">
             {([
-              { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio') },
-              { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio') },
-              { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook') },
-              { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode') },
-              { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio') },
-              { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript') },
-              { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives') },
-              { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide' },
-            ]).map(({ tab, icon: Icon, label }) => (
-              <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
+              { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true },
+              { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true },
+              { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true },
+              { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false },
+              { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false },
+              { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false },
+              { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false },
+              { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true },
+            ]).filter(item => studioMode === 'free' || item.guided).map(({ tab, icon: Icon, label }) => (
+              <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
                 <Icon className="w-4 h-4" /> {label}
               </button>
             ))}
@@ -532,42 +551,42 @@ export default function StudioPage() {
         <div className="mt-auto p-6 border-t border-border space-y-3">
           {/* Export / Import */}
           <div className="flex gap-1.5">
-            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
               <Download className="w-3 h-3" /> TXT
             </button>
-            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
               <Download className="w-3 h-3" /> JSON
             </button>
-            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
               <Upload className="w-3 h-3" /> {t('export.import')}
             </button>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
           </div>
           <div className="flex gap-1.5">
-            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
               <FileText className="w-3 h-3" /> EPUB
             </button>
-            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
               <FileType className="w-3 h-3" /> DOCX
             </button>
           </div>
-          <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+          <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
             {t('export.fullBackup')}
           </button>
           {/* Auth */}
           <div className="flex items-center gap-2 py-1">
             {user ? (
               <>
-                <div className="w-6 h-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-[9px] font-bold text-accent-purple overflow-hidden">
+                <div className="w-6 h-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-[11px] font-bold text-accent-purple overflow-hidden">
                   {user.photoURL ? <Image src={user.photoURL} alt="" width={24} height={24} className="w-full h-full object-cover" /> : user.displayName?.[0] || '?'}
                 </div>
-                <span className="text-[9px] text-text-secondary truncate flex-1">{user.displayName || user.email}</span>
+                <span className="text-[11px] text-text-secondary truncate flex-1">{user.displayName || user.email}</span>
                 <button onClick={() => showConfirm({
                   title: t('confirm.logout'),
                   message: t('confirm.logoutMsg'),
                   variant: 'warning',
                   onConfirm: signOut,
-                })} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{t('confirm.logout')}</button>
+                })} className="text-[10px] text-text-tertiary hover:text-accent-red font-bold">{t('confirm.logout')}</button>
               </>
             ) : (
               <button onClick={() => {
@@ -576,7 +595,7 @@ export default function StudioPage() {
                   return;
                 }
                 signInWithGoogle();
-              }} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
+              }} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
                 🔑 {t('auth.googleLogin')}
               </button>
             )}
@@ -586,7 +605,7 @@ export default function StudioPage() {
             <button
               onClick={handleSync}
               disabled={syncStatus === 'syncing'}
-              className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all border ${
+              className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all border ${
                 syncStatus === 'syncing' ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/30 animate-pulse'
                 : syncStatus === 'done' ? 'bg-accent-green/10 text-accent-green border-accent-green/30'
                 : syncStatus === 'error' ? 'bg-accent-red/10 text-accent-red border-accent-red/30'
@@ -620,7 +639,7 @@ export default function StudioPage() {
       <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
         {focusMode && (
           <button onClick={() => setFocusMode(false)}
-            className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[9px] text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] opacity-30 hover:opacity-100"
+            className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] opacity-30 hover:opacity-100"
             title="F11">
             <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
           </button>
@@ -633,7 +652,7 @@ export default function StudioPage() {
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
               <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
               <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
-              {currentSessionId && <span className={`text-[8px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+              {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -671,7 +690,7 @@ export default function StudioPage() {
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('ui.searchMessages')} autoFocus
               className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
             {searchMatchesEditDraft && (
-              <button onClick={() => setWritingMode('edit')} className="text-[9px] text-accent-green font-bold font-[family-name:var(--font-mono)] shrink-0">
+              <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-[family-name:var(--font-mono)] shrink-0">
                 {t('ui.foundInDraft')}
               </button>
             )}
@@ -925,7 +944,7 @@ export default function StudioPage() {
                         <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
                           {t('applied.appliedSettings')}
                         </span>
-                        <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
+                        <span className="text-[11px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
                       </summary>
                       <div className="px-4 pb-4 space-y-3 text-[10px] border-t border-border pt-3">
                         {/* World */}
@@ -942,7 +961,7 @@ export default function StudioPage() {
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.characters')}</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
                               {currentSession.config.characters.map(c => (
-                                <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                   <span className="font-bold text-text-primary">{c.name}</span>
                                   <span className="text-text-tertiary ml-1">({c.role})</span>
                                   {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
@@ -960,7 +979,7 @@ export default function StudioPage() {
                                 const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
                                 const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
                                 return (
-                                  <span key={i} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                  <span key={i} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                     {from} ⇄ {to} <span className="text-accent-purple">[{r.type}]</span>
                                   </span>
                                 );
@@ -972,7 +991,7 @@ export default function StudioPage() {
                         {currentSession.config.synopsis && (
                           <div>
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.synopsis')}</span>
-                            <p className="text-text-secondary text-[9px] mt-0.5 line-clamp-2 italic">{currentSession.config.synopsis}</p>
+                            <p className="text-text-secondary text-[11px] mt-0.5 line-clamp-2 italic">{currentSession.config.synopsis}</p>
                           </div>
                         )}
                         {/* Scene Direction */}
@@ -981,22 +1000,22 @@ export default function StudioPage() {
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.direction')}</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
                               {currentSession.config.sceneDirection.hooks && currentSession.config.sceneDirection.hooks.length > 0 && (
-                                <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold">
+                                <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[11px] font-bold">
                                   🪝 {t('applied.hook')} {currentSession.config.sceneDirection.hooks.length}
                                 </span>
                               )}
                               {currentSession.config.sceneDirection.goguma && currentSession.config.sceneDirection.goguma.length > 0 && (
-                                <span className="px-2 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[9px] font-bold">
+                                <span className="px-2 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[11px] font-bold">
                                   🍠 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'goguma').length} / 🥤 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'cider').length}
                                 </span>
                               )}
                               {currentSession.config.sceneDirection.cliffhanger && (
-                                <span className="px-2 py-0.5 bg-accent-red/10 text-accent-red rounded text-[9px] font-bold">
+                                <span className="px-2 py-0.5 bg-accent-red/10 text-accent-red rounded text-[11px] font-bold">
                                   🔚 {currentSession.config.sceneDirection.cliffhanger.cliffType}
                                 </span>
                               )}
                               {currentSession.config.sceneDirection.emotionTargets && currentSession.config.sceneDirection.emotionTargets.length > 0 && (
-                                <span className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                                <span className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                   💓 {currentSession.config.sceneDirection.emotionTargets.map(e => e.emotion).join(', ')}
                                 </span>
                               )}
@@ -1008,24 +1027,24 @@ export default function StudioPage() {
                           <div>
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.simulator')}</span>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {currentSession.config.simulatorRef.worldConsistency && <span className="px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[8px] font-bold">✓ {t('applied.consistency')}</span>}
-                              {currentSession.config.simulatorRef.civRelations && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {t('applied.relationsMap')}</span>}
-                              {currentSession.config.simulatorRef.timeline && <span className="px-1.5 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[8px] font-bold">✓ {t('applied.timeline')}</span>}
-                              {currentSession.config.simulatorRef.territoryMap && <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold">✓ {t('applied.map')}</span>}
-                              {currentSession.config.simulatorRef.languageSystem && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {t('applied.language')}</span>}
-                              {currentSession.config.simulatorRef.genreLevel && <span className="px-1.5 py-0.5 bg-accent-red/10 text-accent-red rounded text-[8px] font-bold">✓ {t('applied.genreLv')}</span>}
+                              {currentSession.config.simulatorRef.worldConsistency && <span className="px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[10px] font-bold">✓ {t('applied.consistency')}</span>}
+                              {currentSession.config.simulatorRef.civRelations && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[10px] font-bold">✓ {t('applied.relationsMap')}</span>}
+                              {currentSession.config.simulatorRef.timeline && <span className="px-1.5 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[10px] font-bold">✓ {t('applied.timeline')}</span>}
+                              {currentSession.config.simulatorRef.territoryMap && <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-bold">✓ {t('applied.map')}</span>}
+                              {currentSession.config.simulatorRef.languageSystem && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[10px] font-bold">✓ {t('applied.language')}</span>}
+                              {currentSession.config.simulatorRef.genreLevel && <span className="px-1.5 py-0.5 bg-accent-red/10 text-accent-red rounded text-[10px] font-bold">✓ {t('applied.genreLv')}</span>}
                             </div>
                           </div>
                         )}
                         {/* Quick nav */}
                         <div className="flex gap-2 pt-1">
-                          <button onClick={() => setActiveTab('world')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                          <button onClick={() => setActiveTab('world')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
                             {t('applied.editWorld')}
                           </button>
-                          <button onClick={() => setActiveTab('characters')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                          <button onClick={() => setActiveTab('characters')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
                             {t('applied.editCharacters')}
                           </button>
-                          <button onClick={() => setActiveTab('rulebook')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
+                          <button onClick={() => setActiveTab('rulebook')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
                             {t('applied.editDirection')}
                           </button>
                         </div>
@@ -1090,7 +1109,7 @@ export default function StudioPage() {
                         🎯 {t('writingMode.advanced')}{!hasApiKey && ' 🔒'}
                       </button>
                       {writingMode === 'edit' && (
-                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
+                        <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{t('writingMode.chars')}
                         </span>
                       )}
@@ -1098,7 +1117,7 @@ export default function StudioPage() {
 
                     {/* Prompt Directive — AI에 추가 지시 */}
                     <div className="flex gap-2 items-center">
-                      <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">
+                      <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">
                         💡 {t('writingMode.directive')}
                       </span>
                       <input
@@ -1246,7 +1265,7 @@ export default function StudioPage() {
                             setWritingMode('ai');
                           }}
                         />
-                        <div className="text-[9px] text-zinc-600 font-[family-name:var(--font-mono)]">
+                        <div className="text-[11px] text-zinc-600 font-[family-name:var(--font-mono)]">
                           {t('writingMode.autoRefineGuide')}
                         </div>
                       </div>
@@ -1266,10 +1285,10 @@ export default function StudioPage() {
                           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] ${canvasPass >= 3 ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' : 'bg-bg-secondary text-text-tertiary border border-border'}`}>
                             👁 {canvasPass >= 3 ? '✓' : '3'} {t('canvas.sensory')}
                           </div>
-                          <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                          <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)]">
                             {canvasContent.length.toLocaleString()}{t('writingMode.chars')}
                           </span>
-                          {isGenerating && <span className="text-[9px] text-accent-purple animate-pulse font-[family-name:var(--font-mono)]">{t('canvas.generating')}</span>}
+                          {isGenerating && <span className="text-[11px] text-accent-purple animate-pulse font-[family-name:var(--font-mono)]">{t('canvas.generating')}</span>}
                         </div>
 
                         {/* Custom prompt input */}
@@ -1363,7 +1382,7 @@ export default function StudioPage() {
                             💾 {t('canvas.saveManuscript')}
                           </button>
                         </div>
-                        <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
                           {t('canvas.canvasGuide')}
                         </p>
                       </div>
@@ -1392,7 +1411,7 @@ export default function StudioPage() {
                             {t('writingMode.preciseGenerate')}
                           </button>
                         </div>
-                        <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
                           {t('writingMode.advancedGuide')}
                         </p>
                       </div>
@@ -1459,19 +1478,19 @@ export default function StudioPage() {
                       <div className="mb-6 space-y-3">
                         {projects.length > 1 && (
                           <div className="flex gap-1.5">
-                            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
                               {t('archive.currentProject')}
                             </button>
-                            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
                               {t('archive.allProjects')}
                             </button>
                           </div>
                         )}
                         <div className="flex gap-1.5 flex-wrap">
                           {categories.map(cat => (
-                            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+                            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
                               {cat.label}
-                              <span className="ml-1 text-[8px] opacity-50">
+                              <span className="ml-1 text-[10px] opacity-50">
                                 {cat.key === 'ALL' ? allSessions.length : cat.key === 'WORLD' ? allSessions.filter(s => (s.config.worldSimData?.civs?.length ?? 0) > 0).length : allSessions.filter(s => s.config.genre === cat.key).length}
                               </span>
                             </button>
@@ -1524,21 +1543,21 @@ export default function StudioPage() {
                                 <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
                               )}
                               <div className="flex flex-wrap gap-1.5 mt-1">
-                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
-                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
+                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[10px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
+                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[10px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
                                 {s.messages.length > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
+                                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[10px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
                                 )}
                                 {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
+                                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[10px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
                                     {t('archive.worldLabel')} · {s.config.worldSimData!.civs!.length}
                                   </span>
                                 )}
                                 {archiveScope === 'all' && s._projectName && (
-                                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
+                                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[10px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
                                 )}
                               </div>
-                              <div className="mt-2 text-[8px] text-zinc-600 font-[family-name:var(--font-mono)]">
+                              <div className="mt-2 text-[10px] text-zinc-600 font-[family-name:var(--font-mono)]">
                                 {new Date(s.lastUpdate).toLocaleDateString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
@@ -1596,14 +1615,14 @@ export default function StudioPage() {
                       <div key={slot.id} className="flex items-center gap-2 px-2 py-2 bg-bg-secondary/50 border border-border rounded-lg group hover:border-accent-purple/30 transition-colors">
                         <div className="flex-1 min-w-0">
                           <div className="text-[10px] font-bold text-text-primary truncate">{slot.name}</div>
-                          <div className="text-[8px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
+                          <div className="text-[10px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
                         </div>
                         <button onClick={() => {
                           if (!confirm(`"${slot.name}"${t('confirm.loadSlotMsg')}`)) return;
                           updateCurrentSession({ config: { ...currentSession.config, ...slot.data } });
                           triggerSave();
                         }}
-                          className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
+                          className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
                           {t('saveSlot.load')}
                         </button>
                         <button onClick={() => {
@@ -1620,7 +1639,7 @@ export default function StudioPage() {
                       </div>
                     ))}
                   {(currentSession.config.savedSlots || []).filter(s => s.tab === activeTab || s.tab === 'all').length === 0 && (
-                    <p className="text-[9px] text-text-tertiary italic text-center py-4">
+                    <p className="text-[11px] text-text-tertiary italic text-center py-4">
                       {t('saveSlot.noSavedVersions')}
                     </p>
                   )}
@@ -1629,12 +1648,12 @@ export default function StudioPage() {
                 {/* All slots across tabs */}
                 {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length > 0 && (
                   <details className="group">
-                    <summary className="text-[9px] text-text-tertiary cursor-pointer hover:text-text-secondary">
+                    <summary className="text-[11px] text-text-tertiary cursor-pointer hover:text-text-secondary">
                       {t('saveSlot.otherTabs')} ({(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length})
                     </summary>
                     <div className="mt-1 space-y-1">
                       {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).map(slot => (
-                        <div key={slot.id} className="text-[8px] text-text-tertiary px-2 py-1 bg-bg-primary rounded">
+                        <div key={slot.id} className="text-[10px] text-text-tertiary px-2 py-1 bg-bg-primary rounded">
                           [{slot.tab}] {slot.name}
                         </div>
                       ))}
@@ -1677,7 +1696,7 @@ export default function StudioPage() {
                         currentSession.config.sceneDirection
                           ? 'text-text-tertiary hover:text-text-secondary'
                           : 'text-amber-400 hover:text-amber-300'
-                      }`}>🎬 {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[9px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
+                      }`}>🎬 {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[11px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
                       <div className="mt-1.5 pl-4 space-y-1 min-w-0">
                         {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400 break-words">🪝 {h.desc}</div>)}
                         {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
@@ -1736,7 +1755,7 @@ export default function StudioPage() {
                       <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📐 {t('panel.format')}</summary>
                       <div className="mt-1.5 pl-4 grid grid-cols-2 gap-1">
                         {(tObj.panel?.formatRulesKO as string[] || []).map((r: string, i: number) => (
-                          <div key={i} className="text-[9px] text-text-tertiary"><span className="text-accent-green">✓</span> {r}</div>
+                          <div key={i} className="text-[11px] text-text-tertiary"><span className="text-accent-green">✓</span> {r}</div>
                         ))}
                       </div>
                     </details>
@@ -1842,7 +1861,7 @@ export default function StudioPage() {
                   disabled={isGenerating || !hasApiKey}
                 />
                 {input.length > 0 && (
-                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
+                  <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
                     {input.length}
                   </span>
                 )}
