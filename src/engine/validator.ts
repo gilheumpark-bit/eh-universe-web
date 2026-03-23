@@ -166,6 +166,32 @@ const PUNCT_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래'];
 const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
 
+// Check if a given position in text is inside dialogue quotes.
+// Supports 「」, "", '', "", '' quote pairs.
+function isInsideDialogue(text: string, position: number): boolean {
+  const quoteChars: Array<[string, string]> = [
+    ['「', '」'], ['\u201C', '\u201D'], ['\u2018', '\u2019'], ['"', '"'], ["'", "'"],
+  ];
+  for (const [open, close] of quoteChars) {
+    let depth = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === open) depth++;
+      else if (text[i] === close && depth > 0) depth--;
+      if (i === position && depth > 0) return true;
+    }
+  }
+  return false;
+}
+
+// Check if a word match is part of a longer compound word (surrounded by Korean chars).
+function isCompoundWord(text: string, position: number, wordLength: number): boolean {
+  const before = position > 0 ? text[position - 1] : '';
+  const after = position + wordLength < text.length ? text[position + wordLength] : '';
+  const koreanRange = /[\uAC00-\uD7AF]/;
+  // If both before AND after are Korean chars, it's embedded in a compound
+  return (before !== '' && koreanRange.test(before)) && (after !== '' && koreanRange.test(after));
+}
+
 export function validateCausality(text: string, ruleLevel: number): { fixes: FixRecord[]; issues: ValidationIssue[] } {
   if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
@@ -177,20 +203,29 @@ export function validateCausality(text: string, ruleLevel: number): { fixes: Fix
 
   for (const word of allBanned) {
     const regex = new RegExp(word, 'gi');
-    const matches = text.match(regex);
-    if (matches) {
+    let m: RegExpExecArray | null;
+    let totalCount = 0;
+    let firstPosition = -1;
+    while ((m = regex.exec(text)) !== null) {
+      // Skip if inside dialogue quotes or part of a longer compound word
+      if (isInsideDialogue(text, m.index)) continue;
+      if (isCompoundWord(text, m.index, m[0].length)) continue;
+      totalCount++;
+      if (firstPosition === -1) firstPosition = m.index;
+    }
+    if (totalCount > 0) {
       fixes.push({
         fixType: FixType.CAUSALITY,
         original: word,
         fixed: '',
-        position: text.search(regex),
+        position: firstPosition,
         reason: `[EH v1.4] 인과율 금지어: "${word}" — 논리적 인과관계로 대체 필요`,
         severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
       });
       if (ruleLevel >= 3) {
         issues.push({
           category: 'eh_enforcer',
-          message: `인과율 위반: "${word}" ${matches.length}회 — 시스템 위반 가중치 +2`,
+          message: `인과율 위반: "${word}" ${totalCount}회 — 시스템 위반 가중치 +2`,
           severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
         });
       }
@@ -361,10 +396,19 @@ export function calculateCleanTaste(text: string): { aiTone: number; humanNoise:
 // Sentence Length Variation (같은 길이 3개 연속 금지)
 // ============================================================
 
+// Dialogue quote pairs used for filtering short dialogue from variation checks
+const _DIALOGUE_OPEN_CHARS = /[「『""'']/;
+
 export function validateSentenceVariation(text: string): ValidationIssue[] {
   if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const issues: ValidationIssue[] = [];
-  const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
+  // Filter out sentences that are inside dialogue quotes OR shorter than 5 characters
+  const sentences = text.split(/[.!?。]+/).filter(s => {
+    const trimmed = s.trim();
+    if (trimmed.length < 5) return false; // Skip very short fragments like "응", "아차"
+    if (_DIALOGUE_OPEN_CHARS.test(trimmed[0])) return false; // Skip dialogue lines
+    return true;
+  });
   if (sentences.length < 4) return issues;
 
   let sameCount = 1;
@@ -552,6 +596,28 @@ function normalizeTrademark(t: string): string {
   return t.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '').replace(/\s+/g, '');
 }
 
+// Korean "word boundary" check: the character before/after the match should be
+// whitespace, punctuation, string boundary, or a non-Korean character.
+// This prevents "마리오네트" from matching the "마리오" pattern.
+const _KOREAN_CHAR_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
+
+function isKoreanWordBoundary(text: string, matchStart: number, matchEnd: number): boolean {
+  // Check character BEFORE the match
+  if (matchStart > 0) {
+    const before = text[matchStart - 1];
+    // If the preceding char is Korean, not a boundary
+    if (_KOREAN_CHAR_RE.test(before)) return false;
+  }
+  // Check character AFTER the match
+  if (matchEnd < text.length) {
+    const after = text[matchEnd];
+    // If the following char is Korean (and not a common particle/postposition start),
+    // this is likely a substring of a longer word → false positive
+    if (_KOREAN_CHAR_RE.test(after)) return false;
+  }
+  return true;
+}
+
 export function detectTrademarks(text: string): TrademarkMatch[] {
   if (!text) return [];
   if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
@@ -569,6 +635,8 @@ export function detectTrademarks(text: string): TrademarkMatch[] {
       while ((m = regex.exec(target)) !== null) {
         // Avoid duplicates from normalized scan
         if (target === normalized && matches.some(x => x.original === m![0])) continue;
+        // Korean word boundary check: skip if the match is a substring of a longer Korean word
+        if (!isKoreanWordBoundary(target, m.index, m.index + m[0].length)) continue;
         matches.push({ original: m[0], replacement, category, position: m.index });
       }
     }

@@ -121,12 +121,13 @@ function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string
   const dnaNames = profile.selectedDNA.map(i => isKO ? DNA_NAMES[i] : DNA_NAMES_EN[i]).join(' + ');
   parts.push(`- ${t('pipeline.styleIdentity')}: ${dnaNames}`);
 
-  // Slider parameters
+  // Slider parameters — clamp to valid 1-5 range to prevent out-of-bounds crash
   if (profile.sliders) {
     const sliderParts: string[] = [];
-    for (const [key, val] of Object.entries(profile.sliders)) {
+    for (const [key, rawVal] of Object.entries(profile.sliders)) {
       const meta = SLIDER_LABELS[key];
       if (!meta) continue;
+      const val = Math.max(1, Math.min(5, rawVal));
       const label = isKO ? meta.levels[val - 1] : meta.levelsEN[val - 1];
       sliderParts.push(`${isKO ? meta.name : meta.nameEN}: ${label} (${val}/5)`);
     }
@@ -332,15 +333,20 @@ export function buildSystemInstruction(
     }).join('\n')
     : '  등록된 캐릭터 없음';
 
-  // Character relationships
+  // Character relationships — filter to only include relations where BOTH characters
+  // are within the injectedCharacters list (first 20) to avoid ghost references.
   const REL_LABELS: Record<string, string> = {
     lover: '연인', rival: '라이벌', friend: '친구', enemy: '적',
     family: '가족', mentor: '사제', subordinate: '상하',
   };
-  const charRelations = (config.charRelations && config.charRelations.length > 0)
-    ? config.charRelations.map(r => {
-      const fromName = config.characters.find(c => c.id === r.from)?.name || r.from;
-      const toName = config.characters.find(c => c.id === r.to)?.name || r.to;
+  const injectedCharIds = new Set(injectedCharacters.map(c => c.id));
+  const filteredRelations = (config.charRelations ?? []).filter(
+    r => injectedCharIds.has(r.from) && injectedCharIds.has(r.to)
+  );
+  const charRelations = filteredRelations.length > 0
+    ? filteredRelations.map(r => {
+      const fromName = injectedCharacters.find(c => c.id === r.from)?.name || r.from;
+      const toName = injectedCharacters.find(c => c.id === r.to)?.name || r.to;
       const label = REL_LABELS[r.type] || r.type;
       return `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
     }).join('\n')

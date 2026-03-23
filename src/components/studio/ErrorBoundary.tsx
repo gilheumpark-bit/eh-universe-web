@@ -23,6 +23,13 @@ export class ErrorBoundary extends Component<Props, State> {
     return { error };
   }
 
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[ErrorBoundary] Caught error:', error);
+      console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+    }
+  }
+
   private handleReset = () => {
     this.setState({ error: null });
   };
@@ -41,6 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
         </pre>
         <button
           onClick={this.handleReset}
+          aria-label={t.retry}
           className="px-4 py-2 text-sm rounded-lg bg-accent-purple/20 text-accent-purple hover:bg-accent-purple/30 transition-colors"
         >
           {t.retry}
