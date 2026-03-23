@@ -1,17 +1,19 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu } from 'lucide-react';
+import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 
 interface ChatMessageProps {
   message: Message;
   language?: AppLanguage;
   onRegenerate?: (messageId: string) => void;
+  onAutoFix?: (messageId: string) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onRegenerate }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onRegenerate, onAutoFix }) => {
   const isUser = message.role === 'user';
+  const [showDetail, setShowDetail] = React.useState(false);
 
   // Try structured EngineReport first, fall back to JSON regex extraction
   const report = message.meta?.engineReport ?? null;
@@ -122,6 +124,52 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
               }`}>
                 <Cpu className="w-2.5 h-2.5" /> {(report.serialization.byteSize / 1024).toFixed(1)}KB
               </span>
+            </div>
+          )}
+
+          {/* Detailed Engine Validation Report */}
+          {!isUser && report && (
+            <div className="mt-3">
+              <button onClick={() => setShowDetail(!showDetail)} className="flex items-center gap-1 text-[9px] text-zinc-500 hover:text-zinc-300 transition-colors font-[family-name:var(--font-mono)] uppercase tracking-wider">
+                <ChevronDown className={`w-3 h-3 transition-transform ${showDetail ? 'rotate-180' : ''}`} />
+                {language === 'KO' ? '검증 상세' : 'Validation Detail'}
+              </button>
+              {showDetail && (
+                <div className="mt-2 p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-xl space-y-2 text-[10px] font-[family-name:var(--font-mono)] animate-in fade-in duration-300">
+                  <div className="flex justify-between text-zinc-500">
+                    <span>AI {language === 'KO' ? '톤' : 'Tone'}</span>
+                    <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-zinc-500">
+                    <span>{language === 'KO' ? '텐션 타겟' : 'Tension Target'}</span>
+                    <span>{report.tensionTarget}% → {report.metrics.tension}%</span>
+                  </div>
+                  {report.fixes.length > 0 && (
+                    <div className="border-t border-zinc-800/50 pt-2 space-y-1">
+                      <span className="text-amber-500/80">{report.fixes.length}{language === 'KO' ? '건 수정 제안' : ' fix suggestions'}</span>
+                      {report.fixes.slice(0, 3).map((f, i) => (
+                        <div key={i} className="text-zinc-600 truncate">
+                          {f.reason || `${f.original} → ${f.fixed}`}
+                        </div>
+                      ))}
+                      {report.fixes.length > 3 && <div className="text-zinc-700">+{report.fixes.length - 3}{language === 'KO' ? '건 더' : ' more'}</div>}
+                    </div>
+                  )}
+                  {report.issues.length > 0 && (
+                    <div className="border-t border-zinc-800/50 pt-2 space-y-1">
+                      <span className="text-red-500/80">{report.issues.length}{language === 'KO' ? '건 이슈' : ' issues'}</span>
+                      {report.issues.slice(0, 2).map((iss, i) => (
+                        <div key={i} className="text-zinc-600 truncate">{iss.message}</div>
+                      ))}
+                    </div>
+                  )}
+                  {report.fixes.length > 0 && onAutoFix && (
+                    <button onClick={() => onAutoFix(message.id)} className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-accent-purple text-[10px] font-bold uppercase tracking-wider hover:bg-accent-purple/20 transition-colors">
+                      <Wrench className="w-3 h-3" /> {language === 'KO' ? '자동 수정 적용' : 'Apply Auto-Fix'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
