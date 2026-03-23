@@ -17,7 +17,7 @@ export default function ReferencePage() {
             {en ? "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" : "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
+          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
             <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
             <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
               A Narrative Engine That Prevents Story Collapse — {en ? "4-Page Summary" : "4-Page Summary"}

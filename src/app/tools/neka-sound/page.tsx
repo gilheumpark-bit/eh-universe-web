@@ -304,8 +304,12 @@ export default function NekaSoundPage() {
     <>
       <Header />
       <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
+        <div className="mx-auto max-w-5xl px-4 py-16">
           {/* Doc Header */}
+          <Link href="/archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
+            ← ARCHIVE
+          </Link>
+
           <div className="doc-header rounded-t mb-0">
             <span className="badge badge-blue mr-2">TOOL</span>
             {en

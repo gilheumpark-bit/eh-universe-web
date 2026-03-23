@@ -17,7 +17,7 @@ export default function AboutPage() {
             {en ? "Document Level: PUBLIC — Level 0" : "문서 등급: PUBLIC — Level 0"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
+          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
             <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-8">ABOUT</h1>
 
             <section className="mb-10">

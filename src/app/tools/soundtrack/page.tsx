@@ -173,7 +173,7 @@ export default function SoundtrackPage() {
     <>
       <Header />
       <main className="pt-14">
-        <div className="mx-auto max-w-4xl px-4 py-16">
+        <div className="mx-auto max-w-5xl px-4 py-16">
           <Link
             href="#"
             onClick={(e) => { e.preventDefault(); window.history.length > 1 ? window.history.back() : window.location.href = '/archive'; }}
@@ -189,7 +189,7 @@ export default function SoundtrackPage() {
               : "음향 아카이브: 기밀 | 수신: 비밀조사국"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
+          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
             <h1 className="font-[family-name:var(--font-mono)] text-2xl font-bold tracking-tight mb-2">
               {en ? "EH Universe — Soundtrack" : "EH Universe — 사운드트랙"}
             </h1>
