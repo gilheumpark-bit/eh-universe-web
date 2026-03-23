@@ -175,10 +175,11 @@ export default function SoundtrackPage() {
       <main className="pt-14">
         <div className="mx-auto max-w-4xl px-4 py-16">
           <Link
-            href="/archive"
+            href="#"
+            onClick={(e) => { e.preventDefault(); window.history.length > 1 ? window.history.back() : window.location.href = '/archive'; }}
             className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
           >
-            ← ARCHIVE
+            ← BACK
           </Link>
 
           <div className="doc-header rounded-t mb-0">
