@@ -167,25 +167,30 @@ export function resolveNRG(state: HFCPState, inputText: string): NRGStrategy {
 // PART 6: VERDICT → PROMPT MODIFIER (AI 대화 톤 조절)
 // ============================================================
 
+import type { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
+
 export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, isKO: boolean): string {
+  const language: AppLanguage = isKO ? 'KO' : 'EN';
+  const t = createT(language);
   const parts: string[] = [];
 
   // Verdict-based tone
   switch (verdict) {
     case 'engagement':
-      parts.push(isKO ? '[HFCP 모드: 적극 참여] 친근하고 적극적인 톤으로 답변하세요.' : '[HFCP Mode: Engagement] Respond warmly and proactively.');
+      parts.push(t('hfcpLabels.engagement'));
       break;
     case 'normal_free':
-      parts.push(isKO ? '[HFCP 모드: 자유 응답] 자연스러운 톤으로 답변하세요.' : '[HFCP Mode: Normal] Respond naturally.');
+      parts.push(t('hfcpLabels.normalFree'));
       break;
     case 'normal_analysis':
-      parts.push(isKO ? '[HFCP 모드: 분석] 구조적이고 논리적인 톤으로 답변하세요.' : '[HFCP Mode: Analysis] Respond with structure and logic.');
+      parts.push(t('hfcpLabels.normalAnalysis'));
       break;
     case 'limited':
-      parts.push(isKO ? '[HFCP 모드: 제한] 핵심만 간결하게 답변하세요.' : '[HFCP Mode: Limited] Respond concisely, essentials only.');
+      parts.push(t('hfcpLabels.limited'));
       break;
     case 'silent':
-      parts.push(isKO ? '[HFCP 모드: 침묵] 질문으로만 응답하세요. 직접적인 답변 금지.' : '[HFCP Mode: Silent] Respond with questions only. No direct answers.');
+      parts.push(t('hfcpLabels.silent'));
       break;
   }
 
@@ -193,16 +198,16 @@ export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, 
   if (nrg !== 'normal') {
     switch (nrg) {
       case 'light_variation':
-        parts.push(isKO ? '[NRG: 변형] 이전과 다른 구조로 답변하세요.' : '[NRG: Variation] Use different structure from previous answer.');
+        parts.push(t('hfcpLabels.nrgVariation'));
         break;
       case 'frame_shift':
-        parts.push(isKO ? '[NRG: 프레임 전환] 완전히 다른 관점에서 접근하세요.' : '[NRG: Frame Shift] Approach from a completely different angle.');
+        parts.push(t('hfcpLabels.nrgFrameShift'));
         break;
       case 'perspective_shift':
-        parts.push(isKO ? '[NRG: 시점 전환] 탐색적/비평적 시점으로 답변하세요.' : '[NRG: Perspective Shift] Use exploratory/critical perspective.');
+        parts.push(t('hfcpLabels.nrgPerspectiveShift'));
         break;
       case 'meta_ack':
-        parts.push(isKO ? '[NRG: 메타 인식] "이미 다뤘지만 다른 각도에서" 식으로 시작하세요.' : '[NRG: Meta-Ack] Acknowledge repetition and offer new angle.');
+        parts.push(t('hfcpLabels.nrgMetaAck'));
         break;
     }
   }

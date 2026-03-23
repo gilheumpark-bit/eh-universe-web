@@ -120,34 +120,35 @@ export function detectHallucination(promptLength: number, responseLength: number
 // PART 6: SHADOW → PROMPT BUILDER
 // ============================================================
 
+import type { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
+
 export function buildShadowPrompt(shadow: ShadowState, episode: number, totalEpisodes: number, isKO: boolean): string {
+  const language: AppLanguage = isKO ? 'KO' : 'EN';
+  const t = createT(language);
   const parts: string[] = [];
 
   // Arc state
   const arc = calculateArcPhase(episode, totalEpisodes);
-  parts.push(isKO
-    ? `[아크 상태] ${arc.phase} (진행도: ${Math.round(arc.progress * 100)}%)`
-    : `[Arc State] ${arc.phase} (progress: ${Math.round(arc.progress * 100)}%)`);
+  parts.push(`[${t('shadow.arcState')}] ${arc.phase} (${t('shadow.progress')}: ${Math.round(arc.progress * 100)}%)`);
 
   // Character shadows
   if (shadow.characters.length > 0) {
-    parts.push(isKO ? '[캐릭터 그림자]' : '[Character Shadows]');
+    parts.push(`[${t('shadow.characterShadows')}]`);
     shadow.characters.forEach(c => {
       const drift = detectDrift(c);
-      parts.push(`  ${c.name}: ${isKO ? '감정' : 'emotion'}=${c.emotion}, ${isKO ? '목표' : 'goal'}=${c.goal}, drift=${drift}`);
+      parts.push(`  ${c.name}: ${t('shadow.emotion')}=${c.emotion}, ${t('shadow.goal')}=${c.goal}, drift=${drift}`);
       if (c.unresolvedObservations.length > 0) {
-        parts.push(`    ${isKO ? '미해결 관찰' : 'Unresolved'}: ${c.unresolvedObservations.join(', ')}`);
+        parts.push(`    ${t('shadow.unresolved')}: ${c.unresolvedObservations.join(', ')}`);
       }
     });
   }
 
   // World shadow
   if (shadow.world.location) {
-    parts.push(isKO
-      ? `[세계 상태] ${shadow.world.location} | ${shadow.world.timeMarker} | ${shadow.world.environmentalMood}`
-      : `[World State] ${shadow.world.location} | ${shadow.world.timeMarker} | ${shadow.world.environmentalMood}`);
+    parts.push(`[${t('shadow.worldState')}] ${shadow.world.location} | ${shadow.world.timeMarker} | ${shadow.world.environmentalMood}`);
     if (shadow.world.activeThreats.length > 0) {
-      parts.push(`  ${isKO ? '활성 위협' : 'Active threats'}: ${shadow.world.activeThreats.join(', ')}`);
+      parts.push(`  ${t('shadow.activeThreats')}: ${shadow.world.activeThreats.join(', ')}`);
     }
   }
 
@@ -155,14 +156,10 @@ export function buildShadowPrompt(shadow: ShadowState, episode: number, totalEpi
   const overdue = getOverdueThreads(shadow.threads, episode);
   const highPri = getHighPriorityUnresolved(shadow.threads);
   if (overdue.length > 0) {
-    parts.push(isKO
-      ? `[긴급 복선] 7화 이상 미회수: ${overdue.map(t => t.description).join(', ')}`
-      : `[Urgent Threads] 7+ episodes overdue: ${overdue.map(t => t.description).join(', ')}`);
+    parts.push(`[${t('shadow.urgentThreads')}] ${t('shadow.urgentThreadsDesc')}: ${overdue.map(th => th.description).join(', ')}`);
   }
   if (highPri.length > 0 && arc.phase === 'CLIMAX') {
-    parts.push(isKO
-      ? `[필수 회수] 클라이맥스 아크 — 고우선 복선 반드시 회수: ${highPri.map(t => t.description).join(', ')}`
-      : `[Must Resolve] Climax arc — high priority: ${highPri.map(t => t.description).join(', ')}`);
+    parts.push(`[${t('shadow.mustResolve')}] ${t('shadow.mustResolveDesc')}: ${highPri.map(th => th.description).join(', ')}`);
   }
 
   return parts.length > 0 ? '\n' + parts.join('\n') : '';

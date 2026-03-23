@@ -5,6 +5,7 @@
 import { useCallback } from 'react';
 import { ChatSession, AppLanguage, SavedSlot } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
+import { createT } from '@/lib/i18n';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -47,6 +48,8 @@ export function useStudioExport({
   writingMode,
   editDraft,
 }: UseStudioExportParams) {
+  const t = createT(language);
+
   // Export session as TXT
   const exportTXT = useCallback(() => {
     if (!currentSession) return;
@@ -102,7 +105,7 @@ export function useStudioExport({
         if (Array.isArray(data)) {
           const valid = data.filter(isValidSession);
           if (valid.length === 0) {
-            alert(isKO ? '유효한 세션 데이터가 없습니다.' : 'No valid session data found.');
+            alert(t('studioExport.noValidSession'));
             return;
           }
           setSessions(prev => {
@@ -118,17 +121,17 @@ export function useStudioExport({
           });
           setCurrentSessionId(data.id);
         } else {
-          alert(isKO ? '유효하지 않은 세션 형식입니다. (id, messages 필수)' : 'Invalid session format. (id and messages required)');
+          alert(t('studioExport.invalidFormat'));
           return;
         }
         setActiveTab('writing');
       } catch {
-        alert(isKO ? '유효하지 않은 JSON 파일입니다.' : 'Invalid JSON file.');
+        alert(t('studioExport.invalidJson'));
       }
     };
     reader.readAsText(file);
     e.target.value = '';
-  }, [isKO, setSessions, setCurrentSessionId, setActiveTab]);
+  }, [t, setSessions, setCurrentSessionId, setActiveTab]);
 
   // Print
   const handlePrint = useCallback(() => {
