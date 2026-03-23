@@ -694,15 +694,18 @@ export default function StudioPage() {
                   <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-accent-purple/30 flex items-center justify-center mb-6 backdrop-blur-sm bg-bg-primary/30">
                     <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
                   </div>
-                  <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">{t('engine.noActiveNarrative')}</h2>
-                  <p className="text-text-tertiary text-sm mb-2">{t('engine.startPrompt')}</p>
-                  <p className="text-text-tertiary/50 text-[10px] mb-2 max-w-sm font-[family-name:var(--font-mono)]">
-                    {t('ui.workflowGuide')}
+                  <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">
+                    {isKO ? '첫 소설을 시작해 볼까요?' : 'Ready to write your first story?'}
+                  </h2>
+                  <p className="text-text-tertiary text-sm mb-6">{t('engine.startPrompt')}</p>
+                  <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                    <button onClick={createNewSession} className="px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">
+                      {isKO ? '✍️ 직접 설정하고 시작' : '✍️ Set Up Manually'}
+                    </button>
+                  </div>
+                  <p className="text-text-tertiary/50 text-[10px] max-w-sm font-[family-name:var(--font-mono)]">
+                    {isKO ? '세계관 설계 → 캐릭터 → 연출 → AI 집필 → EPUB 내보내기' : 'World Design → Characters → Direction → AI Writing → EPUB Export'}
                   </p>
-                  <p className="text-text-tertiary/30 text-[9px] mb-8 max-w-sm font-[family-name:var(--font-mono)]">
-                    {t('ui.noApiKeyGuide')}
-                  </p>
-                  <button onClick={createNewSession} className="px-8 py-3 md:px-10 md:py-4 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">{t('sidebar.newProject')}</button>
                 </div>
               </div>
             ) : (

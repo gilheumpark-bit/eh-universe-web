@@ -21,7 +21,20 @@ const stats = {
   ],
 };
 
-const startLinks = {
+const onboardingSteps = {
+  ko: [
+    { href: "/studio", icon: "1️⃣", title: "세계관 설계", desc: "AI가 장르에 맞는 세계관을 생성합니다." },
+    { href: "/studio", icon: "2️⃣", title: "첫 에피소드 집필", desc: "AI와 함께 첫 화를 완성하세요." },
+    { href: "/studio", icon: "3️⃣", title: "EPUB/DOCX 내보내기", desc: "완성된 원고를 바로 출판 형식으로." },
+  ],
+  en: [
+    { href: "/studio", icon: "1️⃣", title: "Design Your World", desc: "AI generates a world matching your genre." },
+    { href: "/studio", icon: "2️⃣", title: "Write Your First Episode", desc: "Complete your first chapter with AI." },
+    { href: "/studio", icon: "3️⃣", title: "Export EPUB/DOCX", desc: "Publish-ready format in one click." },
+  ],
+};
+
+const exploreLinks = {
   ko: [
     { href: "/reference", icon: "📖", title: "EH Open Reference", desc: "4페이지 요약. 여기서 시작." },
     { href: "/rulebook", icon: "📜", title: "EH Rulebook v1.0", desc: "서사 엔진 전문." },
@@ -76,12 +89,17 @@ export default function Home() {
           <p className="max-w-xl font-[family-name:var(--font-document)] text-base text-text-secondary leading-relaxed sm:text-lg">
             &ldquo;{t.hero}&rdquo;
           </p>
+          <p className="max-w-lg font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary tracking-wider leading-relaxed">
+            {lang === "en"
+              ? "World Design → AI Writing → Engine Verification → Export. All in one place."
+              : "세계관 설계 → AI 집필 → 엔진 검증 → 출판. 한 곳에서."}
+          </p>
           <div className="flex flex-wrap justify-center gap-3 pt-4">
-            <Link href="/archive" aria-label="Explore the Universe — browse the archive" className="rounded border border-accent-purple bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-accent-purple transition hover:bg-accent-purple/20 uppercase">
-              Explore the Universe
+            <Link href="/studio" aria-label="Start Writing — open NOA Studio" className="rounded border border-accent-purple bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-accent-purple transition hover:bg-accent-purple/20 uppercase">
+              {lang === "en" ? "Start Writing" : "집필 시작"}
             </Link>
-            <Link href="/rulebook" aria-label="Read the Rulebook" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
-              Read the Rulebook
+            <Link href="/archive" aria-label="Explore the Universe — browse the archive" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
+              Explore the Universe
             </Link>
             <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in new tab)" className="rounded border border-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-widest text-text-secondary transition hover:border-text-tertiary hover:text-text-primary uppercase">
               GitHub
@@ -139,9 +157,23 @@ export default function Home() {
 
       <section className="border-t border-border py-24 px-4">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-12">Get Started</h2>
+          <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-4">{lang === "en" ? "Start in 3 Steps" : "3단계로 시작"}</h2>
+          <p className="text-text-tertiary text-sm mb-10">{lang === "en" ? "From world design to published manuscript — all in NOA Studio." : "세계관 설계부터 출판까지 — NOA Studio 하나로."}</p>
+          <div className="grid gap-4 sm:grid-cols-3 mb-16">
+            {onboardingSteps[lang].map((item) => (
+              <Link key={item.title} href={item.href} className="card-glow group flex items-start gap-4 rounded border border-accent-purple/20 bg-accent-purple/5 p-5 transition hover:border-accent-purple/50 hover:bg-accent-purple/10">
+                <span className="text-2xl">{item.icon}</span>
+                <div>
+                  <h3 className="font-[family-name:var(--font-mono)] text-sm font-semibold text-text-primary group-hover:text-accent-purple transition-colors tracking-wide">{item.title}</h3>
+                  <p className="mt-1 text-xs text-text-secondary">{item.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <h2 className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.3em] text-text-tertiary uppercase mb-8">{lang === "en" ? "Explore the Universe" : "세계관 탐색"}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {startLinks[lang].map((item) => {
+            {exploreLinks[lang].map((item) => {
               const isExternal = item.href.startsWith('http');
               const cls = "card-glow group flex items-start gap-4 rounded border border-border bg-bg-secondary p-5 transition hover:border-accent-purple/50";
               const inner = (<>
