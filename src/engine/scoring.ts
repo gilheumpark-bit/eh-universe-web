@@ -5,6 +5,8 @@ import { validateAITone, validateGeneratedContent, calculateCleanTaste } from '.
 import { calculateByteSize, getTargetByteRange } from './serialization';
 import { detectHallucination, calculateArcPhase } from './shadow';
 
+const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
+
 // ============================================================
 // EOS (Emotion OK Signal) — Ported from ANS 9.2
 // ============================================================
@@ -20,10 +22,14 @@ const SENSORY_KEYWORDS_KO = [
   '거친', '달콤', '쓴', '축축', '바람', '울림', '진동',
 ];
 
-export function calculateEOSScore(text: string): number {
+export function calculateEOSScore(text: string, precomputedSentenceCount?: number): number {
   if (!text || text.length < 100) return 0;
+  // ReDoS prevention
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
 
-  const sentences = text.split(/[.!?。]+/).filter(s => s.trim()).length || 1;
+  const rawCount = precomputedSentenceCount ?? text.split(/[.!?。]+/).filter(s => s.trim()).length;
+  // Edge case: no punctuation — estimate from char count
+  const sentences = (rawCount <= 1 && text.length > 100) ? Math.ceil(text.length / 200) : (rawCount || 1);
 
   // Emotional keyword density
   let emotionCount = 0;
@@ -65,15 +71,25 @@ export function calculateEOSScore(text: string): number {
 // Grade Calculator — Ported from ANS 9.3
 // ============================================================
 
-export function calculateGrade(avgScore: number): string {
-  if (avgScore >= 95) return 'S++';
-  if (avgScore >= 90) return 'S+';
-  if (avgScore >= 85) return 'S';
-  if (avgScore >= 80) return 'A+';
-  if (avgScore >= 75) return 'A';
-  if (avgScore >= 70) return 'B+';
-  if (avgScore >= 65) return 'B';
-  if (avgScore >= 55) return 'C+';
+export function calculateGrade(
+  avgScore: number,
+  tensionTarget?: number,
+  actualTension?: number,
+): string {
+  // Apply tension target delta penalty (30% weight)
+  const tensionDelta = (tensionTarget != null && actualTension != null)
+    ? Math.abs(tensionTarget - actualTension)
+    : 0;
+  const adjustedScore = avgScore - (tensionDelta * 0.3);
+
+  if (adjustedScore >= 95) return 'S++';
+  if (adjustedScore >= 90) return 'S+';
+  if (adjustedScore >= 85) return 'S';
+  if (adjustedScore >= 80) return 'A+';
+  if (adjustedScore >= 75) return 'A';
+  if (adjustedScore >= 70) return 'B+';
+  if (adjustedScore >= 65) return 'B';
+  if (adjustedScore >= 55) return 'C+';
   return 'C';
 }
 
@@ -90,6 +106,8 @@ export function analyzeMetrics(
   if (!text || text.length < 50) {
     return { tension: 0, pacing: 0, immersion: 0 };
   }
+  // ReDoS prevention
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
 
   const sentences = precomputedSentences ?? text.split(/[.!?。]+/).filter(s => s.trim());
   const sentenceCount = precomputedCount ?? (sentences.length > 0 ? sentences.length : Math.max(1, Math.ceil(text.length / 80)));
@@ -135,8 +153,6 @@ export function analyzeMetrics(
 // Full Engine Report
 // ============================================================
 
-const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
-
 export function generateEngineReport(
   text: string,
   config: StoryConfig,
@@ -153,11 +169,13 @@ export function generateEngineReport(
 
   // Single-pass sentence parsing — shared across all analysis functions
   const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
-  // #3 fix: fallback to char-based estimation when no punctuation
-  const sentenceCount = sentences.length > 0 ? sentences.length : Math.max(1, Math.ceil(text.length / 80));
+  // Edge case: no punctuation — estimate sentence count from character length
+  const sentenceCount = (sentences.length <= 1 && text.length > 100)
+    ? Math.ceil(text.length / 200)
+    : (sentences.length || 1);
 
   const metrics = analyzeMetrics(text, config, sentences, sentenceCount);
-  const eosScore = calculateEOSScore(text);
+  const eosScore = calculateEOSScore(text, sentenceCount);
   const aiTone = validateAITone(text);
   const { fixes, issues } = validateGeneratedContent(text, language);
 
@@ -168,7 +186,7 @@ export function generateEngineReport(
   const tensionDelta = Math.abs(tensionTarget - metrics.tension);
   const tensionAlignment = Math.max(0, 100 - tensionDelta);
   const avgScore = (metrics.tension + metrics.pacing + metrics.immersion + eosScore + tensionAlignment) / 5;
-  const grade = calculateGrade(avgScore);
+  const grade = calculateGrade(avgScore, tensionTarget, metrics.tension);
 
   const processingTimeMs = Math.round(performance.now() - startTime);
 

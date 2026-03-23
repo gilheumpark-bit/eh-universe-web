@@ -1,6 +1,8 @@
 import { FixRecord, FixType, Severity, ValidationIssue } from './types';
 import { AppLanguage } from '../lib/studio-types';
 
+const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
+
 // ============================================================
 // AI Tone Validator — Ported from ANS 9.3 Pass2AITone
 // ============================================================
@@ -17,6 +19,7 @@ const AI_TONE_REPLACE_100: Record<string, string> = {
 };
 
 export function validateAITone(text: string): { score: number; fixes: FixRecord[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   let detections = 0;
 
@@ -164,6 +167,7 @@ const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래']
 const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
 
 export function validateCausality(text: string, ruleLevel: number): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   const issues: ValidationIssue[] = [];
 
@@ -206,6 +210,7 @@ const IP_PATTERNS = [
 ];
 
 export function validateStatic(text: string): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   const issues: ValidationIssue[] = [];
 
@@ -256,6 +261,7 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
 // ============================================================
 
 export function applyFormattingRules(text: string): { formatted: string; changes: string[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const changes: string[] = [];
   let result = text;
 
@@ -273,10 +279,13 @@ export function applyFormattingRules(text: string): { formatted: string; changes
   result = result.replace(/(["」』])([^"\n,.])/g, '$1\n$2');
   if (result !== beforeDialogue) changes.push('대화문 줄 분리');
 
-  // 규칙 4: Em dash 삭제
+  // 규칙 4: Em dash — preserve inside dialogue quotes, remove elsewhere
   const beforeDash = result;
-  result = result.replace(/—/g, '');
-  if (result !== beforeDash) changes.push('Em dash(—) 삭제');
+  result = result.replace(/(["「『"][^"」』"]*["」』"])|—/g, (match, dialogue) => {
+    if (dialogue) return dialogue; // preserve em dashes inside quotes
+    return ''; // remove em dashes outside quotes
+  });
+  if (result !== beforeDash) changes.push('Em dash(—) 삭제 (대화문 내 유지)');
 
   // 규칙 6: 말줄임표 통일 — ... → …
   const beforeEllipsis = result;
@@ -323,6 +332,7 @@ export function validateFormattingIssues(text: string): ValidationIssue[] {
 const HUMAN_NOISE_PATTERNS = ['ㅋㅋ', 'ㅎㅎ', '뭐랄까', '그러니까', '아무튼', '진짜', '대박'];
 
 export function calculateCleanTaste(text: string): { aiTone: number; humanNoise: number; balance: number } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const sentences = text.split(/[.!?。]+/).filter(s => s.trim()).length || 1;
 
   // AI Tone score
@@ -352,6 +362,7 @@ export function calculateCleanTaste(text: string): { aiTone: number; humanNoise:
 // ============================================================
 
 export function validateSentenceVariation(text: string): ValidationIssue[] {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const issues: ValidationIssue[] = [];
   const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
   if (sentences.length < 4) return issues;
@@ -543,6 +554,7 @@ function normalizeTrademark(t: string): string {
 
 export function detectTrademarks(text: string): TrademarkMatch[] {
   if (!text) return [];
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   // 2-Track: check both original and normalized (spaces/zero-width removed)
   const normalized = normalizeTrademark(text);
   _TRADEMARK_COMBINED_RE.lastIndex = 0;

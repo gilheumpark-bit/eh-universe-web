@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 
@@ -89,6 +90,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-p:font-serif prose-p:text-zinc-300 prose-p:leading-[1.8]">
               <ReactMarkdown
                 skipHtml
+                rehypePlugins={[rehypeSanitize]}
                 disallowedElements={['script', 'iframe', 'object', 'embed', 'form']}
                 components={{
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
