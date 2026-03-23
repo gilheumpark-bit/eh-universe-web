@@ -1822,6 +1822,11 @@ export default function StudioPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* NOW AI 채팅 */}
+                  <div className="p-4 border-t border-border">
+                    <TabAssistant tab="writing" language={language} config={currentSession.config} />
+                  </div>
                 </div>
               )}
             </aside>
