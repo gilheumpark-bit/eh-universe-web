@@ -217,37 +217,47 @@ async function streamViaProxy(
   if (!reader) throw new Error('No response body');
 
   const decoder = new TextDecoder();
+  const MAX_BUFFER_BYTES = 65_536; // 64KB SSE buffer cap to prevent OOM
   let full = '';
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    // Parse SSE events from proxy
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+      // Guard against unbounded buffer growth
+      if (buffer.length > MAX_BUFFER_BYTES) {
+        buffer = buffer.slice(-MAX_BUFFER_BYTES);
+      }
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const data = trimmed.slice(6);
-      if (data === '[DONE]') continue;
-      try {
-        const json = JSON.parse(data);
-        // Handle different provider formats
-        const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
-          || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
-          || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
-        if (text) {
-          full += text;
-          opts.onChunk(text);
+      // Parse SSE events from proxy
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const json = JSON.parse(data);
+          // Handle different provider formats
+          const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
+            || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
+            || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
+          if (text) {
+            full += text;
+            opts.onChunk(text);
+          }
+        } catch {
+          // Non-JSON SSE data, skip
         }
-      } catch {
-        // Non-JSON SSE data, skip
       }
     }
+  } finally {
+    reader.cancel().catch(() => {});
   }
   return full;
 }

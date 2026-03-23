@@ -87,6 +87,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         <button
           onClick={() => canPrev && onSwitch(currentIndex - 1)}
           disabled={!canPrev}
+          aria-label="이전 버전"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 disabled:opacity-20 transition-colors"
         >
           <ChevronLeft className="w-3 h-3" />
@@ -97,6 +98,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         <button
           onClick={() => canNext && onSwitch(currentIndex + 1)}
           disabled={!canNext}
+          aria-label="다음 버전"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 disabled:opacity-20 transition-colors"
         >
           <ChevronRight className="w-3 h-3" />
@@ -118,6 +120,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
 
         <button
           onClick={handleCopy}
+          aria-label="버전 복사"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors"
         >
           {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}

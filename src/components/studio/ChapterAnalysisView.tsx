@@ -187,7 +187,7 @@ function CopyButton({ text, isKO }: { text: string; isKO: boolean }) {
     setTimeout(() => setCopied(false), 1500);
   }, [text]);
   return (
-    <button onClick={handleCopy} className="p-1.5 rounded bg-bg-tertiary/50 text-text-tertiary hover:text-accent-green transition-colors" title={isKO ? "복사" : "Copy"}>
+    <button onClick={handleCopy} aria-label="복사" className="p-1.5 rounded bg-bg-tertiary/50 text-text-tertiary hover:text-accent-green transition-colors" title={isKO ? "복사" : "Copy"}>
       {copied ? <Check className="w-3 h-3 text-accent-green" /> : <Copy className="w-3 h-3" />}
     </button>
   );

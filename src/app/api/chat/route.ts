@@ -25,13 +25,19 @@ const MAX_REQUEST_BYTES = 1_048_576; // 1MB
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
 
-// Simple in-memory rate limiter (per IP, sliding window)
+// In-memory rate limiter (per IP, sliding window) with size cap
+const RATE_LIMIT_MAX_ENTRIES = 10_000;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
+    // Evict oldest entries if map exceeds cap (LRU-style)
+    if (rateLimitMap.size >= RATE_LIMIT_MAX_ENTRIES) {
+      const firstKey = rateLimitMap.keys().next().value;
+      if (firstKey !== undefined) rateLimitMap.delete(firstKey);
+    }
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
@@ -41,14 +47,12 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // Periodic cleanup to prevent memory leak
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, entry] of rateLimitMap) {
-      if (now > entry.resetAt) rateLimitMap.delete(ip);
-    }
-  }, RATE_LIMIT_WINDOW_MS);
-}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS);
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
@@ -128,12 +132,12 @@ async function streamGemini(
     parts: [{ text: m.content }],
   }));
 
-  // Note: Gemini API requires key as query parameter (no header auth option)
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+  // Use header auth to avoid key leaking in URL/server logs
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents,
       systemInstruction: { parts: [{ text: system }] },
@@ -156,6 +160,16 @@ async function streamGemini(
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF: verify request origin matches host
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (origin && host) {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     // Rate limiting
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
     if (!checkRateLimit(ip)) {
@@ -231,9 +245,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    // Sanitize: strip API keys and sensitive data
+    // Sanitize: strip API keys and sensitive data (covers key=, apikey=, api_key:, etc.)
     const safeMsg = raw
-      .replace(/key[=:]\s*\S+/gi, 'key=[REDACTED]')
+      .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
+      .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
       .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
       .slice(0, 200);
     const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : 500;

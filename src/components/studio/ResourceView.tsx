@@ -126,8 +126,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                 <UserPlus className="w-4 h-4 text-blue-400" /> {t.creator}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsPanelOpen(false)}
+                aria-label="패널 닫기"
                 className="lg:hidden p-2 text-zinc-500 hover:text-white"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -261,8 +262,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           </div>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => removeCharacter(char.id)} 
+                      <button
+                        onClick={() => removeCharacter(char.id)}
+                        aria-label="삭제"
                         className="p-2.5 text-zinc-700 hover:text-red-500 transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />

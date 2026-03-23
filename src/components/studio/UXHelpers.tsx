@@ -144,7 +144,7 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, 
               <p className="text-[10px] text-amber-400/70 mt-2 font-mono">{info.action}</p>
             )}
           </div>
-          <button onClick={onDismiss} className="p-1 text-red-500/50 hover:text-red-400 transition-colors">
+          <button onClick={onDismiss} aria-label="닫기" className="p-1 text-red-500/50 hover:text-red-400 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>

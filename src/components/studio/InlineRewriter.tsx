@@ -238,7 +238,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
             <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
               {isKO ? `선택: ${selection.text.length}자` : `Selected: ${selection.text.length} chars`}
             </span>
-            <button onClick={() => { setShowActions(false); setPreview(null); }} className="p-1 hover:bg-zinc-800 rounded text-zinc-600 hover:text-zinc-400">
+            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-zinc-800 rounded text-zinc-600 hover:text-zinc-400">
               <X className="w-3 h-3" />
             </button>
           </div>

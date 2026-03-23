@@ -85,6 +85,10 @@ export function useProjectManager(language: AppLanguage) {
       if (!ok) {
         const mb = (getStorageUsageBytes() / 1024 / 1024).toFixed(1);
         console.warn(`[NOA] Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
+        // Surface storage-full warning to user via custom event
+        window.dispatchEvent(new CustomEvent('noa:storage-full', {
+          detail: { usageMB: mb },
+        }));
       }
       backupToIndexedDB(projects).catch(() => {});
     }, 500);

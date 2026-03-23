@@ -368,7 +368,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {phase !== 'idle' && (
-            <button onClick={cancel} className="p-1.5 text-zinc-600 hover:text-accent-red transition-colors">
+            <button onClick={cancel} aria-label="취소" className="p-1.5 text-zinc-600 hover:text-accent-red transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}

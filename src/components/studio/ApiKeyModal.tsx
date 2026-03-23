@@ -105,7 +105,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, onClose, onSave }) 
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
+          <button onClick={onClose} aria-label="닫기" className="p-2 hover:bg-bg-secondary rounded-xl transition-colors">
             <X className="w-5 h-5 text-text-tertiary" />
           </button>
         </div>

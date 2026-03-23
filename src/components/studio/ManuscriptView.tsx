@@ -476,10 +476,10 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         >
                           <GitCompare className="w-3 h-3" />
                         </button>
-                        <button onClick={() => startEdit(m)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
+                        <button onClick={() => startEdit(m)} aria-label="편집" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
                           <Edit3 className="w-3 h-3" />
                         </button>
-                        <button onClick={() => deleteManuscript(m.episode)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
+                        <button onClick={() => deleteManuscript(m.episode)} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>

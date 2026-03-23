@@ -110,6 +110,14 @@ export default function StudioPage() {
   // UX: error toast state
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
 
+  // UX: storage-full warning listener
+  const [storageFull, setStorageFull] = useState(false);
+  useEffect(() => {
+    const handler = () => setStorageFull(true);
+    window.addEventListener('noa:storage-full', handler);
+    return () => window.removeEventListener('noa:storage-full', handler);
+  }, []);
+
   // UX: confirm modal state
   const [confirmState, setConfirmState] = useState<{
     open: boolean; title: string; message: string;
@@ -589,7 +597,7 @@ export default function StudioPage() {
                 {isKO ? '✏️ 편집 중 원고에서 발견' : '✏️ Found in draft'}
               </button>
             )}
-            <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
+            <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} aria-label="검색 닫기" className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
           </div>
         )}
 
@@ -599,7 +607,7 @@ export default function StudioPage() {
             <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center">
                 <h3 className="font-black text-sm">{isKO ? '키보드 단축키' : 'Keyboard Shortcuts'}</h3>
-                <button onClick={() => setShowShortcuts(false)}><X className="w-4 h-4 text-text-tertiary" /></button>
+                <button onClick={() => setShowShortcuts(false)} aria-label="닫기"><X className="w-4 h-4 text-text-tertiary" /></button>
               </div>
               <div className="space-y-2 text-xs">
                 {[
@@ -1412,7 +1420,7 @@ export default function StudioPage() {
                               className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
                             >
                               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
-                                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} aria-label="이름 변경" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
                                 {projects.length > 1 && (
                                   <button onClick={(e) => {
                                     e.stopPropagation();
@@ -1427,10 +1435,10 @@ export default function StudioPage() {
                                       const idx = parseInt(choice || '', 10) - 1;
                                       if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
                                     }
-                                  }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
+                                  }} aria-label="이동" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
                                 )}
-                                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
-                                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
                               </div>
                               {renamingSessionId === s.id ? (
                                 <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
@@ -1881,6 +1889,14 @@ export default function StudioPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* UX: Storage full warning */}
+      {storageFull && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
+          <span className="text-sm">{isKO ? '저장 공간이 부족합니다. 오래된 세션을 내보내고 삭제해 주세요.' : 'Storage is full. Please export and delete old sessions.'}</span>
+          <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={isKO ? '닫기' : 'Close'}>&times;</button>
         </div>
       )}
 

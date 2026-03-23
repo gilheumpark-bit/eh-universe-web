@@ -90,8 +90,9 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
           </div>
 
           <div className="flex gap-3 w-full lg:w-auto">
-            <button 
+            <button
               onClick={() => setDraft('')}
+              aria-label="초기화"
               className="p-3 text-zinc-700 hover:text-red-500 transition-colors hidden sm:block"
             >
               <Eraser className="w-5 h-5" />

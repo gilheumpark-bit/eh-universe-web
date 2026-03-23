@@ -615,11 +615,11 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
                 disabled={isStreaming || !getApiKey(getActiveProvider())}
               />
               {isStreaming ? (
-                <button onClick={handleCancel} className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">
+                <button onClick={handleCancel} aria-label="중단" className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">
                   <StopCircle className="w-4 h-4" />
                 </button>
               ) : (
-                <button onClick={handleSend} disabled={!input.trim()} className={`p-2 rounded-xl shrink-0 transition-colors ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}>
+                <button onClick={handleSend} disabled={!input.trim()} aria-label="전송" className={`p-2 rounded-xl shrink-0 transition-colors ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}>
                   <Send className="w-4 h-4" />
                 </button>
               )}
