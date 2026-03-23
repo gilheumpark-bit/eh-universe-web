@@ -8,13 +8,13 @@ import { useLang } from "@/lib/LangContext";
 
 const stats = {
   ko: [
-    { value: "1945~7000", unit: "년", label: "타임라인" },
+    { value: "7000", unit: "년", label: "타임라인" },
     { value: "4", unit: "개 장르", label: "하나의 우주" },
     { value: "200+", unit: "", label: "아티클 아카이브" },
     { value: "1", unit: "", label: "엔진 — EH Rulebook v1.0" },
   ],
   en: [
-    { value: "1945~7000", unit: " yrs", label: "Timeline" },
+    { value: "7000", unit: " yrs", label: "Timeline" },
     { value: "4", unit: " genres", label: "One Universe" },
     { value: "200+", unit: "", label: "Article Archive" },
     { value: "1", unit: "", label: "Engine — EH Rulebook v1.0" },
