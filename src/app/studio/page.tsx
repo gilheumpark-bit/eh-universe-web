@@ -317,10 +317,13 @@ export default function StudioPage() {
   }, [messageCount, isGenerating, activeTab]);
 
   const createNewSession = useCallback(() => {
-    const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
+    const defaultTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
+    const promptTexts: Record<AppLanguage, string> = { KO: "소설 제목을 입력하세요:", EN: "Enter a title for your story:", JP: "小説のタイトルを入力してください:", CN: "请输入小说标题:" };
+    const userTitle = prompt(promptTexts[language], defaultTitles[language]);
+    if (userTitle === null) return; // cancelled
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
-      title: sessionTitles[language],
+      title: userTitle.trim() || defaultTitles[language],
       messages: [],
       config: { ...INITIAL_CONFIG },
       lastUpdate: Date.now()
@@ -1003,12 +1006,15 @@ export default function StudioPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {/* API 키 미설정 안내 배너 */}
-            {hydrated && !localStorage.getItem('noa_api_key') && (
+            {hydrated && !localStorage.getItem('noa_api_key') && !localStorage.getItem('noa_api_banner_dismissed') && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{isKO ? 'AI 기능을 사용하려면 API 키를 설정하세요.' : 'Set your API key to use AI features.'}</span>
                 <button onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
                   {isKO ? '설정하기' : 'Set Up'}
+                </button>
+                <button onClick={() => { localStorage.setItem('noa_api_banner_dismissed', '1'); window.dispatchEvent(new Event('storage')); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
+                  ✕
                 </button>
               </div>
             )}

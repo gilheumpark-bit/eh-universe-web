@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import { useState, useEffect } from "react";
 
 const sections = {
   ko: [
@@ -30,6 +31,24 @@ export default function RulebookPage() {
   const { lang } = useLang();
   const en = lang === "en";
   const secs = sections[lang];
+  const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length > 0) {
+          setActiveId(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    secs.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [secs]);
 
   return (
     <>
@@ -44,7 +63,11 @@ export default function RulebookPage() {
                 </h2>
                 <nav className="space-y-1">
                   {secs.map((s) => (
-                    <a key={s.id} href={`#${s.id}`} className="block py-1.5 px-3 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors font-[family-name:var(--font-mono)]">
+                    <a key={s.id} href={`#${s.id}`} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
+                      activeId === s.id
+                        ? "text-accent-purple bg-accent-purple/10 font-bold border-l-2 border-accent-purple"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+                    }`}>
                       {s.title}
                     </a>
                   ))}

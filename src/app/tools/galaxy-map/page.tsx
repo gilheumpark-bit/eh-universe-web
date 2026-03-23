@@ -135,12 +135,19 @@ function GalaxyMapSVG() {
         <circle key={`e${i}`} cx={x} cy={y} r="1.5" fill="#cc6622" opacity="0.4"/>
       ))}
       {/* Labels */}
-      <text x="250" y="254" fill="#333355" fontSize="10" textAnchor="middle" opacity="0.5">BLACK</text>
-      <text x="250" y="120" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.6">GREEN</text>
-      <text x="385" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.5">BLUE</text>
-      <text x="430" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.5">YELLOW</text>
-      <text x="460" y="420" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.5">AMBER</text>
-      <text x="475" y="470" fill="#cc2222" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.7">RED</text>
+      <text x="250" y="254" fill="#333355" fontSize="10" textAnchor="middle" opacity="0.6">BLACK</text>
+      {/* Right labels */}
+      <text x="385" y="170" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.6">GREEN</text>
+      <text x="420" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.5">BLUE</text>
+      <text x="440" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.5">YELLOW</text>
+      <text x="460" y="400" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.5">AMBER</text>
+      <text x="475" y="460" fill="#cc2222" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.7">RED</text>
+      {/* Left labels (mirrored) */}
+      <text x="115" y="170" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.4">GREEN</text>
+      <text x="80" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.35">BLUE</text>
+      <text x="60" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.35">YELLOW</text>
+      <text x="40" y="400" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.35">AMBER</text>
+      <text x="25" y="460" fill="#cc2222" fontSize="8" textAnchor="middle" opacity="0.5">RED</text>
     </svg>
   );
 }
