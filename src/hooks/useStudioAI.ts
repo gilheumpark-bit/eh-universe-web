@@ -10,7 +10,6 @@ import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp'
 import { EngineReport } from '@/engine/types';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
-import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -63,12 +62,6 @@ export function useStudioAI({
   const handleSend = useCallback(async (customPrompt?: string, inputValue?: string, clearInput?: () => void) => {
     const text = customPrompt || inputValue || '';
     if (!text.trim() || isGenerating || !currentSessionId) return;
-
-    // API key pre-check
-    if (!getApiKey(getActiveProvider())) {
-      setShowApiKeyModal(true);
-      return;
-    }
 
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
@@ -144,8 +137,14 @@ export function useStudioAI({
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
-        console.error(error);
-        setUxError({ error, retry: () => handleSend(text, undefined, undefined) });
+        // Show API key modal when server also has no key (401)
+        const errMsg = error instanceof Error ? error.message : '';
+        if (/401/i.test(errMsg)) {
+          setShowApiKeyModal(true);
+        } else {
+          console.error(error);
+          setUxError({ error, retry: () => handleSend(text, undefined, undefined) });
+        }
       }
     } finally {
       // 3-pass canvas mode: auto-inject on pass completion

@@ -48,7 +48,7 @@ const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGrap
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 import Link from 'next/link';
 import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
-import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
+import { syncAllProjects } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
@@ -126,22 +126,7 @@ export default function StudioPage() {
   }, []);
 
   // ============================================================
-  // AUTO-RESTORE API KEYS ON LOGIN
-  // ============================================================
-  useEffect(() => {
-    if (!user || !accessToken) return;
-    const alreadyHasKey = localStorage.getItem('noa_api_key');
-    if (alreadyHasKey) return;
-    loadApiKeysFromDrive(accessToken).then(restored => {
-      if (restored) {
-        console.log('[Settings] API keys restored from Drive');
-        window.dispatchEvent(new Event('storage'));
-      }
-    });
-  }, [user, accessToken]);
-
-  // ============================================================
-  // SYNC STATE
+  // SYNC STATE (projects only — API keys stay local per device)
   // ============================================================
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
@@ -156,8 +141,6 @@ export default function StudioPage() {
     try {
       const result = await syncAllProjects(token, projects);
       setProjects(result.merged);
-      // Also sync API keys to Drive
-      saveApiKeysToDrive(token).catch(e => console.warn('[Sync] API keys save failed', e));
       setLastSyncTime(Date.now());
       setSyncStatus('done');
       setTimeout(() => setSyncStatus('idle'), 3000);
@@ -171,7 +154,6 @@ export default function StudioPage() {
           try {
             const retryResult = await syncAllProjects(newToken, projects);
             setProjects(retryResult.merged);
-            saveApiKeysToDrive(newToken).catch(e => console.warn('[Sync] API keys save failed', e));
             setLastSyncTime(Date.now());
             setSyncStatus('done');
             setTimeout(() => setSyncStatus('idle'), 3000);
