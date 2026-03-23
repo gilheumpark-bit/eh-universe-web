@@ -14,8 +14,8 @@ interface UseStudioKeyboardOptions {
 export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
   useEffect(() => {
     const tabByFKey: Record<string, AppTab> = {
-      F1: 'world', F2: 'critique', F3: 'characters', F4: 'rulebook',
-      F5: 'writing', F6: 'style', F7: 'manuscript', F8: 'history', F9: 'settings',
+      F1: 'world', F2: 'characters', F3: 'rulebook', F4: 'writing',
+      F5: 'style', F6: 'manuscript', F7: 'history', F8: 'settings',
     };
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;

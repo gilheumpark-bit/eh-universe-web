@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Edit3, Map } from 'lucide-react';
+import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map } from 'lucide-react';
 import type { AppTab, AppLanguage } from '@/lib/studio-types';
 
 interface MobileTabBarProps {
@@ -16,7 +16,6 @@ const LABELS: Record<string, Record<AppLanguage, string>> = {
   writing:    { KO: '집필',   EN: 'Write',   JP: '執筆',   CN: '写作' },
   rulebook:   { KO: '연출',   EN: 'Direct',  JP: '演出',   CN: '导演' },
   more:       { KO: '더보기', EN: 'More',    JP: 'その他', CN: '更多' },
-  critique:   { KO: '비평',   EN: 'Critique', JP: '批評',  CN: '评论' },
   style:      { KO: '문체',   EN: 'Style',   JP: '文体',   CN: '文体' },
   manuscript: { KO: '원고',   EN: 'Script',  JP: '原稿',   CN: '稿件' },
   history:    { KO: '히스토리', EN: 'History', JP: '履歴',  CN: '历史' },
@@ -24,7 +23,6 @@ const LABELS: Record<string, Record<AppLanguage, string>> = {
 };
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
-  { key: 'critique',   icon: Edit3 },
   { key: 'style',      icon: Map },
   { key: 'manuscript', icon: FileText },
   { key: 'history',    icon: History },

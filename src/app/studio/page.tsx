@@ -19,6 +19,7 @@ import { createHFCPState, processHFCPTurn, type HFCPState as HFCPStateType } fro
 import { EngineReport } from '@/engine/types';
 import ChatMessage from '@/components/studio/ChatMessage';
 import PlanningView from '@/components/studio/PlanningView';
+const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
@@ -734,8 +735,7 @@ export default function StudioPage() {
 
           <nav className="space-y-1">
             {([
-              { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
-              { tab: 'critique' as AppTab, icon: Map, label: t.sidebar.worldSimulator },
+              { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldStudio },
               { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
               { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
               { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
@@ -950,7 +950,7 @@ export default function StudioPage() {
                 </button>
               </div>
             )}
-            {!currentSessionId && !['settings', 'history', 'rulebook', 'critique', 'style'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook', 'style'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
                 <div className="absolute inset-0 z-0">
@@ -977,54 +977,35 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <>
-                    <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
-                    <div className="max-w-6xl mx-auto px-4 pb-4">
-                      <TabAssistant tab="world" language={language} config={currentSession.config} />
-                    </div>
-                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
-                      </button>
-                    </div>
-                  </>
-                )}
-                {activeTab === 'critique' && (
-                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'}
-                      synopsis={currentSession?.config.synopsis}
-                      initialData={currentSession?.config.worldSimData}
-                      onSave={(data) => {
-                        if (!currentSessionId || !currentSession) return;
-                        updateCurrentSession({
-                          config: {
-                            ...currentSession.config,
-                            worldSimData: {
-                              civs: data.civs.map(c => ({ name: c.name, era: c.era, color: c.color, traits: c.traits })),
-                              relations: data.relations.map(r => {
-                                const from = data.civs.find(c => c.id === r.from)?.name || '';
-                                const to = data.civs.find(c => c.id === r.to)?.name || '';
-                                return { fromName: from, toName: to, type: r.type };
-                              }),
-                              transitions: data.transitions,
-                              selectedGenre: data.selectedGenre,
-                              selectedLevel: data.selectedLevel,
-                              genreSelections: data.genreSelections,
-                              ruleLevel: data.ruleLevel,
-                            },
+                  <WorldStudioView
+                    language={language}
+                    config={currentSession.config}
+                    setConfig={setConfig}
+                    onStart={() => setActiveTab('writing')}
+                    onSave={triggerSave}
+                    saveFlash={saveFlash}
+                    handleWorldSimChange={(data) => {
+                      if (!currentSessionId || !currentSession) return;
+                      updateCurrentSession({
+                        config: {
+                          ...currentSession.config,
+                          worldSimData: {
+                            civs: data.civs.map((c: { name: string; era: string; color: string; traits: string[] }) => ({ name: c.name, era: c.era, color: c.color, traits: c.traits })),
+                            relations: data.relations.map((r: { from: string; to: string; type: string }) => {
+                              const from = data.civs.find((c: { id: string }) => c.id === r.from)?.name || '';
+                              const to = data.civs.find((c: { id: string }) => c.id === r.to)?.name || '';
+                              return { fromName: from, toName: to, type: r.type };
+                            }),
+                            transitions: data.transitions,
+                            selectedGenre: data.selectedGenre,
+                            selectedLevel: data.selectedLevel,
+                            genreSelections: data.genreSelections,
+                            ruleLevel: data.ruleLevel,
                           },
-                        });
-                      }}
-                    />
-                    <div className="mt-4">
-                      <TabAssistant tab="critique" language={language} config={currentSession?.config ?? null} />
-                    </div>
-                    <div className="flex justify-end mt-4">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
-                      </button>
-                    </div>
-                  </div>
+                        },
+                      });
+                    }}
+                  />
                 )}
                 {activeTab === 'characters' && currentSession && (
                   <>
@@ -1059,7 +1040,7 @@ export default function StudioPage() {
                 {activeTab === 'settings' && (
                   <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
                 )}
-                {/* critique tab rendered above */}
+                {/* world studio (design/simulator/analysis) rendered above */}
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
                     <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}

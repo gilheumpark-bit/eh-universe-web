@@ -14,7 +14,10 @@ export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 
-export type AppTab = 'world' | 'writing' | 'history' | 'critique' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript';
+export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript';
+
+// 세계관 스튜디오 서브탭
+export type WorldSubTab = 'design' | 'simulator' | 'analysis';
 
 export interface PclGuardrails {
   min: number;
