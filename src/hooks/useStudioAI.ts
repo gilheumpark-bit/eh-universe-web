@@ -8,6 +8,8 @@ import {
 } from '@/lib/studio-types';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
+import { canGenerate, incrementGenerationCount } from '@/lib/tier';
+import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, type DirectorReport } from '@/engine/director';
 
@@ -62,6 +64,13 @@ export function useStudioAI({
   const handleSend = useCallback(async (customPrompt?: string, inputValue?: string, clearInput?: () => void) => {
     const text = customPrompt || inputValue || '';
     if (!text.trim() || isGenerating || !currentSessionId) return;
+
+    // Tier gate: check generation limit
+    if (!canGenerate()) {
+      setUxError?.({ error: new Error('Free tier limit reached'), retry: () => {} });
+      return;
+    }
+    incrementGenerationCount();
 
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
@@ -156,6 +165,7 @@ export function useStudioAI({
       }
       setIsGenerating(false);
       abortControllerRef.current = null;
+      trackAIGeneration('unknown', 'unknown', canvasPass > 0 ? 'canvas' : 'ai');
     }
   }, [isGenerating, currentSessionId, currentSession, hfcpState, promptDirective, language, canvasPass, setSessions, updateCurrentSession, setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError]);
 

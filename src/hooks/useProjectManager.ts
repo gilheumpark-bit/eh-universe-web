@@ -5,6 +5,7 @@ import {
 import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-migration';
 import { backupToIndexedDB, restoreFromIndexedDB } from '@/lib/indexeddb-backup';
 import { PlatformType } from '@/engine/types';
+import { trackStudioSessionStart } from '@/lib/analytics';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -177,6 +178,7 @@ export function useProjectManager(language: AppLanguage) {
       setSessions(prev => [newSession, ...prev]);
     }
     setCurrentSessionId(newSession.id);
+    trackStudioSessionStart();
     return newSession.id;
   }, [language, projects.length, setSessions]);
 

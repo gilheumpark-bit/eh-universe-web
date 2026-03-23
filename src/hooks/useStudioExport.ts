@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { ChatSession, AppLanguage, AppTab, SavedSlot } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
+import { trackExport } from '@/lib/analytics';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -155,12 +156,14 @@ export function useStudioExport({
   const handleExportEPUB = useCallback(() => {
     if (!currentSession) return;
     exportEPUB(currentSession);
+    trackExport('epub');
   }, [currentSession]);
 
   // Export as DOCX
   const handleExportDOCX = useCallback(() => {
     if (!currentSession) return;
     exportDOCX(currentSession);
+    trackExport('docx');
   }, [currentSession]);
 
   return {
