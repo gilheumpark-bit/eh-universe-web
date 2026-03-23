@@ -106,8 +106,8 @@ export default function StudioPage() {
   const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
-  // UX: unsaved changes warning
-  useUnsavedWarning(isGenerating);
+  // UX: unsaved changes warning (moved after useStudioAI to avoid TDZ)
+  // see useUnsavedWarning call below useStudioAI
 
   // UX: error toast state
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
@@ -247,11 +247,7 @@ export default function StudioPage() {
   // Hydration + auto-save handled by useProjectManager hook
 
   const messageCount = currentSession?.messages?.length ?? 0;
-  useEffect(() => {
-    if (activeTab === 'writing') {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messageCount, isGenerating, activeTab]);
+  // NOTE: scroll effect moved after useStudioAI (needs isGenerating)
 
   const createNewSession = useCallback(() => {
     doCreateNewSession();
@@ -385,6 +381,16 @@ export default function StudioPage() {
     hfcpState, promptDirective, language, canvasPass,
     setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
   });
+
+  // UX: unsaved changes warning (must be after useStudioAI which provides isGenerating)
+  useUnsavedWarning(isGenerating);
+
+  // Auto-scroll to bottom when generating (moved here — needs isGenerating from useStudioAI)
+  useEffect(() => {
+    if (activeTab === 'writing') {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messageCount, isGenerating, activeTab]);
 
   const handleSend = useCallback((customPrompt?: string) => {
     doHandleSend(customPrompt, input, () => setInput(''));

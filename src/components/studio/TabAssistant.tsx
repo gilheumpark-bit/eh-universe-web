@@ -325,8 +325,8 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
   if (config.title) parts.push(`제목: ${config.title}`);
   if (config.setting) parts.push(`배경: ${config.setting}`);
 
-  // 탭별 심화 컨텍스트
-  switch (tab) {
+  // 탭별 심화 컨텍스트 (critique는 AppTab 외부 모드이므로 string 비교)
+  switch (tab as string) {
     case 'world':
       if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 500)}`);
       if (config.setting) parts.push(`세부 배경: ${config.setting}`);

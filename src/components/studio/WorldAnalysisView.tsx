@@ -142,18 +142,13 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
       ];
 
       let fullResponse = '';
-      await streamChat(
+      await streamChat({
         messages,
-        (chunk: string) => { fullResponse += chunk; },
-        {
-          provider,
-          model: getActiveModel(),
-          apiKey: getApiKey(provider) ?? '',
-          systemPrompt: buildAnalysisPrompt(language),
-          temperature: 0.3,
-          signal: controller.signal,
-        },
-      );
+        onChunk: (chunk: string) => { fullResponse += chunk; },
+        systemInstruction: buildAnalysisPrompt(language),
+        temperature: 0.3,
+        signal: controller.signal,
+      });
 
       // JSON 파싱
       const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);

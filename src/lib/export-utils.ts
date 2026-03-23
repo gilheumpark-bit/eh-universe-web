@@ -189,7 +189,7 @@ export function exportEPUB(session: ChatSession): void {
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="uid">${uid}</dc:identifier>
     <dc:title>${safeTitle}</dc:title>
-    <dc:language>${escapeXml(({ KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh' })[session.config.language ?? 'KO'] ?? 'ko')}</dc:language>
+    <dc:language>${escapeXml(({ KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh' } as Record<string, string>)[(session.config as unknown as Record<string, string>).language ?? 'KO'] ?? 'ko')}</dc:language>
     <dc:creator>NOA Studio</dc:creator>${descMeta}
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z/, 'Z')}</meta>
   </metadata>

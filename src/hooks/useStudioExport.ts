@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import { ChatSession, AppLanguage, SavedSlot } from '@/lib/studio-types';
+import { ChatSession, AppLanguage, AppTab, SavedSlot } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 
@@ -15,7 +15,7 @@ interface UseStudioExportParams {
   currentSessionId: string | null;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>> | ((updater: (prev: ChatSession[]) => ChatSession[]) => void);
   setCurrentSessionId: (id: string | null) => void;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<AppTab>>;
   isKO: boolean;
   language: AppLanguage;
   writingMode: WritingMode;
