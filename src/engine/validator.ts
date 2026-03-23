@@ -97,6 +97,8 @@ const TELL_PATTERNS: Array<{ pattern: RegExp; shows: string[] }> = [
 ];
 
 export function validateQuality(text: string): { showTellIssues: FixRecord[]; repetitionIssues: FixRecord[]; score: number } {
+  // ReDoS prevention
+  if (text.length > 50_000) text = text.slice(0, 50_000);
   const showTellIssues: FixRecord[] = [];
   const repetitionIssues: FixRecord[] = [];
 
@@ -534,18 +536,29 @@ const _TRADEMARK_COMBINED_RE = new RegExp(
   'gi',
 );
 
+// Normalize text for trademark detection: remove zero-width chars, collapse whitespace
+function normalizeTrademark(t: string): string {
+  return t.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '').replace(/\s+/g, '');
+}
+
 export function detectTrademarks(text: string): TrademarkMatch[] {
   if (!text) return [];
-  // Fast path: if combined regex finds nothing, skip individual scans
+  // 2-Track: check both original and normalized (spaces/zero-width removed)
+  const normalized = normalizeTrademark(text);
   _TRADEMARK_COMBINED_RE.lastIndex = 0;
-  if (!_TRADEMARK_COMBINED_RE.test(text)) return [];
+  if (!_TRADEMARK_COMBINED_RE.test(text) && !_TRADEMARK_COMBINED_RE.test(normalized)) return [];
 
   const matches: TrademarkMatch[] = [];
-  for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    let m: RegExpExecArray | null;
-    while ((m = regex.exec(text)) !== null) {
-      matches.push({ original: m[0], replacement, category, position: m.index });
+  // Scan both original and normalized text for trademark matches
+  for (const target of [text, normalized]) {
+    for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
+      const regex = new RegExp(pattern.source, pattern.flags);
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(target)) !== null) {
+        // Avoid duplicates from normalized scan
+        if (target === normalized && matches.some(x => x.original === m![0])) continue;
+        matches.push({ original: m[0], replacement, category, position: m.index });
+      }
     }
   }
   return matches;

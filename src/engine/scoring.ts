@@ -83,14 +83,16 @@ export function calculateGrade(avgScore: number): string {
 
 export function analyzeMetrics(
   text: string,
-  _config: StoryConfig
+  _config: StoryConfig,
+  precomputedSentences?: string[],
+  precomputedCount?: number
 ): { tension: number; pacing: number; immersion: number } {
   if (!text || text.length < 50) {
     return { tension: 0, pacing: 0, immersion: 0 };
   }
 
-  const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
-  const sentenceCount = sentences.length || 1;
+  const sentences = precomputedSentences ?? text.split(/[.!?。]+/).filter(s => s.trim());
+  const sentenceCount = precomputedCount ?? (sentences.length > 0 ? sentences.length : Math.max(1, Math.ceil(text.length / 80)));
 
   // Tension: keyword density + short sentence ratio
   const tensionKeywords = ['위험', '급', '갑자기', '폭발', '비명', '긴장', '전투', '충돌', 'danger', 'explosion', 'scream'];
@@ -133,6 +135,8 @@ export function analyzeMetrics(
 // Full Engine Report
 // ============================================================
 
+const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
+
 export function generateEngineReport(
   text: string,
   config: StoryConfig,
@@ -140,12 +144,19 @@ export function generateEngineReport(
   platform: PlatformType = PlatformType.MOBILE
 ): EngineReport {
   const startTime = performance.now();
+  // Truncate to prevent ReDoS on regex-heavy analysis
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
 
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actPosition = getActFromEpisode(config.episode, totalEpisodes);
   const tensionTarget = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
 
-  const metrics = analyzeMetrics(text, config);
+  // Single-pass sentence parsing — shared across all analysis functions
+  const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
+  // #3 fix: fallback to char-based estimation when no punctuation
+  const sentenceCount = sentences.length > 0 ? sentences.length : Math.max(1, Math.ceil(text.length / 80));
+
+  const metrics = analyzeMetrics(text, config, sentences, sentenceCount);
   const eosScore = calculateEOSScore(text);
   const aiTone = validateAITone(text);
   const { fixes, issues } = validateGeneratedContent(text, language);
@@ -153,7 +164,10 @@ export function generateEngineReport(
   const byteSize = calculateByteSize(text);
   const targetRange = getTargetByteRange(platform);
 
-  const avgScore = (metrics.tension + metrics.pacing + metrics.immersion + eosScore) / 4;
+  // Grade includes tension target alignment penalty
+  const tensionDelta = Math.abs(tensionTarget - metrics.tension);
+  const tensionAlignment = Math.max(0, 100 - tensionDelta);
+  const avgScore = (metrics.tension + metrics.pacing + metrics.immersion + eosScore + tensionAlignment) / 5;
   const grade = calculateGrade(avgScore);
 
   const processingTimeMs = Math.round(performance.now() - startTime);
