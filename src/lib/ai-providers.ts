@@ -282,12 +282,20 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 }
 
 // ============================================================
-// PART 5: TEST KEY
+// PART 5: TEST KEY (all requests via server proxy)
 // ============================================================
 
+const OPENAI_COMPAT_URLS: Partial<Record<ProviderId, string>> = {
+  openai: "https://api.openai.com/v1/chat/completions",
+  groq: "https://api.groq.com/openai/v1/chat/completions",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+};
+
 export async function testApiKey(providerId: ProviderId, key: string): Promise<boolean> {
+  if (!key.trim()) return false;
   try {
     const def = PROVIDERS[providerId];
+
     if (providerId === "gemini") {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: key });
@@ -299,33 +307,33 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
     }
 
     if (providerId === "claude") {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // Route through server proxy to avoid exposing key in browser network tab
+      const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          provider: "claude",
           model: def.defaultModel,
-          max_tokens: 16,
           messages: [{ role: "user", content: def.testPrompt }],
+          max_tokens: 16,
+          apiKey: key,
         }),
       });
       return res.ok;
     }
 
-    // OpenAI-compatible
+    // OpenAI-compatible (OpenAI, Groq, Mistral)
     const url = OPENAI_COMPAT_URLS[providerId];
     if (!url) return false;
-    const res = await fetch(url, {
+    const res = await fetch("/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        provider: providerId,
         model: def.defaultModel,
         messages: [{ role: "user", content: def.testPrompt }],
         max_tokens: 16,
+        apiKey: key,
       }),
     });
     return res.ok;

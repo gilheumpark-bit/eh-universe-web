@@ -20,11 +20,12 @@ interface ResourceViewProps {
   language: AppLanguage;
   config: StoryConfig;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
+  onError?: (message: string) => void;
 }
 
 const ROLE_KEYS = ['hero', 'villain', 'ally', 'extra'] as const;
 
-const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig }) => {
+const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig, onError }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -53,7 +54,8 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
   const handleAutoGenerate = async () => {
     if (!config.synopsis) {
-      alert(({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language]);
+      const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
+      onError?.(msg) ?? console.warn(msg);
       return;
     }
     
@@ -65,7 +67,8 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
         characters: [...prev.characters, ...generated]
       }));
     } catch (_error) {
-      alert("Error generating characters.");
+      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
+      onError?.(msg) ?? console.warn(msg);
     } finally {
       setIsGenerating(false);
     }

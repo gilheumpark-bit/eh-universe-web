@@ -48,6 +48,8 @@ export interface AspectResult {
   /** 이 레벨 독자 시점의 코멘트 */
   comment: { ko: string; en: string };
   severity: 'ok' | 'warn' | 'danger';
+  /** true if this aspect uses a placeholder heuristic (e.g. clicheUsage, foreshadowing) */
+  estimated?: boolean;
 }
 
 export interface GenreLevelReview {
@@ -350,9 +352,9 @@ function metricsToAspectScores(m: TextMetrics): Partial<Record<ReviewAspectKey, 
   // characterEntry: 고유명사 수 (0~100 매핑: 5명 이상이면 100)
   scores.characterEntry = Math.min(100, m.uniqueNames.length * 20);
 
-  // clicheUsage, foreshadowing: 텍스트만으로 정밀 측정 어려움 → 중앙값 50으로 기본 설정
-  scores.clicheUsage = 50;
-  scores.foreshadowing = 50;
+  // clicheUsage, foreshadowing: 텍스트만으로 정밀 측정 어려움 → 중앙값 50 (추정치 표시)
+  scores.clicheUsage = 50;    // [estimated] — heuristic not yet implemented
+  scores.foreshadowing = 50;  // [estimated] — heuristic not yet implemented
 
   // structureIntegrity: 문단 수 대비 전체 길이 균형
   const avgParagraphLen = m.paragraphCount > 0 ? m.totalChars / m.paragraphCount : m.totalChars;
@@ -471,6 +473,7 @@ export function runGenreLevelReview(
     const severity = getSeverity(pos, value, bm.min, bm.max);
     const comment = generateComment(key, pos, level, value, bm.min, bm.max);
 
+    const ESTIMATED_KEYS: ReviewAspectKey[] = ['clicheUsage', 'foreshadowing'];
     aspects.push({
       key,
       label: ASPECT_LABELS[key],
@@ -480,6 +483,7 @@ export function runGenreLevelReview(
       position: pos,
       comment,
       severity,
+      ...(ESTIMATED_KEYS.includes(key) ? { estimated: true } : {}),
     });
 
     // 점수 산정: within=100, warn=60, danger=20

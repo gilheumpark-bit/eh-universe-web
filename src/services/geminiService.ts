@@ -167,9 +167,16 @@ export const generateCharacters = async (config: StoryConfig, language: AppLangu
       }
     });
 
-    const results = JSON.parse(response.text || "[]");
+    let results: unknown[];
+    try {
+      results = JSON.parse(response.text || "[]");
+    } catch {
+      console.error("Character Engine: malformed JSON from AI", response.text?.slice(0, 200));
+      results = [];
+    }
+    if (!Array.isArray(results)) results = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return results.map((c: any) => ({
+    return results.filter((c: any) => c && typeof c.name === 'string').map((c: any) => ({
       ...c,
       id: `c-${Date.now()}-${Math.random()}`
     }));

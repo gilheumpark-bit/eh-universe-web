@@ -18,7 +18,6 @@ import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, processHFCPTurn, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
 import ChatMessage from '@/components/studio/ChatMessage';
-import PlanningView from '@/components/studio/PlanningView';
 const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
@@ -479,6 +478,7 @@ export default function StudioPage() {
     onNewSession: createNewSession,
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
+    disabled: showApiKeyModal || showShortcuts || confirmState.open,
   });
 
   // updateCurrentSession and setConfig provided by useProjectManager hook
@@ -1022,7 +1022,7 @@ export default function StudioPage() {
                     </div>
 
                     {charSubTab === 'characters' ? (
-                      <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
+                      <ResourceView language={language} config={currentSession.config} setConfig={setConfig} onError={(msg) => setUxError({ error: new Error(msg) })} />
                     ) : (
                       <ItemStudioView language={language} config={currentSession.config} setConfig={setConfig} />
                     )}

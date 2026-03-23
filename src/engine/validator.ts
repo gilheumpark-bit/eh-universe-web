@@ -411,6 +411,7 @@ export function validateGeneratedContent(
   language: AppLanguage,
   ruleLevel: number = 1
 ): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (!text) return { fixes: [], issues: [] };
   const allFixes: FixRecord[] = [];
   const allIssues: ValidationIssue[] = [];
 

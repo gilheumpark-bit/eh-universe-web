@@ -9,6 +9,8 @@ interface UseStudioKeyboardOptions {
   onNewSession: () => void;
   onToggleFocus: () => void;
   onToggleShortcuts: () => void;
+  /** When true, suppress all shortcuts (e.g. modal is open) */
+  disabled?: boolean;
 }
 
 export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
@@ -18,6 +20,14 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
       F5: 'style', F6: 'manuscript', F7: 'history', F8: 'settings',
     };
     const handler = (e: KeyboardEvent) => {
+      // Skip shortcuts when modal/dialog is active
+      if (opts.disabled) return;
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+        // Allow F-keys and Ctrl combos even in inputs, but not when a dialog is open
+        const isInDialog = active.closest('[role="dialog"], [data-modal]');
+        if (isInDialog) return;
+      }
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && e.key === 'f') { e.preventDefault(); opts.onToggleSearch(); }
       if (ctrl && e.key === 'e') { e.preventDefault(); opts.onExportTXT(); }

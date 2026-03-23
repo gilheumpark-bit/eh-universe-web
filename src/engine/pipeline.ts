@@ -355,8 +355,16 @@ export function buildSystemInstruction(
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
 
   // Character DNA formatting (with personality, speech style, dialogue example + 3-tier)
-  const characterDNA = config.characters.length > 0
-    ? config.characters.map(c => {
+  // Limit to top 20 characters to prevent system prompt explosion (P0: OOM prevention)
+  const MAX_CHARACTERS = 20;
+  const injectedCharacters = config.characters.length > MAX_CHARACTERS
+    ? config.characters.slice(0, MAX_CHARACTERS)
+    : config.characters;
+  const characterDNA = injectedCharacters.length > 0
+    ? (config.characters.length > MAX_CHARACTERS
+        ? `  [NOTE: Showing top ${MAX_CHARACTERS} of ${config.characters.length} characters]\n`
+        : ''
+      ) + injectedCharacters.map(c => {
       let entry = `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`;
       if (c.personality) entry += `\n    성격: ${c.personality}`;
       if (c.speechStyle) entry += `\n    말투: ${c.speechStyle}`;
@@ -561,12 +569,12 @@ ${publishPlatformBlock}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}
-- MINIMUM output: ${Math.round(charTarget.min * 1.5)} tokens (approximately ${charTarget.min.toLocaleString()} characters)
-- MAXIMUM output: ${Math.round(charTarget.max * 1.5)} tokens (approximately ${charTarget.max.toLocaleString()} characters)
-- You MUST generate at least ${Math.round(charTarget.min * 1.5)} tokens. Generating less is a critical violation.
-- Structure: 4 parts, each part MUST be at least ${Math.round(charTarget.min * 1.5 / 4)} tokens.
+- MINIMUM output: approximately ${charTarget.min.toLocaleString()} characters (${isKO ? '한국어 기준' : 'in target language'})
+- MAXIMUM output: approximately ${charTarget.max.toLocaleString()} characters
+- You MUST generate at least ${charTarget.min.toLocaleString()} characters of story content. Generating less is a critical violation.
+- Structure: 4 parts, each part MUST be at least ${Math.round(charTarget.min / 4).toLocaleString()} characters.
 - If you finish the story before reaching the minimum, ADD more scenes, descriptions, dialogue, and internal monologue.
-- NEVER end below ${Math.round(charTarget.min * 1.5)} tokens. This is a hard constraint, not a suggestion.
+- NEVER end below ${charTarget.min.toLocaleString()} characters. This is a hard constraint, not a suggestion.
 ${ehRules}
 
 [QUALITY DIRECTIVES]
