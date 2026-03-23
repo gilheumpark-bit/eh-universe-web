@@ -144,6 +144,14 @@ export default function NekaSoundPage() {
     };
   }, [tab]);
 
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+    };
+  }, []);
+
   /* ── TTS Logic ── */
   const selectCons = (c: Consonant) => {
     setSelectedCons(c);

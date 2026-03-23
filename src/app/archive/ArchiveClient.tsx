@@ -131,7 +131,7 @@ export default function ArchiveClient() {
     router.push(`/archive?cat=${id}`, { scroll: false });
   }, [router]);
 
-  const currentCategory = categories.find((c) => c.id === activeCategory)!;
+  const currentCategory = categories.find((c) => c.id === activeCategory) ?? categories[0];
 
   return (
     <>

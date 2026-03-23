@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
+      // Clear token when user logs out or session expires
       if (!u) setAccessToken(null);
     });
     return () => unsubscribe();
