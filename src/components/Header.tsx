@@ -19,6 +19,8 @@ const toolItems = [
   { href: "/tools/neka-sound", label: "NEKA SOUND" },
   { href: "/tools/galaxy-map", label: "GALAXY MAP" },
   { href: "/tools/vessel", label: "VESSEL CLASS" },
+  { href: "/tools/warp-gate", label: "WARP GATE" },
+  { href: "/tools/noa-tower", label: "NOA TOWER" },
 ];
 
 export default function Header() {
