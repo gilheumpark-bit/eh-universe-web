@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -295,6 +296,8 @@ interface SceneSheetProps {
 export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');
+  const [showGrammarPanel, setShowGrammarPanel] = useState(false);
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
   const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
   const [emotions, setEmotions] = useState<EmotionPoint[]>(initialDirection?.emotions || []);
@@ -504,11 +507,33 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
     <div className="space-y-4">
       {/* Header */}
       <div className="doc-header rounded-t mb-0 flex items-center justify-between">
-        <div>
-          <span className="badge badge-amber mr-2">SCENE</span>
-          {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+        <div className="flex items-center gap-3">
+          {/* 국가별 문법 팩 셀렉터 */}
+          <div className="flex items-center gap-0.5 p-0.5 bg-black/30 rounded-lg">
+            {GRAMMAR_REGIONS.map(r => (
+              <button key={r} onClick={() => setGrammarRegion(r)}
+                className={`px-2 py-1 rounded text-[11px] transition-all ${
+                  grammarRegion === r
+                    ? 'bg-accent-purple text-white shadow'
+                    : 'text-text-tertiary hover:text-text-primary'
+                }`}
+              >
+                {GRAMMAR_PACKS[r].flag}
+              </button>
+            ))}
+          </div>
+          <div>
+            <span className="badge badge-amber mr-2">SCENE</span>
+            {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+          </div>
         </div>
         <div className="flex gap-2 relative">
+          <button onClick={() => setShowGrammarPanel(v => !v)}
+            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+              showGrammarPanel ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary'
+            }`}>
+            {GRAMMAR_PACKS[grammarRegion].flag} {lang === "ko" ? "문법" : "Grammar"}
+          </button>
           <button onClick={() => setShowScenePresetMenu(v => !v)}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
             ⚡ {lang === "ko" ? "프리셋" : "Preset"}
@@ -541,6 +566,122 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
           </button>
         </div>
       </div>
+
+      {/* 국가별 문법 패널 */}
+      {showGrammarPanel && (() => {
+        const pack = GRAMMAR_PACKS[grammarRegion];
+        const isKO = lang === 'ko';
+        return (
+          <div className="border border-t-0 border-border bg-bg-secondary/50 p-4 sm:p-6 space-y-5 animate-in fade-in duration-300">
+            {/* 팩 헤더 */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black flex items-center gap-2">
+                  <span className="text-lg">{pack.flag}</span>
+                  {isKO ? pack.label.ko : pack.label.en}
+                </h3>
+                <p className="text-[9px] text-text-tertiary font-bold tracking-wider uppercase mt-0.5">
+                  {isKO ? pack.subtitle.ko : pack.subtitle.en}
+                </p>
+              </div>
+              <div className="text-[9px] text-text-tertiary">
+                {pack.episodeLength.min.toLocaleString()}~{pack.episodeLength.max.toLocaleString()} {pack.episodeLength.unit}/{isKO ? '화' : 'ep'}
+              </div>
+            </div>
+
+            {/* 비트시트 타임라인 */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">
+                {isKO ? '비트시트' : 'Beat Sheet'} ({pack.beatSheet.length} beats)
+              </span>
+              <div className="relative">
+                <div className="h-2 bg-bg-primary rounded-full overflow-hidden flex">
+                  {pack.beatSheet.map((beat, i) => {
+                    const next = pack.beatSheet[i + 1]?.position ?? 100;
+                    const width = next - beat.position;
+                    const hue = (beat.position / 100) * 270;
+                    return (
+                      <div key={i} className="h-full relative group cursor-default"
+                        style={{ width: `${width}%`, backgroundColor: `hsl(${hue}, 60%, 30%)` }}>
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-primary border border-border text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
+                          <div className="font-bold text-text-primary">{beat.name}</div>
+                          <div className="text-text-tertiary">{beat.position}% — {beat.desc}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-1 text-[7px] text-text-tertiary">
+                  {pack.beatSheet.filter((_, i) => i % Math.ceil(pack.beatSheet.length / 5) === 0).map(b => (
+                    <span key={b.name}>{b.name}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 리듬 규칙 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
+                  {isKO ? '리듬 규칙' : 'Rhythm Rules'}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rhythmRules.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-purple/5 border border-accent-purple/10 rounded-lg">
+                      <div className="text-[10px] font-bold text-accent-purple">{r.name}</div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 보상 패턴 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                  {isKO ? '독자 보상 패턴' : 'Reader Reward Patterns'}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rewardPatterns.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-green/5 border border-accent-green/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-accent-green">{r.name}</span>
+                        <span className="text-[8px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">{r.interval}</span>
+                      </div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 필수 / 금기 */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                    {isKO ? '필수 요소' : 'Must Have'}
+                  </span>
+                  {pack.mustHave.map((m, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-green">✓</span>
+                      <span className="text-text-secondary">{m}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-red uppercase tracking-widest">
+                    {isKO ? '금기' : 'Taboo'}
+                  </span>
+                  {pack.taboo.map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-red">✕</span>
+                      <span className="text-text-secondary">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">
         {/* Tabs — grouped with collapsible sections */}
