@@ -205,7 +205,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <input
               type="number"
               min="5"
-              max="100"
+              max="300"
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
               value={totalEpisodes}
               onChange={e => setConfig({ ...config, totalEpisodes: parseInt(e.target.value) || 25 })}
