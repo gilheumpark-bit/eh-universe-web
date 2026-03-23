@@ -42,6 +42,7 @@ const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { s
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
 const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
+const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
@@ -689,23 +690,33 @@ export default function StudioPage() {
                 </div>
                 {/* Noise overlay matching landing */}
                 <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-accent-purple/30 flex items-center justify-center mb-6 backdrop-blur-sm bg-bg-primary/30">
-                    <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
-                  </div>
-                  <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">
-                    {t('ui.firstStoryPrompt')}
-                  </h2>
-                  <p className="text-text-tertiary text-sm mb-6">{t('engine.startPrompt')}</p>
-                  <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                    <button onClick={createNewSession} className="px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">
-                      {t('ui.setupManually')}
-                    </button>
-                  </div>
-                  <p className="text-text-tertiary/50 text-[10px] max-w-sm font-[family-name:var(--font-mono)]">
-                    {t('ui.workflowOverview')}
-                  </p>
+                {/* Content — Onboarding or Quick Start */}
+                <div className="relative z-10 flex flex-col items-center w-full">
+                  {hydrated && !localStorage.getItem('noa_onboarding_done') ? (
+                    <OnboardingGuide
+                      lang={language === 'KO' ? 'ko' : 'en'}
+                      onComplete={() => { window.dispatchEvent(new Event('storage')); }}
+                      onNavigate={(tab) => { createNewSession(); setActiveTab(tab as AppTab); }}
+                    />
+                  ) : (
+                    <>
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-accent-purple/30 flex items-center justify-center mb-6 backdrop-blur-sm bg-bg-primary/30">
+                        <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
+                      </div>
+                      <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">
+                        {t('ui.firstStoryPrompt')}
+                      </h2>
+                      <p className="text-text-tertiary text-sm mb-6">{t('engine.startPrompt')}</p>
+                      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                        <button onClick={createNewSession} className="px-8 py-3 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">
+                          {t('ui.setupManually')}
+                        </button>
+                      </div>
+                      <p className="text-text-tertiary/50 text-[10px] max-w-sm font-[family-name:var(--font-mono)]">
+                        {t('ui.workflowOverview')}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
