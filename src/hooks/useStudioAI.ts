@@ -70,8 +70,6 @@ export function useStudioAI({
       setUxError?.({ error: new Error('Free tier limit reached'), retry: () => {} });
       return;
     }
-    incrementGenerationCount();
-
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
@@ -130,6 +128,7 @@ export function useStudioAI({
       }
 
       setLastReport(result.report);
+      incrementGenerationCount();
       // NOD Director analysis
       const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
       setDirectorReport(analyzeManuscript(dirClean, capturedConfig.publishPlatform));

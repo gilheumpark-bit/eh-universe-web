@@ -20,6 +20,7 @@ export interface SyncResult {
   uploaded: number;
   downloaded: number;
   conflicts: ConflictInfo[];
+  failedCount: number;
 }
 
 export interface ConflictInfo {
@@ -220,6 +221,7 @@ export async function syncAllProjects(
   const conflicts: ConflictInfo[] = [];
   let uploaded = 0;
   let downloaded = 0;
+  let failedCount = 0;
 
   // Map remote files by project ID (extracted from filename: name_projectId.json)
   const remoteMap = new Map<string, DriveFile>();
@@ -275,8 +277,11 @@ export async function syncAllProjects(
       }
     }));
     for (const r of results) {
-      if (r.status === 'rejected' && process.env.NODE_ENV === 'development') {
-        console.warn('[Drive Sync] Batch task failed:', r.reason);
+      if (r.status === 'rejected') {
+        failedCount++;
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Drive Sync] Batch task failed:', r.reason);
+        }
       }
     }
   }
@@ -290,13 +295,16 @@ export async function syncAllProjects(
       downloaded++;
     }));
     for (const r of dlResults) {
-      if (r.status === 'rejected' && process.env.NODE_ENV === 'development') {
-        console.warn('[Drive Sync] Remote download failed:', r.reason);
+      if (r.status === 'rejected') {
+        failedCount++;
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Drive Sync] Remote download failed:', r.reason);
+        }
       }
     }
   }
 
-  return { merged, uploaded, downloaded, conflicts };
+  return { merged, uploaded, downloaded, conflicts, failedCount };
 }
 
 // NOTE: API key sync to Drive has been intentionally removed.

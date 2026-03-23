@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
 
     // Request size guard — parse body directly (not trusting Content-Length header)
     const rawText = await req.text();
-    if (rawText.length > MAX_REQUEST_BYTES) {
+    if (Buffer.byteLength(rawText, 'utf8') > MAX_REQUEST_BYTES) {
       return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }
 

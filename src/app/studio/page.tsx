@@ -78,7 +78,7 @@ export default function StudioPage() {
 
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
@@ -98,10 +98,7 @@ export default function StudioPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [lightTheme, setLightTheme] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('noa_light_theme') === 'true';
-  });
+  const [lightTheme, setLightTheme] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -122,6 +119,13 @@ export default function StudioPage() {
     window.addEventListener('noa:storage-full', handler);
     return () => window.removeEventListener('noa:storage-full', handler);
   }, []);
+
+  // Hydration-safe: read localStorage values after mount
+  useEffect(() => {
+    if (!hydrated) return;
+    setIsSidebarOpen(window.innerWidth >= 768);
+    setLightTheme(localStorage.getItem('noa_light_theme') === 'true');
+  }, [hydrated]);
 
   // UX: confirm modal state
   const [confirmState, setConfirmState] = useState<{
@@ -176,7 +180,12 @@ export default function StudioPage() {
       const result = await syncAllProjects(token, projects);
       setProjects(result.merged);
       setLastSyncTime(Date.now());
-      setSyncStatus('done');
+      if (result.failedCount > 0) {
+        setSyncStatus('done');
+        setUxError({ error: new Error(`Drive sync: ${result.failedCount} file(s) failed to sync`) });
+      } else {
+        setSyncStatus('done');
+      }
       setTimeout(() => setSyncStatus('idle'), 3000);
     } catch (err: unknown) {
       const msg = (err as Error)?.message || '';
@@ -189,7 +198,12 @@ export default function StudioPage() {
             const retryResult = await syncAllProjects(newToken, projects);
             setProjects(retryResult.merged);
             setLastSyncTime(Date.now());
-            setSyncStatus('done');
+            if (retryResult.failedCount > 0) {
+              setSyncStatus('done');
+              setUxError({ error: new Error(`Drive sync: ${retryResult.failedCount} file(s) failed to sync`) });
+            } else {
+              setSyncStatus('done');
+            }
             setTimeout(() => setSyncStatus('idle'), 3000);
             return;
           } catch (retryErr) {
@@ -705,7 +719,7 @@ export default function StudioPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {/* API 키 미설정 안내 배너 */}
-            {hydrated && !localStorage.getItem('noa_api_key') && !localStorage.getItem('noa_api_banner_dismissed') && (
+            {hydrated && !hasApiKey && !localStorage.getItem('noa_api_banner_dismissed') && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{t('ui.apiKeyBanner')}</span>
