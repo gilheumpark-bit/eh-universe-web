@@ -13,6 +13,7 @@ import type {
   MusicPromptPack,
   EmotionIntensity,
 } from "@/lib/studio-types";
+import { createT } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 — HELPERS & DEFAULTS
@@ -87,11 +88,11 @@ const EMPTY_MUSIC_PROMPT: MusicPromptPack = {
   musicStyle: [],
 };
 
-const INTENSITY_OPTIONS: { value: EmotionIntensity; labelKO: string; labelEN: string }[] = [
-  { value: "low", labelKO: "낮음", labelEN: "Low" },
-  { value: "mid", labelKO: "보통", labelEN: "Mid" },
-  { value: "high", labelKO: "높음", labelEN: "High" },
-  { value: "extreme", labelKO: "극한", labelEN: "Extreme" },
+const INTENSITY_OPTIONS: { value: EmotionIntensity; tKey: string }[] = [
+  { value: "low", tKey: "chapterAnalysis.intensityLow" },
+  { value: "mid", tKey: "chapterAnalysis.intensityMid" },
+  { value: "high", tKey: "chapterAnalysis.intensityHigh" },
+  { value: "extreme", tKey: "chapterAnalysis.intensityExtreme" },
 ];
 
 function arrayToString(arr: string[]): string {
@@ -148,7 +149,8 @@ function ArrayInput({ value, onChange, placeholder }: { value: string[]; onChang
   );
 }
 
-function IntensitySelect({ value, onChange, isKO }: { value: EmotionIntensity; onChange: (v: EmotionIntensity) => void; isKO: boolean }) {
+function IntensitySelect({ value, onChange, language }: { value: EmotionIntensity; onChange: (v: EmotionIntensity) => void; language: AppLanguage }) {
+  const t = createT(language);
   return (
     <div className="flex gap-1">
       {INTENSITY_OPTIONS.map((opt) => (
@@ -161,14 +163,15 @@ function IntensitySelect({ value, onChange, isKO }: { value: EmotionIntensity; o
               : "bg-bg-secondary border-border text-text-tertiary hover:text-text-primary"
           }`}
         >
-          {isKO ? opt.labelKO : opt.labelEN}
+          {t(opt.tKey)}
         </button>
       ))}
     </div>
   );
 }
 
-function CopyButton({ text, isKO }: { text: string; isKO: boolean }) {
+function CopyButton({ text, language }: { text: string; language: AppLanguage }) {
+  const t = createT(language);
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(async () => {
     try {
@@ -187,7 +190,7 @@ function CopyButton({ text, isKO }: { text: string; isKO: boolean }) {
     setTimeout(() => setCopied(false), 1500);
   }, [text]);
   return (
-    <button onClick={handleCopy} aria-label="복사" className="p-1.5 rounded bg-bg-tertiary/50 text-text-tertiary hover:text-accent-green transition-colors" title={isKO ? "복사" : "Copy"}>
+    <button onClick={handleCopy} aria-label="복사" className="p-1.5 rounded bg-bg-tertiary/50 text-text-tertiary hover:text-accent-green transition-colors" title={t('chapterAnalysis.copy')}>
       {copied ? <Check className="w-3 h-3 text-accent-green" /> : <Copy className="w-3 h-3" />}
     </button>
   );
@@ -205,7 +208,7 @@ export default function ChapterAnalysisView({
   onSaveAnalysis,
   onClose,
 }: ChapterAnalysisViewProps) {
-  const isKO = language === "KO";
+  const t = createT(language);
 
   const [characters, setCharacters] = useState<CharacterStateEntry[]>(analysis?.characterState ?? []);
   const [background, setBackground] = useState<BackgroundState>(analysis?.backgroundState ?? { ...EMPTY_BACKGROUND });
@@ -283,19 +286,19 @@ export default function ChapterAnalysisView({
   // Export all prompts as text
   const exportPrompts = useCallback(() => {
     const lines = [
-      `=== EP.${episode} ${isKO ? "챕터 분석 프롬프트" : "Chapter Analysis Prompts"} ===`,
+      `=== EP.${episode} ${t('chapterAnalysis.chapterAnalysisPrompts')} ===`,
       "",
-      `--- ${isKO ? "이미지 프롬프트" : "Image Prompt"} ---`,
-      `[${isKO ? "캐릭터" : "Character"}] ${imagePrompt.characterFocus}`,
-      `[${isKO ? "배경" : "Background"}] ${imagePrompt.backgroundFocus}`,
-      `[${isKO ? "장면" : "Scene"}] ${imagePrompt.sceneFocus}`,
-      `[${isKO ? "스타일" : "Style"}] ${imagePrompt.styleHints.join(", ")}`,
+      `--- ${t('chapterAnalysis.imagePrompt')} ---`,
+      `[${t('chapterAnalysis.character')}] ${imagePrompt.characterFocus}`,
+      `[${t('chapterAnalysis.background')}] ${imagePrompt.backgroundFocus}`,
+      `[${t('chapterAnalysis.scene')}] ${imagePrompt.sceneFocus}`,
+      `[${t('chapterAnalysis.style')}] ${imagePrompt.styleHints.join(", ")}`,
       "",
-      `--- ${isKO ? "음악 프롬프트" : "Music Prompt"} ---`,
-      `[${isKO ? "분위기" : "Mood"}] ${musicPrompt.mood}`,
-      `[${isKO ? "감정 흐름" : "Emotion"}] ${musicPrompt.emotionFlow}`,
-      `[${isKO ? "사운드" : "Sound"}] ${musicPrompt.soundKeywords.join(", ")}`,
-      `[${isKO ? "음악 스타일" : "Style"}] ${musicPrompt.musicStyle.join(", ")}`,
+      `--- ${t('chapterAnalysis.musicPrompt')} ---`,
+      `[${t('chapterAnalysis.mood')}] ${musicPrompt.mood}`,
+      `[${t('chapterAnalysis.emotionFlow')}] ${musicPrompt.emotionFlow}`,
+      `[${t('chapterAnalysis.sound')}] ${musicPrompt.soundKeywords.join(", ")}`,
+      `[${t('chapterAnalysis.musicStyle')}] ${musicPrompt.musicStyle.join(", ")}`,
     ];
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -304,7 +307,7 @@ export default function ChapterAnalysisView({
     a.download = `ep${episode}-prompts.txt`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [episode, imagePrompt, musicPrompt, isKO]);
+  }, [episode, imagePrompt, musicPrompt, t]);
 
   return (
     <div className="space-y-4">
@@ -313,7 +316,7 @@ export default function ChapterAnalysisView({
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-amber" />
           <h3 className="text-sm font-black tracking-tighter uppercase font-[family-name:var(--font-mono)]">
-            EP.{episode} {isKO ? "챕터 분석" : "Chapter Analysis"}
+            EP.{episode} {t('chapterAnalysis.title')}
           </h3>
         </div>
         <div className="flex gap-1.5">
@@ -323,26 +326,26 @@ export default function ChapterAnalysisView({
             className="px-3 py-1.5 bg-accent-amber/20 border border-accent-amber/30 text-accent-amber rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30"
           >
             <Sparkles className="w-3 h-3 inline mr-1" />
-            {analyzing ? (isKO ? "분석 중..." : "Analyzing...") : (isKO ? "AI 자동 분석" : "AI Auto-Analyze")}
+            {analyzing ? t('chapterAnalysis.analyzing') : t('chapterAnalysis.aiAutoAnalyze')}
           </button>
           <button
             onClick={exportPrompts}
             className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
           >
             <Download className="w-3 h-3 inline mr-1" />
-            {isKO ? "프롬프트 내보내기" : "Export Prompts"}
+            {t('chapterAnalysis.exportPrompts')}
           </button>
           <button
             onClick={handleSave}
             className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
           >
-            {isKO ? "저장" : "Save"}
+            {t('chapterAnalysis.save')}
           </button>
           <button
             onClick={onClose}
             className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
           >
-            {isKO ? "닫기" : "Close"}
+            {t('chapterAnalysis.close')}
           </button>
         </div>
       </div>
@@ -353,7 +356,7 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<User className="w-3.5 h-3.5" />}
-          title={isKO ? "캐릭터 상태" : "Character State"}
+          title={t('chapterAnalysis.characterState')}
           open={openSections.character}
           onToggle={() => toggleSection("character")}
         />
@@ -363,56 +366,56 @@ export default function ChapterAnalysisView({
               <div key={idx} className="bg-bg-primary border border-border rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black text-accent-purple font-[family-name:var(--font-mono)]">
-                    {isKO ? `인물 ${idx + 1}` : `Character ${idx + 1}`}
+                    {`${t('chapterAnalysis.characterN')} ${idx + 1}`}
                   </span>
                   <button onClick={() => removeCharacter(idx)} className="text-[9px] text-text-tertiary hover:text-accent-red transition-colors">
-                    {isKO ? "삭제" : "Remove"}
+                    {t('chapterAnalysis.remove')}
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <FieldRow label={isKO ? "이름" : "Name"}>
+                  <FieldRow label={t('chapterAnalysis.name')}>
                     <TextInput value={char.name} onChange={(v) => updateCharacter(idx, { name: v })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "장면 역할" : "Role"}>
+                  <FieldRow label={t('chapterAnalysis.role')}>
                     <TextInput value={char.sceneRole} onChange={(v) => updateCharacter(idx, { sceneRole: v })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "감정" : "Emotion"}>
+                  <FieldRow label={t('chapterAnalysis.emotion')}>
                     <TextInput value={char.emotion.primary} onChange={(v) => updateCharacter(idx, { emotion: { ...char.emotion, primary: v } })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "강도" : "Intensity"}>
-                    <IntensitySelect value={char.emotion.intensity} onChange={(v) => updateCharacter(idx, { emotion: { ...char.emotion, intensity: v } })} isKO={isKO} />
+                  <FieldRow label={t('chapterAnalysis.intensity')}>
+                    <IntensitySelect value={char.emotion.intensity} onChange={(v) => updateCharacter(idx, { emotion: { ...char.emotion, intensity: v } })} language={language} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "표정" : "Expression"}>
+                  <FieldRow label={t('chapterAnalysis.expression')}>
                     <TextInput value={char.expression} onChange={(v) => updateCharacter(idx, { expression: v })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "시선" : "Gaze"}>
-                    <TextInput value={char.gaze.direction} onChange={(v) => updateCharacter(idx, { gaze: { ...char.gaze, direction: v } })} placeholder={isKO ? "방향" : "Direction"} />
+                  <FieldRow label={t('chapterAnalysis.gaze')}>
+                    <TextInput value={char.gaze.direction} onChange={(v) => updateCharacter(idx, { gaze: { ...char.gaze, direction: v } })} placeholder={t('chapterAnalysis.gazeDirection')} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "시선 대상" : "Target"}>
+                  <FieldRow label={t('chapterAnalysis.gazeTarget')}>
                     <TextInput value={char.gaze.target} onChange={(v) => updateCharacter(idx, { gaze: { ...char.gaze, target: v } })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "자세" : "Pose"}>
+                  <FieldRow label={t('chapterAnalysis.pose')}>
                     <TextInput value={char.pose} onChange={(v) => updateCharacter(idx, { pose: v })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "행동" : "Action"}>
+                  <FieldRow label={t('chapterAnalysis.action')}>
                     <TextInput value={char.actionState} onChange={(v) => updateCharacter(idx, { actionState: v })} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "관계 맥락" : "Relation"}>
+                  <FieldRow label={t('chapterAnalysis.relation')}>
                     <TextInput value={char.relationContext} onChange={(v) => updateCharacter(idx, { relationContext: v })} />
                   </FieldRow>
                 </div>
                 <div className="space-y-2">
-                  <FieldRow label={isKO ? "신체 상태" : "Body"}>
-                    <ArrayInput value={char.bodyState} onChange={(v) => updateCharacter(idx, { bodyState: v })} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+                  <FieldRow label={t('chapterAnalysis.body')}>
+                    <ArrayInput value={char.bodyState} onChange={(v) => updateCharacter(idx, { bodyState: v })} placeholder={t('chapterAnalysis.commaSeparated')} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "복장 변동" : "Outfit"}>
-                    <ArrayInput value={char.outfitDelta} onChange={(v) => updateCharacter(idx, { outfitDelta: v })} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+                  <FieldRow label={t('chapterAnalysis.outfit')}>
+                    <ArrayInput value={char.outfitDelta} onChange={(v) => updateCharacter(idx, { outfitDelta: v })} placeholder={t('chapterAnalysis.commaSeparated')} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "소지물" : "Items"}>
-                    <ArrayInput value={char.heldItem} onChange={(v) => updateCharacter(idx, { heldItem: v })} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+                  <FieldRow label={t('chapterAnalysis.items')}>
+                    <ArrayInput value={char.heldItem} onChange={(v) => updateCharacter(idx, { heldItem: v })} placeholder={t('chapterAnalysis.commaSeparated')} />
                   </FieldRow>
-                  <FieldRow label={isKO ? "인상" : "Aura"}>
-                    <ArrayInput value={char.aura} onChange={(v) => updateCharacter(idx, { aura: v })} placeholder={isKO ? "쉼표로 구분" : "Comma-separated"} />
+                  <FieldRow label={t('chapterAnalysis.aura')}>
+                    <ArrayInput value={char.aura} onChange={(v) => updateCharacter(idx, { aura: v })} placeholder={t('chapterAnalysis.commaSeparated')} />
                   </FieldRow>
                 </div>
               </div>
@@ -421,7 +424,7 @@ export default function ChapterAnalysisView({
               onClick={addCharacter}
               className="w-full py-2 border border-dashed border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 transition-colors font-[family-name:var(--font-mono)]"
             >
-              + {isKO ? "캐릭터 추가" : "Add Character"}
+              + {t('chapterAnalysis.addCharacter')}
             </button>
           </div>
         )}
@@ -433,7 +436,7 @@ export default function ChapterAnalysisView({
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<MapPin className="w-3.5 h-3.5" />}
-          title={isKO ? "배경 상태" : "Background State"}
+          title={t('chapterAnalysis.backgroundState')}
           open={openSections.background}
           onToggle={() => toggleSection("background")}
         />
