@@ -28,16 +28,24 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
   const t = createT(language);
   const l = LABELS[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [defaultPlatform, setDefaultPlatform] = useState<string>('MOBILE');
-  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(25);
-  const [temperature, setTemperature] = useState<number>(0.7);
-  const [apiKeyStatus, setApiKeyStatus] = useState<boolean>(false);
+  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
+  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
+  const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.7'));
+  const [apiKeyStatus, setApiKeyStatus] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const keys = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
+    return keys.some(k => !!localStorage.getItem(k));
+  });
+
+  const checkApiKeys = () => {
+    const keys = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
+    setApiKeyStatus(keys.some(k => !!localStorage.getItem(k)));
+  };
 
   useEffect(() => {
-    setDefaultPlatform(localStorage.getItem('noa_default_platform') || 'MOBILE');
-    setDefaultEpisodes(parseInt(localStorage.getItem('noa_default_episodes') || '25'));
-    setTemperature(parseFloat(localStorage.getItem('noa_temperature') || '0.7'));
-    setApiKeyStatus(!!localStorage.getItem('noa_api_key'));
+    const onStorage = () => checkApiKeys();
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   return (
