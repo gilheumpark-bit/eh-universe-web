@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider><LangProvider>{children}</LangProvider></AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
