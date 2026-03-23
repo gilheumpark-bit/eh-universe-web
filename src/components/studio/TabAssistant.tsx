@@ -329,6 +329,12 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
     case 'world':
       if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 500)}`);
       if (config.setting) parts.push(`세부 배경: ${config.setting}`);
+      // 세계관 3-tier
+      if (config.corePremise) parts.push(`핵심 전제: ${config.corePremise}`);
+      if (config.powerStructure) parts.push(`권력 구조: ${config.powerStructure}`);
+      if (config.currentConflict) parts.push(`현재 갈등: ${config.currentConflict}`);
+      if (config.worldHistory) parts.push(`역사: ${config.worldHistory}`);
+      if (config.magicTechSystem) parts.push(`마법/기술 체계: ${config.magicTechSystem}`);
       if (config.worldSimData?.civs?.length) {
         parts.push(`등록된 문명: ${config.worldSimData.civs.map(c => `${c.name}(${c.era}, 특성: ${c.traits.join('·')})`).join(' / ')}`);
       }
@@ -367,6 +373,14 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
           if (c.speechStyle) details.push(`말투: ${c.speechStyle}`);
           if (c.speechExample) details.push(`대사 예시: "${c.speechExample}"`);
           if (c.appearance) details.push(`외모: ${c.appearance}`);
+          // 3-tier 뼈대
+          if (c.desire) details.push(`욕망: ${c.desire}`);
+          if (c.deficiency) details.push(`결핍: ${c.deficiency}`);
+          if (c.conflict) details.push(`갈등: ${c.conflict}`);
+          if (c.values) details.push(`가치관: ${c.values}`);
+          if (c.changeArc) details.push(`변화 방향: ${c.changeArc}`);
+          if (c.strength) details.push(`강점: ${c.strength}`);
+          if (c.weakness) details.push(`약점: ${c.weakness}`);
           parts.push(`[캐릭터] ${c.name}\n  ${details.join('\n  ')}`);
         });
       }

@@ -354,13 +354,23 @@ export function buildSystemInstruction(
   const isKO = language === 'KO';
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
 
-  // Character DNA formatting (with personality, speech style, dialogue example)
+  // Character DNA formatting (with personality, speech style, dialogue example + 3-tier)
   const characterDNA = config.characters.length > 0
     ? config.characters.map(c => {
       let entry = `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`;
       if (c.personality) entry += `\n    성격: ${c.personality}`;
       if (c.speechStyle) entry += `\n    말투: ${c.speechStyle}`;
       if (c.speechExample) entry += `\n    대사 예시: ${c.speechExample}`;
+      // 3-tier 뼈대
+      if (c.desire) entry += `\n    욕망: ${c.desire}`;
+      if (c.deficiency) entry += `\n    결핍: ${c.deficiency}`;
+      if (c.conflict) entry += `\n    갈등: ${c.conflict}`;
+      if (c.values) entry += `\n    가치관/금지선: ${c.values}`;
+      if (c.changeArc) entry += `\n    변화 방향: ${c.changeArc}`;
+      // 2단계
+      if (c.strength) entry += `\n    강점: ${c.strength}`;
+      if (c.weakness) entry += `\n    약점: ${c.weakness}`;
+      if (c.backstory) entry += `\n    과거: ${c.backstory}`;
       return entry;
     }).join('\n')
     : '  등록된 캐릭터 없음';
@@ -422,6 +432,40 @@ export function buildSystemInstruction(
     if (sd.plotStructure) {
       parts.push(isKO ? `[플롯 구조] ${sd.plotStructure}` : `[Plot Structure] ${sd.plotStructure}`);
     }
+    if (sd.foreshadows && sd.foreshadows.length > 0) {
+      parts.push(isKO ? '[복선/떡밥]' : '[Foreshadowing]');
+      sd.foreshadows.forEach(f => {
+        const status = f.resolved ? (isKO ? '회수됨' : 'resolved') : (isKO ? '미회수' : 'pending');
+        parts.push(`  - EP${f.episode}: ${f.planted} → ${f.payoff} (${status})`);
+      });
+    }
+    if (sd.pacings && sd.pacings.length > 0) {
+      parts.push(isKO ? '[분량 배분]' : '[Pacing]');
+      sd.pacings.forEach(p => {
+        parts.push(`  - ${p.section}: ${p.percent}% — ${p.desc}`);
+      });
+    }
+    if (sd.tensionCurve && sd.tensionCurve.length > 0) {
+      parts.push(isKO ? '[텐션 곡선]' : '[Tension Curve]');
+      sd.tensionCurve.forEach(t => {
+        parts.push(`  - ${t.label}: ${isKO ? '위치' : 'pos'} ${t.position}%, ${isKO ? '레벨' : 'level'} ${t.level}%`);
+      });
+    }
+    if (sd.canonRules && sd.canonRules.length > 0) {
+      parts.push(isKO ? '[캐릭터 규칙 — 위반 금지]' : '[Canon Rules — Must Not Violate]');
+      sd.canonRules.forEach(r => {
+        parts.push(`  - ${r.character}: ${r.rule}`);
+      });
+    }
+    if (sd.sceneTransitions && sd.sceneTransitions.length > 0) {
+      parts.push(isKO ? '[장면 전환]' : '[Scene Transitions]');
+      sd.sceneTransitions.forEach(t => {
+        parts.push(`  - ${t.fromScene} → ${t.toScene}: ${t.method}`);
+      });
+    }
+    if (sd.writerNotes) {
+      parts.push(isKO ? `[작가 메모] ${sd.writerNotes}` : `[Writer Notes] ${sd.writerNotes}`);
+    }
     if (parts.length > 0) {
       sceneDirectionBlock = '\n[SCENE DIRECTION — 연출 스튜디오]\n' + parts.join('\n');
     }
@@ -452,6 +496,24 @@ export function buildSystemInstruction(
     if (simRef.languageSystem) simParts.push(isKO ? '- 세계관 고유 언어 체계 참고' : '- World language system referenced');
     if (simParts.length > 0) {
       simulatorBlock = '\n[WORLD SIMULATOR REFERENCE]\n' + simParts.join('\n');
+    }
+  }
+
+  // World 3-tier framework injection
+  let worldTierBlock = '';
+  {
+    const wParts: string[] = [];
+    if (config.corePremise) wParts.push(isKO ? `- 핵심 전제: ${config.corePremise}` : `- Core Premise: ${config.corePremise}`);
+    if (config.powerStructure) wParts.push(isKO ? `- 권력 구조: ${config.powerStructure}` : `- Power Structure: ${config.powerStructure}`);
+    if (config.currentConflict) wParts.push(isKO ? `- 현재 갈등: ${config.currentConflict}` : `- Current Conflict: ${config.currentConflict}`);
+    if (config.worldHistory) wParts.push(isKO ? `- 역사: ${config.worldHistory}` : `- History: ${config.worldHistory}`);
+    if (config.magicTechSystem) wParts.push(isKO ? `- 마법/기술 체계: ${config.magicTechSystem}` : `- Magic/Tech: ${config.magicTechSystem}`);
+    if (config.socialSystem) wParts.push(isKO ? `- 사회 시스템: ${config.socialSystem}` : `- Social System: ${config.socialSystem}`);
+    if (config.factionRelations) wParts.push(isKO ? `- 종족/세력 관계: ${config.factionRelations}` : `- Faction Relations: ${config.factionRelations}`);
+    if (config.dailyLife) wParts.push(isKO ? `- 평범한 사람의 하루: ${config.dailyLife}` : `- Daily Life: ${config.dailyLife}`);
+    if (config.truthVsBeliefs) wParts.push(isKO ? `- 사람들이 믿는 것 vs 실제 진실: ${config.truthVsBeliefs}` : `- Beliefs vs Truth: ${config.truthVsBeliefs}`);
+    if (wParts.length > 0) {
+      worldTierBlock = `\n[WORLD FRAMEWORK — 세계관 3-tier]\n${wParts.join('\n')}`;
     }
   }
 
@@ -493,6 +555,7 @@ ${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
 ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
+${worldTierBlock}
 ${styleDnaBlock}
 ${publishPlatformBlock}
 

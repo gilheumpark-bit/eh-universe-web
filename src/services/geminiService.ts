@@ -246,7 +246,12 @@ ${hintBlock}`,
 // PART 5: AI WORLD SIMULATOR GENERATION
 // ============================================================
 
-export const generateWorldSim = async (synopsis: string, genre: string, language: AppLanguage = 'KO'): Promise<{
+export const generateWorldSim = async (
+  synopsis: string,
+  genre: string,
+  language: AppLanguage = 'KO',
+  worldContext?: { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string }
+): Promise<{
   civilizations: { name: string; era: string; traits: string[] }[];
   relations: { from: string; to: string; type: string }[];
 }> => {
@@ -255,10 +260,17 @@ export const generateWorldSim = async (synopsis: string, genre: string, language
   const ai = new GoogleGenAI({ apiKey });
   const langName = language === 'KO' ? 'Korean' : 'English';
 
+  const ctxParts: string[] = [];
+  if (worldContext?.corePremise) ctxParts.push(`World Premise: ${worldContext.corePremise}`);
+  if (worldContext?.powerStructure) ctxParts.push(`Power Structure: ${worldContext.powerStructure}`);
+  if (worldContext?.currentConflict) ctxParts.push(`Central Conflict: ${worldContext.currentConflict}`);
+  if (worldContext?.factionRelations) ctxParts.push(`Known Faction Relations: ${worldContext.factionRelations}`);
+  const ctxBlock = ctxParts.length > 0 ? `\n\n[World Framework]\n${ctxParts.join('\n')}\nCivilizations must reflect this framework.` : '';
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-pro',
-      contents: `Based on this ${genre} story synopsis, generate 3-4 civilizations/factions and their relationships in ${langName}.\n\nSynopsis: ${synopsis}`,
+      contents: `Based on this ${genre} story synopsis, generate 3-4 civilizations/factions and their relationships in ${langName}.\n\nSynopsis: ${synopsis}${ctxBlock}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {

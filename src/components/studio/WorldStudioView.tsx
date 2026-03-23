@@ -108,6 +108,12 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           <WorldSimulator
             lang={language === 'EN' ? 'en' : 'ko'}
             synopsis={config.synopsis}
+            worldContext={{
+              corePremise: config.corePremise,
+              powerStructure: config.powerStructure,
+              currentConflict: config.currentConflict,
+              factionRelations: config.factionRelations,
+            }}
             initialData={config.worldSimData}
             onSave={handleWorldSimChange}
           />

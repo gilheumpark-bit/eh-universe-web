@@ -1617,11 +1617,12 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
 interface WorldSimProps {
   lang?: Lang;
   synopsis?: string;
+  worldContext?: { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string };
   onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; genreSelections: GenreSelectionEntry[]; ruleLevel: number }) => void;
   initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; genreSelections?: GenreSelectionEntry[]; ruleLevel?: number };
 }
 
-export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialData }: WorldSimProps) {
+export default function WorldSimulator({ lang = "ko", synopsis, worldContext, onSave, initialData }: WorldSimProps) {
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
 
   // Multi-genre selections (max 5) — backwards compatible
@@ -1800,7 +1801,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
               if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
-                const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN');
+                const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN', worldContext);
                 if (result.civilizations) {
                   const newCivs = result.civilizations.map((c: { name: string; era: string; traits: string[] }, i: number) => ({
                     id: `ai-${Date.now()}-${i}`, name: c.name, era: c.era || 'medieval',
