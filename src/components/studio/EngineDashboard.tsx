@@ -88,13 +88,22 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               );
             })}
           </div>
-          <div className="flex justify-between text-[8px] text-zinc-700">
+          <div className="flex justify-between text-[10px] text-zinc-700">
             <span>EP.1</span>
             <span>EP.{totalEpisodes}</span>
           </div>
         </div>
 
         {/* Engine Report */}
+        {!report && !isGenerating && (
+          <div className="space-y-2 text-center py-4">
+            <BarChart3 className="w-5 h-5 text-zinc-700 mx-auto" />
+            <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">No Report Yet</p>
+            <p className="text-[10px] text-zinc-700 max-w-[200px] mx-auto">
+              AI 생성 후 등급·메트릭·분석 리포트가 여기에 표시됩니다.
+            </p>
+          </div>
+        )}
         {report && (
           <div className="space-y-3">
             <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
@@ -104,11 +113,11 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               {/* Grade + EOS */}
               <div className="flex gap-3">
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
-                  <div className="text-[8px] text-zinc-600 mb-1">GRADE</div>
+                  <div className="text-[10px] text-zinc-600 mb-1">GRADE</div>
                   <div className="text-lg font-black text-blue-400">{report.grade}</div>
                 </div>
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
-                  <div className="text-[8px] text-zinc-600 mb-1">EOS</div>
+                  <div className="text-[10px] text-zinc-600 mb-1">EOS</div>
                   <div className={`text-lg font-black ${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
                     {report.eosScore}
                   </div>
@@ -118,7 +127,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               {/* Metrics */}
               {Object.entries(report.metrics).map(([k, v]) => (
                 <div key={k} className="space-y-1">
-                  <div className="flex justify-between text-[8px] font-black text-zinc-600 uppercase">
+                  <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase">
                     <span>{k}</span>
                     <span>{v}%</span>
                   </div>
@@ -130,7 +139,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
 
               {/* Byte Size */}
               <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-black text-zinc-600 uppercase">
+                <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase">
                   <span>BYTES</span>
                   <span className={report.serialization.withinRange ? 'text-green-500' : 'text-amber-500'}>
                     {(report.serialization.byteSize / 1024).toFixed(1)}KB
@@ -155,7 +164,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                 const charInRange = chars >= charRange.min && chars <= charRange.max;
                 return (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[8px] font-black text-zinc-600 uppercase">
+                    <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase">
                       <span>CHARS</span>
                       <span className={charInRange ? 'text-green-500' : 'text-amber-500'}>
                         {chars.toLocaleString()}
@@ -186,18 +195,18 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               {/* Issues */}
               {report.issues.length > 0 && (
                 <div className="pt-2 border-t border-zinc-800/50">
-                  <div className="text-[8px] text-zinc-600 mb-2">ISSUES ({report.issues.length})</div>
+                  <div className="text-[10px] text-zinc-600 mb-2">ISSUES ({report.issues.length})</div>
                   {report.issues.slice(0, 3).map((issue, i) => (
                     <div key={i} className="flex items-start gap-1.5 mb-1.5">
                       <AlertCircle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                      <span className="text-[8px] text-zinc-500">{issue.message}</span>
+                      <span className="text-[10px] text-zinc-500">{issue.message}</span>
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Processing Time */}
-              <div className="text-[8px] text-zinc-700 text-right">
+              <div className="text-[10px] text-zinc-700 text-right">
                 <Cpu className="w-3 h-3 inline mr-1" />
                 {report.processingTimeMs}ms
               </div>

@@ -10,6 +10,7 @@ import {
   ArrowDownToLine, Thermometer, Sword, MessageCircle
 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { classifyError } from './UXHelpers';
@@ -107,6 +108,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, context, onApply }) => {
   const isKO = language === 'KO';
+  const t = createT(language);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [editableContent, setEditableContent] = useState(content);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -141,7 +143,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      setPreview(isKO ? '⚠️ API 키가 설정되지 않았습니다.\n설정(Settings) 탭에서 API 키를 입력해주세요.' : '⚠️ API key not set.\nGo to Settings tab to enter your key.');
+      setPreview(t('inlineRewriter.apiKeyMissing'));
       return;
     }
 
@@ -149,9 +151,13 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     const after = editableContent.slice(selection.end, selection.end + 300);
     const prompt = isKO ? action.promptKo : action.promptEn;
 
-    const systemPrompt = isKO
-      ? '당신은 소설 텍스트 리라이터입니다. 지시에 따라 선택된 부분만 수정하세요. 설명, 코멘트, 따옴표 없이 순수 소설 텍스트만 출력하세요.'
-      : 'You are a fiction text rewriter. Modify only the selected part as instructed. Output pure fiction text only, no explanations or quotes.';
+    const systemPrompts: Record<string, string> = {
+      KO: '당신은 소설 텍스트 리라이터입니다. 지시에 따라 선택된 부분만 수정하세요. 설명, 코멘트, 따옴표 없이 순수 소설 텍스트만 출력하세요.',
+      EN: 'You are a fiction text rewriter. Modify only the selected part as instructed. Output pure fiction text only, no explanations or quotes.',
+      JP: 'あなたは小説テキストのリライターです。指示に従い選択部分のみ修正してください。説明やコメントなしに純粋な小説テキストのみ出力してください。',
+      CN: '你是小说文本改写器。按指示仅修改选定部分。只输出纯小说文本，不要解释或引号。',
+    };
+    const systemPrompt = systemPrompts[language] ?? systemPrompts.KO;
 
     const userMsg = `${prompt}\n\n[앞 문맥]\n${before}\n\n[선택된 텍스트]\n${selection.text}\n\n[뒤 문맥]\n${after}${context ? `\n\n[작품 정보] ${context}` : ''}`;
 
@@ -177,7 +183,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
       else {
-        const info = classifyError(err, isKO);
+        const info = classifyError(err, language);
         setPreview(`⚠️ ${info.title}\n${info.message}${info.action ? `\n\n💡 ${info.action}` : ''}`);
       }
     } finally {
@@ -236,9 +242,9 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         <div className="bg-zinc-900/80 border border-zinc-700/50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
-              {isKO ? `선택: ${selection.text.length}자` : `Selected: ${selection.text.length} chars`}
+              {t('inlineRewriter.selected').replace('{n}', String(selection.text.length))}
             </span>
-            <button onClick={() => { setShowActions(false); setPreview(null); }} className="p-1 hover:bg-zinc-800 rounded text-zinc-600 hover:text-zinc-400">
+            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-zinc-800 rounded text-zinc-600 hover:text-zinc-400">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -262,7 +268,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               value={customPrompt}
               onChange={e => setCustomPrompt(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCustomAction(); }}
-              placeholder={isKO ? '커스텀 지시 (예: "이 부분 더 슬프게")' : 'Custom instruction (e.g. "make this sadder")'}
+              placeholder={t('inlineRewriter.customPlaceholder')}
               className="flex-1 bg-zinc-800/50 border border-zinc-700/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-[family-name:var(--font-mono)]"
               disabled={isStreaming}
             />
@@ -278,28 +284,28 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         <div className="bg-zinc-950 border border-blue-500/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 font-[family-name:var(--font-mono)]">
-              {isStreaming ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '미리보기' : 'Preview')}
+              {isStreaming ? t('inlineRewriter.generating') : t('inlineRewriter.preview')}
             </span>
             <div className="flex gap-1.5">
               {!isStreaming && preview && !showApplyConfirm && (
                 <button onClick={applyPreview} className="flex items-center gap-1 px-2.5 py-1 bg-green-600/20 border border-green-500/30 rounded-lg text-[9px] font-bold text-green-400 hover:bg-green-600/30 font-[family-name:var(--font-mono)]">
-                  <Check className="w-3 h-3" /> {isKO ? '적용' : 'Apply'}
+                  <Check className="w-3 h-3" /> {t('inlineRewriter.apply')}
                 </button>
               )}
               {showApplyConfirm && (
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[8px] text-amber-400 font-[family-name:var(--font-mono)]">{isKO ? '교체할까요?' : 'Replace?'}</span>
+                  <span className="text-[10px] text-amber-400 font-[family-name:var(--font-mono)]">{t('inlineRewriter.replaceConfirm')}</span>
                   <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
-                    {isKO ? '확인' : 'Yes'}
+                    {t('inlineRewriter.confirmYes')}
                   </button>
                   <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-zinc-700/30 border border-zinc-600/40 rounded text-[9px] text-zinc-400 hover:bg-zinc-700/50">
-                    {isKO ? '취소' : 'No'}
+                    {t('inlineRewriter.confirmNo')}
                   </button>
                 </span>
               )}
               <button onClick={cancelPreview} className="flex items-center gap-1 px-2.5 py-1 bg-red-600/10 border border-red-500/20 rounded-lg text-[9px] font-bold text-red-400 hover:bg-red-600/20 font-[family-name:var(--font-mono)]">
                 {isStreaming ? <X className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}
-                {isStreaming ? (isKO ? '중단' : 'Stop') : (isKO ? '취소' : 'Cancel')}
+                {isStreaming ? t('inlineRewriter.stop') : t('inlineRewriter.cancel')}
               </button>
             </div>
           </div>
@@ -318,13 +324,13 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         }}
         onSelect={handleSelect}
         className="w-full min-h-[40vh] sm:min-h-[55vh] bg-bg-primary border border-border rounded-xl p-4 sm:p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple/30 transition-colors resize-y"
-        placeholder={isKO ? '텍스트를 드래그해서 선택 → 액션 선택' : 'Select text by dragging → choose action'}
+        placeholder={t('inlineRewriter.editorPlaceholder')}
       />
 
       {/* Footer info */}
       <div className="flex justify-between items-center text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-        <span>{editableContent.length.toLocaleString()}{isKO ? '자' : ' chars'}</span>
-        <span className="text-zinc-600">{isKO ? '💡 텍스트 선택 → 리라이트 액션' : '💡 Select text → Rewrite action'}</span>
+        <span>{editableContent.length.toLocaleString()}{t('inlineRewriter.charCount')}</span>
+        <span className="text-zinc-600">{t('inlineRewriter.tip')}</span>
       </div>
     </div>
   );

@@ -86,7 +86,8 @@ function SceneEditor({
   onConfirm: (sheet: EpisodeSceneSheet) => void;
   onCancel: () => void;
 }) {
-  const L = LABELS[lang.toLowerCase() as "ko" | "en"];
+  const normalizedLang = lang.toLowerCase() as "ko" | "en";
+  const L = LABELS[normalizedLang] ?? LABELS.en;
   const [title, setTitle] = useState(initial?.title ?? "");
   const [arc, setArc] = useState(initial?.arc ?? "");
   const [characters, setCharacters] = useState(initial?.characters ?? "");
@@ -210,7 +211,8 @@ function SceneEditor({
 // ============================================================
 
 function SceneTable({ sheet, lang }: { sheet: EpisodeSceneSheet; lang: Lang }) {
-  const L = LABELS[lang.toLowerCase() as "ko" | "en"];
+  const normalizedLang = lang.toLowerCase() as "ko" | "en";
+  const L = LABELS[normalizedLang] ?? LABELS.en;
   const toneColor: Record<string, string> = {
     감동: "bg-green-900/40 text-green-300",
     긴장: "bg-yellow-900/40 text-yellow-300",
@@ -269,7 +271,7 @@ export default function EpisodeScenePanel({
   onUpdate,
 }: EpisodeScenePanelProps) {
   const normalizedLang = lang.toLowerCase() as "ko" | "en";
-  const L = LABELS[normalizedLang];
+  const L = LABELS[normalizedLang] ?? LABELS.en;
   const [editingEp, setEditingEp] = useState<number | null>(null);
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
 

@@ -8,6 +8,7 @@ import {
 } from '@/engine/genre-review';
 import { Genre, AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { Send, BarChart3, User, Bot, ChevronDown, Sparkles } from 'lucide-react';
+import { createT } from '@/lib/i18n';
 
 // ============================================================
 // PART 1 — CHAT MESSAGE TYPES
@@ -112,7 +113,7 @@ const ReviewBubble: React.FC<{ review: GenreLevelReview; lang: 'ko' | 'en' }> = 
       {/* Toggle details */}
       <button onClick={() => setExpanded(p => !p)} className="flex items-center gap-1 text-[10px] text-accent-purple font-bold">
         <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-        {expanded ? (lang === 'ko' ? '상세 접기' : 'Collapse') : (lang === 'ko' ? '상세 보기' : 'Expand')}
+        {(() => { const tw = createT(lang === 'ko' ? 'KO' : 'EN'); return expanded ? tw('genreReview.collapseDetail') : tw('genreReview.expandDetail'); })()}
       </button>
 
       {expanded && (
@@ -133,6 +134,7 @@ const ReviewBubble: React.FC<{ review: GenreLevelReview; lang: 'ko' | 'en' }> = 
 const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, manuscriptText }) => {
   const isKO = language === 'KO';
   const lang = isKO ? 'ko' : 'en';
+  const t = createT(language);
 
   const [messages, setMessages] = useState<ReviewMessage[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<ReaderLevel>(1);
@@ -170,7 +172,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
       setMessages(prev => [...prev, {
         id: `sys-${Date.now()}`,
         role: 'reviewer',
-        content: isKO ? '⚠️ 분석할 원고가 부족합니다. 집필 탭에서 먼저 글을 작성해주세요.' : '⚠️ Not enough manuscript text. Write in the Writing tab first.',
+        content: t('genreReview.insufficientMs'),
         timestamp: Date.now(),
       }]);
       return;
@@ -211,7 +213,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
       setMessages(prev => [...prev, {
         id: `sys-${Date.now()}`,
         role: 'reviewer',
-        content: isKO ? '⚠️ 분석할 원고가 부족합니다.' : '⚠️ Not enough manuscript text.',
+        content: t('genreReview.insufficientShort'),
         timestamp: Date.now(),
       }]);
       return;
@@ -251,7 +253,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-accent-purple" />
-          <span className="text-xs font-bold">{isKO ? '장르×레벨 리뷰어' : 'Genre×Level Reviewer'}</span>
+          <span className="text-xs font-bold">{t('genreReview.title')}</span>
           <span className="text-[9px] text-text-tertiary px-2 py-0.5 bg-bg-primary rounded-full">{genreLabel}</span>
         </div>
       </div>
@@ -327,7 +329,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-purple text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
-            {isKO ? '리뷰 요청' : 'Request Review'}
+            {t('genreReview.requestReview')}
           </button>
           <button
             onClick={runAllLevels}
@@ -335,7 +337,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
             className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            {isKO ? '풀 리뷰 (1~4)' : 'Full (1~4)'}
+            {t('genreReview.fullReview')}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { createT } from '@/lib/i18n';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -1617,11 +1618,13 @@ const AUTO_WORLD_TEMPLATES: Record<string, { civs: Omit<Civilization, "id">[]; r
 interface WorldSimProps {
   lang?: Lang;
   synopsis?: string;
+  worldContext?: { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string };
   onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; genreSelections: GenreSelectionEntry[]; ruleLevel: number }) => void;
   initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; genreSelections?: GenreSelectionEntry[]; ruleLevel?: number };
 }
 
-export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialData }: WorldSimProps) {
+export default function WorldSimulator({ lang = "ko", synopsis, worldContext, onSave, initialData }: WorldSimProps) {
+  const tl = createT(lang === 'ko' ? 'KO' : 'EN');
   const [activeView, setActiveView] = useState<ViewTab>("leveling");
 
   // Multi-genre selections (max 5) — backwards compatible
@@ -1800,7 +1803,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
               if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
-                const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN');
+                const result = await generateWorldSim(synopsis, selectedGenre, lang === "ko" ? 'KO' : 'EN', worldContext);
                 if (result.civilizations) {
                   const newCivs = result.civilizations.map((c: { name: string; era: string; traits: string[] }, i: number) => ({
                     id: `ai-${Date.now()}-${i}`, name: c.name, era: c.era || 'medieval',
@@ -1921,7 +1924,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
             ))}
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{lang === "ko" ? "EH 규칙" : "EH Rules"}: </span>
+            <span className="text-text-tertiary">{tl('worldSim.ehRules')}: </span>
             <span className="font-bold" style={{
               color: ruleLevel <= 1 ? "var(--color-text-tertiary)" : ruleLevel <= 2 ? "#22c55e" : ruleLevel <= 3 ? "#eab308" : ruleLevel <= 4 ? "#f97316" : "#ef4444"
             }}>
@@ -1935,6 +1938,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
         {/* ============================================================ */}
         {civs.length > 0 && (() => {
           const isKO = lang === "ko";
+          const wsT = createT(isKO ? 'KO' : 'EN');
           const RELATION_KO: Record<string, string> = { war: "전쟁", alliance: "동맹", trade: "교역", vassal: "종속" };
           const RELATION_EN: Record<string, string> = { war: "at war with", alliance: "allied with", trade: "trades with", vassal: "vassal of" };
 
@@ -1955,7 +1959,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
           civs.forEach(c => {
             const era = ERAS.find(e => e.id === c.era);
             const eraName = era ? (isKO ? era.ko : era.en) : c.era;
-            const traitStr = c.traits.length > 0 ? c.traits.join(", ") : (isKO ? "특성 미정" : "traits TBD");
+            const traitStr = c.traits.length > 0 ? c.traits.join(", ") : wsT('worldSim.traitsTBD');
             paragraphs.push(isKO
               ? `"${c.name}"은(는) ${eraName} 시대의 문명으로, ${traitStr}의 특성을 가집니다.`
               : `"${c.name}" is a ${eraName}-era civilization characterized by ${traitStr}.`);
@@ -1992,11 +1996,11 @@ export default function WorldSimulator({ lang = "ko", synopsis, onSave, initialD
             <div className="border-t border-border pt-4 mt-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-                  {isKO ? "세계관 서술 요약" : "World Narrative Summary"}
+                  {wsT('worldSim.narrativeSummary')}
                 </span>
                 <button onClick={() => navigator.clipboard.writeText(narrative)}
                   className="text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
-                  {isKO ? "복사" : "Copy"}
+                  {wsT('worldSim.copy')}
                 </button>
               </div>
               <div className="text-[10px] text-text-secondary bg-bg-primary border border-border rounded-lg p-4 leading-relaxed whitespace-pre-wrap">

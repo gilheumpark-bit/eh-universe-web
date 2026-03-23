@@ -1,11 +1,12 @@
 // ============================================================
 // PART 0 — IMPORTS & TYPES
 // ============================================================
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Item, Skill, MagicSystem, ItemRarity, ItemCategory,
   StoryConfig, AppLanguage,
 } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import {
   Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
   BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
@@ -15,29 +16,29 @@ import {
 // PART 1 — CONSTANTS & LABELS
 // ============================================================
 
-const RARITY_CONFIG: Record<ItemRarity, { label: Record<'ko' | 'en', string>; color: string; bg: string }> = {
-  common:    { label: { ko: '일반', en: 'Common' },    color: '#9ca3af', bg: 'bg-gray-500/10' },
-  uncommon:  { label: { ko: '고급', en: 'Uncommon' },   color: '#22c55e', bg: 'bg-green-500/10' },
-  rare:      { label: { ko: '희귀', en: 'Rare' },       color: '#3b82f6', bg: 'bg-blue-500/10' },
-  epic:      { label: { ko: '영웅', en: 'Epic' },       color: '#a855f7', bg: 'bg-purple-500/10' },
-  legendary: { label: { ko: '전설', en: 'Legendary' },  color: '#f59e0b', bg: 'bg-amber-500/10' },
-  mythic:    { label: { ko: '신화', en: 'Mythic' },     color: '#ef4444', bg: 'bg-red-500/10' },
+const RARITY_CONFIG: Record<ItemRarity, { tKey: string; color: string; bg: string }> = {
+  common:    { tKey: 'itemStudio.rarityCommon',    color: '#9ca3af', bg: 'bg-gray-500/10' },
+  uncommon:  { tKey: 'itemStudio.rarityUncommon',  color: '#22c55e', bg: 'bg-green-500/10' },
+  rare:      { tKey: 'itemStudio.rarityRare',      color: '#3b82f6', bg: 'bg-blue-500/10' },
+  epic:      { tKey: 'itemStudio.rarityEpic',      color: '#a855f7', bg: 'bg-purple-500/10' },
+  legendary: { tKey: 'itemStudio.rarityLegendary', color: '#f59e0b', bg: 'bg-amber-500/10' },
+  mythic:    { tKey: 'itemStudio.rarityMythic',    color: '#ef4444', bg: 'bg-red-500/10' },
 };
 
-const CATEGORY_CONFIG: Record<ItemCategory, { label: Record<'ko' | 'en', string>; icon: React.ElementType }> = {
-  weapon:     { label: { ko: '무기', en: 'Weapon' },     icon: Sword },
-  armor:      { label: { ko: '방어구', en: 'Armor' },    icon: Shield },
-  accessory:  { label: { ko: '장신구', en: 'Accessory' }, icon: Sparkles },
-  consumable: { label: { ko: '소모품', en: 'Consumable' }, icon: Zap },
-  material:   { label: { ko: '재료', en: 'Material' },   icon: Package },
-  quest:      { label: { ko: '퀘스트', en: 'Quest' },    icon: ScrollText },
-  misc:       { label: { ko: '기타', en: 'Misc' },       icon: Package },
+const CATEGORY_CONFIG: Record<ItemCategory, { tKey: string; icon: React.ElementType }> = {
+  weapon:     { tKey: 'itemStudio.categoryWeapon',     icon: Sword },
+  armor:      { tKey: 'itemStudio.categoryArmor',      icon: Shield },
+  accessory:  { tKey: 'itemStudio.categoryAccessory',  icon: Sparkles },
+  consumable: { tKey: 'itemStudio.categoryConsumable',  icon: Zap },
+  material:   { tKey: 'itemStudio.categoryMaterial',    icon: Package },
+  quest:      { tKey: 'itemStudio.categoryQuest',       icon: ScrollText },
+  misc:       { tKey: 'itemStudio.categoryMisc',        icon: Package },
 };
 
 const SKILL_TYPES = [
-  { value: 'active' as const, ko: '액티브', en: 'Active' },
-  { value: 'passive' as const, ko: '패시브', en: 'Passive' },
-  { value: 'ultimate' as const, ko: '궁극기', en: 'Ultimate' },
+  { value: 'active' as const, tKey: 'itemStudio.skillTypeActive' },
+  { value: 'passive' as const, tKey: 'itemStudio.skillTypePassive' },
+  { value: 'ultimate' as const, tKey: 'itemStudio.skillTypeUltimate' },
 ];
 
 // ============================================================
@@ -231,18 +232,16 @@ type SubTab = 'items' | 'skills' | 'magic' | 'balance';
 // PART 2 — HELPER: BALANCE ANALYSIS
 // ============================================================
 
-function analyzeBalance(items: Item[], skills: Skill[]): {
+function analyzeBalance(items: Item[], skills: Skill[], t: (key: string) => string): {
   rarityDist: Record<ItemRarity, number>;
   categoryDist: Record<ItemCategory, number>;
   skillTypeDist: Record<string, number>;
   warnings: string[];
-  isKO: boolean;
 } {
   const rarityDist = {} as Record<ItemRarity, number>;
   const categoryDist = {} as Record<ItemCategory, number>;
   const skillTypeDist = {} as Record<string, number>;
   const warnings: string[] = [];
-  const isKO = true;
 
   for (const item of items) {
     rarityDist[item.rarity] = (rarityDist[item.rarity] ?? 0) + 1;
@@ -255,24 +254,24 @@ function analyzeBalance(items: Item[], skills: Skill[]): {
   const legendary = (rarityDist.legendary ?? 0) + (rarityDist.mythic ?? 0);
   const total = items.length;
   if (total > 0 && legendary / total > 0.3) {
-    warnings.push(isKO ? '⚠️ 전설급 이상 아이템 비율이 30%를 초과합니다 — 희소성이 떨어질 수 있습니다' : '⚠️ Legendary+ items exceed 30% — rarity dilution risk');
+    warnings.push(t('itemStudio.warningLegendary'));
   }
   if (total > 5 && !rarityDist.common) {
-    warnings.push(isKO ? '⚠️ 일반 등급 아이템이 없습니다 — 기본 아이템이 필요합니다' : '⚠️ No common items — consider adding basic items');
+    warnings.push(t('itemStudio.warningNoCommon'));
   }
   const ultimates = skillTypeDist['ultimate'] ?? 0;
   if (ultimates > 3) {
-    warnings.push(isKO ? '⚠️ 궁극기가 3개 이상입니다 — 파워 인플레이션 주의' : '⚠️ More than 3 ultimate skills — power inflation risk');
+    warnings.push(t('itemStudio.warningUltimates'));
   }
   if (skills.length > 0) {
     const owners = new Set(skills.map(s => s.owner));
     const avgPerChar = skills.length / owners.size;
     if (avgPerChar > 5) {
-      warnings.push(isKO ? `⚠️ 캐릭터당 평균 스킬 ${avgPerChar.toFixed(1)}개 — 복잡도가 높습니다` : `⚠️ Avg ${avgPerChar.toFixed(1)} skills per character — high complexity`);
+      warnings.push(t('itemStudio.warningSkillComplexity').replace('${avg}', avgPerChar.toFixed(1)));
     }
   }
 
-  return { rarityDist, categoryDist, skillTypeDist, warnings, isKO };
+  return { rarityDist, categoryDist, skillTypeDist, warnings };
 }
 
 // ============================================================
@@ -283,8 +282,8 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const [subTab, setSubTab] = useState<SubTab>('items');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
-  const isKO = language === 'KO';
-  const lang = isKO ? 'ko' : 'en';
+  const t = createT(language);
+  const [tierExpanded, setTierExpanded] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
 
   const items = config.items ?? [];
   const skills = config.skills ?? [];
@@ -296,6 +295,11 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
     setConfig(prev => ({ ...prev, skills: fn(prev.skills ?? []) }));
   const setMagicSystems = (fn: (prev: MagicSystem[]) => MagicSystem[]) =>
     setConfig(prev => ({ ...prev, magicSystems: fn(prev.magicSystems ?? []) }));
+
+  // Generic field updater — replaces 14+ individual onChange handlers
+  const updateItemField = useCallback((id: string, field: string, value: string) =>
+    setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i)),
+  []);
 
   // ============================================================
   // PART 3A — ITEM FORM STATE
@@ -400,7 +404,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // ============================================================
   const handleAIGenerate = async () => {
     if (!config.synopsis) {
-      alert(isKO ? '먼저 시놉시스를 작성해주세요.' : 'Please write the synopsis first.');
+      alert(t('itemStudio.synopsisRequired'));
       return;
     }
     setIsGenerating(true);
@@ -411,21 +415,21 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       const sampleItems: Item[] = [
         {
           id: `item-ai-${Date.now()}`,
-          name: genre === 'SYSTEM_HUNTER' ? (isKO ? '각성자의 단검' : "Awakener's Dagger") : (isKO ? '마법의 검' : 'Magic Sword'),
+          name: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemName1Hunter') : t('itemStudio.aiItemName1Other'),
           category: 'weapon',
           rarity: 'rare',
-          description: isKO ? 'AI가 시놉시스 기반으로 생성한 아이템입니다' : 'AI-generated item based on synopsis',
-          effect: genre === 'SYSTEM_HUNTER' ? (isKO ? '크리티컬 확률 +15%' : 'Crit chance +15%') : (isKO ? '마력 증폭 20%' : 'Magic amp +20%'),
-          obtainedFrom: isKO ? '1화 던전 보상' : 'Episode 1 dungeon reward',
+          description: t('itemStudio.aiItemDesc'),
+          effect: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemEffect1Hunter') : t('itemStudio.aiItemEffect1Other'),
+          obtainedFrom: t('itemStudio.aiItemObtained1'),
         },
         {
           id: `item-ai-${Date.now() + 1}`,
-          name: genre === 'SYSTEM_HUNTER' ? (isKO ? '회복 물약 (하급)' : 'Healing Potion (Low)') : (isKO ? '엘릭서' : 'Elixir'),
+          name: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemName2Hunter') : t('itemStudio.aiItemName2Other'),
           category: 'consumable',
           rarity: 'common',
-          description: isKO ? '기본 회복 아이템' : 'Basic recovery item',
-          effect: isKO ? 'HP 30% 회복' : 'Restores 30% HP',
-          obtainedFrom: isKO ? '상점 구매' : 'Shop purchase',
+          description: t('itemStudio.aiItemDesc2'),
+          effect: t('itemStudio.aiItemEffect2'),
+          obtainedFrom: t('itemStudio.aiItemObtained2'),
         },
       ];
       setItems(prev => [...prev, ...sampleItems]);
@@ -438,16 +442,16 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // PART 4 — SUB-TAB NAV
   // ============================================================
   const subTabs: { key: SubTab; label: string; icon: React.ElementType }[] = [
-    { key: 'items', label: isKO ? '아이템 도감' : 'Item Archive', icon: Sword },
-    { key: 'skills', label: isKO ? '스킬 트리' : 'Skill Tree', icon: Zap },
-    { key: 'magic', label: isKO ? '마법 체계' : 'Magic System', icon: Wand2 },
-    { key: 'balance', label: isKO ? '밸런스 분석' : 'Balance Analysis', icon: BarChart3 },
+    { key: 'items', label: t('itemStudio.tabItems'), icon: Sword },
+    { key: 'skills', label: t('itemStudio.tabSkills'), icon: Zap },
+    { key: 'magic', label: t('itemStudio.tabMagic'), icon: Wand2 },
+    { key: 'balance', label: t('itemStudio.tabBalance'), icon: BarChart3 },
   ];
 
   // ============================================================
   // PART 5 — BALANCE TAB
   // ============================================================
-  const balance = useMemo(() => analyzeBalance(items, skills), [items, skills]);
+  const balance = useMemo(() => analyzeBalance(items, skills, t), [items, skills, t]);
 
   // ============================================================
   // PART 6 — RENDER
@@ -458,10 +462,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-black tracking-tight">
-            {isKO ? '아이템 스튜디오' : 'Item Studio'}
+            {t('itemStudio.title')}
           </h2>
           <p className="text-xs text-text-tertiary mt-1">
-            {isKO ? '아이템 · 스킬 · 마법체계를 설계하고 밸런스를 분석합니다' : 'Design items, skills, magic systems and analyze balance'}
+            {t('itemStudio.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -472,25 +476,25 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all"
             >
               <ScrollText className="w-4 h-4" />
-              {isKO ? 'EH 프리셋' : 'EH Presets'}
+              {t('itemStudio.ehPresets')}
             </button>
             {showPresetMenu && (
               <div className="absolute right-0 top-full mt-2 z-50 bg-bg-secondary border border-border rounded-xl shadow-2xl p-2 min-w-[200px]">
                 <button onClick={() => loadPreset('all')} className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold hover:bg-accent-purple/20 transition-colors">
-                  🌐 {isKO ? '전체 로드 (마법+스킬+아이템)' : 'Load All (Magic+Skills+Items)'}
+                  🌐 {t('itemStudio.loadAll')}
                 </button>
                 <button onClick={() => loadPreset('magic')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  🔮 {isKO ? `마법 체계 (${getPresetSummary(isKO).magic}종)` : `Magic Systems (${getPresetSummary(isKO).magic})`}
+                  🔮 {`${t('itemStudio.magicSystemsCount')} (${getPresetSummary(false).magic})`}
                 </button>
                 <button onClick={() => loadPreset('skills')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  ⚡ {isKO ? `스킬 (${getPresetSummary(isKO).skills}종)` : `Skills (${getPresetSummary(isKO).skills})`}
+                  ⚡ {`${t('itemStudio.skillsCount')} (${getPresetSummary(false).skills})`}
                 </button>
                 <button onClick={() => loadPreset('items')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  ⚔️ {isKO ? `아이템 (${getPresetSummary(isKO).items}종)` : `Items (${getPresetSummary(isKO).items})`}
+                  ⚔️ {`${t('itemStudio.itemsCount')} (${getPresetSummary(false).items})`}
                 </button>
                 <div className="border-t border-border mt-1 pt-1">
                   <p className="px-3 py-1 text-[9px] text-text-tertiary">
-                    {isKO ? '※ 존재력·신성력·EH·마법 4대 체계 + 민시영/이지영 스킬 포함' : '※ 4 power systems + character skills included'}
+                    {t('itemStudio.presetNote')}
                   </p>
                 </div>
               </div>
@@ -504,7 +508,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {isKO ? 'AI 생성' : 'AI Generate'}
+            {t('itemStudio.aiGenerate')}
           </button>
         </div>
       </div>
@@ -531,14 +535,14 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         <div className="space-y-4">
           {/* Category Filter */}
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setItemFilter('all')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === 'all' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
-              {isKO ? '전체' : 'All'} ({items.length})
+            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === 'all' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+              {t('itemStudio.filterAll')} ({items.length})
             </button>
             {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
               const count = items.filter(i => i.category === cat).length;
               return (
-                <button key={cat} onClick={() => setItemFilter(cat)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === cat ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
-                  {CATEGORY_CONFIG[cat].label[lang]} ({count})
+                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${itemFilter === cat ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary'}`}>
+                  {t(CATEGORY_CONFIG[cat].tKey)} ({count})
                 </button>
               );
             })}
@@ -559,7 +563,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color: rCfg.color, border: `1px solid ${rCfg.color}40` }}>
-                        {rCfg.label[lang]}
+                        {t(rCfg.tKey)}
                       </span>
                       <button onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="text-text-tertiary hover:text-accent-red">
                         <Trash2 className="w-3.5 h-3.5" />
@@ -569,6 +573,89 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
                   {item.effect && <p className="text-[10px] text-accent-purple font-bold">✦ {item.effect}</p>}
                   {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
+                  {/* 1단계 뼈대 필드 */}
+                  <div className="space-y-1.5 pt-2 border-t border-border/50">
+                    <input value={item.purpose ?? ''} onChange={e => updateItemField(item.id, 'purpose', e.target.value)}
+                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.activationCond ?? ''} onChange={e => updateItemField(item.id, 'activationCond', e.target.value)}
+                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.costWeakness ?? ''} onChange={e => updateItemField(item.id, 'costWeakness', e.target.value)}
+                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                    <input value={item.storyFunction ?? ''} onChange={e => updateItemField(item.id, 'storyFunction', e.target.value)}
+                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-bg-primary/50 border border-border/50 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                  </div>
+                  {/* 2단계 — 작동 */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t2: !prev[item.id]?.t2 } }))}
+                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
+                    >
+                      {tierExpanded[item.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {t('itemStudio.tier2Mechanics')}
+                    </button>
+                    {tierExpanded[item.id]?.t2 && (
+                      <div className="space-y-1.5 pt-1.5">
+                        <input value={item.worldConnection ?? ''} onChange={e => updateItemField(item.id, 'worldConnection', e.target.value)}
+                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.misuse ?? ''} onChange={e => updateItemField(item.id, 'misuse', e.target.value)}
+                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.lore ?? ''} onChange={e => updateItemField(item.id, 'lore', e.target.value)}
+                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.material ?? ''} onChange={e => updateItemField(item.id, 'material', e.target.value)}
+                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.craftMethod ?? ''} onChange={e => updateItemField(item.id, 'craftMethod', e.target.value)}
+                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.valueRarity ?? ''} onChange={e => updateItemField(item.id, 'valueRarity', e.target.value)}
+                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.whoTargets ?? ''} onChange={e => updateItemField(item.id, 'whoTargets', e.target.value)}
+                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-amber-500/5 border border-amber-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                      </div>
+                    )}
+                  </div>
+                  {/* 3단계 — 디테일 */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t3: !prev[item.id]?.t3 } }))}
+                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
+                    >
+                      {tierExpanded[item.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {t('itemStudio.tier3Detail')}
+                    </button>
+                    {tierExpanded[item.id]?.t3 && (
+                      <div className="space-y-1.5 pt-1.5">
+                        <input value={item.itemAppearance ?? ''} onChange={e => updateItemField(item.id, 'itemAppearance', e.target.value)}
+                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.symbolism ?? ''} onChange={e => updateItemField(item.id, 'symbolism', e.target.value)}
+                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.currentLocation ?? ''} onChange={e => updateItemField(item.id, 'currentLocation', e.target.value)}
+                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.ownershipCond ?? ''} onChange={e => updateItemField(item.id, 'ownershipCond', e.target.value)}
+                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.durability ?? ''} onChange={e => updateItemField(item.id, 'durability', e.target.value)}
+                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.evolution ?? ''} onChange={e => updateItemField(item.id, 'evolution', e.target.value)}
+                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                        <input value={item.maintenance ?? ''} onChange={e => updateItemField(item.id, 'maintenance', e.target.value)}
+                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-lg px-2.5 py-1.5 text-[10px] outline-none focus:border-accent-purple" />
+                      </div>
+                    )}
+                  </div>
+                  {/* 한 줄 요약 */}
+                  {(item.purpose || item.effect) && (
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-[9px] text-text-tertiary italic leading-relaxed">
+                        {t('itemStudio.summaryTemplate')
+                          .replace('${name}', item.name)
+                          .replace('${purpose}', item.purpose || item.description || '___')
+                          .replace('${owner}', item.owner || '___')
+                          .replace('${effect}', item.effect || '___')
+                          .replace('${cost}', item.costWeakness || '___')
+                        }
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -576,26 +663,26 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
           {/* Add Item Form */}
           <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold">{isKO ? '+ 새 아이템 추가' : '+ Add New Item'}</h4>
+            <h4 className="text-xs font-bold">{t('itemStudio.addNewItem')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '이름' : 'Name'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
               <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
                 {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => (
-                  <option key={cat} value={cat}>{CATEGORY_CONFIG[cat].label[lang]}</option>
+                  <option key={cat} value={cat}>{t(CATEGORY_CONFIG[cat].tKey)}</option>
                 ))}
               </select>
               <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
                 {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => (
-                  <option key={r} value={r}>{RARITY_CONFIG[r].label[lang]}</option>
+                  <option key={r} value={r}>{t(RARITY_CONFIG[r].tKey)}</option>
                 ))}
               </select>
-              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={isKO ? '효과' : 'Effect'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={isKO ? '설명' : 'Description'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={isKO ? '획득처' : 'Obtained from'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
               <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
-                <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+                <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
           </div>
@@ -614,7 +701,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-amber-400' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
                     <span className="font-bold text-sm">{skill.name}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-primary text-text-tertiary">
-                      {SKILL_TYPES.find(t => t.value === skill.type)?.[lang] ?? skill.type}
+                      {(() => { const st = SKILL_TYPES.find(s => s.value === skill.type); return st ? t(st.tKey) : skill.type; })()}
                     </span>
                   </div>
                   <button onClick={() => setSkills(prev => prev.filter(s => s.id !== skill.id))} className="text-text-tertiary hover:text-accent-red">
@@ -634,20 +721,20 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
           {/* Add Skill Form */}
           <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold">{isKO ? '+ 새 스킬 추가' : '+ Add New Skill'}</h4>
+            <h4 className="text-xs font-bold">{t('itemStudio.addNewSkill')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '스킬명' : 'Skill name'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.skillNamePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
               <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
-                {SKILL_TYPES.map(t => <option key={t.value} value={t.value}>{t[lang]}</option>)}
+                {SKILL_TYPES.map(st => <option key={st.value} value={st.value}>{t(st.tKey)}</option>)}
               </select>
-              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={isKO ? '소유자' : 'Owner'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={isKO ? '등급' : 'Rank'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={t('itemStudio.ownerPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={t('itemStudio.rankPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={isKO ? '설명' : 'Description'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs col-span-2" />
-              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={isKO ? '비용 (마나 50)' : 'Cost (50 mana)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs col-span-2" />
+              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
               <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
-                <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+                <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
           </div>
@@ -661,8 +748,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             <MagicSystemCard
               key={magic.id}
               magic={magic}
-              lang={lang}
-              isKO={isKO}
+              t={t}
               onDelete={() => setMagicSystems(prev => prev.filter(m => m.id !== magic.id))}
               onAddRank={(rank) => setMagicSystems(prev => prev.map(m =>
                 m.id === magic.id ? { ...m, ranks: [...m.ranks, rank] } : m
@@ -675,17 +761,17 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
           {/* Add Magic System Form */}
           <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold">{isKO ? '+ 새 마법 체계 추가' : '+ Add Magic System'}</h4>
+            <h4 className="text-xs font-bold">{t('itemStudio.addMagicSystem')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={isKO ? '체계명 (예: 마나 시스템)' : 'Name (e.g. Mana System)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={isKO ? '원천 (예: 정령의 힘)' : 'Source (e.g. Elemental force)'} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.magicNamePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={t('itemStudio.magicSourcePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={isKO ? '규칙' : 'Rules'} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
-              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={isKO ? '제한사항' : 'Limitations'} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
+              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
+              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
             </div>
             <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
-              <Plus className="w-3.5 h-3.5" /> {isKO ? '추가' : 'Add'}
+              <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
             </button>
           </div>
         </div>
@@ -696,28 +782,28 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         <div className="space-y-6">
           {items.length === 0 && skills.length === 0 ? (
             <div className="text-center py-16 text-text-tertiary text-sm">
-              {isKO ? '아이템이나 스킬을 먼저 추가해주세요' : 'Add items or skills first'}
+              {t('itemStudio.addItemsOrSkillsFirst')}
             </div>
           ) : (
             <>
               {/* Warnings */}
               {balance.warnings.length > 0 && (
                 <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-4 space-y-2">
-                  <h4 className="text-xs font-bold text-amber-400">{isKO ? '밸런스 경고' : 'Balance Warnings'}</h4>
+                  <h4 className="text-xs font-bold text-amber-400">{t('itemStudio.balanceWarnings')}</h4>
                   {balance.warnings.map((w, i) => <p key={i} className="text-xs text-amber-300">{w}</p>)}
                 </div>
               )}
 
               {/* Rarity Distribution */}
               <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
-                <h4 className="text-xs font-bold">{isKO ? '등급별 아이템 분포' : 'Item Rarity Distribution'}</h4>
+                <h4 className="text-xs font-bold">{t('itemStudio.rarityDistribution')}</h4>
                 <div className="space-y-2">
                   {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => {
                     const count = balance.rarityDist[r] ?? 0;
                     const pct = items.length > 0 ? (count / items.length) * 100 : 0;
                     return (
                       <div key={r} className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold w-12" style={{ color: RARITY_CONFIG[r].color }}>{RARITY_CONFIG[r].label[lang]}</span>
+                        <span className="text-[10px] font-bold w-12" style={{ color: RARITY_CONFIG[r].color }}>{t(RARITY_CONFIG[r].tKey)}</span>
                         <div className="flex-1 h-4 bg-bg-primary rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: RARITY_CONFIG[r].color }} />
                         </div>
@@ -731,14 +817,14 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               {/* Skill Type Distribution */}
               {skills.length > 0 && (
                 <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
-                  <h4 className="text-xs font-bold">{isKO ? '스킬 타입 분포' : 'Skill Type Distribution'}</h4>
+                  <h4 className="text-xs font-bold">{t('itemStudio.skillTypeDistribution')}</h4>
                   <div className="flex gap-4">
-                    {SKILL_TYPES.map(t => {
-                      const count = balance.skillTypeDist[t.value] ?? 0;
+                    {SKILL_TYPES.map(st => {
+                      const count = balance.skillTypeDist[st.value] ?? 0;
                       return (
-                        <div key={t.value} className="text-center">
+                        <div key={st.value} className="text-center">
                           <div className="text-2xl font-black">{count}</div>
-                          <div className="text-[10px] text-text-tertiary">{t[lang]}</div>
+                          <div className="text-[10px] text-text-tertiary">{t(st.tKey)}</div>
                         </div>
                       );
                     })}
@@ -749,10 +835,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               {/* Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: isKO ? '총 아이템' : 'Total Items', value: items.length, icon: Sword },
-                  { label: isKO ? '총 스킬' : 'Total Skills', value: skills.length, icon: Zap },
-                  { label: isKO ? '마법 체계' : 'Magic Systems', value: magicSystems.length, icon: Wand2 },
-                  { label: isKO ? '경고 수' : 'Warnings', value: balance.warnings.length, icon: BarChart3 },
+                  { label: t('itemStudio.totalItems'), value: items.length, icon: Sword },
+                  { label: t('itemStudio.totalSkills'), value: skills.length, icon: Zap },
+                  { label: t('itemStudio.magicSystems'), value: magicSystems.length, icon: Wand2 },
+                  { label: t('itemStudio.warningCount'), value: balance.warnings.length, icon: BarChart3 },
                 ].map(({ label, value, icon: Icon }) => (
                   <div key={label} className="bg-bg-secondary rounded-xl p-4 text-center">
                     <Icon className="w-5 h-5 mx-auto text-text-tertiary mb-2" />
@@ -775,12 +861,11 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
 const MagicSystemCard: React.FC<{
   magic: MagicSystem;
-  lang: 'ko' | 'en';
-  isKO: boolean;
+  t: (key: string, fallback?: string) => string;
   onDelete: () => void;
   onAddRank: (rank: string) => void;
   onRemoveRank: (idx: number) => void;
-}> = ({ magic, lang, isKO, onDelete, onAddRank, onRemoveRank }) => {
+}> = ({ magic, t, onDelete, onAddRank, onRemoveRank }) => {
   const [expanded, setExpanded] = useState(true);
   const [rankInput, setRankInput] = useState('');
 
@@ -799,13 +884,13 @@ const MagicSystemCard: React.FC<{
 
       {expanded && (
         <>
-          {magic.source && <p className="text-xs text-text-secondary">🔮 {isKO ? '원천' : 'Source'}: {magic.source}</p>}
-          {magic.rules && <p className="text-xs text-text-secondary">📜 {isKO ? '규칙' : 'Rules'}: {magic.rules}</p>}
-          {magic.limitations && <p className="text-xs text-accent-red/80">⛔ {isKO ? '제한' : 'Limits'}: {magic.limitations}</p>}
+          {magic.source && <p className="text-xs text-text-secondary">🔮 {t('itemStudio.source')}: {magic.source}</p>}
+          {magic.rules && <p className="text-xs text-text-secondary">📜 {t('itemStudio.rules')}: {magic.rules}</p>}
+          {magic.limitations && <p className="text-xs text-accent-red/80">⛔ {t('itemStudio.limits')}: {magic.limitations}</p>}
 
           {/* Ranks */}
           <div className="space-y-2">
-            <h5 className="text-[10px] font-bold text-text-tertiary uppercase">{isKO ? '등급 체계' : 'Rank System'}</h5>
+            <h5 className="text-[10px] font-bold text-text-tertiary uppercase">{t('itemStudio.rankSystem')}</h5>
             <div className="flex flex-wrap gap-1.5">
               {magic.ranks.map((rank, i) => (
                 <span key={i} className="flex items-center gap-1 px-2 py-1 bg-bg-primary rounded-lg text-[10px] font-bold">
@@ -819,7 +904,7 @@ const MagicSystemCard: React.FC<{
                 value={rankInput}
                 onChange={e => setRankInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
-                placeholder={isKO ? '등급 추가 (Enter)' : 'Add rank (Enter)'}
+                placeholder={t('itemStudio.addRankPlaceholder')}
                 className="bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] flex-1"
               />
             </div>

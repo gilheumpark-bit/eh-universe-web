@@ -157,6 +157,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
             <button
               onClick={() => navigator.clipboard.writeText(message.content)}
+              aria-label="복사"
               className="p-1.5 hover:bg-zinc-900 rounded-lg text-zinc-700 hover:text-zinc-400 transition-all"
             >
               <Copy className="w-3.5 h-3.5" />

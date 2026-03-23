@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, GitCompare, Copy, Check } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 
 interface VersionDiffProps {
   versions: string[];
@@ -67,6 +68,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
   const isKO = language === 'KO';
+  const t = createT(language);
   const total = versions.length;
 
   if (total <= 1) return null;
@@ -87,6 +89,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         <button
           onClick={() => canPrev && onSwitch(currentIndex - 1)}
           disabled={!canPrev}
+          aria-label="이전 버전"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 disabled:opacity-20 transition-colors"
         >
           <ChevronLeft className="w-3 h-3" />
@@ -97,6 +100,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         <button
           onClick={() => canNext && onSwitch(currentIndex + 1)}
           disabled={!canNext}
+          aria-label="다음 버전"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 disabled:opacity-20 transition-colors"
         >
           <ChevronRight className="w-3 h-3" />
@@ -112,12 +116,13 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
             }`}
           >
             <GitCompare className="w-2.5 h-2.5" />
-            {isKO ? '비교' : 'Diff'}
+            {t('versionDiff.diff')}
           </button>
         )}
 
         <button
           onClick={handleCopy}
+          aria-label="버전 복사"
           className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors"
         >
           {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
@@ -127,7 +132,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
       {/* Diff view */}
       {showDiff && currentIndex > 0 && (
         <div className="mt-2 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono leading-relaxed max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
-          <div className="text-[8px] text-zinc-600 uppercase tracking-widest mb-2">
+          <div className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">
             v{currentIndex} → v{currentIndex + 1}
           </div>
           {computeDiff(versions[currentIndex - 1], versions[currentIndex]).map((line, i) => (

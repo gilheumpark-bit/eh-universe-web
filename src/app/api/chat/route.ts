@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // ============================================================
-// PART 1: ENV KEY FALLBACKS
+// PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
 
 const ENV_KEYS: Record<string, string | undefined> = {
@@ -19,6 +19,40 @@ const ENV_KEYS: Record<string, string | undefined> = {
   groq:    process.env.GROQ_API_KEY,
   mistral: process.env.MISTRAL_API_KEY,
 };
+
+const VALID_PROVIDERS = new Set(['gemini', 'openai', 'claude', 'groq', 'mistral']);
+const MAX_REQUEST_BYTES = 1_048_576; // 1MB
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 30;
+
+// In-memory rate limiter (per IP, sliding window) with size cap
+const RATE_LIMIT_MAX_ENTRIES = 10_000;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    // Evict oldest entries if map exceeds cap (LRU-style)
+    if (rateLimitMap.size >= RATE_LIMIT_MAX_ENTRIES) {
+      const firstKey = rateLimitMap.keys().next().value;
+      if (firstKey !== undefined) rateLimitMap.delete(firstKey);
+    }
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) return false;
+  entry.count++;
+  return true;
+}
+
+// Periodic cleanup to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS);
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
@@ -53,7 +87,8 @@ async function streamOpenAICompat(
     throw new Error(`${provider} API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -80,7 +115,8 @@ async function streamClaude(
     throw new Error(`Claude API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -96,11 +132,12 @@ async function streamGemini(
     parts: [{ text: m.content }],
   }));
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+  // Use header auth to avoid key leaking in URL/server logs
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents,
       systemInstruction: { parts: [{ text: system }] },
@@ -113,7 +150,8 @@ async function streamGemini(
     throw new Error(`Gemini API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -122,25 +160,57 @@ async function streamGemini(
 
 export async function POST(req: NextRequest) {
   try {
-    // Request size guard (1MB max)
-    const contentLength = parseInt(req.headers.get('content-length') || '0');
-    if (contentLength > 1_048_576) {
+    // CSRF: verify request origin matches host
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (origin && host) {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
+
+    // Request size guard — parse body directly (not trusting Content-Length header)
+    const rawText = await req.text();
+    if (rawText.length > MAX_REQUEST_BYTES) {
       return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }
 
-    const body = await req.json();
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body;
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body as {
+      provider?: string; model?: string; systemInstruction?: string;
+      messages?: { role: string; content: string }[];
+      temperature?: number; apiKey?: string; maxTokens?: number;
+    };
 
     // Input validation
-    if (!provider || typeof provider !== 'string') {
+    if (!provider || typeof provider !== 'string' || !VALID_PROVIDERS.has(provider)) {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
-    if (!messages || !Array.isArray(messages)) {
+    if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
+      return NextResponse.json({ error: 'Invalid model' }, { status: 400 });
+    }
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
+    }
+    if (typeof temperature !== 'number' || temperature < 0 || temperature > 2) {
+      return NextResponse.json({ error: 'Invalid temperature' }, { status: 400 });
     }
 
     // Resolve API key: client BYOK > server env
-    const apiKey = clientKey || ENV_KEYS[provider];
+    const apiKey = (typeof clientKey === 'string' && clientKey) || ENV_KEYS[provider];
     if (!apiKey) {
       return NextResponse.json(
         { error: 'API key not configured. Set via BYOK or server environment variable.' },
@@ -152,18 +222,18 @@ export async function POST(req: NextRequest) {
 
     switch (provider) {
       case 'gemini':
-        stream = await streamGemini(apiKey, model, systemInstruction, messages, temperature);
+        stream = await streamGemini(apiKey, model, systemInstruction || '', messages, temperature);
         break;
       case 'openai':
       case 'groq':
       case 'mistral':
-        stream = await streamOpenAICompat(provider, apiKey, model, systemInstruction, messages, temperature);
+        stream = await streamOpenAICompat(provider, apiKey, model, systemInstruction || '', messages, temperature);
         break;
       case 'claude':
-        stream = await streamClaude(apiKey, model, systemInstruction, messages, temperature, maxTokens);
+        stream = await streamClaude(apiKey, model, systemInstruction || '', messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
         break;
       default:
-        return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
     return new NextResponse(stream, {
@@ -175,8 +245,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    // Sanitize: strip API keys, internal paths, and verbose details
-    const safeMsg = raw.replace(/key[=:]\s*\S+/gi, 'key=[REDACTED]').slice(0, 200);
+    // Sanitize: strip API keys and sensitive data (covers key=, apikey=, api_key:, etc.)
+    const safeMsg = raw
+      .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
+      .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
+      .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+      .slice(0, 200);
     const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : 500;
     return NextResponse.json({ error: safeMsg }, { status });
   }

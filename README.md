@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EH Universe Web
 
-## Getting Started
+**EH Universe** 세계관 포털 + **NOA Studio** AI 소설 창작 워크벤치가 하나의 저장소에 결합된 프로젝트입니다.
 
-First, run the development server:
+## 구성
+
+| 영역 | 경로 | 설명 |
+|------|------|------|
+| **EH Universe 포털** | `/` `/about` `/archive` `/reference` `/rulebook` | 세계관 소개, 아카이브, 룰북 |
+| **NOA Studio** | `/studio` | AI 기반 소설 창작 도구 (세계관 설계 → 캐릭터 → 연출 → 집필 → 원고 관리) |
+| **Tools** | `/tools/*` | 스타일 스튜디오, 네카사운드, 갤럭시맵, 사운드트랙 |
+
+## 기술 스택
+
+- **Framework:** Next.js 16 + React 19
+- **Styling:** Tailwind CSS 4
+- **AI:** Multi-provider (Gemini, OpenAI, Claude, Groq, Mistral) — BYOK 또는 서버 프록시
+- **Auth:** Firebase (Google 로그인)
+- **Sync:** Google Drive REST API v3
+- **Export:** EPUB / DOCX (브라우저 완결형, 외부 라이브러리 없음)
+- **Engine:** ANS 10.0 (장르별 벤치마크, HFCP 대화 보정, 맥락 추적, 상표 필터)
+- **Test:** Jest 30 + Playwright
+
+## 시작
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 에서 확인.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 주요 명령
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 명령 | 설명 |
+|------|------|
+| `npm run dev` | 개발 서버 |
+| `npm run build` | 프로덕션 빌드 |
+| `npm test` | Jest 단위 테스트 |
+| `npm run test:e2e` | Playwright E2E 테스트 |
+| `npm run lint` | ESLint |
 
-## Learn More
+## 프로젝트 구조
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/           Next.js App Router (페이지)
+  components/    React 컴포넌트 (studio/ 30개+)
+  engine/        서사 엔진 (pipeline, validator, genre-review, HFCP, continuity-tracker)
+  hooks/         커스텀 훅 (useProjectManager, useStudioKeyboard, useStudioAI)
+  lib/           유틸리티, 타입, 컨텍스트
+  services/      외부 서비스 (Gemini, Drive)
+```

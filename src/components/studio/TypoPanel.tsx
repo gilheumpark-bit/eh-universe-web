@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { detectTypos, type TypoMatch } from '@/lib/typo-detector';
 
 interface TypoPanelProps {
@@ -21,6 +22,7 @@ const TYPE_LABEL: Record<TypoMatch['type'], { ko: string; en: string }> = {
 const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => {
   const [expanded, setExpanded] = useState(false);
   const isKO = language === 'KO';
+  const t = createT(language);
 
   const typos = useMemo(() => detectTypos(text), [text]);
 
@@ -35,7 +37,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
       >
         <span className="flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" />
-          {isKO ? '오타 감지' : 'Typos detected'}: {typos.length}
+          {t('typoPanel.detected')}: {typos.length}
         </span>
         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
@@ -45,7 +47,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
         <div className="px-3 pb-3 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
           {typos.map((typo, i) => (
             <div key={i} className="flex items-center gap-2 text-[10px]">
-              <span className="px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 text-[8px] font-mono">
+              <span className="px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 text-[10px] font-mono">
                 {isKO ? TYPE_LABEL[typo.type].ko : TYPE_LABEL[typo.type].en}
               </span>
               <span className="text-red-400/70 line-through font-mono">{typo.original}</span>
@@ -55,7 +57,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
                 <button
                   onClick={() => onApplyFix(typo.index, typo.original, typo.suggestion)}
                   className="ml-auto p-0.5 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors"
-                  title={isKO ? '수정 적용' : 'Apply fix'}
+                  title={t('typoPanel.applyFix')}
                 >
                   <Check className="w-3 h-3" />
                 </button>

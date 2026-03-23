@@ -1,8 +1,34 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3 } from "lucide-react";
-import type { StoryConfig, EpisodeManuscript, AppLanguage } from "@/lib/studio-types";
+import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare } from "lucide-react";
+import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
+import { createT } from "@/lib/i18n";
+import ChapterAnalysisView from "./ChapterAnalysisView";
+
+// ============================================================
+// PART 0 — DIFF UTILITY (line-level LCS)
+// ============================================================
+
+interface DiffLine { type: 'same' | 'add' | 'remove'; text: string }
+
+function computeDiff(oldText: string, newText: string): DiffLine[] {
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+  const m = oldLines.length, n = newLines.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = oldLines[i-1] === newLines[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+  let i = m, j = n;
+  const stack: DiffLine[] = [];
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i-1] === newLines[j-1]) { stack.push({ type: 'same', text: oldLines[i-1] }); i--; j--; }
+    else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) { stack.push({ type: 'add', text: newLines[j-1] }); j--; }
+    else { stack.push({ type: 'remove', text: oldLines[i-1] }); i--; }
+  }
+  return stack.reverse();
+}
 
 // ============================================================
 // PART 1 — TYPES & HELPERS
@@ -13,6 +39,7 @@ interface ManuscriptViewProps {
   config: StoryConfig;
   setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   messages: { role: string; content: string }[];
+  onEditInStudio?: (content: string) => void;
 }
 
 function stripJSON(text: string): string {
@@ -147,13 +174,15 @@ ${manuscripts
 // PART 2 — COMPONENT
 // ============================================================
 
-export default function ManuscriptView({ language, config, setConfig, messages }: ManuscriptViewProps) {
-  const isKO = language === "KO";
+export default function ManuscriptView({ language, config, setConfig, messages, onEditInStudio }: ManuscriptViewProps) {
+  const t = createT(language);
   const manuscripts = config.manuscripts || [];
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
   const [editingEp, setEditingEp] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editTitle, setEditTitle] = useState("");
+  const [analysisEp, setAnalysisEp] = useState<number | null>(null);
+  const [diffEp, setDiffEp] = useState<number | null>(null);
 
   const totalChars = useMemo(() => manuscripts.reduce((sum, m) => sum + m.charCount, 0), [manuscripts]);
   const targetPerEp = config.guardrails.min;
@@ -217,16 +246,36 @@ export default function ManuscriptView({ language, config, setConfig, messages }
   };
 
   const deleteManuscript = (ep: number) => {
-    const msg = isKO ? `EP.${ep} 원고를 삭제하시겠습니까?` : `Delete EP.${ep} manuscript?`;
+    const msg = t('manuscript.deleteConfirm').replace('{ep}', String(ep));
     if (!window.confirm(msg)) return;
     updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
   };
 
+  const saveAnalysis = useCallback(
+    (analysis: ChapterAnalysis) => {
+      const existing = config.chapterAnalyses || [];
+      const idx = existing.findIndex((a) => a.episode === analysis.episode);
+      const updated = idx >= 0
+        ? existing.map((a, i) => (i === idx ? analysis : a))
+        : [...existing, analysis];
+      setConfig((prev) => ({ ...prev, chapterAnalyses: updated }));
+      setAnalysisEp(null);
+    },
+    [config.chapterAnalyses, setConfig]
+  );
+
+  const getAnalysis = useCallback(
+    (ep: number): ChapterAnalysis | null => {
+      return (config.chapterAnalyses || []).find((a) => a.episode === ep) ?? null;
+    },
+    [config.chapterAnalyses]
+  );
+
   const exportEpub = () => {
     if (manuscripts.length === 0) return;
     const blob = generateEpub(
-      config.title || (isKO ? "무제" : "Untitled"),
-      isKO ? "NOA Studio" : "NOA Studio",
+      config.title || t('manuscript.untitled'),
+      "NOA Studio",
       manuscripts
     );
     const url = URL.createObjectURL(blob);
@@ -236,6 +285,15 @@ export default function ManuscriptView({ language, config, setConfig, messages }
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Get the latest AI-generated content for diff comparison
+  const getAiSourceForEp = useCallback(() => {
+    const aiTexts = messages
+      .filter((m) => m.role === "assistant" && m.content)
+      .map((m) => stripJSON(m.content))
+      .filter(Boolean);
+    return aiTexts.join("\n\n---\n\n");
+  }, [messages]);
 
   const sorted = [...manuscripts].sort((a, b) => a.episode - b.episode);
   const progressPercent = totalTarget > 0 ? Math.min(100, Math.round((totalChars / totalTarget) * 100)) : 0;
@@ -247,7 +305,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
         <div className="flex items-center gap-3">
           <BookOpen className="w-5 h-5 text-accent-purple" />
           <h2 className="text-lg font-black tracking-tighter uppercase font-[family-name:var(--font-mono)]">
-            {isKO ? "원고 관리" : "Manuscript"}
+            {t('manuscript.manuscriptTitle')}
           </h2>
         </div>
         <div className="flex gap-2">
@@ -256,7 +314,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
             className="px-4 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
           >
             <Save className="w-3 h-3 inline mr-1" />
-            {isKO ? `EP.${config.episode} 수집` : `Collect EP.${config.episode}`}
+            {`EP.${config.episode} ${t('manuscript.collectEp')}`}
           </button>
           <button
             onClick={exportEpub}
@@ -264,7 +322,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
             className="px-4 py-2 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
           >
             <Download className="w-3 h-3 inline mr-1" />
-            {isKO ? "전체 내보내기 (HTML)" : "Export All (HTML)"}
+            {t('manuscript.exportAll')}
           </button>
         </div>
       </div>
@@ -273,10 +331,10 @@ export default function ManuscriptView({ language, config, setConfig, messages }
       <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
         <div className="flex items-center justify-between text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider">
           <span className="text-text-tertiary">
-            {isKO ? "전체 진행률" : "Overall Progress"}
+            {t('manuscript.overallProgress')}
           </span>
           <span className="text-accent-purple">
-            {totalChars.toLocaleString()}{isKO ? "자" : " chars"} / {totalTarget.toLocaleString()}{isKO ? "자" : " chars"} ({progressPercent}%)
+            {totalChars.toLocaleString()}{t('manuscript.charUnit')} / {totalTarget.toLocaleString()}{t('manuscript.charUnit')} ({progressPercent}%)
           </span>
         </div>
         <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
@@ -286,8 +344,8 @@ export default function ManuscriptView({ language, config, setConfig, messages }
           />
         </div>
         <div className="flex justify-between text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-          <span>{sorted.length} / {config.totalEpisodes} {isKO ? "화" : "eps"}</span>
-          <span>{isKO ? "목표" : "Target"}: {targetPerEp.toLocaleString()}{isKO ? "자/화" : " chars/ep"}</span>
+          <span>{sorted.length} / {config.totalEpisodes} {t('manuscript.eps')}</span>
+          <span>{t('manuscript.target')}: {targetPerEp.toLocaleString()}{t('manuscript.charsPerEp')}</span>
         </div>
       </div>
 
@@ -309,7 +367,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                     : "bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
                   : "bg-bg-secondary text-text-tertiary border border-border"
               } ${isCurrent ? "ring-2 ring-accent-purple" : ""}`}
-              title={ms ? `EP.${ep}: ${ms.charCount.toLocaleString()}${isKO ? "자" : " chars"}` : `EP.${ep}`}
+              title={ms ? `EP.${ep}: ${ms.charCount.toLocaleString()}${t('manuscript.charUnit')}` : `EP.${ep}`}
             >
               {ep}
               {ms && (
@@ -327,9 +385,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
       <div className="space-y-2">
         {sorted.length === 0 ? (
           <div className="py-12 text-center text-text-tertiary text-sm">
-            {isKO
-              ? "아직 수집된 원고가 없습니다. 집필 후 \"수집\" 버튼을 눌러주세요."
-              : "No manuscripts yet. Write in AI mode then click \"Collect\"."}
+            {t('manuscript.noManuscripts')}
           </div>
         ) : (
           sorted.map((m) => (
@@ -346,14 +402,14 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                     {m.title}
                   </span>
                   <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                    {m.charCount.toLocaleString()}{isKO ? "자" : " chars"}
+                    {m.charCount.toLocaleString()}{t('manuscript.charUnit')}
                   </span>
                   {m.charCount >= targetPerEp ? (
-                    <span className="text-[8px] text-accent-green font-bold px-1.5 py-0.5 bg-accent-green/10 rounded">
-                      {isKO ? "달성" : "Done"}
+                    <span className="text-[10px] text-accent-green font-bold px-1.5 py-0.5 bg-accent-green/10 rounded">
+                      {t('manuscript.done')}
                     </span>
                   ) : (
-                    <span className="text-[8px] text-accent-amber font-bold px-1.5 py-0.5 bg-accent-amber/10 rounded">
+                    <span className="text-[10px] text-accent-amber font-bold px-1.5 py-0.5 bg-accent-amber/10 rounded">
                       {Math.round((m.charCount / targetPerEp) * 100)}%
                     </span>
                   )}
@@ -368,7 +424,7 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-accent-purple"
-                        placeholder={isKO ? "제목" : "Title"}
+                        placeholder={t('manuscript.title')}
                       />
                       <textarea
                         value={editContent}
@@ -377,14 +433,14 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                       />
                       <div className="flex justify-between items-center">
                         <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                          {editContent.length.toLocaleString()}{isKO ? "자" : " chars"}
+                          {editContent.length.toLocaleString()}{t('manuscript.charUnit')}
                         </span>
                         <div className="flex gap-2">
                           <button onClick={() => setEditingEp(null)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary">
-                            {isKO ? "취소" : "Cancel"}
+                            {t('manuscript.cancel')}
                           </button>
                           <button onClick={saveEdit} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold">
-                            {isKO ? "저장" : "Save"}
+                            {t('manuscript.save')}
                           </button>
                         </div>
                       </div>
@@ -392,18 +448,99 @@ export default function ManuscriptView({ language, config, setConfig, messages }
                   ) : (
                     <div className="p-4">
                       <div className="flex justify-end gap-2 mb-3">
-                        <button onClick={() => startEdit(m)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
+                        <button
+                          onClick={() => setAnalysisEp(analysisEp === m.episode ? null : m.episode)}
+                          className={`p-1.5 rounded transition-colors ${
+                            analysisEp === m.episode
+                              ? "bg-accent-amber/20 text-accent-amber"
+                              : getAnalysis(m.episode)
+                                ? "bg-accent-amber/10 text-accent-amber/60 hover:text-accent-amber"
+                                : "bg-bg-tertiary/50 text-text-tertiary hover:text-accent-amber"
+                          }`}
+                          title={t('manuscript.title')}
+                        >
+                          <Sparkles className="w-3 h-3" />
+                        </button>
+                        {onEditInStudio && (
+                          <button onClick={() => onEditInStudio(m.content)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-green transition-colors" title={t('manuscript.title')}>
+                            <PenTool className="w-3 h-3" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDiffEp(diffEp === m.episode ? null : m.episode)}
+                          className={`p-1.5 rounded transition-colors ${
+                            diffEp === m.episode ? 'bg-blue-600/20 text-blue-400' : 'bg-bg-tertiary/50 text-text-tertiary hover:text-blue-400'
+                          }`}
+                          title={t('manuscript.aiVsCurrent')}
+                        >
+                          <GitCompare className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => startEdit(m)} aria-label="편집" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
                           <Edit3 className="w-3 h-3" />
                         </button>
-                        <button onClick={() => deleteManuscript(m.episode)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
+                        <button onClick={() => deleteManuscript(m.episode)} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
+
+                      {/* Diff View */}
+                      {diffEp === m.episode && (() => {
+                        const aiSource = getAiSourceForEp();
+                        if (!aiSource) return (
+                          <div className="mb-4 px-4 py-3 bg-bg-primary border border-border rounded-lg text-[10px] text-text-tertiary">
+                            {t('manuscript.noAiSource')}
+                          </div>
+                        );
+                        const diff = computeDiff(aiSource, m.content);
+                        const adds = diff.filter(d => d.type === 'add').length;
+                        const removes = diff.filter(d => d.type === 'remove').length;
+                        return (
+                          <div className="mb-4 border border-blue-500/20 rounded-xl overflow-hidden">
+                            <div className="px-4 py-2 bg-blue-600/10 flex items-center justify-between">
+                              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                                {t('manuscript.aiVsCurrent')}
+                              </span>
+                              <span className="text-[9px] font-[family-name:var(--font-mono)]">
+                                <span className="text-green-400">+{adds}</span>{' '}
+                                <span className="text-red-400">-{removes}</span>
+                              </span>
+                            </div>
+                            <div className="p-3 bg-bg-primary max-h-60 overflow-y-auto text-[11px] font-mono leading-relaxed custom-scrollbar">
+                              {diff.map((line, i) => (
+                                <div key={i} className={`whitespace-pre-wrap ${
+                                  line.type === 'add' ? 'text-green-400/80 bg-green-900/10' :
+                                  line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-zinc-500'
+                                }`}>
+                                  <span className="inline-block w-4 text-zinc-700 select-none">
+                                    {line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}
+                                  </span>
+                                  {line.text || '\u00A0'}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Chapter Analysis Panel */}
+                      {analysisEp === m.episode && (
+                        <div className="mb-4 border border-accent-amber/20 rounded-xl p-4 bg-bg-primary">
+                          <ChapterAnalysisView
+                            language={language}
+                            episode={m.episode}
+                            manuscriptContent={m.content}
+                            analysis={getAnalysis(m.episode)}
+                            onSaveAnalysis={saveAnalysis}
+                            onClose={() => setAnalysisEp(null)}
+                          />
+                        </div>
+                      )}
+
                       <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-sm">
                         {m.content}
                       </div>
-                      <div className="mt-3 text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                        {isKO ? "최종 수정" : "Last update"}: {new Date(m.lastUpdate).toLocaleString()}
+                      <div className="mt-3 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        {t('manuscript.lastUpdate')}: {new Date(m.lastUpdate).toLocaleString()}
                       </div>
                     </div>
                   )}

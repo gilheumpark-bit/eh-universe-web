@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { buildContinuityReport, type ContinuityReport, type EpisodeSnapshot } from '@/engine/continuity-tracker';
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 import { AlertTriangle, CheckCircle, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { createT } from '@/lib/i18n';
 
 // ============================================================
 // PART 1 — PROPS & CONSTANTS
@@ -76,11 +77,12 @@ const MiniBarChart: React.FC<{
 // ============================================================
 
 const WarningList: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({ ep, lang }) => {
+  const tw = createT(lang === 'ko' ? 'KO' : 'EN');
   if (ep.warnings.length === 0) {
     return (
       <div className="flex items-center gap-1.5 text-emerald-400 text-[10px]">
         <CheckCircle className="w-3 h-3" />
-        {lang === 'ko' ? '맥락 이탈 없음' : 'No continuity issues'}
+        {tw('continuity.noIssues')}
       </div>
     );
   }
@@ -112,7 +114,7 @@ const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({
       {activeChars.map(c => (
         <span
           key={c.name}
-          className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-bg-primary border border-border"
+          className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-bg-primary border border-border"
           title={c.stateFlags.length > 0 ? c.stateFlags.join(', ') : undefined}
         >
           {c.name}
@@ -136,6 +138,7 @@ const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({
 const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) => {
   const isKO = language === 'KO';
   const lang = isKO ? 'ko' : 'en';
+  const t = createT(language);
 
   const [windowSize, setWindowSize] = useState(5);
   const [selectedEpNum, setSelectedEpNum] = useState<number | null>(null);
@@ -162,7 +165,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
       <div className="bg-bg-secondary/50 border border-border rounded-xl px-3 py-2 flex items-center gap-2">
         <Eye className="w-3.5 h-3.5 text-text-tertiary" />
         <span className="text-[10px] text-text-tertiary">
-          {isKO ? '맥락 추적: 원고 저장 후 활성화' : 'Continuity: saves manuscript to activate'}
+          {t('continuity.activate')}
         </span>
       </div>
     );
@@ -181,7 +184,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
             {report.overallScore}
           </span>
           <span className="text-[7px] text-text-tertiary uppercase tracking-wider">
-            {isKO ? '맥락' : 'CTX'}
+            {t('continuity.context')}
           </span>
         </div>
 
@@ -204,8 +207,8 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
               <span className="text-emerald-400 font-bold">✅</span>
             )}
           </div>
-          <div className="text-[8px] text-text-tertiary">
-            {isKO ? `떡밥 ${report.threadStatus.open}↗ ${report.threadStatus.resolved}✓` : `Threads ${report.threadStatus.open}↗ ${report.threadStatus.resolved}✓`}
+          <div className="text-[10px] text-text-tertiary">
+            {`${t('continuity.threads')} ${report.threadStatus.open}↗ ${report.threadStatus.resolved}✓`}
           </div>
           {expanded ? <ChevronUp className="w-3 h-3 text-text-tertiary" /> : <ChevronDown className="w-3 h-3 text-text-tertiary" />}
         </div>
@@ -217,7 +220,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
           {/* Window size selector */}
           <div className="flex items-center gap-2">
             <span className="text-[9px] text-text-tertiary font-bold uppercase">
-              {isKO ? '추적 범위' : 'Window'}
+              {t('continuity.window')}
             </span>
             <div className="flex gap-1">
               {WINDOW_PRESETS.map(w => (
@@ -230,7 +233,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
                       : 'bg-bg-primary text-text-tertiary hover:text-text-primary'
                   }`}
                 >
-                  {w}{isKO ? '화' : 'ep'}
+                  {w}{t('continuity.episode')}
                 </button>
               ))}
             </div>
@@ -244,7 +247,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
               onClick={(e) => e.stopPropagation()}
               className="flex-1 h-1 accent-accent-purple"
             />
-            <span className="text-[9px] text-text-tertiary w-8 text-right">{windowSize}{isKO ? '화' : 'ep'}</span>
+            <span className="text-[9px] text-text-tertiary w-8 text-right">{windowSize}{t('continuity.episode')}</span>
           </div>
 
           {/* Selected episode detail */}
@@ -255,7 +258,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
                   EP.{selectedEp.episode} — {selectedEp.title}
                 </span>
                 <span className="text-xs font-black" style={{ color: SCORE_COLOR(selectedEp.continuityScore) }}>
-                  {selectedEp.continuityScore}{isKO ? '점' : 'pt'}
+                  {selectedEp.continuityScore}{t('continuity.point')}
                 </span>
               </div>
 
@@ -269,16 +272,16 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
               {selectedEp.openThreads.length > 0 && (
                 <div>
                   <span className="text-[9px] text-text-tertiary font-bold uppercase">
-                    {isKO ? '미해결 떡밥' : 'Open Threads'}
+                    {t('continuity.openThreads')}
                   </span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedEp.openThreads.slice(0, 5).map((t, i) => (
-                      <span key={i} className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[8px] text-amber-400">
+                      <span key={i} className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400">
                         {t}
                       </span>
                     ))}
                     {selectedEp.openThreads.length > 5 && (
-                      <span className="text-[8px] text-text-tertiary">+{selectedEp.openThreads.length - 5}</span>
+                      <span className="text-[10px] text-text-tertiary">+{selectedEp.openThreads.length - 5}</span>
                     )}
                   </div>
                 </div>
@@ -286,7 +289,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
             </div>
           ) : (
             <p className="text-[10px] text-text-tertiary text-center py-2">
-              {isKO ? '막대를 클릭하면 에피소드 상세를 볼 수 있습니다' : 'Click a bar to see episode details'}
+              {t('continuity.clickBar')}
             </p>
           )}
         </div>

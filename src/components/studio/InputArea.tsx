@@ -82,7 +82,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
           <div className="hidden lg:flex items-center gap-4">
             <div className="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 rounded-full border border-white/5">
               <Command className="w-3 h-3 text-zinc-600" />
-              <span className="text-[8px] font-black text-zinc-600 uppercase">CMD+ENTER</span>
+              <span className="text-[10px] font-black text-zinc-600 uppercase">CMD+ENTER</span>
             </div>
             <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest italic">
               {disabled ? t.architecting : t.ready}
@@ -90,8 +90,9 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
           </div>
 
           <div className="flex gap-3 w-full lg:w-auto">
-            <button 
+            <button
               onClick={() => setDraft('')}
+              aria-label="초기화"
               className="p-3 text-zinc-700 hover:text-red-500 transition-colors hidden sm:block"
             >
               <Eraser className="w-5 h-5" />

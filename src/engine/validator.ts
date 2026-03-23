@@ -411,6 +411,7 @@ export function validateGeneratedContent(
   language: AppLanguage,
   ruleLevel: number = 1
 ): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (!text) return { fixes: [], issues: [] };
   const allFixes: FixRecord[] = [];
   const allIssues: ValidationIssue[] = [];
 
@@ -527,7 +528,18 @@ export interface TrademarkMatch {
   position: number;
 }
 
+// Pre-compiled combined regex for fast first-pass detection (O(n) instead of O(48n))
+const _TRADEMARK_COMBINED_RE = new RegExp(
+  TRADEMARK_PATTERNS.map(t => `(?:${t.pattern.source})`).join('|'),
+  'gi',
+);
+
 export function detectTrademarks(text: string): TrademarkMatch[] {
+  if (!text) return [];
+  // Fast path: if combined regex finds nothing, skip individual scans
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  if (!_TRADEMARK_COMBINED_RE.test(text)) return [];
+
   const matches: TrademarkMatch[] = [];
   for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
     const regex = new RegExp(pattern.source, pattern.flags);

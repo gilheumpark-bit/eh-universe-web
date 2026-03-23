@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLang } from "@/lib/LangContext";
+import { createT } from "@/lib/i18n";
 
 const categories = [
   {
@@ -117,6 +118,7 @@ export default function ArchiveClient() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { lang } = useLang();
   const en = lang === "en";
+  const t = createT(lang === "en" ? "EN" : "KO");
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";
@@ -154,27 +156,27 @@ export default function ArchiveClient() {
 
           <div className="mt-6 pt-4 border-t border-border">
             <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
-              {en ? "Tools" : "도구"}
+              {t('archivePage.tools')}
             </h2>
             <Link href="/tools/neka-sound"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🔧</span>
               <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {en ? "Neka Sound Interface" : "네카 음향 인터페이스"}
+                {t('archivePage.nekaSoundInterface')}
               </span>
             </Link>
             <Link href="/tools/soundtrack"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🎵</span>
               <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {en ? "Soundtrack" : "사운드트랙"}
+                {t('archivePage.soundtrack')}
               </span>
             </Link>
             <Link href="/tools/galaxy-map"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🌌</span>
               <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {en ? "Galaxy Zone & Gate Map" : "은하 구역 & Gate 지도"}
+                {t('archivePage.galaxyZoneGateMap')}
               </span>
             </Link>
           </div>
@@ -184,7 +186,7 @@ export default function ArchiveClient() {
           <div className="mx-auto max-w-4xl">
             <div className="doc-header rounded-t mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
-              {en ? "Category" : "카테고리"}: {currentCategory.label} — {currentCategory.sublabel[lang]}
+              {t('archivePage.category')}: {currentCategory.label} — {currentCategory.sublabel[lang]}
             </div>
 
             <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-8">
@@ -211,7 +213,7 @@ export default function ArchiveClient() {
               <div className="mt-8 eh-log">
                 [ARCHIVE_STATUS: PHASE 1 — MVP]<br />
                 [LOADED: {currentCategory.articles.length} articles]<br />
-                [NOTE: {en ? "Additional articles planned for Phase 2" : "상세 아티클은 Phase 2에서 추가 예정"}]
+                [NOTE: {t('archivePage.phase2Note')}]
               </div>
             </div>
           </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
+import { createT } from '@/lib/i18n';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -240,6 +242,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             <div className="flex items-center gap-2">
               <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "비중" : "Weight"}:</span>
               <input type="range" min={5} max={80} value={seg.width}
+                aria-label={lang === "ko" ? `${seg.label} 비중` : `${seg.label} weight`}
                 onChange={e => {
                   const newW = parseInt(e.target.value);
                   const diff = newW - seg.width;
@@ -275,18 +278,29 @@ interface FullDirectionData {
   plotStructure: string;
 }
 
+interface TierContext {
+  charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[];
+  corePremise?: string;
+  powerStructure?: string;
+  currentConflict?: string;
+}
+
 interface SceneSheetProps {
   lang?: Lang;
   synopsis?: string;
   characterNames?: string[];
+  tierContext?: TierContext;
   onDirectionUpdate?: (data: FullDirectionData) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: Partial<FullDirectionData>;
 }
 
-export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+  const tl = createT(lang === 'ko' ? 'KO' : 'EN');
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');
+  const [showGrammarPanel, setShowGrammarPanel] = useState(false);
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
   const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
   const [emotions, setEmotions] = useState<EmotionPoint[]>(initialDirection?.emotions || []);
@@ -304,6 +318,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const [transitions, setTransitions] = useState<TransitionEntry[]>(initialDirection?.transitions || []);
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes || '');
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure || '');
+
+  // Memoized sorted arrays for SVG polyline rendering (avoid re-sort on every render)
+  const sortedEmotions = useMemo(
+    () => [...emotions].sort((a, b) => a.position - b.position),
+    [emotions],
+  );
+  const sortedTensionPoints = useMemo(
+    () => [...tensionPoints].sort((a, b) => a.position - b.position),
+    [tensionPoints],
+  );
 
   // Sync to parent whenever data changes
   const onDirectionUpdateRef = useRef(onDirectionUpdate);
@@ -342,9 +366,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
     setCliffs(prev => [...prev, { id: `cl-${Date.now()}`, cliffType: "crisis-cut", desc: "", episode: 1 }]);
   };
 
-  // Auto-sync all direction data to parent
+  // Auto-sync all direction data to parent (debounced)
   useEffect(() => {
-    syncDirection();
+    const timer = setTimeout(() => {
+      syncDirection();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [syncDirection]);
 
   // Scene direction presets (10 genres)
@@ -436,6 +463,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const applyScenePreset = useCallback((presetKey: string) => {
     const preset = SCENE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
+    const confirmMsg = lang === "ko"
+      ? "현재 씬시트 데이터를 프리셋으로 덮어쓰시겠습니까?"
+      : "Overwrite current scene sheet data with this preset?";
+    if (!window.confirm(confirmMsg)) return;
     const ts = Date.now();
     const isKO = lang === "ko";
     const data = preset.gen(ts, isKO);
@@ -460,15 +491,62 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   };
   const passCount = Object.values(validation).filter(Boolean).length;
 
+  // 3-tier 연동 검증
+  const tierWarnings: string[] = [];
+  if (tierContext) {
+    const hasCharData = tierContext.charProfiles?.some(c => c.desire || c.conflict);
+    if (!hasCharData) {
+      tierWarnings.push(lang === "ko" ? "캐릭터 뼈대(욕망/갈등)가 비어있어 연출이 서사와 연결되지 않습니다" : "Character skeleton (desire/conflict) is empty — direction won't connect to narrative");
+    }
+    if (!tierContext.corePremise) {
+      tierWarnings.push(lang === "ko" ? "세계관 핵심 전제가 없어 훅/클리프행어가 세계관과 무관합니다" : "No world premise — hooks/cliffs won't relate to the world");
+    }
+    if (!tierContext.currentConflict) {
+      tierWarnings.push(lang === "ko" ? "세계 갈등이 없어 긴장 장치가 맥락을 잃습니다" : "No world conflict — tension devices lose context");
+    }
+    // 대사 톤이 있는데 해당 캐릭터의 values가 없으면
+    if (tierContext.charProfiles?.length) {
+      for (const rule of dialogueRules) {
+        const profile = tierContext.charProfiles.find(c => c.name === rule.character);
+        if (profile && !profile.values) {
+          tierWarnings.push(lang === "ko" ? `${rule.character}의 가치관/금지선이 없어 대사 톤이 캐릭터와 분리됩니다` : `${rule.character} has no values — dialogue tone disconnected from character`);
+          break;
+        }
+      }
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="doc-header rounded-t mb-0 flex items-center justify-between">
-        <div>
-          <span className="badge badge-amber mr-2">SCENE</span>
-          {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+        <div className="flex items-center gap-3">
+          {/* 국가별 문법 팩 셀렉터 */}
+          <div className="flex items-center gap-0.5 p-0.5 bg-black/30 rounded-lg">
+            {GRAMMAR_REGIONS.map(r => (
+              <button key={r} onClick={() => setGrammarRegion(r)}
+                className={`px-2 py-1 rounded text-[11px] transition-all ${
+                  grammarRegion === r
+                    ? 'bg-accent-purple text-white shadow'
+                    : 'text-text-tertiary hover:text-text-primary'
+                }`}
+              >
+                {GRAMMAR_PACKS[r].flag}
+              </button>
+            ))}
+          </div>
+          <div>
+            <span className="badge badge-amber mr-2">SCENE</span>
+            {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+          </div>
         </div>
         <div className="flex gap-2 relative">
+          <button onClick={() => setShowGrammarPanel(v => !v)}
+            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+              showGrammarPanel ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary'
+            }`}>
+            {GRAMMAR_PACKS[grammarRegion].flag} {lang === "ko" ? "문법" : "Grammar"}
+          </button>
           <button onClick={() => setShowScenePresetMenu(v => !v)}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
             ⚡ {lang === "ko" ? "프리셋" : "Preset"}
@@ -484,23 +562,138 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             </div>
           )}
           <button onClick={async () => {
-            if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
+            if (!synopsis) { alert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
-              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN');
+              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
               const ts = Date.now();
               if (result.hook) setHooks([{ id: `ai-h-${ts}`, position: (result.hook.position || 'opening') as "opening" | "middle" | "ending", hookType: result.hook.type || 'question', desc: result.hook.desc || '' }]);
               if (result.tension) setGogumas([{ id: `ai-g-${ts}`, type: 'goguma', intensity: 'medium', desc: result.tension.desc || '', episode: 1 }]);
               if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.type || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
               if (result.emotionTarget) setEmotions([{ id: `ai-e-${ts}`, position: 50, emotion: result.emotionTarget, intensity: 80 }]);
               if (result.dialogueTone) setDialogueRules([{ id: `ai-d-${ts}`, character: result.dialogueTone.character, tone: result.dialogueTone.tone, notes: '' }]);
-            } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+            } catch { alert(tl('sceneSheet.aiFailed')); }
           }}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-            🤖 {lang === "ko" ? "AI 생성" : "AI Generate"}
+            🤖 {tl('sceneSheet.aiGenerate')}
           </button>
         </div>
       </div>
+
+      {/* 국가별 문법 패널 */}
+      {showGrammarPanel && (() => {
+        const pack = GRAMMAR_PACKS[grammarRegion];
+        return (
+          <div className="border border-t-0 border-border bg-bg-secondary/50 p-4 sm:p-6 space-y-5 animate-in fade-in duration-300">
+            {/* 팩 헤더 */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black flex items-center gap-2">
+                  <span className="text-lg">{pack.flag}</span>
+                  {lang === 'ko' ? pack.label.ko : pack.label.en}
+                </h3>
+                <p className="text-[9px] text-text-tertiary font-bold tracking-wider uppercase mt-0.5">
+                  {lang === 'ko' ? pack.subtitle.ko : pack.subtitle.en}
+                </p>
+              </div>
+              <div className="text-[9px] text-text-tertiary">
+                {pack.episodeLength.min.toLocaleString()}~{pack.episodeLength.max.toLocaleString()} {pack.episodeLength.unit}/{tl('sceneSheet.episodeUnit')}
+              </div>
+            </div>
+
+            {/* 비트시트 타임라인 */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">
+                {tl('sceneSheet.beatSheet')} ({pack.beatSheet.length} beats)
+              </span>
+              <div className="relative">
+                <div className="h-2 bg-bg-primary rounded-full overflow-hidden flex">
+                  {pack.beatSheet.map((beat, i) => {
+                    const next = pack.beatSheet[i + 1]?.position ?? 100;
+                    const width = next - beat.position;
+                    const hue = (beat.position / 100) * 270;
+                    return (
+                      <div key={i} className="h-full relative group cursor-default"
+                        style={{ width: `${width}%`, backgroundColor: `hsl(${hue}, 60%, 30%)` }}>
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-primary border border-border text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
+                          <div className="font-bold text-text-primary">{beat.name}</div>
+                          <div className="text-text-tertiary">{beat.position}% — {beat.desc}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-1 text-[7px] text-text-tertiary">
+                  {pack.beatSheet.filter((_, i) => i % Math.ceil(pack.beatSheet.length / 5) === 0).map(b => (
+                    <span key={b.name}>{b.name}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 리듬 규칙 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
+                  {tl('sceneSheet.rhythmRules')}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rhythmRules.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-purple/5 border border-accent-purple/10 rounded-lg">
+                      <div className="text-[10px] font-bold text-accent-purple">{r.name}</div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 보상 패턴 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                  {tl('sceneSheet.readerReward')}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rewardPatterns.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-green/5 border border-accent-green/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-accent-green">{r.name}</span>
+                        <span className="text-[10px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">{r.interval}</span>
+                      </div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 필수 / 금기 */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                    {tl('sceneSheet.mustHave')}
+                  </span>
+                  {pack.mustHave.map((m, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-green">✓</span>
+                      <span className="text-text-secondary">{m}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-red uppercase tracking-widest">
+                    {tl('sceneSheet.taboo')}
+                  </span>
+                  {pack.taboo.map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-red">✕</span>
+                      <span className="text-text-secondary">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">
         {/* Tabs — grouped with collapsible sections */}
@@ -513,15 +706,17 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <summary className={`flex items-center gap-1 cursor-pointer text-[10px] font-bold tracking-wider select-none py-1 ${
                   hasActive ? "text-accent-purple" : "text-text-tertiary hover:text-text-secondary"
                 }`}>
-                  <span className="text-[8px] group-open/tab:rotate-90 transition-transform">▶</span>
+                  <span className="text-[10px] group-open/tab:rotate-90 transition-transform">▶</span>
                   {groupLabel}
                 </summary>
-                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5">
+                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5" role="tablist">
                   {group.tabs.map(tabId => {
                     const tab = TAB_DEF.find(t => t.id === tabId);
                     if (!tab) return null;
                     return (
                       <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
                         className={`px-2.5 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
                           activeTab === tab.id
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
@@ -621,7 +816,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
                   {emotions.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-purple)" strokeWidth="0.5"
-                      points={emotions.sort((a, b) => a.position - b.position).map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
+                      points={sortedEmotions.map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
                   )}
                   {emotions.map(e => (
                     <circle key={e.id} cx={e.position} cy={50 - e.intensity / 2} r="1.5" fill="var(--color-accent-purple)" />
@@ -637,10 +832,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 </select>
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}:</span>
                 <input type="range" min={0} max={100} value={em.position}
+                  aria-label={lang === "ko" ? "감정 위치" : "Emotion position"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, position: parseInt(e.target.value) } : ee))}
                   className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Int"}:</span>
                 <input type="range" min={0} max={100} value={em.intensity}
+                  aria-label={lang === "ko" ? "감정 강도" : "Emotion intensity"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, intensity: parseInt(e.target.value) } : ee))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-purple w-6 text-right">{em.intensity}</span>
@@ -776,7 +973,9 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {pacings.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3 border border-border rounded px-3 py-2 bg-bg-primary">
                 <span className="text-[10px] font-bold w-16">{p.section}</span>
-                <input type="range" min={5} max={80} value={p.percent} onChange={e => {
+                <input type="range" min={5} max={80} value={p.percent}
+                  aria-label={lang === "ko" ? "페이싱 비중" : "Pacing weight"}
+                  onChange={e => {
                   setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, percent: parseInt(e.target.value) } : pp));
                 }} className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
@@ -799,7 +998,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
                   {tensionPoints.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
-                      points={tensionPoints.sort((a, b) => a.position - b.position).map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
+                      points={sortedTensionPoints.map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
                   )}
                   {tensionPoints.map(t => (
                     <circle key={t.id} cx={t.position} cy={50 - t.level / 2} r="2" fill="var(--color-accent-red)" />
@@ -812,10 +1011,14 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
                   placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
-                <input type="range" min={0} max={100} value={tp.position} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.position}
+                  aria-label={lang === "ko" ? "텐션 위치" : "Tension position"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Lv"}</span>
-                <input type="range" min={0} max={100} value={tp.level} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.level}
+                  aria-label={lang === "ko" ? "텐션 강도" : "Tension level"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
                 <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -875,10 +1078,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}
               className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-              placeholder={lang === "ko" ? "이번 화에서 꼭 넣고 싶은 장면, 대사, 분위기, 전개 방향 등을 자유롭게 적으세요...\n\n예시:\n- 주인공이 처음으로 울어야 함\n- 악역과의 재회 장면 필수\n- 비 오는 밤 배경\n- 마지막에 반드시 떡밥 회수" : "Write freely about scenes, dialogue, mood, direction you want...\n\nExample:\n- Protagonist must cry for first time\n- Reunion with antagonist required\n- Rainy night setting\n- Must resolve foreshadow at end"}
+              placeholder={tl('sceneSheet.writerNotesPlaceholder')}
             />
             <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-              {writerNotes.length.toLocaleString()}{lang === "ko" ? "자" : " chars"}
+              {writerNotes.length.toLocaleString()}{tl('sceneSheet.chars')}
             </div>
           </div>
         )}
@@ -891,10 +1094,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
         <div className="border border-border rounded-xl p-4 bg-bg-primary space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-              🗺️ {lang === "ko" ? "세계관 시뮬레이터 참고" : "World Simulator Reference"}
+              🗺️ {tl('sceneSheet.worldSimRef')}
             </span>
-            <span className="text-[8px] text-text-tertiary">
-              {lang === "ko" ? "체크한 항목이 연출에 반영됩니다" : "Checked items will be referenced in direction"}
+            <span className="text-[10px] text-text-tertiary">
+              {tl('sceneSheet.simRefDesc')}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -950,6 +1153,18 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
               </div>
             ))}
           </div>
+
+          {/* 3-tier 서사 연동 경고 */}
+          {tierWarnings.length > 0 && (
+            <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-1">
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider">
+                ⚠ {lang === "ko" ? "서사 연동 경고" : "Narrative Link Warning"}
+              </span>
+              {tierWarnings.map((w, i) => (
+                <p key={i} className="text-[9px] text-amber-300/70">{w}</p>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ============================================================ */}
@@ -989,7 +1204,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase">{card.label}</span>
                   <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
                 </div>
-                <div className="text-[8px] text-text-tertiary truncate">
+                <div className="text-[10px] text-text-tertiary truncate">
                   {card.detail || (lang === "ko" ? "미설정" : "Not set")}
                 </div>
               </button>
@@ -1053,7 +1268,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   </pre>
                   {parts.length > 0 && (
                     <button onClick={() => { navigator.clipboard.writeText(preview); }}
-                      className="absolute top-2 right-2 text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
+                      className="absolute top-2 right-2 text-[10px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
                       {lang === "ko" ? "복사" : "Copy"}
                     </button>
                   )}

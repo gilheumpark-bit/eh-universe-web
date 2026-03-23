@@ -184,21 +184,20 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
 
-  // Sync profile changes to parent (stable ref to avoid infinite loops)
-  const onProfileChangeRef = useRef(onProfileChange);
-  onProfileChangeRef.current = onProfileChange;
-  const isInitialMount = useRef(true);
+  // Sync profile changes to parent — skip initial mount via flag
+  const didMount = useRef(false);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    if (!didMount.current) {
+      didMount.current = true;
       return;
     }
-    onProfileChangeRef.current?.({
+    onProfileChange?.({
       selectedDNA: Array.from(selectedCards),
       sliders: { ...sliderVals },
       checkedSF: Array.from(checkedSF),
       checkedWeb: Array.from(checkedWeb),
     });
+  // onProfileChange is intentionally excluded — parent re-creates it on each render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCards, sliderVals, checkedSF, checkedWeb]);
 
@@ -541,7 +540,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
-                  {resultText && <CopyButton text={resultText} isKO={!en} />}
+                  {resultText && <CopyButton text={resultText} language={isKO ? 'KO' : 'EN'} />}
                 </div>
                 <div className="ss-result-box">
                   {resultText ? (

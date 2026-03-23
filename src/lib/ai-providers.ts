@@ -128,8 +128,35 @@ export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string
 }
 
 // ============================================================
-// PART 2: KEY MANAGEMENT
+// PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
+
+// Simple reversible obfuscation to prevent casual DevTools/extension snooping.
+// NOT cryptographic — XSS can still extract keys from memory.
+// For true security, use server-side key storage.
+const _OBFUSCATION_PREFIX = 'noa:1:';
+
+function obfuscateKey(plain: string): string {
+  if (!plain) return '';
+  try {
+    return _OBFUSCATION_PREFIX + btoa(unescape(encodeURIComponent(plain)));
+  } catch {
+    return plain;
+  }
+}
+
+function deobfuscateKey(stored: string): string {
+  if (!stored) return '';
+  if (stored.startsWith(_OBFUSCATION_PREFIX)) {
+    try {
+      return decodeURIComponent(escape(atob(stored.slice(_OBFUSCATION_PREFIX.length))));
+    } catch {
+      return '';
+    }
+  }
+  // Backward compat: read plaintext keys from before this change
+  return stored;
+}
 
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
@@ -143,12 +170,12 @@ export function setActiveProvider(id: ProviderId): void {
 export function getApiKey(providerId: ProviderId): string {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
-  return localStorage.getItem(def.storageKey) || "";
+  return deobfuscateKey(localStorage.getItem(def.storageKey) || "");
 }
 
 export function setApiKey(providerId: ProviderId, key: string): void {
   const def = PROVIDERS[providerId];
-  localStorage.setItem(def.storageKey, key);
+  localStorage.setItem(def.storageKey, obfuscateKey(key));
 }
 
 export function getActiveModel(): string {
@@ -190,37 +217,47 @@ async function streamViaProxy(
   if (!reader) throw new Error('No response body');
 
   const decoder = new TextDecoder();
+  const MAX_BUFFER_BYTES = 65_536; // 64KB SSE buffer cap to prevent OOM
   let full = '';
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    // Parse SSE events from proxy
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+      // Guard against unbounded buffer growth
+      if (buffer.length > MAX_BUFFER_BYTES) {
+        buffer = buffer.slice(-MAX_BUFFER_BYTES);
+      }
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const data = trimmed.slice(6);
-      if (data === '[DONE]') continue;
-      try {
-        const json = JSON.parse(data);
-        // Handle different provider formats
-        const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
-          || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
-          || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
-        if (text) {
-          full += text;
-          opts.onChunk(text);
+      // Parse SSE events from proxy
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const json = JSON.parse(data);
+          // Handle different provider formats
+          const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
+            || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
+            || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
+          if (text) {
+            full += text;
+            opts.onChunk(text);
+          }
+        } catch {
+          // Non-JSON SSE data, skip
         }
-      } catch {
-        // Non-JSON SSE data, skip
       }
     }
+  } finally {
+    reader.cancel().catch(() => {});
   }
   return full;
 }
@@ -282,187 +319,20 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 }
 
 // ============================================================
-// PART 4: GEMINI ADAPTER
+// PART 5: TEST KEY (all requests via server proxy)
 // ============================================================
 
-async function streamGemini(apiKey: string, model: string, opts: StreamOptions): Promise<string> {
-  const { GoogleGenAI } = await import("@google/genai");
-  const ai = new GoogleGenAI({ apiKey });
-
-  const history = opts.messages.filter(m => m.role !== "system");
-  const contents = history.map(m => ({
-    role: m.role === "user" ? "user" : "model",
-    parts: [{ text: m.content }],
-  }));
-
-  const responseStream = await ai.models.generateContentStream({
-    model,
-    contents,
-    config: {
-      systemInstruction: opts.systemInstruction,
-      temperature: opts.temperature ?? 0.9,
-      topP: 0.95,
-    },
-  });
-
-  let full = "";
-  for await (const chunk of responseStream) {
-    if (opts.signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-    if (chunk.text) {
-      full += chunk.text;
-      opts.onChunk(chunk.text);
-    }
-  }
-  return full;
-}
-
-// ============================================================
-// PART 5: OPENAI-COMPATIBLE ADAPTER (OpenAI / Groq / Mistral)
-// ============================================================
-
-const OPENAI_COMPAT_URLS: Record<string, string> = {
+const OPENAI_COMPAT_URLS: Partial<Record<ProviderId, string>> = {
   openai: "https://api.openai.com/v1/chat/completions",
   groq: "https://api.groq.com/openai/v1/chat/completions",
   mistral: "https://api.mistral.ai/v1/chat/completions",
 };
 
-async function streamOpenAICompat(
-  provider: ProviderId, apiKey: string, model: string, opts: StreamOptions
-): Promise<string> {
-  const url = OPENAI_COMPAT_URLS[provider];
-  if (!url) throw new Error(`No URL for provider: ${provider}`);
-
-  const messages = [
-    { role: "system", content: opts.systemInstruction },
-    ...opts.messages.map(m => ({ role: m.role, content: m.content })),
-  ];
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: opts.temperature ?? 0.9,
-      stream: true,
-    }),
-    signal: opts.signal,
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`${provider} API error ${res.status}: ${errText}`);
-  }
-
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error("No response body");
-
-  const decoder = new TextDecoder();
-  let full = "";
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data: ")) continue;
-      const data = trimmed.slice(6);
-      if (data === "[DONE]") continue;
-      try {
-        const json = JSON.parse(data);
-        const delta = json.choices?.[0]?.delta?.content;
-        if (delta) {
-          full += delta;
-          opts.onChunk(delta);
-        }
-      } catch {
-        // skip malformed chunks
-      }
-    }
-  }
-  return full;
-}
-
-// ============================================================
-// PART 6: CLAUDE ADAPTER
-// ============================================================
-
-async function streamClaude(apiKey: string, model: string, opts: StreamOptions): Promise<string> {
-  const messages = opts.messages.map(m => ({ role: m.role, content: m.content }));
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: opts.maxTokens ?? 8192,
-      system: opts.systemInstruction,
-      messages,
-      temperature: opts.temperature ?? 0.9,
-      stream: true,
-    }),
-    signal: opts.signal,
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`Claude API error ${res.status}: ${errText}`);
-  }
-
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error("No response body");
-
-  const decoder = new TextDecoder();
-  let full = "";
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data: ")) continue;
-      const data = trimmed.slice(6);
-      try {
-        const json = JSON.parse(data);
-        if (json.type === "content_block_delta" && json.delta?.text) {
-          full += json.delta.text;
-          opts.onChunk(json.delta.text);
-        }
-      } catch {
-        // skip
-      }
-    }
-  }
-  return full;
-}
-
-// ============================================================
-// PART 7: TEST KEY
-// ============================================================
-
 export async function testApiKey(providerId: ProviderId, key: string): Promise<boolean> {
+  if (!key.trim()) return false;
   try {
     const def = PROVIDERS[providerId];
+
     if (providerId === "gemini") {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: key });
@@ -474,33 +344,33 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
     }
 
     if (providerId === "claude") {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // Route through server proxy to avoid exposing key in browser network tab
+      const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          provider: "claude",
           model: def.defaultModel,
-          max_tokens: 16,
           messages: [{ role: "user", content: def.testPrompt }],
+          max_tokens: 16,
+          apiKey: key,
         }),
       });
       return res.ok;
     }
 
-    // OpenAI-compatible
+    // OpenAI-compatible (OpenAI, Groq, Mistral)
     const url = OPENAI_COMPAT_URLS[providerId];
     if (!url) return false;
-    const res = await fetch(url, {
+    const res = await fetch("/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        provider: providerId,
         model: def.defaultModel,
         messages: [{ role: "user", content: def.testPrompt }],
         max_tokens: 16,
+        apiKey: key,
       }),
     });
     return res.ok;

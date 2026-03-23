@@ -7,11 +7,22 @@ export const metadata: Metadata = {
   title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
   description:
     "66 million years of verified SF universe. Open-source narrative engine EH Rulebook. 200+ article archive.",
+  metadataBase: new URL("https://eh-universe.com"),
   openGraph: {
     title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
     description:
       "66 million years of verified SF universe. Open-source narrative engine EH Rulebook.",
     type: "website",
+    url: "https://eh-universe.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EH Universe — Narrative Engine",
+    description: "66 million years of verified SF universe. Open-source narrative engine.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
