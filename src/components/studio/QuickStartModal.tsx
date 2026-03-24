@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { X, Sparkles, Wand2, Loader2, BookOpen } from "lucide-react";
 import { Genre, type AppLanguage } from "@/lib/studio-types";
 import { GENRE_LABELS } from "@/lib/studio-constants";
+import { createT } from "@/lib/i18n";
 
 interface QuickStartModalProps {
   language: AppLanguage;
@@ -22,7 +23,7 @@ export default function QuickStartModal({
 }: QuickStartModalProps) {
   const [selectedGenre, setSelectedGenre] = useState<Genre>(Genre.SF);
   const [prompt, setPrompt] = useState("");
-  const isKO = language === "KO";
+  const t = createT(language);
   const trimmedPrompt = prompt.trim();
 
   if (!isOpen) {
@@ -45,7 +46,7 @@ export default function QuickStartModal({
             type="button"
             onClick={onClose}
             className="absolute right-6 top-6 rounded-full p-2 text-text-tertiary transition-colors hover:bg-bg-secondary hover:text-text-primary"
-            aria-label={isKO ? "쾌속 시작 닫기" : "Close quick start"}
+            aria-label={t('quickStartModal.closeQuickStart')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -55,24 +56,20 @@ export default function QuickStartModal({
               <Sparkles className="h-6 w-6 text-accent-purple" />
             </div>
             <h2 className="font-[family-name:var(--font-mono)] text-2xl font-black italic tracking-tighter">
-              {isKO ? "쾌속 시작" : "QUICK START"}
+              {t('quickStartModal.title')}
             </h2>
           </div>
 
           <p className="text-sm leading-relaxed text-text-tertiary">
-            {isKO
-              ? "장르와 한 줄 아이디어만 적으면 제목, 핵심 인물, 첫 장면 초안까지 바로 이어집니다."
-              : "Pick a genre and enter one line. We will set up the title, key cast, and first scene draft for you."}
+            {t('quickStartModal.desc')}
           </p>
 
           <div className="mt-4 rounded-2xl border border-white/6 bg-bg-secondary/70 px-4 py-3">
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-accent-purple">
-              {isKO ? "바로 이어지는 흐름" : "WHAT HAPPENS NEXT"}
+              {t('quickStartModal.flowLabel')}
             </p>
             <p className="mt-2 text-xs leading-6 text-text-secondary">
-              {isKO
-                ? "세계관 씨앗 생성 → 캐릭터 초안 구성 → 글쓰기 탭에서 첫 장면 받기"
-                : "World seed → cast draft → first scene in the Writing tab"}
+              {t('quickStartModal.flowDesc')}
             </p>
           </div>
         </div>
@@ -80,7 +77,7 @@ export default function QuickStartModal({
         <form onSubmit={handleSubmit} className="space-y-6 px-8 pb-8">
           <div className="space-y-3">
             <label className="px-1 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
-              {isKO ? "장르 선택" : "SELECT GENRE"}
+              {t('quickStartModal.selectGenre')}
             </label>
             <div className="flex flex-wrap gap-2">
               {Object.values(Genre).map((genre) => (
@@ -102,18 +99,14 @@ export default function QuickStartModal({
 
           <div className="space-y-3">
             <label className="px-1 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
-              {isKO ? "어떤 이야기로 시작할까요?" : "WHAT STORY DO YOU WANT TO START WITH?"}
+              {t('quickStartModal.storyPrompt')}
             </label>
             <div className="relative">
               <textarea
                 autoFocus
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
-                placeholder={
-                  isKO
-                    ? "예: 비 오는 밤, 은퇴한 형사가 오래전 사라진 안드로이드를 다시 만난다."
-                    : "e.g., On a rainy night, a retired detective meets an android who vanished years ago."
-                }
+                placeholder={t('quickStartModal.placeholder')}
                 className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none transition-all placeholder:text-text-tertiary/50 focus:border-accent-purple"
                 disabled={isGenerating}
                 maxLength={240}
@@ -136,12 +129,12 @@ export default function QuickStartModal({
             {isGenerating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {isKO ? "첫 장면을 준비하는 중..." : "PREPARING YOUR FIRST SCENE..."}
+                {t('quickStartModal.generating')}
               </>
             ) : (
               <>
                 <Wand2 className="h-4 w-4" />
-                {isKO ? "첫 장면 받기" : "GET THE FIRST SCENE"}
+                {t('quickStartModal.submit')}
               </>
             )}
           </button>

@@ -3,25 +3,14 @@
 import React, { useState, useCallback } from 'react';
 import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map } from 'lucide-react';
 import type { AppTab, AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 
 interface MobileTabBarProps {
   activeTab: AppTab;
   onTabChange: (tab: AppTab) => void;
-  language: 'KO' | 'EN' | 'JP' | 'CN';
+  language: AppLanguage;
   mode?: 'guided' | 'free';
 }
-
-const LABELS: Record<string, Record<AppLanguage, string>> = {
-  world:      { KO: '세계관', EN: 'World',   JP: '世界',   CN: '世界' },
-  characters: { KO: '캐릭터', EN: 'Chars',   JP: 'キャラ', CN: '角色' },
-  writing:    { KO: '집필',   EN: 'Write',   JP: '執筆',   CN: '写作' },
-  rulebook:   { KO: '연출',   EN: 'Direct',  JP: '演出',   CN: '导演' },
-  more:       { KO: '더보기', EN: 'More',    JP: 'その他', CN: '更多' },
-  style:      { KO: '문체',   EN: 'Style',   JP: '文体',   CN: '文体' },
-  manuscript: { KO: '원고',   EN: 'Script',  JP: '原稿',   CN: '稿件' },
-  history:    { KO: '히스토리', EN: 'History', JP: '履歴',  CN: '历史' },
-  settings:   { KO: '설정',   EN: 'Settings', JP: '設定',  CN: '设置' },
-};
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
   { key: 'style',      icon: Map },
@@ -49,6 +38,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   const [moreOpen, setMoreOpen] = useState(false);
   const isGuided = mode === 'guided';
   const primaryTabs = isGuided ? GUIDED_TABS : PRIMARY_TABS;
+  const t = createT(language);
 
   const handleTab = useCallback((key: AppTab | 'more') => {
     if (isGuided) { onTabChange(key as AppTab); return; }
@@ -60,7 +50,9 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
     }
   }, [isGuided, onTabChange]);
 
-  const isMoreActive = !isGuided && (moreOpen || MORE_TABS.some(t => t.key === activeTab));
+  const isMoreActive = !isGuided && (moreOpen || MORE_TABS.some(tab => tab.key === activeTab));
+
+  const getTabLabel = (key: string): string => t(`mobileTab.${key}`, key);
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden">
@@ -73,7 +65,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
                 className={`flex flex-col items-center gap-0.5 py-2.5 rounded-lg text-xs min-h-[44px]
                   ${activeTab === key ? 'text-accent-purple' : 'text-text-tertiary'}`}>
                 <Icon size={20} />
-                <span>{LABELS[key]?.[language] ?? key}</span>
+                <span>{getTabLabel(key)}</span>
               </button>
             ))}
           </div>
@@ -90,7 +82,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
               className={`flex flex-col items-center gap-0.5 py-2 px-3 text-[11px] leading-tight min-h-[44px]
                 ${active ? 'text-accent-purple' : 'text-text-tertiary'}`}>
               <TabIcon size={22} />
-              <span>{LABELS[key]?.[language] ?? key}</span>
+              <span>{getTabLabel(key)}</span>
             </button>
           );
         })}

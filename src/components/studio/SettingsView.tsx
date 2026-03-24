@@ -17,16 +17,10 @@ interface SettingsViewProps {
   onManageApiKey: () => void;
 }
 
-const LABELS: Record<AppLanguage, Record<string, string>> = {
-  KO: { engineSettings: "엔진 설정", defaultPlatform: "기본 플랫폼", defaultPlatformDesc: "새 프로젝트의 기본 출력 플랫폼", defaultEpisodes: "기본 에피소드 수", defaultEpisodesDesc: "새 프로젝트의 기본 총 에피소드 수", temperature: "Temperature", temperatureDesc: "AI 생성의 창의성 수준 (0.0 = 정확, 1.0 = 창의적)", mobile: "모바일", web: "웹" },
-  EN: { engineSettings: "Engine Settings", defaultPlatform: "Default Platform", defaultPlatformDesc: "Default output platform for new projects", defaultEpisodes: "Default Episodes", defaultEpisodesDesc: "Default total episodes for new projects", temperature: "Temperature", temperatureDesc: "AI generation creativity level (0.0 = precise, 1.0 = creative)", mobile: "Mobile", web: "Web" },
-  JP: { engineSettings: "エンジン設定", defaultPlatform: "デフォルトプラットフォーム", defaultPlatformDesc: "新規プロジェクトのデフォルト出力プラットフォーム", defaultEpisodes: "デフォルトエピソード数", defaultEpisodesDesc: "新規プロジェクトのデフォルト総エピソード数", temperature: "Temperature", temperatureDesc: "AI生成の創造性レベル（0.0 = 正確、1.0 = 創造的）", mobile: "モバイル", web: "ウェブ" },
-  CN: { engineSettings: "引擎设置", defaultPlatform: "默认平台", defaultPlatformDesc: "新项目的默认输出平台", defaultEpisodes: "默认集数", defaultEpisodesDesc: "新项目的默认总集数", temperature: "Temperature", temperatureDesc: "AI生成创意水平（0.0 = 精确，1.0 = 创意）", mobile: "移动端", web: "网页端" },
-};
+// Engine settings labels are now in TRANSLATIONS.settingsEngine
 
 const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onManageApiKey }) => {
   const t = createT(language);
-  const l = LABELS[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
@@ -138,7 +132,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
         {/* Engine Settings */}
         <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-blue-500" /> {l.engineSettings}
+            <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
           </h3>
           <div className="space-y-2">
             {/* Default Platform */}
@@ -148,8 +142,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
                   {defaultPlatform === 'MOBILE' ? <Smartphone className="w-5 h-5 text-zinc-500" /> : <Monitor className="w-5 h-5 text-zinc-500" />}
                 </div>
                 <div>
-                  <div className="text-sm font-bold">{l.defaultPlatform}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{l.defaultPlatformDesc}</div>
+                  <div className="text-sm font-bold">{t('settingsEngine.defaultPlatform')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -159,7 +153,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
                     onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-zinc-500 hover:text-white'}`}
                   >
-                    {p === 'MOBILE' ? l.mobile : l.web}
+                    {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
                 ))}
               </div>
@@ -170,8 +164,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl"><Hash className="w-5 h-5 text-zinc-500" /></div>
                 <div>
-                  <div className="text-sm font-bold">{l.defaultEpisodes}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{l.defaultEpisodesDesc}</div>
+                  <div className="text-sm font-bold">{t('settingsEngine.defaultEpisodes')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
                 </div>
               </div>
               <input
@@ -189,8 +183,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl"><Thermometer className="w-5 h-5 text-zinc-500" /></div>
                 <div>
-                  <div className="text-sm font-bold">{l.temperature}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{l.temperatureDesc}</div>
+                  <div className="text-sm font-bold">{t('settingsEngine.temperature')}</div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { X, ChevronRight, ChevronLeft, Sparkles, Pen, BookOpen } from "lucide-react";
+import type { AppLanguage } from "@/lib/studio-types";
+import { createT } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 — Types & activation steps
@@ -16,16 +18,11 @@ interface OnboardingGuideProps {
 
 interface ActivationStep {
   icon: ReactNode;
-  eyebrowKo: string;
-  eyebrowEn: string;
-  titleKo: string;
-  titleEn: string;
-  descKo: string;
-  descEn: string;
-  highlightsKo: string[];
-  highlightsEn: string[];
-  ctaKo: string;
-  ctaEn: string;
+  eyebrowKey: string;
+  titleKey: string;
+  descKey: string;
+  highlightKeys: string[];
+  ctaKey: string;
   tab?: string;
   kind: "quickstart" | "tab" | "finish";
 }
@@ -33,45 +30,30 @@ interface ActivationStep {
 const STEPS: ActivationStep[] = [
   {
     icon: <Sparkles className="h-6 w-6" />,
-    eyebrowKo: "STEP 01 · 첫 감탄",
-    eyebrowEn: "STEP 01 · FIRST WIN",
-    titleKo: "한 줄 아이디어로 바로 첫 장면까지",
-    titleEn: "Go from one line to your first scene",
-    descKo: "장르와 한 줄 아이디어만 넣으면 제목, 핵심 인물, 첫 장면 초안까지 한 번에 이어집니다.",
-    descEn: "Pick a genre and enter one line. We turn it into a title, key cast, and your first scene draft.",
-    highlightsKo: ["세계관 씨앗 자동 생성", "핵심 인물 초안 세팅", "바로 글쓰기 탭으로 이동"],
-    highlightsEn: ["Instant world seed", "Starter cast draft", "Jump straight into Writing"],
-    ctaKo: "쾌속 시작 열기",
-    ctaEn: "Open Quick Start",
+    eyebrowKey: "onboarding.step01Eyebrow",
+    titleKey: "onboarding.step01Title",
+    descKey: "onboarding.step01Desc",
+    highlightKeys: ["onboarding.step01H1", "onboarding.step01H2", "onboarding.step01H3"],
+    ctaKey: "onboarding.step01Cta",
     kind: "quickstart",
   },
   {
     icon: <Pen className="h-6 w-6" />,
-    eyebrowKo: "STEP 02 · 문장 다듬기",
-    eyebrowEn: "STEP 02 · SHAPE THE DRAFT",
-    titleKo: "AI 초안에서 내 문장으로 이어 쓰기",
-    titleEn: "Turn the draft into your own voice",
-    descKo: "AI 초안, 캔버스, 직접 수정 모드를 같은 화면에서 오가며 원하는 결로 문장을 다듬을 수 있습니다.",
-    descEn: "Move between AI draft, canvas flow, and manual editing without leaving the same workspace.",
-    highlightsKo: ["AI와 수동 집필을 자연스럽게 병행", "캔버스와 리라이트 도구 포함", "작업 흐름이 한 화면에서 연결"],
-    highlightsEn: ["AI and manual writing side by side", "Canvas and rewrite tools included", "One continuous workspace"],
-    ctaKo: "글쓰기 탭 열기",
-    ctaEn: "Open Writing",
+    eyebrowKey: "onboarding.step02Eyebrow",
+    titleKey: "onboarding.step02Title",
+    descKey: "onboarding.step02Desc",
+    highlightKeys: ["onboarding.step02H1", "onboarding.step02H2", "onboarding.step02H3"],
+    ctaKey: "onboarding.step02Cta",
     tab: "writing",
     kind: "tab",
   },
   {
     icon: <BookOpen className="h-6 w-6" />,
-    eyebrowKo: "STEP 03 · 원고로 키우기",
-    eyebrowEn: "STEP 03 · GROW THE MANUSCRIPT",
-    titleKo: "저장, 비교, 원고 관리까지 한 흐름",
-    titleEn: "Save, compare, and grow the manuscript",
-    descKo: "에피소드 저장, 버전 비교, 원고 관리 흐름이 이미 이어져 있어서 초안이 자연스럽게 원고로 발전합니다.",
-    descEn: "Episode saves, version compare, and manuscript management are already connected in one loop.",
-    highlightsKo: ["에피소드 저장과 버전 비교", "원고 관리 탭으로 즉시 이동", "초안에서 원고까지 흐름 유지"],
-    highlightsEn: ["Episode saves and version compare", "Jump into Manuscript right away", "Keep the draft-to-manuscript flow"],
-    ctaKo: "원고 관리 열기",
-    ctaEn: "Open Manuscript",
+    eyebrowKey: "onboarding.step03Eyebrow",
+    titleKey: "onboarding.step03Title",
+    descKey: "onboarding.step03Desc",
+    highlightKeys: ["onboarding.step03H1", "onboarding.step03H2", "onboarding.step03H3"],
+    ctaKey: "onboarding.step03Cta",
     tab: "manuscript",
     kind: "tab",
   },
@@ -95,7 +77,8 @@ export default function OnboardingGuide({
   onNavigate,
   onQuickStart,
 }: OnboardingGuideProps) {
-  const isKO = lang === "ko" || lang === "KO";
+  const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JP" ? "JP" : lang === "CN" ? "CN" : "EN") as AppLanguage;
+  const t = createT(language);
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -148,7 +131,7 @@ export default function OnboardingGuide({
   }, [complete, onComplete, onNavigate, onQuickStart, step]);
 
   const current = STEPS[step];
-  const highlights = isKO ? current.highlightsKo : current.highlightsEn;
+  const highlights = current.highlightKeys.map((k) => t(k));
 
   return (
     <div
@@ -175,13 +158,13 @@ export default function OnboardingGuide({
           type="button"
           onClick={skip}
           className="absolute right-4 top-4 text-text-tertiary transition-colors hover:text-text-primary"
-          aria-label={isKO ? "온보딩 닫기" : "Close onboarding"}
+          aria-label={t('onboarding.closeOnboarding')}
         >
           <X className="h-4 w-4" />
         </button>
 
         <p className="text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-accent-purple">
-          {isKO ? "3분 안에 첫 장면" : "First scene in minutes"}
+          {t('onboarding.firstSceneInMinutes')}
         </p>
 
         <div className="mt-5 flex justify-center">
@@ -192,13 +175,13 @@ export default function OnboardingGuide({
 
         <div className="mt-5 text-center">
           <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
-            {isKO ? current.eyebrowKo : current.eyebrowEn}
+            {t(current.eyebrowKey)}
           </p>
           <h3 className="mt-3 text-xl font-black tracking-tight md:text-2xl">
-            {isKO ? current.titleKo : current.titleEn}
+            {t(current.titleKey)}
           </h3>
           <p className="mt-4 text-sm leading-7 text-text-secondary md:text-[15px]">
-            {isKO ? current.descKo : current.descEn}
+            {t(current.descKey)}
           </p>
         </div>
 
@@ -224,7 +207,7 @@ export default function OnboardingGuide({
             className="inline-flex items-center gap-1 font-[family-name:var(--font-mono)] text-xs text-text-tertiary transition-colors hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
-            {isKO ? "이전" : "Prev"}
+            {t('onboarding.prev')}
           </button>
 
           <div className="flex flex-wrap justify-end gap-2">
@@ -234,14 +217,14 @@ export default function OnboardingGuide({
               className="flex items-center gap-2 rounded-xl bg-accent-purple px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-accent-purple/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              {isKO ? current.ctaKo : current.ctaEn}
+              {t(current.ctaKey)}
             </button>
             <button
               type="button"
               onClick={next}
               className="flex items-center gap-1 rounded-xl border border-border px-4 py-2.5 font-[family-name:var(--font-mono)] text-xs font-bold text-text-secondary transition-colors hover:bg-bg-primary"
             >
-              {step === STEPS.length - 1 ? (isKO ? "스튜디오 열기" : "Open Studio") : isKO ? "다음" : "Next"}
+              {step === STEPS.length - 1 ? t('onboarding.openStudio') : t('onboarding.next')}
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
