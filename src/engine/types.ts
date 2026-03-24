@@ -36,11 +36,33 @@ export enum PlatformType {
 // 연재 플랫폼 (publishing platform)
 export enum PublishPlatform {
   NONE = 'NONE',
+  // KO
   MUNPIA = 'MUNPIA',
   NOVELPIA = 'NOVELPIA',
   KAKAOPAGE = 'KAKAOPAGE',
   SERIES = 'SERIES',
+  // EN
+  ROYAL_ROAD = 'ROYAL_ROAD',
+  WEBNOVEL = 'WEBNOVEL',
+  KINDLE_VELLA = 'KINDLE_VELLA',
+  WATTPAD = 'WATTPAD',
+  // JP
+  KAKUYOMU = 'KAKUYOMU',
+  NAROU = 'NAROU',
+  ALPHAPOLIS = 'ALPHAPOLIS',
+  // CN
+  QIDIAN = 'QIDIAN',
+  JJWXC = 'JJWXC',
+  FANQIE = 'FANQIE',
 }
+
+// Language → Platform mapping
+export const PLATFORM_BY_LANG: Record<string, PublishPlatform[]> = {
+  KO: [PublishPlatform.MUNPIA, PublishPlatform.NOVELPIA, PublishPlatform.KAKAOPAGE, PublishPlatform.SERIES],
+  EN: [PublishPlatform.ROYAL_ROAD, PublishPlatform.WEBNOVEL, PublishPlatform.KINDLE_VELLA, PublishPlatform.WATTPAD],
+  JP: [PublishPlatform.KAKUYOMU, PublishPlatform.NAROU, PublishPlatform.ALPHAPOLIS],
+  CN: [PublishPlatform.QIDIAN, PublishPlatform.JJWXC, PublishPlatform.FANQIE],
+};
 
 export interface PlatformPreset {
   targetReader: string;
@@ -93,6 +115,109 @@ export const PLATFORM_PRESETS: Record<string, PlatformPreset> = {
     endingHook: 'medium',
     allowedMature: false,
     nodChecks: ['completion_structure_check', 'emotion_consistency_check'],
+  },
+  // EN platforms
+  [PublishPlatform.ROYAL_ROAD]: {
+    targetReader: 'LitRPG/Progression Fantasy readers, 18-35',
+    episodeLength: { min: 4000, max: 8000 },
+    billingModel: 'free_patron',
+    worldComplexity: 'high',
+    pace: 'long_breath',
+    endingHook: 'medium',
+    allowedMature: true,
+    nodChecks: ['length_min_warning', 'worldbuilding_density_check'],
+  },
+  [PublishPlatform.WEBNOVEL]: {
+    targetReader: 'Global readers, translated web novel fans',
+    episodeLength: { min: 3000, max: 5000 },
+    billingModel: 'spirit_stone_unlock',
+    worldComplexity: 'medium',
+    pace: 'fast',
+    endingHook: 'high',
+    allowedMature: false,
+    nodChecks: ['hook_missing_warning', 'cliffhanger_check'],
+  },
+  [PublishPlatform.KINDLE_VELLA]: {
+    targetReader: 'Amazon Kindle readers, romance/thriller heavy',
+    episodeLength: { min: 1200, max: 5000 },
+    billingModel: 'token_per_episode',
+    worldComplexity: 'low',
+    pace: 'fast',
+    endingHook: 'high',
+    allowedMature: true,
+    nodChecks: ['hook_missing_warning', 'episode_length_check'],
+  },
+  [PublishPlatform.WATTPAD]: {
+    targetReader: 'Young adults 13-25, romance/fanfic dominant',
+    episodeLength: { min: 1500, max: 3000 },
+    billingModel: 'free_paid_stories',
+    worldComplexity: 'low',
+    pace: 'fast',
+    endingHook: 'medium',
+    allowedMature: false,
+    nodChecks: ['pace_check', 'dialogue_ratio_check'],
+  },
+  // JP platforms
+  [PublishPlatform.KAKUYOMU]: {
+    targetReader: 'ラノベ・文芸読者、20~40代',
+    episodeLength: { min: 3000, max: 6000 },
+    billingModel: 'free_reward_ad',
+    worldComplexity: 'medium',
+    pace: 'stable',
+    endingHook: 'medium',
+    allowedMature: true,
+    nodChecks: ['pacing_check', 'emotion_consistency_check'],
+  },
+  [PublishPlatform.NAROU]: {
+    targetReader: '異世界・転生読者、全年齢',
+    episodeLength: { min: 2000, max: 5000 },
+    billingModel: 'free_bookwalker',
+    worldComplexity: 'medium',
+    pace: 'fast',
+    endingHook: 'medium',
+    allowedMature: false,
+    nodChecks: ['isekai_trope_check', 'pace_check'],
+  },
+  [PublishPlatform.ALPHAPOLIS]: {
+    targetReader: 'ファンタジー・恋愛読者、書籍化志望',
+    episodeLength: { min: 3000, max: 6000 },
+    billingModel: 'free_publishing_scout',
+    worldComplexity: 'medium',
+    pace: 'stable',
+    endingHook: 'medium',
+    allowedMature: true,
+    nodChecks: ['completion_structure_check', 'density_check'],
+  },
+  // CN platforms
+  [PublishPlatform.QIDIAN]: {
+    targetReader: '男频玄幻/都市读者，18-35岁',
+    episodeLength: { min: 3000, max: 5000 },
+    billingModel: 'vip_chapter_unlock',
+    worldComplexity: 'high',
+    pace: 'fast',
+    endingHook: 'high',
+    allowedMature: false,
+    nodChecks: ['hook_missing_warning', 'cliffhanger_check', 'density_check'],
+  },
+  [PublishPlatform.JJWXC]: {
+    targetReader: '女频言情/古言读者，18-30岁',
+    episodeLength: { min: 3000, max: 6000 },
+    billingModel: 'vip_chapter_unlock',
+    worldComplexity: 'medium',
+    pace: 'stable',
+    endingHook: 'medium',
+    allowedMature: false,
+    nodChecks: ['emotion_consistency_check', 'romance_pacing_check'],
+  },
+  [PublishPlatform.FANQIE]: {
+    targetReader: '免费小说读者，全年龄',
+    episodeLength: { min: 2000, max: 4000 },
+    billingModel: 'free_ad_supported',
+    worldComplexity: 'low',
+    pace: 'fast',
+    endingHook: 'high',
+    allowedMature: false,
+    nodChecks: ['hook_missing_warning', 'pace_check'],
   },
 };
 

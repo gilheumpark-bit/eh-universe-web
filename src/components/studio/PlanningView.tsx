@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
-import { PLATFORM_PRESETS } from '@/engine/types';
+import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
@@ -245,13 +245,13 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             {tl('planningExtra.publishPlatform')}
           </label>
           <div className="flex flex-wrap gap-2">
-            {Object.values(PublishPlatform).map(pp => {
+            {[PublishPlatform.NONE, ...(PLATFORM_BY_LANG[language] || Object.values(PublishPlatform).filter(p => p !== 'NONE'))].map(pp => {
               const labels: Record<string, string> = {
                 NONE: tl('planningExtra.none'),
-                MUNPIA: '문피아',
-                NOVELPIA: '노벨피아',
-                KAKAOPAGE: '카카오페이지',
-                SERIES: '시리즈',
+                MUNPIA: '문피아', NOVELPIA: '노벨피아', KAKAOPAGE: '카카오페이지', SERIES: '시리즈',
+                ROYAL_ROAD: 'Royal Road', WEBNOVEL: 'Webnovel', KINDLE_VELLA: 'Kindle Vella', WATTPAD: 'Wattpad',
+                KAKUYOMU: 'カクヨム', NAROU: 'なろう', ALPHAPOLIS: 'アルファポリス',
+                QIDIAN: '起点', JJWXC: '晋江', FANQIE: '番茄',
               };
               const selected = (config.publishPlatform || PublishPlatform.NONE) === pp;
               const preset = PLATFORM_PRESETS[pp];

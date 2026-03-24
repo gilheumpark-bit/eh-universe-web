@@ -217,6 +217,86 @@ function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined,
       `- 감정선의 일관성 중요. 급격한 톤 변화 지양.`,
       `- 메인스트림 독자 대상. 지나치게 마니아적인 설정 자제.`,
     );
+  } else if (publishPlatform === 'ROYAL_ROAD') {
+    parts.push(
+      `[Royal Road Rules]`,
+      `- LitRPG/Progression Fantasy core audience. System mechanics and stats welcome.`,
+      `- Long chapters preferred (2000-4000 words). Readers expect substance.`,
+      `- Free with Patreon model. Build reader loyalty through consistent quality.`,
+      `- Community-driven: author notes and reader interaction matter.`,
+    );
+  } else if (publishPlatform === 'WEBNOVEL') {
+    parts.push(
+      `[Webnovel Rules]`,
+      `- Global audience, translated fiction norms. Clear, punchy prose.`,
+      `- Spirit stone unlock model: every chapter must justify the unlock.`,
+      `- Strong cliffhangers mandatory. Readers decide per-chapter.`,
+      `- No explicit adult content. Keep it clean but exciting.`,
+    );
+  } else if (publishPlatform === 'KINDLE_VELLA') {
+    parts.push(
+      `[Kindle Vella Rules]`,
+      `- Token-per-episode model. Short, punchy episodes (600-5000 words).`,
+      `- Romance and thriller dominate. Hook in first 3 sentences.`,
+      `- Episode 1-3 are free: make them count for retention.`,
+      `- Amazon audience expects polished, edited prose.`,
+    );
+  } else if (publishPlatform === 'WATTPAD') {
+    parts.push(
+      `[Wattpad Rules]`,
+      `- Young adult audience (13-25). Conversational, accessible tone.`,
+      `- Short chapters (1500-3000 words). Mobile-first reading experience.`,
+      `- High dialogue ratio (40%+). Internal monologue drives engagement.`,
+      `- Tags and description matter for discovery. Genre conventions expected.`,
+    );
+  } else if (publishPlatform === 'KAKUYOMU') {
+    parts.push(
+      `[カクヨム特化ルール]`,
+      `- ラノベ・文芸読者向け。ジャンルの王道を押さえつつ個性を出す。`,
+      `- 1話3,000～6,000字。テンポよく読ませる構成。`,
+      `- リワード広告モデル。PV数が収益に直結するため、連載ペースと更新頻度が重要。`,
+      `- コンテスト文化が強い。受賞狙いなら完成度重視。`,
+    );
+  } else if (publishPlatform === 'NAROU') {
+    parts.push(
+      `[小説家になろう特化ルール]`,
+      `- 異世界転生・転移が圧倒的主流。ジャンルコードを守ること。`,
+      `- 1話2,000～5,000字。毎日更新が理想。`,
+      `- 書籍化への登竜門。ランキング入りが出版社の目に留まる条件。`,
+      `- テンプレを踏まえた上での差別化がカギ。`,
+    );
+  } else if (publishPlatform === 'ALPHAPOLIS') {
+    parts.push(
+      `[アルファポリス特化ルール]`,
+      `- ファンタジー・恋愛が主力。書籍化スカウト制度あり。`,
+      `- 1話3,000～6,000字。安定した更新ペースが評価される。`,
+      `- 投稿インセンティブ制度あり。スコア蓄積で報酬。`,
+      `- 完結作品を好む傾向。構成力が問われる。`,
+    );
+  } else if (publishPlatform === 'QIDIAN') {
+    parts.push(
+      `[起点中文网特化规则]`,
+      `- 男频玄幻/都市/仙侠为主。节奏快，爽点密集。`,
+      `- 每章3,000～5,000字。日更两章以上为佳。`,
+      `- VIP章节付费模式。每章结尾必须有强钩子，读者按章付费。`,
+      `- 开头三章决定生死。追读率是核心指标。`,
+    );
+  } else if (publishPlatform === 'JJWXC') {
+    parts.push(
+      `[晋江文学城特化规则]`,
+      `- 女频言情/古言/现代为主。感情线是核心驱动力。`,
+      `- 每章3,000～6,000字。情感节奏要细腻。`,
+      `- VIP付费模式。读者对感情戏质量要求极高。`,
+      `- 榜单文化浓厚。积分和收藏数决定曝光。`,
+    );
+  } else if (publishPlatform === 'FANQIE') {
+    parts.push(
+      `[番茄小说特化规则]`,
+      `- 免费阅读+广告模式。全年龄向，下沉市场。`,
+      `- 每章2,000～4,000字。节奏极快，不拖沓。`,
+      `- 完读率是核心。每章必须有进展，禁止灌水。`,
+      `- 开篇黄金三章定生死。第一章就要抓住读者。`,
+    );
   }
 
   return '\n' + parts.join('\n');
