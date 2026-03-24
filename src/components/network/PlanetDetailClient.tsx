@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { BookmarkButton } from "@/components/network/BookmarkButton";
+import { CommentSection } from "@/components/network/CommentSection";
 import { PlanetHeaderCard } from "@/components/network/PlanetHeaderCard";
+import { ReactionBar } from "@/components/network/ReactionBar";
+import { ReportButton } from "@/components/network/ReportButton";
 import { SettlementBadge } from "@/components/network/SettlementBadge";
 import {
   getNetworkUserRecord,
@@ -192,11 +196,17 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                   {lang === "ko" ? "정산 워크벤치" : "Settlement Workbench"}
                 </Link>
               ) : null}
+              <BookmarkButton planetId={planet.id} />
+              <ReportButton targetType="planet" targetId={planet.id} />
             </>
           }
         />
 
         {error ? <p className="text-sm text-accent-red">{error}</p> : null}
+
+        <div className="premium-panel-soft p-4">
+          <ReactionBar targetType="planet" targetId={planet.id} />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.6fr_0.8fr]">
           <section className="space-y-4">
@@ -259,17 +269,24 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                   </div>
                 ) : (
                   filteredPosts.map((post) => (
-                    <article key={post.id} className="premium-panel-soft p-5">
+                    <article key={post.id} className="premium-panel-soft p-5 space-y-4">
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="badge badge-amber">{pickNetworkLabel(REPORT_TYPE_LABELS[post.reportType], lang)}</span>
                         {post.followupStatus ? <SettlementBadge status={post.followupStatus} lang={lang} /> : null}
                       </div>
-                      <h2 className="mt-4 text-lg font-semibold text-text-primary">{post.title}</h2>
-                      <div className="mt-3 text-xs text-text-tertiary">
+                      <h2 className="text-lg font-semibold text-text-primary">{post.title}</h2>
+                      <div className="text-xs text-text-tertiary">
                         {post.eventCategory ?? (lang === "ko" ? "미분류" : "Unclassified")} ·{" "}
                         {new Date(post.createdAt).toLocaleString(lang === "ko" ? "ko-KR" : "en-US")}
                       </div>
-                      <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-text-secondary">{post.content}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-text-secondary">{post.content}</p>
+
+                      <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-3">
+                        <ReactionBar targetType="post" targetId={post.id} />
+                        <ReportButton targetType="post" targetId={post.id} />
+                      </div>
+
+                      <CommentSection planetId={planet.id} postId={post.id} />
                     </article>
                   ))
                 )}

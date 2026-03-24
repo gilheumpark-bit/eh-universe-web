@@ -150,10 +150,52 @@ export interface SettlementRecord {
 export interface CommentRecord {
   id: string;
   postId: string;
+  planetId: string;
   authorId: string;
+  authorName: string;
+  authorPhoto?: string;
   content: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+export const REACTION_TYPES = ["like", "fire", "insight", "touching", "warning"] as const;
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
+export const REACTION_EMOJI: Record<ReactionType, string> = {
+  like: "\u{1F44D}",
+  fire: "\u{1F525}",
+  insight: "\u{1F4A1}",
+  touching: "\u{1F3AD}",
+  warning: "\u{26A0}\u{FE0F}",
+};
+
+export interface ReactionRecord {
+  id: string;
+  targetType: "planet" | "post";
+  targetId: string;
+  userId: string;
+  reactionType: ReactionType;
+  createdAt: string;
+}
+
+export interface BookmarkRecord {
+  planetId: string;
+  createdAt: string;
+}
+
+export const REPORT_REASONS = ["spam", "inappropriate", "copyright", "other"] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export interface ReportRecord {
+  id: string;
+  reporterId: string;
+  targetType: "planet" | "post" | "comment";
+  targetId: string;
+  reason: ReportReason;
+  detail: string;
+  createdAt: string;
+  status: "pending" | "reviewed" | "dismissed";
 }
 
 // IDENTITY_SEAL: PART-2 | role=firestore record contracts | inputs=entity payloads | outputs=typed records

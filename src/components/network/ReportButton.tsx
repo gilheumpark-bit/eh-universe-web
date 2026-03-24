@@ -1,0 +1,150 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { L2, useLang } from "@/lib/LangContext";
+import { submitReport } from "@/lib/network-firestore";
+import { REPORT_REASONS, type ReportReason } from "@/lib/network-types";
+
+// ============================================================
+// PART 1 - LABELS
+// ============================================================
+
+const LABELS = {
+  report: { ko: "신고", en: "Report" },
+  title: { ko: "콘텐츠 신고", en: "Report Content" },
+  reason: { ko: "사유", en: "Reason" },
+  detail: { ko: "상세 설명", en: "Details" },
+  detailPlaceholder: { ko: "구체적인 내용을 입력하세요.", en: "Provide details about the issue." },
+  submit: { ko: "신고 제출", en: "Submit Report" },
+  cancel: { ko: "취소", en: "Cancel" },
+  success: { ko: "신고가 접수되었습니다.", en: "Report submitted." },
+  loginRequired: { ko: "로그인 후 신고할 수 있습니다.", en: "Sign in to report." },
+} as const;
+
+const REASON_LABELS: Record<ReportReason, { ko: string; en: string }> = {
+  spam: { ko: "스팸", en: "Spam" },
+  inappropriate: { ko: "부적절한 콘텐츠", en: "Inappropriate Content" },
+  copyright: { ko: "저작권 침해", en: "Copyright Violation" },
+  other: { ko: "기타", en: "Other" },
+};
+
+// IDENTITY_SEAL: PART-1 | role=report labels | inputs=none | outputs=i18n labels
+
+// ============================================================
+// PART 2 - COMPONENT
+// ============================================================
+
+interface ReportButtonProps {
+  targetType: "planet" | "post" | "comment";
+  targetId: string;
+}
+
+export function ReportButton({ targetType, targetId }: ReportButtonProps) {
+  const { lang } = useLang();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<ReportReason>("spam");
+  const [detail, setDetail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = useCallback(async () => {
+    if (!user || submitting) return;
+    try {
+      setSubmitting(true);
+      await submitReport({
+        reporterId: user.uid,
+        targetType,
+        targetId,
+        reason,
+        detail,
+      });
+      setSubmitted(true);
+      setTimeout(() => { setOpen(false); setSubmitted(false); setDetail(""); }, 2000);
+    } catch {
+      /* silent */
+    } finally {
+      setSubmitting(false);
+    }
+  }, [detail, reason, submitting, targetId, targetType, user]);
+
+  if (!user) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs text-text-tertiary transition hover:text-accent-red"
+      >
+        {L2(LABELS.report, lang)}
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setOpen(false)}>
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/8 bg-bg-primary p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-red">
+              {L2(LABELS.title, lang)}
+            </h3>
+
+            {submitted ? (
+              <p className="mt-6 text-sm text-accent-green">{L2(LABELS.success, lang)}</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs text-text-secondary">{L2(LABELS.reason, lang)}</label>
+                  <select
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value as ReportReason)}
+                    className="w-full rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary focus:border-accent-red/40 focus:outline-none"
+                  >
+                    {REPORT_REASONS.map((r) => (
+                      <option key={r} value={r}>
+                        {L2(REASON_LABELS[r], lang)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs text-text-secondary">{L2(LABELS.detail, lang)}</label>
+                  <textarea
+                    className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-red/40 focus:outline-none"
+                    rows={3}
+                    placeholder={L2(LABELS.detailPlaceholder, lang)}
+                    value={detail}
+                    onChange={(e) => setDetail(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg bg-white/5 px-4 py-2 text-xs text-text-secondary transition hover:bg-white/10"
+                  >
+                    {L2(LABELS.cancel, lang)}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleSubmit()}
+                    className="rounded-lg bg-accent-red/20 px-4 py-2 text-xs font-medium text-accent-red transition hover:bg-accent-red/30 disabled:opacity-40"
+                  >
+                    {L2(LABELS.submit, lang)}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=report button with modal | inputs=targetType, targetId | outputs=report submission UI

@@ -6,11 +6,13 @@ import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import {
   getPlanetsByIds,
+  listBookmarks,
   listLatestPlanets,
   listLatestPosts,
   listLatestSettlements,
 } from "@/lib/network-firestore";
-import type { PlanetRecord, PostRecord, SettlementRecord } from "@/lib/network-types";
+import type { BookmarkRecord, PlanetRecord, PostRecord, SettlementRecord } from "@/lib/network-types";
+import { BookmarkButton } from "@/components/network/BookmarkButton";
 import {
   BOARD_TYPE_LABELS,
   REPORT_TYPE_LABELS,
@@ -40,6 +42,8 @@ export function NetworkHomeClient() {
     settlements: [],
     planetMap: {},
   });
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,10 +53,11 @@ export function NetworkHomeClient() {
         setLoading(true);
         setError(null);
 
-        const [planets, posts, settlements] = await Promise.all([
+        const [planets, posts, settlements, bookmarks] = await Promise.all([
           listLatestPlanets(6),
           listLatestPosts(8),
           listLatestSettlements(6),
+          user ? listBookmarks(user.uid) : Promise.resolve([] as BookmarkRecord[]),
         ]);
 
         const planetIds = [
@@ -64,6 +69,7 @@ export function NetworkHomeClient() {
 
         if (!cancelled) {
           setState({ planets, posts, settlements, planetMap });
+          setBookmarkedIds(new Set(bookmarks.map((b) => b.planetId)));
         }
       } catch (caught) {
         if (!cancelled) {
@@ -81,7 +87,7 @@ export function NetworkHomeClient() {
     return () => {
       cancelled = true;
     };
-  }, [lang]);
+  }, [lang, user]);
 
   // IDENTITY_SEAL: PART-1 | role=dashboard data loader | inputs=language and firestore state | outputs=dashboard records
 
@@ -156,6 +162,19 @@ export function NetworkHomeClient() {
               <div className="site-kicker">{lang === "ko" ? "추천 행성" : "Featured Planets"}</div>
               <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "최근 갱신된 행성" : "Recently Updated Planets"}</h2>
             </div>
+            {user && bookmarkedIds.size > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowBookmarksOnly((prev) => !prev)}
+                className={`rounded-full border px-4 py-2 text-xs font-medium transition ${
+                  showBookmarksOnly
+                    ? "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
+                    : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
+                }`}
+              >
+                {lang === "ko" ? (showBookmarksOnly ? "전체 보기" : "북마크만") : (showBookmarksOnly ? "Show All" : "Bookmarked")}
+              </button>
+            ) : null}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
@@ -163,26 +182,31 @@ export function NetworkHomeClient() {
               ? Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="premium-panel-soft min-h-[220px] animate-pulse p-6" />
                 ))
-              : state.planets.map((planet) => (
-                  <Link key={planet.id} href={`/network/planets/${planet.id}`} className="premium-link-card p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="site-kicker">{planet.genre}</span>
-                      <SettlementBadge status={planet.status} lang={lang} />
+              : (showBookmarksOnly ? state.planets.filter((p) => bookmarkedIds.has(p.id)) : state.planets).map((planet) => (
+                  <div key={planet.id} className="premium-link-card p-6">
+                    <Link href={`/network/planets/${planet.id}`} className="block">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="site-kicker">{planet.genre}</span>
+                        <SettlementBadge status={planet.status} lang={lang} />
+                      </div>
+                      <h3 className="mt-4 text-xl font-semibold text-text-primary">{planet.name}</h3>
+                      <p className="mt-3 text-sm leading-7 text-text-secondary">{planet.summary}</p>
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {planet.representativeTags.slice(0, 3).map((tag) => (
+                          <span key={tag} className="badge badge-blue">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-6 flex items-center justify-between text-xs text-text-tertiary">
+                        <span>{lang === "ko" ? `최근 로그 ${planet.stats.logCount}개` : `${planet.stats.logCount} recent logs`}</span>
+                        <span>{lang === "ko" ? `정산 ${planet.stats.settlementCount}` : `${planet.stats.settlementCount} settlements`}</span>
+                      </div>
+                    </Link>
+                    <div className="mt-3 flex justify-end">
+                      <BookmarkButton planetId={planet.id} compact />
                     </div>
-                    <h3 className="mt-4 text-xl font-semibold text-text-primary">{planet.name}</h3>
-                    <p className="mt-3 text-sm leading-7 text-text-secondary">{planet.summary}</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {planet.representativeTags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="badge badge-blue">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-6 flex items-center justify-between text-xs text-text-tertiary">
-                      <span>{lang === "ko" ? `최근 로그 ${planet.stats.logCount}개` : `${planet.stats.logCount} recent logs`}</span>
-                      <span>{lang === "ko" ? `정산 ${planet.stats.settlementCount}` : `${planet.stats.settlementCount} settlements`}</span>
-                    </div>
-                  </Link>
+                  </div>
                 ))}
           </div>
         </section>
