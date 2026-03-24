@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
+import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT } from '@/lib/i18n';
 import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
+import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
 
 const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
   lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
@@ -483,6 +484,143 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           />
                         </div>
                       )}
+                    </div>
+
+                    {/* Social Profile (소셜 레지스터) — collapsible Advanced */}
+                    <div className="mb-4">
+                      <button
+                        onClick={() => {
+                          // Toggle social profile visibility via a data attribute trick
+                          const el = document.getElementById(`social-${char.id}`);
+                          if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                        }}
+                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors mb-2"
+                      >
+                        <Users className="w-3 h-3" />
+                        {t.socialProfile ?? 'Social Profile'} ({t.socialAdvanced ?? 'Advanced'})
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      <div id={`social-${char.id}`} style={{ display: 'none' }} className="space-y-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-zinc-500 uppercase">{t.socialRelation ?? 'Relation'}</label>
+                            <select
+                              value={char.socialProfile?.relationDistance ?? 'colleague'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: e.target.value as SocialProfile['relationDistance'],
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(RELATION_LABELS[language] ?? RELATION_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-zinc-500 uppercase">{t.socialAge ?? 'Age'}</label>
+                            <select
+                              value={char.socialProfile?.ageRegister ?? 'adult'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: e.target.value as SocialProfile['ageRegister'],
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(AGE_LABELS[language] ?? AGE_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-zinc-500 uppercase">{t.socialProfession ?? 'Profession'}</label>
+                            <input
+                              value={char.socialProfile?.professionRegister ?? ''}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: e.target.value,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              placeholder={t.socialProfessionPH ?? 'Soldier, doctor...'}
+                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-cyan-500 transition-colors placeholder:text-zinc-700"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-zinc-500 uppercase">{t.socialExplicitness ?? 'Explicitness'}</label>
+                            <select
+                              value={char.socialProfile?.explicitness ?? 'none'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: e.target.value as SocialProfile['explicitness'],
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(EXPLICIT_LABELS[language] ?? EXPLICIT_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-zinc-500 uppercase">{t.socialProfanity ?? 'Profanity'}</label>
+                            <select
+                              value={char.socialProfile?.profanityLevel ?? 'none'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: e.target.value as SocialProfile['profanityLevel'],
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(PROFANITY_LABELS[language] ?? PROFANITY_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* 한 줄 요약 공식 (자동 생성) */}

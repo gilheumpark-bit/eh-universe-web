@@ -1,5 +1,6 @@
 import { FixRecord, FixType, Severity, ValidationIssue } from './types';
 import { AppLanguage } from '../lib/studio-types';
+import { getLanguagePack } from './language-pack';
 
 const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
 
@@ -192,14 +193,18 @@ function isCompoundWord(text: string, position: number, wordLength: number): boo
   return (before !== '' && koreanRange.test(before)) && (after !== '' && koreanRange.test(after));
 }
 
-export function validateCausality(text: string, ruleLevel: number): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+export function validateCausality(text: string, ruleLevel: number, language?: AppLanguage): { fixes: FixRecord[]; issues: ValidationIssue[] } {
   if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   const issues: ValidationIssue[] = [];
 
   if (ruleLevel < 2) return { fixes, issues };
 
-  const allBanned = [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
+  // Use language pack banned words when language is provided, fall back to hardcoded lists
+  const pack = language ? getLanguagePack(language) : null;
+  const allBanned = pack
+    ? pack.bannedWords
+    : [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
 
   for (const word of allBanned) {
     const regex = new RegExp(word, 'gi');
@@ -487,9 +492,9 @@ export function validateGeneratedContent(
   allFixes.push(...staticResult.fixes);
   allIssues.push(...staticResult.issues);
 
-  // EH Engine v1.4 — Causality enforcer (Lv2+)
+  // EH Engine v1.4 — Causality enforcer (Lv2+) with language pack support
   if (ruleLevel >= 2) {
-    const causalityResult = validateCausality(text, ruleLevel);
+    const causalityResult = validateCausality(text, ruleLevel, language);
     allFixes.push(...causalityResult.fixes);
     allIssues.push(...causalityResult.issues);
   }

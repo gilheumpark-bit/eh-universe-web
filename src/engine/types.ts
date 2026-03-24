@@ -325,3 +325,21 @@ export interface EngineReport {
   processingTimeMs: number;
 }
 
+// ============================================================
+// PRISM-MODE Presets — Content Rating System
+// ============================================================
+
+export interface PrismModeLevel {
+  sexual: number;    // 0-5
+  violence: number;  // 0-5
+  profanity: number; // 0-5
+}
+
+export const PRISM_MODE_PRESETS: Record<string, PrismModeLevel | null> = {
+  OFF: null, // no filtering
+  FREE: { sexual: 3, violence: 3, profanity: 3 }, // AI provider default only
+  ALL: { sexual: 0, violence: 1, profanity: 0 },
+  T15: { sexual: 2, violence: 3, profanity: 2 },
+  M18: { sexual: 4, violence: 5, profanity: 4 },
+};
+

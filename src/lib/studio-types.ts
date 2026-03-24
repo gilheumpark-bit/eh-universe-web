@@ -52,6 +52,16 @@ export interface Character {
   symbol?: string;             // 상징 요소
   secret?: string;             // 비밀 요소
   externalPerception?: string; // 타인이 보는 인상
+  // Social Register Pack
+  socialProfile?: SocialProfile;
+}
+
+export interface SocialProfile {
+  relationDistance: 'stranger' | 'formal' | 'colleague' | 'friend' | 'intimate' | 'hostile';
+  ageRegister: 'teen' | 'young_adult' | 'adult' | 'middle' | 'elder';
+  professionRegister?: string;
+  explicitness: 'none' | 'implied' | 'low' | 'medium' | 'high';
+  profanityLevel: 'none' | 'mild' | 'strong';
 }
 
 export type CharRelationType = "lover" | "rival" | "friend" | "enemy" | "family" | "mentor" | "subordinate";
@@ -225,6 +235,13 @@ export interface StoryConfig {
   // NOA-PRISM v1.1 — Writing Quality Control
   prismScale?: number;      // 0-150, default 120 (expansion density)
   prismPreserve?: number;   // 0-150, default 100 (preservation level)
+  // NOA-PRISM MODE — Content Rating System
+  prismMode?: 'OFF' | 'FREE' | 'ALL' | 'T15' | 'M18' | 'CUSTOM';
+  prismCustom?: {
+    sexual: number;    // 0-5
+    violence: number;  // 0-5
+    profanity: number; // 0-5
+  };
 }
 
 // Episode manuscript entry

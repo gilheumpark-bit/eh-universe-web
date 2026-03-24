@@ -661,6 +661,71 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             })}
           </div>
         </div>
+
+        {/* NOA-PRISM MODE — Content Rating System */}
+        <div className="space-y-6 pt-6 border-t border-zinc-800">
+          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+            <Shield className="w-4 h-4" /> {tl('planningExtra.prismModeTitle')}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { key: 'OFF' as const, label: tl('planningExtra.prismModeOff'), desc: tl('planningExtra.prismModeOffDesc') },
+              { key: 'FREE' as const, label: tl('planningExtra.prismModeFree'), desc: tl('planningExtra.prismModeFreeDesc') },
+              { key: 'ALL' as const, label: tl('planningExtra.prismModeAll'), desc: tl('planningExtra.prismModeAllDesc') },
+              { key: 'T15' as const, label: tl('planningExtra.prismModeT15'), desc: tl('planningExtra.prismModeT15Desc') },
+              { key: 'M18' as const, label: tl('planningExtra.prismModeM18'), desc: tl('planningExtra.prismModeM18Desc') },
+              { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
+            ] as const).map(pm => {
+              const currentMode = config.prismMode ?? 'OFF';
+              const isActive = currentMode === pm.key;
+              return (
+                <button
+                  key={pm.key}
+                  onClick={() => setConfig({ ...config, prismMode: pm.key })}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${
+                    isActive
+                      ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400'
+                      : 'bg-zinc-900 border border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                  }`}
+                  title={pm.desc}
+                >
+                  {pm.label}
+                </button>
+              );
+            })}
+          </div>
+          {(config.prismMode === 'CUSTOM') && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+              {(['sexual', 'violence', 'profanity'] as const).map(axis => {
+                const labelKey = axis === 'sexual' ? 'prismSexual' : axis === 'violence' ? 'prismViolence' : 'prismProfanity';
+                const val = config.prismCustom?.[axis] ?? 0;
+                return (
+                  <div key={axis} className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
+                      <span>{tl(`planningExtra.${labelKey}`)}</span>
+                      <span className="font-[family-name:var(--font-mono)]">{val}/5</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="5" step="1"
+                      aria-label={tl(`planningExtra.${labelKey}`)}
+                      className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none"
+                      value={val}
+                      onChange={e => setConfig({
+                        ...config,
+                        prismCustom: {
+                          sexual: config.prismCustom?.sexual ?? 0,
+                          violence: config.prismCustom?.violence ?? 0,
+                          profanity: config.prismCustom?.profanity ?? 0,
+                          [axis]: parseInt(e.target.value),
+                        },
+                      })}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4">

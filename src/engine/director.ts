@@ -337,6 +337,45 @@ export function checkPrismShrinkage(
 }
 
 // ============================================================
+// PART 5b — PRISM-MODE Violation Check
+// ============================================================
+
+const PRISM_EXPLICIT_KEYWORDS = [
+  // KO
+  '섹스', '성관계', '자위', '오르가즘', '사정', '성기',
+  // EN
+  'sex', 'intercourse', 'orgasm', 'ejaculation', 'genitals',
+  // JP
+  'セックス', '性行為', 'オーガズム',
+  // CN
+  '性交', '高潮', '射精',
+];
+
+/**
+ * Check if PRISM-MODE ALL is active and output contains explicit words.
+ * Returns a finding with severity 5 if violation detected.
+ */
+export function checkPrismModeViolation(
+  text: string,
+  prismMode?: string,
+): DirectorFinding | null {
+  if (!prismMode || prismMode !== 'ALL') return null;
+  if (!text || text.length < 10) return null;
+
+  const lower = text.toLowerCase();
+  for (const keyword of PRISM_EXPLICIT_KEYWORDS) {
+    if (lower.includes(keyword.toLowerCase())) {
+      return {
+        kind: 'PRISM_MODE_VIOLATION',
+        severity: 5,
+        message: `PRISM-MODE ALL 위반: "${keyword}" 감지 — 전체이용가 콘텐츠에 부적합한 표현`,
+      };
+    }
+  }
+  return null;
+}
+
+// ============================================================
 // PART 6 — Main Analyzer (renumbered from PART 4)
 // ============================================================
 

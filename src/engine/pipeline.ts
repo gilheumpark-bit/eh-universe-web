@@ -1,10 +1,12 @@
 import { StoryConfig, AppLanguage, StyleProfile } from '../lib/studio-types';
-import { EngineReport, PlatformType, getActFromEpisode, PublishPlatform, PLATFORM_PRESETS } from './types';
+import { EngineReport, PlatformType, getActFromEpisode, PublishPlatform, PLATFORM_PRESETS, PRISM_MODE_PRESETS } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
 import { getTargetCharRange } from './serialization';
 import { createT } from '@/lib/i18n';
 import { GENRE_BENCHMARKS } from './genre-review';
+import { getLanguagePack } from './language-pack';
+import { formatSocialProfile } from './social-register';
 
 // ============================================================
 // Dynamic System Instruction Builder
@@ -391,6 +393,108 @@ function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
 }
 
 // ============================================================
+// PRISM-MODE — Content Rating Prompt Builder
+// ============================================================
+
+function buildPrismModeBlock(config: StoryConfig, isKO: boolean): string {
+  const mode = config.prismMode ?? 'OFF';
+  if (mode === 'OFF') return '';
+
+  if (mode === 'FREE') {
+    return isKO
+      ? '\n[PRISM-MODE: FREE]\n- 기본 콘텐츠 가이드라인만 따르세요.'
+      : '\n[PRISM-MODE: FREE]\n- Follow your default content guidelines only.';
+  }
+
+  const parts: string[] = [];
+  parts.push(`\n[PRISM-MODE: ${mode}]`);
+
+  if (mode === 'ALL') {
+    if (isKO) {
+      parts.push('- 성적 콘텐츠 금지.');
+      parts.push('- 최소한의 폭력만 허용 (충격만, 피 묘사 금지).');
+      parts.push('- 비속어 금지.');
+    } else {
+      parts.push('- No sexual content.');
+      parts.push('- Minimal violence (impacts only, no blood).');
+      parts.push('- No profanity.');
+    }
+  } else if (mode === 'T15') {
+    if (isKO) {
+      parts.push('- 로맨스는 키스/긴장감까지 허용.');
+      parts.push('- 중간 수준 폭력 허용 (상처, 피).');
+      parts.push('- 가벼운 비속어 허용.');
+    } else {
+      parts.push('- Romance up to kissing/tension.');
+      parts.push('- Moderate violence (wounds, blood).');
+      parts.push('- Mild profanity.');
+    }
+  } else if (mode === 'M18') {
+    if (isKO) {
+      parts.push('- 노골적인 로맨스 허용.');
+      parts.push('- 그래픽 폭력 허용.');
+      parts.push('- 강한 비속어 허용.');
+    } else {
+      parts.push('- Explicit romance allowed.');
+      parts.push('- Graphic violence allowed.');
+      parts.push('- Strong profanity allowed.');
+    }
+  } else if (mode === 'CUSTOM') {
+    const custom = config.prismCustom ?? { sexual: 0, violence: 0, profanity: 0 };
+    const preset = PRISM_MODE_PRESETS;
+    // Generate rules based on slider values
+    const sexLabels = isKO
+      ? ['성적 콘텐츠 금지', '가벼운 암시만', '키스/긴장감까지', '짙은 로맨스', '노골적 허용', '제한 없음']
+      : ['No sexual content', 'Light implication only', 'Up to kissing/tension', 'Heavy romance', 'Explicit allowed', 'No limits'];
+    const violLabels = isKO
+      ? ['폭력 금지', '충격만, 피 금지', '상처/피 허용', '그래픽 폭력', '극한 폭력', '제한 없음']
+      : ['No violence', 'Impacts only, no blood', 'Wounds/blood allowed', 'Graphic violence', 'Extreme violence', 'No limits'];
+    const profLabels = isKO
+      ? ['비속어 금지', '매우 가벼운 비속어', '가벼운 비속어', '일반 비속어', '강한 비속어', '제한 없음']
+      : ['No profanity', 'Very mild profanity', 'Mild profanity', 'Standard profanity', 'Strong profanity', 'No limits'];
+
+    // Suppress unused variable warning — preset is referenced for type correctness
+    void preset;
+
+    parts.push(`- ${isKO ? '성적 수위' : 'Sexual'} [${custom.sexual}/5]: ${sexLabels[custom.sexual]}`);
+    parts.push(`- ${isKO ? '폭력 수위' : 'Violence'} [${custom.violence}/5]: ${violLabels[custom.violence]}`);
+    parts.push(`- ${isKO ? '비속어 수위' : 'Profanity'} [${custom.profanity}/5]: ${profLabels[custom.profanity]}`);
+  }
+
+  return parts.join('\n');
+}
+
+// ============================================================
+// Language Pack — Writing Rules Prompt Builder
+// ============================================================
+
+function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): string {
+  const pack = getLanguagePack(language);
+  const parts: string[] = [];
+  const header = isKO ? '언어팩 규칙' : 'Language Pack Rules';
+
+  parts.push(`\n[${header}: ${pack.id}]`);
+  if (pack.bannedWords.length > 0) {
+    const label = isKO ? '인과율 금지어' : 'Banned causality words';
+    parts.push(`- ${label}: ${pack.bannedWords.join(', ')}`);
+  }
+  if (pack.aiTonePatterns.length > 0) {
+    const label = isKO ? 'AI 톤 금지 표현' : 'AI tone forbidden phrases';
+    parts.push(`- ${label}: ${pack.aiTonePatterns.join(', ')}`);
+  }
+  {
+    const label = isKO ? '대화 마커' : 'Dialogue markers';
+    parts.push(`- ${label}: ${pack.dialogueMarkers.open}...${pack.dialogueMarkers.close}`);
+  }
+  {
+    const label = isKO ? '문장 리듬' : 'Sentence rhythm';
+    parts.push(`- ${label}: ${pack.sentenceRhythm.minWords}~${pack.sentenceRhythm.maxWords} ${isKO ? '단어' : 'words'}`);
+  }
+
+  return parts.join('\n');
+}
+
+// ============================================================
 // EH Engine v1.4 — Rule Level System (Lv1~5)
 // Lv1: 미적용, Lv2: 10%, Lv3: 20%, Lv4: 30%, Lv5: 40%
 // ============================================================
@@ -498,6 +602,10 @@ export function buildSystemInstruction(
       if (c.strength) entry += `\n    강점: ${c.strength}`;
       if (c.weakness) entry += `\n    약점: ${c.weakness}`;
       if (c.backstory) entry += `\n    과거: ${c.backstory}`;
+      // Social Register Pack
+      if (c.socialProfile) {
+        entry += `\n    ${formatSocialProfile(c.socialProfile, c.name, language)}`;
+      }
       return entry;
     }).join('\n')
     : '  등록된 캐릭터 없음';
@@ -651,6 +759,12 @@ export function buildSystemInstruction(
   // NOA-PRISM v1.1 injection
   const prismBlock = buildPrismBlock(config, isKO);
 
+  // PRISM-MODE content rating injection
+  const prismModeBlock = buildPrismModeBlock(config, isKO);
+
+  // Language Pack injection
+  const langPackBlock = buildLanguagePackBlock(language, isKO);
+
   // Publish platform injection
   const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, isKO);
 
@@ -695,6 +809,8 @@ ${simulatorBlock}
 ${worldTierBlock}
 ${styleDnaBlock}
 ${prismBlock}
+${prismModeBlock}
+${langPackBlock}
 ${publishPlatformBlock}
 ${dialogueGuide}
 
