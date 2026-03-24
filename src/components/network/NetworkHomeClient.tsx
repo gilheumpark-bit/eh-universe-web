@@ -286,7 +286,7 @@ export function NetworkHomeClient() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setBoardFilter("all")}
+              onClick={() => { setBoardFilter("all"); document.getElementById("board-posts")?.scrollIntoView({ behavior: "smooth" }); }}
               className={`rounded-full border px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.14em] transition ${
                 boardFilter === "all"
                   ? "border-accent-amber/40 bg-accent-amber/10 text-accent-amber"
@@ -302,7 +302,7 @@ export function NetworkHomeClient() {
               <button
                 key={bt}
                 type="button"
-                onClick={() => setBoardFilter(bt)}
+                onClick={() => { setBoardFilter(bt); document.getElementById("board-posts")?.scrollIntoView({ behavior: "smooth" }); }}
                 className={`rounded-full border px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.14em] transition ${
                   boardFilter === bt
                     ? bt === "if"
@@ -421,7 +421,7 @@ export function NetworkHomeClient() {
         </section>
 
         {/* Posts list section */}
-        <section id="latest-logs" className="space-y-4">
+        <section id="board-posts" className="space-y-4 scroll-mt-24">
           <div className="flex items-center justify-between">
             <div>
               <div className="site-kicker">{lang === "ko" ? "최신 관측 로그" : "Latest Logs"}</div>
