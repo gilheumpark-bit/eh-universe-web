@@ -1033,7 +1033,7 @@ function VectorBar({ vectors, lang }: { vectors: VectorScores; lang: string }) {
     <div className="space-y-2">
       {keys.map((k) => (
         <div key={k} className="flex items-center gap-2">
-          <span className="w-20 shrink-0 font-[family-name:var(--font-mono)] text-[10px] tracking-wider text-text-tertiary">
+          <span className="w-20 shrink-0 font-[family-name:var(--font-mono)] text-[12px] tracking-wider text-text-tertiary">
             {lang === "ko" ? VECTOR_LABELS[k].ko : VECTOR_LABELS[k].en}
           </span>
           <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
@@ -1042,7 +1042,7 @@ function VectorBar({ vectors, lang }: { vectors: VectorScores; lang: string }) {
               style={{ width: `${Math.min(vectors[k] * 100, 100)}%`, opacity: 0.8 }}
             />
           </div>
-          <span className="w-10 text-right font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+          <span className="w-10 text-right font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary">
             {(vectors[k] * 100).toFixed(0)}%
           </span>
         </div>
@@ -1069,7 +1069,7 @@ const CONDITION_COLORS: Record<string, string> = {
 function ConditionBadge({ condition, label }: { condition: string; label: string }) {
   const color = CONDITION_COLORS[condition] ?? CONDITION_COLORS["active"];
   return (
-    <span className={`inline-block rounded-full border px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] tracking-wider ${color}`}>
+    <span className={`inline-block rounded-full border px-3 py-1 font-[family-name:var(--font-mono)] text-[12px] tracking-wider ${color}`}>
       {label}
     </span>
   );
@@ -1166,7 +1166,7 @@ export default function NoaTowerPage() {
             <div className="flex items-center gap-4">
               <Link
                 href="/tools"
-                className="rounded-full border border-white/8 px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.18em] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary"
+                className="rounded-full border border-white/8 px-4 py-2 font-[family-name:var(--font-mono)] text-[13px] tracking-[0.18em] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary"
               >
                 {t("back", lang)}
               </Link>
@@ -1174,7 +1174,7 @@ export default function NoaTowerPage() {
                 <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-[0.12em] text-text-primary">
                   {t("pageTitle", lang)}
                 </h1>
-                <p className="font-[family-name:var(--font-mono)] text-[10px] tracking-[0.2em] text-text-tertiary uppercase">
+                <p className="font-[family-name:var(--font-mono)] text-[12px] tracking-[0.2em] text-text-tertiary uppercase">
                   {t("pageSubtitle", lang)}
                 </p>
               </div>
@@ -1184,7 +1184,7 @@ export default function NoaTowerPage() {
               {isEnded && (
                 <button
                   onClick={() => doAction("restart")}
-                  className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-wider text-accent-amber transition-colors hover:bg-accent-amber/20"
+                  className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[13px] tracking-wider text-accent-amber transition-colors hover:bg-accent-amber/20"
                 >
                   {t("restart", lang)}
                 </button>
@@ -1196,13 +1196,13 @@ export default function NoaTowerPage() {
           <div className="mb-4 flex gap-2 lg:hidden">
             <button
               onClick={() => setSidePanel("status")}
-              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[10px] tracking-wider transition-colors ${sidePanel === "status" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
+              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider transition-colors ${sidePanel === "status" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
             >
               {t("towerStatus", lang)}
             </button>
             <button
               onClick={() => setSidePanel("case")}
-              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[10px] tracking-wider transition-colors ${sidePanel === "case" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
+              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider transition-colors ${sidePanel === "case" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
             >
               {t("caseInfo", lang)}
             </button>
@@ -1214,38 +1214,38 @@ export default function NoaTowerPage() {
             <aside className={`space-y-4 ${sidePanel !== "status" ? "hidden lg:block" : ""}`}>
               {/* Floor Sense */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("floorSense", lang)}
                 </h3>
-                <p className="font-[family-name:var(--font-mono)] text-xs leading-relaxed text-text-secondary">
+                <p className="font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-secondary">
                   {reply.floorHint}
                 </p>
               </div>
 
               {/* Record Status */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("recordStatus", lang)}
                 </h3>
-                <p className="font-[family-name:var(--font-mono)] text-xs leading-relaxed text-text-secondary">
+                <p className="font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-secondary">
                   {reply.recordStatus}
                 </p>
               </div>
 
               {/* Vector Analysis */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("vectorAnalysis", lang)}
                 </h3>
                 <VectorBar vectors={reply.vectorScores} lang={lang} />
-                <p className="mt-3 font-[family-name:var(--font-mono)] text-[10px] italic text-text-tertiary">
+                <p className="mt-3 font-[family-name:var(--font-mono)] text-[12px] italic text-text-tertiary">
                   {reply.vectorCopy}
                 </p>
               </div>
 
               {/* Progress */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("progress", lang)}
                 </h3>
                 <div className="relative h-2 overflow-hidden rounded-full bg-white/5">
@@ -1254,7 +1254,7 @@ export default function NoaTowerPage() {
                     style={{ width: `${Math.min(caseData.progress * 100, 100)}%` }}
                   />
                 </div>
-                <div className="mt-2 flex justify-between font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+                <div className="mt-2 flex justify-between font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary">
                   <span>{(caseData.progress * 100).toFixed(0)}%</span>
                   <span>{state.hardMode ? "HARD" : "NORMAL"}</span>
                 </div>
@@ -1269,26 +1269,26 @@ export default function NoaTowerPage() {
                   <div key={i} className={`mb-4 ${entry.role === "player" ? "flex justify-end" : ""}`}>
                     {entry.role === "player" ? (
                       <div className="max-w-[80%] rounded-2xl rounded-br-md border border-accent-amber/15 bg-accent-amber/5 px-4 py-3">
-                        <p className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-xs leading-relaxed text-accent-amber/90">
+                        <p className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-sm leading-relaxed text-accent-amber/90">
                           {entry.text}
                         </p>
                       </div>
                     ) : entry.role === "tower" ? (
                       <div className="max-w-[85%]">
                         <div className="mb-1 flex items-center gap-2">
-                          <span className="font-[family-name:var(--font-mono)] text-[9px] tracking-wider text-cyan-400/60">
+                          <span className="font-[family-name:var(--font-mono)] text-[12px] tracking-wider text-cyan-400/60">
                             [{entry.code}] {entry.title}
                           </span>
                         </div>
                         <div className="rounded-2xl rounded-bl-md border border-cyan-400/10 bg-cyan-400/[0.03] px-4 py-3">
-                          <p className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-xs leading-relaxed text-text-secondary">
+                          <p className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-secondary">
                             {entry.text}
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="mx-auto max-w-[90%] rounded-xl border border-white/5 bg-white/[0.02] px-4 py-2">
-                        <p className="whitespace-pre-wrap text-center font-[family-name:var(--font-mono)] text-[10px] leading-relaxed text-text-tertiary">
+                        <p className="whitespace-pre-wrap text-center font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
                           {entry.text}
                         </p>
                       </div>
@@ -1299,7 +1299,7 @@ export default function NoaTowerPage() {
                 {/* Event line */}
                 {reply.event && (
                   <div className="mb-2 text-center">
-                    <p className="inline-block rounded-full border border-white/5 bg-white/[0.02] px-4 py-1.5 font-[family-name:var(--font-mono)] text-[10px] italic text-text-tertiary">
+                    <p className="inline-block rounded-full border border-white/5 bg-white/[0.02] px-4 py-1.5 font-[family-name:var(--font-mono)] text-[12px] italic text-text-tertiary">
                       {reply.event}
                     </p>
                   </div>
@@ -1317,7 +1317,7 @@ export default function NoaTowerPage() {
                         setInput(seed.body);
                         inputRef.current?.focus();
                       }}
-                      className="rounded-full border border-white/8 bg-white/[0.02] px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary"
+                      className="rounded-full border border-white/8 bg-white/[0.02] px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary"
                       title={seed.body}
                     >
                       {seed.title}
@@ -1341,13 +1341,13 @@ export default function NoaTowerPage() {
                   placeholder={t("placeholder", lang)}
                   disabled={isEnded}
                   rows={2}
-                  className="flex-1 resize-none rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 font-[family-name:var(--font-mono)] text-xs leading-relaxed text-text-primary placeholder:text-text-tertiary/50 focus:border-accent-amber/30 focus:outline-none disabled:opacity-40"
+                  className="flex-1 resize-none rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary/50 focus:border-accent-amber/30 focus:outline-none disabled:opacity-40"
                 />
                 <div className="flex flex-col gap-1.5">
                   <button
                     type="submit"
                     disabled={isEnded || !input.trim()}
-                    className="rounded-xl border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-wider text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:opacity-30"
+                    className="rounded-xl border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-wider text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:opacity-30"
                   >
                     {t("submit", lang)}
                   </button>
@@ -1356,7 +1356,7 @@ export default function NoaTowerPage() {
                       type="button"
                       onClick={() => { if (input.trim()) doAction("submit_verdict", input); }}
                       disabled={!input.trim()}
-                      className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-wider text-cyan-400 transition-colors hover:bg-cyan-400/20 disabled:opacity-30"
+                      className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-wider text-cyan-400 transition-colors hover:bg-cyan-400/20 disabled:opacity-30"
                     >
                       {t("submitVerdict", lang)}
                     </button>
@@ -1367,21 +1367,21 @@ export default function NoaTowerPage() {
               {/* Action Buttons */}
               {!isEnded && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => doAction("silence")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
+                  <button onClick={() => doAction("silence")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
                     {t("silence", lang)}
                   </button>
-                  <button onClick={() => doAction("probe")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
+                  <button onClick={() => doAction("probe")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
                     {t("probe", lang)}
                   </button>
                   {!state.hardMode && (
-                    <button onClick={() => doAction("hard_mode")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
+                    <button onClick={() => doAction("hard_mode")} className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
                       {t("hardMode", lang)}
                     </button>
                   )}
-                  <button onClick={() => doAction("give_up")} className="rounded-full border border-red-400/15 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-red-400/60 transition-colors hover:border-red-400/30 hover:text-red-400/80">
+                  <button onClick={() => doAction("give_up")} className="rounded-full border border-red-400/15 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-red-400/60 transition-colors hover:border-red-400/30 hover:text-red-400/80">
                     {t("giveUp", lang)}
                   </button>
-                  <button onClick={() => doAction("restart")} className="ml-auto rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
+                  <button onClick={() => doAction("restart")} className="ml-auto rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary">
                     {t("restart", lang)}
                   </button>
                 </div>
@@ -1392,14 +1392,14 @@ export default function NoaTowerPage() {
             <aside className={`space-y-4 ${sidePanel !== "case" ? "hidden lg:block" : ""}`}>
               {/* Current Objective */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("objectives", lang)}
                 </h3>
                 <div className={`rounded-xl border p-3 ${caseData.currentObjective.complete ? "border-cyan-400/20 bg-cyan-400/[0.03]" : caseData.currentObjective.active ? "border-accent-amber/20 bg-accent-amber/[0.03]" : "border-white/5 bg-white/[0.01]"}`}>
-                  <p className="font-[family-name:var(--font-mono)] text-[11px] font-medium text-text-primary">
+                  <p className="font-[family-name:var(--font-mono)] text-[13px] font-medium text-text-primary">
                     {caseData.currentObjective.title}
                   </p>
-                  <p className="mt-1 font-[family-name:var(--font-mono)] text-[10px] leading-relaxed text-text-tertiary">
+                  <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
                     {caseData.currentObjective.body}
                   </p>
                 </div>
@@ -1407,7 +1407,7 @@ export default function NoaTowerPage() {
                   {caseData.objectives.map((obj) => (
                     <div key={obj.id} className="flex items-center gap-2">
                       <span className={`h-1.5 w-1.5 rounded-full ${obj.complete ? "bg-cyan-400" : obj.active ? "bg-accent-amber" : "bg-white/10"}`} />
-                      <span className={`font-[family-name:var(--font-mono)] text-[10px] ${obj.complete ? "text-cyan-400/70 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/50"}`}>
+                      <span className={`font-[family-name:var(--font-mono)] text-[12px] ${obj.complete ? "text-cyan-400/70 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/50"}`}>
                         {obj.title}
                       </span>
                     </div>
@@ -1417,17 +1417,17 @@ export default function NoaTowerPage() {
 
               {/* Clues */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("clues", lang)} ({caseData.clueCount}/{CLUES.length})
                 </h3>
                 <div className="space-y-2">
                   {caseData.clues.map((clue) => (
                     <div key={clue.id} className={`rounded-xl border p-2.5 ${clue.unlocked ? "border-white/8 bg-white/[0.02]" : "border-white/3 bg-transparent opacity-50"}`}>
-                      <p className="font-[family-name:var(--font-mono)] text-[10px] font-medium text-text-secondary">
+                      <p className="font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-secondary">
                         {clue.unlocked ? clue.title : `??? ${clue.unlockHint}`}
                       </p>
                       {clue.unlocked && clue.body && (
-                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[10px] leading-relaxed text-text-tertiary">
+                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
                           {clue.body}
                         </p>
                       )}
@@ -1438,17 +1438,17 @@ export default function NoaTowerPage() {
 
               {/* Theory Fragments */}
               <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
+                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
                   {t("fragments", lang)} ({caseData.fragmentCount}/{FRAGMENTS.length})
                 </h3>
                 <div className="space-y-2">
                   {caseData.fragments.map((frag) => (
                     <div key={frag.id} className={`rounded-xl border p-2.5 ${frag.unlocked ? "border-white/8 bg-white/[0.02]" : "border-white/3 bg-transparent opacity-50"}`}>
-                      <p className="font-[family-name:var(--font-mono)] text-[10px] font-medium text-text-secondary">
+                      <p className="font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-secondary">
                         {frag.unlocked ? frag.title : `??? ${frag.unlockHint}`}
                       </p>
                       {frag.unlocked && frag.body && (
-                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[10px] leading-relaxed text-text-tertiary">
+                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
                           {frag.body}
                         </p>
                       )}
