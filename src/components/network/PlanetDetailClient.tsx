@@ -213,7 +213,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             <div className="flex flex-wrap gap-3">
               {([
                 ["logs", lang === "ko" ? "최근 관측 로그" : "Logs"],
-                ["if", "IF / Side Route"],
+                ["if", lang === "ko" ? "IF / 분기 루트" : "IF / Side Route"],
                 ["settlements", lang === "ko" ? "정산 기록" : "Settlements"],
                 ["feedback", lang === "ko" ? "피드백" : "Feedback"],
               ] as [DetailTab, string][]).map(([key, label]) => (
@@ -312,7 +312,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
               {topReadPost ? (
                 <>
                   <h3 className="mt-3 text-lg font-semibold text-text-primary">{topReadPost.title}</h3>
-                  <p className="mt-2 text-sm text-text-secondary">{topReadPost.metrics.viewCount} views</p>
+                  <p className="mt-2 text-sm text-text-secondary">{topReadPost.metrics.viewCount} {lang === "ko" ? "조회" : "views"}</p>
                 </>
               ) : (
                 <p className="mt-3 text-sm text-text-secondary">{lang === "ko" ? "아직 집계 전입니다." : "No reads tracked yet."}</p>

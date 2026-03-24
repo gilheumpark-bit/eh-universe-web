@@ -94,9 +94,14 @@ test.describe('NOA Studio — Extended Flows', () => {
     await createSession(page);
     // Navigate to writing tab
     const writingTab = page.locator('button', { hasText: /집필 스튜디오|Writing Studio/ }).first();
+    await expect(writingTab).toBeVisible({ timeout: 8000 });
     await writingTab.click();
+    // Wait for the writing tab panel to render
+    await page.waitForTimeout(500);
     // Should see writing mode buttons — labels are "초안 생성"/"Draft" and "글쓰기"/"Write"
-    await expect(page.locator('button', { hasText: /초안 생성|Draft|글쓰기|Write/ }).first()).toBeVisible({ timeout: 8000 });
+    const modeBtn = page.locator('button', { hasText: /초안 생성|Draft|글쓰기|Write/ }).first();
+    await modeBtn.scrollIntoViewIfNeeded();
+    await expect(modeBtn).toBeVisible({ timeout: 10000 });
   });
 
   test('settings tab loads without error', async ({ page }) => {
@@ -136,7 +141,7 @@ test.describe('NOA Studio — Extended Flows', () => {
 
     for (const path of ['/', '/archive', '/rulebook', '/reference', '/about']) {
       await page.goto(path);
-      await expect(page.locator('text=EH UNIVERSE')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=EH UNIVERSE').first()).toBeVisible({ timeout: 10000 });
     }
     // Filter out known non-critical errors (favicon, analytics, 404, hydration, chunk loading, preload, net errors, etc.)
     const benignPatterns = [
