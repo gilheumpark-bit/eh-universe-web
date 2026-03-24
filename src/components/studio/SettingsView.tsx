@@ -10,30 +10,36 @@ import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
+import { getActiveProvider, getActiveModel, getApiKey, PROVIDERS } from '@/lib/ai-providers';
 
 interface SettingsViewProps {
   language: AppLanguage;
+  hostedProviders?: Partial<Record<string, boolean>>;
   onClearAll: () => void;
   onManageApiKey: () => void;
 }
 
 // Engine settings labels are now in TRANSLATIONS.settingsEngine
 
-const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onManageApiKey }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders = {}, onClearAll, onManageApiKey }) => {
   const t = createT(language);
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
   const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.7'));
+
+  const activeProvider = typeof window !== 'undefined' ? getActiveProvider() : 'gemini';
+  const activeModel = typeof window !== 'undefined' ? getActiveModel() : '';
+  const providerName = PROVIDERS[activeProvider]?.name ?? activeProvider;
+
   const [apiKeyStatus, setApiKeyStatus] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const keys = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
-    return keys.some(k => !!localStorage.getItem(k));
+    return !!getApiKey(activeProvider) || !!hostedProviders[activeProvider];
   });
 
   const checkApiKeys = () => {
-    const keys = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
-    setApiKeyStatus(keys.some(k => !!localStorage.getItem(k)));
+    const currentProvider = getActiveProvider();
+    setApiKeyStatus(!!getApiKey(currentProvider) || !!hostedProviders[currentProvider]);
   };
 
   useEffect(() => {
@@ -65,7 +71,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, onClearAll, onMan
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
               <span className="text-xs text-zinc-400">{t('settings.aiModel')}</span>
-              <span className="text-xs font-black text-white">Gemini 2.5 Pro</span>
+              <span className="text-xs font-black text-white">{providerName} — {activeModel}</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
               <span className="text-xs text-zinc-400">{t('settings.latency')}</span>

@@ -194,6 +194,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               {navItems.map(({ tab, icon: Icon, label }) => (
                 <button
                   key={tab}
+                  data-testid={`tab-${tab}`}
                   onClick={() => handleTabChange(tab)}
                   className={`flex w-full items-center gap-3 rounded-[1.15rem] px-4 py-3.5 text-left transition-all ${
                     activeTab === tab
@@ -312,6 +313,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               </div>
 
               <button
+                data-testid="tab-settings"
                 onClick={() => handleTabChange('settings')}
                 className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
                   activeTab === 'settings'

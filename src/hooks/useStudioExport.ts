@@ -160,20 +160,21 @@ export function useStudioExport({
     e.target.value = '';
   }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab]);
 
-  // Print
-  const handlePrint = useCallback(() => {
-    if (!currentSession) return;
+  // Print — accepts an optional session to print a specific history card
+  const handlePrint = useCallback((targetSession?: ChatSession) => {
+    const session = targetSession ?? currentSession;
+    if (!session) return;
     const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const isEditMode = writingMode === 'edit' && editDraft.trim();
+    const isEditMode = !targetSession && writingMode === 'edit' && editDraft.trim();
     const printContent = isEditMode
       ? `<div style="white-space:pre-wrap;font-family:serif;line-height:1.8;">${escHtml(editDraft)}</div>`
-      : currentSession.messages.map(m => {
+      : session.messages.map(m => {
         const prefix = m.role === 'user' ? '\u{1F4DD} ' : '\u{1F916} ';
         return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
       }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
+    w.document.write(`<html><head><title>${escHtml(session.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(session.title)}</h1><p style="color:#888;">${escHtml(session.config.genre)} | EP.${session.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
     w.document.close();
     w.print();
   }, [currentSession, writingMode, editDraft, language]);

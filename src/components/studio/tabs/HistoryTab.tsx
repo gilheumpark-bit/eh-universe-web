@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppLanguage, AppTab, ChatSession, Project } from '@/lib/studio-types';
 import GenreReviewChat from '@/components/studio/GenreReviewChat';
 import { Edit3, Upload, Printer, X } from 'lucide-react';
@@ -25,7 +25,7 @@ interface HistoryTabProps {
   setRenameValue: (val: string) => void;
   confirmRename: () => void;
   moveSessionToProject: (sid: string, pid: string) => void;
-  handlePrint: () => void;
+  handlePrint: (session?: ChatSession) => void;
   deleteSession: (id: string) => void;
   currentSession: ChatSession | null;
 }
@@ -56,6 +56,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
   currentSession
 }) => {
   const t = createT(language);
+  const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
 
   const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
     ? projects.flatMap(p => p.sessions.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })))
@@ -126,16 +127,11 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                     if (others.length === 1) {
                       moveSessionToProject(s.id, others[0].id);
                     } else if (others.length > 1) {
-                      const choice = window.prompt(
-                        (t('project.moveSession')) + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
-                        '1'
-                      );
-                      const idx = parseInt(choice || '', 10) - 1;
-                      if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
+                      setMoveModal({ sessionId: s.id, others });
                     }
                   }} aria-label="이동" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t('project.moveSession')}><Upload className="w-3 h-3" /></button>
                 )}
-                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); handlePrint(s); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
                 <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
               </div>
               {renamingSessionId === s.id ? (
@@ -177,6 +173,34 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
             config={currentSession.config}
             manuscriptText={currentSession.messages.filter(m => m.role === 'assistant').map(m => m.content).join('\n\n')}
           />
+        </div>
+      )}
+
+      {/* Move Session Modal */}
+      {moveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setMoveModal(null)}>
+          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
+            <select
+              autoFocus
+              className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
+              defaultValue=""
+              onChange={e => {
+                if (e.target.value) {
+                  moveSessionToProject(moveModal.sessionId, e.target.value);
+                  setMoveModal(null);
+                }
+              }}
+            >
+              <option value="" disabled>{language === 'KO' ? '프로젝트 선택...' : 'Select project...'}</option>
+              {moveModal.others.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button onClick={() => setMoveModal(null)} className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors">
+              {language === 'KO' ? '취소' : 'Cancel'}
+            </button>
+          </div>
         </div>
       )}
     </div>

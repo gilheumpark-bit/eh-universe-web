@@ -12,7 +12,7 @@ import Image from 'next/image';
 import {
   Message, StoryConfig, Genre,
   AppLanguage, AppTab,
-  ChatSession
+  ChatSession, Project
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
@@ -131,6 +131,7 @@ export default function StudioPage() {
   const [renameValue, setRenameValue] = useState('');
   const [archiveFilter, setArchiveFilter] = useState<string>('ALL');
   const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
+  const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   // UX: unsaved changes warning (moved after useStudioAI to avoid TDZ)
@@ -1022,7 +1023,7 @@ export default function StudioPage() {
                   </>
                 )}
                 {activeTab === 'settings' && (
-                  <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
+                  <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
                 )}
                 {/* world studio (design/simulator/analysis) rendered above */}
                 {activeTab === 'rulebook' && (
@@ -1689,16 +1690,11 @@ export default function StudioPage() {
                                     if (others.length === 1) {
                                       moveSessionToProject(s.id, others[0].id);
                                     } else if (others.length > 1) {
-                                      const choice = window.prompt(
-                                        (t('project.moveSession')) + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
-                                        '1'
-                                      );
-                                      const idx = parseInt(choice || '', 10) - 1;
-                                      if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
+                                      setMoveModal({ sessionId: s.id, others });
                                     }
                                   }} aria-label="이동" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t('project.moveSession')}><Upload className="w-3 h-3" /></button>
                                 )}
-                                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handlePrint(s); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
                                 <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
                               </div>
                               {renamingSessionId === s.id ? (
@@ -1746,7 +1742,7 @@ export default function StudioPage() {
                   );
                 })()}
                 {activeTab === 'docs' && (
-                  <StudioDocsView lang={language === 'KO' ? 'ko' : 'en'} />
+                  <StudioDocsView lang={language} />
                 )}
               </>
             )}
@@ -2080,6 +2076,34 @@ export default function StudioPage() {
         onConfirm={confirmState.onConfirm}
         onCancel={closeConfirm}
       />
+
+      {/* Move Session Modal */}
+      {moveModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={() => setMoveModal(null)}>
+          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
+            <select
+              autoFocus
+              className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
+              defaultValue=""
+              onChange={e => {
+                if (e.target.value) {
+                  moveSessionToProject(moveModal.sessionId, e.target.value);
+                  setMoveModal(null);
+                }
+              }}
+            >
+              <option value="" disabled>{isKO ? '프로젝트 선택...' : 'Select project...'}</option>
+              {moveModal.others.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button onClick={() => setMoveModal(null)} className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors">
+              {isKO ? '취소' : 'Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Save Slot Name Modal */}
       {saveSlotModalOpen && (

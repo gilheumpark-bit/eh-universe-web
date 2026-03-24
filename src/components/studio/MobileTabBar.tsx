@@ -61,7 +61,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
           <div className="fixed inset-0 bg-black/40" onClick={() => setMoreOpen(false)} />
           <div className="relative mx-2 mb-1 rounded-xl bg-bg-primary border border-border p-2 grid grid-cols-5 gap-1">
             {MORE_TABS.map(({ key, icon: Icon }) => (
-              <button key={key} onClick={() => handleTab(key)} type="button"
+              <button key={key} data-testid={`tab-${key}`} onClick={() => handleTab(key)} type="button"
                 className={`flex flex-col items-center gap-0.5 py-2.5 rounded-lg text-xs min-h-[44px]
                   ${activeTab === key ? 'text-accent-purple' : 'text-text-tertiary'}`}>
                 <Icon size={20} />
@@ -78,7 +78,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
           const active = key === 'more' ? isMoreActive : activeTab === key;
           const TabIcon = !isGuided && key === 'more' && moreOpen ? X : Icon;
           return (
-            <button key={key} onClick={() => handleTab(key)} type="button"
+            <button key={key} data-testid={`tab-${key}`} onClick={() => handleTab(key)} type="button"
               className={`flex flex-col items-center gap-0.5 py-2 px-3 text-[11px] leading-tight min-h-[44px]
                 ${active ? 'text-accent-purple' : 'text-text-tertiary'}`}>
               <TabIcon size={22} />
