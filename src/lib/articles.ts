@@ -4434,6 +4434,10 @@ v1.0 (2km) → Tier 3 (2km) → Tier 4 (1km) → Tier 2 (6km) → Tier 1 (12km)`
   },
 };
 
+// Merge report articles (11-63)
+import { reportArticles } from "./articles-reports";
+Object.assign(articles, reportArticles);
+
 export function getArticleTitle(slug: string, lang: "ko" | "en"): string {
   return articles[slug]?.title[lang] ?? slug;
 }
