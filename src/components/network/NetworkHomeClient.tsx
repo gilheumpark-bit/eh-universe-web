@@ -1,17 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import {
+  getAllUniqueTags,
   getPlanetsByIds,
   listBookmarks,
   listLatestPlanets,
   listLatestPosts,
   listLatestSettlements,
 } from "@/lib/network-firestore";
-import type { BookmarkRecord, PlanetRecord, PostRecord, SettlementRecord } from "@/lib/network-types";
+import type {
+  BoardType,
+  BookmarkRecord,
+  PlanetRecord,
+  PostRecord,
+  SettlementRecord,
+} from "@/lib/network-types";
+import { BOARD_TYPES } from "@/lib/network-types";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
 import {
   BOARD_TYPE_LABELS,
@@ -19,17 +27,25 @@ import {
   pickNetworkLabel,
 } from "@/lib/network-labels";
 import { SettlementBadge } from "@/components/network/SettlementBadge";
+import { TagFilter } from "@/components/network/TagFilter";
+
+// ============================================================
+// PART 1 - TYPES AND DATA LOADING
+// ============================================================
 
 interface DashboardState {
   planets: PlanetRecord[];
   posts: PostRecord[];
   settlements: SettlementRecord[];
   planetMap: Record<string, PlanetRecord>;
+  allTags: string[];
 }
 
-// ============================================================
-// PART 1 - DATA LOADING
-// ============================================================
+type BoardFilter = "all" | BoardType;
+
+const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string }> = {
+  all: { ko: "전체", en: "All" },
+};
 
 export function NetworkHomeClient() {
   const { lang } = useLang();
@@ -41,9 +57,12 @@ export function NetworkHomeClient() {
     posts: [],
     settlements: [],
     planetMap: {},
+    allTags: [],
   });
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,11 +72,12 @@ export function NetworkHomeClient() {
         setLoading(true);
         setError(null);
 
-        const [planets, posts, settlements, bookmarks] = await Promise.all([
+        const [planets, posts, settlements, bookmarks, allTags] = await Promise.all([
           listLatestPlanets(6),
-          listLatestPosts(8),
+          listLatestPosts(20),
           listLatestSettlements(6),
           user ? listBookmarks(user.uid) : Promise.resolve([] as BookmarkRecord[]),
+          getAllUniqueTags(50),
         ]);
 
         const planetIds = [
@@ -68,7 +88,7 @@ export function NetworkHomeClient() {
         const planetMap = await getPlanetsByIds(planetIds);
 
         if (!cancelled) {
-          setState({ planets, posts, settlements, planetMap });
+          setState({ planets, posts, settlements, planetMap, allTags });
           setBookmarkedIds(new Set(bookmarks.map((b) => b.planetId)));
         }
       } catch (caught) {
@@ -89,7 +109,45 @@ export function NetworkHomeClient() {
     };
   }, [lang, user]);
 
-  // IDENTITY_SEAL: PART-1 | role=dashboard data loader | inputs=language and firestore state | outputs=dashboard records
+  const handleTagToggle = useCallback((tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  }, []);
+
+  const handleTagClear = useCallback(() => {
+    setSelectedTags([]);
+  }, []);
+
+  const filteredPosts = useMemo(() => {
+    let posts = state.posts;
+    if (boardFilter !== "all") {
+      posts = posts.filter((p) => p.boardType === boardFilter);
+    }
+    if (selectedTags.length > 0) {
+      const tagSet = new Set(selectedTags.map((t) => t.toLowerCase()));
+      posts = posts.filter((p) =>
+        (p.tags ?? []).some((t) => tagSet.has(t.toLowerCase())),
+      );
+    }
+    return posts.slice(0, 8);
+  }, [state.posts, boardFilter, selectedTags]);
+
+  const filteredPlanets = useMemo(() => {
+    let planets = state.planets;
+    if (showBookmarksOnly) {
+      planets = planets.filter((p) => bookmarkedIds.has(p.id));
+    }
+    if (selectedTags.length > 0) {
+      const tagSet = new Set(selectedTags.map((t) => t.toLowerCase()));
+      planets = planets.filter((p) =>
+        [...(p.representativeTags ?? []), ...(p.tags ?? [])].some((t) => tagSet.has(t.toLowerCase())),
+      );
+    }
+    return planets;
+  }, [state.planets, showBookmarksOnly, bookmarkedIds, selectedTags]);
+
+  // IDENTITY_SEAL: PART-1 | role=dashboard data loader and filters | inputs=language, firestore state, filter state | outputs=filtered records
 
   // ============================================================
   // PART 2 - RENDER
@@ -154,6 +212,50 @@ export function NetworkHomeClient() {
           </div>
         </section>
 
+        {/* Board Type Filter Tabs */}
+        <section className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setBoardFilter("all")}
+              className={`rounded-full border px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.14em] transition ${
+                boardFilter === "all"
+                  ? "border-accent-amber/40 bg-accent-amber/10 text-accent-amber"
+                  : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16 hover:text-text-primary"
+              }`}
+            >
+              {lang === "ko" ? BOARD_FILTER_LABELS.all.ko : BOARD_FILTER_LABELS.all.en}
+            </button>
+            {BOARD_TYPES.filter((bt) => bt !== "notice").map((bt) => (
+              <button
+                key={bt}
+                type="button"
+                onClick={() => setBoardFilter(bt)}
+                className={`rounded-full border px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.14em] transition ${
+                  boardFilter === bt
+                    ? bt === "if"
+                      ? "border-purple-400/40 bg-purple-400/10 text-purple-300"
+                      : "border-accent-amber/40 bg-accent-amber/10 text-accent-amber"
+                    : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16 hover:text-text-primary"
+                }`}
+              >
+                {pickNetworkLabel(BOARD_TYPE_LABELS[bt], lang)}
+              </button>
+            ))}
+          </div>
+
+          {/* Tag Filter */}
+          {state.allTags.length > 0 && (
+            <TagFilter
+              availableTags={state.allTags}
+              selectedTags={selectedTags}
+              onToggle={handleTagToggle}
+              onClear={handleTagClear}
+              lang={lang}
+            />
+          )}
+        </section>
+
         {error ? <p className="text-sm text-accent-red">{error}</p> : null}
 
         <section className="space-y-4">
@@ -182,7 +284,7 @@ export function NetworkHomeClient() {
               ? Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="premium-panel-soft min-h-[220px] animate-pulse p-6" />
                 ))
-              : (showBookmarksOnly ? state.planets.filter((p) => bookmarkedIds.has(p.id)) : state.planets).map((planet) => (
+              : filteredPlanets.map((planet) => (
                   <div key={planet.id} className="premium-link-card p-6">
                     <Link href={`/network/planets/${planet.id}`} className="block">
                       <div className="flex items-center justify-between gap-3">
@@ -194,6 +296,11 @@ export function NetworkHomeClient() {
                       <div className="mt-5 flex flex-wrap gap-2">
                         {planet.representativeTags.slice(0, 3).map((tag) => (
                           <span key={tag} className="badge badge-blue">
+                            {tag}
+                          </span>
+                        ))}
+                        {(planet.tags ?? []).slice(0, 2).map((tag) => (
+                          <span key={`t-${tag}`} className="badge badge-blue">
                             {tag}
                           </span>
                         ))}
@@ -222,21 +329,52 @@ export function NetworkHomeClient() {
               ? Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className="premium-panel-soft min-h-[140px] animate-pulse p-5" />
                 ))
-              : state.posts.map((post) => {
+              : filteredPosts.map((post) => {
                   const planet = state.planetMap[post.planetId];
+                  const isIfPost = post.boardType === "if";
                   return (
-                    <Link key={post.id} href={`/network/planets/${post.planetId}`} className="premium-panel-soft p-5 transition hover:border-accent-amber/20">
+                    <Link
+                      key={post.id}
+                      href={`/network/planets/${post.planetId}`}
+                      className={`premium-panel-soft p-5 transition ${
+                        isIfPost
+                          ? "border-purple-400/20 hover:border-purple-400/40"
+                          : "hover:border-accent-amber/20"
+                      }`}
+                    >
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="badge badge-amber">
                           {pickNetworkLabel(REPORT_TYPE_LABELS[post.reportType], lang)}
                         </span>
-                        <span className="badge badge-redacted">
+                        <span
+                          className={
+                            isIfPost
+                              ? "inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-400/10 px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] font-semibold tracking-[0.12em] text-purple-300 uppercase"
+                              : "badge badge-redacted"
+                          }
+                        >
+                          {isIfPost && (
+                            <span className="text-[11px]" aria-hidden="true">
+                              IF
+                            </span>
+                          )}
                           {pickNetworkLabel(BOARD_TYPE_LABELS[post.boardType], lang)}
                         </span>
                         {post.followupStatus ? <SettlementBadge status={post.followupStatus} lang={lang} /> : null}
                       </div>
-                      <h3 className="mt-4 text-lg font-semibold text-text-primary">{post.title}</h3>
+                      <h3 className={`mt-4 text-lg font-semibold ${isIfPost ? "text-purple-200" : "text-text-primary"}`}>
+                        {post.title}
+                      </h3>
                       <p className="mt-2 text-sm text-text-secondary">{post.summary}</p>
+                      {(post.tags ?? []).length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {post.tags.slice(0, 5).map((tag) => (
+                            <span key={tag} className="rounded-full border border-white/8 bg-white/[0.02] px-2 py-0.5 text-[10px] text-text-tertiary">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-4 flex flex-wrap gap-4 text-xs text-text-tertiary">
                         <span>{planet?.name ?? post.planetId}</span>
                         <span>{post.eventCategory ?? (lang === "ko" ? "미분류" : "Unclassified")}</span>
@@ -291,4 +429,4 @@ export function NetworkHomeClient() {
   );
 }
 
-// IDENTITY_SEAL: PART-2 | role=dashboard renderer | inputs=dashboard state | outputs=network landing UI
+// IDENTITY_SEAL: PART-2 | role=dashboard renderer | inputs=dashboard state and filter state | outputs=network landing UI with board tabs and tag filters

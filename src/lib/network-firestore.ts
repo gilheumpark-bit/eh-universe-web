@@ -178,6 +178,7 @@ export async function createPlanetWithFirstLog(input: CreatePlanetWithFirstLogIn
     summary: normalizeText(input.planet.summary),
     visibility: input.visibility ?? "public",
     representativeTags: normalizeStringArray(input.planet.representativeTags, 6),
+    tags: normalizeStringArray(input.planet.tags, 10),
     coreRules: normalizeStringArray(input.planet.coreRules, 3),
     featuredFaction: normalizeOptionalText(input.planet.featuredFaction),
     featuredCharacter: normalizeOptionalText(input.planet.featuredCharacter),
@@ -460,6 +461,25 @@ export async function listCommentsForPost(postId: string) {
   );
 
   return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as CommentRecord));
+}
+
+export async function getAllUniqueTags(limitCount = 50): Promise<string[]> {
+  const database = requireDb();
+  const snapshot = await getDocs(
+    query(collection(database, COLLECTIONS.planets), orderBy("updatedAt", "desc"), limit(limitCount)),
+  );
+
+  const tagSet = new Set<string>();
+  for (const document of snapshot.docs) {
+    const planet = document.data() as PlanetRecord;
+    for (const tag of planet.representativeTags ?? []) {
+      tagSet.add(tag);
+    }
+    for (const tag of planet.tags ?? []) {
+      tagSet.add(tag);
+    }
+  }
+  return Array.from(tagSet).sort();
 }
 
 // IDENTITY_SEAL: PART-4 | role=read queries | inputs=ids and filters | outputs=typed records and maps

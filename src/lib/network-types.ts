@@ -95,6 +95,7 @@ export interface PlanetRecord {
   summary: string;
   visibility: Visibility;
   representativeTags: string[];
+  tags?: string[];
   coreRules: string[];
   featuredFaction?: string;
   featuredCharacter?: string;
@@ -215,6 +216,7 @@ export interface PlanetWizardDraft {
   ehRisk: number | null;
   systemExposure: number | null;
   representativeTags: string[];
+  tags?: string[];
   coreRules: string[];
   featuredFaction: string;
   featuredCharacter: string;

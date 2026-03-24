@@ -20,12 +20,14 @@ import {
   REPORT_TYPE_TEMPLATES,
   pickNetworkLabel,
 } from "@/lib/network-labels";
+import { TagInput } from "@/components/network/TagInput";
 
 interface PlanetWizardProps {
   ownerId: string;
   ownerName?: string | null;
   lang: Lang;
   onCreated: (planetId: string) => void;
+  availableTags?: string[];
 }
 
 const FIRST_LOG_TYPES: FirstLogDraft["reportType"][] = [
@@ -45,12 +47,13 @@ const STEP_TITLES = {
 // PART 1 - LOCAL STATE AND HELPERS
 // ============================================================
 
-export function PlanetWizard({ ownerId, ownerName, lang, onCreated }: PlanetWizardProps) {
+export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTags = [] }: PlanetWizardProps) {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [rulesInput, setRulesInput] = useState("");
+  const [planetTags, setPlanetTags] = useState<string[]>([]);
   const [planet, setPlanet] = useState({
     name: "",
     code: "",
@@ -99,6 +102,17 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated }: PlanetWiza
     [rulesInput],
   );
 
+  const suggestedTags = useMemo(() => {
+    const base = new Set<string>();
+    if (planet.genre.trim()) base.add(planet.genre.trim());
+    if (planet.goal) base.add(planet.goal);
+    if (planet.status && planet.status !== planet.goal) base.add(planet.status);
+    for (const tag of representativeTags) base.add(tag);
+    for (const existing of availableTags) base.add(existing);
+    for (const current of planetTags) base.delete(current);
+    return Array.from(base).slice(0, 20);
+  }, [planet.genre, planet.goal, planet.status, representativeTags, availableTags, planetTags]);
+
   const canMoveNext = useMemo(() => {
     if (step === 0) {
       return Boolean(planet.name.trim() && planet.genre.trim() && planet.civilizationLevel.trim());
@@ -146,6 +160,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated }: PlanetWiza
         planet: {
           ...planet,
           representativeTags,
+          tags: planetTags,
           coreRules,
         },
         firstLog,
@@ -289,6 +304,17 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated }: PlanetWiza
             placeholder={lang === "ko" ? "한 줄에 하나씩 입력" : "One rule per line"}
           />
         </label>
+        <div className="md:col-span-2">
+          <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "검색용 태그" : "Search Tags"}</div>
+          <TagInput
+            tags={planetTags}
+            onChange={setPlanetTags}
+            availableTags={suggestedTags}
+            maxTags={10}
+            lang={lang}
+            placeholder={lang === "ko" ? "장르, 키워드 등 (Enter로 추가)" : "Genre, keywords, etc. (press Enter)"}
+          />
+        </div>
       </div>
     ) : step === 2 ? (
       <div className="grid gap-4 md:grid-cols-2">

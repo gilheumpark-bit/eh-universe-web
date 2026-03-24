@@ -54,6 +54,13 @@ service cloud.firestore {
           || isAdmin()
         );
       allow delete: if isAdmin();
+
+      // Bookmarks subcollection — only the user themselves
+      match /bookmarks/{bookmarkId} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow create, update: if signedIn() && request.auth.uid == uid;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     match /planets/{planetId} {
@@ -66,6 +73,35 @@ service cloud.firestore {
           resource.data.ownerId == request.auth.uid
           || isAdmin()
         );
+
+      // Planet-level comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.authorId == request.auth.uid;
+        allow update: if signedIn()
+          && (
+            resource.data.authorId == request.auth.uid
+            || isPlanetOwner(planetId)
+            || isAdmin()
+          );
+        allow delete: if signedIn()
+          && (
+            resource.data.authorId == request.auth.uid
+            || isPlanetOwner(planetId)
+            || isAdmin()
+          );
+      }
+
+      // Planet-level reactions subcollection
+      match /reactions/{reactionId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if signedIn()
+          && resource.data.userId == request.auth.uid;
+        allow update: if false;
+      }
     }
 
     match /posts/{postId} {
@@ -106,6 +142,23 @@ service cloud.firestore {
           resource.data.authorId == request.auth.uid
           || isAdmin()
         );
+    }
+
+    match /reactions/{reactionId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if signedIn()
+        && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // Reports — authenticated users can create, only admin can read
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     // IDENTITY_SEAL: PART-2 | role=collection policies | inputs=request and resource data | outputs=allow or deny

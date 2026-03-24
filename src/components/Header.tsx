@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useLang } from "@/lib/LangContext";
+import { isTestEnvironment } from "@/lib/firebase";
 
 const navItems = [
   { href: "/", label: "HOME" },
@@ -40,8 +41,15 @@ export default function Header() {
               EH
             </span>
             <span className="flex flex-col">
-              <span className="font-[family-name:var(--font-display)] text-[1.02rem] font-semibold tracking-[0.16em] text-text-primary transition-colors group-hover:text-accent-amber">
-                EH UNIVERSE
+              <span className="flex items-center gap-2">
+                <span className="font-[family-name:var(--font-display)] text-[1.02rem] font-semibold tracking-[0.16em] text-text-primary transition-colors group-hover:text-accent-amber">
+                  EH UNIVERSE
+                </span>
+                {isTestEnvironment && (
+                  <span className="rounded-md border border-accent-red/30 bg-accent-red/10 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.18em] text-accent-red uppercase">
+                    TEST
+                  </span>
+                )}
               </span>
               <span className="font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] text-text-tertiary uppercase">
                 Narrative Engine

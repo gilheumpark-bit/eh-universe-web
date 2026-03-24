@@ -1,5 +1,23 @@
 import type { NextConfig } from "next";
 
+/**
+ * Environment Variables:
+ *
+ * NEXT_PUBLIC_FIREBASE_ENV
+ *   Controls which Firebase project is used.
+ *   - "production" (default): production Firebase project
+ *   - "test" | "development": test Firebase project (shows TEST badge in UI)
+ *
+ * NEXT_PUBLIC_FIREBASE_TEST_API_KEY
+ * NEXT_PUBLIC_FIREBASE_TEST_AUTH_DOMAIN
+ * NEXT_PUBLIC_FIREBASE_TEST_PROJECT_ID
+ * NEXT_PUBLIC_FIREBASE_TEST_STORAGE_BUCKET
+ * NEXT_PUBLIC_FIREBASE_TEST_MESSAGING_SENDER_ID
+ * NEXT_PUBLIC_FIREBASE_TEST_APP_ID
+ *   Optional overrides for the test Firebase project config.
+ *   If not set, falls back to the production config values.
+ */
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,

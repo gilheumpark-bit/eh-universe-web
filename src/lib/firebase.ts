@@ -2,11 +2,33 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// Firebase config for project "NOA STUDIO" (gen-lang-client-0645063497).
-// All values are hardcoded because the Vercel env vars point to a different
-// project ("eh-universe" / 169294097312) which causes auth/invalid-continue-uri.
-// Source: Firebase Console → Project Settings → SDK setup and configuration.
-const firebaseConfig = {
+// ============================================================
+// PART 1 - ENVIRONMENT DETECTION
+// ============================================================
+
+/**
+ * NEXT_PUBLIC_FIREBASE_ENV controls which Firebase project configuration is used.
+ * - "production" (default): uses the production Firebase project
+ * - "test" or "development": uses the test Firebase project (same project, "test_" collection prefix awareness)
+ *
+ * Set this in .env.local or Vercel environment variables.
+ */
+const FIREBASE_ENV = (
+  typeof process !== 'undefined'
+    ? process.env.NEXT_PUBLIC_FIREBASE_ENV
+    : undefined
+) ?? 'production';
+
+export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'development';
+
+// IDENTITY_SEAL: PART-1 | role=environment detection | inputs=env var | outputs=isTestEnvironment flag
+
+// ============================================================
+// PART 2 - FIREBASE CONFIG AND INITIALIZATION
+// ============================================================
+
+// Production Firebase config for project "NOA STUDIO" (gen-lang-client-0645063497).
+const productionConfig = {
   apiKey: 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
   authDomain: 'gen-lang-client-0645063497.firebaseapp.com',
   projectId: 'gen-lang-client-0645063497',
@@ -14,6 +36,19 @@ const firebaseConfig = {
   messagingSenderId: '262025911233',
   appId: '1:262025911233:web:e49fe5b774538b808f2d40',
 };
+
+// Test environment config — same project but can be overridden via env vars.
+// To use a fully separate test project, set NEXT_PUBLIC_FIREBASE_TEST_* env vars.
+const testConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_TEST_API_KEY ?? productionConfig.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_TEST_AUTH_DOMAIN ?? productionConfig.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_TEST_PROJECT_ID ?? productionConfig.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_TEST_STORAGE_BUCKET ?? productionConfig.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_TEST_MESSAGING_SENDER_ID ?? productionConfig.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_TEST_APP_ID ?? productionConfig.appId,
+};
+
+const firebaseConfig = isTestEnvironment ? testConfig : productionConfig;
 
 // Only initialize Firebase on the client side, and only if API key is configured
 let app: FirebaseApp | null = null;
@@ -33,6 +68,10 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     auth = getAuth(app);
     db = getFirestore(app);
+
+    if (isTestEnvironment) {
+      console.info('[EH Universe] Running in TEST environment. Firebase project:', firebaseConfig.projectId);
+    }
   }
 }
 
@@ -42,3 +81,5 @@ export { auth, app, db };
 export function getDb(): Firestore | null {
   return db;
 }
+
+// IDENTITY_SEAL: PART-2 | role=firebase initialization | inputs=env-based config | outputs=firebase app, auth, db singletons
