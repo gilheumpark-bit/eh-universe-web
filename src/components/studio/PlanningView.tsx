@@ -5,7 +5,7 @@ import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
-import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp, Share2, Check } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -66,6 +66,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const handleAIGenerate = async () => {
     if (!getApiKey(getActiveProvider())) {
@@ -602,10 +603,46 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
         <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-white text-black rounded-2xl font-black hover:scale-105 active:scale-95 transition-all shadow-2xl">
           <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
           {startLabel ?? t.commence}
+        </button>
+        <button
+          onClick={() => {
+            const worldPayload = {
+              title: config.title,
+              genre: config.genre,
+              synopsis: config.synopsis,
+              setting: config.setting,
+              primaryEmotion: config.primaryEmotion,
+              characters: config.characters ?? [],
+              corePremise: config.corePremise,
+              powerStructure: config.powerStructure,
+              currentConflict: config.currentConflict,
+              worldHistory: config.worldHistory,
+              socialSystem: config.socialSystem,
+              economy: config.economy,
+              magicTechSystem: config.magicTechSystem,
+              culture: config.culture,
+              religion: config.religion,
+              taboo: config.taboo,
+              totalEpisodes: config.totalEpisodes,
+              tensionCurve: config.sceneDirection?.tensionCurve,
+            };
+            const encoded = btoa(JSON.stringify(worldPayload));
+            const url = `${window.location.origin}/world/share?data=${encoded}`;
+            navigator.clipboard.writeText(url).then(() => {
+              setShareCopied(true);
+              setTimeout(() => setShareCopied(false), 2000);
+            });
+          }}
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-zinc-900 border border-zinc-700 text-zinc-300 rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
+        >
+          {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
+          {shareCopied
+            ? (isKO ? '복사됨!' : 'Copied!')
+            : (isKO ? '세계관 공유' : 'Share World')}
         </button>
       </div>
     </div>
