@@ -293,9 +293,10 @@ interface SceneSheetProps {
   onDirectionUpdate?: (data: FullDirectionData) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: Partial<FullDirectionData>;
+  onSaveEpisodeSheet?: () => void;
 }
 
-export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
   const tl = createT(lang === 'ko' ? 'KO' : 'EN');
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
@@ -1277,6 +1278,18 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, tier
             })()}
           </div>
         </div>
+
+        {/* Save current episode scene sheet button */}
+        {onSaveEpisodeSheet && (
+          <div className="mt-4 pt-3 border-t border-border">
+            <button
+              onClick={onSaveEpisodeSheet}
+              className="w-full px-4 py-2.5 text-xs font-bold bg-accent-purple/15 hover:bg-accent-purple/25 border border-accent-purple/30 rounded-lg text-accent-purple font-[family-name:var(--font-mono)] transition-colors"
+            >
+              📋 {lang === "ko" ? "현재 화 씬시트 저장" : "Save Current Episode Scene Sheet"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
