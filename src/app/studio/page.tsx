@@ -1025,7 +1025,7 @@ export default function StudioPage() {
                 {/* world studio (design/simulator/analysis) rendered above */}
                 {activeTab === 'rulebook' && (
                   <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
+                    <SceneSheet language={language}
                       synopsis={currentSession?.config.synopsis}
                       characterNames={currentSession?.config.characters.map(c => c.name)}
                       tierContext={{
@@ -1586,7 +1586,7 @@ export default function StudioPage() {
                 {activeTab === 'style' && currentSession && (
                   <>
                     <StyleStudioView
-                      isKO={isKO}
+                      language={language}
                       initialProfile={currentSession.config.styleProfile}
                       onProfileChange={(profile) => {
                         updateCurrentSession({

@@ -27,17 +27,16 @@ const SEV_DOTS: Record<number, string> = {
   1: '⚪',
 };
 
-const KIND_LABELS: Record<string, { ko: string; en: string }> = {
-  BLUR: { ko: '인과 흐림', en: 'Causal Blur' },
-  GAIN_NO_COST: { ko: '이득 vs 대가', en: 'Gain w/o Cost' },
-  SIMILAR_CONTEXT: { ko: '맥락 반복', en: 'Context Repeat' },
-  AI_TONE: { ko: 'AI 톤', en: 'AI Tone' },
-  TYPO: { ko: '오타', en: 'Typo' },
-  ENDING_MONO: { ko: '종결 단조', en: 'Ending Monotone' },
+const KIND_LABELS: Record<string, Record<AppLanguage, string>> = {
+  BLUR: { KO: '인과 흐림', EN: 'Causal Blur', JP: '因果のぼかし', CN: '因果模糊' },
+  GAIN_NO_COST: { KO: '이득 vs 대가', EN: 'Gain w/o Cost', JP: '対価なし', CN: '无代价获益' },
+  SIMILAR_CONTEXT: { KO: '맥락 반복', EN: 'Context Repeat', JP: '文脈の繰り返し', CN: '上下文重复' },
+  AI_TONE: { KO: 'AI 톤', EN: 'AI Tone', JP: 'AIトーン', CN: 'AI腔调' },
+  TYPO: { KO: '오타', EN: 'Typo', JP: '誤字', CN: '错字' },
+  ENDING_MONO: { KO: '종결 단조', EN: 'Ending Monotone', JP: '語尾単調', CN: '结尾单调' },
 };
 
 const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
-  const isKO = language === 'KO';
   const t = createT(language);
 
   if (!report) {
@@ -98,7 +97,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
                 <span className="text-[9px] shrink-0 mt-0.5">{SEV_DOTS[f.severity] || '⚪'}</span>
                 <div className="min-w-0">
                   <div className={`text-[10px] font-bold ${SEV_COLORS[f.severity] || 'text-zinc-500'}`}>
-                    {KIND_LABELS[f.kind]?.[isKO ? 'ko' : 'en'] || f.kind}
+                    {KIND_LABELS[f.kind]?.[language] || f.kind}
                     {f.lineNo ? ` L${f.lineNo}` : ''}
                   </div>
                   <div className="text-[9px] text-text-tertiary break-words">{f.message}</div>
@@ -118,12 +117,12 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
 
         {/* Stats summary */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-zinc-800/50 text-[10px] text-zinc-600 font-[family-name:var(--font-mono)]">
-          {report.stats.ending_mono > 0 && <span>종결{report.stats.ending_mono}%</span>}
-          {report.stats.blur > 0 && <span>흐림{report.stats.blur}</span>}
-          {report.stats.gain_no_cost > 0 && <span>무대가{report.stats.gain_no_cost}</span>}
-          {report.stats.ai_tone > 0 && <span>AI톤{report.stats.ai_tone}</span>}
-          {report.stats.typo > 0 && <span>오타{report.stats.typo}</span>}
-          {report.stats.similar_context > 0 && <span>반복{report.stats.similar_context}</span>}
+          {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JP:'語尾',CN:'结尾'}[language])}{report.stats.ending_mono}%</span>}
+          {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JP:'ぼかし',CN:'模糊'}[language])}{report.stats.blur}</span>}
+          {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JP:'無対価',CN:'无代价'}[language])}{report.stats.gain_no_cost}</span>}
+          {report.stats.ai_tone > 0 && <span>{({KO:'AI톤',EN:'AI',JP:'AI',CN:'AI'}[language])}{report.stats.ai_tone}</span>}
+          {report.stats.typo > 0 && <span>{({KO:'오타',EN:'Typo',JP:'誤字',CN:'错字'}[language])}{report.stats.typo}</span>}
+          {report.stats.similar_context > 0 && <span>{({KO:'반복',EN:'Repeat',JP:'繰返',CN:'重复'}[language])}{report.stats.similar_context}</span>}
         </div>
       </div>
     </details>

@@ -12,16 +12,15 @@ interface TypoPanelProps {
   onApplyFix?: (index: number, original: string, suggestion: string) => void;
 }
 
-const TYPE_LABEL: Record<TypoMatch['type'], { ko: string; en: string }> = {
-  'double-char': { ko: '글자 중복', en: 'Double char' },
-  'jamo-slip': { ko: '자모 분리', en: 'Loose jamo' },
-  'spacing': { ko: '띄어쓰기', en: 'Spacing' },
-  'batchim-swap': { ko: '받침 오타', en: 'Batchim typo' },
+const TYPE_LABEL: Record<TypoMatch['type'], Record<AppLanguage, string>> = {
+  'double-char': { KO: '글자 중복', EN: 'Double char', JP: '文字重複', CN: '字符重复' },
+  'jamo-slip': { KO: '자모 분리', EN: 'Loose jamo', JP: '字母分離', CN: '字母分离' },
+  'spacing': { KO: '띄어쓰기', EN: 'Spacing', JP: 'スペース', CN: '间距' },
+  'batchim-swap': { KO: '받침 오타', EN: 'Batchim typo', JP: '終声誤字', CN: '韵尾错误' },
 };
 
 const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => {
   const [expanded, setExpanded] = useState(false);
-  const isKO = language === 'KO';
   const t = createT(language);
 
   const typos = useMemo(() => detectTypos(text), [text]);
@@ -48,7 +47,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
           {typos.map((typo, i) => (
             <div key={i} className="flex items-center gap-2 text-[10px]">
               <span className="px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 text-[10px] font-mono">
-                {isKO ? TYPE_LABEL[typo.type].ko : TYPE_LABEL[typo.type].en}
+                {TYPE_LABEL[typo.type][language]}
               </span>
               <span className="text-red-400/70 line-through font-mono">{typo.original}</span>
               <span className="text-zinc-600">→</span>

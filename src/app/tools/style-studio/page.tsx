@@ -11,7 +11,7 @@ export default function StyleStudioPage() {
     <>
       <Header />
       <main className="pt-24">
-        <StyleStudioView isKO={lang === "ko"} />
+        <StyleStudioView language={lang === "ko" ? "KO" : "EN"} />
       </main>
     </>
   );

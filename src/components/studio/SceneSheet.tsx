@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
 import { createT } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -287,6 +288,7 @@ interface TierContext {
 
 interface SceneSheetProps {
   lang?: Lang;
+  language?: AppLanguage;
   synopsis?: string;
   characterNames?: string[];
   tierContext?: TierContext;
@@ -296,8 +298,9 @@ interface SceneSheetProps {
   onSaveEpisodeSheet?: () => void;
 }
 
-export default function SceneSheet({ lang = "ko", synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
-  const tl = createT(lang === 'ko' ? 'KO' : 'EN');
+export default function SceneSheet({ lang: langProp, language: languageProp, synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
+  const lang: Lang = langProp ?? ((languageProp === 'KO' || languageProp === 'JP') ? 'ko' : 'en');
+  const tl = createT(languageProp ?? (lang === 'ko' ? 'KO' : 'EN'));
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');

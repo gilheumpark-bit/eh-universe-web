@@ -29,8 +29,8 @@ interface AnalysisResult {
 // ============================================================
 
 function buildAnalysisPrompt(language: AppLanguage): string {
-  if (language === 'KO') {
-    return `당신은 소설 세계관 분석 전문가입니다. 주어진 텍스트에서 세계관 요소를 추출하고 분석합니다.
+  const prompts: Record<AppLanguage, string> = {
+    KO: `당신은 소설 세계관 분석 전문가입니다. 주어진 텍스트에서 세계관 요소를 추출하고 분석합니다.
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요:
 
@@ -43,9 +43,8 @@ function buildAnalysisPrompt(language: AppLanguage): string {
   "summary": "전체 세계관 평가 (강점, 약점, 독창성 점수 1-10)"
 }
 
-텍스트가 짧거나 세계관 요소가 부족하면, 해당 필드에 "정보 부족"이라고 적으세요.`;
-  }
-  return `You are a fiction worldbuilding analysis expert. Extract and analyze worldbuilding elements from the given text.
+텍스트가 짧거나 세계관 요소가 부족하면, 해당 필드에 "정보 부족"이라고 적으세요.`,
+    EN: `You are a fiction worldbuilding analysis expert. Extract and analyze worldbuilding elements from the given text.
 
 Respond ONLY in the JSON format below. No other text:
 
@@ -58,7 +57,37 @@ Respond ONLY in the JSON format below. No other text:
   "summary": "Overall evaluation (strengths, weaknesses, originality score 1-10)"
 }
 
-If text is short or lacks worldbuilding elements, write "Insufficient data" for that field.`;
+If text is short or lacks worldbuilding elements, write "Insufficient data" for that field.`,
+    JP: `あなたは小説の世界観分析の専門家です。与えられたテキストから世界観要素を抽出し分析します。
+
+必ず以下のJSON形式のみで応答してください。他のテキストなしにJSONのみ出力:
+
+{
+  "worldStructure": "世界の物理的/形而上学的構造、法則、時代背景の分析",
+  "powerSystem": "魔法/技術/能力体系、コスト効果バランス、制限条件の分析",
+  "geography": "地理的構造、核心的場所、空間的関係の分析",
+  "factions": "勢力/種族/組織構造、関係図、対立軸の分析",
+  "inconsistencies": "発見された世界観内の矛盾、論理的穴、未説明要素",
+  "summary": "全体的な世界観評価（強み、弱み、独創性スコア1-10）"
+}
+
+テキストが短いか世界観要素が不足している場合、該当フィールドに「情報不足」と記入してください。`,
+    CN: `你是小说世界观分析专家。从给定文本中提取和分析世界观元素。
+
+请务必仅以下面的JSON格式回答。不要输出其他文本:
+
+{
+  "worldStructure": "世界的物理/形而上学结构、法则、时代背景分析",
+  "powerSystem": "魔法/技术/能力体系、成本效果平衡、限制条件分析",
+  "geography": "地理结构、核心场所、空间关系分析",
+  "factions": "势力/种族/组织结构、关系图、冲突轴分析",
+  "inconsistencies": "发现的世界观内矛盾、逻辑漏洞、未解释元素",
+  "summary": "整体世界观评价（优点、缺点、独创性评分1-10）"
+}
+
+如果文本太短或缺乏世界观元素，请在相应字段填写"信息不足"。`,
+  };
+  return prompts[language];
 }
 
 // ============================================================
@@ -110,7 +139,6 @@ const SECTION_LABELS: Record<AppLanguage, Record<string, string>> = {
 };
 
 const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
-  const isKO = language === 'KO';
   const t = createT(language);
   const [inputText, setInputText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -166,7 +194,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
       setAnalyzing(false);
       abortRef.current = null;
     }
-  }, [inputText, language, isKO]);
+  }, [inputText, language]);
 
   const handleCopy = useCallback(() => {
     if (!result) return;

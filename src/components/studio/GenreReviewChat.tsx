@@ -132,8 +132,7 @@ const ReviewBubble: React.FC<{ review: GenreLevelReview; lang: 'ko' | 'en' }> = 
 // ============================================================
 
 const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, manuscriptText }) => {
-  const isKO = language === 'KO';
-  const lang = isKO ? 'ko' : 'en';
+  const lang = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const t = createT(language);
 
   const [messages, setMessages] = useState<ReviewMessage[]>([]);
@@ -158,9 +157,12 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
       setMessages([{
         id: 'welcome',
         role: 'reviewer',
-        content: isKO
-          ? `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 때리지 않습니다. ${genreLabel} 장르 기준선 위에 현재 원고의 위치를 찍어드립니다.`
-          : `📊 Genre×Level Reviewer. Current genre: ${genreLabel}\n\nSelect a level and click "Request Review" to analyze your manuscript from that perspective.\n\nNo averages. We plot your manuscript's position on the ${genreLabel} genre benchmark.`,
+        content: ({
+          KO: `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 때리지 않습니다. ${genreLabel} 장르 기준선 위에 현재 원고의 위치를 찍어드립니다.`,
+          EN: `📊 Genre×Level Reviewer. Current genre: ${genreLabel}\n\nSelect a level and click "Request Review" to analyze your manuscript from that perspective.\n\nNo averages. We plot your manuscript's position on the ${genreLabel} genre benchmark.`,
+          JP: `📊 ジャンル×レベルレビュアーです。現在のジャンル: ${genreLabel}\n\nレベルを選択し「レビュー依頼」をクリックすると、該当レベルの読者/編集者/批評家の視点で原稿を分析します。\n\n平均で打ちません。${genreLabel}ジャンル基準線上に現在の原稿の位置をプロットします。`,
+          CN: `📊 类型×等级审阅器。当前类型: ${genreLabel}\n\n选择等级并点击"请求审阅"，将从该等级读者/编辑/评论家的角度分析稿件。\n\n不打平均分。我们在${genreLabel}类型基准线上标注您稿件的位置。`,
+        }[language]),
         timestamp: Date.now(),
       }]);
     }
@@ -184,9 +186,12 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
     setMessages(prev => [...prev, {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: isKO
-        ? `${genreLabel} 장르 / ${levelMeta.label.ko} 시점으로 리뷰해줘`
-        : `Review as ${genreLabel} / ${levelMeta.label.en}`,
+      content: ({
+        KO: `${genreLabel} 장르 / ${levelMeta.label.ko} 시점으로 리뷰해줘`,
+        EN: `Review as ${genreLabel} / ${levelMeta.label.en}`,
+        JP: `${genreLabel}ジャンル / ${levelMeta.label.ko}の視点でレビューして`,
+        CN: `以${genreLabel}类型 / ${levelMeta.label.en}视角审阅`,
+      }[language]),
       timestamp: Date.now(),
     }]);
 
@@ -222,7 +227,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
     setMessages(prev => [...prev, {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: isKO ? `${genreLabel} 장르 / 전체 레벨 (Lv.1~4) 풀 리뷰` : `Full review: ${genreLabel} / All levels (Lv.1~4)`,
+      content: ({KO:`${genreLabel} 장르 / 전체 레벨 (Lv.1~4) 풀 리뷰`,EN:`Full review: ${genreLabel} / All levels (Lv.1~4)`,JP:`${genreLabel}ジャンル / 全レベル (Lv.1~4) フルレビュー`,CN:`${genreLabel}类型 / 全等级 (Lv.1~4) 完整审阅`}[language]),
       timestamp: Date.now(),
     }]);
 

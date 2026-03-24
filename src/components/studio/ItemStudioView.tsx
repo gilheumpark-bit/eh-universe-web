@@ -212,7 +212,7 @@ const PRESET_ITEMS: Item[] = [
 
 type PresetCategory = 'all' | 'magic' | 'skills' | 'items';
 
-function getPresetSummary(isKO: boolean): { magic: number; skills: number; items: number } {
+function getPresetSummary(): { magic: number; skills: number; items: number } {
   return {
     magic: PRESET_MAGIC_SYSTEMS.length,
     skills: PRESET_SKILLS.length,
@@ -484,13 +484,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   🌐 {t('itemStudio.loadAll')}
                 </button>
                 <button onClick={() => loadPreset('magic')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  🔮 {`${t('itemStudio.magicSystemsCount')} (${getPresetSummary(false).magic})`}
+                  🔮 {`${t('itemStudio.magicSystemsCount')} (${getPresetSummary().magic})`}
                 </button>
                 <button onClick={() => loadPreset('skills')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  ⚡ {`${t('itemStudio.skillsCount')} (${getPresetSummary(false).skills})`}
+                  ⚡ {`${t('itemStudio.skillsCount')} (${getPresetSummary().skills})`}
                 </button>
                 <button onClick={() => loadPreset('items')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent-purple/20 transition-colors">
-                  ⚔️ {`${t('itemStudio.itemsCount')} (${getPresetSummary(false).items})`}
+                  ⚔️ {`${t('itemStudio.itemsCount')} (${getPresetSummary().items})`}
                 </button>
                 <div className="border-t border-border mt-1 pt-1">
                   <p className="px-3 py-1 text-[9px] text-text-tertiary">

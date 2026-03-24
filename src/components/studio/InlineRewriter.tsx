@@ -33,8 +33,7 @@ type ActionType = 'rewrite' | 'expand' | 'compress' | 'insert_before' | 'insert_
 interface QuickAction {
   id: ActionType | string;
   icon: React.ReactNode;
-  labelKo: string;
-  labelEn: string;
+  label: Record<AppLanguage, string>;
   promptKo: string;
   promptEn: string;
 }
@@ -47,56 +46,49 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'rewrite',
     icon: <PenLine className="w-3 h-3" />,
-    labelKo: '다시 쓰기',
-    labelEn: 'Rewrite',
+    label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' },
     promptKo: '아래 선택된 텍스트를 같은 의미이지만 더 나은 문장으로 다시 써줘. 앞뒤 문맥에 자연스럽게 이어져야 함. 순수 소설 텍스트만 출력, 설명 없이.',
     promptEn: 'Rewrite the selected text with better prose while keeping the same meaning. Must flow naturally with surrounding context. Output only the rewritten text, no explanation.',
   },
   {
     id: 'expand',
     icon: <Expand className="w-3 h-3" />,
-    labelKo: '살 붙이기',
-    labelEn: 'Expand',
+    label: { KO: '살 붙이기', EN: 'Expand', JP: '拡張', CN: '扩展' },
     promptKo: '아래 선택된 텍스트에 감각 묘사, 내면 독백, 환경 묘사를 추가해서 2~3배로 늘려줘. 원래 사건과 대사는 유지. 순수 소설 텍스트만 출력.',
     promptEn: 'Expand the selected text 2-3x by adding sensory details, inner monologue, and environmental description. Keep original events/dialogue. Output only the expanded text.',
   },
   {
     id: 'compress',
     icon: <Scissors className="w-3 h-3" />,
-    labelKo: '압축',
-    labelEn: 'Compress',
+    label: { KO: '압축', EN: 'Compress', JP: '圧縮', CN: '压缩' },
     promptKo: '아래 선택된 텍스트를 핵심만 남기고 절반 이하로 압축해줘. 불필요한 수식어, 반복, 과잉 묘사 제거. 순수 소설 텍스트만 출력.',
     promptEn: 'Compress the selected text to half or less. Remove unnecessary modifiers, repetition, and excessive description. Output only the compressed text.',
   },
   {
     id: 'tension',
     icon: <Thermometer className="w-3 h-3" />,
-    labelKo: '긴장감 올리기',
-    labelEn: 'Add tension',
+    label: { KO: '긴장감 올리기', EN: 'Add tension', JP: '緊張感アップ', CN: '增加紧张感' },
     promptKo: '아래 선택된 텍스트의 긴장감을 높여줘. 짧은 문장, 급박한 호흡, 위기감 있는 묘사로. 원래 사건은 유지. 순수 소설 텍스트만 출력.',
     promptEn: 'Increase tension in the selected text. Use shorter sentences, urgent pacing, and crisis atmosphere. Keep original events. Output only the rewritten text.',
   },
   {
     id: 'action',
     icon: <Sword className="w-3 h-3" />,
-    labelKo: '액션 강화',
-    labelEn: 'More action',
+    label: { KO: '액션 강화', EN: 'More action', JP: 'アクション強化', CN: '增强动作' },
     promptKo: '아래 선택된 텍스트의 액션/전투 묘사를 강화해줘. 동적인 동사, 타격감, 속도감 추가. 순수 소설 텍스트만 출력.',
     promptEn: 'Enhance action/combat in the selected text. Add dynamic verbs, impact, and speed. Output only the rewritten text.',
   },
   {
     id: 'dialogue',
     icon: <MessageCircle className="w-3 h-3" />,
-    labelKo: '대사 다듬기',
-    labelEn: 'Polish dialogue',
+    label: { KO: '대사 다듬기', EN: 'Polish dialogue', JP: 'セリフ磨き', CN: '润色台词' },
     promptKo: '아래 선택된 텍스트의 대사를 캐릭터 성격에 맞게 더 자연스럽고 개성있게 다듬어줘. 지문도 자연스럽게. 순수 소설 텍스트만 출력.',
     promptEn: 'Polish the dialogue in the selected text to be more natural and characteristic. Improve dialogue tags too. Output only the rewritten text.',
   },
   {
     id: 'insert_after',
     icon: <ArrowDownToLine className="w-3 h-3" />,
-    labelKo: '뒤에 삽입',
-    labelEn: 'Insert after',
+    label: { KO: '뒤에 삽입', EN: 'Insert after', JP: '後に挿入', CN: '在后面插入' },
     promptKo: '아래 선택된 텍스트 바로 뒤에 이어지는 전환 장면이나 묘사를 새로 써줘. 약 200~400자. 앞 내용에서 자연스럽게 이어져야 함. 순수 소설 텍스트만 출력.',
     promptEn: 'Write a new transition scene or description to follow the selected text. About 200-400 chars. Must flow naturally. Output only the new text.',
   },
@@ -107,7 +99,6 @@ const QUICK_ACTIONS: QuickAction[] = [
 // ============================================================
 
 const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, context, onApply }) => {
-  const isKO = language === 'KO';
   const t = createT(language);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [editableContent, setEditableContent] = useState(content);
@@ -149,7 +140,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
     const before = editableContent.slice(Math.max(0, selection.start - 300), selection.start);
     const after = editableContent.slice(selection.end, selection.end + 300);
-    const prompt = isKO ? action.promptKo : action.promptEn;
+    const prompt = (language === 'KO' || language === 'JP') ? action.promptKo : action.promptEn;
 
     const systemPrompts: Record<string, string> = {
       KO: '당신은 소설 텍스트 리라이터입니다. 지시에 따라 선택된 부분만 수정하세요. 설명, 코멘트, 따옴표 없이 순수 소설 텍스트만 출력하세요.',
@@ -190,15 +181,14 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [selection, isStreaming, editableContent, context, language, isKO]);
+  }, [selection, isStreaming, editableContent, context, language]);
 
   const handleCustomAction = useCallback(() => {
     if (!customPrompt.trim() || !selection) return;
     executeAction({
       id: 'custom',
       icon: <Sparkles className="w-3 h-3" />,
-      labelKo: '커스텀',
-      labelEn: 'Custom',
+      label: { KO: '커스텀', EN: 'Custom', JP: 'カスタム', CN: '自定义' },
       promptKo: customPrompt,
       promptEn: customPrompt,
     });
@@ -258,7 +248,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-zinc-400 hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
               >
                 {action.icon}
-                {isKO ? action.labelKo : action.labelEn}
+                {action.label[language]}
               </button>
             ))}
           </div>

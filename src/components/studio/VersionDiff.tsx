@@ -67,7 +67,6 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
 const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, language, onSwitch }) => {
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
-  const isKO = language === 'KO';
   const t = createT(language);
   const total = versions.length;
 

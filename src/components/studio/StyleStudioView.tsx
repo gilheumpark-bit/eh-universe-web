@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import type { StyleProfile } from "@/lib/studio-types";
+import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
 
@@ -194,13 +194,16 @@ const DNA_CARDS: DnaCard[] = [
 // ============================================================
 
 interface Props {
+  language?: AppLanguage;
+  /** @deprecated Use language prop instead */
   isKO?: boolean;
   initialProfile?: StyleProfile;
   onProfileChange?: (profile: StyleProfile) => void;
 }
 
-export default function StyleStudioView({ isKO = true, initialProfile, onProfileChange }: Props) {
-  const en = !isKO;
+export default function StyleStudioView({ language: languageProp, isKO: isKOProp, initialProfile, onProfileChange }: Props) {
+  const language: AppLanguage = languageProp ?? (isKOProp === false ? 'EN' : 'KO');
+  const en = language === 'EN' || language === 'CN';
 
   const [tab, setTab] = useState(0);
   const [selectedCards, setSelectedCards] = useState<Set<number>>(
@@ -628,7 +631,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
-                  {resultText && <CopyButton text={resultText} language={isKO ? 'KO' : 'EN'} />}
+                  {resultText && <CopyButton text={resultText} language={language} />}
                 </div>
                 <div className="ss-result-box">
                   {resultText ? (

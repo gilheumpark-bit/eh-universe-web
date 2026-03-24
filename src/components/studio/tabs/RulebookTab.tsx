@@ -32,8 +32,8 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-      <SceneSheet 
-        lang={language === 'EN' ? 'en' : 'ko'}
+      <SceneSheet
+        language={language}
         synopsis={config.synopsis}
         characterNames={config.characters.map(c => c.name)}
         tierContext={{

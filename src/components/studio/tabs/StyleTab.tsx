@@ -29,7 +29,7 @@ const StyleTab: React.FC<StyleTabProps> = ({
   return (
     <>
       <StyleStudioView
-        isKO={isKO}
+        language={language}
         initialProfile={config.styleProfile}
         onProfileChange={(profile) => {
           updateCurrentSession({

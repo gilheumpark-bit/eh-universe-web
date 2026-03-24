@@ -436,7 +436,7 @@ const STORAGE_PREFIX = 'noa_tab_chat_';
 
 const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) => {
   const ctx = TAB_CONTEXT[tab];
-  const isKO = language === 'KO';
+  const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const tl = createT(language);
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
@@ -486,7 +486,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const systemPrompt = (isKO ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
+    const systemPrompt = (lk === 'ko' ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
     const recentMsgs: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
@@ -521,7 +521,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages, config, tab, language, isKO, ctx]);
+  }, [input, isStreaming, messages, config, tab, language, lk, ctx]);
 
   const handleCancel = () => {
     abortRef.current?.abort();
@@ -544,7 +544,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       >
         <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
           <Sparkles className="w-3.5 h-3.5" />
-          {isKO ? ctx.ko : ctx.en}
+          {ctx[lk]}
         </span>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
@@ -561,17 +561,17 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
             {messages.length === 0 && (
               <div className="py-4 space-y-3">
                 <p className="text-sm text-text-tertiary italic text-center">
-                  {tl('tabAssistant.askAnything').replace('{name}', isKO ? ctx.ko : ctx.en)}
+                  {tl('tabAssistant.askAnything').replace('{name}', ctx[lk])}
                 </p>
                 {TAB_PRESETS[tab] && (
                   <div className="flex flex-wrap gap-1.5 justify-center px-2">
                     {TAB_PRESETS[tab].map((preset, i) => (
                       <button
                         key={i}
-                        onClick={() => { setInput(isKO ? preset.ko : preset.en); }}
+                        onClick={() => { setInput(preset[lk]); }}
                         className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)] leading-tight"
                       >
-                        {isKO ? preset.ko : preset.en}
+                        {preset[lk]}
                       </button>
                     ))}
                   </div>
