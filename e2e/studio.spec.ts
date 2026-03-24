@@ -80,6 +80,33 @@ test.describe('NOA Studio — Core', () => {
 // ============================================================
 
 test.describe('NOA Studio — Extended Flows', () => {
+  test('world import query prefills a new session', async ({ page }) => {
+    const payload = Buffer.from(JSON.stringify({
+      name: '한글★세계관 테스트',
+      summary: '첫 줄 요약\\n둘째 줄 with symbols !@#$%^&*()',
+      tags: ['SF', '태그'],
+      coreRules: ['규칙 1', '규칙 2'],
+    }), 'utf8').toString('base64');
+
+    await page.goto(`/studio?worldImport=${payload}`);
+
+    await expect(page.getByText(/Network에서 세계관을 불러왔습니다|World imported from Network/).first()).toBeVisible({ timeout: 10000 });
+    await expect.poll(async () => (
+      await page.locator('input, textarea').evaluateAll((elements) =>
+        elements
+          .map((element) => (element as HTMLInputElement | HTMLTextAreaElement).value)
+          .filter(Boolean)
+      )
+    ), { timeout: 10000 }).toContain('한글★세계관 테스트');
+    await expect.poll(async () => (
+      await page.locator('input, textarea').evaluateAll((elements) =>
+        elements
+          .map((element) => (element as HTMLInputElement | HTMLTextAreaElement).value)
+          .filter(Boolean)
+      )
+    ), { timeout: 10000 }).toContain('첫 줄 요약\\n둘째 줄 with symbols !@#$%^&*()');
+  });
+
   test('world design form has required fields', async ({ page }) => {
     await page.goto('/studio');
     await createSession(page);
@@ -92,12 +119,10 @@ test.describe('NOA Studio — Extended Flows', () => {
   test('writing studio tab shows mode buttons', async ({ page }) => {
     await page.goto('/studio');
     await createSession(page);
-    // Navigate to writing tab using data-testid
-    const writingTab = page.locator('[data-testid="tab-writing"]').first();
-    await expect(writingTab).toBeVisible({ timeout: 10000 });
-    await writingTab.click();
-    // Wait for the writing tab panel to render
-    await expect(page.locator('button', { hasText: /초안 생성|Draft|글쓰기|Write|AI|캔버스|Canvas/ }).first()).toBeVisible({ timeout: 10000 });
+    const startWritingBtn = page.locator('button', { hasText: /집필 시작|Start Writing|Start Novel/ }).first();
+    await expect(startWritingBtn).toBeVisible({ timeout: 10000 });
+    await startWritingBtn.click();
+    await expect(page.locator('button', { hasText: /초안 생성|Draft|수동 편집|Manual Edit|캔버스|Canvas|고급|Advanced/ }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('settings tab loads without error', async ({ page }) => {

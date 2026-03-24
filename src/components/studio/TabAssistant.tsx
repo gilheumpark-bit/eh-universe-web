@@ -521,6 +521,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       setIsStreaming(false);
       abortRef.current = null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tl is derived from language (already in deps)
   }, [input, isStreaming, messages, config, tab, language, lk, ctx]);
 
   const handleCancel = () => {

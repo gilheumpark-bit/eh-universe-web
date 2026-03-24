@@ -263,6 +263,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     } finally {
       abortRef.current = null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
   }, [content, language, context]);
 
   // Step 2: Fix suggestions one by one

@@ -9,7 +9,7 @@ import { createT } from "@/lib/i18n";
 
 const categories = [
   {
-    id: "core", icon: "📁", label: "CORE", sublabel: { ko: "핵심", en: "Core" },
+    id: "core", icon: "📁", label: "CORE", sublabel: { ko: "핵심", en: "Core", jp: "核心", cn: "核心" },
     articles: [
       { slug: "eh-definition", title: { ko: "EH 정의", en: "EH Definition" }, level: "PUBLIC" },
       { slug: "non-intervention", title: { ko: "비개입 원칙", en: "Non-Intervention Principle" }, level: "RESTRICTED" },
@@ -28,7 +28,7 @@ const categories = [
     ],
   },
   {
-    id: "timeline", icon: "📁", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline" },
+    id: "timeline", icon: "📁", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline", jp: "年表", cn: "年表" },
     articles: [
       { slug: "era-origin", title: { ko: "기원기 (1945~2025)", en: "Origin Era (1945~2025)" }, level: "PUBLIC" },
       { slug: "era-war", title: { ko: "전쟁기 (2025~2092)", en: "War Era (2025~2092)" }, level: "RESTRICTED" },
@@ -40,7 +40,7 @@ const categories = [
     ],
   },
   {
-    id: "factions", icon: "📁", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions" },
+    id: "factions", icon: "📁", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions", jp: "勢力", cn: "势力" },
     articles: [
       { slug: "council", title: { ko: "협의회", en: "The Council" }, level: "PUBLIC" },
       { slug: "neka-empire", title: { ko: "네카 제국", en: "Neka Empire" }, level: "RESTRICTED" },
@@ -57,7 +57,7 @@ const categories = [
     ],
   },
   {
-    id: "technology", icon: "📁", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech" },
+    id: "technology", icon: "📁", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech", jp: "技術", cn: "技术" },
     articles: [
       { slug: "hctg-gate", title: { ko: "HCTG / Gate 체계", en: "HCTG / Gate System" }, level: "RESTRICTED" },
       { slug: "eh-chamber", title: { ko: "EH 챔버", en: "EH Chamber" }, level: "RESTRICTED" },
@@ -81,7 +81,7 @@ const categories = [
     ],
   },
   {
-    id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography" },
+    id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography", jp: "地理", cn: "地理" },
     articles: [
       { slug: "galaxy-zones", title: { ko: "은하 구역 분류", en: "Galactic Zone Classification" }, level: "PUBLIC" },
       { slug: "galaxy-profiles", title: { ko: "양쪽 은하 프로필", en: "Galaxy Profiles — Human vs Neka" }, level: "RESTRICTED" },
@@ -97,7 +97,7 @@ const categories = [
     ],
   },
   {
-    id: "military", icon: "📁", label: "MILITARY", sublabel: { ko: "군사", en: "Military" },
+    id: "military", icon: "📁", label: "MILITARY", sublabel: { ko: "군사", en: "Military", jp: "軍事", cn: "军事" },
     articles: [
       { slug: "ship-classes", title: { ko: "함급 체계", en: "Ship Class System" }, level: "RESTRICTED" },
       { slug: "visual-vessel-classification", title: { ko: "함선 분류 도해", en: "Vessel Classification Visual" }, level: "CLASSIFIED" },
@@ -111,7 +111,7 @@ const categories = [
     ],
   },
   {
-    id: "classified", icon: "📁", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified" },
+    id: "classified", icon: "📁", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified", jp: "機密", cn: "机密" },
     articles: [
       { slug: "bia-manual", title: { ko: "비밀조사국 매뉴얼", en: "Bureau of Investigation Manual" }, level: "CLASSIFIED" },
       { slug: "pilot-daily", title: { ko: "탑승자 일상", en: "Pilot's Daily Life" }, level: "RESTRICTED" },
@@ -129,7 +129,7 @@ const categories = [
     ],
   },
   {
-    id: "reports", icon: "📁", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports" },
+    id: "reports", icon: "📁", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports", jp: "報告書", cn: "报告书" },
     articles: [
       { slug: "rpt-eschaton-incident", title: { ko: "Eschaton 함선침몰 사건보고서", en: "Eschaton Incident Report" }, level: "CLASSIFIED" },
       { slug: "rpt-noa10005-interrogation", title: { ko: "NOA #10005 심문 기록", en: "NOA #10005 Interrogation Log" }, level: "CLASSIFIED" },
@@ -198,12 +198,11 @@ export default function ArchiveClient() {
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
               <button key={cat.id} onClick={() => changeCategory(cat.id)}
-                aria-label={`${cat.label} — ${L2(cat.sublabel, lang)}`}
+                aria-label={`${L2(cat.sublabel, lang)}`}
                 aria-current={activeCategory === cat.id ? "true" : undefined}
                 className={`w-full text-left flex items-center gap-2 py-2 px-3 rounded text-sm transition-colors ${activeCategory === cat.id ? "bg-bg-tertiary text-accent-purple" : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"}`}>
                 <span aria-hidden="true">{cat.icon}</span>
-                <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider">{cat.label}</span>
-                <span className="text-text-tertiary text-xs ml-auto">{L2(cat.sublabel, lang)}</span>
+                <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider">{L2(cat.sublabel, lang)}</span>
               </button>
             ))}
           </nav>
@@ -240,12 +239,12 @@ export default function ArchiveClient() {
           <div className="mx-auto max-w-4xl">
             <div className="doc-header rounded-t-[24px] mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
-              {t('archivePage.category')}: {currentCategory.label} — {L2(currentCategory.sublabel, lang)}
+              {t('archivePage.category', 'Category')}: {L2(currentCategory.sublabel, lang)}
             </div>
 
             <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-8">
               <h1 className="site-title text-2xl font-bold tracking-tight mb-6">
-                {currentCategory.icon} {currentCategory.label}
+                {currentCategory.icon} {L2(currentCategory.sublabel, lang)}
               </h1>
 
               <div className="space-y-3">

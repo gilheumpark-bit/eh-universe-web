@@ -59,14 +59,18 @@ export function useLang() {
   return useContext(LangContext);
 }
 
-/** Safe lookup for {ko, en} objects — jp/cn fall back to en */
-export function L2(obj: { ko: string; en: string }, lang: Lang): string {
+/** Safe lookup for i18n objects — jp/cn fall back to ko if missing, then en */
+export function L2(obj: { ko: string; en: string; jp?: string; cn?: string }, lang: Lang): string {
   if (lang === "ko") return obj.ko;
-  return obj.en; // en/jp/cn all use English for 2-lang objects
+  if (lang === "jp") return obj.jp || obj.ko || obj.en;
+  if (lang === "cn") return obj.cn || obj.ko || obj.en;
+  return obj.en;
 }
 
-/** Generic safe lookup for {ko, en} objects with any value type — jp/cn fall back to en */
-export function L2A<T>(obj: { ko: T; en: T }, lang: Lang): T {
+/** Generic safe lookup for i18n objects with any value type — jp/cn fall back to ko then en */
+export function L2A<T>(obj: { ko: T; en: T; jp?: T; cn?: T }, lang: Lang): T {
   if (lang === "ko") return obj.ko;
+  if (lang === "jp") return obj.jp || obj.ko || obj.en;
+  if (lang === "cn") return obj.cn || obj.ko || obj.en;
   return obj.en;
 }

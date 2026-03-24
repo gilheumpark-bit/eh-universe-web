@@ -254,9 +254,9 @@ export function NetworkHomeClient() {
               <Link href="/network/new" className="premium-button">
                 {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
               </Link>
-              <Link href="/network/posts/new" className="premium-button secondary">
-                {lang === "ko" ? "글쓰기" : "Write Post"}
-              </Link>
+              <a href="#board-posts" className="premium-button secondary">
+                {lang === "ko" ? "최신 로그 보기" : "View Latest Logs"}
+              </a>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
                   {lang === "ko" ? "Google 로그인" : "Sign In with Google"}

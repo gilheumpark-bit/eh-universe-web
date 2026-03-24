@@ -9,72 +9,72 @@
   const CONSISTENCY_BAND_MAX = CONSISTENCY_BAND_CENTER + CONSISTENCY_BAND_HALF_WIDTH;
 
   const ERA_DEFS = [
-    { id: "ships", name: "Era 1", title: "Age of Ships", rangeRequirement: 0, hctgRequirement: 7.0 },
-    { id: "gates", name: "Era 2", title: "Age of Gates", rangeRequirement: 160, hctgRequirement: 10.0 },
-    { id: "stars", name: "Era 3", title: "Age of Networks & Stars", rangeRequirement: 1200, hctgRequirement: 16.0 },
-    { id: "galaxy", name: "Era 4", title: "Galactic Center Reach", rangeRequirement: 3200, hctgRequirement: 20.0 },
+    { id: "ships", name: "1시대", title: "함선의 시대", rangeRequirement: 0, hctgRequirement: 7.0 },
+    { id: "gates", name: "2시대", title: "게이트의 시대", rangeRequirement: 160, hctgRequirement: 10.0 },
+    { id: "stars", name: "3시대", title: "네트워크와 별의 시대", rangeRequirement: 1200, hctgRequirement: 16.0 },
+    { id: "galaxy", name: "4시대", title: "은하 중심 도달", rangeRequirement: 3200, hctgRequirement: 20.0 },
   ];
 
   const SHIPS = [
     {
       id: "hope01",
       name: "Hope-01",
-      tag: "tutorial drone",
+      tag: "튜토리얼 드론",
       crew: "0",
       hull: 0.44,
       quantum: 0.32,
       sensor: 0.58,
       rangeBias: 1.08,
       stressGuard: 0.16,
-      description: "Unmanned tutorial scout. Deep Core recovery is its whole reason to exist.",
+      description: "무인 튜토리얼 정찰기. Deep Core 회수가 이 기체의 존재 이유 전부다.",
     },
     {
       id: "warp_probe",
       name: "Warp Probe",
-      tag: "consumable scout",
+      tag: "소모성 정찰기",
       crew: "0",
       hull: 0.38,
       quantum: 0.48,
       sensor: 0.72,
       rangeBias: 1.22,
       stressGuard: 0.08,
-      description: "Pathfinder probe for unsafe lanes. High branch readout, low survival margin.",
+      description: "위험 항로용 탐사 프로브. 높은 분기 판독값, 낮은 생존 여유.",
     },
     {
       id: "warpship_mk1",
       name: "Warpship Mk I",
-      tag: "single-seat runner",
+      tag: "1인승 러너",
       crew: "1",
       hull: 0.62,
       quantum: 0.56,
       sensor: 0.48,
       rangeBias: 1.36,
       stressGuard: 0.24,
-      description: "Small personal craft with a proper warp shield. Fast, fragile, precise.",
+      description: "정식 워프 실드를 갖춘 소형 개인 함. 빠르고, 취약하고, 정밀하다.",
     },
     {
       id: "hpg_shuttle",
       name: "HPG Shuttle",
-      tag: "four-seat transport",
+      tag: "4인승 수송기",
       crew: "4",
       hull: 0.68,
       quantum: 0.42,
       sensor: 0.44,
       rangeBias: 1.12,
       stressGuard: 0.28,
-      description: "Network workhorse inside established corridors. Great for stable relay chains.",
+      description: "확립된 회랑 내 네트워크 주력 기체. 안정적인 중계 체인에 최적화.",
     },
     {
       id: "starship_hpg",
       name: "Starship HPG",
-      tag: "deep explorer",
+      tag: "심우주 탐사선",
       crew: "6",
       hull: 0.82,
       quantum: 0.61,
       sensor: 0.57,
       rangeBias: 1.7,
       stressGuard: 0.36,
-      description: "Final-tier landing-capable explorer. Expensive to move, built to reach stars.",
+      description: "최종 등급 착륙 가능 탐사선. 이동 비용이 높지만, 별에 도달하도록 설계되었다.",
     },
   ];
 
@@ -82,8 +82,8 @@
     {
       id: "l2_calibration",
       name: "L2 Calibration Corridor",
-      subtitle: "Project HPG begins",
-      distanceText: "1.5 million km",
+      subtitle: "HPG 프로젝트 시작",
+      distanceText: "150만 km",
       requiredSpan: 20,
       gateTierRequired: 1,
       risk: 0.12,
@@ -92,13 +92,13 @@
       reward: { energy: 40, materials: 24, hydrogen: 4, intel: 18 },
       x: 50,
       y: 20,
-      description: "First disciplined corridor. Used to teach the chamber what a safe warp feels like.",
+      description: "최초의 통제된 회랑. 챔버에게 안전한 워프가 어떤 것인지 가르치는 데 사용된다.",
     },
     {
       id: "jupiter_arc",
       name: "Jupiter Direct Warp",
-      subtitle: "Gate I and Gate II expansion",
-      distanceText: "530 million km",
+      subtitle: "Gate I 및 Gate II 확장",
+      distanceText: "5억 3천만 km",
       requiredSpan: 160,
       gateTierRequired: 2,
       risk: 0.22,
@@ -107,13 +107,13 @@
       reward: { energy: 50, materials: 36, hydrogen: 8, intel: 24 },
       x: 74,
       y: 36,
-      description: "First serious test of the main ring. Relay spacing begins to matter here.",
+      description: "메인 링의 첫 번째 본격적인 시험. 여기서부터 중계기 간격이 중요해진다.",
     },
     {
       id: "seed_belt",
       name: "Seed Belt Relay Arc",
-      subtitle: "Autonomous gate seeds",
-      distanceText: "network chain beyond Saturn",
+      subtitle: "자율 게이트 시드",
+      distanceText: "토성 너머 네트워크 체인",
       requiredSpan: 460,
       gateTierRequired: 2,
       risk: 0.3,
@@ -122,13 +122,13 @@
       reward: { energy: 62, materials: 46, hydrogen: 12, intel: 28 },
       x: 80,
       y: 58,
-      description: "A relay-heavy lane where gate seeds begin to cascade the path ahead of you.",
+      description: "중계기 밀집 항로. 게이트 시드가 앞선 경로를 연쇄적으로 개척하기 시작한다.",
     },
     {
       id: "proxima_corridor",
       name: "Proxima Corridor",
-      subtitle: "Gold ring frontier",
-      distanceText: "4.24 light years",
+      subtitle: "골드 링 프론티어",
+      distanceText: "4.24 광년",
       requiredSpan: 1200,
       gateTierRequired: 3,
       risk: 0.4,
@@ -137,13 +137,13 @@
       reward: { energy: 86, materials: 62, hydrogen: 18, intel: 42 },
       x: 50,
       y: 78,
-      description: "Where the gate stops being a bridge and starts becoming a civilization backbone.",
+      description: "게이트가 다리에서 문명의 척추로 변하는 지점.",
     },
     {
       id: "transparent_run",
       name: "Transparent Gate Run",
-      subtitle: "n=20 chamber leap",
-      distanceText: "2,500 light years",
+      subtitle: "n=20 챔버 도약",
+      distanceText: "2,500 광년",
       requiredSpan: 2200,
       gateTierRequired: 4,
       risk: 0.54,
@@ -152,13 +152,13 @@
       reward: { energy: 110, materials: 88, hydrogen: 30, intel: 56 },
       x: 24,
       y: 60,
-      description: "A near-transparent chamber lock where tiny phase drift becomes catastrophic.",
+      description: "거의 투명에 가까운 챔버 잠금. 미세한 위상 편차가 치명적이 된다.",
     },
     {
       id: "galactic_center",
       name: "Galactic Center Reach",
-      subtitle: "Fourth-generation relay triumph",
-      distanceText: "27,500 light years",
+      subtitle: "4세대 중계 승리",
+      distanceText: "27,500 광년",
       requiredSpan: 3200,
       gateTierRequired: 5,
       risk: 0.7,
@@ -167,27 +167,27 @@
       reward: { energy: 150, materials: 110, hydrogen: 42, intel: 80 },
       x: 18,
       y: 30,
-      description: "The endgame lane. One clean run here proves the whole HPG legacy was worth it.",
+      description: "최종 항로. 여기서 한 번의 깨끗한 주행이 HPG의 전체 유산의 가치를 증명한다.",
     },
   ];
 
   const MAIN_GATE_LEVELS = [
     null,
-    { level: 1, name: "Gate I", color: "#70cfff", baseSpan: 160, stability: 0.12, diameter: "50m", lore: "Blue-white starter ring for early interplanetary warp." },
-    { level: 2, name: "Gate II", color: "#c9f1ff", baseSpan: 520, stability: 0.18, diameter: "80m", lore: "Expanded corridor ring able to anchor direct system-scale routes." },
-    { level: 3, name: "Gate III", color: "#ffd87a", baseSpan: 1400, stability: 0.24, diameter: "150m", lore: "Gold frontier ring for the Proxima corridor era." },
-    { level: 4, name: "Gate IV", color: "#ffe6b8", baseSpan: 2600, stability: 0.3, diameter: "220m", lore: "High-transparency chamber built for deep stellar relay jumps." },
-    { level: 5, name: "Gate V", color: "#f6ffff", baseSpan: 3400, stability: 0.36, diameter: "300m", lore: "Transparent galactic-class gate. Civilization-scale infrastructure in ring form." },
+    { level: 1, name: "Gate I", color: "#70cfff", baseSpan: 160, stability: 0.12, diameter: "50m", lore: "초기 행성간 워프를 위한 청백색 기본 링." },
+    { level: 2, name: "Gate II", color: "#c9f1ff", baseSpan: 520, stability: 0.18, diameter: "80m", lore: "항성계 규모의 직접 항로를 고정할 수 있는 확장 회랑 링." },
+    { level: 3, name: "Gate III", color: "#ffd87a", baseSpan: 1400, stability: 0.24, diameter: "150m", lore: "프록시마 회랑 시대를 위한 금색 프론티어 링." },
+    { level: 4, name: "Gate IV", color: "#ffe6b8", baseSpan: 2600, stability: 0.3, diameter: "220m", lore: "심우주 항성 중계 점프를 위해 건조된 고투명도 챔버." },
+    { level: 5, name: "Gate V", color: "#f6ffff", baseSpan: 3400, stability: 0.36, diameter: "300m", lore: "투명 은하급 게이트. 링 형태의 문명 규모 인프라." },
   ];
 
   const UPGRADE_DEFS = [
-    { id: "hctg", name: "HCTG Defense Lattice", maxLevel: 6, effect: "Raises lattice density and warp resilience." },
-    { id: "sondol", name: "S-Ondol Thermal Skin", maxLevel: 4, effect: "Bleeds entropy without extra power draw." },
-    { id: "dpad", name: "D-PAD Dampener", maxLevel: 4, effect: "Absorbs impact and cuts ship stress during failed attempts." },
-    { id: "qlaunch", name: "Q-Launch Ion Engine", maxLevel: 4, effect: "Improves quantum peak and close-range gate handling." },
-    { id: "warp_shield", name: "Warp Shield", maxLevel: 4, effect: "Boosts hull stability when psi spikes." },
-    { id: "deep_core", name: "Deep Core Recovery", maxLevel: 3, effect: "Softens DENY events and preserves intel." },
-    { id: "cweh", name: "CWEH Energy Recovery", maxLevel: 4, effect: "Recycles impact and wake energy back into the chamber." },
+    { id: "hctg", name: "HCTG 방어 격자", maxLevel: 6, effect: "격자 밀도와 워프 내성을 높인다." },
+    { id: "sondol", name: "S-Ondol 열 외피", maxLevel: 4, effect: "추가 전력 소모 없이 엔트로피를 방출한다." },
+    { id: "dpad", name: "D-PAD 완충기", maxLevel: 4, effect: "충격을 흡수하고 실패 시 함선 스트레스를 줄인다." },
+    { id: "qlaunch", name: "Q-Launch 이온 엔진", maxLevel: 4, effect: "양자 피크와 근거리 게이트 조작을 개선한다." },
+    { id: "warp_shield", name: "워프 실드", maxLevel: 4, effect: "psi 급증 시 선체 안정성을 강화한다." },
+    { id: "deep_core", name: "Deep Core 회수 장치", maxLevel: 3, effect: "DENY 이벤트를 완화하고 정보를 보존한다." },
+    { id: "cweh", name: "CWEH 에너지 회수", maxLevel: 4, effect: "충격과 잔류 에너지를 챔버로 재순환한다." },
   ];
 
   const HCTG_SCALE = [7.0, 8.5, 10.0, 12.0, 14.0, 16.0, 20.0];
@@ -195,90 +195,90 @@
   const SITUATION_DEFS = [
     {
       id: "quiet_window",
-      title: "Quiet Window",
+      title: "고요한 창",
       tone: "support",
-      summary: "Solar noise dipped below forecast. The chamber has one of those rare shifts where everything sounds cleaner than it should.",
+      summary: "태양 노이즈가 예측치 아래로 떨어졌다. 챔버에 모든 것이 실제보다 깨끗하게 들리는 드문 전환이 찾아왔다.",
       minCampaign: 1,
       maxCampaign: 10,
       modifiers: { phi: 0.018, entropy: -0.05, branchProbability: 0.04, eRms: -0.0018 },
     },
     {
       id: "solar_shear",
-      title: "Solar Shear Front",
+      title: "태양 전단면",
       tone: "danger",
-      summary: "Charged particulate flow is scraping across the ring stack. Heat and vibration will arrive before the telemetry fully catches up.",
+      summary: "하전 입자 흐름이 링 스택을 긁어대고 있다. 텔레메트리가 완전히 따라잡기 전에 열과 진동이 먼저 도달할 것이다.",
       minCampaign: 1,
       maxCampaign: 10,
       modifiers: { phi: -0.024, entropy: 0.065, eRms: 0.0028, branchProbability: -0.034, holdScale: 0.12, simScale: 0.1 },
     },
     {
       id: "relay_echo",
-      title: "Relay Echo Alignment",
+      title: "중계 에코 정렬",
       tone: "support",
-      summary: "A relay chain came into accidental phase sympathy. The corridor is carrying more of its own weight than usual.",
+      summary: "중계 체인이 우연히 위상 공명에 들어섰다. 회랑이 평소보다 더 많은 자체 하중을 감당하고 있다.",
       minCampaign: 2,
       maxCampaign: 10,
       modifiers: { psi: 0.028, relayHarmony: 0.05, branchProbability: 0.025, consistencySignal: 0.03, holdScale: -0.08 },
     },
     {
       id: "crew_drift",
-      title: "Crew Bio-Drift",
+      title: "승무원 생체 드리프트",
       tone: "unstable",
-      summary: "Breathing cycles and wake heat are pushing the chamber away from a clean line. Human presence is making the numbers softer and meaner.",
+      summary: "호흡 주기와 체온이 챔버를 깨끗한 라인에서 밀어내고 있다. 인간의 존재가 수치를 더 부드럽고 더 험악하게 만들고 있다.",
       minCampaign: 3,
       maxCampaign: 10,
       modifiers: { phi: -0.018, entropy: 0.03, eRms: 0.0012, branchProbability: -0.02, holdScale: 0.08 },
     },
     {
       id: "thermal_bloom",
-      title: "Thermal Bloom",
+      title: "열 폭발",
       tone: "danger",
-      summary: "Residual heat is sticking to the chamber shell. Every extra point of output will cost more structure than command likes to admit.",
+      summary: "잔류 열이 챔버 외피에 달라붙고 있다. 추가 출력 1포인트마다 사령부가 인정하고 싶은 것보다 더 많은 구조적 비용이 든다.",
       minCampaign: 4,
       maxCampaign: 10,
       modifiers: { phi: -0.02, entropy: 0.075, eRms: 0.0018, holdScale: 0.14, simScale: 0.12 },
     },
     {
       id: "gravitic_lens",
-      title: "Gravitic Lens Pocket",
+      title: "중력 렌즈 포켓",
       tone: "support",
-      summary: "Local curvature is helping instead of fighting. The gate wants to open, but it will still punish sloppy steering.",
+      summary: "국소 곡률이 저항 대신 도움을 주고 있다. 게이트가 열리려 하지만, 부주의한 조종에는 여전히 벌을 줄 것이다.",
       minCampaign: 5,
       maxCampaign: 10,
       modifiers: { psi: 0.036, branchProbability: 0.032, consistencySignal: 0.02, eRms: 0.001 },
     },
     {
       id: "audit_stack",
-      title: "Audit Stack Backlog",
+      title: "감사 스택 적체",
       tone: "unstable",
-      summary: "SJC is spending extra passes on the same decision tree. Nothing is broken, but the machine is taking longer to trust you.",
+      summary: "SJC가 동일한 결정 트리에 추가 패스를 소비하고 있다. 고장난 것은 없지만, 기계가 당신을 신뢰하는 데 더 오래 걸리고 있다.",
       minCampaign: 6,
       maxCampaign: 10,
       modifiers: { holdScale: 0.24, simScale: 0.28, branchProbability: -0.018 },
     },
     {
       id: "seed_resonance",
-      title: "Seed Corridor Resonance",
+      title: "시드 회랑 공명",
       tone: "support",
-      summary: "Autonomous seed lanes are humming in sympathy with the main ring. The corridor is suddenly better connected than the map suggests.",
+      summary: "자율 시드 항로가 메인 링과 공명하며 윙윙거리고 있다. 회랑이 갑자기 지도가 보여주는 것보다 더 잘 연결되었다.",
       minCampaign: 7,
       maxCampaign: 10,
       modifiers: { relayHarmony: 0.06, consistencySignal: 0.038, branchProbability: 0.03, entropy: -0.028 },
     },
     {
       id: "transparent_shear",
-      title: "Transparent Shear",
+      title: "투명 전단",
       tone: "danger",
-      summary: "Near-transparent lattice layers are slipping against one another. The final chamber looks beautiful and behaves like a blade.",
+      summary: "거의 투명한 격자 층이 서로 미끄러지고 있다. 최종 챔버는 아름답게 보이지만 칼날처럼 행동한다.",
       minCampaign: 9,
       maxCampaign: 10,
       modifiers: { phi: -0.03, psi: -0.022, entropy: 0.05, eRms: 0.0026, branchProbability: -0.06, holdScale: 0.3, simScale: 0.22 },
     },
     {
       id: "star_sea_window",
-      title: "Star-Sea Window",
+      title: "별바다의 창",
       tone: "support",
-      summary: "For one narrow stack of futures, the corridor lines up almost too well. This is the kind of window whole generations spend their lives chasing.",
+      summary: "좁은 미래의 한 스택에서 회랑이 거의 완벽에 가깝게 정렬된다. 이것은 온 세대가 평생을 쫓는 종류의 창이다.",
       minCampaign: 9,
       maxCampaign: 10,
       modifiers: { phi: 0.022, psi: 0.03, branchProbability: 0.055, consistencySignal: 0.03, holdScale: 0.1 },
@@ -978,7 +978,7 @@
   let state = loadState();
   if (!state) {
     state = clone(INITIAL_STATE);
-    pushLog("hold", "HPG command initialized.", "Hope-01 is waiting inside a fresh Gate I chamber. Pick a lane and start the relay age.");
+    pushLog("hold", "HPG 사령부 초기화 완료.", "Hope-01이 새로운 Gate I 챔버 안에서 대기 중입니다. 항로를 선택하고 중계 시대를 시작하십시오.");
   }
   state = normalizeState(state);
 
@@ -1045,13 +1045,13 @@
     return {
       phi: "phi",
       psi: "psi",
-      entropy: "Entropy",
+      entropy: "엔트로피",
       eRms: "E_rms",
-      branchProbability: "Branch",
-      relayHarmony: "Relay",
-      consistencySignal: "Consistency",
-      holdScale: "Hold",
-      simScale: "Sim stack",
+      branchProbability: "분기",
+      relayHarmony: "중계",
+      consistencySignal: "일관성",
+      holdScale: "홀드",
+      simScale: "시뮬 스택",
     }[key] || key;
   }
 
@@ -1326,17 +1326,17 @@
     const branchProbability = clamp(0.14 + phi * 0.2 + psi * 0.21 + ship.sensor * 0.17 + relayHarmony * 0.12 + quantumPeak * 0.1 + spanCoverage * 0.08 + hullIntegrity * 0.05 + (legacyBonuses.branchProbability || 0) + (situationModifiers.branchProbability || 0) - zone.risk * 0.18 - consistencyBandOverflow(consistency) * 1.2, 0.01, 0.99);
 
     let verdict = "DENY";
-    let reason = "Range or phase conditions are below operational minimums.";
+    let reason = "범위 또는 위상 조건이 운용 최소값 미만입니다.";
     if (span < zone.requiredSpan) {
-      reason = "The network span cannot physically sustain this route yet.";
+      reason = "네트워크 범위가 이 항로를 물리적으로 지탱할 수 없습니다.";
     } else if (state.structures.mainGateLevel < zone.gateTierRequired) {
-      reason = "Main Gate tier is not high enough for this corridor.";
+      reason = "메인 게이트 등급이 이 회랑에 충분하지 않습니다.";
     } else if (phi >= zone.minPhi && psi >= zone.minPsi && consistency >= CONSISTENCY_TARGET) {
       verdict = "ALLOW";
-      reason = "Chamber lock achieved. Corridor is stable enough to commit the jump.";
+      reason = "챔버 잠금 달성. 회랑이 점프를 실행할 만큼 안정적입니다.";
     } else if (consistency >= CONSISTENCY_TARGET - 0.06 && phi >= zone.minPhi - 0.06 && psi >= zone.minPsi - 0.06) {
       verdict = "HOLD";
-      reason = "The chamber is near stable but still waiting for a cleaner phase lock.";
+      reason = "챔버가 거의 안정적이지만 더 깨끗한 위상 잠금을 기다리고 있습니다.";
     }
 
     return { zone, ship, gate, span, phi, psi, entropy, consistency, branchProbability, quantumPeak, relayHarmony, spanCoverage, verdict, reason, hullIntegrity, thermalLoad, eRms, legacyBonuses, situation };
@@ -1519,7 +1519,7 @@
     const metrics = computeMetrics();
     return {
       verdict: metrics.verdict,
-      title: "Chamber waiting for input.",
+      title: "챔버가 입력을 기다리고 있습니다.",
       detail: metrics.reason,
       zoneName: metrics.zone.name,
       shipName: metrics.ship.name,
@@ -1548,9 +1548,9 @@
     {
       phase: 50,
       verdict: "DENY",
-      label: "Step 1 / 3",
-      title: "phi 0.50 // immediate denial",
-      detail: "0.01 short is enough. The machine treats phi 0.50 as a dead corridor and throws the launch away before it deserves grief.",
+      label: "단계 1 / 3",
+      title: "phi 0.50 // 즉시 거부",
+      detail: "0.01 부족이면 충분하다. 기계는 phi 0.50을 죽은 회랑으로 취급하고 슬퍼할 가치도 없이 발사를 폐기한다.",
       phi: 0.5,
       psi: 0.482,
       consistency: 0.498,
@@ -1562,9 +1562,9 @@
     {
       phase: 52,
       verdict: "ALLOW",
-      label: "Step 2 / 3",
-      title: "phi 0.52 // immediate approval",
-      detail: "A tiny margin becomes survival. The chamber sees phi 0.52 and signs off without blinking.",
+      label: "단계 2 / 3",
+      title: "phi 0.52 // 즉시 승인",
+      detail: "작은 여유가 생존이 된다. 챔버는 phi 0.52를 보고 눈 하나 깜짝 않고 승인한다.",
       phi: 0.52,
       psi: 0.536,
       consistency: 0.526,
@@ -1576,9 +1576,9 @@
     {
       phase: 51,
       verdict: "HOLD",
-      label: "Step 3 / 3",
-      title: "phi 0.51 // the machine hesitates",
-      detail: "HOLD is not indecision. It is the machine spending 2.1 seconds to ask whether you are still alive in enough futures to permit launch.",
+      label: "단계 3 / 3",
+      title: "phi 0.51 // 기계가 망설인다",
+      detail: "HOLD는 우유부단함이 아니다. 기계가 2.1초를 들여 당신이 충분한 미래에서 아직 살아있는지 확인하는 것이다.",
       phi: 0.51,
       psi: 0.511,
       consistency: 0.51,
@@ -1634,10 +1634,10 @@
 
     if (campaign.zoneId) {
       const targetZone = findZone(campaign.zoneId);
-      addCheck("Route", metrics.zone.name, targetZone.name, metrics.zone.id === campaign.zoneId, true);
+      addCheck("항로", metrics.zone.name, targetZone.name, metrics.zone.id === campaign.zoneId, true);
     }
     if (requirements.requiredGateLevel) {
-      addCheck("Main Gate", `Gate ${state.structures.mainGateLevel}`, `Gate ${requirements.requiredGateLevel}`, state.structures.mainGateLevel >= requirements.requiredGateLevel, true);
+      addCheck("메인 게이트", `Gate ${state.structures.mainGateLevel}`, `Gate ${requirements.requiredGateLevel}`, state.structures.mainGateLevel >= requirements.requiredGateLevel, true);
     }
     if (requirements.minPhi) {
       addCheck("phi", fixed(metrics.phi, 3), fixed(requirements.minPhi, 3), metrics.phi >= requirements.minPhi, false);
@@ -1646,41 +1646,41 @@
       addCheck("psi", fixed(metrics.psi, 3), fixed(requirements.minPsi, 3), metrics.psi >= requirements.minPsi, false);
     }
     if (requirements.maxEntropy) {
-      addCheck("Entropy", fixed(metrics.entropy, 3), `<= ${fixed(requirements.maxEntropy, 3)}`, metrics.entropy <= requirements.maxEntropy, false);
+      addCheck("엔트로피", fixed(metrics.entropy, 3), `<= ${fixed(requirements.maxEntropy, 3)}`, metrics.entropy <= requirements.maxEntropy, false);
     }
     if (requirements.minConsistency) {
-      addCheck("Consistency", fixed(metrics.consistency, 3), fixed(requirements.minConsistency, 3), metrics.consistency >= requirements.minConsistency, false);
+      addCheck("일관성", fixed(metrics.consistency, 3), fixed(requirements.minConsistency, 3), metrics.consistency >= requirements.minConsistency, false);
     }
     if (requirements.minBranchProbability) {
-      addCheck("Branch", fixed(metrics.branchProbability, 3), fixed(requirements.minBranchProbability, 3), metrics.branchProbability >= requirements.minBranchProbability, false);
+      addCheck("분기", fixed(metrics.branchProbability, 3), fixed(requirements.minBranchProbability, 3), metrics.branchProbability >= requirements.minBranchProbability, false);
     }
     if (requirements.maxStress) {
-      addCheck("Stress", Math.round(state.shipStress), `<= ${requirements.maxStress}`, state.shipStress <= requirements.maxStress, false);
+      addCheck("스트레스", Math.round(state.shipStress), `<= ${requirements.maxStress}`, state.shipStress <= requirements.maxStress, false);
     }
     if (requirements.minGateCharge || requirements.minMainGateCharge) {
       const targetCharge = requirements.minMainGateCharge || requirements.minGateCharge;
-      addCheck("Gate Charge", `${Math.round(state.gateCharge)}%`, `${targetCharge}%`, state.gateCharge >= targetCharge, false);
+      addCheck("게이트 충전", `${Math.round(state.gateCharge)}%`, `${targetCharge}%`, state.gateCharge >= targetCharge, false);
     }
     if (requirements.minEnergy) {
-      addCheck("Energy", Math.round(state.resources.energy), requirements.minEnergy, state.resources.energy >= requirements.minEnergy, false);
+      addCheck("에너지", Math.round(state.resources.energy), requirements.minEnergy, state.resources.energy >= requirements.minEnergy, false);
     }
     if (requirements.minIntel) {
-      addCheck("Intel", Math.round(state.resources.intel), requirements.minIntel, state.resources.intel >= requirements.minIntel, false);
+      addCheck("정보", Math.round(state.resources.intel), requirements.minIntel, state.resources.intel >= requirements.minIntel, false);
     }
     if (requirements.minRelay) {
-      addCheck("Relay Gates", state.structures.relay, requirements.minRelay, state.structures.relay >= requirements.minRelay, false);
+      addCheck("중계 게이트", state.structures.relay, requirements.minRelay, state.structures.relay >= requirements.minRelay, false);
     }
     if (requirements.minSeed) {
-      addCheck("Gate Seeds", state.structures.seed, requirements.minSeed, state.structures.seed >= requirements.minSeed, false);
+      addCheck("게이트 시드", state.structures.seed, requirements.minSeed, state.structures.seed >= requirements.minSeed, false);
     }
     if (requirements.minSolar) {
-      addCheck("Solar Concentrators", state.structures.solar, requirements.minSolar, state.structures.solar >= requirements.minSolar, false);
+      addCheck("태양 집광기", state.structures.solar, requirements.minSolar, state.structures.solar >= requirements.minSolar, false);
     }
     if (requirements.minHarvester) {
-      addCheck("Hydrogen Harvesters", state.structures.harvester, requirements.minHarvester, state.structures.harvester >= requirements.minHarvester, false);
+      addCheck("수소 수확기", state.structures.harvester, requirements.minHarvester, state.structures.harvester >= requirements.minHarvester, false);
     }
     if (requirements.minHctg) {
-      addCheck("Lattice Density", `n=${fixed(hctgValue(), 1)}`, `n=${fixed(requirements.minHctg, 1)}`, hctgValue() >= requirements.minHctg, false);
+      addCheck("격자 밀도", `n=${fixed(hctgValue(), 1)}`, `n=${fixed(requirements.minHctg, 1)}`, hctgValue() >= requirements.minHctg, false);
     }
     if (requirements.minUpgrade_sondol) {
       addCheck("S-Ondol", `L${state.upgrades.sondol}`, `L${requirements.minUpgrade_sondol}`, state.upgrades.sondol >= requirements.minUpgrade_sondol, false);
@@ -1691,11 +1691,11 @@
     if (campaign.id === "campaign_10" && situation) {
       if (situation.tone === "danger") {
         const targetBranch = (requirements.minBranchProbability || 0.68) + 0.12;
-        addCheck("Stack branch margin", fixed(metrics.branchProbability, 3), fixed(targetBranch, 3), metrics.branchProbability >= targetBranch, false);
-        addCheck("Stack E_rms", fixed(metrics.eRms, 3), "<= 0.010", metrics.eRms <= 0.01, false);
+        addCheck("스택 분기 마진", fixed(metrics.branchProbability, 3), fixed(targetBranch, 3), metrics.branchProbability >= targetBranch, false);
+        addCheck("스택 E_rms", fixed(metrics.eRms, 3), "<= 0.010", metrics.eRms <= 0.01, false);
       } else if (situation.tone === "unstable") {
         const targetBranch = (requirements.minBranchProbability || 0.68) + 0.06;
-        addCheck("Stack branch margin", fixed(metrics.branchProbability, 3), fixed(targetBranch, 3), metrics.branchProbability >= targetBranch, false);
+        addCheck("스택 분기 마진", fixed(metrics.branchProbability, 3), fixed(targetBranch, 3), metrics.branchProbability >= targetBranch, false);
       }
     }
     if (campaign.id === "campaign_06" && state.campaignFlags.campaign06CrisisTriggered) {
@@ -1752,13 +1752,13 @@
     const forcedCrisis = campaign.id === "campaign_06" && !state.campaignFlags.campaign06CrisisTriggered;
     let finalVerdict = failedChecks.length === 0 ? "ALLOW" : nearMiss ? "HOLD" : "DENY";
     let summary = failedChecks.length === 0
-      ? `${campaign.title} satisfied all gate conditions.`
+      ? `${campaign.title}: 모든 게이트 조건 충족.`
       : failedChecks.map(function (check) {
           return `${check.label} ${check.target}`;
         }).join(" / ");
     if (forcedCrisis) {
       finalVerdict = "DENY";
-      summary = "Relay #223 fractured during the evaluation stack. Rescue routing is now mandatory.";
+      summary = "Relay #223이 평가 스택 중 파열되었다. 구조 경로가 이제 필수다.";
     }
     return {
       finalVerdict: finalVerdict,
@@ -1790,7 +1790,7 @@
     }
     if (campaign.relic && !state.unlockedRelicIds.includes(campaign.relic.id)) {
       state.unlockedRelicIds.push(campaign.relic.id);
-      pushLog("allow", "Generational relic inherited.", `${campaign.relic.title} entered the archive. ${campaign.relic.effectText}`);
+      pushLog("allow", "세대 유물 계승.", `${campaign.relic.title}이(가) 아카이브에 등록되었다. ${campaign.relic.effectText}`);
     }
     if (campaign.zoneId && !state.completedZones.includes(campaign.zoneId)) {
       state.completedZones.push(campaign.zoneId);
@@ -1802,11 +1802,11 @@
     if (campaign.id === "campaign_10" && !state.finale.unlocked) {
       state.finale = {
         unlocked: true,
-        title: "Sea of Stars",
-        detail: "The terminal finally lets the archive become light. Gate V holds, the seed cascade survives, and the center of the galaxy looks back.",
+        title: "별의 바다",
+        detail: "터미널이 마침내 아카이브를 빛으로 변하게 허락했다. Gate V가 유지되고, 시드 연쇄가 생존하며, 은하의 중심이 되돌아본다.",
         yearUnlocked: state.year,
       };
-      pushLog("allow", "Sea of Stars unlocked.", "The final command view opened beyond the terminal. Text gave way to the light it had been earning for seventy-five years.");
+      pushLog("allow", "별의 바다 해금.", "최종 사령부 뷰가 터미널 너머로 열렸다. 텍스트가 75년 동안 벌어온 빛에게 자리를 내주었다.");
     }
     if (state.campaignIndex < CAMPAIGNS.length - 1) {
       state.campaignIndex += 1;
@@ -1820,7 +1820,7 @@
       return false;
     }
     state.campaignFlags.vasquezShieldUsed = true;
-    pushLog("allow", "Vasquez pre-reinforcement engaged.", `${contextLabel} should have become a fracture, but the red-pen reinforcement absorbed one DENY without cost.`);
+    pushLog("allow", "Vasquez 사전 보강 작동.", `${contextLabel}은(는) 파열이 되었어야 했지만, 빨간 펜 보강이 비용 없이 DENY 하나를 흡수했다.`);
     return true;
   }
 
@@ -1829,24 +1829,24 @@
       active: true,
       kind: "life_support",
       campaignId: campaign.id,
-      title: "Life Support Countdown",
-      relayNode: "Expedition Cutoff",
+      title: "생명 유지 카운트다운",
+      relayNode: "탐사대 차단점",
       remainingHours: 48,
       attempts: 0,
       droneCost: { energy: 52, materials: 16, hydrogen: 8 },
       result: "pending",
-      crewLabel: "Life support remains for 48 hours in a cut corridor beyond the active network.",
+      crewLabel: "활성 네트워크 너머 단절된 회랑에서 48시간의 생명 유지가 남아있다.",
     };
-    pushLog("deny", "Crew isolation event triggered.", "A late-era DENY no longer just burns money. It traps people behind a corridor that is already dying.");
+    pushLog("deny", "승무원 고립 사건 발생.", "후기 시대의 DENY는 더 이상 돈만 태우지 않는다. 이미 죽어가는 회랑 뒤에 사람을 가둔다.");
   }
 
   function applyCampaignSetback(campaign, verdict) {
     if (verdict !== "DENY") {
       state.shipStress = clamp(state.shipStress + 4, 0, 100);
-      return "SJC stalled but did not break the route. Command stress rose and the room has to try again.";
+      return "SJC가 정체했지만 항로를 파괴하지는 않았다. 사령부 스트레스가 상승했고 다시 시도해야 한다.";
     }
     if (consumeVasquezShield(campaign.title)) {
-      return "Vasquez's red pen intercepted the first fracture. The verdict stands, but the chamber escaped structural loss once.";
+      return "Vasquez의 빨간 펜이 첫 번째 파열을 막았다. 판정은 유지되지만, 챔버가 한 번 구조적 손실을 면했다.";
     }
     const mitigation = computeLegacyBonuses().denyMitigation || 0;
     const eraIndex = currentEraIndex();
@@ -1855,8 +1855,8 @@
       state.resources.energy = Math.max(0, state.resources.energy - Math.round(22 * (1 - mitigation)));
       state.resources.materials = Math.max(0, state.resources.materials - Math.round(10 * (1 - mitigation)));
       state.shipStress = clamp(state.shipStress + 8, 0, 100);
-      pushLog("deny", "Budget emergency issued.", `${deficit} credits evaporated into refits and destroyed confidence. In the ship era, DENY feels like finance deciding whether the project deserves another sunrise.`);
-      return `${deficit} credits were burned on emergency rebuilds. The early program survives, but only by getting poorer.`;
+      pushLog("deny", "예산 비상 발령.", `${deficit} 크레딧이 개수와 파괴된 신뢰에 증발했다. 함선 시대에서 DENY는 재무부가 프로젝트에 다음 일출의 자격이 있는지 결정하는 것과 같다.`);
+      return `${deficit} 크레딧이 긴급 재건에 소진되었다. 초기 프로그램은 살아남았지만, 더 가난해져야만 했다.`;
     }
     if (eraIndex === 1) {
       const lostRelays = Math.min(Math.max(1, Math.ceil(state.structures.relay / 4)), 3);
@@ -1864,8 +1864,8 @@
       state.resources.materials = Math.max(0, state.resources.materials - Math.round(24 * (1 - mitigation)));
       state.resources.energy = Math.max(0, state.resources.energy - Math.round(18 * (1 - mitigation)));
       state.shipStress = clamp(state.shipStress + 10, 0, 100);
-      pushLog("deny", "Relay chain shutdown.", `Nodes collapsed in sequence and ${lostRelays} relay lines went dark. In the gate era, DENY sounds like infrastructure failing all at once.`);
-      return `${lostRelays} relay nodes were lost in a chain shutdown. The route is still alive, but the corridor got shorter and angrier.`;
+      pushLog("deny", "중계 체인 정지.", `노드가 연쇄적으로 붕괴하여 ${lostRelays}개 중계 라인이 꺼졌다. 게이트 시대에서 DENY는 인프라가 한꺼번에 실패하는 소리다.`);
+      return `${lostRelays}개 중계 노드가 체인 정지로 소실되었다. 항로는 아직 살아있지만, 회랑이 더 짧아지고 더 험악해졌다.`;
     }
     state.resources.energy = Math.max(0, state.resources.energy - Math.round(18 * (1 - mitigation)));
     state.resources.materials = Math.max(0, state.resources.materials - Math.round(12 * (1 - mitigation)));
@@ -1874,8 +1874,8 @@
       createLifeSupportIncident(campaign);
     }
     return activeRescueIncident()
-      ? "A stranded team now depends on rescue drones and a temporary corridor before life support collapses."
-      : "The chamber failed hard enough to wound command confidence and future routing plans.";
+      ? "고립된 팀이 이제 생명 유지가 붕괴되기 전에 구조 드론과 임시 회랑에 의존하고 있다."
+      : "챔버가 사령부의 자신감과 미래 항로 계획에 상처를 줄 만큼 심하게 실패했다.";
   }
 
   function createCampaignSixIncident() {
@@ -1884,17 +1884,17 @@
       active: true,
       kind: "relay_rescue",
       campaignId: "campaign_06",
-      title: "Relay #223 Rescue Desk",
+      title: "Relay #223 구조 데스크",
       relayNode: "Relay #223",
       remainingHours: 48,
       attempts: 0,
       droneCost: { energy: 44, materials: 18, hydrogen: 6 },
       result: "pending",
-      crewLabel: "Four isolated crew remain beyond the broken relay line.",
+      crewLabel: "4명의 고립된 승무원이 파손된 중계 라인 너머에 남아있다.",
     };
     state.selectedDocumentId = "doc_c6_salvage";
-    pushTerminalLine("> Rescue desk opened. Relay #223 requires an emergency bypass corridor.");
-    pushLog("deny", "Relay #223 fractured.", "A DENY became an incident. Forty-eight hours remain to dispatch rescue drones and stitch around the dead relay.");
+    pushTerminalLine("> 구조 데스크 개방. Relay #223에 긴급 우회 회랑이 필요합니다.");
+    pushLog("deny", "Relay #223 파열.", "DENY가 사건이 되었다. 구조 드론을 발송하고 죽은 중계기를 우회할 48시간이 남았다.");
   }
 
   function dispatchRescueDrones() {
@@ -1903,7 +1903,7 @@
       return;
     }
     if (!canAfford(incident.droneCost)) {
-      pushLog("deny", "Rescue sortie blocked.", "Energy, materials, or hydrogen reserves are too low to throw drones into the broken corridor.");
+      pushLog("deny", "구조 출격 차단.", "에너지, 자재, 또는 수소 비축이 파손된 회랑에 드론을 투입하기에 너무 부족하다.");
       render();
       return;
     }
@@ -1931,11 +1931,11 @@
       incident.result = "rescued";
       gain({ intel: 24, materials: 10 });
       state.shipStress = clamp(state.shipStress - 8, 0, 100);
-      pushLog("allow", incident.kind === "life_support" ? "Life support corridor restored." : "Rescue corridor opened.", incident.kind === "life_support" ? `Drones reached the isolated expedition before the final clock ran out. Archive confidence rose to ${fixed(rescueScore, 3)}.` : `Drones reached ${incident.relayNode} and extracted telemetry plus survivors. Archive confidence rose to ${fixed(rescueScore, 3)}.`);
+      pushLog("allow", incident.kind === "life_support" ? "생명 유지 회랑 복구." : "구조 회랑 개방.", incident.kind === "life_support" ? `드론이 최종 타이머가 만료되기 전에 고립된 탐사대에 도달했다. 아카이브 신뢰도가 ${fixed(rescueScore, 3)}으로 상승했다.` : `드론이 ${incident.relayNode}에 도달하여 텔레메트리와 생존자를 추출했다. 아카이브 신뢰도가 ${fixed(rescueScore, 3)}으로 상승했다.`);
       safeSetResolution({
         verdict: "HOLD",
-        title: incident.kind === "life_support" ? "Life support restored." : "Rescue successful.",
-        detail: incident.kind === "life_support" ? "The isolated team is back on a temporary line. Command can resume evaluation with fewer ghosts in the room." : `${incident.relayNode} is no longer bleeding the route. Survivors are inbound and campaign evaluation may resume.`,
+        title: incident.kind === "life_support" ? "생명 유지 복구." : "구조 성공.",
+        detail: incident.kind === "life_support" ? "고립된 팀이 임시 라인에 복귀했다. 사령부는 방 안의 유령이 줄어든 상태에서 평가를 재개할 수 있다." : `${incident.relayNode}이(가) 더 이상 항로를 출혈시키지 않는다. 생존자가 귀환 중이며 캠페인 평가를 재개할 수 있다.`,
         zoneName: currentZone().name,
         shipName: currentShip().name,
         branchProbability: metrics.branchProbability,
@@ -1950,11 +1950,11 @@
     }
 
     if (incident.remainingHours > 0) {
-      pushLog("hold", incident.kind === "life_support" ? "Rescue convoy still outbound." : "Rescue sortie incomplete.", `${incident.relayNode} remains unstable. ${incident.remainingHours} hours remain before command must write off the corridor.`);
+      pushLog("hold", incident.kind === "life_support" ? "구조 호위대 아직 이동 중." : "구조 출격 미완료.", `${incident.relayNode}이(가) 여전히 불안정하다. 사령부가 회랑을 포기해야 하기까지 ${incident.remainingHours}시간 남았다.`);
       safeSetResolution({
         verdict: "HOLD",
-        title: incident.kind === "life_support" ? "Crew still isolated." : "Rescue still in progress.",
-        detail: `${incident.relayNode} resisted the first drone wave. Stabilize phi, E_rms, and consistency, then try again before the window closes.`,
+        title: incident.kind === "life_support" ? "승무원 아직 고립 중." : "구조 아직 진행 중.",
+        detail: `${incident.relayNode}이(가) 첫 번째 드론 파동을 막아냈다. phi, E_rms, 일관성을 안정화한 후 창이 닫히기 전에 다시 시도하라.`,
         zoneName: currentZone().name,
         shipName: currentShip().name,
         branchProbability: metrics.branchProbability,
@@ -1974,11 +1974,11 @@
     state.resources.intel = Math.max(0, state.resources.intel - 10);
     state.shipStress = clamp(state.shipStress + 9, 0, 100);
     state.structures.relay = Math.max(0, state.structures.relay - 1);
-    pushLog("deny", incident.kind === "life_support" ? "Life support window lost." : "Rescue window lost.", `${incident.relayNode} went dark before the drones could hold the lane. One relay line was abandoned to keep the rest alive.`);
+    pushLog("deny", incident.kind === "life_support" ? "생명 유지 창 소실." : "구조 창 소실.", `드론이 항로를 유지하기 전에 ${incident.relayNode}이(가) 어둠에 빠졌다. 나머지를 살리기 위해 중계 라인 하나를 포기했다.`);
     safeSetResolution({
       verdict: "DENY",
-      title: incident.kind === "life_support" ? "Isolation became permanent." : "Rescue window expired.",
-      detail: incident.kind === "life_support" ? "The team beyond the corridor could not be reached in time. The archive records the route, but not their return." : `${incident.relayNode} is gone. Command survived by sacrificing one line of the network, and the archive will remember it that way.`,
+      title: incident.kind === "life_support" ? "고립이 영구적이 되었다." : "구조 창이 만료되었다.",
+      detail: incident.kind === "life_support" ? "회랑 너머의 팀에게 제시간에 도달할 수 없었다. 아카이브는 항로를 기록하지만, 그들의 귀환은 기록하지 않는다." : `${incident.relayNode}이(가) 사라졌다. 사령부는 네트워크의 한 라인을 희생하여 생존했고, 아카이브는 그렇게 기억할 것이다.`,
       zoneName: currentZone().name,
       shipName: currentShip().name,
       branchProbability: metrics.branchProbability,
@@ -1993,12 +1993,12 @@
 
   function tutorialButtonLabel() {
     if (state.tutorial.completed) {
-      return "Replay 0.51 Tutorial";
+      return "0.51 튜토리얼 재실행";
     }
     if (state.tutorial.step > 0) {
-      return `Tutorial ${Math.min(state.tutorial.step + 1, 3)} / 3`;
+      return `튜토리얼 ${Math.min(state.tutorial.step + 1, 3)} / 3`;
     }
-    return "Run 0.51 Tutorial";
+    return "0.51 튜토리얼 실행";
   }
 
   function runPhiTutorial() {
@@ -2034,9 +2034,9 @@
         eRms: scenario.eRms,
       });
       if (scenario.verdict === "DENY") {
-        pushLog("deny", "0.51 tutorial // DENY", "phi 0.50 failed instantly. The machine does not bargain with margins that small.");
+        pushLog("deny", "0.51 튜토리얼 // DENY", "phi 0.50은 즉시 실패했다. 기계는 그렇게 작은 마진과 타협하지 않는다.");
       } else {
-        pushLog("allow", "0.51 tutorial // ALLOW", "phi 0.52 cleared at once. The machine likes surplus more than courage.");
+        pushLog("allow", "0.51 튜토리얼 // ALLOW", "phi 0.52는 즉시 통과했다. 기계는 용기보다 여유를 좋아한다.");
       }
       render();
       terminalResetTimeoutId = setTimeout(function () {
@@ -2070,7 +2070,7 @@
       state.terminal.simCount = Math.round((scenario.simStart || 0) + ((scenario.simEnd || 84) - (scenario.simStart || 0)) * progress);
       state.terminal.holdTimeRemaining = Math.max(scenario.holdSeconds - scenario.holdSeconds * progress, 0);
       if (tickIndex === 3) {
-        pushTerminalLine("> HOLD is the machine buying time to see if enough futures still contain you.");
+        pushTerminalLine("> HOLD는 기계가 충분한 미래에 당신이 아직 존재하는지 확인하기 위해 시간을 버는 것이다.");
       }
       render();
       if (tickIndex >= totalTicks) {
@@ -2080,12 +2080,12 @@
         state.terminal.lastVerdict = "ALLOW";
         state.tutorial.active = false;
         state.tutorial.completed = true;
-        pushTerminalLine("> [ALLOW] 84 scenarios survived the 2.1 second hesitation window.");
-        pushLog("allow", "0.51 tutorial complete.", "0.01 decided death, life, and hesitation. The terminal has shown what HOLD actually means.");
+        pushTerminalLine("> [ALLOW] 84개 시나리오가 2.1초 망설임 창을 생존했다.");
+        pushLog("allow", "0.51 튜토리얼 완료.", "0.01이 죽음, 삶, 그리고 망설임을 결정했다. 터미널은 HOLD가 실제로 무엇을 의미하는지 보여주었다.");
         safeSetResolution({
           verdict: "ALLOW",
-          title: "HOLD became survival.",
-          detail: "HOLD is not hesitation. It is the machine spending 2.1 seconds to simulate whether you remain alive in enough futures to permit launch.",
+          title: "HOLD가 생존이 되었다.",
+          detail: "HOLD는 망설임이 아니다. 기계가 2.1초를 들여 당신이 충분한 미래에서 살아 있는지 시뮬레이션하는 것이다.",
           zoneName: currentZone().name,
           shipName: currentShip().name,
           branchProbability: 0.514,
@@ -2111,7 +2111,7 @@
 
     if (evaluation.finalVerdict === "ALLOW") {
       applyCampaignSuccess(campaign, metrics, systems);
-      pushLog("allow", `Campaign ${campaign.number} cleared.`, `${campaign.title} moved into the archive. ${campaign.summary}`);
+      pushLog("allow", `캠페인 ${campaign.number} 클리어.`, `${campaign.title}이(가) 아카이브에 등록되었다. ${campaign.summary}`);
       safeSetResolution({
         verdict: "ALLOW",
         title: `${campaign.title} cleared.`,
@@ -2134,7 +2134,7 @@
         createCampaignSixIncident();
       }
       const unresolvedDetail = setbackDetail ? `${evaluation.summary} ${setbackDetail}` : evaluation.summary;
-      pushLog(evaluation.finalVerdict === "HOLD" ? "hold" : "deny", `Campaign ${campaign.number} unresolved.`, unresolvedDetail);
+      pushLog(evaluation.finalVerdict === "HOLD" ? "hold" : "deny", `캠페인 ${campaign.number} 미해결.`, unresolvedDetail);
       safeSetResolution({
         verdict: evaluation.finalVerdict,
         title: `${campaign.title} ${evaluation.finalVerdict.toLowerCase()}.`,
@@ -2174,13 +2174,13 @@
     state.terminal.mode = "EVALUATE";
     state.terminal.simCount = evaluation.simStart;
     state.terminal.holdTimeRemaining = holdProfile.displaySeconds;
-    pushTerminalLine(`> Evaluating ${campaign.title} :: ${campaign.sjcVersion}`);
-    pushTerminalLine(`> Objective :: ${campaign.objective}`);
+    pushTerminalLine(`> 평가 중 ${campaign.title} :: ${campaign.sjcVersion}`);
+    pushTerminalLine(`> 목표 :: ${campaign.objective}`);
     if (situation) {
-      pushTerminalLine(`> Situation :: ${situation.title} // ${situation.effectTexts.slice(0, 3).join(" / ")}`);
+      pushTerminalLine(`> 상황 :: ${situation.title} // ${situation.effectTexts.slice(0, 3).join(" / ")}`);
     }
     if (holdProfile.isRetry) {
-      pushTerminalLine("> Retry fast-forward enabled. SJC is compressing repeated branches.");
+      pushTerminalLine("> 재시도 빨리감기 활성화. SJC가 반복 분기를 압축하고 있습니다.");
     }
     render();
 
@@ -2328,14 +2328,14 @@
             <div class="card-tag">${ship.tag}</div>
           </div>
           <div class="card-metrics">
-            <div class="mini-metric"><span>Crew</span><strong>${ship.crew}</strong></div>
-            <div class="mini-metric"><span>Hull</span><strong>${fixed(ship.hull, 2)}</strong></div>
-            <div class="mini-metric"><span>Quantum</span><strong>${fixed(ship.quantum, 2)}</strong></div>
-            <div class="mini-metric"><span>Range</span><strong>${fixed(ship.rangeBias, 2)}x</strong></div>
+            <div class="mini-metric"><span>승무원</span><strong>${ship.crew}</strong></div>
+            <div class="mini-metric"><span>선체</span><strong>${fixed(ship.hull, 2)}</strong></div>
+            <div class="mini-metric"><span>양자</span><strong>${fixed(ship.quantum, 2)}</strong></div>
+            <div class="mini-metric"><span>사거리</span><strong>${fixed(ship.rangeBias, 2)}x</strong></div>
           </div>
           <div class="card-actions">
-            <span class="muted-copy">Sensor ${fixed(ship.sensor, 2)} // Stress guard ${fixed(ship.stressGuard, 2)}</span>
-            <button class="card-button" data-action="select-ship" data-ship="${ship.id}">Deploy</button>
+            <span class="muted-copy">센서 ${fixed(ship.sensor, 2)} // 스트레스 방어 ${fixed(ship.stressGuard, 2)}</span>
+            <button class="card-button" data-action="select-ship" data-ship="${ship.id}">배치</button>
           </div>
         </article>
       `;
@@ -2346,41 +2346,41 @@
     const gate = currentGate();
     const cards = [
       {
-        title: `${gate.name} // Main Gate`,
-        copy: `${gate.diameter} chamber. ${gate.lore}`,
-        stats: `Base span ${gate.baseSpan} // Stability ${fixed(gate.stability, 2)}`,
+        title: `${gate.name} // 메인 게이트`,
+        copy: `${gate.diameter} 챔버. ${gate.lore}`,
+        stats: `기본 범위 ${gate.baseSpan} // 안정성 ${fixed(gate.stability, 2)}`,
         action: "upgrade-main-gate",
         disabled: state.structures.mainGateLevel >= 5,
         cost: structureCost("mainGate"),
       },
       {
-        title: `Relay Gates x${state.structures.relay}`,
-        copy: "Short-span stepping stones that keep long corridors from tearing ships apart.",
-        stats: "Each relay adds +46 span.",
+        title: `중계 게이트 x${state.structures.relay}`,
+        copy: "긴 회랑에서 함선이 찢어지는 것을 막아주는 단거리 디딤돌.",
+        stats: "각 중계기는 범위 +46을 추가한다.",
         action: "build-relay",
         disabled: false,
         cost: structureCost("relay"),
       },
       {
-        title: `Gate Seeds x${state.structures.seed}`,
-        copy: "Autonomous seed rings that leap ahead and grow the next corridor node.",
-        stats: "Each seed adds +92 span and more passive materials.",
+        title: `게이트 시드 x${state.structures.seed}`,
+        copy: "앞서 도약하여 다음 회랑 노드를 성장시키는 자율 시드 링.",
+        stats: "각 시드는 범위 +92와 추가 패시브 자재를 제공한다.",
         action: "launch-seed",
         disabled: state.structures.mainGateLevel < 2,
         cost: structureCost("seed"),
       },
       {
-        title: `Solar Concentrators x${state.structures.solar}`,
-        copy: "Reflector swarms that dump amplified sunlight into the local gate stack.",
-        stats: "Passive energy gain every major action.",
+        title: `태양 집광기 x${state.structures.solar}`,
+        copy: "증폭된 태양광을 로컬 게이트 스택에 쏟아붓는 반사경 군집.",
+        stats: "주요 행동마다 패시브 에너지 획득.",
         action: "build-solar",
         disabled: state.structures.solar >= 4,
         cost: structureCost("solar"),
       },
       {
-        title: `Hydrogen Harvesters x${state.structures.harvester}`,
-        copy: "Deep-space funnels that scrape trace hydrogen into usable fuel.",
-        stats: "Passive hydrogen gain and more corridor endurance.",
+        title: `수소 수확기 x${state.structures.harvester}`,
+        copy: "미량 수소를 사용 가능한 연료로 긁어모으는 심우주 깔때기.",
+        stats: "패시브 수소 획득 및 회랑 지구력 증가.",
         action: "build-harvester",
         disabled: state.structures.harvester >= 4,
         cost: structureCost("harvester"),
@@ -2400,7 +2400,7 @@
           </div>
           <div class="structure-footer">
             <span class="muted-copy">${card.stats}<br>${cost}</span>
-            <button class="card-button" data-action="${card.action}" ${disabled}>Execute</button>
+            <button class="card-button" data-action="${card.action}" ${disabled}>실행</button>
           </div>
         </article>
       `;
@@ -2424,7 +2424,7 @@
           </div>
           <div class="upgrade-footer">
             <span class="muted-copy">E ${cost.energy} / M ${cost.materials} / H ${cost.hydrogen}</span>
-            <button class="card-button" data-action="upgrade" data-upgrade="${definition.id}" ${disabled}>Upgrade</button>
+            <button class="card-button" data-action="upgrade" data-upgrade="${definition.id}" ${disabled}>업그레이드</button>
           </div>
         </article>
       `;
@@ -2445,31 +2445,31 @@
     }).join("");
 
     const zone = metrics.zone;
-    const accessState = state.structures.mainGateLevel < zone.gateTierRequired ? "main gate too small" : metrics.span < zone.requiredSpan ? "network span too short" : "route is physically reachable";
+    const accessState = state.structures.mainGateLevel < zone.gateTierRequired ? "메인 게이트 등급 부족" : metrics.span < zone.requiredSpan ? "네트워크 범위 부족" : "항로 물리적 접근 가능";
     elements.selectedZonePill.textContent = `${zone.name} // ${zone.distanceText}`;
     elements.zoneDetail.innerHTML = `
       <article class="zone-info-card">
         <h3>${zone.name}</h3>
         <p>${zone.description}</p>
         <div class="zone-grid">
-          <div class="zone-stat"><span>Subtitle</span><strong>${zone.subtitle}</strong></div>
-          <div class="zone-stat"><span>Distance</span><strong>${zone.distanceText}</strong></div>
-          <div class="zone-stat"><span>Required span</span><strong>${zone.requiredSpan}</strong></div>
-          <div class="zone-stat"><span>Gate tier</span><strong>${zone.gateTierRequired}</strong></div>
-          <div class="zone-stat"><span>Min phi</span><strong>${fixed(zone.minPhi, 2)}</strong></div>
-          <div class="zone-stat"><span>Min psi</span><strong>${fixed(zone.minPsi, 2)}</strong></div>
-          <div class="zone-stat"><span>Risk</span><strong>${Math.round(zone.risk * 100)}%</strong></div>
-          <div class="zone-stat"><span>Status</span><strong>${accessState}</strong></div>
+          <div class="zone-stat"><span>부제</span><strong>${zone.subtitle}</strong></div>
+          <div class="zone-stat"><span>거리</span><strong>${zone.distanceText}</strong></div>
+          <div class="zone-stat"><span>필요 범위</span><strong>${zone.requiredSpan}</strong></div>
+          <div class="zone-stat"><span>게이트 등급</span><strong>${zone.gateTierRequired}</strong></div>
+          <div class="zone-stat"><span>최소 phi</span><strong>${fixed(zone.minPhi, 2)}</strong></div>
+          <div class="zone-stat"><span>최소 psi</span><strong>${fixed(zone.minPsi, 2)}</strong></div>
+          <div class="zone-stat"><span>위험도</span><strong>${Math.round(zone.risk * 100)}%</strong></div>
+          <div class="zone-stat"><span>상태</span><strong>${accessState}</strong></div>
         </div>
       </article>
       <article class="zone-info-card">
-        <h3>Route payout</h3>
-        <p>The corridor rewards energy, fabrication stock, hydrogen reserves, and survey intel.</p>
+        <h3>항로 보상</h3>
+        <p>회랑은 에너지, 제조 자재, 수소 비축, 탐사 정보를 보상한다.</p>
         <div class="zone-grid">
-          <div class="zone-stat"><span>Energy</span><strong>+${zone.reward.energy}</strong></div>
-          <div class="zone-stat"><span>Materials</span><strong>+${zone.reward.materials}</strong></div>
-          <div class="zone-stat"><span>Hydrogen</span><strong>+${zone.reward.hydrogen}</strong></div>
-          <div class="zone-stat"><span>Intel</span><strong>+${zone.reward.intel}</strong></div>
+          <div class="zone-stat"><span>에너지</span><strong>+${zone.reward.energy}</strong></div>
+          <div class="zone-stat"><span>자재</span><strong>+${zone.reward.materials}</strong></div>
+          <div class="zone-stat"><span>수소</span><strong>+${zone.reward.hydrogen}</strong></div>
+          <div class="zone-stat"><span>정보</span><strong>+${zone.reward.intel}</strong></div>
         </div>
       </article>
     `;
@@ -2490,7 +2490,7 @@
     elements.gateRing.style.boxShadow = `inset 0 0 34px rgba(255,255,255,0.05), 0 0 42px ${gate.color}66`;
     writeNumberText("gate-tier-label", gate.name);
     writeNumberText("gate-charge-label", `${Math.round(state.gateCharge)}%`);
-    writeNumberText("gate-range-label", `Span ${Math.round(metrics.span)} // ${gate.diameter}`);
+    writeNumberText("gate-range-label", `범위 ${Math.round(metrics.span)} // ${gate.diameter}`);
     writeNumberText("focus-state", state.focusPulse ? "charged" : "offline");
     writeNumberText("main-gate-readout", gate.name);
     writeNumberText("relay-readout", String(state.structures.relay));

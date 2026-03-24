@@ -228,13 +228,29 @@ export default function StudioPage() {
         const matched = Object.values(Genre).find(g => g.toLowerCase() === genreGuess.toLowerCase());
         if (matched) importedConfig.genre = matched;
       }
-      doCreateNewSession();
-      setTimeout(() => {
-        setConfig((prev: StoryConfig) => ({ ...prev, ...importedConfig }));
-        setActiveTab('world');
-        setWorldImportBanner(true);
-        setTimeout(() => setWorldImportBanner(false), 5000);
-      }, 50);
+      const importedSessionId = doCreateNewSession();
+      setProjects(prevProjects => prevProjects.map(project => {
+        if (!project.sessions.some(session => session.id === importedSessionId)) {
+          return project;
+        }
+
+        return {
+          ...project,
+          lastUpdate: Date.now(),
+          sessions: project.sessions.map(session =>
+            session.id === importedSessionId
+              ? {
+                  ...session,
+                  config: { ...session.config, ...importedConfig },
+                  lastUpdate: Date.now(),
+                }
+              : session,
+          ),
+        };
+      }));
+      setActiveTab('world');
+      setWorldImportBanner(true);
+      setTimeout(() => setWorldImportBanner(false), 5000);
       // Clear query param without full reload
       studioRouter.replace('/studio', { scroll: false });
     } catch {

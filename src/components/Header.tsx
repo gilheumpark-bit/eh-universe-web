@@ -109,7 +109,7 @@ export default function Header() {
               className="rounded-full border border-accent-amber/20 bg-accent-amber/10 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber transition-colors hover:bg-accent-amber/15"
               aria-label="Toggle language"
             >
-              {{ ko: "EN", en: "JP", jp: "CN", cn: "KR" }[lang] || "EN"}
+              {lang.toUpperCase()}
             </button>
           </nav>
 
@@ -120,7 +120,7 @@ export default function Header() {
               aria-label="Toggle language"
               className="rounded-full border border-accent-amber/20 bg-accent-amber/10 px-3 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber"
             >
-              {{ ko: "EN", en: "JP", jp: "CN", cn: "KR" }[lang] || "EN"}
+              {lang.toUpperCase()}
             </button>
             <button
               className="rounded-full border border-white/8 bg-white/[0.03] p-2.5 text-text-secondary"

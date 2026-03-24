@@ -88,7 +88,7 @@ body::after {
 .panel-kicker,
 .resource-label {
   color: var(--accent);
-  font-size: 11px;
+  font-size: 15px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -123,7 +123,7 @@ body::after {
   padding: 8px 14px;
   background: rgba(105, 200, 255, 0.08);
   color: var(--accent);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .resource-strip {
@@ -231,7 +231,7 @@ body::after {
   padding: 6px 10px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -259,7 +259,7 @@ body::after {
 .mini-metric span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .mini-metric strong {
@@ -310,7 +310,7 @@ body::after {
 
 .small-button {
   padding: 9px 12px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .small-button.danger,
@@ -333,7 +333,7 @@ body::after {
 
 .muted-copy {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .map-grid {
@@ -403,7 +403,7 @@ body::after {
 .objective-item span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .brief-meta-card strong,
@@ -450,7 +450,7 @@ body::after {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .situation-card {
@@ -486,7 +486,7 @@ body::after {
 
 .situation-head span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -495,7 +495,7 @@ body::after {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .situation-tags {
@@ -512,7 +512,7 @@ body::after {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.07);
   color: var(--text);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .terminal-panel {
@@ -535,7 +535,7 @@ body::after {
 
 .subpanel-head span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .terminal-meta {
@@ -555,7 +555,7 @@ body::after {
     linear-gradient(180deg, rgba(0, 8, 14, 0.94), rgba(4, 10, 21, 0.96));
   color: #e6f8ff;
   font-family: "Cascadia Mono", "Consolas", monospace;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.6;
   white-space: pre-wrap;
   overflow: auto;
@@ -664,7 +664,7 @@ body::after {
   border-radius: 999px;
   padding: 6px 10px;
   background: rgba(0, 0, 0, 0.08);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .document-frame.dark .document-meta span {
@@ -806,14 +806,14 @@ body::after {
 
 .zone-node strong {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .zone-node span {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .zone-node.selected {
@@ -862,7 +862,7 @@ body::after {
 .zone-stat span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .zone-stat strong {
@@ -901,7 +901,7 @@ body::after {
   gap: 10px;
   margin: 8px 0 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .slider-card input[type="range"] {
@@ -983,7 +983,7 @@ body::after {
   color: var(--muted);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .gate-ring-core strong {
@@ -992,7 +992,7 @@ body::after {
 
 .core-copy {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .gate-readouts {
@@ -1011,7 +1011,7 @@ body::after {
 .readout-card span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .readout-card strong {
@@ -1031,7 +1031,7 @@ body::after {
   justify-content: space-between;
   gap: 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   margin-bottom: 10px;
 }
 
@@ -1110,7 +1110,7 @@ body::after {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .status-chip {
@@ -1119,7 +1119,7 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1163,7 +1163,7 @@ body::after {
 .system-card-stat span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .system-card-stat strong {
@@ -1174,7 +1174,7 @@ body::after {
 
 .system-card-copy {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.45;
 }
 
@@ -1228,7 +1228,7 @@ body::after {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .archive-grid {
@@ -1279,7 +1279,7 @@ body::after {
   margin-top: 4px;
   color: var(--muted);
   line-height: 1.45;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .resolution-card {
@@ -1357,7 +1357,7 @@ body::after {
 .resolution-event-head span,
 .resolution-inline-note {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .resolution-mini-grid {
@@ -1378,7 +1378,7 @@ body::after {
 .resolution-mini-grid span,
 .sea-of-stars-metrics span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .sea-of-stars-card {
@@ -1419,7 +1419,7 @@ body::after {
 
 .sea-of-stars-copy span {
   color: rgba(212, 229, 255, 0.72);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -1445,7 +1445,7 @@ body::after {
 .resolution-stat span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .resolution-stat strong {

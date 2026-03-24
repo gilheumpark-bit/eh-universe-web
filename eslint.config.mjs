@@ -22,6 +22,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Nested Codex/Claude worktrees include generated app output.
+    ".claude/**",
     // Test artifacts (may not exist locally)
     "test-results/**",
     "playwright-report/**",

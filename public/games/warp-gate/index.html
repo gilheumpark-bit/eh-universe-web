@@ -1,60 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EH Warp Gate Command</title>
+  <title>EH 워프 게이트 사령부</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div class="app-shell">
     <header class="hero panel">
-      <div class="hero-kicker">EH UNIVERSE // HPG 7.0 FIELD PROTOTYPE</div>
-      <h1>Warp Gate Command</h1>
+      <div class="hero-kicker">EH UNIVERSE // HPG 7.0 현장 시제품</div>
+      <h1>워프 게이트 사령부</h1>
       <p class="hero-copy">
-        Build relay infrastructure, phase-lock the chamber at 0.51 consistency,
-        and push humanity from the Age of Ships to the Galactic Center Reach.
+        중계 인프라를 건설하고, 챔버를 0.51 일관성에 위상 고정하여,
+        인류를 함선의 시대에서 은하 중심 도달까지 이끄십시오.
       </p>
       <div class="hero-tags">
-        <span>Ship Select</span>
-        <span>Relay Build</span>
-        <span>Gate Chamber</span>
-        <span>Field Physics</span>
-        <span>SJC Verdict</span>
+        <span>함선 선택</span>
+        <span>중계기 건설</span>
+        <span>게이트 챔버</span>
+        <span>필드 물리학</span>
+        <span>SJC 판정</span>
       </div>
     </header>
 
     <section class="resource-strip panel">
       <div class="resource-card">
-        <span class="resource-label">Year</span>
+        <span class="resource-label">연도</span>
         <strong id="stat-year">2095</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Era</span>
-        <strong id="stat-era">Age of Ships</strong>
+        <span class="resource-label">시대</span>
+        <strong id="stat-era">함선의 시대</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Energy</span>
+        <span class="resource-label">에너지</span>
         <strong id="stat-energy">0</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Materials</span>
+        <span class="resource-label">자재</span>
         <strong id="stat-materials">0</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Hydrogen</span>
+        <span class="resource-label">수소</span>
         <strong id="stat-hydrogen">0</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Intel</span>
+        <span class="resource-label">정보</span>
         <strong id="stat-intel">0</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Network Span</span>
+        <span class="resource-label">네트워크 범위</span>
         <strong id="stat-span">0</strong>
       </div>
       <div class="resource-card">
-        <span class="resource-label">Ship Stress</span>
+        <span class="resource-label">함선 스트레스</span>
         <strong id="stat-stress">0</strong>
       </div>
     </section>
@@ -64,8 +64,8 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Fleet Layer</div>
-              <h2>Ship Hangar</h2>
+              <div class="panel-kicker">함대 레이어</div>
+              <h2>함선 격납고</h2>
             </div>
           </div>
           <div id="ship-list" class="ship-list"></div>
@@ -74,8 +74,8 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Infrastructure</div>
-              <h2>Build Queue</h2>
+              <div class="panel-kicker">인프라</div>
+              <h2>건설 대기열</h2>
             </div>
           </div>
           <div id="structure-list" class="stack-list"></div>
@@ -84,8 +84,8 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Core Tech</div>
-              <h2>Upgrade Deck</h2>
+              <div class="panel-kicker">핵심 기술</div>
+              <h2>업그레이드 데크</h2>
             </div>
           </div>
           <div id="upgrade-list" class="stack-list"></div>
@@ -96,10 +96,10 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Campaign Layer</div>
-              <h2>SJC Protocol Console</h2>
+              <div class="panel-kicker">캠페인 레이어</div>
+              <h2>SJC 프로토콜 콘솔</h2>
             </div>
-            <div class="pill" id="campaign-progress-pill">Campaign 1 / 10</div>
+            <div class="pill" id="campaign-progress-pill">캠페인 1 / 10</div>
           </div>
 
           <div class="campaign-grid">
@@ -108,21 +108,21 @@
             <article class="terminal-panel">
               <div class="terminal-header">
                 <div>
-                  <div class="panel-kicker">SJC Terminal</div>
-                  <h3>Evaluation Stack</h3>
+                  <div class="panel-kicker">SJC 터미널</div>
+                  <h3>평가 스택</h3>
                 </div>
                 <div class="pill" id="terminal-status-pill">IDLE</div>
               </div>
               <div class="terminal-meta">
-                <div class="terminal-meta-card"><span>Simulation Count</span><strong id="terminal-sim-count">0</strong></div>
-                <div class="terminal-meta-card"><span>Hold Clock</span><strong id="terminal-hold-time">0.0 s</strong></div>
-                <div class="terminal-meta-card"><span>Campaign</span><strong id="terminal-campaign-name">0.51 Boundary</strong></div>
+                <div class="terminal-meta-card"><span>시뮬레이션 횟수</span><strong id="terminal-sim-count">0</strong></div>
+                <div class="terminal-meta-card"><span>홀드 타이머</span><strong id="terminal-hold-time">0.0 s</strong></div>
+                <div class="terminal-meta-card"><span>캠페인</span><strong id="terminal-campaign-name">0.51 경계</strong></div>
               </div>
               <pre id="terminal-screen" class="terminal-screen"></pre>
               <div class="terminal-actions">
-                <button id="btn-tutorial" class="action-button">Run 0.51 Tutorial</button>
-                <button id="btn-evaluate" class="action-button primary">Evaluate</button>
-                <button id="btn-skip-hold" class="action-button alt">Skip Hold</button>
+                <button id="btn-tutorial" class="action-button">0.51 튜토리얼 실행</button>
+                <button id="btn-evaluate" class="action-button primary">평가</button>
+                <button id="btn-skip-hold" class="action-button alt">홀드 건너뛰기</button>
               </div>
             </article>
           </div>
@@ -130,24 +130,24 @@
           <div class="archive-layout">
             <article class="archive-panel">
               <div class="subpanel-head">
-                <strong>Document Archive</strong>
-                <span>Campaign documents and reports</span>
+                <strong>문서 아카이브</strong>
+                <span>캠페인 문서 및 보고서</span>
               </div>
               <div id="archive-list" class="archive-list"></div>
             </article>
 
             <article class="document-panel">
               <div class="subpanel-head">
-                <strong>Document Viewer</strong>
-                <span>Click a file or relic to inspect it</span>
+                <strong>문서 뷰어</strong>
+                <span>파일이나 유물을 클릭하여 열람하세요</span>
               </div>
               <div id="document-viewer" class="document-viewer"></div>
             </article>
 
             <article class="legacy-panel">
               <div class="subpanel-head">
-                <strong>Generational Relay</strong>
-                <span>Inherited tools and relic buffs</span>
+                <strong>세대 계승</strong>
+                <span>계승된 도구와 유물 효과</span>
               </div>
               <div id="legacy-list" class="legacy-list"></div>
             </article>
@@ -157,10 +157,10 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Route Layer</div>
-              <h2>Galaxy Zone Map</h2>
+              <div class="panel-kicker">항로 레이어</div>
+              <h2>은하 구역 지도</h2>
             </div>
-            <div class="pill" id="selected-zone-pill">No zone selected</div>
+            <div class="pill" id="selected-zone-pill">선택된 구역 없음</div>
           </div>
           <div class="map-grid">
             <div id="zone-map" class="zone-map"></div>
@@ -171,39 +171,39 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Warp Layer</div>
-              <h2>Gate Chamber</h2>
+              <div class="panel-kicker">워프 레이어</div>
+              <h2>게이트 챔버</h2>
             </div>
             <div class="pill verdict-pill" id="verdict-pill">SJC // HOLD</div>
           </div>
           <div class="chamber-grid">
             <div class="control-cluster">
               <div class="slider-card">
-                <label for="phase-slider">Phase Lock</label>
-                <div class="slider-meta"><span>phi alignment</span><strong id="phase-value">51</strong></div>
+                <label for="phase-slider">위상 고정</label>
+                <div class="slider-meta"><span>phi 정렬</span><strong id="phase-value">51</strong></div>
                 <input id="phase-slider" type="range" min="0" max="100" value="51">
               </div>
               <div class="slider-card">
-                <label for="curvature-slider">Curvature Feed</label>
-                <div class="slider-meta"><span>psi injection</span><strong id="curvature-value">50</strong></div>
+                <label for="curvature-slider">곡률 공급</label>
+                <div class="slider-meta"><span>psi 주입</span><strong id="curvature-value">50</strong></div>
                 <input id="curvature-slider" type="range" min="0" max="100" value="50">
               </div>
               <div class="slider-card">
-                <label for="coolant-slider">Coolant / S-Ondol Bias</label>
-                <div class="slider-meta"><span>entropy bleed</span><strong id="coolant-value">55</strong></div>
+                <label for="coolant-slider">냉각 / S-Ondol 편향</label>
+                <div class="slider-meta"><span>엔트로피 방출</span><strong id="coolant-value">55</strong></div>
                 <input id="coolant-slider" type="range" min="0" max="100" value="55">
               </div>
               <div class="slider-card">
-                <label for="relay-slider">Relay Sync</label>
-                <div class="slider-meta"><span>network harmony</span><strong id="relay-value">44</strong></div>
+                <label for="relay-slider">중계 동기화</label>
+                <div class="slider-meta"><span>네트워크 조화</span><strong id="relay-value">44</strong></div>
                 <input id="relay-slider" type="range" min="0" max="100" value="44">
               </div>
 
               <div class="action-grid">
-                <button id="btn-calibrate" class="action-button">Calibrate Chamber</button>
-                <button id="btn-charge" class="action-button">Charge Gate</button>
-                <button id="btn-focus" class="action-button alt">Reverse Focus</button>
-                <button id="btn-jump" class="action-button primary">Commit Jump</button>
+                <button id="btn-calibrate" class="action-button">챔버 보정</button>
+                <button id="btn-charge" class="action-button">게이트 충전</button>
+                <button id="btn-focus" class="action-button alt">역방향 집속</button>
+                <button id="btn-jump" class="action-button primary">점프 실행</button>
               </div>
             </div>
 
@@ -219,19 +219,19 @@
               </div>
               <div class="gate-readouts">
                 <div class="readout-card">
-                  <span>Focus Pulse</span>
-                  <strong id="focus-state">offline</strong>
+                  <span>집속 펄스</span>
+                  <strong id="focus-state">오프라인</strong>
                 </div>
                 <div class="readout-card">
-                  <span>Main Gate</span>
+                  <span>메인 게이트</span>
                   <strong id="main-gate-readout">Gate I</strong>
                 </div>
                 <div class="readout-card">
-                  <span>Relays</span>
+                  <span>중계기</span>
                   <strong id="relay-readout">0</strong>
                 </div>
                 <div class="readout-card">
-                  <span>Gate Seeds</span>
+                  <span>게이트 시드</span>
                   <strong id="seed-readout">0</strong>
                 </div>
               </div>
@@ -240,35 +240,35 @@
             <div class="verdict-panel">
               <div class="metric-block">
                 <div class="metric-head">
-                  <span>phi // hull stability</span>
+                  <span>phi // 선체 안정성</span>
                   <strong id="metric-phi-label">0.000</strong>
                 </div>
                 <div class="metric-bar"><div id="metric-phi-fill" class="metric-fill"></div></div>
               </div>
               <div class="metric-block">
                 <div class="metric-head">
-                  <span>psi // gate curvature</span>
+                  <span>psi // 게이트 곡률</span>
                   <strong id="metric-psi-label">0.000</strong>
                 </div>
                 <div class="metric-bar"><div id="metric-psi-fill" class="metric-fill"></div></div>
               </div>
               <div class="metric-block">
                 <div class="metric-head">
-                  <span>entropy</span>
+                  <span>엔트로피</span>
                   <strong id="metric-entropy-label">0.000</strong>
                 </div>
                 <div class="metric-bar"><div id="metric-entropy-fill" class="metric-fill entropy"></div></div>
               </div>
               <div class="metric-block">
                 <div class="metric-head">
-                  <span>consistency target</span>
+                  <span>일관성 목표</span>
                   <strong id="metric-consistency-label">0.510</strong>
                 </div>
                 <div class="metric-bar"><div id="metric-consistency-fill" class="metric-fill consistency"></div></div>
               </div>
               <div class="metric-block">
                 <div class="metric-head">
-                  <span>branch probability</span>
+                  <span>분기 확률</span>
                   <strong id="metric-branch-label">0.000</strong>
                 </div>
                 <div class="metric-bar"><div id="metric-branch-fill" class="metric-fill branch"></div></div>
@@ -282,29 +282,29 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Gameplay Physics</div>
-              <h2>Field Systems</h2>
+              <div class="panel-kicker">게임플레이 물리학</div>
+              <h2>필드 시스템</h2>
             </div>
-            <div class="pill" id="systems-pill">Systems // standby</div>
+            <div class="pill" id="systems-pill">시스템 // 대기</div>
           </div>
           <div id="systems-grid" class="systems-grid"></div>
           <div class="systems-actions">
-            <button id="btn-sortie" class="action-button">Run Sortie</button>
-            <button id="btn-thermal-pulse" class="action-button alt">Thermal Pulse</button>
-            <button id="btn-support-cycle" class="action-button">Support Cycle</button>
-            <button id="btn-orbit-step" class="action-button primary">Orbit Step</button>
+            <button id="btn-sortie" class="action-button">출격 실행</button>
+            <button id="btn-thermal-pulse" class="action-button alt">열 펄스</button>
+            <button id="btn-support-cycle" class="action-button">지원 순환</button>
+            <button id="btn-orbit-step" class="action-button primary">궤도 이동</button>
           </div>
         </section>
 
         <section class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Command Layer</div>
-              <h2>Mission Archive</h2>
+              <div class="panel-kicker">지휘 레이어</div>
+              <h2>임무 아카이브</h2>
             </div>
             <div class="panel-actions">
-              <button id="btn-save" class="small-button">Save</button>
-              <button id="btn-reset" class="small-button danger">Reset</button>
+              <button id="btn-save" class="small-button">저장</button>
+              <button id="btn-reset" class="small-button danger">초기화</button>
             </div>
           </div>
 
@@ -312,11 +312,11 @@
 
           <div class="archive-grid">
             <div class="inset-panel">
-              <h3>Jump Feed</h3>
+              <h3>점프 기록</h3>
               <div id="mission-log" class="mission-log"></div>
             </div>
             <div class="inset-panel">
-              <h3>Latest Resolution</h3>
+              <h3>최신 판정 결과</h3>
               <div id="resolution-card" class="resolution-card"></div>
             </div>
           </div>
