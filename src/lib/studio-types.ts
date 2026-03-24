@@ -222,6 +222,9 @@ export interface StoryConfig {
   manuscripts?: EpisodeManuscript[];
   chapterAnalyses?: ChapterAnalysis[];
   episodeSceneSheets?: EpisodeSceneSheet[];
+  // NOA-PRISM v1.1 — Writing Quality Control
+  prismScale?: number;      // 0-150, default 120 (expansion density)
+  prismPreserve?: number;   // 0-150, default 100 (preservation level)
 }
 
 // Episode manuscript entry

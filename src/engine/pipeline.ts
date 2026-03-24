@@ -303,6 +303,94 @@ function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined,
 }
 
 // ============================================================
+// NOA-PRISM v1.1 — Writing Quality Control System
+// ============================================================
+
+function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
+  const scale = config.prismScale ?? 120;
+  const preserve = config.prismPreserve ?? 100;
+
+  const parts: string[] = [];
+
+  // PRISM-CORE: Always-on writing rules
+  parts.push(`[NOA-PRISM v1.1 — PRISM-CORE]`);
+  if (isKO) {
+    parts.push(`- 원문 보존 우선: 원문의 단어/문장/단락을 허가 없이 삭제·재배치 금지`);
+    parts.push(`- 시점 잠금 (POV Lock): 설정된 시점 캐릭터 외 내면 서술 금지`);
+    parts.push(`- 캐릭터 말맛 보존: 등록된 말투/대사 스타일을 절대 평준화하지 마라`);
+    parts.push(`- 설정 환각 금지: 등록되지 않은 지명/인명/설정을 창작하지 마라`);
+    parts.push(`- AI 냄새 차단: "그러나", "한편", "결론적으로" 등 요약형 연결사 사용 금지`);
+    parts.push(`- 감정은 직접 명명 대신 장면으로: "슬펐다" 대신 행동/감각/환경으로 전달`);
+  } else {
+    parts.push(`- Preserve original: Never delete/reorder words/sentences/paragraphs without permission`);
+    parts.push(`- POV Lock: No inner narration outside the set POV character`);
+    parts.push(`- Character voice preservation: Never flatten registered speech styles`);
+    parts.push(`- No setting hallucination: Do not invent unregistered names/places/lore`);
+    parts.push(`- AI tone suppression: Avoid summary-style connectors ("however", "in conclusion")`);
+    parts.push(`- Show emotion through scenes: Use action/sensation/environment instead of naming emotions`);
+  }
+
+  // Genre rhythm profile
+  const genrePreset = GENRE_PRESETS[config.genre];
+  if (genrePreset) {
+    parts.push(`- ${isKO ? '장르 리듬' : 'Genre rhythm'}: ${genrePreset.pacing}`);
+  }
+
+  // PRISM-SCALE: Numeric control
+  parts.push('');
+  parts.push(`[PRISM-SCALE — Preserve: ${preserve} / Expand: ${scale}]`);
+
+  // Preserve mode instructions
+  if (preserve >= 100) {
+    parts.push(isKO
+      ? `- 보존 ${preserve}: 원문 삭제 금지, 순서 변경 금지.`
+      : `- Preserve ${preserve}: No deletion, no reordering.`);
+  } else {
+    parts.push(isKO
+      ? `- 보존 ${preserve}: 정리/축약 모드. 원문 압축 허용.`
+      : `- Preserve ${preserve}: Compression mode. Original text condensation allowed.`);
+  }
+
+  // Scale mode instructions
+  if (scale < 100) {
+    parts.push(isKO
+      ? `- 확장 ${scale}: 정리/축약 모드. 원문 압축 허용.`
+      : `- Scale ${scale}: Compression mode. Condensation allowed.`);
+  } else if (scale === 100) {
+    parts.push(isKO
+      ? `- 확장 ${scale}: 원문 보존. 삭제 금지, 순서 변경 금지.`
+      : `- Scale ${scale}: Preserve original. No deletion, no reordering.`);
+  } else if (scale <= 115) {
+    parts.push(isKO
+      ? `- 확장 ${scale}: 경량 확장. 감정/행동/묘사 소폭 보강.`
+      : `- Scale ${scale}: Light expansion. Minor reinforcement of emotion/action/description.`);
+  } else if (scale <= 130) {
+    parts.push(isKO
+      ? `- 확장 ${scale}: 표준 확장. 장면 밀도 상승, 감정선 보강, 연결 강화.`
+      : `- Scale ${scale}: Standard expansion. Increased scene density, emotional arc reinforcement, stronger transitions.`);
+  } else {
+    parts.push(isKO
+      ? `- 확장 ${scale}: 고밀도 확장. 감각/내면/상황 디테일 대폭 보강. 새 사건 제한.`
+      : `- Scale ${scale}: High-density expansion. Major reinforcement of sensory/inner/situational detail. Limit new events.`);
+  }
+
+  // PRISM-WRITE execution summary
+  parts.push('');
+  parts.push(`[PRISM-WRITE]`);
+  if (isKO) {
+    parts.push(`- 확장 시 새 사건보다 기존 장면의 밀도를 높여라`);
+    parts.push(`- 추가 묘사는 캐릭터 행동, 감각 디테일, 환경 반응 순서로 우선`);
+    parts.push(`- 원문 문장 사이에 삽입하되 흐름을 끊지 마라`);
+  } else {
+    parts.push(`- When expanding, increase density of existing scenes rather than adding new events`);
+    parts.push(`- Prioritize: character action, sensory detail, environmental response`);
+    parts.push(`- Insert between existing sentences without breaking flow`);
+  }
+
+  return '\n' + parts.join('\n');
+}
+
+// ============================================================
 // EH Engine v1.4 — Rule Level System (Lv1~5)
 // Lv1: 미적용, Lv2: 10%, Lv3: 20%, Lv4: 30%, Lv5: 40%
 // ============================================================
@@ -560,6 +648,9 @@ export function buildSystemInstruction(
   // Style DNA injection
   const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
 
+  // NOA-PRISM v1.1 injection
+  const prismBlock = buildPrismBlock(config, isKO);
+
   // Publish platform injection
   const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, isKO);
 
@@ -603,6 +694,7 @@ ${sceneDirectionBlock}
 ${simulatorBlock}
 ${worldTierBlock}
 ${styleDnaBlock}
+${prismBlock}
 ${publishPlatformBlock}
 ${dialogueGuide}
 

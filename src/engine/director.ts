@@ -316,6 +316,30 @@ function checkPlatformRules(text: string, publishPlatform?: PublishPlatform): Di
 // PART 4 — Main Analyzer
 // ============================================================
 
+// ============================================================
+// PART 5 — NOA-PRISM v1.1 Shrinkage Check
+// ============================================================
+
+export function checkPrismShrinkage(
+  inputLength: number,
+  outputLength: number,
+  prismScale: number = 120
+): DirectorFinding | null {
+  if (prismScale >= 100 && outputLength < inputLength) {
+    const ratio = Math.round((outputLength / inputLength) * 100);
+    return {
+      kind: 'PRISM_SHRINKAGE',
+      severity: 4,
+      message: `원문 축소 감지: PRISM-${prismScale} 모드에서 출력(${outputLength.toLocaleString()}자)이 입력(${inputLength.toLocaleString()}자)보다 짧음 (${ratio}%)`,
+    };
+  }
+  return null;
+}
+
+// ============================================================
+// PART 6 — Main Analyzer (renumbered from PART 4)
+// ============================================================
+
 export function analyzeManuscript(text: string, publishPlatform?: PublishPlatform): DirectorReport {
   if (!text || text.trim().length < 50) {
     return { findings: [], stats: {}, score: 100 };

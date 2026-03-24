@@ -5,7 +5,7 @@ import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
-import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp, Share2, Check } from 'lucide-react';
+import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp, Share2, Check, Shield } from 'lucide-react';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -600,6 +600,65 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               </div>
               <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
             </div>
+          </div>
+        </div>
+
+        {/* NOA-PRISM v1.1 — Writing Quality Control */}
+        <div className="space-y-6 pt-6 border-t border-zinc-800">
+          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+            <Shield className="w-4 h-4" /> {tl('planningExtra.prismTitle')}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            <div className="space-y-4">
+              <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
+                <span>{tl('planningExtra.prismPreserve')}</span>
+                <span className="font-[family-name:var(--font-mono)]">{config.prismPreserve ?? 100}</span>
+              </div>
+              <input
+                type="range" min="0" max="150" step="5"
+                aria-label={tl('planningExtra.prismPreserve')}
+                className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none"
+                value={config.prismPreserve ?? 100}
+                onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase">
+                <span>{tl('planningExtra.prismExpand')}</span>
+                <span className="font-[family-name:var(--font-mono)]">{config.prismScale ?? 120}</span>
+              </div>
+              <input
+                type="range" min="0" max="150" step="5"
+                aria-label={tl('planningExtra.prismExpand')}
+                className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none"
+                value={config.prismScale ?? 120}
+                onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { label: tl('planningExtra.prism100'), preserve: 100, scale: 100 },
+              { label: tl('planningExtra.prism105'), preserve: 100, scale: 105 },
+              { label: tl('planningExtra.prism120'), preserve: 100, scale: 120 },
+              { label: tl('planningExtra.prism135'), preserve: 100, scale: 135 },
+              { label: tl('planningExtra.prism150'), preserve: 100, scale: 150 },
+            ] as const).map(p => {
+              const isActive = (config.prismPreserve ?? 100) === p.preserve && (config.prismScale ?? 120) === p.scale;
+              return (
+                <button
+                  key={p.scale}
+                  onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${
+                    isActive
+                      ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400'
+                      : 'bg-zinc-900 border border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                  }`}
+                >
+                  PRISM-{p.scale} {p.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
