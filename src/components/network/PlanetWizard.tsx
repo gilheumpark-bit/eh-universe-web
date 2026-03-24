@@ -40,9 +40,17 @@ const FIRST_LOG_TYPES: FirstLogDraft["reportType"][] = [
 ];
 
 const STEP_TITLES = {
-  ko: ["행성 기본 정보", "현재 상태", "대표 설정", "첫 관측 로그"],
-  en: ["Planet Basics", "Current State", "Signature Setting", "First Observation Log"],
+  ko: ["행성 기본 정보", "세부 설정", "대가 구조 정의", "통치 목표 선언", "첫 관측 로그"],
+  en: ["Planet Basics", "Detail Settings", "Cost Structure", "Governance Goal", "First Observation Log"],
 };
+
+const TRANSCENDENCE_COST_OPTIONS: { value: string; ko: string; en: string }[] = [
+  { value: "memory_loss", ko: "기억 상실", en: "Memory Loss" },
+  { value: "sense_loss", ko: "감각 소실", en: "Sense Loss" },
+  { value: "humanity_decline", ko: "인간성 하락", en: "Humanity Decline" },
+  { value: "time_reduction", ko: "시간 단축", en: "Time Reduction" },
+  { value: "relationship_collapse", ko: "관계 붕괴", en: "Relationship Collapse" },
+];
 
 // ============================================================
 // PART 1 - LOCAL STATE AND HELPERS
@@ -68,6 +76,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
     featuredFaction: "",
     featuredCharacter: "",
     transcendenceCost: "",
+    transcendenceCosts: [] as string[],
   });
   const [firstLog, setFirstLog] = useState<FirstLogDraft>({
     title: "",
@@ -147,7 +156,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
     if (step === 1) {
       return Boolean(planet.summary.trim());
     }
-    if (step === 3) {
+    if (step === 4) {
       return Boolean(firstLog.title.trim() && firstLog.eventCategory.trim() && firstLog.content.trim());
     }
     return true;
@@ -189,6 +198,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           representativeTags,
           tags: planetTags,
           coreRules,
+          transcendenceCosts: planet.transcendenceCosts,
         },
         firstLog,
       });
@@ -241,20 +251,6 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             onChange={(event) => setPlanet((current) => ({ ...current, civilizationLevel: event.target.value }))}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
-        </label>
-        <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "운영 목표" : "Goal"}</div>
-          <select
-            value={planet.goal}
-            onChange={(event) => setPlanet((current) => ({ ...current, goal: event.target.value as PlanetGoal }))}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
-          >
-            {PLANET_GOALS.map((goal) => (
-              <option key={goal} value={goal}>
-                {pickNetworkLabel(PLANET_GOAL_LABELS[goal], lang)}
-              </option>
-            ))}
-          </select>
         </label>
       </div>
     ) : step === 1 ? (
@@ -342,9 +338,6 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             placeholder={lang === "ko" ? "장르, 키워드 등 (Enter로 추가)" : "Genre, keywords, etc. (press Enter)"}
           />
         </div>
-      </div>
-    ) : step === 2 ? (
-      <div className="grid gap-4 md:grid-cols-2">
         <label className="block">
           <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "대표 세력" : "Featured Faction"}</div>
           <input
@@ -361,14 +354,102 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
-        <label className="block md:col-span-2">
-          <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "초월 대가" : "Transcendence Cost"}</div>
+      </div>
+    ) : step === 2 ? (
+      <div className="space-y-6">
+        <div>
+          <p className="text-sm text-text-secondary">
+            {lang === "ko"
+              ? "초월 시 상실 요소를 지정하세요. EH 세계관의 대가 구조에 해당합니다."
+              : "Designate the cost elements upon transcendence. These map to EH cost structures."}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {TRANSCENDENCE_COST_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
+                planet.transcendenceCosts.includes(option.value)
+                  ? "border-accent-amber/40 bg-accent-amber/10 text-text-primary"
+                  : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={planet.transcendenceCosts.includes(option.value)}
+                onChange={(event) => {
+                  setPlanet((current) => ({
+                    ...current,
+                    transcendenceCosts: event.target.checked
+                      ? [...current.transcendenceCosts, option.value]
+                      : current.transcendenceCosts.filter((v) => v !== option.value),
+                  }));
+                }}
+                className="accent-accent-amber"
+              />
+              {lang === "ko" ? option.ko : option.en}
+            </label>
+          ))}
+        </div>
+        <label className="block">
+          <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "추가 대가 설명 (선택)" : "Additional Cost Description (optional)"}</div>
           <textarea
             value={planet.transcendenceCost}
             onChange={(event) => setPlanet((current) => ({ ...current, transcendenceCost: event.target.value }))}
-            className="min-h-[120px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
+            className="min-h-[100px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
+            placeholder={lang === "ko" ? "선택한 대가에 대한 부연 설명" : "Additional notes on selected costs"}
           />
         </label>
+      </div>
+    ) : step === 3 ? (
+      <div className="space-y-6">
+        <div>
+          <p className="text-sm text-text-secondary">
+            {lang === "ko"
+              ? "이 행성의 운영 목표를 선언하세요. NMF는 통치자의 의도를 기록하고, 정산 시 이를 기준으로 평가합니다."
+              : "Declare the governance goal for this planet. NMF records the governor's intent and evaluates against it during settlement."}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {PLANET_GOALS.map((goal) => (
+            <label
+              key={goal}
+              className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-5 py-4 transition ${
+                planet.goal === goal
+                  ? "border-accent-amber/40 bg-accent-amber/10 text-text-primary"
+                  : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
+              }`}
+            >
+              <input
+                type="radio"
+                name="planet-goal"
+                value={goal}
+                checked={planet.goal === goal}
+                onChange={() => setPlanet((current) => ({ ...current, goal }))}
+                className="accent-accent-amber"
+              />
+              <div>
+                <div className="text-sm font-medium">{pickNetworkLabel(PLANET_GOAL_LABELS[goal], lang)}</div>
+                <div className="mt-1 text-xs text-text-tertiary">
+                  {goal === "maintain"
+                    ? lang === "ko" ? "현재 상태를 보존하고 안정적으로 운영합니다." : "Preserve current state and operate stably."
+                    : goal === "develop"
+                      ? lang === "ko" ? "성장과 확장을 목표로 운영합니다." : "Operate toward growth and expansion."
+                      : goal === "collapse"
+                        ? lang === "ko" ? "의도적 해체 또는 붕괴를 허용합니다." : "Allow intentional dismantling or collapse."
+                        : lang === "ko" ? "실험적 운영을 허용합니다. 결과는 미확정입니다." : "Allow experimental operation. Results are undetermined."}
+                </div>
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-5 py-4">
+          <p className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.1em] text-text-tertiary">
+            {lang === "ko"
+              ? "\"통치자는 신이 아니다. 통치자는 관리자다.\" — NMF 운영 원칙"
+              : "\"A governor is not a god. A governor is a manager.\" — NMF Operational Principle"}
+          </p>
+        </div>
       </div>
     ) : (
       <div className="grid gap-4 md:grid-cols-2">
@@ -505,12 +586,12 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             </span>
           )}
           <span className="font-[family-name:var(--font-mono)] text-xs tracking-[0.18em] text-text-tertiary uppercase">
-            STEP {step + 1} / 4
+            STEP {step + 1} / 5
           </span>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-3 md:grid-cols-4">
+      <div className="mt-8 grid gap-3 md:grid-cols-5">
         {stepTitles.map((title, index) => (
           <button
             key={title}
@@ -543,10 +624,10 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           {lang === "ko" ? "이전" : "Back"}
         </button>
         <div className="flex flex-wrap gap-3">
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
-              onClick={() => setStep((current) => Math.min(3, current + 1))}
+              onClick={() => setStep((current) => Math.min(4, current + 1))}
               disabled={!canMoveNext || submitting}
               className="premium-button"
             >

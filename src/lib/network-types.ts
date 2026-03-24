@@ -100,6 +100,7 @@ export interface PlanetRecord {
   featuredFaction?: string;
   featuredCharacter?: string;
   transcendenceCost?: string;
+  transcendenceCosts?: string[];
   stats: PlanetStats;
   createdAt: string;
   updatedAt: string;
@@ -221,6 +222,7 @@ export interface PlanetWizardDraft {
   featuredFaction: string;
   featuredCharacter: string;
   transcendenceCost: string;
+  transcendenceCosts: string[];
 }
 
 export interface FirstLogDraft {

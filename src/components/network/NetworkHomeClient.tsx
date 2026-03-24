@@ -234,7 +234,10 @@ export function NetworkHomeClient() {
         <section className="premium-panel p-6 md:p-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <div className="site-kicker">{lang === "ko" ? "세계관 기반 관측 네트워크" : "Worldbuilding Observation Network"}</div>
+              <div className="site-kicker">NMF — Narrative Management Foundation</div>
+              <p className="mt-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.1em] text-text-tertiary">
+                {lang === "ko" ? "기록하라. 관리하라. 정산하라." : "Narrate. Manage. Finalize."}
+              </p>
               <h1 className="site-title mt-3 text-4xl font-semibold md:text-5xl">
                 {lang === "ko"
                   ? "행성을 만들고, 첫 로그를 남기고, 정산으로 세계를 쌓아가세요."
@@ -569,6 +572,15 @@ export function NetworkHomeClient() {
                   );
                 })}
           </div>
+        </section>
+        {/* NMF Footer */}
+        <section className="mt-4 flex items-center justify-center">
+          <Link
+            href="/network/guidelines"
+            className="font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
+          >
+            {lang === "ko" ? "NMF 2차 창작 가이드라인" : "NMF Creative Guidelines"} &rarr;
+          </Link>
         </section>
       </div>
     </main>

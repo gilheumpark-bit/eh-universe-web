@@ -184,6 +184,7 @@ export async function createPlanetWithFirstLog(input: CreatePlanetWithFirstLogIn
     featuredFaction: normalizeOptionalText(input.planet.featuredFaction),
     featuredCharacter: normalizeOptionalText(input.planet.featuredCharacter),
     transcendenceCost: normalizeOptionalText(input.planet.transcendenceCost),
+    transcendenceCosts: normalizeStringArray(input.planet.transcendenceCosts, 5),
     stats: {
       logCount: 1,
       settlementCount: 0,
