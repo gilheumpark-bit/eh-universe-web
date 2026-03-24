@@ -58,13 +58,13 @@ export default function StudioDocsView({ lang }: Props) {
         {/* TOC sidebar */}
         <aside className="lg:w-48 shrink-0">
           <div className="lg:sticky lg:top-20">
-            <h2 className="font-[family-name:var(--font-mono)] text-[10px] font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
+            <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
               {isKO ? "목차" : "Contents"}
             </h2>
             <nav className="space-y-0.5">
               {secs.map(s => (
                 <a key={s.id} href={`#doc-${s.id}`}
-                  className={`block py-1 px-2 rounded text-[10px] transition-colors font-[family-name:var(--font-mono)] ${
+                  className={`block py-1.5 px-2.5 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
                     activeId === s.id
                       ? "text-accent-purple bg-accent-purple/10 font-bold border-l-2 border-accent-purple"
                       : "text-text-tertiary hover:text-text-secondary"
@@ -79,22 +79,22 @@ export default function StudioDocsView({ lang }: Props) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="mb-8">
-            <span className="inline-block px-2 py-0.5 text-[9px] font-bold tracking-widest text-accent-purple border border-accent-purple/30 rounded font-[family-name:var(--font-mono)] mb-2">
+            <span className="inline-block px-2.5 py-1 text-[11px] font-bold tracking-widest text-accent-purple border border-accent-purple/30 rounded font-[family-name:var(--font-mono)] mb-2">
               v1.1
             </span>
-            <h1 className="font-[family-name:var(--font-mono)] text-2xl font-black tracking-tight mb-1">
+            <h1 className="font-[family-name:var(--font-mono)] text-3xl font-black tracking-tight mb-1">
               NOA Studio {isKO ? "사용설명서" : "User Guide"}
             </h1>
-            <p className="text-text-tertiary text-xs">{isKO ? "AI 소설 창작 워크벤치 — 전체 기능 가이드" : "AI Novel Writing Workbench — Full Feature Guide"}</p>
+            <p className="text-text-tertiary text-sm">{isKO ? "AI 소설 창작 워크벤치 — 전체 기능 가이드" : "AI Novel Writing Workbench — Full Feature Guide"}</p>
           </div>
 
           <div className="space-y-10">
             {secs.map(s => (
               <section key={s.id} id={`doc-${s.id}`}>
-                <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold tracking-tight mb-3 text-text-primary border-l-2 border-accent-purple pl-3">
+                <h2 className="font-[family-name:var(--font-mono)] text-xl font-bold tracking-tight mb-4 text-text-primary border-l-2 border-accent-purple pl-4">
                   {s.title}
                 </h2>
-                <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-line pl-3">
+                <div className="text-base text-text-secondary leading-relaxed whitespace-pre-line pl-4">
                   {s.content}
                 </div>
               </section>
