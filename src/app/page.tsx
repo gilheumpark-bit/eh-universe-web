@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2A } from "@/lib/LangContext";
 
 const stats = {
   ko: [
@@ -153,7 +153,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {stats[lang].map((item) => (
+                  {L2A(stats, lang).map((item) => (
                     <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-5">
                       <div className="font-[family-name:var(--font-display)] text-[1.9rem] font-bold leading-none text-text-primary">
                         {item.value}
@@ -270,7 +270,7 @@ export default function Home() {
               <p className="max-w-xl text-sm leading-7 text-text-tertiary md:text-right">{t.numbersBody}</p>
             </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats[lang].map((item) => (
+              {L2A(stats, lang).map((item) => (
                 <div key={item.label} className="premium-link-card p-5 sm:p-6">
                   <div className="whitespace-nowrap font-[family-name:var(--font-display)] text-[2rem] font-bold text-text-primary">
                     {item.value}
@@ -293,7 +293,7 @@ export default function Home() {
             <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.activationHeadline}</h2>
             <p className="mt-4 text-sm leading-7 text-text-tertiary sm:text-base">{t.activationBody}</p>
             <div className="mt-8 grid gap-4">
-              {onboardingSteps[lang].map((item) => (
+              {L2A(onboardingSteps, lang).map((item) => (
                 <Link key={item.title} href={item.href} className="premium-link-card group flex items-start gap-4 p-5 md:p-6">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/10 font-[family-name:var(--font-mono)] text-sm tracking-[0.16em] text-accent-amber">
                     {item.icon}
@@ -313,7 +313,7 @@ export default function Home() {
             <p className="site-kicker">{t.exploreTitle}</p>
             <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.exploreHeadline}</h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {exploreLinks[lang].map((item) => {
+              {L2A(exploreLinks, lang).map((item) => {
                 const isExternal = item.href.startsWith("http");
                 const inner = (
                   <>

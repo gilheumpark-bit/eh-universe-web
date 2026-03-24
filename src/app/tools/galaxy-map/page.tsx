@@ -2,7 +2,7 @@
 
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
 
 /* ─── ZONE DATA ─── */
 const ZONES = [
@@ -256,16 +256,16 @@ export default function GalaxyMapPage() {
                       {t.tier} / {t.zone}
                     </div>
                     <div className="font-bold text-base mb-2" style={{ color: t.color }}>
-                      {t.name[lang]}
+                      {L2(t.name, lang)}
                     </div>
                     <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-line mb-3">
-                      {t.desc[lang]}
+                      {L2(t.desc, lang)}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {t.specs.map((s, i) => (
                         <div key={i} className="border border-border rounded px-3 py-2 text-center bg-bg-secondary min-w-[80px]">
                           <div className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: t.color }}>{s.val}</div>
-                          <div className="text-[9px] text-text-tertiary tracking-wider mt-0.5">{s.label[lang]}</div>
+                          <div className="text-[9px] text-text-tertiary tracking-wider mt-0.5">{L2(s.label, lang)}</div>
                         </div>
                       ))}
                     </div>
@@ -339,7 +339,7 @@ export default function GalaxyMapPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {CALCS.map((c, i) => (
                   <div key={i} className="flex justify-between items-center border border-border rounded px-4 py-3 bg-bg-primary">
-                    <span className="text-xs text-text-tertiary">{c.label[lang]}</span>
+                    <span className="text-xs text-text-tertiary">{L2(c.label, lang)}</span>
                     <span className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: c.color }}>{c.val}</span>
                   </div>
                 ))}

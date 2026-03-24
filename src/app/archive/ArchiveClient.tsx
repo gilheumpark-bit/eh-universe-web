@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
 import { createT } from "@/lib/i18n";
 
 const categories = [
@@ -146,12 +146,12 @@ export default function ArchiveClient() {
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
               <button key={cat.id} onClick={() => changeCategory(cat.id)}
-                aria-label={`${cat.label} — ${cat.sublabel[lang]}`}
+                aria-label={`${cat.label} — ${L2(cat.sublabel, lang)}`}
                 aria-current={activeCategory === cat.id ? "true" : undefined}
                 className={`w-full text-left flex items-center gap-2 py-2 px-3 rounded text-sm transition-colors ${activeCategory === cat.id ? "bg-bg-tertiary text-accent-purple" : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"}`}>
                 <span aria-hidden="true">{cat.icon}</span>
                 <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider">{cat.label}</span>
-                <span className="text-text-tertiary text-xs ml-auto">{cat.sublabel[lang]}</span>
+                <span className="text-text-tertiary text-xs ml-auto">{L2(cat.sublabel, lang)}</span>
               </button>
             ))}
           </nav>
@@ -188,7 +188,7 @@ export default function ArchiveClient() {
           <div className="mx-auto max-w-4xl">
             <div className="doc-header rounded-t-[24px] mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
-              {t('archivePage.category')}: {currentCategory.label} — {currentCategory.sublabel[lang]}
+              {t('archivePage.category')}: {currentCategory.label} — {L2(currentCategory.sublabel, lang)}
             </div>
 
             <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-8">
@@ -201,11 +201,11 @@ export default function ArchiveClient() {
                   const href = `/archive/${article.slug}`;
                   return (
                     <Link key={article.slug} href={href}
-                      aria-label={`${article.title[lang]} — ${article.level}`}
+                      aria-label={`${L2(article.title, lang)} — ${article.level}`}
                       className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
                       <div className="flex items-center gap-3">
                         <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>
-                        <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{article.title[lang]}</span>
+                        <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
                       </div>
                       <BadgeLevel level={article.level} />
                     </Link>

@@ -3,7 +3,7 @@
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
 import { articles, getArticleTitle } from "@/lib/articles";
 
 export default function ArticleClient({ slug }: { slug: string }) {
@@ -59,17 +59,17 @@ export default function ArticleClient({ slug }: { slug: string }) {
 
           <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
             <h1 className="site-title text-2xl font-bold tracking-tight mb-8">
-              {article.title[lang]}
+              {L2(article.title, lang)}
             </h1>
 
             {article.image && (
               <div className="mb-8 overflow-hidden rounded-[22px] border border-white/8 shadow-2xl">
-                <Image src={article.image} alt={article.title[lang]} width={800} height={450} className="w-full h-auto" />
+                <Image src={article.image} alt={L2(article.title, lang)} width={800} height={450} className="w-full h-auto" />
               </div>
             )}
 
             <div className="whitespace-pre-line text-text-secondary leading-relaxed text-sm">
-              {article.content[lang]}
+              {L2(article.content, lang)}
             </div>
 
             {article.related && article.related.length > 0 && (
@@ -96,7 +96,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
                         <span className={`badge ${relLvl} text-[10px] px-1 py-0`}>
                           {rel.level.charAt(0)}
                         </span>
-                        {getArticleTitle(relSlug, lang)}
+                        {getArticleTitle(relSlug, lang === "ko" ? "ko" : "en")}
                       </Link>
                     );
                   })}

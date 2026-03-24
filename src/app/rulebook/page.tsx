@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2A } from "@/lib/LangContext";
 import { useState, useEffect } from "react";
 
 const sections = {
@@ -30,7 +30,7 @@ const sections = {
 export default function RulebookPage() {
   const { lang } = useLang();
   const en = lang === "en";
-  const secs = sections[lang];
+  const secs = L2A(sections, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
   useEffect(() => {

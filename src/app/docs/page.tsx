@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2A } from "@/lib/LangContext";
 import { useState, useEffect } from "react";
 
 // ============================================================
@@ -293,7 +293,7 @@ const sectionMap = { ko: sectionsKo, en: sectionsEn };
 export default function DocsPage() {
   const { lang } = useLang();
   const en = lang === "en";
-  const secs = sectionMap[lang];
+  const secs = L2A(sectionMap, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
   useEffect(() => {

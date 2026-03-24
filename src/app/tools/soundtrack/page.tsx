@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
 
 /* ─── TRACK DATA ─── */
 interface Track {
@@ -222,7 +222,7 @@ export default function SoundtrackPage() {
                       className="px-4 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase font-[family-name:var(--font-mono)]"
                       style={{ background: track.theme, color: "#ffffff90" }}
                     >
-                      {track.category[lang]}
+                      {L2(track.category, lang)}
                     </div>
 
                     <div className="p-5">
@@ -230,7 +230,7 @@ export default function SoundtrackPage() {
                       <div className="flex items-start gap-4">
                         <button
                           onClick={() => toggle(track.id)}
-                          aria-label={isPlaying ? `Pause ${track.title[lang]}` : `Play ${track.title[lang]}`}
+                          aria-label={isPlaying ? `Pause ${L2(track.title, lang)}` : `Play ${L2(track.title, lang)}`}
                           className="flex-shrink-0 w-12 h-12 rounded-full border border-border flex items-center justify-center hover:border-accent-purple transition-colors mt-0.5"
                           style={{
                             background: isPlaying ? track.theme : "transparent",
@@ -250,10 +250,10 @@ export default function SoundtrackPage() {
 
                         <div className="flex-1 min-w-0">
                           <h2 className="font-[family-name:var(--font-mono)] text-base font-bold tracking-tight leading-tight">
-                            {track.title[lang]}
+                            {L2(track.title, lang)}
                           </h2>
                           <p className="text-text-tertiary text-xs mt-1 font-[family-name:var(--font-mono)]">
-                            {track.subtitle[lang]}
+                            {L2(track.subtitle, lang)}
                           </p>
                         </div>
                       </div>
@@ -266,7 +266,7 @@ export default function SoundtrackPage() {
                         <div
                           className="flex-1 h-1 rounded-full bg-border cursor-pointer relative group/bar"
                           role="progressbar"
-                          aria-label={`${track.title[lang]} progress`}
+                          aria-label={`${L2(track.title, lang)} progress`}
                           aria-valuenow={Math.round(prog * 100)}
                           aria-valuemin={0}
                           aria-valuemax={100}
@@ -289,7 +289,7 @@ export default function SoundtrackPage() {
 
                       {/* Description */}
                       <p className="mt-3 text-xs text-text-secondary leading-relaxed">
-                        {track.desc[lang]}
+                        {L2(track.desc, lang)}
                       </p>
                     </div>
                   </div>
