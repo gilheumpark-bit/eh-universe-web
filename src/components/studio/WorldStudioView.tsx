@@ -62,7 +62,6 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   handleWorldSimChange,
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
-  const isKO = language === 'KO';
   const t = createT(language);
   const labels = SUB_TABS[language];
 

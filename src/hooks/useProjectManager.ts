@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Project, ChatSession, Genre, StoryConfig, AppLanguage,
 } from '@/lib/studio-types';
@@ -78,7 +78,7 @@ export function useProjectManager(language: AppLanguage) {
 
   // Derived state
   const currentProject = projects.find(p => p.id === currentProjectId) ?? null;
-  const sessions = currentProject?.sessions ?? [];
+  const sessions = useMemo(() => currentProject?.sessions ?? [], [currentProject?.sessions]);
   const currentSession = sessions.find(s => s.id === currentSessionId) ?? null;
 
   // ---- setSessions helper ----

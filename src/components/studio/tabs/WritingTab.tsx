@@ -73,19 +73,17 @@ const WritingTab: React.FC<WritingTabProps> = ({
   isGenerating, lastReport,
   handleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix,
   messagesEndRef,
-  searchQuery, filteredMessages, searchMatchesEditDraft,
+  searchQuery, filteredMessages, searchMatchesEditDraft: _searchMatchesEditDraft,
   hasApiKey, setShowApiKeyModal, setActiveTab,
   advancedSettings, setAdvancedSettings,
   input, setInput,
   showDashboard,
   rightPanelOpen, setRightPanelOpen,
-  directorReport, hfcpState,
+  directorReport, hfcpState: _hfcpState,
   handleNextEpisode
 }: WritingTabProps) => {
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
-  const isKO = language === 'KO';
-
   const handleApplyEdit = React.useCallback(() => {
     if (!editDraft.trim()) return;
     const now = Date.now();

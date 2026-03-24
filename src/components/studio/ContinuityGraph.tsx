@@ -105,7 +105,7 @@ const WarningList: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({ ep,
 // PART 4 — CHARACTER PRESENCE GRID
 // ============================================================
 
-const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({ ep, lang }) => {
+const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({ ep, lang: _lang }) => {
   const activeChars = ep.characters.filter(c => c.present);
   if (activeChars.length === 0) return null;
 
@@ -143,7 +143,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
   const [selectedEpNum, setSelectedEpNum] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const manuscripts: EpisodeManuscript[] = config.manuscripts ?? [];
+  const manuscripts: EpisodeManuscript[] = useMemo(() => config.manuscripts ?? [], [config.manuscripts]);
   const currentEp = config.episode ?? 1;
 
   const report: ContinuityReport = useMemo(

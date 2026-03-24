@@ -8,7 +8,6 @@ import { articles, getArticleTitle } from "@/lib/articles";
 
 export default function ArticleClient({ slug }: { slug: string }) {
   const { lang } = useLang();
-  const en = lang !== "ko";
   const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
     lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image, Music } from "lucide-react";
+import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -550,7 +550,7 @@ export default function ChapterAnalysisView({
       {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
-          icon={<Image className="w-3.5 h-3.5" />}
+          icon={<ImageIcon className="w-3.5 h-3.5" />}
           title={t('chapterAnalysis.imagePrompt')}
           open={openSections.image}
           onToggle={() => toggleSection("image")}

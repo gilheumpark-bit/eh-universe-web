@@ -2,7 +2,7 @@
 // PART 0 — TYPES
 // ============================================================
 
-import type { Character, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
+import type { Character, EpisodeManuscript } from '@/lib/studio-types';
 
 /** 에피소드 단위 캐릭터 상태 스냅샷 */
 export interface CharacterSnapshot {
@@ -55,7 +55,6 @@ export interface ContinuityReport {
 // ============================================================
 
 const KOREAN_NAME_RE = /(?:^|[\s"'\u201C\u2018])([가-힣]{2,4})(?:이|가|은|는|을|를|의|에게|한테|라고|라며|도|만|까지)/gm;
-const LOCATION_RE = /(?:에서|으로|로|에)\s*(?:이동|도착|들어|나|왔|갔)/g;
 const THREAD_PLANT_RE = /(?:떡밥|복선|의문|비밀|수수께끼|미스터리|단서)/gi;
 const THREAD_RESOLVE_RE = /(?:밝혀|드러나|해결|정체|진실|알게)/gi;
 

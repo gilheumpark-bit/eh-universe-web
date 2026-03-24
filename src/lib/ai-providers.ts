@@ -352,6 +352,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 // PART 5: TEST KEY (all requests via server proxy)
 // ============================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future direct API calls
 const OPENAI_COMPAT_URLS: Partial<Record<ProviderId, string>> = {
   openai: "https://api.openai.com/v1/chat/completions",
   groq: "https://api.groq.com/openai/v1/chat/completions",

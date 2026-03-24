@@ -1246,7 +1246,7 @@ export default function WarpGatePage() {
       <Header />
       <main className="pt-24 bg-bg-primary min-h-screen">
         <div className="site-shell py-16 md:py-20">
-          <Link href="#" onClick={e => { e.preventDefault(); window.history.length > 1 ? window.history.back() : (window.location.href = "/archive"); }}
+          <Link href="#" onClick={e => { e.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href = "/archive"; } }}
             aria-label="Go back" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
             &larr; {en ? "BACK" : "뒤로"}
           </Link>

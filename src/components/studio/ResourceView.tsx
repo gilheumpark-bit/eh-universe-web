@@ -56,7 +56,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const handleAutoGenerate = async () => {
     if (!config.synopsis) {
       const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
-      onError?.(msg) ?? console.warn(msg);
+      if (onError) { onError(msg); } else { console.warn(msg); }
       return;
     }
     
@@ -67,9 +67,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
         ...prev,
         characters: [...prev.characters, ...generated]
       }));
-    } catch (_error) {
+    } catch {
       const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
-      onError?.(msg) ?? console.warn(msg);
+      if (onError) { onError(msg); } else { console.warn(msg); }
     } finally {
       setIsGenerating(false);
     }

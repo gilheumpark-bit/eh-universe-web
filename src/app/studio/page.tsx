@@ -35,7 +35,8 @@ import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import dynamic from 'next/dynamic';
-const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
+// WorldSimulator loaded by WorldStudioView
+// const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
@@ -53,7 +54,7 @@ const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedW
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import Link from 'next/link';
-import { FileText, Map, Cloud, CloudOff, Wand2 } from 'lucide-react';
+import { FileText, Cloud, CloudOff, Wand2 } from 'lucide-react';
 import { syncAllProjects } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
@@ -105,7 +106,6 @@ export default function StudioPage() {
   const isKO = language === 'KO';
 
   // API 키 존재 여부 (렌더링용, hydrated 이후만 체크, apiKeyVersion으로 갱신 트리거)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const activeProviderId = getActiveProvider();
   const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(activeProviderId);
   const hasAiAccess = hydrated && (hasLocalApiKey || Boolean(hostedProviders[activeProviderId]));
@@ -230,7 +230,7 @@ export default function StudioPage() {
       }
     }, 60_000); // check every minute
     return () => clearInterval(timer);
-  }, [user, lastSyncTime]);
+  }, [user, lastSyncTime, SYNC_REMINDER_MS]);
 
   const handleSync = useCallback(async () => {
     let token = accessToken;
@@ -278,7 +278,7 @@ export default function StudioPage() {
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
     }
-  }, [accessToken, refreshAccessToken, projects]);
+  }, [accessToken, refreshAccessToken, projects, setProjects]);
 
   // ============================================================
   // PROJECT MANAGEMENT (confirm-wrapped actions)
@@ -293,6 +293,7 @@ export default function StudioPage() {
       variant: 'danger',
       onConfirm: () => { closeConfirm(); doDeleteProject(projectId); },
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
   }, [projects, language, showConfirm, closeConfirm, doDeleteProject]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
@@ -480,6 +481,7 @@ export default function StudioPage() {
     }
     setActiveTab(tab);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
   }, [activeTab, writingMode, editDraft, language, showConfirm]);
 
   const deleteSession = (sessionIdToDelete: string) => {
@@ -551,7 +553,7 @@ export default function StudioPage() {
       });
       return { ...s, messages: msgs };
     }));
-  }, [currentSessionId]);
+  }, [currentSessionId, setSessions]);
 
   // Apply single typo fix to a message
   const handleTypoFix = useCallback((messageId: string, index: number, original: string, suggestion: string) => {
@@ -564,7 +566,7 @@ export default function StudioPage() {
       });
       return { ...s, messages: msgs };
     }));
-  }, [currentSessionId]);
+  }, [currentSessionId, setSessions]);
 
   // Keyboard shortcuts (extracted to hook)
   useStudioKeyboard({

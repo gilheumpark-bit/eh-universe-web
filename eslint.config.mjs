@@ -8,6 +8,11 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "react-hooks/preserve-manual-memoization": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+      }],
     },
   },
   // Override default ignores of eslint-config-next.

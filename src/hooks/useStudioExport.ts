@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import { ChatSession, AppLanguage, AppTab, SavedSlot, Project, Genre } from '@/lib/studio-types';
+import { ChatSession, AppLanguage, AppTab, Project, Genre } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
@@ -43,8 +43,8 @@ const isValidSession = (s: unknown): s is ChatSession => {
 
 export function useStudioExport({
   currentSession,
-  sessions,
-  currentSessionId,
+  sessions: _sessions,
+  currentSessionId: _currentSessionId,
   currentProjectId,
   projects,
   setProjects,
@@ -52,7 +52,7 @@ export function useStudioExport({
   setSessions,
   setCurrentSessionId,
   setActiveTab,
-  isKO,
+  isKO: _isKO,
   language,
   writingMode,
   editDraft,

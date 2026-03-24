@@ -132,7 +132,7 @@ export default function NekaSoundPage() {
         for (let i = 0; i < bufLen; i++) {
           const v = dataArr[i] / 128.0;
           const y = (v * h) / 2;
-          i === 0 ? ctx2!.moveTo(x, y) : ctx2!.lineTo(x, y);
+          if (i === 0) { ctx2!.moveTo(x, y); } else { ctx2!.lineTo(x, y); }
           x += sliceW;
         }
         ctx2!.stroke();

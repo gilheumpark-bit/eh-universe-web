@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from "react";
 import type { EpisodeSceneSheet, EpisodeSceneEntry, AppLanguage } from "@/lib/studio-types";
-import { createT } from "@/lib/i18n";
 
 // ============================================================
 // PART 0 — TYPES & CONSTANTS

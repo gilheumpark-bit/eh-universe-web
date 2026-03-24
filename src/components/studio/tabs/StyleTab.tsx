@@ -16,7 +16,7 @@ interface StyleTabProps {
 }
 
 const StyleTab: React.FC<StyleTabProps> = ({
-  isKO,
+  isKO: _isKO,
   language,
   config,
   updateCurrentSession,

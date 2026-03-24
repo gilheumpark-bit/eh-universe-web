@@ -285,21 +285,21 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const t = createT(language);
   const [tierExpanded, setTierExpanded] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
 
-  const items = config.items ?? [];
-  const skills = config.skills ?? [];
+  const items = useMemo(() => config.items ?? [], [config.items]);
+  const skills = useMemo(() => config.skills ?? [], [config.skills]);
   const magicSystems = config.magicSystems ?? [];
 
-  const setItems = (fn: (prev: Item[]) => Item[]) =>
-    setConfig(prev => ({ ...prev, items: fn(prev.items ?? []) }));
-  const setSkills = (fn: (prev: Skill[]) => Skill[]) =>
-    setConfig(prev => ({ ...prev, skills: fn(prev.skills ?? []) }));
-  const setMagicSystems = (fn: (prev: MagicSystem[]) => MagicSystem[]) =>
-    setConfig(prev => ({ ...prev, magicSystems: fn(prev.magicSystems ?? []) }));
+  const setItems = useCallback((fn: (prev: Item[]) => Item[]) =>
+    setConfig(prev => ({ ...prev, items: fn(prev.items ?? []) })), [setConfig]);
+  const setSkills = useCallback((fn: (prev: Skill[]) => Skill[]) =>
+    setConfig(prev => ({ ...prev, skills: fn(prev.skills ?? []) })), [setConfig]);
+  const setMagicSystems = useCallback((fn: (prev: MagicSystem[]) => MagicSystem[]) =>
+    setConfig(prev => ({ ...prev, magicSystems: fn(prev.magicSystems ?? []) })), [setConfig]);
 
   // Generic field updater — replaces 14+ individual onChange handlers
   const updateItemField = useCallback((id: string, field: string, value: string) =>
     setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i)),
-  []);
+  [setItems]);
 
   // ============================================================
   // PART 3A — ITEM FORM STATE
@@ -358,7 +358,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const [newMagic, setNewMagic] = useState<Partial<MagicSystem>>({
     name: '', source: '', rules: '', limitations: '',
   });
-  const [newRank, setNewRank] = useState('');
+  // const [newRank, setNewRank] = useState(''); // reserved for future rank input UI
 
   const addMagic = () => {
     if (!newMagic.name) return;

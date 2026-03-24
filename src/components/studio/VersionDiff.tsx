@@ -24,8 +24,6 @@ interface DiffLine {
 function computeDiff(oldText: string, newText: string): DiffLine[] {
   const oldLines = oldText.split('\n');
   const newLines = newText.split('\n');
-  const result: DiffLine[] = [];
-
   // LCS-based diff (O(n*m) but versions are short)
   const m = oldLines.length;
   const n = newLines.length;

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Film, AlertCircle, ChevronDown } from 'lucide-react';
+import { Film, ChevronDown } from 'lucide-react';
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';

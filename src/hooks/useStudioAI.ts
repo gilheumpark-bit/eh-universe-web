@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Message, StoryConfig, ChatSession, AppLanguage,
+  Message, ChatSession, AppLanguage,
 } from '@/lib/studio-types';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';

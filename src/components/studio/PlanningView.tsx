@@ -105,6 +105,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for demo/dev injection
   const injectDemoData = () => {
     const presets = AUTO_PRESETS[autoGenGenre];
     if (!presets || presets.length === 0) return;

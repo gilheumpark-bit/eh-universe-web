@@ -292,7 +292,6 @@ const sectionMap = { ko: sectionsKo, en: sectionsEn };
 
 export default function DocsPage() {
   const { lang } = useLang();
-  const en = lang !== "ko";
   const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
     lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
   const secs = L2A(sectionMap, lang);

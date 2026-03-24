@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  Scissors, Expand, PenLine, Plus, Sparkles, X, Check, RotateCcw,
+  Scissors, Expand, PenLine, Sparkles, X, Check, RotateCcw,
   ArrowDownToLine, Thermometer, Sword, MessageCircle
 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
@@ -181,6 +181,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
       setIsStreaming(false);
       abortRef.current = null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
   }, [selection, isStreaming, editableContent, context, language]);
 
   const handleCustomAction = useCallback(() => {

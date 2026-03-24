@@ -8,7 +8,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Search, Loader2, BookOpen, Layers, Map, Users, Zap, AlertTriangle, Copy, Check } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
-import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
+import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 
 interface WorldAnalysisViewProps {
@@ -194,6 +194,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
       setAnalyzing(false);
       abortRef.current = null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
   }, [inputText, language]);
 
   const handleCopy = useCallback(() => {

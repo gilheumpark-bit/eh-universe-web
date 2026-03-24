@@ -251,6 +251,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     setSliderVals(prev => ({ ...prev, ...preset.sliders }));
     setSelectedCards(new Set(preset.dna));
     setShowStylePresetMenu(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- STYLE_PRESETS is a constant array defined inline
   }, []);
 
   const totalChecked = checkedSF.size + checkedWeb.size;
@@ -386,7 +387,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     } finally {
       setLoading(false);
     }
-  }, [sourceText, activeStyles]);
+  }, [sourceText, activeStyles, en]);
 
   // ============================================================
   // PART 4 — 렌더: 헤더 + 탭 네비게이션

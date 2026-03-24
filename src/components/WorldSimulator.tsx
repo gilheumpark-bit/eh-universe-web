@@ -1545,7 +1545,8 @@ const RULE_LEVELS: { lv: number; ko: string; en: string; desc_ko: string; desc_e
 ];
 
 // EH 엔진 강도 공식 — 적용률(R)에 따른 모듈별 승수 계산
-function getEHModuleIntensity(pct: number) {
+// Reserved for future use: EH engine module intensity calculation
+function _getEHModuleIntensity(pct: number) {
   const R = pct;
   return {
     bannedWordWarn: R >= 5,                              // 금지어 경고
@@ -1705,7 +1706,6 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
     onSaveRef.current?.({
       civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel]);
 
   const handleGenreToggle = useCallback((genre: string, level: number) => {
@@ -1726,8 +1726,9 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
       }
       return [...prev, { genre, level }];
     });
-  }, []);
+  }, [lang]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future genre auto-generation UI
   const handleAutoGenerate = useCallback(() => {
     const template = AUTO_WORLD_TEMPLATES[selectedGenre];
     if (!template) return;

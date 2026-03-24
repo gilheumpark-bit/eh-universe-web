@@ -176,7 +176,7 @@ ${manuscripts
 
 export default function ManuscriptView({ language, config, setConfig, messages, onEditInStudio }: ManuscriptViewProps) {
   const t = createT(language);
-  const manuscripts = config.manuscripts || [];
+  const manuscripts = useMemo(() => config.manuscripts || [], [config.manuscripts]);
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
   const [editingEp, setEditingEp] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");

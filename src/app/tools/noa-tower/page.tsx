@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
 
