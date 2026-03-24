@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Lang } from "@/lib/LangContext";
 import {
   createPlanetWithFirstLog,
@@ -78,6 +79,32 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
     ehImpact: null as number | null,
     followupStatus: null as PlanetStatus | null,
   });
+
+  const searchParams = useSearchParams();
+  const [importedFromStudio, setImportedFromStudio] = useState(false);
+
+  useEffect(() => {
+    const raw = searchParams.get("import");
+    if (!raw) return;
+    try {
+      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      setPlanet((prev) => ({
+        ...prev,
+        name: json.title ?? prev.name,
+        summary: json.synopsis ?? prev.summary,
+        genre: json.genre ?? prev.genre,
+      }));
+      const rules: string[] = [];
+      if (json.corePremise) rules.push(json.corePremise);
+      if (json.powerStructure) rules.push(json.powerStructure);
+      if (rules.length > 0) setRulesInput(rules.slice(0, 3).join("\n"));
+      if (json.genre) setTagInput(json.genre);
+      setImportedFromStudio(true);
+    } catch {
+      // invalid base64 or JSON — ignore silently
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stepTitles = lang === "ko" ? STEP_TITLES.ko : STEP_TITLES.en;
   const representativeTags = useMemo(
@@ -471,8 +498,15 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             {lang === "ko" ? "행성을 만들고 첫 관측 로그를 남기세요." : "Register a planet and publish its first observation."}
           </h1>
         </div>
-        <div className="font-[family-name:var(--font-mono)] text-xs tracking-[0.18em] text-text-tertiary uppercase">
-          STEP {step + 1} / 4
+        <div className="flex items-center gap-3">
+          {importedFromStudio && (
+            <span className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-3 py-1 text-[11px] font-semibold tracking-[0.08em] text-accent-amber">
+              {lang === "ko" ? "스튜디오에서 불러옴" : "Imported from Studio"}
+            </span>
+          )}
+          <span className="font-[family-name:var(--font-mono)] text-xs tracking-[0.18em] text-text-tertiary uppercase">
+            STEP {step + 1} / 4
+          </span>
         </div>
       </div>
 

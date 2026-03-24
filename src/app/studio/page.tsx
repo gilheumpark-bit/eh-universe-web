@@ -36,6 +36,7 @@ import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
 // WorldSimulator loaded by WorldStudioView
 // const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
@@ -70,6 +71,9 @@ export default function StudioPage() {
   // PROJECT-BASED STATE MANAGEMENT (extracted to hook)
   // ============================================================
   const { lang } = useLang();
+  const searchParams = useSearchParams();
+  const studioRouter = useRouter();
+  const [worldImportBanner, setWorldImportBanner] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>(() => {
     const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
     return map[lang] || 'KO';
@@ -201,6 +205,42 @@ export default function StudioPage() {
     return () => {
       cancelled = true;
     };
+  }, [hydrated]);
+
+  // ============================================================
+  // WORLD IMPORT FROM NETWORK
+  // ============================================================
+  useEffect(() => {
+    if (!hydrated) return;
+    const raw = searchParams.get('worldImport');
+    if (!raw) return;
+    try {
+      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      const genreGuess = (json.tags as string[] | undefined)?.find((tag: string) =>
+        Object.values(Genre).map(g => g.toLowerCase()).includes(tag.toLowerCase())
+      );
+      const importedConfig: Partial<StoryConfig> = {
+        title: json.name ?? '',
+        synopsis: json.summary ?? '',
+        corePremise: (json.coreRules as string[] | undefined)?.join('\n') ?? '',
+      };
+      if (genreGuess) {
+        const matched = Object.values(Genre).find(g => g.toLowerCase() === genreGuess.toLowerCase());
+        if (matched) importedConfig.genre = matched;
+      }
+      doCreateNewSession();
+      setTimeout(() => {
+        setConfig((prev: StoryConfig) => ({ ...prev, ...importedConfig }));
+        setActiveTab('world');
+        setWorldImportBanner(true);
+        setTimeout(() => setWorldImportBanner(false), 5000);
+      }, 50);
+      // Clear query param without full reload
+      studioRouter.replace('/studio', { scroll: false });
+    } catch {
+      // invalid payload — ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
   // UX: confirm modal state
@@ -2241,6 +2281,15 @@ export default function StudioPage() {
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span className="text-sm">{t('ui.storageFull')}</span>
           <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
+        </div>
+      )}
+
+      {/* UX: World import from Network banner */}
+      {worldImportBanner && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-emerald-900/95 border border-emerald-600 text-emerald-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md animate-in fade-in slide-in-from-top-2 duration-300">
+          <Globe className="w-4 h-4 shrink-0" />
+          <span className="text-sm">{isKO ? 'Network에서 세계관을 불러왔습니다' : 'World imported from Network'}</span>
+          <button onClick={() => setWorldImportBanner(false)} className="text-emerald-400 hover:text-emerald-200 shrink-0" aria-label="close">&times;</button>
         </div>
       )}
 

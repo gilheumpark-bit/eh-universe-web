@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
@@ -34,6 +35,7 @@ type DetailTab = "logs" | "if" | "settlements" | "feedback";
 export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
   const { lang } = useLang();
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [planet, setPlanet] = useState<PlanetRecord | null>(null);
@@ -199,6 +201,23 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                   {lang === "ko" ? "정산 워크벤치" : "Settlement Workbench"}
                 </Link>
               ) : null}
+              <button
+                onClick={() => {
+                  const worldPayload = {
+                    name: planet.name,
+                    summary: planet.summary,
+                    tags: planet.representativeTags,
+                    coreRules: planet.coreRules,
+                    civilizationLevel: planet.civilizationLevel,
+                    goal: planet.goal,
+                  };
+                  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(worldPayload))));
+                  router.push(`/studio?worldImport=${encoded}`);
+                }}
+                className="premium-button secondary"
+              >
+                {lang === "ko" ? "이 세계관으로 집필 시작" : "Start Writing with this World"}
+              </button>
               <BookmarkButton planetId={planet.id} />
               <ReportButton targetType="planet" targetId={planet.id} />
             </>

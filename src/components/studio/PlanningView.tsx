@@ -5,7 +5,8 @@ import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
-import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp, Share2, Check, Shield } from 'lucide-react';
+import { Sparkles, BarChart3, Monitor, Smartphone, Shuffle, Bot, Loader2, ChevronDown, ChevronUp, Share2, Check, Shield, Globe } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -67,6 +68,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const router = useRouter();
 
   const handleAIGenerate = async () => {
     if (!getApiKey(getActiveProvider())) {
@@ -768,6 +770,24 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           {shareCopied
             ? (isKO ? '복사됨!' : 'Copied!')
             : (isKO ? '세계관 공유' : 'Share World')}
+        </button>
+        <button
+          onClick={() => {
+            const planetPayload = {
+              title: config.title,
+              genre: config.genre,
+              synopsis: config.synopsis,
+              characters: config.characters ?? [],
+              corePremise: config.corePremise,
+              powerStructure: config.powerStructure,
+            };
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(planetPayload))));
+            router.push(`/network/new?import=${encoded}`);
+          }}
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-zinc-900 border border-zinc-700 text-zinc-300 rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
+        >
+          <Globe className="w-4 h-4" />
+          {isKO ? '행성으로 등록' : 'Register as Planet'}
         </button>
       </div>
     </div>
