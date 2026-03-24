@@ -1196,21 +1196,13 @@ export default function NoaTowerPage() {
         <div className="mx-auto max-w-7xl px-4">
           {/* --- Top Bar --- */}
           <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/tools"
-                className="rounded-full border border-white/8 px-4 py-2 font-[family-name:var(--font-mono)] text-[13px] tracking-[0.18em] text-text-tertiary transition-colors hover:border-white/15 hover:text-text-secondary"
-              >
-                {t("back", lang)}
-              </Link>
-              <div>
-                <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-[0.12em] text-text-primary">
-                  {t("pageTitle", lang)}
-                </h1>
-                <p className="font-[family-name:var(--font-mono)] text-[12px] tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("pageSubtitle", lang)}
-                </p>
-              </div>
+            <div>
+              <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[0.12em] text-text-primary">
+                {t("pageTitle", lang)}
+              </h1>
+              <p className="font-[family-name:var(--font-mono)] text-[12px] tracking-[0.2em] text-text-tertiary uppercase mt-1">
+                {t("pageSubtitle", lang)}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <ConditionBadge condition={caseData.towerCondition} label={caseData.towerConditionLabel} />
