@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import ResourceView from '@/components/studio/ResourceView';
@@ -9,7 +8,7 @@ import { createT } from '@/lib/i18n';
 interface CharacterTabProps {
   language: AppLanguage;
   config: StoryConfig;
-  setConfig: (config: StoryConfig) => void;
+  setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
   charSubTab: 'characters' | 'items';
   setCharSubTab: (tab: 'characters' | 'items') => void;
   triggerSave: () => void;

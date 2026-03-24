@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
@@ -6,7 +5,7 @@ import ManuscriptView from '@/components/studio/ManuscriptView';
 interface ManuscriptTabProps {
   language: AppLanguage;
   config: StoryConfig;
-  setConfig: (config: StoryConfig) => void;
+  setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   messages: Message[];
   onEditInStudio: (content: string) => void;
 }

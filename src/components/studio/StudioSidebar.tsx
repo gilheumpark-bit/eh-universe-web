@@ -30,7 +30,7 @@ interface StudioSidebarProps {
   handleExportEPUB: () => void;
   handleExportDOCX: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
-  user: any;
+  user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
   signInWithGoogle: () => void;
   signOut: () => void;
   authConfigured: boolean;

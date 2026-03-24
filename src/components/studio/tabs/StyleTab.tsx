@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { StoryConfig } from '@/lib/studio-types';

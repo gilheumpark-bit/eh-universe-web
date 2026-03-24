@@ -494,7 +494,7 @@ function ShipPanel({ s, en, onSelect }: { s: GameState; en: boolean; onSelect: (
               ))}
             </div>
             <div className="flex justify-between items-center mt-3">
-              <span className={mutedCls}>{en ? "Sensor" : "센서"} {fixed(ship.sensor, 2)} // {en ? "Stress Guard" : "스트레스 방어"} {fixed(ship.stressGuard, 2)}</span>
+              <span className={mutedCls}>{en ? "Sensor" : "센서"} {fixed(ship.sensor, 2)} {'// '}{en ? "Stress Guard" : "스트레스 방어"} {fixed(ship.stressGuard, 2)}</span>
               <button className={btnCls} onClick={() => onSelect(ship.id)}>{en ? "Deploy" : "배치"}</button>
             </div>
           </article>
@@ -586,7 +586,7 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
           <div className={kickerCls}>{en ? "Campaign Layer" : "캠페인 레이어"}</div>
           <h2 className="text-lg font-bold mt-1 text-text-primary">{en ? "SJC Protocol Console" : "SJC 프로토콜 콘솔"}</h2>
         </div>
-        <span className={pillCls}>{en ? "Campaign" : "캠페인"} {campaign.number} / {CAMPAIGNS.length} // {campaign.yearLabel}</span>
+        <span className={pillCls}>{en ? "Campaign" : "캠페인"} {campaign.number} / {CAMPAIGNS.length} {'// '}{campaign.yearLabel}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -594,7 +594,7 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
         <div className={`${cardCls} grid gap-3`}>
           <div className="flex justify-between items-start gap-2">
             <div>
-              <div className={kickerCls + " !text-xs"}>{campaign.generation} // {campaign.sjcVersion}</div>
+              <div className={kickerCls + " !text-xs"}>{campaign.generation} {'// '}{campaign.sjcVersion}</div>
               <h3 className="text-lg font-bold text-text-primary mt-1">{campaign.title}</h3>
             </div>
             <span className={pillCls + " !text-xs"}>{campaign.lead}</span>
@@ -716,7 +716,7 @@ function ZoneMapPanel({ s, metrics, en, onSelectZone }: { s: GameState; metrics:
     <section className={panelCls}>
       <div className="flex justify-between items-start mb-4">
         <div><div className={kickerCls}>{en ? "Route Layer" : "항로 레이어"}</div><h2 className="text-lg font-bold mt-1 text-text-primary">{en ? "Galactic Sector Map" : "은하 구역 지도"}</h2></div>
-        <span className={pillCls}>{zone.name} // {zone.distanceText}</span>
+        <span className={pillCls}>{zone.name} {'// '}{zone.distanceText}</span>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div className="relative min-h-[320px] rounded-2xl border border-white/[0.06] bg-gradient-to-b from-[rgba(0,8,14,0.6)] to-[rgba(4,10,21,0.8)] overflow-hidden">
@@ -860,7 +860,7 @@ function MissionArchivePanel({ s, en, onSave, onReset }: { s: GameState; en: boo
           <div className="grid gap-2 max-h-[350px] overflow-auto">
             {s.log.map((entry, i) => (
               <div key={i} className={`${cardCls} ${entry.kind === "allow" ? "!border-green-400/25" : entry.kind === "deny" ? "!border-red-400/25" : "!border-amber-400/20"}`}>
-                <strong className="block text-xs text-text-primary">{entry.year} // {entry.title}</strong>
+                <strong className="block text-xs text-text-primary">{entry.year} {'// '}{entry.title}</strong>
                 <span className={mutedCls + " !text-xs"}>{entry.detail}</span>
               </div>
             ))}

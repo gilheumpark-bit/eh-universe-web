@@ -1,8 +1,11 @@
-// @ts-nocheck
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool, StopCircle, Send } from 'lucide-react';
-import { AppLanguage, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
+import { AppLanguage, AppTab, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
+import type { EngineReport } from '@/engine/types';
+import type { DirectorReport } from '@/engine/director';
+import type { HFCPState } from '@/engine/hfcp';
+import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-constants';
 
@@ -25,7 +28,7 @@ interface WritingTabProps {
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setConfig: (config: StoryConfig) => void;
   writingMode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
-  setWritingMode: (mode: any) => void;
+  setWritingMode: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
   editDraft: string;
   setEditDraft: (val: string) => void;
   canvasContent: string;
@@ -35,7 +38,7 @@ interface WritingTabProps {
   promptDirective: string;
   setPromptDirective: (val: string) => void;
   isGenerating: boolean;
-  lastReport: any;
+  lastReport: EngineReport | null;
   handleSend: (customPrompt?: string) => void;
   handleCancel: () => void;
   handleRegenerate: (msgId: string) => void;
@@ -47,16 +50,16 @@ interface WritingTabProps {
   searchMatchesEditDraft: boolean;
   hasApiKey: boolean;
   setShowApiKeyModal: (show: boolean) => void;
-  setActiveTab: (tab: any) => void;
-  advancedSettings: any;
-  setAdvancedSettings: (settings: any) => void;
+  setActiveTab: (tab: AppTab) => void;
+  advancedSettings: AdvancedWritingSettings;
+  setAdvancedSettings: (settings: AdvancedWritingSettings) => void;
   input: string;
   setInput: (val: string) => void;
   showDashboard: boolean;
   rightPanelOpen: boolean;
   setRightPanelOpen: (open: boolean) => void;
-  directorReport: any;
-  hfcpState: any;
+  directorReport: DirectorReport | null;
+  hfcpState: HFCPState;
   handleNextEpisode: () => void;
 }
 
@@ -82,6 +85,18 @@ const WritingTab: React.FC<WritingTabProps> = ({
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const isKO = language === 'KO';
+
+  const handleApplyEdit = React.useCallback(() => {
+    if (!editDraft.trim()) return;
+    const now = Date.now();
+    const editMsg: Message = { id: `edit-${now}`, role: 'assistant', content: editDraft, timestamp: now };
+    updateCurrentSession({
+      messages: [...currentSession.messages, { id: `u-edit-${now + 1}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: now + 1 }, editMsg],
+      title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title,
+    });
+    if (hasApiKey) setWritingMode('ai');
+    setEditDraft('');
+  }, [editDraft, currentSession, updateCurrentSession, t, hasApiKey, setWritingMode, setEditDraft]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -181,7 +196,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-text-tertiary">{hasApiKey ? t('writingMode.editDescWithApi') : t('writingMode.editDescNoApi')}</p>
-                  <button onClick={() => { if (!editDraft.trim()) return; const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() }; updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg], title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title }); if (hasApiKey) setWritingMode('ai'); setEditDraft(''); }} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">{t('writingMode.applyToManuscript')}</button>
+                  <button onClick={handleApplyEdit} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">{t('writingMode.applyToManuscript')}</button>
                 </div>
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">

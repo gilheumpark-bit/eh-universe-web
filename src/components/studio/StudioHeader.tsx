@@ -13,11 +13,11 @@ interface StudioHeaderProps {
   setShowDashboard: (show: boolean) => void;
   ENGINE_VERSION: string;
   showSearch: boolean;
-  setShowSearch: (show: any) => void;
+  setShowSearch: React.Dispatch<React.SetStateAction<boolean>>;
   focusMode: boolean;
   setFocusMode: (focus: boolean) => void;
   lightTheme: boolean;
-  setLightTheme: (light: any) => void;
+  setLightTheme: React.Dispatch<React.SetStateAction<boolean>>;
   showShortcuts: boolean;
   setShowShortcuts: (show: boolean) => void;
   language: AppLanguage;

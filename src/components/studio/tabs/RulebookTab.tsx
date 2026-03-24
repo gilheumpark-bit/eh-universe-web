@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
@@ -46,11 +45,11 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
           currentConflict: config.currentConflict,
         }}
         initialDirection={config.sceneDirection ? {
-          goguma: config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as any, intensity: g.intensity as any, desc: g.desc, episode: g.episode || 1 })),
-          hooks: config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as any, hookType: h.hookType, desc: h.desc })),
+          goguma: config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
+          hooks: config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
           emotions: config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: e.position ?? i * 25, emotion: e.emotion, intensity: e.intensity })),
           dialogueRules: config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
-          dopamines: config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as any, device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
+          dopamines: config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
           cliffs: config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: config.sceneDirection.cliffhanger.cliffType, desc: config.sceneDirection.cliffhanger.desc, episode: config.sceneDirection.cliffhanger.episode || 1 }] : [],
           foreshadows: config.sceneDirection.foreshadows?.map((f, i) => ({ id: `r-${i}`, planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
           pacings: config.sceneDirection.pacings?.map((p, i) => ({ id: `r-${i}`, section: p.section, percent: p.percent, desc: p.desc })),

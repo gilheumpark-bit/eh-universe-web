@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React from 'react';
-import { AppLanguage, ChatSession, Project } from '@/lib/studio-types';
+import { AppLanguage, AppTab, ChatSession, Project } from '@/lib/studio-types';
 import GenreReviewChat from '@/components/studio/GenreReviewChat';
 import { Edit3, Upload, Printer, X } from 'lucide-react';
 import { createT } from '@/lib/i18n';
@@ -18,9 +17,10 @@ interface HistoryTabProps {
   setCurrentProjectId: (id: string) => void;
   currentSessionId: string | null;
   setCurrentSessionId: (id: string | null) => void;
-  setActiveTab: (tab: any) => void;
+  setActiveTab: (tab: AppTab) => void;
   startRename: (id: string, title: string) => void;
   renamingSessionId: string | null;
+  setRenamingSessionId: (id: string | null) => void;
   renameValue: string;
   setRenameValue: (val: string) => void;
   confirmRename: () => void;
@@ -46,6 +46,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
   setActiveTab,
   startRename,
   renamingSessionId,
+  setRenamingSessionId,
   renameValue,
   setRenameValue,
   confirmRename,

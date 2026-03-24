@@ -1118,26 +1118,28 @@ const STORAGE_KEY = "noa-tower-state-v1";
 
 export default function NoaTowerPage() {
   const { lang } = useLang();
-  const [payload, setPayload] = useState<GamePayload | null>(null);
+  const [payload, setPayload] = useState<GamePayload | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as GamePayload;
+        if (parsed?.state && parsed?.reply && parsed?.case) return parsed;
+      }
+    } catch { /* ignore */ }
+    return bootstrap(lang);
+  });
+  const [prevLang, setPrevLang] = useState(lang);
   const [input, setInput] = useState("");
   const [sidePanel, setSidePanel] = useState<"status" | "case">("status");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // --- Init / Restore ---
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as GamePayload;
-        if (parsed?.state && parsed?.reply && parsed?.case) {
-          setPayload(parsed);
-          return;
-        }
-      }
-    } catch { /* ignore */ }
+  // --- Reinit on lang change ---
+  if (prevLang !== lang) {
+    setPrevLang(lang);
     setPayload(bootstrap(lang));
-  }, [lang]);
+  }
 
   // --- Persist ---
   useEffect(() => {

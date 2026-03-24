@@ -1330,10 +1330,10 @@ export default function StudioPage() {
                         ) : (
                           (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
                             <div key={msg.id}>
-                              <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} onAutoFix={msg.role === 'assistant' ? (messageId: string) => {
+                              <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} onAutoFix={msg.role === 'assistant' ? async (messageId: string) => {
                                 const target = currentSession.messages.find(m => m.id === messageId);
                                 if (!target) return;
-                                const { applyFormattingRules } = require('@/engine/validator');
+                                const { applyFormattingRules } = await import('@/engine/validator');
                                 const { formatted } = applyFormattingRules(target.content);
                                 updateCurrentSession({
                                   messages: currentSession.messages.map(m => m.id === messageId ? { ...m, content: formatted } : m)

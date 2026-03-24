@@ -1,6 +1,6 @@
 import { AppLanguage } from "./studio-types";
 
-export const RULEBOOK_DATA: Record<AppLanguage, any> = {
+export const RULEBOOK_DATA: Record<AppLanguage, Record<string, unknown>> = {
   KO: {
     title: "EH Rulebook v1.0",
     subtitle: "A Narrative Engine That Prevents Story Collapse",

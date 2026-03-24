@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useLang, type Lang } from "@/lib/LangContext";
@@ -373,23 +373,16 @@ export default function WorldSharePage() {
   const router = useRouter();
   const t = T[lang];
 
-  const [worldData, setWorldData] = useState<SharedWorldData | null>(null);
-  const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
+  const { worldData, error, loaded } = useMemo(() => {
     const encoded = searchParams.get("data");
     if (encoded) {
       const decoded = decodeWorldData(encoded);
       if (decoded) {
-        setWorldData(decoded);
-      } else {
-        setError(true);
+        return { worldData: decoded, error: false, loaded: true };
       }
-    } else {
-      setError(true);
+      return { worldData: null as SharedWorldData | null, error: true, loaded: true };
     }
-    setLoaded(true);
+    return { worldData: null as SharedWorldData | null, error: true, loaded: true };
   }, [searchParams]);
 
   const genreLabel = useMemo(() => {
