@@ -270,4 +270,14 @@ export interface CreateSettlementInput {
   archiveLevel?: string;
 }
 
+export interface CreateBoardPostInput {
+  authorId: string;
+  boardType: BoardType;
+  title: string;
+  content: string;
+  tags?: string[];
+  planetId?: string;
+  visibility?: Visibility;
+}
+
 // IDENTITY_SEAL: PART-3 | role=wizard input contracts | inputs=form state | outputs=create payloads

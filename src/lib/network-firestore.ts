@@ -20,6 +20,7 @@ import {
   type BookmarkRecord,
   type CommentRecord,
   type CreatePlanetWithFirstLogInput,
+  type CreateBoardPostInput,
   type CreatePostInput,
   type CreateSettlementInput,
   type PlanetRecord,
@@ -356,6 +357,41 @@ export async function createSettlement(input: CreateSettlementInput) {
   await batch.commit();
 
   return settlementRecord;
+}
+
+export async function createBoardPost(input: CreateBoardPostInput) {
+  const database = requireDb();
+  const timestamp = nowIso();
+  const postsRef = collection(database, COLLECTIONS.posts);
+  const postRef = doc(postsRef);
+
+  const postRecord: PostRecord = {
+    id: postRef.id,
+    authorId: input.authorId,
+    planetId: input.planetId ?? "",
+    boardType: input.boardType,
+    reportType: "observation",
+    title: normalizeText(input.title),
+    content: normalizeText(input.content),
+    summary: summarizeContent(input.content),
+    tags: normalizeStringArray([input.boardType, ...(input.tags ?? [])], 8),
+    officiality: "pending",
+    visibility: input.visibility ?? "public",
+    isPinned: false,
+    isOfficial: false,
+    metrics: {
+      viewCount: 0,
+      commentCount: 0,
+      reactionCount: 0,
+    },
+    approvedAt: null,
+    approvedBy: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  await setDoc(postRef, postRecord);
+  return postRecord;
 }
 
 // IDENTITY_SEAL: PART-3 | role=create entities | inputs=planet/log/settlement create payloads | outputs=stored records

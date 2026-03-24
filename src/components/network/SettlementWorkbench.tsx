@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
@@ -163,7 +164,11 @@ export function SettlementWorkbench() {
 
   return (
     <main className="pt-14 pb-20">
-      <div className="site-shell grid gap-6 py-8 lg:grid-cols-[1.05fr_0.95fr] md:py-10">
+      <div className="site-shell space-y-6 py-8 md:py-10">
+        <Link href="/network" className="inline-flex items-center gap-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary transition hover:text-accent-amber">
+          &larr; NETWORK
+        </Link>
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="premium-panel p-6 md:p-8">
           <div className="site-kicker">{lang === "ko" ? "정산 워크벤치" : "Settlement Workbench"}</div>
           <h1 className="site-title mt-3 text-3xl font-semibold">
@@ -287,6 +292,7 @@ export function SettlementWorkbench() {
             </div>
           </div>
         </aside>
+        </div>
       </div>
     </main>
   );

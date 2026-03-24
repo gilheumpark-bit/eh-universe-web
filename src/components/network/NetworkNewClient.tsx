@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
@@ -41,7 +42,11 @@ export function NetworkNewClient() {
 
   return (
     <main className="pt-14 pb-20">
-      <div className="site-shell grid gap-6 py-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start md:py-10">
+      <div className="site-shell space-y-6 py-8 md:py-10">
+        <Link href="/network" className="inline-flex items-center gap-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary transition hover:text-accent-amber">
+          &larr; NETWORK
+        </Link>
+        <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
         <PlanetWizard
           ownerId={user.uid}
           ownerName={user.displayName}
@@ -69,6 +74,7 @@ export function NetworkNewClient() {
             </p>
           </div>
         </aside>
+        </div>
       </div>
     </main>
   );

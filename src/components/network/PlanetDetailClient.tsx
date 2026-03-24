@@ -180,6 +180,9 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
   return (
     <main className="pt-14 pb-20">
       <div className="site-shell space-y-6 py-8 md:py-10">
+        <Link href="/network" className="inline-flex items-center gap-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary transition hover:text-accent-amber">
+          &larr; NETWORK
+        </Link>
         <PlanetHeaderCard
           planet={planet}
           lang={lang}

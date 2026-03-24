@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import {
   getAllUniqueTags,
+  getNetworkUserRecord,
   getPlanetsByIds,
   listBookmarks,
   listLatestPlanets,
@@ -18,6 +19,7 @@ import type {
   PlanetRecord,
   PostRecord,
   SettlementRecord,
+  UserRecord,
 } from "@/lib/network-types";
 import { BOARD_TYPES } from "@/lib/network-types";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
@@ -30,7 +32,7 @@ import { SettlementBadge } from "@/components/network/SettlementBadge";
 import { TagFilter } from "@/components/network/TagFilter";
 
 // ============================================================
-// PART 1 - TYPES AND DATA LOADING
+// PART 1 - TYPES, HELPERS, AND DATA LOADING
 // ============================================================
 
 interface DashboardState {
@@ -38,6 +40,7 @@ interface DashboardState {
   posts: PostRecord[];
   settlements: SettlementRecord[];
   planetMap: Record<string, PlanetRecord>;
+  authorMap: Record<string, UserRecord>;
   allTags: string[];
 }
 
@@ -46,6 +49,18 @@ type BoardFilter = "all" | BoardType;
 const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string }> = {
   all: { ko: "전체", en: "All" },
 };
+
+function relativeTime(isoDate: string, lang: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return lang === "ko" ? "방금 전" : "Just now";
+  if (minutes < 60) return lang === "ko" ? `${minutes}분 전` : `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return lang === "ko" ? `${hours}시간 전` : `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return lang === "ko" ? `${days}일 전` : `${days}d ago`;
+  return new Date(isoDate).toLocaleDateString(lang === "ko" ? "ko-KR" : "en-US");
+}
 
 export function NetworkHomeClient() {
   const { lang } = useLang();
@@ -57,6 +72,7 @@ export function NetworkHomeClient() {
     posts: [],
     settlements: [],
     planetMap: {},
+    authorMap: {},
     allTags: [],
   });
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
@@ -74,7 +90,7 @@ export function NetworkHomeClient() {
 
         const [planets, posts, settlements, bookmarks, allTags] = await Promise.all([
           listLatestPlanets(6),
-          listLatestPosts(20),
+          listLatestPosts(30),
           listLatestSettlements(6),
           user ? listBookmarks(user.uid) : Promise.resolve([] as BookmarkRecord[]),
           getAllUniqueTags(50),
@@ -82,13 +98,25 @@ export function NetworkHomeClient() {
 
         const planetIds = [
           ...planets.map((planet) => planet.id),
-          ...posts.map((post) => post.planetId),
+          ...posts.map((post) => post.planetId).filter(Boolean),
           ...settlements.map((settlement) => settlement.planetId),
         ];
         const planetMap = await getPlanetsByIds(planetIds);
 
+        const uniqueAuthorIds = Array.from(new Set(posts.map((p) => p.authorId)));
+        const authorEntries = await Promise.all(
+          uniqueAuthorIds.map(async (uid) => {
+            const record = await getNetworkUserRecord(uid);
+            return [uid, record] as const;
+          }),
+        );
+        const authorMap: Record<string, UserRecord> = {};
+        for (const [uid, record] of authorEntries) {
+          if (record) authorMap[uid] = record;
+        }
+
         if (!cancelled) {
-          setState({ planets, posts, settlements, planetMap, allTags });
+          setState({ planets, posts, settlements, planetMap, authorMap, allTags });
           setBookmarkedIds(new Set(bookmarks.map((b) => b.planetId)));
         }
       } catch (caught) {
@@ -119,6 +147,14 @@ export function NetworkHomeClient() {
     setSelectedTags([]);
   }, []);
 
+  const boardTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const post of state.posts) {
+      counts[post.boardType] = (counts[post.boardType] ?? 0) + 1;
+    }
+    return counts;
+  }, [state.posts]);
+
   const filteredPosts = useMemo(() => {
     let posts = state.posts;
     if (boardFilter !== "all") {
@@ -130,7 +166,7 @@ export function NetworkHomeClient() {
         (p.tags ?? []).some((t) => tagSet.has(t.toLowerCase())),
       );
     }
-    return posts.slice(0, 8);
+    return posts.slice(0, 12);
   }, [state.posts, boardFilter, selectedTags]);
 
   const filteredPlanets = useMemo(() => {
@@ -176,9 +212,9 @@ export function NetworkHomeClient() {
               <Link href="/network/new" className="premium-button">
                 {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
               </Link>
-              <a href="#latest-logs" className="premium-button secondary">
-                {lang === "ko" ? "최신 로그 보기" : "View Latest Logs"}
-              </a>
+              <Link href="/network/posts/new" className="premium-button secondary">
+                {lang === "ko" ? "글쓰기" : "Write Post"}
+              </Link>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
                   {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
@@ -212,7 +248,7 @@ export function NetworkHomeClient() {
           </div>
         </section>
 
-        {/* Board Type Filter Tabs */}
+        {/* Board Type Filter Tabs with counts */}
         <section className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <button
@@ -225,6 +261,9 @@ export function NetworkHomeClient() {
               }`}
             >
               {lang === "ko" ? BOARD_FILTER_LABELS.all.ko : BOARD_FILTER_LABELS.all.en}
+              {state.posts.length > 0 && (
+                <span className="ml-1.5 text-[10px] opacity-60">{state.posts.length}</span>
+              )}
             </button>
             {BOARD_TYPES.filter((bt) => bt !== "notice").map((bt) => (
               <button
@@ -240,6 +279,9 @@ export function NetworkHomeClient() {
                 }`}
               >
                 {pickNetworkLabel(BOARD_TYPE_LABELS[bt], lang)}
+                {(boardTypeCounts[bt] ?? 0) > 0 && (
+                  <span className="ml-1.5 text-[10px] opacity-60">{boardTypeCounts[bt]}</span>
+                )}
               </button>
             ))}
           </div>
@@ -258,6 +300,7 @@ export function NetworkHomeClient() {
 
         {error ? <p className="text-sm text-accent-red">{error}</p> : null}
 
+        {/* Planets section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -318,10 +361,19 @@ export function NetworkHomeClient() {
           </div>
         </section>
 
+        {/* Posts list section */}
         <section id="latest-logs" className="space-y-4">
-          <div>
-            <div className="site-kicker">{lang === "ko" ? "최신 관측 로그" : "Latest Logs"}</div>
-            <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "이야기와 기록 스트림" : "Story and record stream"}</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="site-kicker">{lang === "ko" ? "최신 관측 로그" : "Latest Logs"}</div>
+              <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "이야기와 기록 스트림" : "Story and record stream"}</h2>
+            </div>
+            <Link
+              href="/network/posts/new"
+              className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
+            >
+              + {lang === "ko" ? "글쓰기" : "Write"}
+            </Link>
           </div>
 
           <div className="grid gap-4">
@@ -329,13 +381,28 @@ export function NetworkHomeClient() {
               ? Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className="premium-panel-soft min-h-[140px] animate-pulse p-5" />
                 ))
-              : filteredPosts.map((post) => {
+              : filteredPosts.length === 0
+                ? (
+                  <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
+                    <p className="text-sm text-text-tertiary">
+                      {lang === "ko" ? "아직 게시글이 없습니다." : "No posts yet."}
+                    </p>
+                    <Link
+                      href="/network/posts/new"
+                      className="mt-4 rounded-lg bg-accent-amber/20 px-5 py-2.5 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
+                    >
+                      {lang === "ko" ? "첫 글을 작성해보세요" : "Write the first post"}
+                    </Link>
+                  </div>
+                )
+                : filteredPosts.map((post) => {
                   const planet = state.planetMap[post.planetId];
+                  const author = state.authorMap[post.authorId];
                   const isIfPost = post.boardType === "if";
                   return (
                     <Link
                       key={post.id}
-                      href={`/network/planets/${post.planetId}`}
+                      href={`/network/posts/${post.id}`}
                       className={`premium-panel-soft p-5 transition ${
                         isIfPost
                           ? "border-purple-400/20 hover:border-purple-400/40"
@@ -362,10 +429,12 @@ export function NetworkHomeClient() {
                         </span>
                         {post.followupStatus ? <SettlementBadge status={post.followupStatus} lang={lang} /> : null}
                       </div>
+
                       <h3 className={`mt-4 text-lg font-semibold ${isIfPost ? "text-purple-200" : "text-text-primary"}`}>
                         {post.title}
                       </h3>
                       <p className="mt-2 text-sm text-text-secondary">{post.summary}</p>
+
                       {(post.tags ?? []).length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {post.tags.slice(0, 5).map((tag) => (
@@ -375,10 +444,21 @@ export function NetworkHomeClient() {
                           ))}
                         </div>
                       )}
-                      <div className="mt-4 flex flex-wrap gap-4 text-xs text-text-tertiary">
-                        <span>{planet?.name ?? post.planetId}</span>
-                        <span>{post.eventCategory ?? (lang === "ko" ? "미분류" : "Unclassified")}</span>
-                        <span>{new Date(post.createdAt).toLocaleString(lang === "ko" ? "ko-KR" : "en-US")}</span>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-text-tertiary">
+                        <span className="font-medium text-text-secondary">
+                          {author?.nickname ?? `Explorer-${post.authorId.slice(0, 6)}`}
+                        </span>
+                        <span>{relativeTime(post.createdAt, lang)}</span>
+                        <span>{planet?.name ?? (post.planetId || (lang === "ko" ? "일반" : "General"))}</span>
+                        <span className="ml-auto flex items-center gap-3">
+                          {post.metrics.commentCount > 0 && (
+                            <span>{lang === "ko" ? `댓글 ${post.metrics.commentCount}` : `${post.metrics.commentCount} comments`}</span>
+                          )}
+                          {post.metrics.reactionCount > 0 && (
+                            <span>{lang === "ko" ? `반응 ${post.metrics.reactionCount}` : `${post.metrics.reactionCount} reactions`}</span>
+                          )}
+                        </span>
                       </div>
                     </Link>
                   );
@@ -386,6 +466,7 @@ export function NetworkHomeClient() {
           </div>
         </section>
 
+        {/* Settlements section */}
         <section className="space-y-4">
           <div>
             <div className="site-kicker">{lang === "ko" ? "최신 정산" : "Latest Settlements"}</div>
@@ -429,4 +510,4 @@ export function NetworkHomeClient() {
   );
 }
 
-// IDENTITY_SEAL: PART-2 | role=dashboard renderer | inputs=dashboard state and filter state | outputs=network landing UI with board tabs and tag filters
+// IDENTITY_SEAL: PART-2 | role=dashboard renderer | inputs=dashboard state and filter state | outputs=network landing UI with board tabs, post cards, and tag filters

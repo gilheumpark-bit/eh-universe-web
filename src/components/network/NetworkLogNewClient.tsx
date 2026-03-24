@@ -153,6 +153,9 @@ export function NetworkLogNewClient() {
   return (
     <main className="pt-14 pb-20">
       <div className="site-shell space-y-6 py-8 md:py-10">
+        <Link href="/network" className="inline-flex items-center gap-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary transition hover:text-accent-amber">
+          &larr; NETWORK
+        </Link>
         <section className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="site-kicker">{lang === "ko" ? "관측 로그 작성" : "Write Observation Log"}</div>
