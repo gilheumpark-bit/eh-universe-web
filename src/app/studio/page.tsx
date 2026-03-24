@@ -711,29 +711,29 @@ export default function StudioPage() {
           </nav>
         </div>
 
-        <div className="mt-auto p-6 border-t border-border space-y-3">
+        <div className="mt-auto px-4 py-4 border-t border-border space-y-2">
           {/* Export / Import */}
           <div className="flex gap-1.5">
-            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Download className="w-3 h-3" /> TXT
+            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Download className="w-3.5 h-3.5" /> TXT
             </button>
-            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Download className="w-3 h-3" /> JSON
+            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Download className="w-3.5 h-3.5" /> JSON
             </button>
-            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Upload className="w-3 h-3" /> {t('export.import')}
+            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <Upload className="w-3.5 h-3.5" /> {t('export.import')}
             </button>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
           </div>
           <div className="flex gap-1.5">
-            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <FileText className="w-3 h-3" /> EPUB
+            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <FileText className="w-3.5 h-3.5" /> EPUB
             </button>
-            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <FileType className="w-3 h-3" /> DOCX
+            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+              <FileType className="w-3.5 h-3.5" /> DOCX
             </button>
           </div>
-          <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
+          <button onClick={exportAllJSON} className="w-full py-2 bg-bg-secondary border border-border rounded-xl text-xs font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
             {t('export.fullBackup')}
           </button>
           {/* Auth */}
@@ -758,7 +758,7 @@ export default function StudioPage() {
                   return;
                 }
                 signInWithGoogle();
-              }} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[11px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
+              }} className="w-full py-2.5 bg-bg-secondary border border-border rounded-xl text-sm font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
                 🔑 {t('auth.googleLogin')}
               </button>
             )}
