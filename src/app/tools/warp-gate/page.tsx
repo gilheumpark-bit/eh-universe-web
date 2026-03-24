@@ -685,7 +685,7 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
                 {"effectText" in selDoc && selDoc.effectText && <span className={`rounded-full px-2.5 py-1 text-xs ${selDoc.tone === "dark" ? "bg-white/[0.08]" : "bg-black/[0.08]"}`}>{selDoc.effectText}</span>}
               </div>
               <div className="grid gap-3 text-sm leading-relaxed">
-                <p>{selDoc.summary}</p>
+                {"summary" in selDoc && <p>{(selDoc as {summary?: string}).summary}</p>}
                 {selDoc.quote && <div className={`border-l-2 pl-3 italic ${selDoc.tone === "dark" ? "border-white/25" : "border-black/25"}`}>{selDoc.quote}</div>}
                 {selDoc.body.map((p, i) => <p key={i}>{p}</p>)}
               </div>
@@ -754,7 +754,7 @@ function ZoneMapPanel({ s, metrics, en, onSelectZone }: { s: GameState; metrics:
   );
 }
 
-function GateChamberPanel({ s, metrics, en, onCalibrate, onCharge, onFocus, onJump }: {
+function GateChamberPanel({ s, metrics, en, onCalibrate, onCharge, onFocus, onJump, onSlider }: {
   s: GameState; metrics: Metrics; en: boolean;
   onCalibrate: () => void; onCharge: () => void; onFocus: () => void; onJump: () => void;
   onSlider: (key: string, val: number) => void;
@@ -874,8 +874,8 @@ function MissionArchivePanel({ s, en, onSave, onReset }: { s: GameState; en: boo
                 <p className={mutedCls + " mt-1 !text-xs"}>{String(res.detail || "")}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {[["phi", res.phi], ["psi", res.psi], ["E_rms", res.eRms], [en ? "Entropy" : "엔트로피", res.entropy], [en ? "Consistency" : "일관성", res.consistency], [en ? "Branch" : "분기", res.branchProbability]].map(([l, v]) => (
-                  <div key={String(l)} className="flex justify-between py-0.5"><span className={mutedCls + " !text-xs"}>{l}</span><strong className="text-xs text-text-primary">{typeof v === "number" ? fixed(v, 3) : String(v ?? "-")}</strong></div>
+                {([["phi", res.phi], ["psi", res.psi], ["E_rms", res.eRms], [en ? "Entropy" : "엔트로피", res.entropy], [en ? "Consistency" : "일관성", res.consistency], [en ? "Branch" : "분기", res.branchProbability]] as [string, number][]).map(([l, v]) => (
+                  <div key={l} className="flex justify-between py-0.5"><span className={mutedCls + " !text-xs"}>{l}</span><strong className="text-xs text-text-primary">{typeof v === "number" ? fixed(v, 3) : String(v ?? "-")}</strong></div>
                 ))}
               </div>
               {s.finale.unlocked && (
