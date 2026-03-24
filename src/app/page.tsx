@@ -51,67 +51,41 @@ const exploreLinks = {
 
 export default function Home() {
   const { lang } = useLang();
-  const isEN = lang === "en";
+
+  const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
+    lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
 
   const t = {
-    kicker: isEN ? "Story Studio for Fast First Scenes" : "첫 장면까지 빠르게 도달하는 스토리 스튜디오",
-    hero: isEN
-      ? "Turn one line of inspiration into a world seed, key cast, and a writable first scene."
-      : "한 줄 아이디어를 세계관 씨앗, 핵심 인물, 바로 이어 쓸 수 있는 첫 장면으로 연결합니다.",
-    meta: isEN
-      ? "Quick Start · Writing Flow · Consistency Support · Manuscript Growth"
-      : "쾌속 시작 · 글쓰기 흐름 · 설정 일관성 보조 · 원고 성장",
-    briefTitle: isEN ? "Activation Brief" : "시작 흐름",
-    briefBody: isEN
-      ? "EH Universe is designed to get writers to a usable first scene quickly, then stay out of the way while they shape the draft."
-      : "EH Universe는 작가가 빠르게 첫 장면에 도달한 뒤, 자기 문장을 다듬는 흐름에 계속 집중하도록 설계되어 있습니다.",
-    pipelineTitle: isEN ? "Flow" : "진행 순서",
-    pipeline: isEN
-      ? ["Quick Start", "Shape the draft", "Grow the manuscript"]
-      : ["쾌속 시작", "초안 다듬기", "원고로 키우기"],
-    statusTitle: isEN ? "Studio Promise" : "스튜디오 약속",
-    statusBody: isEN
-      ? "Start fast, keep context, and protect the shape of your story while you write."
-      : "빠르게 시작하고, 맥락을 잃지 않고, 쓰는 동안 이야기의 형태를 지켜줍니다.",
-    whatIs: isEN ? "WHY EH" : "왜 EH인가",
-    ehDef: isEN ? "A co-pilot for writers, not a noisy control panel." : "복잡한 제어판이 아니라, 작가를 돕는 코파일럿.",
-    ehDesc: isEN
-      ? "EH Universe keeps world design, drafting, and manuscript growth on one editorial surface so writers can focus on the story itself."
-      : "EH Universe는 세계관 설계, 초안 작성, 원고 관리 흐름을 한 화면에 이어서 작가가 이야기 자체에 집중하게 돕습니다.",
-    ehHigh: isEN
-      ? "Writer-first: quick starts, editable drafts, and support that appears when needed."
-      : "작가 우선: 빠른 시작, 바로 수정 가능한 초안, 필요할 때만 나타나는 보조.",
-    ehLow: isEN
-      ? "System-first: too many settings, too much explanation, and the first sentence arrives too late."
-      : "시스템 우선: 설정이 너무 많고 설명이 길어서 첫 문장이 늦게 나오는 상태.",
-    principleTitle: isEN ? "Design Principle" : "설계 원칙",
-    principleBody: isEN
-      ? "The best writing tool makes the next action obvious: start, shape, save, continue."
-      : "좋은 글쓰기 도구는 다음 행동이 바로 보여야 합니다. 시작하고, 다듬고, 저장하고, 이어 쓰는 흐름입니다.",
-    numbersTitle: isEN ? "Built for the writing loop" : "글쓰기 루프에 맞춘 구조",
-    numbersHeadline: isEN ? "Less setup friction, more time in the scene." : "설정 마찰은 줄이고, 장면 안에 머무는 시간은 늘립니다.",
-    numbersBody: isEN
-      ? "The archive is deep, but the surface stays focused on action: get in, write, compare, and continue."
-      : "아카이브는 깊게 가져가되, 첫 화면은 행동에 집중합니다. 들어오고, 쓰고, 비교하고, 이어 가는 구조입니다.",
-    activationTitle: isEN ? "Start in 3 moves" : "3번의 행동으로 시작",
-    activationHeadline: isEN
-      ? "Get from concept to manuscript without leaving the studio."
-      : "아이디어에서 원고 관리까지, 스튜디오 안에서 끊기지 않게.",
-    activationBody: isEN
-      ? "Quick Start creates momentum first. The rest of the studio helps you keep it."
-      : "쾌속 시작으로 먼저 감탄을 만들고, 이후 스튜디오가 그 흐름을 이어줍니다.",
-    exploreTitle: isEN ? "Explore the universe" : "세계관 탐색",
-    exploreHeadline: isEN
-      ? "Reference, archive, and rulebook still stay one click away."
-      : "레퍼런스, 아카이브, 룰북도 한 번에 닿는 거리에 둡니다.",
-    ctaTitle: isEN ? "Ready for your next first scene?" : "다음 첫 장면을 써볼 시간",
-    ctaBody: isEN
-      ? "Open the studio, drop in one line, and keep the draft moving while the world stays consistent."
-      : "스튜디오를 열고 한 줄을 넣으면, 세계관의 맥락을 지키면서 초안을 계속 앞으로 밀 수 있습니다.",
-    openStudio: isEN ? "Open Studio" : "스튜디오 열기",
-    seeFlow: isEN ? "See the 3-step flow" : "3단계 흐름 보기",
-    browseReference: isEN ? "Read Reference" : "레퍼런스 보기",
-    footer: isEN ? "Start fast. Stay in the story." : "빠르게 시작하고, 이야기 안에 머문다.",
+    kicker: T({ ko: "첫 장면까지 빠르게 도달하는 스토리 스튜디오", en: "Story Studio for Fast First Scenes", jp: "最初のシーンに素早く到達するストーリースタジオ", cn: "快速到达第一个场景的故事工作室" }),
+    hero: T({ ko: "한 줄 아이디어를 세계관 씨앗, 핵심 인물, 바로 이어 쓸 수 있는 첫 장면으로 연결합니다.", en: "Turn one line of inspiration into a world seed, key cast, and a writable first scene.", jp: "一行のアイデアを世界観の種、キャスト、すぐに書ける最初のシーンへ。", cn: "将一行灵感转化为世界观种子、核心角色和可续写的第一个场景。" }),
+    meta: T({ ko: "쾌속 시작 · 글쓰기 흐름 · 설정 일관성 보조 · 원고 성장", en: "Quick Start · Writing Flow · Consistency Support · Manuscript Growth", jp: "クイックスタート · 執筆フロー · 設定一貫性サポート · 原稿成長", cn: "快速开始 · 写作流程 · 设定一致性支持 · 原稿成长" }),
+    briefTitle: T({ ko: "시작 흐름", en: "Activation Brief", jp: "開始フロー", cn: "启动流程" }),
+    briefBody: T({ ko: "EH Universe는 작가가 빠르게 첫 장면에 도달한 뒤, 자기 문장을 다듬는 흐름에 계속 집중하도록 설계되어 있습니다.", en: "EH Universe is designed to get writers to a usable first scene quickly, then stay out of the way while they shape the draft." }),
+    pipelineTitle: T({ ko: "진행 순서", en: "Flow", jp: "フロー", cn: "流程" }),
+    pipeline: T({ ko: ["쾌속 시작", "초안 다듬기", "원고로 키우기"], en: ["Quick Start", "Shape the draft", "Grow the manuscript"], jp: ["クイックスタート", "下書きを整える", "原稿に育てる"], cn: ["快速开始", "打磨草稿", "发展为稿件"] }),
+    statusTitle: T({ ko: "스튜디오 약속", en: "Studio Promise", jp: "スタジオの約束", cn: "工作室承诺" }),
+    statusBody: T({ ko: "빠르게 시작하고, 맥락을 잃지 않고, 쓰는 동안 이야기의 형태를 지켜줍니다.", en: "Start fast, keep context, and protect the shape of your story while you write." }),
+    whatIs: T({ ko: "왜 EH인가", en: "WHY EH", jp: "なぜEHか", cn: "为什么选择EH" }),
+    ehDef: T({ ko: "복잡한 제어판이 아니라, 작가를 돕는 코파일럿.", en: "A co-pilot for writers, not a noisy control panel." }),
+    ehDesc: T({ ko: "EH Universe는 세계관 설계, 초안 작성, 원고 관리 흐름을 한 화면에 이어서 작가가 이야기 자체에 집중하게 돕습니다.", en: "EH Universe keeps world design, drafting, and manuscript growth on one editorial surface so writers can focus on the story itself." }),
+    ehHigh: T({ ko: "작가 우선: 빠른 시작, 바로 수정 가능한 초안, 필요할 때만 나타나는 보조.", en: "Writer-first: quick starts, editable drafts, and support that appears when needed." }),
+    ehLow: T({ ko: "시스템 우선: 설정이 너무 많고 설명이 길어서 첫 문장이 늦게 나오는 상태.", en: "System-first: too many settings, too much explanation, and the first sentence arrives too late." }),
+    principleTitle: T({ ko: "설계 원칙", en: "Design Principle", jp: "設計原則", cn: "设计原则" }),
+    principleBody: T({ ko: "좋은 글쓰기 도구는 다음 행동이 바로 보여야 합니다. 시작하고, 다듬고, 저장하고, 이어 쓰는 흐름입니다.", en: "The best writing tool makes the next action obvious: start, shape, save, continue." }),
+    numbersTitle: T({ ko: "글쓰기 루프에 맞춘 구조", en: "Built for the writing loop", jp: "執筆ループに合わせた構造", cn: "为写作循环而构建" }),
+    numbersHeadline: T({ ko: "설정 마찰은 줄이고, 장면 안에 머무는 시간은 늘립니다.", en: "Less setup friction, more time in the scene." }),
+    numbersBody: T({ ko: "아카이브는 깊게 가져가되, 첫 화면은 행동에 집중합니다. 들어오고, 쓰고, 비교하고, 이어 가는 구조입니다.", en: "The archive is deep, but the surface stays focused on action: get in, write, compare, and continue." }),
+    activationTitle: T({ ko: "3번의 행동으로 시작", en: "Start in 3 moves", jp: "3ステップで開始", cn: "三步开始" }),
+    activationHeadline: T({ ko: "아이디어에서 원고 관리까지, 스튜디오 안에서 끊기지 않게.", en: "Get from concept to manuscript without leaving the studio." }),
+    activationBody: T({ ko: "쾌속 시작으로 먼저 감탄을 만들고, 이후 스튜디오가 그 흐름을 이어줍니다.", en: "Quick Start creates momentum first. The rest of the studio helps you keep it." }),
+    exploreTitle: T({ ko: "세계관 탐색", en: "Explore the universe", jp: "世界観を探索", cn: "探索世界观" }),
+    exploreHeadline: T({ ko: "레퍼런스, 아카이브, 룰북도 한 번에 닿는 거리에 둡니다.", en: "Reference, archive, and rulebook still stay one click away." }),
+    ctaTitle: T({ ko: "다음 첫 장면을 써볼 시간", en: "Ready for your next first scene?", jp: "次の最初のシーンを書く時間", cn: "准备写下一个第一场景" }),
+    ctaBody: T({ ko: "스튜디오를 열고 한 줄을 넣으면, 세계관의 맥락을 지키면서 초안을 계속 앞으로 밀 수 있습니다.", en: "Open the studio, drop in one line, and keep the draft moving while the world stays consistent." }),
+    openStudio: T({ ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" }),
+    seeFlow: T({ ko: "3단계 흐름 보기", en: "See the 3-step flow", jp: "3ステップを見る", cn: "查看三步流程" }),
+    browseReference: T({ ko: "레퍼런스 보기", en: "Read Reference", jp: "リファレンスを読む", cn: "阅读参考" }),
+    footer: T({ ko: "빠르게 시작하고, 이야기 안에 머문다.", en: "Start fast. Stay in the story.", jp: "素早く始め、物語の中に留まる。", cn: "快速开始，留在故事中。" }),
   };
 
   return (
@@ -197,7 +171,7 @@ export default function Home() {
                 <div className="absolute bottom-0 right-0 z-[1] select-none opacity-80">
                   <Image
                     src="/images/hero-mina.jpg"
-                    alt={isEN ? "Writer using the EH Universe studio" : "EH Universe 스튜디오를 상징하는 캐릭터 이미지"}
+                    alt={lang === "ko" ? "EH Universe 스튜디오를 상징하는 캐릭터 이미지" : "Writer using the EH Universe studio"}
                     width={560}
                     height={760}
                     priority={true}

@@ -292,7 +292,9 @@ const sectionMap = { ko: sectionsKo, en: sectionsEn };
 
 export default function DocsPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
   const secs = L2A(sectionMap, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
@@ -321,9 +323,9 @@ export default function DocsPage() {
             <aside className="lg:w-56 shrink-0">
               <div className="premium-panel-soft motion-rise rounded-[24px] p-4 lg:sticky lg:top-24">
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
-                  {en ? "Contents" : "\ubaa9\ucc28"}
+                  {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
                 </h2>
-                <nav className="space-y-1" role="navigation" aria-label={en ? "Table of contents" : "\ubaa9\ucc28"}>
+                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
                   {secs.map((s) => (
                     <a
                       key={s.id}
@@ -347,18 +349,14 @@ export default function DocsPage() {
             <div className="flex-1 min-w-0">
               <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
                 <span className="badge badge-classified mr-2">PUBLIC</span>
-                {en
-                  ? "Document Level: PUBLIC | Version: 2.0 | NOA Studio User Manual"
-                  : "\ubb38\uc11c \ub4f1\uae09: PUBLIC | \ubc84\uc804: 2.0 | NOA Studio \uc0ac\uc6a9\uc790 \ub9e4\ub274\uc5bc"}
+                {T({ ko: "문서 등급: PUBLIC | 버전: 2.0 | NOA Studio 사용자 매뉴얼", en: "Document Level: PUBLIC | Version: 2.0 | NOA Studio User Manual" })}
               </div>
               <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
                 <h1 className="site-title text-3xl font-bold tracking-tight mb-2">
                   NOA STUDIO MANUAL
                 </h1>
                 <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
-                  {en
-                    ? "AI-Powered Novel Writing Platform \u2014 Complete Feature Guide"
-                    : "AI \uae30\ubc18 \uc18c\uc124 \uc9d1\ud544 \ud50c\ub7ab\ud3fc \u2014 \uc804\uccb4 \uae30\ub2a5 \uac00\uc774\ub4dc"}
+                  {T({ ko: "AI 기반 소설 집필 플랫폼 — 전체 기능 가이드", en: "AI-Powered Novel Writing Platform \u2014 Complete Feature Guide" })}
                 </p>
 
                 {secs.map((s) => (
@@ -374,9 +372,7 @@ export default function DocsPage() {
 
                 <div className="mt-16 border-t border-border pt-6">
                   <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
-                    {en
-                      ? "NOA Studio is an open-source AI novel writing platform. Contributions welcome on GitHub."
-                      : "NOA Studio\ub294 \uc624\ud508\uc18c\uc2a4 AI \uc18c\uc124 \uc9d1\ud544 \ud50c\ub7ab\ud3fc\uc785\ub2c8\ub2e4. GitHub\uc5d0\uc11c \uae30\uc5ec\ub97c \ud658\uc601\ud569\ub2c8\ub2e4."}
+                    {T({ ko: "NOA Studio는 오픈소스 AI 소설 집필 플랫폼입니다. GitHub에서 기여를 환영합니다.", en: "NOA Studio is an open-source AI novel writing platform. Contributions welcome on GitHub." })}
                   </p>
                 </div>
               </div>

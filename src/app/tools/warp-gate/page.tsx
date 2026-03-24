@@ -915,7 +915,7 @@ function loadSavedState(): GameState {
 
 export default function WarpGatePage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
   const [s, setS] = useState<GameState>(() => {
     const loaded = loadSavedState();
     if (loaded.log.length === 0) {

@@ -259,7 +259,7 @@ function FlagshipCard({ flagship, accent }: { flagship: Flagship; accent: string
 
 export default function VesselPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
   const [activeTab, setActiveTab] = useState("council");
 
   const renderFactionPanel = (key: FactionKey) => {

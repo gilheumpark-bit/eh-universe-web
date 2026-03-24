@@ -170,7 +170,7 @@ function WarzoneCalcSVG() {
 /* ─── MAIN ─── */
 export default function GalaxyMapPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
 
   return (
     <>

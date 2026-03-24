@@ -78,7 +78,7 @@ interface Syllable {
 /* ─── COMPONENT ─── */
 export default function NekaSoundPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
 
   const [tab, setTab] = useState<"tts" | "sig">("tts");
   const [selectedCons, setSelectedCons] = useState<Consonant | null>(null);

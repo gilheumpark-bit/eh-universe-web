@@ -29,7 +29,8 @@ const sections = {
 
 export default function RulebookPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
   const secs = L2A(sections, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
@@ -59,9 +60,9 @@ export default function RulebookPage() {
             <aside className="lg:w-56 shrink-0">
               <div className="premium-panel-soft rounded-[24px] p-4 lg:sticky lg:top-24">
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
-                  {en ? "Contents" : "목차"}
+                  {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
                 </h2>
-                <nav className="space-y-1" role="navigation" aria-label={en ? "Table of contents" : "목차"}>
+                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
                   {secs.map((s) => (
                     <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
                       activeId === s.id
@@ -78,7 +79,7 @@ export default function RulebookPage() {
             <div className="flex-1 min-w-0">
               <div className="doc-header rounded-t-[24px] mb-0">
                 <span className="badge badge-classified mr-2">RESTRICTED</span>
-                {en ? "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" : "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국"}
+                {T({ ko: "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국", en: "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" })}
               </div>
               <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
                 <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
@@ -93,8 +94,8 @@ export default function RulebookPage() {
 
                 <div className="mt-16 border-t border-border pt-6">
                   <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
-                    {en ? "This document is for Bureau of Investigation internal reference only." : "이 문서는 비밀조사국 내부 참조용이다."}<br />
-                    {en ? "Unauthorized disclosure will result in the personnel being processed as a typo." : "무단 유출 시 해당 인원은 오타로 처리된다."}
+                    {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}<br />
+                    {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
                   </p>
                 </div>
               </div>
