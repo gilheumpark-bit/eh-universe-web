@@ -16,6 +16,7 @@ import {
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
+import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 // EngineReport type inferred from useStudioAI hook return
@@ -68,7 +69,18 @@ export default function StudioPage() {
   // ============================================================
   // PROJECT-BASED STATE MANAGEMENT (extracted to hook)
   // ============================================================
-  const [language, setLanguage] = useState<AppLanguage>('KO');
+  const { lang } = useLang();
+  const [language, setLanguage] = useState<AppLanguage>(() => {
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    return map[lang] || 'KO';
+  });
+
+  // Sync studio language when global lang changes (e.g. header toggle)
+  useEffect(() => {
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    setLanguage(map[lang] || 'KO');
+  }, [lang]);
+
   const pm = useProjectManager(language);
   const {
     projects, setProjects,

@@ -117,7 +117,7 @@ export default function ArchiveClient() {
   const [activeCategory, setActiveCategory] = useState(catParam);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { lang } = useLang();
-  const t = createT(lang === "ko" ? "KO" : "EN");
+  const t = createT(lang === "ko" ? "KO" : lang === "jp" ? "JP" : lang === "cn" ? "CN" : "EN");
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";

@@ -50,6 +50,39 @@ const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string }> = {
   all: { ko: "전체", en: "All" },
 };
 
+const SAMPLE_PLANETS = [
+  {
+    id: "sample-1",
+    genre: "Sci-Fi",
+    name: { ko: "아르카디아-7", en: "Arcadia-7" },
+    summary: {
+      ko: "GREEN 구역 외곽에 위치한 자원 행성. 최근 미확인 에너지 파동이 감지되었습니다.",
+      en: "A resource planet on the edge of the GREEN zone. Unidentified energy waves recently detected.",
+    },
+    tags: ["GREEN", "Resource", "Anomaly"],
+  },
+  {
+    id: "sample-2",
+    genre: "Military",
+    name: { ko: "요새 헬리오스", en: "Fortress Helios" },
+    summary: {
+      ko: "BLUE 구역 방어선의 핵심 거점. 3개 함대가 주둔 중입니다.",
+      en: "A key stronghold on the BLUE zone defense line. Three fleets are stationed here.",
+    },
+    tags: ["BLUE", "Defense", "Fleet"],
+  },
+  {
+    id: "sample-3",
+    genre: "Exploration",
+    name: { ko: "네뷸라 드리프트", en: "Nebula Drift" },
+    summary: {
+      ko: "YELLOW 구역 미탐사 성운 지대. 탐사 허가 대기 중입니다.",
+      en: "An unexplored nebula zone in the YELLOW sector. Awaiting exploration clearance.",
+    },
+    tags: ["YELLOW", "Nebula", "Uncharted"],
+  },
+];
+
 function relativeTime(isoDate: string, lang: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
@@ -326,6 +359,32 @@ export function NetworkHomeClient() {
             {loading
               ? Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="premium-panel-soft min-h-[220px] animate-pulse p-6" />
+                ))
+              : !loading && filteredPlanets.length === 0 && state.planets.length === 0
+                ? SAMPLE_PLANETS.map((sample) => (
+                  <div key={sample.id} className="premium-link-card relative p-6 opacity-75">
+                    <span className="absolute right-4 top-4 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-amber">
+                      {lang === "ko" ? "샘플" : "Sample"}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="site-kicker">{sample.genre}</span>
+                    </div>
+                    <h3 className="mt-4 text-xl font-semibold text-text-primary">{lang === "ko" ? sample.name.ko : sample.name.en}</h3>
+                    <p className="mt-3 text-sm leading-7 text-text-secondary">{lang === "ko" ? sample.summary.ko : sample.summary.en}</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {sample.tags.map((tag) => (
+                        <span key={tag} className="badge badge-blue">{tag}</span>
+                      ))}
+                    </div>
+                    <div className="mt-6 text-center">
+                      <Link
+                        href="/network/new"
+                        className="inline-block rounded-lg bg-accent-amber/20 px-5 py-2.5 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
+                      >
+                        {lang === "ko" ? "실제 행성을 등록해보세요" : "Register your own planet"}
+                      </Link>
+                    </div>
+                  </div>
                 ))
               : filteredPlanets.map((planet) => (
                   <div key={planet.id} className="premium-link-card p-6">
