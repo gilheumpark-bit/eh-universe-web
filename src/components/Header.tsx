@@ -7,11 +7,9 @@ import { useLang } from "@/lib/LangContext";
 const navItems = [
   { href: "/", label: "HOME" },
   { href: "/archive", label: "ARCHIVE" },
-  { href: "/rulebook", label: "RULEBOOK" },
-  { href: "/reference", label: "REFERENCE" },
+  { href: "/codex", label: "CODEX" },
   { href: "/studio", label: "STUDIO" },
   { href: "/about", label: "ABOUT" },
-  { href: "/docs", label: "DOCS" },
 ];
 
 const toolItems = [
