@@ -129,7 +129,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       )}
 
       {subTab === 'analysis' && (
-        <WorldAnalysisView language={language} />
+        <WorldAnalysisView language={language} config={config} />
       )}
     </div>
   );

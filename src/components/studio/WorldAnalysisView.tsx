@@ -13,6 +13,7 @@ import type { ChatMsg } from '@/lib/ai-providers';
 
 interface WorldAnalysisViewProps {
   language: AppLanguage;
+  config?: import('@/lib/studio-types').StoryConfig | null;
 }
 
 interface AnalysisResult {
@@ -138,7 +139,7 @@ const SECTION_LABELS: Record<AppLanguage, Record<string, string>> = {
   },
 };
 
-const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
+const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config }) => {
   const t = createT(language);
   const [inputText, setInputText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -146,6 +147,32 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // 설계/시뮬레이터 데이터 불러오기
+  const loadFromConfig = useCallback(() => {
+    if (!config) return;
+    const parts: string[] = [];
+    if (config.title) parts.push(`[제목] ${config.title}`);
+    if (config.synopsis) parts.push(`[시놉시스]\n${config.synopsis}`);
+    if (config.genre) parts.push(`[장르] ${config.genre}`);
+    if (config.corePremise) parts.push(`[핵심 전제]\n${config.corePremise}`);
+    if (config.powerStructure) parts.push(`[권력 구조]\n${config.powerStructure}`);
+    if (config.characters?.length) {
+      parts.push(`[캐릭터 ${config.characters.length}명]`);
+      config.characters.forEach(c => {
+        let line = `- ${c.name} (${c.role}): ${c.traits}`;
+        if (c.personality) line += ` / 성격: ${c.personality}`;
+        if (c.desire) line += ` / 욕망: ${c.desire}`;
+        if (c.deficiency) line += ` / 결핍: ${c.deficiency}`;
+        parts.push(line);
+      });
+    }
+    if (config.charRelations?.length) {
+      parts.push(`[관계도]`);
+      config.charRelations.forEach(r => parts.push(`- ${r.from} ↔ ${r.to}: ${r.type}`));
+    }
+    setInputText(parts.join('\n\n'));
+  }, [config]);
 
   const handleAnalyze = useCallback(async () => {
     const trimmed = inputText.trim();
@@ -226,9 +253,19 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language }) => {
 
       {/* Input */}
       <div className="space-y-3">
-        <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
-          {t('worldAnalysis.inputLabel')}
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+            {t('worldAnalysis.inputLabel')}
+          </label>
+          {config && (
+            <button
+              onClick={loadFromConfig}
+              className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-xs font-bold text-accent-purple hover:bg-accent-purple/20 transition-colors font-[family-name:var(--font-mono)]"
+            >
+              📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
+            </button>
+          )}
+        </div>
         <textarea
           className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
           placeholder={t('worldAnalysis.inputPlaceholder')}
