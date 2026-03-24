@@ -1130,7 +1130,7 @@ export default function NoaTowerPage() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as GamePayload;
-        if (parsed?.state && parsed?.reply) {
+        if (parsed?.state && parsed?.reply && parsed?.case) {
           setPayload(parsed);
           return;
         }

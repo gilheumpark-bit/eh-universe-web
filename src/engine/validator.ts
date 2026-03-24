@@ -601,6 +601,10 @@ function normalizeTrademark(t: string): string {
 // This prevents "마리오네트" from matching the "마리오" pattern.
 const _KOREAN_CHAR_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
 
+// Common Korean particles/postpositions that can follow a trademark word
+// without making it part of a longer compound word.
+const _KOREAN_PARTICLES_RE = /^[을를이가은는의에와과도로으며면서까지부터만보다라]|^으로|^에서|^까지|^부터|^처럼|^마저|^조차/;
+
 function isKoreanWordBoundary(text: string, matchStart: number, matchEnd: number): boolean {
   // Check character BEFORE the match
   if (matchStart > 0) {
@@ -611,9 +615,13 @@ function isKoreanWordBoundary(text: string, matchStart: number, matchEnd: number
   // Check character AFTER the match
   if (matchEnd < text.length) {
     const after = text[matchEnd];
-    // If the following char is Korean (and not a common particle/postposition start),
-    // this is likely a substring of a longer word → false positive
-    if (_KOREAN_CHAR_RE.test(after)) return false;
+    // If the following char is Korean, check if it's a common particle/postposition.
+    // Particles after a trademark are normal in Korean (e.g. 포켓몬을, 스타벅스에).
+    // Only reject if the suffix does NOT start with a known particle.
+    if (_KOREAN_CHAR_RE.test(after)) {
+      const suffix = text.slice(matchEnd);
+      if (!_KOREAN_PARTICLES_RE.test(suffix)) return false;
+    }
   }
   return true;
 }
