@@ -2,7 +2,7 @@
 
 import React, { Component, ComponentType } from 'react';
 import type { AppLanguage } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
+import { TRANSLATIONS } from '@/lib/studio-translations';
 
 interface Props {
   children: React.ReactNode;

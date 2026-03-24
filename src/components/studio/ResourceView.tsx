@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
+import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT } from '@/lib/i18n';
 import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';

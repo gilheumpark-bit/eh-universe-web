@@ -2,7 +2,7 @@
 import React from 'react';
 import { AppLanguage } from '@/lib/studio-types';
 import { FileText } from 'lucide-react';
-import { TRANSLATIONS } from '@/lib/studio-constants';
+import { TRANSLATIONS } from '@/lib/studio-translations';
 
 interface RulebookViewProps {
   language: AppLanguage;

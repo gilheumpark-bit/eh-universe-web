@@ -2,7 +2,7 @@
 import React from 'react';
 import { Activity, Cpu, Zap } from 'lucide-react';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
+import { TRANSLATIONS } from '@/lib/studio-translations';
 import { EngineReport, PlatformType, getActFromEpisode } from '@/engine/types';
 import { tensionCurve } from '@/engine/models';
 import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';

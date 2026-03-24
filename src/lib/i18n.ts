@@ -1,5 +1,5 @@
 import type { AppLanguage } from './studio-types';
-import { TRANSLATIONS } from './studio-constants';
+import { TRANSLATIONS } from './studio-translations';
 
 /**
  * Create a translator function for the given language.

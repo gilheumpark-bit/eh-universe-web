@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eraser, Sparkles, Command, MapPin, User, Bookmark } from 'lucide-react';
 import { StoryConfig, AppLanguage } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
+import { TRANSLATIONS } from '@/lib/studio-translations';
 
 interface InputAreaProps {
   language: AppLanguage;

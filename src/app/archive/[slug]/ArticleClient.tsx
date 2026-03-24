@@ -3,14 +3,43 @@
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useLang, L2 } from "@/lib/LangContext";
-import { articles, getArticleTitle } from "@/lib/articles";
+import type { ArticleData } from "@/lib/articles";
 
 export default function ArticleClient({ slug }: { slug: string }) {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
     lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
 
+  const [articleModule, setArticleModule] = useState<{
+    articles: Record<string, ArticleData>;
+    getArticleTitle: (slug: string, lang: "ko" | "en") => string;
+  } | null>(null);
+
+  useEffect(() => {
+    import("@/lib/articles").then((mod) => {
+      setArticleModule({ articles: mod.articles, getArticleTitle: mod.getArticleTitle });
+    });
+  }, []);
+
+  // Loading state while articles chunk loads
+  if (!articleModule) {
+    return (
+      <>
+        <Header />
+        <main className="pt-24 flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider animate-pulse">
+              Loading archive...
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  const { articles, getArticleTitle } = articleModule;
   const article = articles[slug];
 
   if (!article) {
