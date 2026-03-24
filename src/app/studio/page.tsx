@@ -674,7 +674,7 @@ export default function StudioPage() {
             )}
           </div>
 
-          <button onClick={() => createNewSession()} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
+          <button data-testid="btn-new-session" onClick={() => createNewSession()} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
             <Plus className="w-4 h-4" /> {t('sidebar.newProject')}
           </button>
 
@@ -704,7 +704,7 @@ export default function StudioPage() {
               { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false },
               { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true },
             ]).filter(item => studioMode === 'free' || item.guided).map(({ tab, icon: Icon, label }) => (
-              <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
+              <button key={tab} data-testid={`tab-${tab}`} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
                 <Icon className="w-4 h-4" /> {label}
               </button>
             ))}
@@ -906,7 +906,7 @@ export default function StudioPage() {
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{apiBannerMessage}</span>
-                <button onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
+                <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
                   {apiSetupLabel}
                 </button>
                 <button onClick={() => { localStorage.setItem('noa_api_banner_dismissed', '1'); window.dispatchEvent(new Event('storage')); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">

@@ -42,7 +42,7 @@ interface ReportButtonProps {
 
 export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const { lang } = useLang();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason>("spam");
   const [detail, setDetail] = useState("");
@@ -69,13 +69,11 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
     }
   }, [detail, reason, submitting, targetId, targetType, user]);
 
-  if (!user) return null;
-
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { if (!user) { void signInWithGoogle(); return; } setOpen(true); }}
         className="text-xs text-text-tertiary transition hover:text-accent-red"
       >
         {L2(LABELS.report, lang)}

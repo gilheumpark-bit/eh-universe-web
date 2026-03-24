@@ -6,7 +6,7 @@ import { L2, useLang } from "@/lib/LangContext";
 import {
   addComment,
   deleteComment,
-  listComments,
+  listCommentsForPost,
   updateComment,
 } from "@/lib/network-firestore";
 import type { CommentRecord } from "@/lib/network-types";
@@ -63,7 +63,7 @@ interface CommentSectionProps {
 
 export function CommentSection({ planetId, postId }: CommentSectionProps) {
   const { lang } = useLang();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
@@ -76,15 +76,14 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
   const loadComments = useCallback(async () => {
     try {
       setLoading(true);
-      const records = await listComments(planetId);
-      const filtered = records.filter((c) => c.postId === postId);
-      setComments(filtered);
+      const records = await listCommentsForPost(postId);
+      setComments(records);
     } catch {
       /* silent */
     } finally {
       setLoading(false);
     }
-  }, [planetId, postId]);
+  }, [postId]);
 
   useEffect(() => {
     void loadComments();
@@ -203,7 +202,16 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-text-tertiary">{L2(LABELS.loginRequired, lang)}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-text-tertiary">{L2(LABELS.loginRequired, lang)}</p>
+          <button
+            type="button"
+            onClick={() => void signInWithGoogle()}
+            className="rounded-lg bg-accent-purple/20 px-3 py-1.5 text-xs font-medium text-accent-purple transition hover:bg-accent-purple/30"
+          >
+            Google {lang === "ko" ? "로그인" : "Sign In"}
+          </button>
+        </div>
       )}
 
       {loading ? (
@@ -216,6 +224,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
             <div key={comment.id} className="premium-panel-soft p-4">
               <div className="flex items-center gap-2">
                 {comment.authorPhoto ? (
+                  /* eslint-disable-next-line @next/next/no-img-element -- external user avatar URL */
                   <img src={comment.authorPhoto} alt="" className="h-5 w-5 rounded-full" />
                 ) : null}
                 <span className="text-xs font-medium text-text-primary">{comment.authorName}</span>

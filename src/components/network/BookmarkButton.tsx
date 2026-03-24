@@ -28,7 +28,7 @@ interface BookmarkButtonProps {
 
 export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const { lang } = useLang();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -51,7 +51,11 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   }, [planetId, user]);
 
   const handleToggle = useCallback(async () => {
-    if (!user || loading) return;
+    if (!user) {
+      await signInWithGoogle();
+      return;
+    }
+    if (loading) return;
     try {
       setLoading(true);
       if (saved) {
@@ -66,9 +70,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
     } finally {
       setLoading(false);
     }
-  }, [loading, planetId, saved, user]);
-
-  if (!user) return null;
+  }, [loading, planetId, saved, signInWithGoogle, user]);
 
   const label = saved ? L2(LABELS.bookmarked, lang) : L2(LABELS.bookmark, lang);
 

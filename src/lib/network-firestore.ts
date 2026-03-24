@@ -569,8 +569,12 @@ export async function toggleReaction(input: {
   const ref = doc(database, COLLECTIONS.reactions, docId);
   const snapshot = await getDoc(ref);
 
+  const parentCollection = input.targetType === "planet" ? COLLECTIONS.planets : COLLECTIONS.posts;
+  const parentRef = doc(database, parentCollection, input.targetId);
+
   if (snapshot.exists()) {
     await deleteDoc(ref);
+    await updateDoc(parentRef, { "metrics.reactionCount": increment(-1) });
     return false;
   }
 
@@ -583,6 +587,7 @@ export async function toggleReaction(input: {
     createdAt: nowIso(),
   };
   await setDoc(ref, record);
+  await updateDoc(parentRef, { "metrics.reactionCount": increment(1) });
   return true;
 }
 
