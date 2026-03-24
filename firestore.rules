@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ============================================================
+    // PART 1 - SHARED HELPERS
+    // ============================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && userDoc(request.auth.uid).exists()
+        && userDoc(request.auth.uid).data.role == "admin";
+    }
+
+    function isPlanetOwner(planetId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/planets/$(planetId)).exists()
+        && get(/databases/$(database)/documents/planets/$(planetId)).data.ownerId == request.auth.uid;
+    }
+
+    function canReadVisibility(visibility, ownerId) {
+      return visibility == "public"
+        || (visibility == "members" && signedIn())
+        || (signedIn() && request.auth.uid == ownerId)
+        || isAdmin();
+    }
+
+    function linkedPlanet(postData) {
+      return get(/databases/$(database)/documents/planets/$(postData.planetId));
+    }
+
+    // IDENTITY_SEAL: PART-1 | role=shared access helpers | inputs=auth and linked docs | outputs=booleans
+
+    // ============================================================
+    // PART 2 - COLLECTION RULES
+    // ============================================================
+
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.id == uid
+        && request.resource.data.role == "member";
+      allow update: if signedIn()
+        && (
+          request.auth.uid == uid
+          || isAdmin()
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /planets/{planetId} {
+      allow read: if canReadVisibility(resource.data.visibility, resource.data.ownerId);
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.id == planetId;
+      allow update, delete: if signedIn()
+        && (
+          resource.data.ownerId == request.auth.uid
+          || isAdmin()
+        );
+    }
+
+    match /posts/{postId} {
+      allow read: if canReadVisibility(resource.data.visibility, linkedPlanet(resource.data).data.ownerId);
+      allow create: if signedIn()
+        && request.resource.data.id == postId
+        && request.resource.data.authorId == request.auth.uid
+        && (
+          isPlanetOwner(request.resource.data.planetId)
+          || isAdmin()
+        );
+      allow update, delete: if signedIn()
+        && (
+          resource.data.authorId == request.auth.uid
+          || isPlanetOwner(resource.data.planetId)
+          || isAdmin()
+        );
+    }
+
+    match /settlements/{settlementId} {
+      allow read: if canReadVisibility(
+        get(/databases/$(database)/documents/planets/$(resource.data.planetId)).data.visibility,
+        get(/databases/$(database)/documents/planets/$(resource.data.planetId)).data.ownerId
+      );
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /comments/{commentId} {
+      allow read: if canReadVisibility(
+        get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.visibility,
+        get(/databases/$(database)/documents/planets/$(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.planetId)).data.ownerId
+      );
+      allow create: if signedIn()
+        && request.resource.data.id == commentId
+        && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if signedIn()
+        && (
+          resource.data.authorId == request.auth.uid
+          || isAdmin()
+        );
+    }
+
+    // IDENTITY_SEAL: PART-2 | role=collection policies | inputs=request and resource data | outputs=allow or deny
+  }
+}
