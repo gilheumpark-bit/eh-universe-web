@@ -748,7 +748,7 @@ export default function StudioPage() {
                   title: t('confirm.logout'),
                   message: t('confirm.logoutMsg'),
                   variant: 'warning',
-                  onConfirm: signOut,
+                  onConfirm: () => { closeConfirm(); signOut(); },
                 })} className="text-[10px] text-text-tertiary hover:text-accent-red font-bold">{t('confirm.logout')}</button>
               </>
             ) : (
