@@ -169,9 +169,9 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             </h1>
             <p className="site-lede mt-4">{error ?? (lang === "ko" ? "유효한 행성 ID를 확인하세요." : "Check the requested planet id.")}</p>
             <div className="mt-8">
-              <Link href="/network" className="premium-button">
-                {lang === "ko" ? "네트워크 홈으로" : "Back to Network"}
-              </Link>
+              <button onClick={() => window.history.back()} className="premium-button">
+                {lang === "ko" ? "← 뒤로가기" : "← Go Back"}
+              </button>
             </div>
           </section>
         </div>

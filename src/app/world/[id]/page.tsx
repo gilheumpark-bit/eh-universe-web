@@ -67,7 +67,7 @@ const T: Record<Lang, {
   ko: {
     loading: "세계관 불러오는 중...",
     invalidData: "유효하지 않은 세계관 데이터입니다.",
-    backHome: "홈으로 돌아가기",
+    backHome: "← 뒤로가기",
     synopsis: "시놉시스",
     setting: "배경",
     emotion: "핵심 감정",
@@ -98,7 +98,7 @@ const T: Record<Lang, {
   en: {
     loading: "Loading world...",
     invalidData: "Invalid world data.",
-    backHome: "Back to Home",
+    backHome: "← Go Back",
     synopsis: "Synopsis",
     setting: "Setting",
     emotion: "Core Emotion",
@@ -129,7 +129,7 @@ const T: Record<Lang, {
   jp: {
     loading: "世界観を読み込み中...",
     invalidData: "無効な世界観データです。",
-    backHome: "ホームに戻る",
+    backHome: "← 戻る",
     synopsis: "シノプシス",
     setting: "舞台",
     emotion: "コア感情",
@@ -160,7 +160,7 @@ const T: Record<Lang, {
   cn: {
     loading: "加载世界观中...",
     invalidData: "无效的世界观数据。",
-    backHome: "返回首页",
+    backHome: "← 返回",
     synopsis: "梗概",
     setting: "背景",
     emotion: "核心情感",
@@ -436,12 +436,12 @@ export default function WorldSharePage() {
           <div className="text-center space-y-6">
             <div className="text-4xl">&#x26A0;</div>
             <p className="text-text-secondary text-sm">{t.invalidData}</p>
-            <Link
-              href="/"
-              className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
+            <button
+              onClick={() => window.history.back()}
+              className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
             >
               {t.backHome}
-            </Link>
+            </button>
           </div>
         </main>
       </div>
