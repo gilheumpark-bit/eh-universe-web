@@ -533,8 +533,8 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           {/* Item Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredItems.map(item => {
-              const rCfg = RARITY_CONFIG[item.rarity];
-              const cCfg = CATEGORY_CONFIG[item.category];
+              const rCfg = RARITY_CONFIG[item.rarity] || RARITY_CONFIG.common;
+              const cCfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.misc;
               const CatIcon = cCfg.icon;
               return (
                 <div key={item.id} className={`${rCfg.bg} border border-border rounded-xl p-4 space-y-2`}>

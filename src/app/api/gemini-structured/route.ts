@@ -179,7 +179,7 @@ Each item must be deeply connected to the world's lore and serve a narrative pur
 
 For each item provide ALL of the following:
 - name: Unique item name
-- category: One of "weapon", "armor", "artifact", "consumable", "material", "key_item"
+- category: One of "weapon", "armor", "accessory", "consumable", "material", "quest", "misc"
 - rarity: One of "common", "uncommon", "rare", "epic", "legendary", "mythic"
 - description: What the item is and its history (2-3 sentences)
 - effect: What it does mechanically or narratively

@@ -232,6 +232,13 @@ export const generateItems = async (
 
   if (!Array.isArray(results)) return [];
 
+  const VALID_CATEGORIES = ['weapon', 'armor', 'accessory', 'consumable', 'material', 'quest', 'misc'];
+  const VALID_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+  // API가 예상 외 값을 반환할 경우 가장 가까운 유효 값으로 매핑
+  const CATEGORY_ALIAS: Record<string, string> = { artifact: 'accessory', key_item: 'quest' };
+  const normalizeCategory = (c: string) => VALID_CATEGORIES.includes(c) ? c : (CATEGORY_ALIAS[c] || 'misc');
+  const normalizeRarity = (r: string) => VALID_RARITIES.includes(r) ? r : 'common';
+
   return results
     .filter((item): item is Omit<Item, 'id'> => {
       return Boolean(
@@ -242,6 +249,8 @@ export const generateItems = async (
     })
     .map((item) => ({
       ...item,
+      category: normalizeCategory((item as Item).category || 'misc') as Item['category'],
+      rarity: normalizeRarity((item as Item).rarity || 'common') as Item['rarity'],
       id: `item-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     }));
 };
