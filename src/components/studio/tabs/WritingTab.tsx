@@ -160,6 +160,10 @@ const WritingTab: React.FC<WritingTabProps> = ({
               <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'canvas' ? 'opacity-50' : ''}`}>🎨 {t('writingMode.threeStep')}{!hasApiKey && ' 🔒'}</button>
               <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('refine'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'refine' ? 'opacity-50' : ''}`}>⚡ {t('writingMode.auto30')}{!hasApiKey && ' 🔒'}</button>
               <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-50' : ''}`}>🎯 {t('writingMode.advanced')}{!hasApiKey && ' 🔒'}</button>
+              {writingMode === 'edit' && (<>
+                <button onClick={handleApplyEdit} disabled={!editDraft.trim()} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">📋 {t('writingMode.applyToManuscript')}</button>
+                <span className="text-[9px] text-text-tertiary ml-auto">{editDraft.length}{language === 'KO' ? '자' : ' chars'}</span>
+              </>)}
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">💡 {t('writingMode.directive')}</span>
@@ -199,10 +203,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
             {writingMode === 'edit' && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <button onClick={handleApplyEdit} disabled={!editDraft.trim()} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">📋 {t('writingMode.applyToManuscript')}</button>
-                  <span className="text-[9px] text-text-tertiary ml-auto">{editDraft.length}{language === 'KO' ? '자' : ' chars'}</span>
-                </div>
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">
                     <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
