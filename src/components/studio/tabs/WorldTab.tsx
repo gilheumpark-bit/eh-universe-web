@@ -16,6 +16,7 @@ interface WorldTabProps {
   saveFlash: boolean;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   currentSessionId: string | null;
+  hostedProviders?: Record<string, boolean>;
 }
 
 const WorldTab: React.FC<WorldTabProps> = ({
@@ -26,7 +27,8 @@ const WorldTab: React.FC<WorldTabProps> = ({
   onSave,
   saveFlash,
   updateCurrentSession,
-  currentSessionId
+  currentSessionId,
+  hostedProviders = {},
 }) => {
   return (
     <WorldStudioView
@@ -36,6 +38,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
       onStart={onStart}
       onSave={onSave}
       saveFlash={saveFlash}
+      hostedProviders={hostedProviders}
       handleWorldSimChange={(data) => {
         if (!currentSessionId) return;
         updateCurrentSession({

@@ -29,7 +29,7 @@ import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
-import ManuscriptView from '@/components/studio/ManuscriptView';
+import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 // generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
@@ -43,9 +43,8 @@ import { StudioConfigProvider, StudioUIProvider } from '@/contexts/StudioContext
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
-// WorldSimulator loaded by WorldStudioView
-// const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
-const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
+import WorldTab from '@/components/studio/tabs/WorldTab';
+// WorldStudioView는 WorldTab 내부에서 import됨
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 import StyleTab from '@/components/studio/tabs/StyleTab';
 // StyleStudioView는 StyleTab 내부에서 import됨
@@ -873,34 +872,10 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <WorldStudioView
-                    language={language}
-                    config={currentSession.config}
-                    setConfig={setConfig}
-                    onStart={() => setActiveTab('writing')}
-                    onSave={triggerSave}
-                    saveFlash={saveFlash}
-                    handleWorldSimChange={(data) => {
-                      if (!currentSessionId || !currentSession) return;
-                      updateCurrentSession({
-                        config: {
-                          ...currentSession.config,
-                          worldSimData: {
-                            civs: data.civs.map((c: { name: string; era: string; color: string; traits: string[] }) => ({ name: c.name, era: c.era, color: c.color, traits: c.traits })),
-                            relations: data.relations.map((r: { from: string; to: string; type: string }) => {
-                              const from = data.civs.find((c: { id: string }) => c.id === r.from)?.name || '';
-                              const to = data.civs.find((c: { id: string }) => c.id === r.to)?.name || '';
-                              return { fromName: from, toName: to, type: r.type };
-                            }),
-                            transitions: data.transitions,
-                            selectedGenre: data.selectedGenre,
-                            selectedLevel: data.selectedLevel,
-                            genreSelections: data.genreSelections,
-                            ruleLevel: data.ruleLevel,
-                          },
-                        },
-                      });
-                    }}
+                  <WorldTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
+                    onStart={() => setActiveTab('writing')} onSave={triggerSave} saveFlash={saveFlash}
+                    updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId}
                     hostedProviders={hostedProviders}
                   />
                 )}
@@ -965,16 +940,10 @@ export default function StudioPage() {
                   />
                 )}
                 {activeTab === 'manuscript' && currentSession && (
-                  <ManuscriptView
-                    language={language}
-                    config={currentSession.config}
-                    setConfig={setConfig}
+                  <ManuscriptTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
                     messages={currentSession.messages}
-                    onEditInStudio={(content) => {
-                      setEditDraft(content);
-                      setWritingMode('edit');
-                      setActiveTab('writing');
-                    }}
+                    onEditInStudio={(content) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
                   />
                 )}
                 {activeTab === 'history' && (
