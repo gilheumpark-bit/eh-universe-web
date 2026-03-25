@@ -36,6 +36,7 @@ import MobileTabBar from '@/components/studio/MobileTabBar';
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
+import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
@@ -325,54 +326,22 @@ export default function StudioPage() {
   }, [projects, language, showConfirm, closeConfirm, doDeleteProject]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
-  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'>('ai');
-  const [editDraft, setEditDraft] = useState('');
-  const editDraftRef = useRef<HTMLTextAreaElement>(null);
-  const [advancedSettings, setAdvancedSettings] = useState<import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings>({
-    sceneGoals: [], constraints: { pov: '3rd-limited', dialogueRatio: 40, tempo: 'stable', sentenceLen: 'normal', emotionExposure: 'normal' },
-    references: { prevEpisodes: 3, characterCards: true, worldSetting: true, styleProfile: false, sceneSheet: false, platformPreset: false },
-    locks: { speechStyle: false, worldRules: false, charRelations: false, bannedWords: false },
-    outputMode: 'draft', includes: '', excludes: '',
-  });
-  const [canvasContent, setCanvasContent] = useState('');
-  const [canvasPass, setCanvasPass] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('noa_canvasPass');
-      return saved ? parseInt(saved, 10) : 0;
-    }
-    return 0;
-  });
-  useEffect(() => {
-    if (canvasPass > 0) sessionStorage.setItem('noa_canvasPass', String(canvasPass));
-    else sessionStorage.removeItem('noa_canvasPass');
-  }, [canvasPass]);
-  const [promptDirective, setPromptDirective] = useState('');
+  // 집필 모드 상태 — useStudioWritingMode 훅으로 추출
+  const {
+    writingMode, setWritingMode,
+    editDraft, setEditDraft,
+    editDraftRef,
+    advancedSettings, setAdvancedSettings,
+    canvasContent, setCanvasContent,
+    canvasPass, setCanvasPass,
+    promptDirective, setPromptDirective,
+  } = useStudioWritingMode(currentSessionId, hydrated);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   // saveFlash, lastSaveTime, triggerSave → useStudioUX에서 제공
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
 
-  // editDraft 세션별 임시 저장 — 새로고침/크래시 대비
-  useEffect(() => {
-    if (!hydrated || !currentSessionId) return;
-    const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
-    setEditDraft(saved ?? '');
-  // currentSessionId가 바뀔 때만 복원
-  }, [currentSessionId, hydrated]);
-
-  useEffect(() => {
-    if (!currentSessionId || !hydrated) return;
-    const key = `noa_editdraft_${currentSessionId}`;
-    if (editDraft) {
-      localStorage.setItem(key, editDraft);
-    } else {
-      // Debounce deletion: avoid wiping during hydration/session-switch race
-      const timer = setTimeout(() => {
-        if (!editDraft) localStorage.removeItem(key);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [editDraft, currentSessionId, hydrated]);
+  // editDraft persist → useStudioWritingMode 내부로 이동
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
