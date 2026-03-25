@@ -916,6 +916,7 @@ function loadSavedState(): GameState {
 export default function WarpGatePage() {
   const { lang } = useLang();
   const en = lang !== "ko";
+  const [sideTab, setSideTab] = useState<"ship" | "struct" | "upgrade">("ship");
   const [s, setS] = useState<GameState>(() => {
     const loaded = loadSavedState();
     if (loaded.log.length === 0) {
@@ -1273,21 +1274,38 @@ export default function WarpGatePage() {
 
           <ResourceStrip s={s} metrics={metrics} en={en} />
 
-          {/* Main Layout */}
-          <div className="grid lg:grid-cols-[360px_1fr] gap-4 mt-4 items-start">
-            {/* Sidebar */}
-            <div className="grid gap-4">
-              <ShipPanel s={s} en={en} onSelect={onSelectShip} />
-              <StructurePanel s={s} en={en} onBuild={onBuild} />
-              <UpgradePanel s={s} en={en} onUpgrade={onUpgrade} />
+          {/* Main Layout — 컴팩트 2컬럼 */}
+          <div className="grid lg:grid-cols-[280px_1fr] gap-4 mt-4 items-start">
+            {/* Sidebar — 탭 전환 */}
+            <div className="space-y-2">
+              <div className="flex gap-1 rounded-xl border border-white/6 bg-white/[0.02] p-1">
+                {(["ship", "struct", "upgrade"] as const).map(tab => (
+                  <button key={tab} onClick={() => setSideTab(tab)}
+                    className={`flex-1 rounded-lg px-2 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-wider uppercase transition-all ${
+                      sideTab === tab ? "bg-white/[0.08] text-text-primary" : "text-text-tertiary hover:text-text-secondary"
+                    }`}>
+                    {tab === "ship" ? (en ? "Ship" : "함선") : tab === "struct" ? (en ? "Build" : "건설") : (en ? "Upgrade" : "강화")}
+                  </button>
+                ))}
+              </div>
+              {sideTab === "ship" && <ShipPanel s={s} en={en} onSelect={onSelectShip} />}
+              {sideTab === "struct" && <StructurePanel s={s} en={en} onBuild={onBuild} />}
+              {sideTab === "upgrade" && <UpgradePanel s={s} en={en} onUpgrade={onUpgrade} />}
             </div>
 
-            {/* Main Column */}
-            <div className="grid gap-4">
+            {/* Main Column — 핵심만 기본 노출, 나머지 접기 */}
+            <div className="space-y-4">
               <CampaignPanel s={s} metrics={metrics} en={en} onEvaluate={onEvaluate} onSkipHold={onSkipHold} onTutorial={onTutorial} onSelectDoc={onSelectDoc} />
-              <ZoneMapPanel s={s} metrics={metrics} en={en} onSelectZone={onSelectZone} />
               <GateChamberPanel s={s} metrics={metrics} en={en} onCalibrate={onCalibrate} onCharge={onCharge} onFocus={onFocus} onJump={onJump} onSlider={onSlider} />
-              <MissionArchivePanel s={s} en={en} onSave={onSave} onReset={onReset} />
+              <details className="group">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary">
+                  {en ? "▸ Zone Map & Mission Archive" : "▸ 구역 지도 & 임무 아카이브"}
+                </summary>
+                <div className="mt-2 space-y-4">
+                  <ZoneMapPanel s={s} metrics={metrics} en={en} onSelectZone={onSelectZone} />
+                  <MissionArchivePanel s={s} en={en} onSave={onSave} onReset={onReset} />
+                </div>
+              </details>
             </div>
           </div>
         </div>

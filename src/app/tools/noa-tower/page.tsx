@@ -1218,73 +1218,96 @@ export default function NoaTowerPage() {
             </div>
           </div>
 
-          {/* --- Mobile Panel Toggle --- */}
-          <div className="mb-4 flex gap-2 lg:hidden">
+          {/* --- Mobile: 대시보드 토글 --- */}
+          <div className="mb-4 lg:hidden">
             <button
-              onClick={() => setSidePanel("status")}
-              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider transition-colors ${sidePanel === "status" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
+              onClick={() => setSidePanel(sidePanel === "status" ? "case" : "status")}
+              className="w-full rounded-xl border border-white/8 px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              {t("towerStatus", lang)}
-            </button>
-            <button
-              onClick={() => setSidePanel("case")}
-              className={`flex-1 rounded-xl border px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider transition-colors ${sidePanel === "case" ? "border-white/15 bg-white/[0.04] text-text-primary" : "border-white/5 text-text-tertiary"}`}
-            >
-              {t("caseInfo", lang)}
+              {sidePanel === "status" ? (lang === "ko" ? "▲ 대시보드 닫기" : "▲ Hide Dashboard") : (lang === "ko" ? "▼ 대시보드 보기" : "▼ Show Dashboard")}
             </button>
           </div>
 
-          {/* --- 3-Column Layout --- */}
-          <div className="grid gap-4 lg:grid-cols-[260px_1fr_280px]">
-            {/* LEFT: Tower Status */}
-            <aside className={`space-y-4 ${sidePanel !== "status" ? "hidden lg:block" : ""}`}>
-              {/* Floor Sense */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("floorSense", lang)}
-                </h3>
-                <p className="font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-secondary">
-                  {reply.floorHint}
-                </p>
-              </div>
-
-              {/* Record Status */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("recordStatus", lang)}
-                </h3>
-                <p className="font-[family-name:var(--font-mono)] text-sm leading-relaxed text-text-secondary">
-                  {reply.recordStatus}
-                </p>
-              </div>
-
-              {/* Vector Analysis */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("vectorAnalysis", lang)}
-                </h3>
-                <VectorBar vectors={reply.vectorScores} lang={lang} />
-                <p className="mt-3 font-[family-name:var(--font-mono)] text-[12px] italic text-text-tertiary">
-                  {reply.vectorCopy}
-                </p>
-              </div>
-
-              {/* Progress */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("progress", lang)}
-                </h3>
-                <div className="relative h-2 overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-accent-amber/60 transition-all duration-700"
-                    style={{ width: `${Math.min(caseData.progress * 100, 100)}%` }}
-                  />
+          {/* --- 2-Column Layout (compact sidebar + main) --- */}
+          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+            {/* LEFT: Compact Dashboard */}
+            <aside className={`space-y-3 ${sidePanel !== "status" ? "hidden lg:block" : ""}`}>
+              {/* Progress + Mode — 한 줄 */}
+              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("progress", lang)}</span>
+                  <span className="font-[family-name:var(--font-mono)] text-[10px] text-accent-amber">{state.hardMode ? "HARD" : "NORMAL"}</span>
                 </div>
-                <div className="mt-2 flex justify-between font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary">
-                  <span>{(caseData.progress * 100).toFixed(0)}%</span>
-                  <span>{state.hardMode ? "HARD" : "NORMAL"}</span>
+                <div className="relative h-1.5 overflow-hidden rounded-full bg-white/5">
+                  <div className="absolute inset-y-0 left-0 rounded-full bg-accent-amber/60 transition-all duration-700" style={{ width: `${Math.min(caseData.progress * 100, 100)}%` }} />
+                </div>
+                <span className="font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary mt-1 block">{(caseData.progress * 100).toFixed(0)}%</span>
+              </div>
+
+              {/* Vectors — 인라인 4줄 */}
+              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-3">
+                <h3 className="mb-2 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("vectorAnalysis", lang)}</h3>
+                {(["insight", "consistency", "delusion", "risk"] as const).map(k => (
+                  <div key={k} className="flex items-center gap-2 mb-1">
+                    <span className="w-14 font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary uppercase">{k.slice(0,4)}</span>
+                    <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-500 ${k === "risk" ? "bg-red-400/60" : k === "delusion" ? "bg-purple-400/60" : "bg-cyan-400/60"}`}
+                        style={{ width: `${(reply.vectorScores[k] * 100)}%` }} />
+                    </div>
+                    <span className="w-7 font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary text-right">{(reply.vectorScores[k] * 100).toFixed(0)}</span>
+                  </div>
+                ))}
+                {reply.vectorCopy && <p className="mt-2 font-[family-name:var(--font-mono)] text-[10px] italic text-text-tertiary leading-snug">{reply.vectorCopy}</p>}
+              </div>
+
+              {/* Floor + Record — 합축 */}
+              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-3 space-y-2">
+                <div>
+                  <span className="font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.15em] text-text-tertiary uppercase">{t("floorSense", lang)}</span>
+                  <p className="font-[family-name:var(--font-mono)] text-[11px] leading-snug text-text-secondary mt-0.5">{reply.floorHint}</p>
+                </div>
+                <div className="border-t border-white/5 pt-2">
+                  <span className="font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.15em] text-text-tertiary uppercase">{t("recordStatus", lang)}</span>
+                  <p className="font-[family-name:var(--font-mono)] text-[11px] leading-snug text-text-secondary mt-0.5">{reply.recordStatus}</p>
                 </div>
               </div>
+
+              {/* Objectives — 컴팩트 리스트 */}
+              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-3">
+                <h3 className="mb-2 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("objectives", lang)}</h3>
+                <div className="space-y-1">
+                  {caseData.objectives.map((obj) => (
+                    <div key={obj.id} className="flex items-start gap-1.5">
+                      <span className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${obj.complete ? "bg-cyan-400" : obj.active ? "bg-accent-amber" : "bg-white/10"}`} />
+                      <span className={`font-[family-name:var(--font-mono)] text-[11px] leading-snug ${obj.complete ? "text-cyan-400/70 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/50"}`}>{obj.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clues + Fragments — 접기식 */}
+              <details className="rounded-2xl border border-white/6 bg-white/[0.02]">
+                <summary className="p-3 cursor-pointer font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase hover:text-text-secondary">
+                  {t("clues", lang)} {caseData.clueCount}/{CLUES.length} · {t("fragments", lang)} {caseData.fragmentCount}/{FRAGMENTS.length}
+                </summary>
+                <div className="px-3 pb-3 space-y-1.5">
+                  {caseData.clues.filter((c) => c.unlocked).map((clue) => (
+                    <div key={clue.id} className="rounded-lg border border-white/5 bg-white/[0.01] p-2">
+                      <p className="font-[family-name:var(--font-mono)] text-[11px] font-medium text-text-secondary">{clue.title}</p>
+                      {clue.body && <p className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary mt-0.5 leading-snug">{clue.body}</p>}
+                    </div>
+                  ))}
+                  {caseData.fragments.filter((f) => f.unlocked).map((frag) => (
+                    <div key={frag.id} className="rounded-lg border border-purple-400/10 bg-purple-400/[0.02] p-2">
+                      <p className="font-[family-name:var(--font-mono)] text-[11px] font-medium text-purple-300/80">{frag.title}</p>
+                      {frag.body && <p className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary mt-0.5 leading-snug">{frag.body}</p>}
+                    </div>
+                  ))}
+                  {caseData.clueCount === 0 && caseData.fragmentCount === 0 && (
+                    <p className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary italic">{lang === "ko" ? "아직 발견된 단서가 없습니다" : "No clues discovered yet"}</p>
+                  )}
+                </div>
+              </details>
             </aside>
 
             {/* CENTER: Chat / Dialogue */}
@@ -1414,75 +1437,7 @@ export default function NoaTowerPage() {
               )}
             </section>
 
-            {/* RIGHT: Case Info */}
-            <aside className={`space-y-4 ${sidePanel !== "case" ? "hidden lg:block" : ""}`}>
-              {/* Current Objective */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("objectives", lang)}
-                </h3>
-                <div className={`rounded-xl border p-3 ${caseData.currentObjective.complete ? "border-cyan-400/20 bg-cyan-400/[0.03]" : caseData.currentObjective.active ? "border-accent-amber/20 bg-accent-amber/[0.03]" : "border-white/5 bg-white/[0.01]"}`}>
-                  <p className="font-[family-name:var(--font-mono)] text-[13px] font-medium text-text-primary">
-                    {caseData.currentObjective.title}
-                  </p>
-                  <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
-                    {caseData.currentObjective.body}
-                  </p>
-                </div>
-                <div className="mt-3 space-y-1">
-                  {caseData.objectives.map((obj) => (
-                    <div key={obj.id} className="flex items-center gap-2">
-                      <span className={`h-1.5 w-1.5 rounded-full ${obj.complete ? "bg-cyan-400" : obj.active ? "bg-accent-amber" : "bg-white/10"}`} />
-                      <span className={`font-[family-name:var(--font-mono)] text-[12px] ${obj.complete ? "text-cyan-400/70 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/50"}`}>
-                        {obj.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clues */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("clues", lang)} ({caseData.clueCount}/{CLUES.length})
-                </h3>
-                <div className="space-y-2">
-                  {caseData.clues.map((clue) => (
-                    <div key={clue.id} className={`rounded-xl border p-2.5 ${clue.unlocked ? "border-white/8 bg-white/[0.02]" : "border-white/3 bg-transparent opacity-50"}`}>
-                      <p className="font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-secondary">
-                        {clue.unlocked ? clue.title : `??? ${clue.unlockHint}`}
-                      </p>
-                      {clue.unlocked && clue.body && (
-                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
-                          {clue.body}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Theory Fragments */}
-              <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <h3 className="mb-3 font-[family-name:var(--font-mono)] text-[12px] font-bold tracking-[0.2em] text-text-tertiary uppercase">
-                  {t("fragments", lang)} ({caseData.fragmentCount}/{FRAGMENTS.length})
-                </h3>
-                <div className="space-y-2">
-                  {caseData.fragments.map((frag) => (
-                    <div key={frag.id} className={`rounded-xl border p-2.5 ${frag.unlocked ? "border-white/8 bg-white/[0.02]" : "border-white/3 bg-transparent opacity-50"}`}>
-                      <p className="font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-secondary">
-                        {frag.unlocked ? frag.title : `??? ${frag.unlockHint}`}
-                      </p>
-                      {frag.unlocked && frag.body && (
-                        <p className="mt-1 font-[family-name:var(--font-mono)] text-[12px] leading-relaxed text-text-tertiary">
-                          {frag.body}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </aside>
+            {/* RIGHT 패널 제거 — 목표/단서/이론은 좌측 컴팩트 대시보드에 통합 */}
           </div>
         </div>
       </main>
