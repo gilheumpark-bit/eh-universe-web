@@ -282,8 +282,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <span className="text-[9px] font-black text-zinc-800 uppercase tracking-widest">Version {ENGINE_VERSION}-NEXUS</span>
           </div>
           <div className="flex gap-6 text-[9px] font-black text-zinc-700 uppercase tracking-widest">
-            <button className="hover:text-zinc-500 transition-colors">Privacy</button>
-            <button className="hover:text-zinc-500 transition-colors">Terms</button>
+            <a href="/about#privacy" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Privacy</a>
+            <a href="/about#license" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Terms</a>
           </div>
         </div>
       </div>

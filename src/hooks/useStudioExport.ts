@@ -37,6 +37,12 @@ const isValidSession = (s: unknown): s is ChatSession => {
   return typeof obj.id === 'string' && Array.isArray(obj.messages);
 };
 
+const isValidProject = (p: unknown): p is Project => {
+  if (!p || typeof p !== 'object') return false;
+  const obj = p as Record<string, unknown>;
+  return typeof obj.id === 'string' && typeof obj.name === 'string' && Array.isArray(obj.sessions);
+};
+
 // ============================================================
 // PART 3 — Hook implementation
 // ============================================================
@@ -136,27 +142,52 @@ export function useStudioExport({
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
-        // Auto-create a default project if none exists
-        ensureProject();
-        if (Array.isArray(data)) {
+
+        // Case 1: Full backup — Project[] (from exportAllJSON / BACKUP)
+        if (Array.isArray(data) && data.length > 0 && isValidProject(data[0])) {
+          const validProjects = data.filter(isValidProject);
+          if (validProjects.length === 0) { alert(t('studioExport.noValidSession')); return; }
+          setProjects(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newProjects = validProjects.filter(p => !existingIds.has(p.id));
+            return [...prev, ...newProjects];
+          });
+          // Switch to first imported project's first session
+          const firstProj = validProjects[0];
+          setCurrentProjectId(firstProj.id);
+          if (firstProj.sessions.length > 0) setCurrentSessionId(firstProj.sessions[0].id);
+        }
+        // Case 2: Session array — ChatSession[]
+        else if (Array.isArray(data)) {
+          ensureProject();
           const valid = data.filter(isValidSession);
-          if (valid.length === 0) {
-            alert(t('studioExport.noValidSession'));
-            return;
-          }
+          if (valid.length === 0) { alert(t('studioExport.noValidSession')); return; }
           setSessions(prev => {
             const existingIds = new Set(prev.map(s => s.id));
             const deduped = valid.filter(s => !existingIds.has(s.id));
             if (deduped.length > 0) setCurrentSessionId(deduped[0].id);
             return [...deduped, ...prev];
           });
-        } else if (isValidSession(data)) {
+        }
+        // Case 3: Single session
+        else if (isValidSession(data)) {
+          ensureProject();
           setSessions(prev => {
             if (prev.some(s => s.id === data.id)) return prev;
             return [data, ...prev];
           });
           setCurrentSessionId(data.id);
-        } else {
+        }
+        // Case 4: Single project
+        else if (isValidProject(data)) {
+          setProjects(prev => {
+            if (prev.some(p => p.id === data.id)) return prev;
+            return [...prev, data];
+          });
+          setCurrentProjectId(data.id);
+          if (data.sessions.length > 0) setCurrentSessionId(data.sessions[0].id);
+        }
+        else {
           alert(t('studioExport.invalidFormat'));
           return;
         }

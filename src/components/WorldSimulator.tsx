@@ -743,8 +743,9 @@ function TimelineView({ lang, civs, transitions, setTransitions }: {
                   </span>
                   <div className="flex gap-1">
                     <button onClick={() => generateAIEvent(tr.fromEra, tr.toEra, i)}
-                      className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors">
-                      AI
+                      className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors"
+                      title={lang === 'ko' ? '템플릿에서 자동 생성' : 'Auto-generate from templates'}>
+                      {lang === 'ko' ? '자동' : 'Auto'}
                     </button>
                     <button onClick={() => removeTransition(i)} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
                   </div>
@@ -771,7 +772,7 @@ function HexMapView({ lang, civs }: {
   lang: Lang;
   civs: Civilization[];
 }) {
-  const [selectedCiv] = useState<string | null>(null);
+  const [selectedCiv, setSelectedCiv] = useState<string | null>(null);
   const [paintCiv, setPaintCiv] = useState<string | null>(null);
   const [hexMap, setHexMap] = useState<Record<string, string>>({});
 
@@ -826,7 +827,7 @@ function HexMapView({ lang, civs }: {
           {lang === "ko" ? "세력 페인트:" : "Paint faction:"}
         </span>
         {civs.map(c => (
-          <button key={c.id} onClick={() => setPaintCiv(paintCiv === c.id ? null : c.id)}
+          <button key={c.id} onClick={() => { setPaintCiv(paintCiv === c.id ? null : c.id); setSelectedCiv(c.id); }}
             className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${
               paintCiv === c.id ? "text-white" : "text-text-tertiary border-border"
             }`}
@@ -1486,9 +1487,17 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
                     <div className="flex items-center gap-2 text-[9px] text-text-tertiary">
                       <span>{lang === "ko" ? "문명 지정:" : "Assign to civ:"}</span>
                       {civs.map(c => (
-                        <span key={c.id} className="px-1.5 py-0.5 rounded border text-[9px] font-bold" style={{ borderColor: c.color, color: c.color }}>
+                        <button key={c.id} onClick={() => {
+                          // 현재 조합 중인 단어들의 civId를 일괄 변경
+                          setWords(prev => prev.map(w =>
+                            composeBuf.includes(w.id) ? { ...w, civId: c.id } : w
+                          ));
+                        }}
+                          className="px-1.5 py-0.5 rounded border text-[9px] font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ borderColor: c.color, color: c.color }}
+                          title={lang === 'ko' ? `${c.name}에 귀속` : `Assign to ${c.name}`}>
                           {c.name}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -1687,8 +1696,21 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
   });
   const [relations, setRelations] = useState<CivRelation[]>(() => {
     if (initialData?.relations && initialData.relations.length > 0) {
-      // Reconstruct from names
-      return [];
+      // Reconstruct: map saved relation names to restored civ IDs
+      const savedCivs = initialData.civs ?? [];
+      const VALID_TYPES: RelationType[] = ['war', 'alliance', 'trade', 'vassal'];
+      return initialData.relations
+        .filter((r: Record<string, string>) => (r.from || r.fromName) && (r.to || r.toName) && r.type)
+        .map((r: Record<string, string>) => {
+          const fromKey = r.from || r.fromName;
+          const toKey = r.to || r.toName;
+          return {
+            from: `saved-${savedCivs.findIndex(c => c.name === fromKey)}`,
+            to: `saved-${savedCivs.findIndex(c => c.name === toKey)}`,
+            type: (VALID_TYPES.includes(r.type as RelationType) ? r.type : 'trade') as RelationType,
+          };
+        })
+        .filter(r => !r.from.includes('-1') && !r.to.includes('-1'));
     }
     const t = AUTO_WORLD_TEMPLATES["Fantasy"];
     if (!t) return [];
