@@ -280,9 +280,69 @@ export function setActiveModel(model: string): void {
 // PART 3: SERVER PROXY STREAM
 // ============================================================
 
+// 로컬 LLM(ollama/lmstudio): Vercel 서버는 로컬 IP 접근 불가 → 브라우저 직접 스트림
+async function streamLocalDirect(
+  baseUrl: string, model: string, opts: StreamOptions
+): Promise<string> {
+  const url = `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+  const msgs = [
+    ...(opts.systemInstruction ? [{ role: 'system', content: opts.systemInstruction }] : []),
+    ...opts.messages,
+  ];
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: msgs,
+      temperature: opts.temperature ?? 0.9,
+      max_tokens: opts.maxTokens,
+      stream: true,
+    }),
+    signal: opts.signal,
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`Local LLM ${res.status}: ${err.slice(0, 200)}`);
+  }
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error('No response body');
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const json = JSON.parse(data);
+          const text = json.choices?.[0]?.delta?.content;
+          if (text) { full += text; opts.onChunk(text); }
+        } catch { /* skip non-JSON */ }
+      }
+    }
+  } finally {
+    reader.cancel().catch(() => {});
+  }
+  return full;
+}
+
 async function streamViaProxy(
   provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
 ): Promise<string> {
+  // 로컬 프로바이더는 브라우저 직접 호출 (서버 프록시 우회)
+  if (PROVIDERS[provider]?.capabilities.isLocal && apiKey.trim()) {
+    return streamLocalDirect(apiKey, model, opts);
+  }
+
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -460,7 +520,18 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
   try {
     const def = PROVIDERS[providerId];
 
-    // All providers route through server proxy to avoid key exposure in network tab
+    // 로컬 프로바이더: 브라우저에서 직접 /v1/models 엔드포인트로 확인
+    // (Vercel 서버는 로컬 네트워크 IP에 접근 불가)
+    if (def.capabilities.isLocal) {
+      const baseUrl = key.replace(/\/$/, '');
+      const res = await fetch(`${baseUrl}/v1/models`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000),
+      });
+      return res.ok;
+    }
+
+    // 클라우드 프로바이더: 서버 프록시 경유 (키 노출 방지)
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
