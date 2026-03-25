@@ -297,27 +297,12 @@ async function streamLocalDirect(
     stream: true,
   };
 
-  // localhost 환경: Next.js 서버 프록시 경유 (Chrome PNA 우회)
-  // Vercel/외부 환경: 브라우저 직접 fetch (사설 IP 직접 접근)
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  let fetchUrl: string;
-  let fetchBody: string;
-
-  if (isLocalhost) {
-    fetchUrl = '/api/local-proxy';
-    fetchBody = JSON.stringify({ baseUrl, ...payload });
-  } else {
-    fetchUrl = `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
-    fetchBody = JSON.stringify(payload);
-  }
-
-  const res = await fetch(fetchUrl, {
+  // 항상 /api/local-proxy 경유 — Chrome PNA + Mixed Content 동시 해결
+  // Vercel 배포 시: 서버가 사설 IP 접근 불가 → 502 반환 → 에러 메시지로 안내
+  const res = await fetch('/api/local-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: fetchBody,
+    body: JSON.stringify({ baseUrl, ...payload }),
     signal: opts.signal,
   });
   if (!res.ok) {
@@ -540,17 +525,10 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
     const def = PROVIDERS[providerId];
 
     // 로컬 프로바이더: /v1/models 엔드포인트로 연결 확인
-    // - localhost 환경: Chrome PNA 우회를 위해 /api/local-proxy?baseUrl=... 경유
-    // - 외부 환경: 브라우저 직접 fetch
+    // localhost/Vercel 모두 프록시 경유 시도 → Vercel은 사설 IP 접근 불가로 실패
     if (def.capabilities.isLocal) {
       const baseUrl = key.replace(/\/$/, '');
-      const isLocalhost =
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-      const testUrl = isLocalhost
-        ? `/api/local-proxy?baseUrl=${encodeURIComponent(baseUrl)}`
-        : `${baseUrl}/v1/models`;
+      const testUrl = `/api/local-proxy?baseUrl=${encodeURIComponent(baseUrl)}`;
 
       const res = await fetch(testUrl, {
         method: 'GET',

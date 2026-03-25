@@ -174,11 +174,31 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             autoFocus
           />
           {currentProvider.capabilities.isLocal && (
-            <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-              {language === 'KO'
-                ? '💡 로컬 서버가 실행 중이어야 합니다. Ollama: ollama serve / LM Studio: 서버 시작'
-                : '💡 Local server must be running. Ollama: ollama serve / LM Studio: Start server'}
-            </p>
+            <div className="space-y-1.5">
+              <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                {language === 'KO'
+                  ? '💡 로컬 서버가 실행 중이어야 합니다. Ollama: ollama serve / LM Studio: 서버 시작'
+                  : '💡 Local server must be running. Ollama: ollama serve / LM Studio: Start server'}
+              </p>
+              <details className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                <summary className="cursor-pointer text-amber-400 hover:text-amber-300">
+                  {language === 'KO' ? '📖 로컬 LLM 설정 가이드' : '📖 Local LLM Setup Guide'}
+                </summary>
+                <div className="mt-2 space-y-1.5 bg-black/30 rounded-lg p-3 text-[8px] leading-relaxed">
+                  <p className="font-bold text-text-secondary">{language === 'KO' ? '▸ LM Studio' : '▸ LM Studio'}</p>
+                  <p>{language === 'KO'
+                    ? '1. LM Studio 실행 → 모델 다운로드\n2. Local Server 탭 → Start Server\n3. 위 URL에 http://localhost:1234 입력'
+                    : '1. Open LM Studio → Download model\n2. Local Server tab → Start Server\n3. Enter http://localhost:1234 above'}</p>
+                  <p className="font-bold text-text-secondary mt-2">{language === 'KO' ? '▸ Ollama' : '▸ Ollama'}</p>
+                  <p>{language === 'KO'
+                    ? '1. ollama pull llama3.2 (모델 다운로드)\n2. ollama serve (서버 시작)\n3. 위 URL에 http://localhost:11434 입력'
+                    : '1. ollama pull llama3.2 (download model)\n2. ollama serve (start server)\n3. Enter http://localhost:11434 above'}</p>
+                  <p className="font-bold text-amber-400 mt-2">{language === 'KO'
+                    ? '⚠️ 로컬 LLM은 localhost (npm run dev) 환경에서만 사용 가능합니다.'
+                    : '⚠️ Local LLM only works on localhost (npm run dev).'}</p>
+                </div>
+              </details>
+            </div>
           )}
         </div>
 
