@@ -7,7 +7,11 @@ export enum Genre {
   THRILLER = "THRILLER",
   HORROR = "HORROR",
   SYSTEM_HUNTER = "SYSTEM_HUNTER",
-  FANTASY_ROMANCE = "FANTASY_ROMANCE"
+  FANTASY_ROMANCE = "FANTASY_ROMANCE",
+  ALT_HISTORY = "ALT_HISTORY",
+  MODERN_FANTASY = "MODERN_FANTASY",
+  WUXIA = "WUXIA",
+  LIGHT_NOVEL = "LIGHT_NOVEL",
 }
 
 export type GenerationMode = 'cloud' | 'local';
@@ -242,6 +246,8 @@ export interface StoryConfig {
     violence: number;  // 0-5
     profanity: number; // 0-5
   };
+  // Sub-genre tags (서브 장르 태그)
+  subGenres?: string[];
   // EH Engine — Narrative Intensity (서사 강도)
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
 }

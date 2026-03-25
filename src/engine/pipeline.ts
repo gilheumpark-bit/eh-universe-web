@@ -79,6 +79,26 @@ const GENRE_PRESETS: Record<string, { rules: string; pacing: string; tensionBase
     pacing: 'layered_accumulation', tensionBase: 0.5,
     cliffTypes: '예상 변화, 미래 무효화', emotionFocus: '후회, 기대, 불안',
   },
+  ALT_HISTORY: {
+    rules: '대체 역사는 시스템 롤백(QFR)으로 과거의 분기점으로 데이터를 동기화하는 서사. 미래 지식으로 역사를 바꾸는 행위는 인과율(CRL)을 대규모로 소모하는 시장 교란 행위. 역사적 사실과 창작의 경계를 명확히. 나비효과를 논리적으로.',
+    pacing: 'steady_rise_with_reversals', tensionBase: 0.5,
+    cliffTypes: '역사 분기, 예상치 못한 변수', emotionFocus: '책임감, 딜레마, 긴장',
+  },
+  MODERN_FANTASY: {
+    rules: '현대 사회에 숨겨진 시스템 백도어를 발견한 자의 서사. 돈/권력/명예는 세계의 인과율 파이를 독점하는 시장 교란. 전문직 지식은 시스템의 디버깅 도구. 일상과 비일상의 경계에서 긴장 유지.',
+    pacing: 'fast_spikes', tensionBase: 0.55,
+    cliffTypes: '정체 노출, 세력 충돌', emotionFocus: '야망, 긴장, 성취',
+  },
+  WUXIA: {
+    rules: '내공은 백그라운드 프로세싱 파워(HPP) 축적. 무공 수련은 시스템 자산 가치 업데이트. 주화입마는 데이터 충돌/메모리 누수. 강호 세력 구도는 최소 3개 축. 전투 묘사는 기세와 흐름 중심.',
+    pacing: 'epic_waves', tensionBase: 0.6,
+    cliffTypes: '고수 등장, 비급 발견', emotionFocus: '의리, 복수, 초월',
+  },
+  LIGHT_NOVEL: {
+    rules: '가볍고 유쾌한 톤 유지. 성별 전환(TS)은 QFR 데이터 동기화 중 Vessel 재할당 오류. 착각물은 시스템 로그 출력 오류로 HPP 과대 측정 버그. 루프물은 인스턴스 서버 리부트 + 캐시 유지. 대화문 비율 높게, 독백은 코믹하게.',
+    pacing: 'fast_spikes', tensionBase: 0.35,
+    cliffTypes: '정체 노출, 착각 증폭', emotionFocus: '쾌감, 당혹, 유머',
+  },
 };
 
 function buildGenrePreset(genre: string, isKO: boolean): string {
@@ -753,6 +773,11 @@ export function buildSystemInstruction(
     }
   }
 
+  // Sub-genre tags injection
+  const subGenreBlock = (config.subGenres && config.subGenres.length > 0)
+    ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${isKO ? '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.' : 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).'}`
+    : '';
+
   // Style DNA injection
   const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
 
@@ -807,6 +832,7 @@ ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
 ${worldTierBlock}
+${subGenreBlock}
 ${styleDnaBlock}
 ${prismBlock}
 ${prismModeBlock}

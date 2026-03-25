@@ -12,6 +12,89 @@ import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 // ============================================================
+// Sub-genre tag suggestions per main genre
+// ============================================================
+
+const SUB_GENRE_SUGGESTIONS: Partial<Record<Genre, string[]>> = {
+  [Genre.SYSTEM_HUNTER]: ['성좌물', '탑등반', '아포칼립스', '네크로맨서', '상태창', '겜판소'],
+  [Genre.FANTASY]: ['정통판타지', '다크판타지', '아카데미', '영지물', '마왕토벌'],
+  [Genre.ROMANCE]: ['악역영애', '계약결혼', '피카레스크', '후회물', '육아물', '선결혼후연애'],
+  [Genre.FANTASY_ROMANCE]: ['회귀', '빙의', '악역영애', '아카데미', '피카레스크'],
+  [Genre.ALT_HISTORY]: ['빙의', '회귀', '영지물', '스팀펑크', '밀리터리', '국가경영'],
+  [Genre.MODERN_FANTASY]: ['재벌물', '전문직', '인방물', '연예계', '힐링물'],
+  [Genre.WUXIA]: ['정통무협', '신무협', '무협아카데미', '환생', '사파물'],
+  [Genre.LIGHT_NOVEL]: ['TS', '착각물', '루프물', '겜판소', '하렘', '이세계'],
+  [Genre.SF]: ['사이버펑크', '스페이스오페라', '디스토피아', '메카물', '포스트아포칼립스'],
+  [Genre.THRILLER]: ['추리', '범죄', '심리전', '서스펜스', '법정물'],
+  [Genre.HORROR]: ['코즈믹호러', '심리호러', '생존호러', '괴담', '좀비'],
+};
+
+function SubGenreTagInput({ genre, subGenres, onChange, language }: {
+  genre: Genre;
+  subGenres: string[];
+  onChange: (tags: string[]) => void;
+  language: AppLanguage;
+}) {
+  const [input, setInput] = React.useState('');
+  const suggestions = SUB_GENRE_SUGGESTIONS[genre] || [];
+  const isKO = language === 'KO';
+
+  const addTag = (tag: string) => {
+    const trimmed = tag.trim();
+    if (trimmed && !subGenres.includes(trimmed) && subGenres.length < 8) {
+      onChange([...subGenres, trimmed]);
+    }
+    setInput('');
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+        {isKO ? '서브 장르 태그' : 'Sub-genre Tags'}
+      </label>
+      {/* Current tags */}
+      <div className="flex flex-wrap gap-1.5">
+        {subGenres.map(tag => (
+          <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[11px] font-bold text-blue-400">
+            #{tag}
+            <button onClick={() => onChange(subGenres.filter(t => t !== tag))} className="text-blue-400/50 hover:text-blue-300 text-xs">&times;</button>
+          </span>
+        ))}
+        {subGenres.length === 0 && (
+          <span className="text-[11px] text-zinc-600 italic">{isKO ? '태그를 추가하면 AI 프롬프트에 반영됩니다' : 'Tags will be injected into AI prompts'}</span>
+        )}
+      </div>
+      {/* Input */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(input); } }}
+          placeholder={isKO ? '태그 입력 후 Enter' : 'Type tag + Enter'}
+          className="flex-1 bg-black border border-zinc-800 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-600 transition-colors"
+          maxLength={20}
+        />
+      </div>
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {suggestions.filter(s => !subGenres.includes(s)).map(s => (
+            <button
+              key={s}
+              onClick={() => addTag(s)}
+              className="px-2 py-0.5 text-[10px] font-bold text-zinc-500 bg-zinc-900 border border-zinc-800 rounded-full hover:border-blue-500/30 hover:text-blue-400 transition-colors"
+            >
+              +{s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Genre-specific auto-generation presets
 // ============================================================
 
@@ -202,6 +285,14 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             </select>
           </div>
         </div>
+
+        {/* Sub-genre tags */}
+        <SubGenreTagInput
+          genre={config.genre}
+          subGenres={config.subGenres || []}
+          onChange={(tags) => setConfig({ ...config, subGenres: tags })}
+          language={language}
+        />
 
         {/* New: Total Episodes + Platform */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
