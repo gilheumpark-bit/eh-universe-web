@@ -18,7 +18,7 @@ export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 
-export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs';
+export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual';
 
 // 세계관 스튜디오 서브탭
 export type WorldSubTab = 'design' | 'simulator' | 'analysis';
@@ -236,6 +236,7 @@ export interface StoryConfig {
   manuscripts?: EpisodeManuscript[];
   chapterAnalyses?: ChapterAnalysis[];
   episodeSceneSheets?: EpisodeSceneSheet[];
+  visualPromptCards?: VisualPromptCard[];
   // NOA-PRISM v1.1 — Writing Quality Control
   prismScale?: number;      // 0-150, default 120 (expansion density)
   prismPreserve?: number;   // 0-150, default 100 (preservation level)
@@ -361,6 +362,71 @@ export interface ChapterAnalysis {
   soundState: SoundState;
   imagePromptPack: ImagePromptPack;
   musicPromptPack: MusicPromptPack;
+}
+
+// ============================================================
+// NOI — Narrative Origin Imaging (비주얼 설계 엔진)
+// ============================================================
+
+export type VisualShotType = 'key_scene' | 'character_focus' | 'background_focus' | 'cover' | 'thumbnail' | 'object_focus';
+export type VisualTargetUse = 'illustration' | 'cover' | 'thumbnail' | 'character_sheet' | 'concept_art';
+export type CameraShot = 'close_up' | 'medium' | 'full_body' | 'wide' | 'over_shoulder' | 'top_down' | 'low_angle' | 'eye_level';
+
+export interface VisualLevelPack {
+  subjectFocus: number;       // 0-3
+  backgroundDensity: number;  // 0-3
+  sceneTension: number;       // 0-3
+  emotionIntensity: number;   // 0-3
+  compositionDrama: number;   // 0-3
+  styleStrength: number;      // 0-3
+  symbolismWeight: number;    // 0-3
+}
+
+export interface VisualPromptCard {
+  id: string;
+  episode: number;
+  analysisId?: string;
+  title: string;
+  shotType: VisualShotType;
+  targetUse: VisualTargetUse;
+  cameraShot?: CameraShot;
+  selectedCharacters: string[];
+  selectedObjects: string[];
+  levels: VisualLevelPack;
+  subjectPrompt: string;
+  backgroundPrompt: string;
+  scenePrompt: string;
+  compositionPrompt: string;
+  lightingPrompt: string;
+  stylePrompt: string;
+  negativePrompt: string;
+  moodTags: string[];
+  consistencyTags: string[];
+  sourceSummary?: string;
+  sourceTurningPoint?: string;
+  sourceLocation?: string;
+  createdAt: number;
+  updatedAt: number;
+  generatedImages?: GeneratedVisualAsset[];
+}
+
+export interface GeneratedVisualAsset {
+  id: string;
+  promptCardId: string;
+  provider: string;
+  model: string;
+  imageUrl: string;
+  promptSnapshot: string;
+  createdAt: number;
+}
+
+export interface VisualPreset {
+  id: string;
+  name: string;
+  levels: VisualLevelPack;
+  defaultShotType?: VisualShotType;
+  defaultTargetUse?: VisualTargetUse;
+  tags?: string[];
 }
 
 export interface SavedSlot {

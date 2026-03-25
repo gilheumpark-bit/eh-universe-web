@@ -59,6 +59,7 @@ const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferen
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 // ItemStudioView는 CharacterTab 내부에서 import됨
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
+const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false });
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false });
@@ -918,6 +919,9 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'docs' && (
                   <StudioDocsView lang={language} />
+                )}
+                {activeTab === 'visual' && currentSession && (
+                  <VisualTab config={currentSession.config} setConfig={setConfig} currentSession={currentSession} language={language} />
                 )}
               </>
             )}

@@ -290,6 +290,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false },
                 { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false },
                 { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false },
+                { tab: 'visual' as AppTab, icon: Zap, label: language === 'KO' ? '비주얼 설계' : 'Visual Design', guided: false },
                 { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false },
                 { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true },
               ] as const)

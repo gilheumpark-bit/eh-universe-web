@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map } from 'lucide-react';
+import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map, Zap } from 'lucide-react';
 import type { AppTab, AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
@@ -14,6 +14,7 @@ interface MobileTabBarProps {
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
   { key: 'style',      icon: Map },
+  { key: 'visual',     icon: Zap },
   { key: 'manuscript', icon: FileText },
   { key: 'history',    icon: History },
   { key: 'settings',   icon: Settings },
