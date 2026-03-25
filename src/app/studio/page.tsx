@@ -815,7 +815,10 @@ export default function StudioPage() {
     setConfig({ ...currentSession.config, episode: nextEp });
   };
 
-  const writingColumnShell = 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
+  // edit 모드에서는 전체 폭 활용, 그 외에는 max-w 제한
+  const writingColumnShell = writingMode === 'edit'
+    ? 'w-full px-4 md:px-6 lg:px-8'
+    : 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
   const writingInputDockOffset = activeTab === 'writing' && !showDashboard
     ? (writingMode === 'ai'
         ? (rightPanelOpen ? 'lg:pr-80' : 'lg:pr-10')
@@ -1474,11 +1477,11 @@ export default function StudioPage() {
 
                     {writingMode === 'edit' && (
                       /* ====== INLINE REWRITE MODE + SPLIT VIEW ====== */
-                      <div className="flex gap-0 items-stretch">
-                      <div className="flex-1 min-w-0 space-y-4">
-                        <div className="flex items-center justify-between">
+                      <div className="flex gap-4 items-stretch">
+                      <div className="flex-1 min-w-0 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
                           {!showAiLock && (
-                          <p className="text-[10px] text-text-tertiary">
+                          <p className="text-[10px] text-text-tertiary shrink-0">
                             {t('writingMode.editDescWithApi')}
                           </p>
                           )}
@@ -1512,8 +1515,8 @@ export default function StudioPage() {
                         {!editDraft.trim() ? (
                           /* ====== EMPTY EDIT ONBOARDING ====== */
                           <div className="space-y-3">
-                            <div className="text-center py-10 space-y-2">
-                              <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
+                            <div className="text-center py-6 space-y-2">
+                              <PenTool className="w-6 h-6 text-text-tertiary mx-auto opacity-40" />
                               <p className="text-sm text-text-secondary font-[family-name:var(--font-mono)]">
                                 {t('writingMode.writeManuscript')}
                               </p>
@@ -1526,7 +1529,7 @@ export default function StudioPage() {
                               value={editDraft}
                               onChange={e => setEditDraft(e.target.value)}
                               placeholder={t('writingMode.typeManuscript')}
-                              className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] resize-y"
+                              className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-5 text-sm text-left outline-none focus:border-accent-purple transition-colors font-serif leading-relaxed resize-y"
                             />
                           </div>
                         ) : (
