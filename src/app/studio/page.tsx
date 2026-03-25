@@ -37,6 +37,7 @@ import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
+import { useStudioTheme } from '@/hooks/useStudioTheme';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
@@ -148,12 +149,14 @@ export default function StudioPage() {
     ? (isKO ? '개인 키 추가' : 'Add Key')
     : t('ui.apiKeySetUp');
 
-  // UX feature states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [lightTheme, setLightTheme] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  // UX feature states — useStudioTheme 훅
+  const {
+    lightTheme, toggleTheme,
+    focusMode, setFocusMode,
+    showShortcuts, setShowShortcuts,
+    showSearch, setShowSearch,
+    searchQuery, setSearchQuery,
+  } = useStudioTheme();
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [archiveFilter, setArchiveFilter] = useState<string>('ALL');
@@ -179,11 +182,11 @@ export default function StudioPage() {
     confirmState, showConfirm, closeConfirm,
   } = useStudioUX();
 
-  // Hydration-safe: read localStorage values after mount
+  // Hydration-safe: sidebar width
   useEffect(() => {
     if (!hydrated) return;
     setIsSidebarOpen(window.innerWidth >= 768);
-    setLightTheme(localStorage.getItem('noa_light_theme') === 'true');
+    // lightTheme은 useStudioTheme 내부에서 localStorage 로드
   }, [hydrated]);
 
   useEffect(() => {
@@ -782,7 +785,7 @@ export default function StudioPage() {
             <div className="flex items-center gap-1">
               <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.searchCtrlF')} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
               <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.focusMode')} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={() => setLightTheme(prev => { const next = !prev; localStorage.setItem('noa_light_theme', String(next)); return next; })} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.toggleTheme')} aria-label={t('ui.toggleThemeLabel')}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.toggleTheme')} aria-label={t('ui.toggleThemeLabel')}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
               <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
