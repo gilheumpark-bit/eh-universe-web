@@ -352,9 +352,13 @@ function metricsToAspectScores(m: TextMetrics): Partial<Record<ReviewAspectKey, 
   // characterEntry: 고유명사 수 (0~100 매핑: 5명 이상이면 100)
   scores.characterEntry = Math.min(100, m.uniqueNames.length * 20);
 
-  // clicheUsage, foreshadowing: 텍스트만으로 정밀 측정 어려움 → 중앙값 50 (추정치 표시)
-  scores.clicheUsage = 50;    // [estimated] — heuristic not yet implemented
-  scores.foreshadowing = 50;  // [estimated] — heuristic not yet implemented
+  // clicheUsage: 클리셰 밀도 추정 (고유명사 적고 대화 비율 낮으면 서술 클리셰 가능성 높음)
+  const clicheBase = Math.max(0, 80 - m.uniqueNames.length * 10 - m.dialogueRatio * 0.3);
+  scores.clicheUsage = Math.round(Math.min(100, Math.max(0, clicheBase + m.ellipsisDensity * 5)));
+
+  // foreshadowing: 물음표 + 줄임표 밀도 기반 복선 추정
+  const foreshadowBase = (m.questionDensity + m.ellipsisDensity) * 30;
+  scores.foreshadowing = Math.round(Math.min(100, Math.max(0, foreshadowBase)));
 
   // structureIntegrity: 문단 수 대비 전체 길이 균형
   const avgParagraphLen = m.paragraphCount > 0 ? m.totalChars / m.paragraphCount : m.totalChars;

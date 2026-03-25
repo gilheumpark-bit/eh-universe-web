@@ -16,7 +16,12 @@ interface EpisodeScenePanelProps {
   onUpdate: (sheet: EpisodeSceneSheet) => void;
 }
 
-const TONE_OPTIONS = ["감동", "긴장", "개그", "액션", "일상", "반전", "공포", "서사"];
+const TONE_BY_LANG: Record<string, string[]> = {
+  KO: ["감동", "긴장", "개그", "액션", "일상", "반전", "공포", "서사"],
+  EN: ["touching", "tension", "comedy", "action", "daily", "twist", "horror", "epic"],
+  JP: ["感動", "緊張", "コメディ", "アクション", "日常", "反転", "ホラー", "叙事"],
+  CN: ["感人", "紧张", "喜剧", "动作", "日常", "反转", "恐怖", "叙事"],
+};
 
 /** Per-component labels (not in global i18n to keep the panel self-contained) */
 const LABELS: Record<string, {
@@ -72,7 +77,7 @@ const LABELS: Record<string, {
 function getL(lang: AppLanguage) {
   return LABELS[lang] ?? LABELS.EN;
 }
-// IDENTITY_SEAL: PART-0 | role=types+constants | inputs=none | outputs=LABELS,TONE_OPTIONS
+// IDENTITY_SEAL: PART-0 | role=types+constants | inputs=none | outputs=LABELS,TONE_BY_LANG
 
 // ============================================================
 // PART 1 — EDITOR FORM
@@ -175,7 +180,7 @@ function SceneEditor({
                 </td>
                 <td className="border border-border px-1 py-1">
                   <select className={selectCls} value={scene.tone} onChange={e => updateScene(idx, "tone", e.target.value)}>
-                    {TONE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                    {(TONE_BY_LANG[lang] ?? TONE_BY_LANG.KO).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </td>
                 <td className="border border-border px-1 py-1">

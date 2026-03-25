@@ -398,7 +398,17 @@ export default function StudioPage() {
     outputMode: 'draft', includes: '', excludes: '',
   });
   const [canvasContent, setCanvasContent] = useState('');
-  const [canvasPass, setCanvasPass] = useState(0);
+  const [canvasPass, setCanvasPass] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('noa_canvasPass');
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
+  useEffect(() => {
+    if (canvasPass > 0) sessionStorage.setItem('noa_canvasPass', String(canvasPass));
+    else sessionStorage.removeItem('noa_canvasPass');
+  }, [canvasPass]);
   const [promptDirective, setPromptDirective] = useState('');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -720,6 +730,7 @@ export default function StudioPage() {
     currentSession, currentSessionId, setSessions, updateCurrentSession,
     hfcpState, promptDirective, language, canvasPass,
     setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
+    advancedOutputMode: advancedSettings.outputMode,
   });
 
   // UX: unsaved changes warning (must be after useStudioAI which provides isGenerating)
@@ -801,10 +812,10 @@ export default function StudioPage() {
       {!isSidebarOpen && !focusMode && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-6 h-16 bg-bg-secondary/80 border border-border border-l-0 rounded-r-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-all"
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[60] items-center justify-center w-7 h-20 bg-bg-secondary border border-border border-l-0 rounded-r-xl text-text-tertiary hover:text-accent-purple hover:bg-bg-tertiary transition-all shadow-lg cursor-pointer"
           title={language === 'KO' ? '사이드바 열기' : 'Open sidebar'}
         >
-          <span className="text-[10px]">▶</span>
+          <span className="text-xs font-bold">▶</span>
         </button>
       )}
 
@@ -1880,7 +1891,11 @@ export default function StudioPage() {
 
           {/* Right Panel — Save Slots (all tabs except writing) */}
           {activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && !(activeTab === 'writing' && writingMode === 'ai' && !showDashboard) && currentSession && (
-            <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
+            <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-64' : 'w-8'}`}>
+              <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)]">
+                {rightPanelOpen ? '▶' : '◀'}
+              </button>
+              {!rightPanelOpen ? null : (
               <div className="p-4 space-y-3">
                 <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
                   📂 {t('saveSlot.savedVersions')}
@@ -1950,6 +1965,7 @@ export default function StudioPage() {
                   </details>
                 )}
               </div>
+              )}
             </aside>
           )}
 
