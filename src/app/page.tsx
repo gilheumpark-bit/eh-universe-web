@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
-import { useLang, L2A } from "@/lib/LangContext";
+import { useLang } from "@/lib/LangContext";
 
 
 function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => void; onWithApi: () => void; onWithout: () => void }) {

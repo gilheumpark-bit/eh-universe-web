@@ -263,7 +263,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     } finally {
       abortRef.current = null;
     }
-  }, [content, language, context]);
+  }, [content, language, context, t]);
 
   // Step 2: Fix suggestions one by one
   const fixSuggestion = useCallback(async (idx: number) => {

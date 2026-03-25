@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
@@ -37,16 +37,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
     return !!getApiKey(activeProvider) || !!hostedProviders[activeProvider];
   });
 
-  const checkApiKeys = () => {
+  const checkApiKeys = useCallback(() => {
     const currentProvider = getActiveProvider();
     setApiKeyStatus(!!getApiKey(currentProvider) || !!hostedProviders[currentProvider]);
-  };
+  }, []);
 
   useEffect(() => {
-    const onStorage = () => checkApiKeys();
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+    window.addEventListener('storage', checkApiKeys);
+    return () => window.removeEventListener('storage', checkApiKeys);
+  }, [checkApiKeys]);
 
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">

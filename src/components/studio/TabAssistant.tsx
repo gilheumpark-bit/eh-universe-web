@@ -521,7 +521,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages, config, tab, language, lk, ctx]);
+  }, [input, isStreaming, messages, config, tab, language, lk, ctx, tl]);
 
   const handleCancel = () => {
     abortRef.current?.abort();
