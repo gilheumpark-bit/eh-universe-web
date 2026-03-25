@@ -92,7 +92,21 @@ export default function AboutPage() {
               </p>
             </section>
 
-            <div className="mt-12 border-t border-border pt-6">
+            <div className="mt-12 border-t border-border pt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { value: "109", label: T({ ko: "아카이브 문서", en: "Archive Docs" }) },
+                { value: "6", label: T({ ko: "세계관 카테고리", en: "World Categories" }) },
+                { value: "200K+", label: T({ ko: "관할 행성계", en: "Star Systems" }) },
+                { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open License" }) },
+              ].map(({ value, label }) => (
+                <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center">
+                  <div className="font-[family-name:var(--font-mono)] text-xl font-black text-accent-purple mb-1">{value}</div>
+                  <div className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 border-t border-border pt-6">
               <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
                 &ldquo;{T({ ko: "삭제된 인원의 기록은 오타로 처리된다.", en: "Records of deleted personnel are processed as typos." })}&rdquo;
               </p>
