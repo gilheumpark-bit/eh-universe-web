@@ -10,7 +10,7 @@ import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
-import { getActiveProvider, getActiveModel, getApiKey, PROVIDERS } from '@/lib/ai-providers';
+import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST } from '@/lib/ai-providers';
 
 interface SettingsViewProps {
   language: AppLanguage;
@@ -21,9 +21,25 @@ interface SettingsViewProps {
 
 // Engine settings labels are now in TRANSLATIONS.settingsEngine
 
+const OBFUSCATION_PREFIX = 'noa:1:';
+
+function migrateAllKeysToObfuscated(): number {
+  let migrated = 0;
+  for (const provider of PROVIDER_LIST) {
+    const raw = localStorage.getItem(provider.storageKey);
+    if (raw && !raw.startsWith(OBFUSCATION_PREFIX)) {
+      // Plain-text key detected — re-save through setApiKey which obfuscates it
+      setApiKey(provider.id, raw);
+      migrated++;
+    }
+  }
+  return migrated;
+}
+
 const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders = {}, onClearAll, onManageApiKey }) => {
   const t = createT(language);
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const [obfuscateDone, setObfuscateDone] = useState<number | null>(null);
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
   const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.7'));
@@ -99,6 +115,38 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               </div>
               <div className="text-[10px] font-black text-blue-500 uppercase shrink-0 ml-2">
                 {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
+              </div>
+            </div>
+
+            <div
+              onClick={() => {
+                const count = migrateAllKeysToObfuscated();
+                setObfuscateDone(count);
+                setTimeout(() => setObfuscateDone(null), 3000);
+              }}
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-zinc-900/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Shield className="w-5 h-5 text-zinc-500" /></div>
+                <div>
+                  <div className="text-sm font-bold">
+                    {language === 'KO' ? '저장된 키 암호화' : 'Encrypt Saved Keys'}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 hidden sm:block">
+                    {language === 'KO'
+                      ? '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다'
+                      : 'Re-saves any plain-text API keys in obfuscated format'}
+                  </div>
+                </div>
+              </div>
+              <div className="text-[10px] font-black uppercase shrink-0 ml-2">
+                {obfuscateDone === null ? (
+                  <span className="text-zinc-600">RUN</span>
+                ) : obfuscateDone === 0 ? (
+                  <span className="text-green-500">ALL SECURE</span>
+                ) : (
+                  <span className="text-blue-400">{obfuscateDone} MIGRATED</span>
+                )}
               </div>
             </div>
 
