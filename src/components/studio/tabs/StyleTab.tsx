@@ -7,21 +7,23 @@ import { createT } from '@/lib/i18n';
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false });
 
 interface StyleTabProps {
-  isKO: boolean;
   language: 'KO' | 'EN' | 'JP' | 'CN';
   config: StoryConfig;
   updateCurrentSession: (data: Partial<{ config: StoryConfig }>) => void;
   triggerSave: () => void;
   saveFlash: boolean;
+  showAiLock?: boolean;
+  hostedProviders?: Record<string, boolean>;
 }
 
 const StyleTab: React.FC<StyleTabProps> = ({
-  isKO: _isKO,
   language,
   config,
   updateCurrentSession,
   triggerSave,
-  saveFlash
+  saveFlash,
+  showAiLock = false,
+  hostedProviders = {},
 }) => {
   const t = createT(language);
 
@@ -36,9 +38,11 @@ const StyleTab: React.FC<StyleTabProps> = ({
           });
         }}
       />
+      {!showAiLock && (
       <div className="max-w-6xl mx-auto px-4 pb-4">
-        <TabAssistant tab="style" language={language} config={config} />
+        <TabAssistant tab="style" language={language} config={config} hostedProviders={hostedProviders} />
       </div>
+      )}
       <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
         <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
           💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}

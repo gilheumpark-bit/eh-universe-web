@@ -24,7 +24,7 @@ import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp'
 // EngineReport type inferred from useStudioAI hook return
 import ChatMessage from '@/components/studio/ChatMessage';
 import { WritingToolbar } from '@/components/studio/WritingToolbar';
-import ResourceView from '@/components/studio/ResourceView';
+import CharacterTab from '@/components/studio/tabs/CharacterTab';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import EngineStatusBar from '@/components/studio/EngineStatusBar';
@@ -47,7 +47,8 @@ import { useStudioExport } from '@/hooks/useStudioExport';
 // const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
 const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
-const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
+import StyleTab from '@/components/studio/tabs/StyleTab';
+// StyleStudioView는 StyleTab 내부에서 import됨
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
@@ -57,7 +58,7 @@ const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
 const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
-const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
+// ItemStudioView는 CharacterTab 내부에서 import됨
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false });
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false });
@@ -904,36 +905,12 @@ export default function StudioPage() {
                   />
                 )}
                 {activeTab === 'characters' && currentSession && (
-                  <>
-                    {/* 서브탭 토글: 캐릭터 / 아이템 */}
-                    <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
-                      <div className="flex gap-1 bg-bg-secondary rounded-xl p-1 w-fit">
-                        <button onClick={() => setCharSubTab('characters')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'characters' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
-                          👥 {t('ui.characters')}
-                        </button>
-                        <button onClick={() => setCharSubTab('items')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'items' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
-                          ⚔️ {t('ui.itemStudio')}
-                        </button>
-                      </div>
-                    </div>
-
-                    {charSubTab === 'characters' ? (
-                      <ResourceView language={language} config={currentSession.config} setConfig={setConfig} onError={(msg) => setUxError({ error: new Error(msg) })} />
-                    ) : (
-                      <ItemStudioView language={language} config={currentSession.config} setConfig={setConfig} />
-                    )}
-
-                    {!showAiLock && (
-                    <div className="max-w-[1400px] mx-auto px-4 pb-4">
-                      <TabAssistant tab="characters" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
-                    </div>
-                    )}
-                    <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
-                      </button>
-                    </div>
-                  </>
+                  <CharacterTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
+                    charSubTab={charSubTab} setCharSubTab={setCharSubTab}
+                    triggerSave={triggerSave} saveFlash={saveFlash}
+                    setUxError={setUxError} showAiLock={showAiLock} hostedProviders={hostedProviders}
+                  />
                 )}
                 {activeTab === 'settings' && (
                   <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
@@ -980,27 +957,12 @@ export default function StudioPage() {
                   />
                 )}
                 {activeTab === 'style' && currentSession && (
-                  <>
-                    <StyleStudioView
-                      language={language}
-                      initialProfile={currentSession.config.styleProfile}
-                      onProfileChange={(profile) => {
-                        updateCurrentSession({
-                          config: { ...currentSession.config, styleProfile: profile },
-                        });
-                      }}
-                    />
-                    {!showAiLock && (
-                    <div className="max-w-6xl mx-auto px-4 pb-4">
-                      <TabAssistant tab="style" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
-                    </div>
-                    )}
-                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
-                      </button>
-                    </div>
-                  </>
+                  <StyleTab
+                    language={language} config={currentSession.config}
+                    updateCurrentSession={updateCurrentSession}
+                    triggerSave={triggerSave} saveFlash={saveFlash}
+                    showAiLock={showAiLock} hostedProviders={hostedProviders}
+                  />
                 )}
                 {activeTab === 'manuscript' && currentSession && (
                   <ManuscriptView

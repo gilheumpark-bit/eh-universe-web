@@ -14,6 +14,8 @@ interface CharacterTabProps {
   triggerSave: () => void;
   saveFlash: boolean;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
+  showAiLock?: boolean;
+  hostedProviders?: Record<string, boolean>;
 }
 
 const CharacterTab: React.FC<CharacterTabProps> = ({
@@ -24,7 +26,9 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
   setCharSubTab,
   triggerSave,
   saveFlash,
-  setUxError
+  setUxError,
+  showAiLock = false,
+  hostedProviders = {},
 }) => {
   const t = createT(language);
 
@@ -62,9 +66,11 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
         />
       )}
 
+      {!showAiLock && (
       <div className="max-w-[1400px] mx-auto px-4 pb-4">
-        <TabAssistant tab="characters" language={language} config={config} />
+        <TabAssistant tab="characters" language={language} config={config} hostedProviders={hostedProviders} />
       </div>
+      )}
       <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
         <button 
           onClick={triggerSave} 
