@@ -257,13 +257,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    // Sanitize: strip API keys and sensitive data (covers key=, apikey=, api_key:, etc.)
+    // Sanitize: strip API keys and sensitive data
     const safeMsg = raw
       .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
       .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
       .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
       .slice(0, 200);
-    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : 500;
+    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : /Request too large/i.test(raw) ? 413 : 500;
     return NextResponse.json({ error: safeMsg }, { status });
   }
 }
