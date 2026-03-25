@@ -524,9 +524,26 @@ export default function StudioPage() {
         povCharacter: world.povCharacter,
         setting: world.setting,
         primaryEmotion: world.primaryEmotion,
+        // Tier 1
         corePremise: world.corePremise,
         powerStructure: world.powerStructure,
         currentConflict: world.currentConflict,
+        // Tier 2
+        worldHistory: world.worldHistory || '',
+        socialSystem: world.socialSystem || '',
+        economy: world.economy || '',
+        magicTechSystem: world.magicTechSystem || '',
+        factionRelations: world.factionRelations || '',
+        survivalEnvironment: world.survivalEnvironment || '',
+        // Tier 3
+        culture: world.culture || '',
+        religion: world.religion || '',
+        education: world.education || '',
+        lawOrder: world.lawOrder || '',
+        taboo: world.taboo || '',
+        dailyLife: world.dailyLife || '',
+        travelComm: world.travelComm || '',
+        truthVsBeliefs: world.truthVsBeliefs || '',
       };
 
       const characters = await generateCharacters(config, language);

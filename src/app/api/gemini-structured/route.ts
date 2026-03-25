@@ -172,11 +172,31 @@ async function handleWorldDesign(
   return generateJson<Record<string, string>>(
     apiKey,
     model,
-    `Generate a unique ${genre} story concept in ${LANGUAGE_NAMES[language]}. Be creative and original.
-Include:
-- corePremise: The one key rule that makes this world different from reality
-- powerStructure: Who holds power and how it is maintained
-- currentConflict: The central conflict driving the world right now
+    `Generate a unique ${genre} story concept in ${LANGUAGE_NAMES[language]}. Be creative, original, and DETAILED.
+Fill ALL of the following fields thoroughly — do not leave any empty.
+
+[Tier 1 — Core]
+- corePremise: The one key rule that makes this world different from reality (2-3 sentences)
+- powerStructure: Who holds power and how it is maintained (2-3 sentences)
+- currentConflict: The central conflict driving the world right now (2-3 sentences)
+
+[Tier 2 — Systems]
+- worldHistory: Key historical events that shaped this world (2-3 sentences)
+- socialSystem: Class structure, culture, education, law and order (2-3 sentences)
+- economy: Resources, currency, trade, daily livelihoods (2-3 sentences)
+- magicTechSystem: Core abilities/technology — principles and limitations (2-3 sentences)
+- factionRelations: Major faction conflicts and alliances (2-3 sentences)
+- survivalEnvironment: Geography, climate, hazards (2-3 sentences)
+
+[Tier 3 — Detail]
+- culture: Rituals, art, customs (1-2 sentences)
+- religion: What people believe, mythology (1-2 sentences)
+- education: How knowledge is passed down (1-2 sentences)
+- lawOrder: Law enforcement, punishment, justice system (1-2 sentences)
+- taboo: Things absolutely forbidden (1-2 sentences)
+- dailyLife: A typical day from waking to sleeping (1-2 sentences)
+- travelComm: Travel time between cities, speed of information (1-2 sentences)
+- truthVsBeliefs: What people believe vs what is actually true (1-2 sentences)
 ${hintBlock}`,
     {
       type: Type.OBJECT,
@@ -189,8 +209,22 @@ ${hintBlock}`,
         corePremise: { type: Type.STRING },
         powerStructure: { type: Type.STRING },
         currentConflict: { type: Type.STRING },
+        worldHistory: { type: Type.STRING },
+        socialSystem: { type: Type.STRING },
+        economy: { type: Type.STRING },
+        magicTechSystem: { type: Type.STRING },
+        factionRelations: { type: Type.STRING },
+        survivalEnvironment: { type: Type.STRING },
+        culture: { type: Type.STRING },
+        religion: { type: Type.STRING },
+        education: { type: Type.STRING },
+        lawOrder: { type: Type.STRING },
+        taboo: { type: Type.STRING },
+        dailyLife: { type: Type.STRING },
+        travelComm: { type: Type.STRING },
+        truthVsBeliefs: { type: Type.STRING },
       },
-      required: ['title', 'povCharacter', 'setting', 'primaryEmotion', 'synopsis'],
+      required: ['title', 'povCharacter', 'setting', 'primaryEmotion', 'synopsis', 'corePremise', 'powerStructure', 'currentConflict'],
     },
     { title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '' },
   );

@@ -179,6 +179,20 @@ export const generateWorldDesign = async (
   corePremise?: string;
   powerStructure?: string;
   currentConflict?: string;
+  worldHistory?: string;
+  socialSystem?: string;
+  economy?: string;
+  magicTechSystem?: string;
+  factionRelations?: string;
+  survivalEnvironment?: string;
+  culture?: string;
+  religion?: string;
+  education?: string;
+  lawOrder?: string;
+  taboo?: string;
+  dailyLife?: string;
+  travelComm?: string;
+  truthVsBeliefs?: string;
 }> => {
   return fetchStructuredGemini({
     task: 'worldDesign',
