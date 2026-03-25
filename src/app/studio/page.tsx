@@ -35,6 +35,7 @@ import MobileTabBar from '@/components/studio/MobileTabBar';
 // generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
+import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
@@ -59,7 +60,7 @@ const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedW
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { Wand2 } from 'lucide-react';
-import { syncAllProjects, setDriveEncryptionKey } from '@/services/driveService';
+import { setDriveEncryptionKey } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
@@ -298,82 +299,14 @@ export default function StudioPage() {
   // confirmState, showConfirm, closeConfirm → useStudioUX에서 제공
 
   // ============================================================
-  // SYNC STATE (projects only — API keys stay local per device)
+  // SYNC STATE — useStudioSync 훅으로 추출
   // ============================================================
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
-  const [showSyncReminder, setShowSyncReminder] = useState(false);
 
-  // 2-hour sync reminder
-  const SYNC_REMINDER_MS = 2 * 60 * 60 * 1000; // 2h
-  useEffect(() => {
-    if (!user) {
-      // Non-logged-in users: remind to log in for backup after 2 hours
-      const timer = setTimeout(() => {
-        console.info('[NOA] 💡 Google 로그인 후 Drive 동기화를 사용하면 작업물을 안전하게 백업할 수 있습니다.');
-        setShowSyncReminder(true);
-      }, SYNC_REMINDER_MS);
-      return () => clearTimeout(timer);
-    }
-    const timer = setInterval(() => {
-      const gap = lastSyncTime ? Date.now() - lastSyncTime : Infinity;
-      if (gap >= SYNC_REMINDER_MS) {
-        setShowSyncReminder(true);
-      }
-    }, 60_000); // check every minute
-    return () => clearInterval(timer);
-  }, [user, lastSyncTime, SYNC_REMINDER_MS]);
-
-  const handleSync = useCallback(async () => {
-    let token = accessToken;
-    if (!token) {
-      token = await refreshAccessToken();
-      if (!token) return;
-    }
-    setSyncStatus('syncing');
-    try {
-      const result = await syncAllProjects(token, projects);
-      setProjects(result.merged);
-      setLastSyncTime(Date.now());
-      if (result.failedCount > 0) {
-        setSyncStatus('done');
-        setUxError({ error: new Error(`Drive sync: ${result.failedCount} file(s) failed to sync`) });
-      } else {
-        setSyncStatus('done');
-      }
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch (err: unknown) {
-      const msg = (err as Error)?.message || '';
-      // Auto-retry on 401 (expired token)
-      if (msg.includes('401')) {
-        console.warn('[Sync] Token expired, refreshing...');
-        const newToken = await refreshAccessToken();
-        if (newToken) {
-          try {
-            const retryResult = await syncAllProjects(newToken, projects);
-            setProjects(retryResult.merged);
-            setLastSyncTime(Date.now());
-            if (retryResult.failedCount > 0) {
-              setSyncStatus('done');
-              setUxError({ error: new Error(`Drive sync: ${retryResult.failedCount} file(s) failed to sync`) });
-            } else {
-              setSyncStatus('done');
-            }
-            setTimeout(() => setSyncStatus('idle'), 3000);
-            return;
-          } catch (retryErr) {
-            console.error('[Sync] Retry failed', retryErr);
-            setSyncStatus('error');
-            setTimeout(() => setSyncStatus('idle'), 5000);
-            return;
-          }
-        }
-      }
-      console.error('[Sync]', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 5000);
-    }
-  }, [accessToken, refreshAccessToken, projects, setProjects]);
+  const {
+    syncStatus, lastSyncTime,
+    showSyncReminder, setShowSyncReminder,
+    handleSync,
+  } = useStudioSync({ user, accessToken, refreshAccessToken, projects, setProjects, setUxError });
 
   // ============================================================
   // PROJECT MANAGEMENT (confirm-wrapped actions)
