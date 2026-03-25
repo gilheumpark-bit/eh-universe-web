@@ -58,7 +58,7 @@ const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedW
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { Wand2 } from 'lucide-react';
-import { syncAllProjects } from '@/services/driveService';
+import { syncAllProjects, setDriveEncryptionKey } from '@/services/driveService';
 import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
@@ -157,6 +157,11 @@ export default function StudioPage() {
   const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
   const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
+
+  // Drive 암호화 키 설정 (user UID 기반 AES-GCM)
+  useEffect(() => {
+    if (user?.uid) setDriveEncryptionKey(user.uid);
+  }, [user?.uid]);
 
   // UX: unsaved changes warning (moved after useStudioAI to avoid TDZ)
   // see useUnsavedWarning call below useStudioAI

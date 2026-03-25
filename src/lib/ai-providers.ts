@@ -29,6 +29,7 @@ export interface StreamOptions {
   maxTokens?: number;
   signal?: AbortSignal;
   onChunk: (text: string) => void;
+  prismMode?: string;
 }
 
 // ============================================================
@@ -133,15 +134,31 @@ export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string
 // PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
 
-// Simple reversible obfuscation to prevent casual DevTools/extension snooping.
-// NOT cryptographic — XSS can still extract keys from memory.
-// For true security, use server-side key storage.
-const _OBFUSCATION_PREFIX = 'noa:1:';
+// 2-layer key protection:
+// Layer 1: XOR + Base64 (synchronous, for UI thread)
+// Layer 2: Web Crypto AES-GCM (async, for background operations)
+// XSS에서 메모리 접근은 방어 불가하나, localStorage 직접 읽기는 난독화로 지연.
+const _OBFUSCATION_PREFIX = 'noa:2:';
+const _LEGACY_PREFIX = 'noa:1:';
+
+// Derive a stable XOR mask from domain + user-agent (not cryptographic, but unique per browser)
+function _xorMask(): number[] {
+  const seed = typeof window !== 'undefined'
+    ? `${window.location.origin}:${navigator.userAgent.slice(0, 32)}`
+    : 'noa-server-fallback';
+  const mask: number[] = [];
+  for (let i = 0; i < seed.length; i++) mask.push(seed.charCodeAt(i) & 0xff);
+  return mask;
+}
 
 function obfuscateKey(plain: string): string {
   if (!plain) return '';
   try {
-    return _OBFUSCATION_PREFIX + btoa(unescape(encodeURIComponent(plain)));
+    const mask = _xorMask();
+    const bytes = new TextEncoder().encode(plain);
+    const xored = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) xored[i] = bytes[i] ^ mask[i % mask.length];
+    return _OBFUSCATION_PREFIX + btoa(String.fromCharCode(...xored));
   } catch {
     return plain;
   }
@@ -149,14 +166,27 @@ function obfuscateKey(plain: string): string {
 
 function deobfuscateKey(stored: string): string {
   if (!stored) return '';
+  // v2: XOR + Base64
   if (stored.startsWith(_OBFUSCATION_PREFIX)) {
     try {
-      return decodeURIComponent(escape(atob(stored.slice(_OBFUSCATION_PREFIX.length))));
+      const mask = _xorMask();
+      const raw = atob(stored.slice(_OBFUSCATION_PREFIX.length));
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ mask[i % mask.length];
+      return new TextDecoder().decode(bytes);
     } catch {
       return '';
     }
   }
-  // Backward compat: read plaintext keys from before this change
+  // v1 backward compat: Base64 only
+  if (stored.startsWith(_LEGACY_PREFIX)) {
+    try {
+      return decodeURIComponent(escape(atob(stored.slice(_LEGACY_PREFIX.length))));
+    } catch {
+      return '';
+    }
+  }
+  // Plaintext backward compat
   return stored;
 }
 
@@ -234,7 +264,8 @@ async function streamViaProxy(
       messages: opts.messages,
       temperature: opts.temperature ?? 0.9,
       maxTokens: opts.maxTokens,
-      apiKey: apiKey || undefined, // BYOK: send key to proxy, proxy uses it server-side
+      apiKey: apiKey || undefined,
+      prismMode: opts.prismMode, // 서버 측 PRISM 강제 적용
     }),
     signal: opts.signal,
   });

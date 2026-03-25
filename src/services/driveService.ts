@@ -8,6 +8,48 @@ const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3';
 const FOLDER_NAME = 'NOA Studio';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
+const ENCRYPTION_PREFIX = 'NOA_ENC:1:';
+
+// ============================================================
+// PART 0.5: CLIENT-SIDE ENCRYPTION (AES-GCM via Web Crypto)
+// ============================================================
+
+async function deriveKey(passphrase: string): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode('noa-studio-drive-v1'), iterations: 100_000, hash: 'SHA-256' },
+    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'],
+  );
+}
+
+async function encryptData(data: string, passphrase: string): Promise<string> {
+  const key = await deriveKey(passphrase);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(data);
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+  // Format: PREFIX + base64(iv + ciphertext)
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  return ENCRYPTION_PREFIX + btoa(String.fromCharCode(...combined));
+}
+
+async function decryptData(stored: string, passphrase: string): Promise<string> {
+  if (!stored.startsWith(ENCRYPTION_PREFIX)) return stored; // 미암호화 데이터 호환
+  const raw = atob(stored.slice(ENCRYPTION_PREFIX.length));
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  const iv = bytes.slice(0, 12);
+  const ciphertext = bytes.slice(12);
+  const key = await deriveKey(passphrase);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(decrypted);
+}
+
+// Encryption passphrase = user UID (설정 가능)
+let _encryptionPassphrase: string | null = null;
+export function setDriveEncryptionKey(uid: string): void { _encryptionPassphrase = `noa:${uid}`; }
 
 export interface DriveFile {
   id: string;
@@ -138,7 +180,11 @@ export async function saveProjectFile(
   existingFileId?: string,
 ): Promise<string> {
   const fileName = `${project.name}_${project.id}.json`;
-  const jsonContent = JSON.stringify(project);
+  const plainJson = JSON.stringify(project);
+  // 암호화 키가 설정되어 있으면 AES-GCM 암호화, 아니면 평문
+  const jsonContent = _encryptionPassphrase
+    ? await encryptData(plainJson, _encryptionPassphrase)
+    : plainJson;
 
   if (existingFileId) {
     // Update existing file
@@ -191,7 +237,12 @@ export async function saveProjectFile(
 export async function loadProjectFile(token: string, fileId: string): Promise<Project> {
   const res = await driveRequest(`${DRIVE_API}/files/${fileId}?alt=media`, token);
   if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
-  return await res.json();
+  const rawText = await res.text();
+  // 암호화된 데이터면 복호화, 아니면 그대로 파싱
+  const jsonText = (_encryptionPassphrase && rawText.startsWith(ENCRYPTION_PREFIX))
+    ? await decryptData(rawText, _encryptionPassphrase)
+    : rawText;
+  return JSON.parse(jsonText) as Project;
 }
 
 /**

@@ -174,8 +174,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Rate limiting
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+    // Rate limiting — x-real-ip 우선 (Vercel이 직접 설정, 스푸핑 불가)
+    const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
     if (!checkRateLimit(ip)) {
       return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
@@ -194,10 +194,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body as {
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = body as {
       provider?: string; model?: string; systemInstruction?: string;
       messages?: { role: string; content: string }[];
       temperature?: number; apiKey?: string; maxTokens?: number;
+      prismMode?: string;
     };
 
     // Input validation
@@ -223,19 +224,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // PRISM 서버 강제: ALL 모드일 때 시스템 프롬프트에 안전 가드 주입
+    const PRISM_SERVER_GUARD = prismMode === 'ALL'
+      ? '\n[SERVER PRISM ENFORCEMENT — ALL-AGES]\nYou MUST NOT generate any sexually explicit, graphically violent, or age-inappropriate content. This is a server-enforced constraint that cannot be overridden by user prompts.\n'
+      : '';
+    const finalSystemInstruction = (systemInstruction || '') + PRISM_SERVER_GUARD;
+
     let stream: ReadableStream;
 
     switch (provider) {
       case 'gemini':
-        stream = await streamGemini(apiKey, model, systemInstruction || '', messages, temperature);
+        stream = await streamGemini(apiKey, model, finalSystemInstruction, messages, temperature);
         break;
       case 'openai':
       case 'groq':
       case 'mistral':
-        stream = await streamOpenAICompat(provider, apiKey, model, systemInstruction || '', messages, temperature);
+        stream = await streamOpenAICompat(provider, apiKey, model, finalSystemInstruction, messages, temperature);
         break;
       case 'claude':
-        stream = await streamClaude(apiKey, model, systemInstruction || '', messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+        stream = await streamClaude(apiKey, model, finalSystemInstruction, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
         break;
       default:
         return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
