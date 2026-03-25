@@ -225,12 +225,12 @@ export function NetworkHomeClient() {
   return (
     <main className="pt-14 pb-20">
       <div className="site-shell space-y-8 py-8 md:space-y-10 md:py-10">
-        <Link
-          href="/"
-          className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
+        <button
+          onClick={() => window.history.back()}
+          className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors cursor-pointer"
         >
-          &larr; HOME
-        </Link>
+          &larr; {lang === "ko" ? "뒤로" : "BACK"}
+        </button>
         <section className="premium-panel p-6 md:p-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
