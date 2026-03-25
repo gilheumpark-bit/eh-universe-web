@@ -1087,9 +1087,11 @@ export default function StudioPage() {
                       <ItemStudioView language={language} config={currentSession.config} setConfig={setConfig} />
                     )}
 
+                    {!showAiLock && (
                     <div className="max-w-[1400px] mx-auto px-4 pb-4">
                       <TabAssistant tab="characters" language={language} config={currentSession.config} />
                     </div>
+                    )}
                     <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
@@ -1163,9 +1165,11 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    {!showAiLock && (
                     <div className="mt-4">
                       <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} />
                     </div>
+                    )}
                     <div className="flex justify-end mt-4">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
@@ -1675,9 +1679,11 @@ export default function StudioPage() {
                         });
                       }}
                     />
+                    {!showAiLock && (
                     <div className="max-w-6xl mx-auto px-4 pb-4">
                       <TabAssistant tab="style" language={language} config={currentSession.config} />
                     </div>
+                    )}
                     <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
                       <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
                         💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
@@ -2168,8 +2174,8 @@ export default function StudioPage() {
           )}
         </div>
 
-        {/* Writing Input */}
-        {activeTab === 'writing' && currentSessionId && (
+        {/* Writing Input — 수동 모드(미사용)일 때 숨김 */}
+        {activeTab === 'writing' && currentSessionId && !showAiLock && (
           <div className={`pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0 transition-[padding] duration-300 ${writingInputDockOffset}`}>
             <div className={`${writingColumnShell} relative`}>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
