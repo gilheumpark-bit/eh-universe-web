@@ -1859,11 +1859,11 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                   setCivs(newCivs);
                   setRelations([]);
                 }
-              } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+              } catch { alert(lang === "ko" ? '자동 생성 실패. API 키를 확인하세요.' : 'Generation failed. Check API key.'); }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
-              {aiGenerating ? '⏳' : '🤖'} {lang === "ko" ? (aiGenerating ? '생성 중...' : 'AI 생성') : (aiGenerating ? 'Generating...' : 'AI Generate')}
+              {aiGenerating ? '⏳' : '🤖'} {lang === "ko" ? (aiGenerating ? '생성 중...' : '자동 생성') : (aiGenerating ? 'Generating...' : 'Auto Generate')}
             </button>
           </div>
         </div>

@@ -1078,7 +1078,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* ====== WRITER NOTES (작가 메모) ====== */}
         {activeTab === "notes" && (
           <div className="space-y-3">
-            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. AI 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
+            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. 자동 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
             <textarea
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}

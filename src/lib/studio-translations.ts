@@ -264,7 +264,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       preciseGenerate: "정밀 생성",
       preciseInstruction: "🎯 정밀 지시 (설정된 제약 조건이 자동 반영됩니다)",
       advancedGuide: "※ 장면 목표·서술 제약·참조 범위·고정 규칙이 프롬프트에 자동 결합됩니다. \"고급 집필 = 작가가 더 세밀하게 제어하는 모드\"",
-      apiKeyPlaceholder: "🔒 AI 생성에는 API 키가 필요합니다. 글쓰기 모드(✏️)를 이용하세요.",
+      apiKeyPlaceholder: "🔒 자동 생성에는 API 키가 필요합니다. 글쓰기 모드(✏️)를 이용하세요.",
       openCanvas: "캔버스 실행",
     },
     canvas: {
@@ -573,7 +573,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       skillsCount: "스킬",
       itemsCount: "아이템",
       presetNote: "※ 존재력·신성력·EH·마법 4대 체계 + 민시영/이지영 스킬 포함",
-      aiGenerate: "AI 생성",
+      aiGenerate: "자동 생성",
       synopsisRequired: "먼저 시놉시스를 작성해주세요.",
       tabItems: "아이템 도감",
       tabSkills: "스킬 트리",
@@ -797,8 +797,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     planningExtra: {
       preset: "프리셋",
       noPreset: "해당 장르 프리셋 없음",
-      aiGenerating: "AI 생성 중...",
-      aiGenerate: "AI 생성",
+      aiGenerating: "자동 생성 중...",
+      aiGenerate: "자동 생성",
       publishPlatform: "연재 플랫폼",
       none: "미선택",
       target: "독자층",
@@ -814,7 +814,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       narrativeGuardrails: "서사 가드라인",
       worldFormulaSentence: '이 세계는 "{premise}"라는 전제를 가진 {genre} 장르의 배경이며, {power}한 권력 구조 속에서, "{conflict}"라는 갈등을 중심으로 돌아간다.',
       apiKeyAlert: "API 키를 먼저 설정해주세요. (설정 탭 → API 키)",
-      aiFailed: "AI 생성 실패. API 키를 확인하세요.",
+      aiFailed: "자동 생성 실패. API 키를 확인하세요.",
       prismTitle: "NOA-PRISM 품질 제어",
       prismPreserve: "보존",
       prismExpand: "확장",
@@ -926,9 +926,9 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       applyFix: "수정 적용"
     },
     sceneSheet: {
-      aiGenerate: "AI 생성",
+      aiGenerate: "자동 생성",
       synopsisRequired: "세계관 설계에서 시놉시스를 먼저 작성하세요.",
-      aiFailed: "AI 생성 실패. API 키를 확인하세요.",
+      aiFailed: "자동 생성 실패. API 키를 확인하세요.",
       beatSheet: "비트시트",
       rhythmRules: "리듬 규칙",
       readerReward: "독자 보상 패턴",
@@ -1148,7 +1148,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       defaultEpisodes: "기본 에피소드 수",
       defaultEpisodesDesc: "새 프로젝트의 기본 총 에피소드 수",
       temperature: "Temperature",
-      temperatureDesc: "AI 생성의 창의성 수준 (0.0 = 정확, 1.0 = 창의적)",
+      temperatureDesc: "자동 생성의 창의성 수준 (0.0 = 정확, 1.0 = 창의적)",
       mobile: "모바일",
       web: "웹"
     },
