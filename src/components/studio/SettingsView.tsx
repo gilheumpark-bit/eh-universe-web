@@ -40,7 +40,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const checkApiKeys = useCallback(() => {
     const currentProvider = getActiveProvider();
     setApiKeyStatus(!!getApiKey(currentProvider) || !!hostedProviders[currentProvider]);
-  }, []);
+  }, [hostedProviders]);
 
   useEffect(() => {
     window.addEventListener('storage', checkApiKeys);

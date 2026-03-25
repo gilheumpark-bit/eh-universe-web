@@ -279,7 +279,6 @@ export default function StudioPage() {
       setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
       localStorage.setItem('noa_studio_mode', 'manual');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
   // UX: confirm modal state
@@ -417,7 +416,6 @@ export default function StudioPage() {
     const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
     setEditDraft(saved ?? '');
   // currentSessionId가 바뀔 때만 복원
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId, hydrated]);
 
   useEffect(() => {

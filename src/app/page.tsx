@@ -165,7 +165,6 @@ export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   const [showStudioChoice, setShowStudioChoice] = useState(false);
 
-  const isKO = lang === "ko";
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
     lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
 
