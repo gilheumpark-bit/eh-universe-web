@@ -119,8 +119,14 @@ async function handleCharacters(
   const prompt = `
     Based on the genre [${config.genre}] and world setting [${config.synopsis}],
     generate exactly ${count} multidimensional characters in JSON format.
-    IMPORTANT: All character names, roles, traits, and appearance descriptions MUST be written in ${LANGUAGE_NAMES[language]}.
+    IMPORTANT: All character names, traits, and appearance descriptions MUST be written in ${LANGUAGE_NAMES[language]}.
     Each character must have a unique narrative role and high narrative potential (dna score 0-100).
+
+    CRITICAL: The "role" field MUST be exactly one of: "hero", "villain", "ally", "extra".
+    - "hero": protagonist or main character (1-2 per story)
+    - "villain": antagonist or opposing force (1-2 per story)
+    - "ally": supporting character who helps the protagonist
+    - "extra": minor or neutral character
 
     For each character, also provide:
     - desire: What they desperately want (their core drive)
@@ -369,46 +375,63 @@ async function handleSceneDirection(
   return generateJson<Record<string, unknown>>(
     apiKey,
     model,
-    `Based on this story, generate scene direction elements in ${LANGUAGE_NAMES[language]}.\n\nSynopsis: ${synopsis}\nCharacters: ${characters.join(', ')}${tierBlock}`,
+    `Based on this story, generate COMPREHENSIVE scene direction elements in ${LANGUAGE_NAMES[language]}.
+Include hooks, goguma/cider tension devices, cliffhanger, emotion targets, dialogue tones, foreshadowing, dopamine devices, pacing beats, and tension curve.
+
+Synopsis: ${synopsis}
+Characters: ${characters.join(', ')}${tierBlock}
+
+Generate multiple items for each array field (2-4 items each). Be specific and detailed.`,
     {
       type: Type.OBJECT,
       properties: {
-        hook: {
-          type: Type.OBJECT,
-          properties: {
-            position: { type: Type.STRING },
-            type: { type: Type.STRING },
-            desc: { type: Type.STRING },
-          },
-          required: ['position', 'type', 'desc'],
+        hooks: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            position: { type: Type.STRING }, hookType: { type: Type.STRING }, desc: { type: Type.STRING },
+          }, required: ['position', 'hookType', 'desc'] },
         },
-        tension: {
-          type: Type.OBJECT,
-          properties: {
-            type: { type: Type.STRING },
-            desc: { type: Type.STRING },
-          },
-          required: ['type', 'desc'],
+        goguma: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            type: { type: Type.STRING }, intensity: { type: Type.STRING }, desc: { type: Type.STRING },
+          }, required: ['type', 'intensity', 'desc'] },
         },
         cliffhanger: {
-          type: Type.OBJECT,
-          properties: {
-            type: { type: Type.STRING },
-            desc: { type: Type.STRING },
-          },
-          required: ['type', 'desc'],
+          type: Type.OBJECT, properties: {
+            cliffType: { type: Type.STRING }, desc: { type: Type.STRING },
+          }, required: ['cliffType', 'desc'],
         },
-        emotionTarget: { type: Type.STRING },
-        dialogueTone: {
-          type: Type.OBJECT,
-          properties: {
-            character: { type: Type.STRING },
-            tone: { type: Type.STRING },
-          },
-          required: ['character', 'tone'],
+        emotionTargets: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            emotion: { type: Type.STRING }, intensity: { type: Type.NUMBER },
+          }, required: ['emotion', 'intensity'] },
+        },
+        dialogueTones: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            character: { type: Type.STRING }, tone: { type: Type.STRING },
+          }, required: ['character', 'tone'] },
+        },
+        foreshadows: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            planted: { type: Type.STRING }, payoff: { type: Type.STRING },
+          }, required: ['planted', 'payoff'] },
+        },
+        dopamineDevices: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            scale: { type: Type.STRING }, device: { type: Type.STRING }, desc: { type: Type.STRING },
+          }, required: ['scale', 'device', 'desc'] },
+        },
+        pacings: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            section: { type: Type.STRING }, percent: { type: Type.NUMBER }, desc: { type: Type.STRING },
+          }, required: ['section', 'percent', 'desc'] },
+        },
+        tensionCurve: {
+          type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
+            position: { type: Type.NUMBER }, level: { type: Type.NUMBER }, label: { type: Type.STRING },
+          }, required: ['position', 'level', 'label'] },
         },
       },
-      required: ['hook', 'tension', 'cliffhanger', 'emotionTarget', 'dialogueTone'],
+      required: ['hooks', 'goguma', 'cliffhanger', 'emotionTargets', 'dialogueTones'],
     },
     {},
   );

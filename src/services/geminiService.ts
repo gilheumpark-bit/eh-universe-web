@@ -163,10 +163,16 @@ export const generateCharacters = async (
         && typeof (character as Character).name === 'string'
       );
     })
-    .map((character) => ({
-      ...character,
-      id: `c-${Date.now()}-${Math.random()}`,
-    }));
+    .map((character) => {
+      const VALID_ROLES = ['hero', 'villain', 'ally', 'extra'];
+      const rawRole = ((character as Character).role || 'extra').toLowerCase();
+      const normalizedRole = VALID_ROLES.includes(rawRole) ? rawRole : 'extra';
+      return {
+        ...character,
+        role: normalizedRole,
+        id: `c-${Date.now()}-${Math.random()}`,
+      };
+    });
 };
 
 // ============================================================
@@ -292,11 +298,15 @@ export const generateSceneDirection = async (
     currentConflict?: string;
   }
 ): Promise<{
-  hook: { position: string; type: string; desc: string };
-  tension: { type: string; desc: string };
-  cliffhanger: { type: string; desc: string };
-  emotionTarget: string;
-  dialogueTone: { character: string; tone: string };
+  hooks: { position: string; hookType: string; desc: string }[];
+  goguma: { type: string; intensity: string; desc: string }[];
+  cliffhanger: { cliffType: string; desc: string };
+  emotionTargets: { emotion: string; intensity: number }[];
+  dialogueTones: { character: string; tone: string }[];
+  foreshadows?: { planted: string; payoff: string }[];
+  dopamineDevices?: { scale: string; device: string; desc: string }[];
+  pacings?: { section: string; percent: number; desc: string }[];
+  tensionCurve?: { position: number; level: number; label: string }[];
 }> => {
   return fetchStructuredGemini({
     task: 'sceneDirection',

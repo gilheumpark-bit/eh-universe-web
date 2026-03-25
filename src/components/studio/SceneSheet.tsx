@@ -572,11 +572,24 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               const { generateSceneDirection } = await import('@/services/geminiService');
               const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
               const ts = Date.now();
-              if (result.hook) setHooks([{ id: `ai-h-${ts}`, position: (result.hook.position || 'opening') as "opening" | "middle" | "ending", hookType: result.hook.type || 'question', desc: result.hook.desc || '' }]);
-              if (result.tension) setGogumas([{ id: `ai-g-${ts}`, type: 'goguma', intensity: 'medium', desc: result.tension.desc || '', episode: 1 }]);
-              if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.type || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
-              if (result.emotionTarget) setEmotions([{ id: `ai-e-${ts}`, position: 50, emotion: result.emotionTarget, intensity: 80 }]);
-              if (result.dialogueTone) setDialogueRules([{ id: `ai-d-${ts}`, character: result.dialogueTone.character, tone: result.dialogueTone.tone, notes: '' }]);
+              // hooks
+              if (result.hooks?.length) setHooks(result.hooks.map((h, i) => ({ id: `ai-h-${ts}-${i}`, position: (h.position || 'opening') as "opening" | "middle" | "ending", hookType: h.hookType || 'question', desc: h.desc || '' })));
+              // goguma/cider
+              if (result.goguma?.length) setGogumas(result.goguma.map((g, i) => ({ id: `ai-g-${ts}-${i}`, type: (g.type === 'cider' ? 'cider' : 'goguma') as "goguma" | "cider", intensity: (g.intensity || 'medium') as "small" | "medium" | "large", desc: g.desc || '', episode: 1 })));
+              // cliffhanger
+              if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.cliffType || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
+              // emotions
+              if (result.emotionTargets?.length) setEmotions(result.emotionTargets.map((e, i) => ({ id: `ai-e-${ts}-${i}`, position: Math.round((i / Math.max(result.emotionTargets.length - 1, 1)) * 100), emotion: e.emotion, intensity: e.intensity || 70 })));
+              // dialogue tones
+              if (result.dialogueTones?.length) setDialogueRules(result.dialogueTones.map((d, i) => ({ id: `ai-d-${ts}-${i}`, character: d.character, tone: d.tone, notes: '' })));
+              // foreshadows
+              if (result.foreshadows?.length) setForeshadows(result.foreshadows.map((f, i) => ({ id: `ai-f-${ts}-${i}`, planted: f.planted, payoff: f.payoff, episode: 1, resolved: false })));
+              // dopamine devices
+              if (result.dopamineDevices?.length) setDopamines(result.dopamineDevices.map((dp, i) => ({ id: `ai-dp-${ts}-${i}`, scale: (dp.scale || 'medium') as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: false })));
+              // pacing
+              if (result.pacings?.length) setPacings(result.pacings.map((p, i) => ({ id: `ai-p-${ts}-${i}`, section: p.section, percent: p.percent || 25, desc: p.desc })));
+              // tension curve
+              if (result.tensionCurve?.length) setTensionPoints(result.tensionCurve.map((t, i) => ({ id: `ai-t-${ts}-${i}`, position: t.position, level: t.level, label: t.label })));
             } catch { alert(tl('sceneSheet.aiFailed')); }
           }}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">

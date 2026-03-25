@@ -267,12 +267,25 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         </div>
                         <div className="min-w-0">
                           <div className="text-base font-black text-white truncate mb-0.5">{char.name}</div>
-                          <div className="flex items-center gap-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${
+                          <div className="flex items-center gap-1">
+                             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                char.role === 'hero' ? 'bg-blue-500' :
-                               char.role === 'villain' ? 'bg-red-500' : 'bg-zinc-600'
+                               char.role === 'villain' ? 'bg-red-500' :
+                               char.role === 'ally' ? 'bg-green-500' : 'bg-zinc-600'
                              }`}></div>
-                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{getRoleLabel(char.role)}</span>
+                             <select
+                               value={char.role}
+                               onChange={e => setConfig((prev: StoryConfig) => ({
+                                 ...prev,
+                                 characters: prev.characters.map(c => c.id === char.id ? { ...c, role: e.target.value } : c)
+                               }))}
+                               className="bg-transparent text-[10px] font-black text-zinc-500 uppercase tracking-widest outline-none cursor-pointer hover:text-zinc-300 transition-colors appearance-none pr-3"
+                               style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'8\' viewBox=\'0 0 8 8\'%3E%3Cpath fill=\'%236b7280\' d=\'M0 2l4 4 4-4z\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right center' }}
+                             >
+                               {ROLE_KEYS.map(r => (
+                                 <option key={r} value={r}>{te.roles[r]}</option>
+                               ))}
+                             </select>
                           </div>
                         </div>
                       </div>
