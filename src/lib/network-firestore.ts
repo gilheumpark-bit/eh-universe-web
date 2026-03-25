@@ -420,7 +420,12 @@ export async function getPostById(postId: string) {
 export async function listLatestPlanets(limitCount = 6) {
   const database = requireDb();
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.planets), orderBy("updatedAt", "desc"), limit(limitCount)),
+    query(
+      collection(database, COLLECTIONS.planets),
+      where("visibility", "==", "public"),
+      orderBy("updatedAt", "desc"),
+      limit(limitCount),
+    ),
   );
   return snapshot.docs.map((document) => document.data() as PlanetRecord);
 }
@@ -430,16 +435,27 @@ export async function listLatestPosts(limitCount = 8, boardType?: BoardType) {
 
   if (!boardType) {
     const snapshot = await getDocs(
-      query(collection(database, COLLECTIONS.posts), orderBy("createdAt", "desc"), limit(limitCount)),
+      query(
+        collection(database, COLLECTIONS.posts),
+        where("visibility", "==", "public"),
+        orderBy("createdAt", "desc"),
+        limit(limitCount),
+      ),
     );
     return snapshot.docs.map((document) => document.data() as PostRecord);
   }
 
+  // Composite index: boardType + visibility + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.posts), where("boardType", "==", boardType), limit(limitCount * 3)),
+    query(
+      collection(database, COLLECTIONS.posts),
+      where("boardType", "==", boardType),
+      where("visibility", "==", "public"),
+      orderBy("createdAt", "desc"),
+      limit(limitCount),
+    ),
   );
-
-  return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as PostRecord)).slice(0, limitCount);
+  return snapshot.docs.map((document) => document.data() as PostRecord);
 }
 
 export async function listLatestSettlements(limitCount = 6) {
@@ -452,22 +468,45 @@ export async function listLatestSettlements(limitCount = 6) {
 
 export async function listPlanetPosts(planetId: string, boardType?: BoardType) {
   const database = requireDb();
-  const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.posts), where("planetId", "==", planetId), limit(120)),
-  );
 
-  const records = snapshot.docs.map((document) => document.data() as PostRecord);
-  const filtered = boardType ? records.filter((record) => record.boardType === boardType) : records;
-  return sortByCreatedDesc(filtered);
+  if (boardType) {
+    // Composite index: planetId + boardType + createdAt (firestore.indexes.json)
+    const snapshot = await getDocs(
+      query(
+        collection(database, COLLECTIONS.posts),
+        where("planetId", "==", planetId),
+        where("boardType", "==", boardType),
+        orderBy("createdAt", "desc"),
+        limit(120),
+      ),
+    );
+    return snapshot.docs.map((document) => document.data() as PostRecord);
+  }
+
+  // Composite index: planetId + createdAt (firestore.indexes.json)
+  const snapshot = await getDocs(
+    query(
+      collection(database, COLLECTIONS.posts),
+      where("planetId", "==", planetId),
+      orderBy("createdAt", "desc"),
+      limit(120),
+    ),
+  );
+  return snapshot.docs.map((document) => document.data() as PostRecord);
 }
 
 export async function listPlanetSettlements(planetId: string) {
   const database = requireDb();
+  // Composite index: planetId + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.settlements), where("planetId", "==", planetId), limit(120)),
+    query(
+      collection(database, COLLECTIONS.settlements),
+      where("planetId", "==", planetId),
+      orderBy("createdAt", "desc"),
+      limit(120),
+    ),
   );
-
-  return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as SettlementRecord));
+  return snapshot.docs.map((document) => document.data() as SettlementRecord);
 }
 
 export async function listPlanetsByOwner(ownerId: string) {
@@ -493,11 +532,16 @@ export async function getPlanetsByIds(planetIds: string[]) {
 
 export async function listCommentsForPost(postId: string) {
   const database = requireDb();
+  // Composite index: postId + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.comments), where("postId", "==", postId), limit(100)),
+    query(
+      collection(database, COLLECTIONS.comments),
+      where("postId", "==", postId),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    ),
   );
-
-  return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as CommentRecord));
+  return snapshot.docs.map((document) => document.data() as CommentRecord);
 }
 
 export async function getAllUniqueTags(limitCount = 50): Promise<string[]> {
@@ -579,10 +623,16 @@ export async function deleteComment(commentId: string, postId: string) {
 
 export async function listComments(planetId: string, limitCount = 100) {
   const database = requireDb();
+  // Composite index: planetId + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.comments), where("planetId", "==", planetId), limit(limitCount)),
+    query(
+      collection(database, COLLECTIONS.comments),
+      where("planetId", "==", planetId),
+      orderBy("createdAt", "desc"),
+      limit(limitCount),
+    ),
   );
-  return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as CommentRecord));
+  return snapshot.docs.map((document) => document.data() as CommentRecord);
 }
 
 // IDENTITY_SEAL: PART-5 | role=comment CRUD | inputs=comment payloads | outputs=comment records
@@ -630,8 +680,14 @@ export async function toggleReaction(input: {
 
 export async function getReactions(targetId: string): Promise<ReactionRecord[]> {
   const database = requireDb();
+  // Composite index: targetId + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.reactions), where("targetId", "==", targetId), limit(500)),
+    query(
+      collection(database, COLLECTIONS.reactions),
+      where("targetId", "==", targetId),
+      orderBy("createdAt", "desc"),
+      limit(500),
+    ),
   );
   return snapshot.docs.map((document) => document.data() as ReactionRecord);
 }
