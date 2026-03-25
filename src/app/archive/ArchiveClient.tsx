@@ -169,6 +169,7 @@ export default function ArchiveClient() {
   const catParam = searchParams.get("cat") || "core";
   const [activeCategory, setActiveCategory] = useState(catParam);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { lang } = useLang();
   const t = createT(lang === "ko" ? "KO" : lang === "jp" ? "JP" : lang === "cn" ? "CN" : "EN");
 
@@ -185,6 +186,14 @@ export default function ArchiveClient() {
 
   const currentCategory = categories.find((c) => c.id === activeCategory) ?? categories[0];
 
+  // 검색: 전체 카테고리에서 제목 매칭
+  const searchResults = searchQuery.trim()
+    ? categories.flatMap(cat => cat.articles.filter(a => {
+        const q = searchQuery.toLowerCase();
+        return (a.title.ko?.toLowerCase().includes(q) || a.title.en?.toLowerCase().includes(q) || a.slug.includes(q));
+      }).map(a => ({ ...a, categoryId: cat.id, categoryLabel: cat.label })))
+    : null;
+
   return (
     <>
       <Header />
@@ -194,7 +203,13 @@ export default function ArchiveClient() {
         </button>
 
         <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-[24px] border border-white/8 bg-[rgba(15,20,28,0.92)] p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">Archive</h2>
+          <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">Archive</h2>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={lang === "ko" ? "🔍 문서 검색..." : "🔍 Search..."}
+            className="w-full mb-3 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)]"
+          />
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
               <button key={cat.id} onClick={() => changeCategory(cat.id)}
@@ -248,7 +263,27 @@ export default function ArchiveClient() {
               </h1>
 
               <div className="space-y-3">
-                {currentCategory.articles.map((article) => {
+                {searchResults ? (
+                  <>
+                    <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase mb-2">
+                      🔍 {searchResults.length} {lang === "ko" ? "건 검색됨" : "results"} — &quot;{searchQuery}&quot;
+                    </p>
+                    {searchResults.map((article) => (
+                      <Link key={article.slug} href={`/archive/${article.slug}`}
+                        className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
+                        <div className="flex items-center gap-3">
+                          <span className="font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">{article.categoryLabel}</span>
+                          <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
+                        </div>
+                        <BadgeLevel level={article.level} />
+                      </Link>
+                    ))}
+                    {searchResults.length === 0 && (
+                      <p className="text-center text-text-tertiary text-sm py-8">{lang === "ko" ? "검색 결과가 없습니다." : "No results found."}</p>
+                    )}
+                  </>
+                ) : null}
+                {!searchResults && currentCategory.articles.map((article) => {
                   const href = `/archive/${article.slug}`;
                   return (
                     <Link key={article.slug} href={href}
