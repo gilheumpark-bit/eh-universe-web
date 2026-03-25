@@ -112,10 +112,15 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
   const [showActions, setShowActions] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Sync external content changes (only when onChange is NOT used — avoids feedback loop)
+  // Sync external content changes (WritingToolbar 서식 버튼 등 외부 변경 반영)
+  // onChange가 있어도 외부 content와 내부 editableContent가 다르면 동기화
   useEffect(() => {
-    if (!onChange && !isStreaming) setEditableContent(content);
-  }, [content, isStreaming, onChange]);
+    if (!isStreaming && content !== editableContent) {
+      setEditableContent(content);
+    }
+  // editableContent를 deps에 넣으면 무한 루프 → content만 감시
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, isStreaming]);
 
   const handleSelect = useCallback(() => {
     const ta = textareaRef.current;
