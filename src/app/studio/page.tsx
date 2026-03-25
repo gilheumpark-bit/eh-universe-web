@@ -172,6 +172,18 @@ export default function StudioPage() {
     return () => window.removeEventListener('noa:storage-full', handler);
   }, []);
 
+  // UX: export done toast
+  const [exportDoneFormat, setExportDoneFormat] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { format: string };
+      setExportDoneFormat(detail.format);
+      setTimeout(() => setExportDoneFormat(null), 3000);
+    };
+    window.addEventListener('noa:export-done', handler);
+    return () => window.removeEventListener('noa:export-done', handler);
+  }, []);
+
   // UX: provider fallback notification
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   useEffect(() => {
@@ -2363,6 +2375,11 @@ export default function StudioPage() {
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span className="text-sm">{language === 'KO' ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}</span>
           <button onClick={() => setFallbackNotice(null)} className="text-blue-400 hover:text-blue-200 shrink-0">&times;</button>
+        </div>
+      )}
+      {exportDoneFormat && (
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-green-900/95 border border-green-600 text-green-100 px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-bottom-4 duration-300">
+          <span className="text-sm">✅ {exportDoneFormat} {language === 'KO' ? '내보내기 완료' : 'export complete'}</span>
         </div>
       )}
 

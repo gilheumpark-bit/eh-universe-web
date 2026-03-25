@@ -84,20 +84,34 @@ async function generateJson<T>(
   fallback: T,
 ): Promise<T> {
   const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema,
-    },
-  });
+  const MAX_RETRIES = 2;
 
-  try {
-    return JSON.parse(response.text || JSON.stringify(fallback)) as T;
-  } catch {
-    return fallback;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+        },
+      });
+
+      try {
+        return JSON.parse(response.text || JSON.stringify(fallback)) as T;
+      } catch {
+        return fallback;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      const isRetryable = /500|502|503|504|INTERNAL|resource.*exhausted|deadline|overloaded/i.test(msg);
+      if (!isRetryable || attempt === MAX_RETRIES) throw err;
+      // 지수 백오프: 1초, 2초
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
   }
+
+  return fallback;
 }
 
 // ============================================================

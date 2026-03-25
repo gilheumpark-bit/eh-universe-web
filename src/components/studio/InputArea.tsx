@@ -25,6 +25,8 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // 한국어 IME 조합 중에는 Enter 무시 (isComposing 또는 keyCode 229)
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       if (!disabled && !e.repeat) {
         handleSubmit();

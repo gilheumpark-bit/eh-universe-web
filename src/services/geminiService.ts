@@ -34,26 +34,35 @@ function getStructuredModel(): string {
 }
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
-  const response = await fetch('/api/gemini-structured', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...body,
-      provider: 'gemini', // future: make this configurable per capability
-      model: getStructuredModel(),
-      apiKey: getApiKey('gemini') || undefined,
-    }),
+  const MAX_RETRIES = 2;
+  const payload = JSON.stringify({
+    ...body,
+    provider: 'gemini',
+    model: getStructuredModel(),
+    apiKey: getApiKey('gemini') || undefined,
   });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch('/api/gemini-structured', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    });
+
+    const data = await response.json().catch(() => null);
+    if (response.ok) return data as T;
+
     const errorMessage = data && typeof data.error === 'string'
       ? data.error
       : `Structured Gemini error ${response.status}`;
-    throw new Error(errorMessage);
+
+    // 500/502/503/504 → retry, 그 외(401/400 등) → 즉시 에러
+    const isRetryable = response.status >= 500 && response.status < 600;
+    if (!isRetryable || attempt === MAX_RETRIES) throw new Error(errorMessage);
+    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
   }
 
-  return data as T;
+  throw new Error('Structured Gemini: max retries exceeded');
 }
 
 // ============================================================

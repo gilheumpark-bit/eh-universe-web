@@ -611,7 +611,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onKeyDown={e => { if (e.nativeEvent.isComposing || e.keyCode === 229) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={!hasAiKey
                   ? tl('tabAssistant.apiKeyRequired')
                   : tl('tabAssistant.askQuestion')}

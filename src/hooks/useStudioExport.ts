@@ -59,6 +59,13 @@ export function useStudioExport({
 }: UseStudioExportParams) {
   const t = createT(language);
 
+  // Toast helper — 내보내기 완료 알림
+  const showExportToast = useCallback((format: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('noa:export-done', { detail: { format } }));
+    }
+  }, []);
+
   // Export session as TXT
   const exportTXT = useCallback(() => {
     if (!currentSession) return;
@@ -74,7 +81,8 @@ export function useStudioExport({
     a.download = `${currentSession.title || 'noa-story'}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [currentSession]);
+    showExportToast('TXT');
+  }, [currentSession, showExportToast]);
 
   // Export session as JSON backup
   const exportJSON = useCallback(() => {
@@ -86,7 +94,8 @@ export function useStudioExport({
     a.download = `${currentSession.title || 'noa-session'}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [currentSession]);
+    showExportToast('JSON');
+  }, [currentSession, showExportToast]);
 
   // Export ALL projects (full backup) as JSON
   const exportAllJSON = useCallback(() => {
@@ -184,14 +193,16 @@ export function useStudioExport({
     if (!currentSession) return;
     exportEPUB(currentSession);
     trackExport('epub');
-  }, [currentSession]);
+    showExportToast('EPUB');
+  }, [currentSession, showExportToast]);
 
   // Export as DOCX
   const handleExportDOCX = useCallback(() => {
     if (!currentSession) return;
     exportDOCX(currentSession);
     trackExport('docx');
-  }, [currentSession]);
+    showExportToast('DOCX');
+  }, [currentSession, showExportToast]);
 
   return {
     exportTXT,
