@@ -27,7 +27,9 @@ export interface GenerateResult {
   report: EngineReport;
 }
 
-function getStructuredGeminiModel(): string {
+function getStructuredModel(): string {
+  // Structured generation currently uses Gemini only.
+  // When more providers support structured output, this can check capabilities.
   return getPreferredModel('gemini');
 }
 
@@ -37,7 +39,8 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...body,
-      model: getStructuredGeminiModel(),
+      provider: 'gemini', // future: make this configurable per capability
+      model: getStructuredModel(),
       apiKey: getApiKey('gemini') || undefined,
     }),
   });

@@ -152,6 +152,13 @@ interface PlanningViewProps {
   startLabel?: string;
 }
 
+// ============================================================
+// PART 2 — MAIN COMPONENT
+// Sections: Basic Config → Sub-genres → Episodes/Platform → Intensity →
+//           Publish Platform → World Tier (1/2/3) → Tension Curve →
+//           Guardrails → PRISM → PRISM-MODE → Actions
+// ============================================================
+
 const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel }) => {
   const tl = createT(language);
   const t = TRANSLATIONS[language].planning;

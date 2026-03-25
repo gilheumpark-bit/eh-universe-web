@@ -101,7 +101,7 @@ const GENRE_PRESETS: Record<string, { rules: string; pacing: string; tensionBase
   },
 };
 
-function buildGenrePreset(genre: string, isKO: boolean): string {
+export function buildGenrePreset(genre: string, isKO: boolean): string {
   const preset = GENRE_PRESETS[genre] || GENRE_PRESETS.FANTASY;
   const language: AppLanguage = isKO ? 'KO' : 'EN';
   const t = createT(language);
@@ -133,7 +133,7 @@ const SLIDER_LABELS: Record<string, { name: string; nameEN: string; levels: stri
   s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['편한 말맛', '담백한 어휘', '균형', '정교한 어휘', '전문적 질감'], levelsEN: ['Plainspoken', 'Clean', 'Balanced', 'Refined', 'Specialized'] },
 };
 
-function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string {
+export function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string {
   if (!profile || profile.selectedDNA.length === 0) return '';
 
   const language: AppLanguage = isKO ? 'KO' : 'EN';
@@ -184,7 +184,7 @@ function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string
 // Publish Platform Prompt Builder
 // ============================================================
 
-function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined, isKO: boolean): string {
+export function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined, isKO: boolean): string {
   if (!publishPlatform || publishPlatform === PublishPlatform.NONE) return '';
   const preset = PLATFORM_PRESETS[publishPlatform];
   if (!preset) return '';
@@ -328,7 +328,7 @@ function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined,
 // NOA-PRISM v1.1 — Writing Quality Control System
 // ============================================================
 
-function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
+export function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
   const scale = config.prismScale ?? 120;
   const preserve = config.prismPreserve ?? 100;
 
@@ -416,7 +416,7 @@ function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
 // PRISM-MODE — Content Rating Prompt Builder
 // ============================================================
 
-function buildPrismModeBlock(config: StoryConfig, isKO: boolean): string {
+export function buildPrismModeBlock(config: StoryConfig, isKO: boolean): string {
   const mode = config.prismMode ?? 'OFF';
   if (mode === 'OFF') return '';
 
@@ -488,7 +488,7 @@ function buildPrismModeBlock(config: StoryConfig, isKO: boolean): string {
 // Language Pack — Writing Rules Prompt Builder
 // ============================================================
 
-function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): string {
+export function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): string {
   const pack = getLanguagePack(language);
   const parts: string[] = [];
   const header = isKO ? '언어팩 규칙' : 'Language Pack Rules';
@@ -519,7 +519,7 @@ function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): string {
 // Lv1: 미적용, Lv2: 10%, Lv3: 20%, Lv4: 30%, Lv5: 40%
 // ============================================================
 
-function buildEHRules(ruleLevel: number, isKO: boolean): string {
+export function buildEHRules(ruleLevel: number, isKO: boolean): string {
   if (ruleLevel <= 1) return '';
 
   const language: AppLanguage = isKO ? 'KO' : 'EN';
