@@ -1,344 +1,430 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
 import { useLang, L2A } from "@/lib/LangContext";
 
-const stats = {
-  ko: [
-    { value: "3", unit: "분", label: "첫 장면 체감" },
-    { value: "1", unit: "줄", label: "아이디어 입력" },
-    { value: "3", unit: "단계", label: "초안부터 원고까지" },
-    { value: "200+", unit: "", label: "레퍼런스 아카이브" },
-  ],
-  en: [
-    { value: "3", unit: " min", label: "First scene" },
-    { value: "1", unit: " line", label: "Idea input" },
-    { value: "3", unit: " steps", label: "Draft to manuscript" },
-    { value: "200+", unit: "", label: "Reference archive" },
-  ],
-};
 
-const onboardingSteps = {
-  ko: [
-    { href: "/studio", icon: "01", title: "한 줄로 시작", desc: "장르와 한 줄 아이디어만 넣고 바로 첫 장면을 받습니다." },
-    { href: "/studio", icon: "02", title: "글쓰기에서 이어 쓰기", desc: "AI 초안과 직접 수정을 같은 화면에서 오가며 다듬습니다." },
-    { href: "/studio", icon: "03", title: "원고로 키우기", desc: "에피소드 저장, 버전 비교, 원고 관리 흐름으로 자연스럽게 이어집니다." },
-  ],
-  en: [
-    { href: "/studio", icon: "01", title: "Start with one line", desc: "Enter a genre and one idea, then receive your first scene right away." },
-    { href: "/studio", icon: "02", title: "Keep writing in Studio", desc: "Move between AI draft and manual editing in the same workspace." },
-    { href: "/studio", icon: "03", title: "Grow it into a manuscript", desc: "Episode saves, version compare, and manuscript management stay in one flow." },
-  ],
-};
+function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => void; onWithApi: () => void; onWithout: () => void }) {
+  const { lang } = useLang();
+  const isKO = lang === "ko";
 
-const exploreLinks = {
-  ko: [
-    { href: "/reference", icon: "RF", title: "EH Open Reference", desc: "프로젝트 전체를 빠르게 훑는 4페이지 요약." },
-    { href: "/rulebook", icon: "RB", title: "EH Rulebook v1.0", desc: "서사 엔진의 구조와 원리를 문서로 확인." },
-    { href: "/archive", icon: "AR", title: "설정집 아카이브", desc: "세계관 문서와 레퍼런스를 한곳에서 탐색." },
-    { href: "https://github.com/gilheumpark-bit/eh-universe-web", icon: "GH", title: "GitHub", desc: "오픈소스 진행 상황과 코드베이스 확인." },
-  ],
-  en: [
-    { href: "/reference", icon: "RF", title: "EH Open Reference", desc: "A fast 4-page summary of the whole project." },
-    { href: "/rulebook", icon: "RB", title: "EH Rulebook v1.0", desc: "Read the narrative engine as a proper document." },
-    { href: "/archive", icon: "AR", title: "Lore Archive", desc: "Browse worldbuilding notes and references in one place." },
-    { href: "https://github.com/gilheumpark-bit/eh-universe-web", icon: "GH", title: "GitHub", desc: "See the open-source code and current progress." },
-  ],
-};
+  return (
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
+      <StarField />
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center gap-12">
+        <div className="text-center">
+          <button
+            onClick={onBack}
+            className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-text-tertiary hover:text-text-secondary transition-colors mb-6 flex items-center gap-2 mx-auto"
+          >
+            ← {isKO ? "돌아가기" : "Back"}
+          </button>
+          <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
+            NOA STUDIO
+          </p>
+          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold text-text-primary">
+            {isKO ? "어떻게 사용할까요?" : "How will you write?"}
+          </h1>
+          <p className="mt-4 text-sm text-text-tertiary">
+            {isKO ? "AI 연동 여부에 따라 최적화된 화면으로 진입합니다." : "Enter the workspace optimized for your setup."}
+          </p>
+        </div>
+
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* WITH API */}
+          <button
+            onClick={onWithApi}
+            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-purple/30 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
+            </div>
+            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
+              {isKO ? "AI 집필 모드" : "AI Mode"}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+              {isKO ? "API 사용" : "With API"}
+            </h2>
+            <p className="text-sm leading-7 text-text-secondary">
+              {isKO
+                ? "API 키를 연결해 NOA 엔진을 도구로서 활용해보세요."
+                : "Connect your API key and use the NOA engine as a tool."}
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
+              {isKO ? "API 키 설정하기" : "Set up API key"} →
+            </div>
+          </button>
+
+          {/* WITHOUT API */}
+          <button
+            onClick={onWithout}
+            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-amber/30 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
+            </div>
+            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
+              {isKO ? "수동 집필 모드" : "Manual Mode"}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+              {isKO ? "미사용" : "Without API"}
+            </h2>
+            <p className="text-sm leading-7 text-text-secondary">
+              {isKO
+                ? "API 없이 세계관 설계, 캐릭터, 수동 집필 기능을 바로 사용합니다."
+                : "Use worldbuilding, character tools, and manual writing without an API key."}
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
+              {isKO ? "바로 시작하기" : "Start now"} →
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStudio: () => void }) {
+  const { lang } = useLang();
+  const isKO = lang === "ko";
+
+  return (
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
+      <StarField />
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center gap-12">
+        <div className="text-center">
+          <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
+            EH UNIVERSE
+          </p>
+          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold text-text-primary">
+            {isKO ? "어디로 향할까요?" : "Where are you headed?"}
+          </h1>
+        </div>
+
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* UNIVERSE */}
+          <button
+            onClick={onUniverse}
+            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-amber/30 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
+            </div>
+            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
+              {isKO ? "세계관 탐색" : "Explore"}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+              UNIVERSE
+            </h2>
+            <p className="text-sm leading-7 text-text-secondary">
+              {isKO
+                ? "아카이브, 네트워크, 세계관 문서를 탐색합니다."
+                : "Browse the archive, network, and worldbuilding docs."}
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
+              {isKO ? "탐색 시작" : "Enter"} →
+            </div>
+          </button>
+
+          {/* STUDIO */}
+          <button
+            onClick={onStudio}
+            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-purple/30 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
+            </div>
+            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
+              {isKO ? "집필 시작" : "Write"}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+              STUDIO
+            </h2>
+            <p className="text-sm leading-7 text-text-secondary">
+              {isKO
+                ? "세계관 설계 작업실로 진입합니다."
+                : "Enter the world design and writing workspace."}
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
+              {isKO ? "스튜디오 열기" : "Open Studio"} →
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const { lang } = useLang();
+  const router = useRouter();
+  const [showSplash, setShowSplash] = useState(true);
+  const [showStudioChoice, setShowStudioChoice] = useState(false);
 
+  const isKO = lang === "ko";
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
     lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
 
-  const t = {
-    kicker: T({ ko: "첫 장면까지 빠르게 도달하는 스토리 스튜디오", en: "Story Studio for Fast First Scenes", jp: "最初のシーンに素早く到達するストーリースタジオ", cn: "快速到达第一个场景的故事工作室" }),
-    hero: T({ ko: "한 줄 아이디어를 세계관 씨앗, 핵심 인물, 바로 이어 쓸 수 있는 첫 장면으로 연결합니다.", en: "Turn one line of inspiration into a world seed, key cast, and a writable first scene.", jp: "一行のアイデアを世界観の種、キャスト、すぐに書ける最初のシーンへ。", cn: "将一行灵感转化为世界观种子、核心角色和可续写的第一个场景。" }),
-    meta: T({ ko: "쾌속 시작 · 글쓰기 흐름 · 설정 일관성 보조 · 원고 성장", en: "Quick Start · Writing Flow · Consistency Support · Manuscript Growth", jp: "クイックスタート · 執筆フロー · 設定一貫性サポート · 原稿成長", cn: "快速开始 · 写作流程 · 设定一致性支持 · 原稿成长" }),
-    briefTitle: T({ ko: "시작 흐름", en: "Activation Brief", jp: "開始フロー", cn: "启动流程" }),
-    briefBody: T({ ko: "EH Universe는 작가가 빠르게 첫 장면에 도달한 뒤, 자기 문장을 다듬는 흐름에 계속 집중하도록 설계되어 있습니다.", en: "EH Universe is designed to get writers to a usable first scene quickly, then stay out of the way while they shape the draft." }),
-    pipelineTitle: T({ ko: "진행 순서", en: "Flow", jp: "フロー", cn: "流程" }),
-    pipeline: T({ ko: ["쾌속 시작", "초안 다듬기", "원고로 키우기"], en: ["Quick Start", "Shape the draft", "Grow the manuscript"], jp: ["クイックスタート", "下書きを整える", "原稿に育てる"], cn: ["快速开始", "打磨草稿", "发展为稿件"] }),
-    statusTitle: T({ ko: "스튜디오 약속", en: "Studio Promise", jp: "スタジオの約束", cn: "工作室承诺" }),
-    statusBody: T({ ko: "빠르게 시작하고, 맥락을 잃지 않고, 쓰는 동안 이야기의 형태를 지켜줍니다.", en: "Start fast, keep context, and protect the shape of your story while you write." }),
-    whatIs: T({ ko: "왜 EH인가", en: "WHY EH", jp: "なぜEHか", cn: "为什么选择EH" }),
-    ehDef: T({ ko: "복잡한 제어판이 아니라, 작가를 돕는 코파일럿.", en: "A co-pilot for writers, not a noisy control panel." }),
-    ehDesc: T({ ko: "EH Universe는 세계관 설계, 초안 작성, 원고 관리 흐름을 한 화면에 이어서 작가가 이야기 자체에 집중하게 돕습니다.", en: "EH Universe keeps world design, drafting, and manuscript growth on one editorial surface so writers can focus on the story itself." }),
-    ehHigh: T({ ko: "작가 우선: 빠른 시작, 바로 수정 가능한 초안, 필요할 때만 나타나는 보조.", en: "Writer-first: quick starts, editable drafts, and support that appears when needed." }),
-    ehLow: T({ ko: "시스템 우선: 설정이 너무 많고 설명이 길어서 첫 문장이 늦게 나오는 상태.", en: "System-first: too many settings, too much explanation, and the first sentence arrives too late." }),
-    principleTitle: T({ ko: "설계 원칙", en: "Design Principle", jp: "設計原則", cn: "设计原则" }),
-    principleBody: T({ ko: "좋은 글쓰기 도구는 다음 행동이 바로 보여야 합니다. 시작하고, 다듬고, 저장하고, 이어 쓰는 흐름입니다.", en: "The best writing tool makes the next action obvious: start, shape, save, continue." }),
-    numbersTitle: T({ ko: "글쓰기 루프에 맞춘 구조", en: "Built for the writing loop", jp: "執筆ループに合わせた構造", cn: "为写作循环而构建" }),
-    numbersHeadline: T({ ko: "설정 마찰은 줄이고, 장면 안에 머무는 시간은 늘립니다.", en: "Less setup friction, more time in the scene." }),
-    numbersBody: T({ ko: "아카이브는 깊게 가져가되, 첫 화면은 행동에 집중합니다. 들어오고, 쓰고, 비교하고, 이어 가는 구조입니다.", en: "The archive is deep, but the surface stays focused on action: get in, write, compare, and continue." }),
-    activationTitle: T({ ko: "3번의 행동으로 시작", en: "Start in 3 moves", jp: "3ステップで開始", cn: "三步开始" }),
-    activationHeadline: T({ ko: "아이디어에서 원고 관리까지, 스튜디오 안에서 끊기지 않게.", en: "Get from concept to manuscript without leaving the studio." }),
-    activationBody: T({ ko: "쾌속 시작으로 먼저 감탄을 만들고, 이후 스튜디오가 그 흐름을 이어줍니다.", en: "Quick Start creates momentum first. The rest of the studio helps you keep it." }),
-    exploreTitle: T({ ko: "세계관 탐색", en: "Explore the universe", jp: "世界観を探索", cn: "探索世界观" }),
-    exploreHeadline: T({ ko: "레퍼런스, 아카이브, 룰북도 한 번에 닿는 거리에 둡니다.", en: "Reference, archive, and rulebook still stay one click away." }),
-    ctaTitle: T({ ko: "다음 첫 장면을 써볼 시간", en: "Ready for your next first scene?", jp: "次の最初のシーンを書く時間", cn: "准备写下一个第一场景" }),
-    ctaBody: T({ ko: "스튜디오를 열고 한 줄을 넣으면, 세계관의 맥락을 지키면서 초안을 계속 앞으로 밀 수 있습니다.", en: "Open the studio, drop in one line, and keep the draft moving while the world stays consistent." }),
-    openStudio: T({ ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" }),
-    seeFlow: T({ ko: "3단계 흐름 보기", en: "See the 3-step flow", jp: "3ステップを見る", cn: "查看三步流程" }),
-    browseReference: T({ ko: "레퍼런스 보기", en: "Read Reference", jp: "リファレンスを読む", cn: "阅读参考" }),
-    footer: T({ ko: "빠르게 시작하고, 이야기 안에 머문다.", en: "Start fast. Stay in the story.", jp: "素早く始め、物語の中に留まる。", cn: "快速开始，留在故事中。" }),
+  const universeStats = [
+    { value: "109", label: T({ ko: "아카이브 문서", en: "Archive docs", jp: "アーカイブ文書", cn: "存档文档" }) },
+    { value: "6", label: T({ ko: "세계관 카테고리", en: "Lore categories", jp: "世界観カテゴリ", cn: "世界观类别" }) },
+    { value: "200K+", label: T({ ko: "관할 행성계", en: "Planetary systems", jp: "管轄惑星系", cn: "管辖星系" }) },
+    { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", jp: "オープンライセンス", cn: "开放许可" }) },
+  ];
+
+  const universeHubs = [
+    {
+      href: "/archive",
+      badge: "AR",
+      color: "amber" as const,
+      title: T({ ko: "설정집 아카이브", en: "Lore Archive", jp: "設定集アーカイブ", cn: "设定集存档" }),
+      desc: T({ ko: "CORE · TIMELINE · FACTIONS · MILITARY · GEOGRAPHY · TECHNOLOGY — 6개 카테고리, 109개 문서.", en: "CORE · TIMELINE · FACTIONS · MILITARY · GEOGRAPHY · TECHNOLOGY — 6 categories, 109 docs." }),
+      meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", jp: "世界観文書を探索", cn: "浏览世界观文档" }),
+    },
+    {
+      href: "/network",
+      badge: "NW",
+      color: "blue" as const,
+      title: T({ ko: "작가 네트워크", en: "Writer Network", jp: "作家ネットワーク", cn: "作家网络" }),
+      desc: T({ ko: "세계관을 기반으로 연결된 작가들의 행성 시스템. 로그와 게시글을 탐색합니다.", en: "A planet-based network of writers connected through shared worldbuilding. Browse logs and posts." }),
+      meta: T({ ko: "네트워크 진입", en: "Enter network", jp: "ネットワークへ", cn: "进入网络" }),
+    },
+    {
+      href: "/codex",
+      badge: "CX",
+      color: "green" as const,
+      title: T({ ko: "코덱스", en: "Codex", jp: "コデックス", cn: "法典" }),
+      desc: T({ ko: "세계관의 핵심 법칙, 용어, 구조를 빠르게 참조합니다.", en: "Quick reference for the core laws, terms, and structures of the universe." }),
+      meta: T({ ko: "코덱스 열기", en: "Open codex", jp: "コデックスを開く", cn: "打开法典" }),
+    },
+    {
+      href: "/rulebook",
+      badge: "RB",
+      color: "purple" as const,
+      title: T({ ko: "룰북 v1.0", en: "Rulebook v1.0", jp: "ルールブック v1.0", cn: "规则书 v1.0" }),
+      desc: T({ ko: "서사 엔진의 구조와 원리. 이 세계관이 어떻게 작동하는지 문서로 확인합니다.", en: "The structure and principles of the narrative engine. How this universe works, documented." }),
+      meta: T({ ko: "룰북 읽기", en: "Read rulebook", jp: "ルールブックを読む", cn: "阅读规则书" }),
+    },
+    {
+      href: "/reference",
+      badge: "RF",
+      color: "amber" as const,
+      title: T({ ko: "EH Open Reference", en: "EH Open Reference", jp: "EH オープンリファレンス", cn: "EH 开放参考" }),
+      desc: T({ ko: "프로젝트 전체를 빠르게 훑는 4페이지 요약본.", en: "A fast 4-page summary of the whole EH Universe project." }),
+      meta: T({ ko: "레퍼런스 보기", en: "Read reference", jp: "リファレンスを読む", cn: "阅读参考" }),
+    },
+    {
+      href: "https://github.com/gilheumpark-bit/eh-universe-web",
+      badge: "GH",
+      color: "blue" as const,
+      title: "GitHub",
+      desc: T({ ko: "오픈소스 진행 상황과 코드베이스를 확인합니다.", en: "See the open-source code and current progress." }),
+      meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
+    },
+  ];
+
+  const categories = [
+    { id: "CORE", label: T({ ko: "핵심 법칙", en: "Core Laws", jp: "核心法則", cn: "核心法则" }), count: 5 },
+    { id: "TIMELINE", label: T({ ko: "타임라인", en: "Timeline", jp: "タイムライン", cn: "时间线" }), count: 6 },
+    { id: "FACTIONS", label: T({ ko: "세력", en: "Factions", jp: "勢力", cn: "派系" }), count: 9 },
+    { id: "MILITARY", label: T({ ko: "군사", en: "Military", jp: "軍事", cn: "军事" }), count: 7 },
+    { id: "GEOGRAPHY", label: T({ ko: "지리", en: "Geography", jp: "地理", cn: "地理" }), count: 9 },
+    { id: "TECHNOLOGY", label: T({ ko: "기술", en: "Technology", jp: "技術", cn: "技术" }), count: 5 },
+  ];
+
+  const colorMap = {
+    amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", glow: "bg-accent-amber/8" },
+    blue: { border: "border-accent-blue/20", bg: "bg-accent-blue/10", text: "text-accent-blue", glow: "bg-accent-blue/8" },
+    green: { border: "border-accent-green/20", bg: "bg-accent-green/10", text: "text-accent-green", glow: "bg-accent-green/8" },
+    purple: { border: "border-accent-purple/20", bg: "bg-accent-purple/10", text: "text-accent-purple", glow: "bg-accent-purple/8" },
   };
+
+  if (showStudioChoice) {
+    return (
+      <StudioChoiceScreen
+        onBack={() => setShowStudioChoice(false)}
+        onWithApi={() => {
+          if (typeof window !== 'undefined') localStorage.setItem('noa_studio_mode', 'api');
+          router.push("/studio?setup=1");
+        }}
+        onWithout={() => {
+          if (typeof window !== 'undefined') localStorage.setItem('noa_studio_mode', 'manual');
+          router.push("/studio");
+        }}
+      />
+    );
+  }
+
+  if (showSplash) {
+    return (
+      <SplashScreen
+        onUniverse={() => setShowSplash(false)}
+        onStudio={() => setShowStudioChoice(true)}
+      />
+    );
+  }
 
   return (
     <>
       <Header />
+
+      {/* HERO */}
       <section className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
         <StarField />
         <div className="site-shell relative z-10">
           <div className="premium-panel premium-grid-accent px-6 py-8 md:px-10 md:py-12 xl:px-14">
-            <div className="grid gap-12 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-end">
-              <div className="relative z-10">
-                <p className="site-kicker">{t.kicker}</p>
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="relative z-10 max-w-2xl">
+                <p className="site-kicker">
+                  {T({ ko: "세계관 탐색 포털", en: "Worldbuilding Portal", jp: "世界観探索ポータル", cn: "世界观探索门户" })}
+                </p>
                 <h1 className="site-title mt-5 text-5xl font-bold leading-[0.94] sm:text-6xl md:text-7xl xl:text-[5.4rem]">
                   EH UNIVERSE
                 </h1>
-                <p className="mt-6 max-w-2xl font-[family-name:var(--font-document)] text-lg leading-[1.95] text-text-secondary md:text-[1.24rem]">
-                  {t.hero}
+                <p className="mt-6 font-[family-name:var(--font-document)] text-lg leading-[1.95] text-text-secondary md:text-[1.24rem]">
+                  {T({ ko: "은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색합니다.", en: "Explore the history, factions, technology, and geography of 200,000 planetary systems under the Galactic Central Council.", jp: "銀河中央評議会が管轄する20万惑星系の歴史、勢力、技術、地理をアーカイブで探索します。", cn: "探索银河中央议会管辖的20万星系的历史、派系、技术和地理档案。" })}
                 </p>
-                <p className="mt-5 max-w-2xl font-[family-name:var(--font-mono)] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
-                  {t.meta}
+                <p className="mt-5 font-[family-name:var(--font-mono)] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
+                  {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", jp: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", cn: "存档 · 网络 · 法典 · 规则书 · 参考" })}
                 </p>
-
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/studio" aria-label={t.openStudio} className="premium-button">
-                    {t.openStudio}
+                  <Link href="/archive" className="premium-button">
+                    {T({ ko: "아카이브 탐색", en: "Browse Archive", jp: "アーカイブを探索", cn: "浏览存档" })}
                   </Link>
-                  <Link href="#activation" aria-label={t.seeFlow} className="premium-button secondary">
-                    {t.seeFlow}
+                  <Link href="/network" className="premium-button secondary">
+                    {T({ ko: "네트워크 진입", en: "Enter Network", jp: "ネットワークへ", cn: "进入网络" })}
                   </Link>
-                  <a
-                    href="https://github.com/gilheumpark-bit/eh-universe-web"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="GitHub repository (opens in new tab)"
-                    className="premium-button secondary"
-                  >
-                    GitHub
-                  </a>
-                </div>
-
-                <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {L2A(stats, lang).map((item) => (
-                    <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-5">
-                      <div className="font-[family-name:var(--font-display)] text-[1.9rem] font-bold leading-none text-text-primary">
-                        {item.value}
-                        <span className="ml-1 text-sm font-normal text-text-tertiary">{item.unit}</span>
-                      </div>
-                      <p className="mt-3 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-secondary">
-                        {item.label}
-                      </p>
-                    </div>
-                  ))}
                 </div>
               </div>
 
-              <div className="relative min-h-[420px] overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(14,18,27,0.6),rgba(7,9,13,0.12))]">
-                <div className="absolute inset-x-6 top-6 z-10 flex items-start justify-between gap-4">
-                  <div className="premium-panel-soft rounded-[20px] px-4 py-3">
-                    <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-accent-amber">
-                      {t.briefTitle}
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-text-secondary">{t.briefBody}</p>
-                  </div>
-                  <div className="hidden w-[220px] rounded-[22px] border border-accent-blue/20 bg-accent-blue/10 p-4 backdrop-blur md:block">
-                    <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-accent-blue">
-                      {t.pipelineTitle}
-                    </p>
-                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
-                      {t.pipeline.map((item, index) => (
-                        <p key={item}>
-                          {String(index + 1).padStart(2, "0")}. {item}
-                        </p>
-                      ))}
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4 lg:w-80 lg:shrink-0">
+                {universeStats.map((item) => (
+                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-5">
+                    <div className="font-[family-name:var(--font-display)] text-[1.9rem] font-bold leading-none text-text-primary">
+                      {item.value}
                     </div>
+                    <p className="mt-3 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-secondary">
+                      {item.label}
+                    </p>
                   </div>
-                </div>
-
-                <div className="pointer-events-none absolute inset-0">
-                  <div className="absolute -left-10 top-8 h-52 w-52 rounded-full bg-accent-blue/12 blur-3xl" />
-                  <div className="absolute bottom-6 right-0 h-56 w-56 rounded-full bg-accent-amber/12 blur-3xl" />
-                </div>
-
-                <div className="absolute bottom-0 right-0 z-[1] select-none opacity-80">
-                  <Image
-                    src="/images/hero-mina.jpg"
-                    alt={lang === "ko" ? "EH Universe 스튜디오를 상징하는 캐릭터 이미지" : "Writer using the EH Universe studio"}
-                    width={560}
-                    height={760}
-                    priority={true}
-                    className="h-[360px] w-auto object-contain object-bottom md:h-[500px]"
-                    style={{
-                      maskImage: "linear-gradient(to top, transparent 2%, black 24%), linear-gradient(to left, transparent 0%, black 58%)",
-                      WebkitMaskImage: "linear-gradient(to top, transparent 2%, black 24%), linear-gradient(to left, transparent 0%, black 58%)",
-                      maskComposite: "intersect",
-                      WebkitMaskComposite: "source-in",
-                    }}
-                  />
-                </div>
-
-                <div className="absolute bottom-6 left-6 z-10 max-w-[280px] rounded-[22px] border border-accent-amber/20 bg-[rgba(16,18,23,0.78)] p-4 backdrop-blur">
-                  <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-accent-amber">
-                    {t.statusTitle}
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-text-secondary">{t.statusBody}</p>
-                  <p className="mt-3 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary">
-                    Quick Start · Writing · Manuscript
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="section-divider py-24">
-        <div className="site-shell">
-          <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
-            <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
-              <div className="doc-header mb-7 rounded-[18px]">
-                <span className="badge badge-blue mr-2">INFO</span>
-                {t.whatIs}
-              </div>
-              <p className="site-kicker">{t.whatIs}</p>
-              <h2 className="site-title mt-4 text-3xl font-semibold sm:text-4xl">{t.ehDef}</h2>
-              <p className="site-lede mt-6 text-base sm:text-lg">{t.ehDesc}</p>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="premium-link-card p-6 md:p-7">
-                <span className="badge badge-amber">WRITER-FIRST</span>
-                <p className="mt-4 text-base leading-8 text-text-secondary sm:text-lg">{t.ehHigh}</p>
-              </div>
-              <div className="premium-link-card p-6 md:p-7">
-                <span className="badge badge-blue">FRICTION CHECK</span>
-                <p className="mt-4 text-base leading-8 text-text-secondary sm:text-lg">{t.ehLow}</p>
-              </div>
-              <div className="premium-panel-soft rounded-[24px] px-6 py-6">
-                <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-tertiary">
-                  {t.principleTitle}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-text-secondary sm:text-base">{t.principleBody}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-divider py-24">
+      {/* CATEGORY GRID */}
+      <section className="section-divider py-20">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="site-kicker">{t.numbersTitle}</p>
-                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.numbersHeadline}</h2>
+                <p className="site-kicker">
+                  {T({ ko: "아카이브 카테고리", en: "Archive Categories", jp: "アーカイブカテゴリ", cn: "存档类别" })}
+                </p>
+                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
+                  {T({ ko: "6개 분류, 109개 문서", en: "6 categories, 109 documents", jp: "6カテゴリ、109文書", cn: "6个分类，109个文档" })}
+                </h2>
               </div>
-              <p className="max-w-xl text-sm leading-7 text-text-tertiary md:text-right">{t.numbersBody}</p>
+              <Link href="/archive" className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
+                {T({ ko: "전체 보기 →", en: "View all →", jp: "全て見る →", cn: "查看全部 →" })}
+              </Link>
             </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {L2A(stats, lang).map((item) => (
-                <div key={item.label} className="premium-link-card p-5 sm:p-6">
-                  <div className="whitespace-nowrap font-[family-name:var(--font-display)] text-[2rem] font-bold text-text-primary">
-                    {item.value}
-                    <span className="ml-1 text-base font-normal text-text-tertiary">{item.unit}</span>
-                  </div>
-                  <p className="mt-3 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-secondary">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="activation" className="section-divider py-24">
-        <div className="site-shell grid gap-8 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
-            <p className="site-kicker">{t.activationTitle}</p>
-            <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.activationHeadline}</h2>
-            <p className="mt-4 text-sm leading-7 text-text-tertiary sm:text-base">{t.activationBody}</p>
-            <div className="mt-8 grid gap-4">
-              {L2A(onboardingSteps, lang).map((item) => (
-                <Link key={item.title} href={item.href} className="premium-link-card group flex items-start gap-4 p-5 md:p-6">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/10 font-[family-name:var(--font-mono)] text-sm tracking-[0.16em] text-accent-amber">
-                    {item.icon}
-                  </span>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categories.map((cat) => (
+                <Link key={cat.id} href={`/archive?category=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
                   <div>
-                    <h3 className="font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:text-accent-amber">
-                      {item.title}
+                    <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
+                    <h3 className="mt-1 font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:text-accent-amber">
+                      {cat.label}
                     </h3>
-                    <p className="mt-2 text-sm leading-7 text-text-secondary">{item.desc}</p>
                   </div>
+                  <span className="font-[family-name:var(--font-display)] text-2xl font-bold text-text-tertiary group-hover:text-accent-amber transition-colors">
+                    {cat.count}
+                  </span>
                 </Link>
               ))}
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
-            <p className="site-kicker">{t.exploreTitle}</p>
-            <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.exploreHeadline}</h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {L2A(exploreLinks, lang).map((item) => {
-                const isExternal = item.href.startsWith("http");
-                const inner = (
-                  <>
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] font-[family-name:var(--font-mono)] text-sm tracking-[0.14em] text-text-secondary">
-                      {item.icon}
-                    </span>
-                    <div>
-                      <h3 className="font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary">
-                        {item.title}
-                      </h3>
-                      <p className="mt-2 text-sm leading-7 text-text-secondary">{item.desc}</p>
-                    </div>
-                  </>
-                );
+      {/* HUB GRID */}
+      <section className="section-divider py-20">
+        <div className="site-shell">
+          <div className="mb-8 px-1">
+            <p className="site-kicker">
+              {T({ ko: "탐색 허브", en: "Explore Hubs", jp: "探索ハブ", cn: "探索中心" })}
+            </p>
+            <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
+              {T({ ko: "세계관의 모든 입구", en: "Every entry point into the universe", jp: "世界観へのすべての入口", cn: "进入世界观的所有入口" })}
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {universeHubs.map((hub) => {
+              const c = colorMap[hub.color];
+              const isExternal = hub.href.startsWith("http");
+              const inner = (
+                <>
+                  <div className="pointer-events-none absolute inset-0">
+                    <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
+                  </div>
+                  <span className={`flex h-11 w-11 items-center justify-center rounded-full border ${c.border} ${c.bg} font-[family-name:var(--font-mono)] text-xs tracking-[0.14em] ${c.text}`}>
+                    {hub.badge}
+                  </span>
+                  <div className="mt-4">
+                    <h3 className={`font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:${c.text}`}>
+                      {hub.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-text-secondary">{hub.desc}</p>
+                  </div>
+                  <div className={`mt-4 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors group-hover:${c.text}`}>
+                    {hub.meta} →
+                  </div>
+                </>
+              );
 
-                return isExternal ? (
-                  <a
-                    key={item.title}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="premium-link-card group flex items-start gap-4 p-5"
-                    aria-label={`${item.title} (opens in new tab)`}
-                  >
-                    {inner}
-                  </a>
-                ) : (
-                  <Link key={item.title} href={item.href} className="premium-link-card group flex items-start gap-4 p-5">
-                    {inner}
-                  </Link>
-                );
-              })}
-            </div>
+              return isExternal ? (
+                <a key={hub.title} href={hub.href} target="_blank" rel="noopener noreferrer"
+                  className="group relative overflow-hidden premium-link-card flex flex-col p-6"
+                  aria-label={`${hub.title} (opens in new tab)`}>
+                  {inner}
+                </a>
+              ) : (
+                <Link key={hub.title} href={hub.href} className="group relative overflow-hidden premium-link-card flex flex-col p-6">
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
+      {/* CTA */}
       <section className="section-divider pb-24 pt-8">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="site-kicker">{t.ctaTitle}</p>
-                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">{t.ctaBody}</h2>
+                <p className="site-kicker">
+                  {T({ ko: "집필을 시작하려면", en: "Ready to write?", jp: "執筆を始めるには", cn: "准备开始写作？" })}
+                </p>
+                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
+                  {T({ ko: "이 세계관을 바탕으로 이야기를 쓸 수 있습니다.", en: "You can write stories set in this universe.", jp: "この世界観をもとに物語を書けます。", cn: "您可以在这个世界观中创作故事。" })}
+                </h2>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link href="/studio" className="premium-button">
-                  {t.openStudio}
+                  {T({ ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" })}
                 </Link>
                 <Link href="/reference" className="premium-button secondary">
-                  {t.browseReference}
+                  {T({ ko: "레퍼런스 보기", en: "Read Reference", jp: "リファレンスを読む", cn: "阅读参考" })}
                 </Link>
               </div>
             </div>
@@ -350,7 +436,9 @@ export default function Home() {
         <div className="site-shell">
           <div className="premium-panel-soft flex flex-col items-center justify-between gap-4 rounded-[24px] px-6 py-5 sm:flex-row">
             <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.16em] text-text-tertiary">EH UNIVERSE · CC-BY-NC-4.0</p>
-            <p className="font-[family-name:var(--font-document)] text-xs italic text-text-tertiary">{t.footer}</p>
+            <p className="font-[family-name:var(--font-document)] text-xs italic text-text-tertiary">
+              {T({ ko: "세계관을 탐색하고, 이야기를 만든다.", en: "Explore the universe. Build the story.", jp: "世界観を探索し、物語を作る。", cn: "探索世界观，创造故事。" })}
+            </p>
           </div>
         </div>
       </footer>
