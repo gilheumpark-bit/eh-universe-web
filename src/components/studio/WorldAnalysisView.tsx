@@ -215,7 +215,12 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setError(t('worldAnalysis.analysisFailed'));
+        const msg = err instanceof Error ? err.message : '';
+        const isKeyIssue = /401|403|api.?key|not.?configured|unauthorized/i.test(msg);
+        setError(isKeyIssue
+          ? t('worldAnalysis.analysisFailed')
+          : `${t('worldAnalysis.analysisFailed')} (${msg || 'Unknown error'})`);
+        console.error('[WorldAnalysis] Stream failed:', msg);
       }
     } finally {
       setAnalyzing(false);
