@@ -8,6 +8,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { AlertTriangle, X, Copy, Check } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
+import { classifyAsStudioError, getErrorMessage } from '@/lib/errors';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -147,12 +148,11 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismi
   const t = createT(language);
   // StudioError 체계 우선, 폴백으로 기존 classifyError
   let info: ErrorInfo;
-  try {
-    const { classifyAsStudioError, getErrorMessage } = require('@/lib/errors');
-    const studioErr = classifyAsStudioError(error);
-    const msg = getErrorMessage(studioErr.code, language);
+  const studioErr = classifyAsStudioError(error);
+  const msg = getErrorMessage(studioErr.code, language);
+  if (msg.title !== studioErr.code) {
     info = { title: msg.title, message: msg.message, action: msg.action, retryable: studioErr.retryable };
-  } catch {
+  } else {
     info = classifyError(error, language);
   }
 

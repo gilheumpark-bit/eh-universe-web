@@ -8,6 +8,7 @@ import {
 } from '@/lib/studio-types';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
+import { classifyAsStudioError, StudioErrorCode } from '@/lib/errors';
 import { canGenerate, incrementGenerationCount } from '@/lib/tier';
 import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
@@ -183,13 +184,12 @@ export function useStudioAI({
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
-        // Show API key modal when server also has no key (401)
-        const errMsg = error instanceof Error ? error.message : '';
-        if (/401/i.test(errMsg)) {
+        const classified = classifyAsStudioError(error);
+        if (classified.code === StudioErrorCode.KEY_MISSING || classified.code === StudioErrorCode.KEY_INVALID) {
           setShowApiKeyModal(true);
         } else {
-          console.error(error);
-          setUxError({ error, retry: () => handleSend(text, undefined, undefined) });
+          console.error(classified);
+          setUxError({ error: classified, retry: classified.retryable ? () => handleSend(text, undefined, undefined) : undefined });
         }
       }
     } finally {
@@ -279,8 +279,9 @@ export function useStudioAI({
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
-        console.error(error);
-        setUxError({ error, retry: () => handleRegenerate(assistantMsgId) });
+        const classified = classifyAsStudioError(error);
+        console.error(classified);
+        setUxError({ error: classified, retry: classified.retryable ? () => handleRegenerate(assistantMsgId) : undefined });
       }
     } finally {
       setIsGenerating(false);
