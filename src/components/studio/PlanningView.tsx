@@ -209,12 +209,21 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{te.totalEpisodes}</label>
             <input
               type="number"
-              min="5"
-              max="300"
-              className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
+              className={`w-full bg-black border rounded-xl p-4 text-sm font-bold outline-none transition-all ${
+                totalEpisodes < 1 || totalEpisodes > 500
+                  ? 'border-red-500/60 focus:border-red-500 text-red-400'
+                  : 'border-zinc-800 focus:border-blue-600'
+              }`}
               value={totalEpisodes}
               onChange={e => setConfig({ ...config, totalEpisodes: parseInt(e.target.value) || 25 })}
             />
+            {(totalEpisodes < 1 || totalEpisodes > 500) && (
+              <p className="text-[10px] font-bold text-red-400 px-1">
+                {totalEpisodes < 1
+                  ? (language === 'KO' ? '에피소드 수는 1 이상이어야 합니다.' : 'Episode count must be at least 1.')
+                  : (language === 'KO' ? '500화 초과는 시스템 부하를 유발할 수 있습니다.' : 'Over 500 episodes may cause performance issues.')}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{te.platform}</label>
