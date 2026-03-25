@@ -203,9 +203,26 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         setting: result.setting || prev.setting,
         primaryEmotion: result.primaryEmotion || prev.primaryEmotion,
         synopsis: result.synopsis || prev.synopsis,
+        // Tier 1
         corePremise: result.corePremise || prev.corePremise,
         powerStructure: result.powerStructure || prev.powerStructure,
         currentConflict: result.currentConflict || prev.currentConflict,
+        // Tier 2
+        worldHistory: result.worldHistory || prev.worldHistory,
+        socialSystem: result.socialSystem || prev.socialSystem,
+        economy: result.economy || prev.economy,
+        magicTechSystem: result.magicTechSystem || prev.magicTechSystem,
+        factionRelations: result.factionRelations || prev.factionRelations,
+        survivalEnvironment: result.survivalEnvironment || prev.survivalEnvironment,
+        // Tier 3
+        culture: result.culture || prev.culture,
+        religion: result.religion || prev.religion,
+        education: result.education || prev.education,
+        lawOrder: result.lawOrder || prev.lawOrder,
+        taboo: result.taboo || prev.taboo,
+        dailyLife: result.dailyLife || prev.dailyLife,
+        travelComm: result.travelComm || prev.travelComm,
+        truthVsBeliefs: result.truthVsBeliefs || prev.truthVsBeliefs,
         totalEpisodes: 25,
         guardrails: { min: 4000, max: 6000 },
       }));
