@@ -561,8 +561,8 @@ export default function StudioPage() {
   }, [showQuickStartLock]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
-    // 수동 편집 중 탭 전환 시 미저장 경고
-    if (activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
+    // 수동 편집 중 탭 전환 시 미저장 경고 (같은 탭 재클릭 제외)
+    if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
       showConfirm({
         title: t('confirm.unsavedEdits'),
         message: t('confirm.unsavedEditsMsg'),
@@ -570,6 +570,7 @@ export default function StudioPage() {
         confirmLabel: t('confirm.switch'),
         cancelLabel: t('confirm.keepEditing'),
         onConfirm: () => {
+          setEditDraft('');
           setActiveTab(tab);
           if (window.innerWidth < 768) setIsSidebarOpen(false);
         }
