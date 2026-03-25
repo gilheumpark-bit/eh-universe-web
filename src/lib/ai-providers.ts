@@ -281,24 +281,43 @@ export function setActiveModel(model: string): void {
 // ============================================================
 
 // 로컬 LLM(ollama/lmstudio): Vercel 서버는 로컬 IP 접근 불가 → 브라우저 직접 스트림
+// localhost 개발 환경: Chrome PNA 우회를 위해 /api/local-proxy 경유
 async function streamLocalDirect(
   baseUrl: string, model: string, opts: StreamOptions
 ): Promise<string> {
-  const url = `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
   const msgs = [
     ...(opts.systemInstruction ? [{ role: 'system', content: opts.systemInstruction }] : []),
     ...opts.messages,
   ];
-  const res = await fetch(url, {
+  const payload = {
+    model,
+    messages: msgs,
+    temperature: opts.temperature ?? 0.9,
+    max_tokens: opts.maxTokens,
+    stream: true,
+  };
+
+  // localhost 환경: Next.js 서버 프록시 경유 (Chrome PNA 우회)
+  // Vercel/외부 환경: 브라우저 직접 fetch (사설 IP 직접 접근)
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  let fetchUrl: string;
+  let fetchBody: string;
+
+  if (isLocalhost) {
+    fetchUrl = '/api/local-proxy';
+    fetchBody = JSON.stringify({ baseUrl, ...payload });
+  } else {
+    fetchUrl = `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+    fetchBody = JSON.stringify(payload);
+  }
+
+  const res = await fetch(fetchUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      messages: msgs,
-      temperature: opts.temperature ?? 0.9,
-      max_tokens: opts.maxTokens,
-      stream: true,
-    }),
+    body: fetchBody,
     signal: opts.signal,
   });
   if (!res.ok) {
@@ -520,11 +539,20 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
   try {
     const def = PROVIDERS[providerId];
 
-    // 로컬 프로바이더: 브라우저에서 직접 /v1/models 엔드포인트로 확인
-    // (Vercel 서버는 로컬 네트워크 IP에 접근 불가)
+    // 로컬 프로바이더: /v1/models 엔드포인트로 연결 확인
+    // - localhost 환경: Chrome PNA 우회를 위해 /api/local-proxy?baseUrl=... 경유
+    // - 외부 환경: 브라우저 직접 fetch
     if (def.capabilities.isLocal) {
       const baseUrl = key.replace(/\/$/, '');
-      const res = await fetch(`${baseUrl}/v1/models`, {
+      const isLocalhost =
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+      const testUrl = isLocalhost
+        ? `/api/local-proxy?baseUrl=${encodeURIComponent(baseUrl)}`
+        : `${baseUrl}/v1/models`;
+
+      const res = await fetch(testUrl, {
         method: 'GET',
         signal: AbortSignal.timeout(5000),
       });
