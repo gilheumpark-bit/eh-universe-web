@@ -112,10 +112,10 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
   const [showActions, setShowActions] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Sync external content changes
+  // Sync external content changes (only when onChange is NOT used — avoids feedback loop)
   useEffect(() => {
-    if (!isStreaming) setEditableContent(content);
-  }, [content, isStreaming]);
+    if (!onChange && !isStreaming) setEditableContent(content);
+  }, [content, isStreaming, onChange]);
 
   const handleSelect = useCallback(() => {
     const ta = textareaRef.current;

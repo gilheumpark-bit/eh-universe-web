@@ -450,9 +450,13 @@ export default function StudioPage() {
     if (editDraft) {
       localStorage.setItem(key, editDraft);
     } else {
-      localStorage.removeItem(key);
+      // Debounce deletion: avoid wiping during hydration/session-switch race
+      const timer = setTimeout(() => {
+        if (!editDraft) localStorage.removeItem(key);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [editDraft, currentSessionId]); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+  }, [editDraft, currentSessionId]);
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
