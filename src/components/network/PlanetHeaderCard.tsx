@@ -121,6 +121,29 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
             </div>
           ) : null}
         </div>
+
+        {/* Share buttons */}
+        <div className="flex gap-2 mt-4 pt-4 border-t border-white/8">
+          <button
+            onClick={() => {
+              const url = typeof window !== 'undefined' ? window.location.href : '';
+              const text = `${planet.name} — EH Universe`;
+              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+            }}
+            className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
+          >
+            𝕏 {lang === 'ko' ? '공유' : 'Share'}
+          </button>
+          <button
+            onClick={() => {
+              const url = typeof window !== 'undefined' ? window.location.href : '';
+              navigator.clipboard.writeText(url);
+            }}
+            className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
+          >
+            🔗 {lang === 'ko' ? '링크 복사' : 'Copy Link'}
+          </button>
+        </div>
       </div>
     </section>
   );
