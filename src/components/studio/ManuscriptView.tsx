@@ -450,16 +450,17 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                       <div className="flex justify-end gap-2 mb-3">
                         <button
                           onClick={() => setAnalysisEp(analysisEp === m.episode ? null : m.episode)}
-                          className={`p-1.5 rounded transition-colors ${
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors ${
                             analysisEp === m.episode
-                              ? "bg-accent-amber/20 text-accent-amber"
+                              ? "bg-accent-amber/25 text-accent-amber border border-accent-amber/40"
                               : getAnalysis(m.episode)
-                                ? "bg-accent-amber/10 text-accent-amber/60 hover:text-accent-amber"
-                                : "bg-bg-tertiary/50 text-text-tertiary hover:text-accent-amber"
+                                ? "bg-accent-amber/15 text-accent-amber/80 border border-accent-amber/25 hover:bg-accent-amber/25 hover:text-accent-amber"
+                                : "bg-bg-tertiary/70 text-text-secondary border border-border hover:bg-accent-amber/15 hover:text-accent-amber hover:border-accent-amber/30"
                           }`}
-                          title={t('manuscript.title')}
+                          title={t('chapterAnalysis.title')}
                         >
-                          <Sparkles className="w-3 h-3" />
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {t('chapterAnalysis.title')}
                         </button>
                         {onEditInStudio && (
                           <button onClick={() => onEditInStudio(m.content)} className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-green transition-colors" title={t('manuscript.title')}>

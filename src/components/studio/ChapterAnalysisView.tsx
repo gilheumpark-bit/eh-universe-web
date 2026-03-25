@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
+import { getApiKey } from "@/lib/ai-providers";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -243,10 +244,11 @@ export default function ChapterAnalysisView({
     setAnalyzing(true);
 
     try {
+      const clientApiKey = getApiKey("gemini");
       const res = await fetch("/api/analyze-chapter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: manuscriptContent, language }),
+        body: JSON.stringify({ content: manuscriptContent, language, apiKey: clientApiKey || undefined }),
       });
 
       if (!res.ok) throw new Error("Analysis failed");
