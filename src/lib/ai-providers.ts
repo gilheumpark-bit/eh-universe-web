@@ -225,7 +225,11 @@ function deobfuscateKey(stored: string): string {
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
   const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
-  const provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "gemini";
+  let provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "gemini";
+  // 로컬 provider가 활성인데 URL(키)이 비어 있으면 gemini로 폴백
+  if ((provider === 'ollama' || provider === 'lmstudio') && !localStorage.getItem(PROVIDERS[provider].storageKey)) {
+    provider = 'gemini';
+  }
   localStorage.setItem("noa_active_provider", provider);
   localStorage.removeItem(LEGACY_PROVIDER_KEY);
   return provider;

@@ -30,7 +30,13 @@ interface ApiKeyModalProps {
 const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, onClose, onSave }) => {
   const t = createT(language);
 
-  const [activeId, setActiveId] = useState<ProviderId>(getActiveProvider());
+  const [activeId, setActiveId] = useState<ProviderId>(() => {
+    const current = getActiveProvider();
+    // 로컬 provider(ollama/lmstudio)가 활성인데 키(URL)가 없으면 gemini로 초기화
+    const isLocal = current === 'ollama' || current === 'lmstudio';
+    if (isLocal && !getApiKey(current)) return 'gemini';
+    return current;
+  });
   const [keys, setKeys] = useState<Record<ProviderId, string>>(() => {
     const loaded = {} as Record<ProviderId, string>;
     for (const p of PROVIDER_LIST) loaded[p.id] = getApiKey(p.id);
