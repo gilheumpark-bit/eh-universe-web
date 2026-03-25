@@ -150,6 +150,7 @@ interface PlanningViewProps {
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
   onStart: () => void;
   startLabel?: string;
+  hasAiAccess?: boolean;
 }
 
 // ============================================================
@@ -159,7 +160,7 @@ interface PlanningViewProps {
 //           Guardrails → PRISM → PRISM-MODE → Actions
 // ============================================================
 
-const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel }) => {
+const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel, hasAiAccess }) => {
   const tl = createT(language);
   const t = TRANSLATIONS[language].planning;
   const te = TRANSLATIONS[language].engine;
@@ -180,7 +181,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const router = useRouter();
 
   const handleAIGenerate = async () => {
-    if (!getApiKey(getActiveProvider())) {
+    // hosted provider가 있으면 로컬 키 없이도 사용 가능
+    if (!getApiKey(getActiveProvider()) && !hasAiAccess) {
       alert(tl('planningExtra.apiKeyAlert'));
       return;
     }
@@ -418,16 +420,16 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </label>
           <div className="flex gap-3">
             {([
-              { value: 'iron' as const, label: language === 'KO' ? '강 (Iron)' : 'Iron', color: 'red', desc: language === 'KO' ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
-              { value: 'standard' as const, label: language === 'KO' ? '중 (Standard)' : 'Standard', color: 'blue', desc: language === 'KO' ? '주요 경고만 표시' : 'Major warnings only' },
-              { value: 'soft' as const, label: language === 'KO' ? '약 (Soft)' : 'Soft', color: 'zinc', desc: language === 'KO' ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
-            ]).map(({ value, label, color, desc }) => (
+              { value: 'iron' as const, label: language === 'KO' ? '강 (Iron)' : 'Iron', activeClass: 'bg-red-600/10 border-red-500/30 text-red-400', desc: language === 'KO' ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
+              { value: 'standard' as const, label: language === 'KO' ? '중 (Standard)' : 'Standard', activeClass: 'bg-blue-600/10 border-blue-500/30 text-blue-400', desc: language === 'KO' ? '주요 경고만 표시' : 'Major warnings only' },
+              { value: 'soft' as const, label: language === 'KO' ? '약 (Soft)' : 'Soft', activeClass: 'bg-zinc-600/10 border-zinc-500/30 text-zinc-400', desc: language === 'KO' ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
+            ]).map(({ value, label, activeClass, desc }) => (
               <button
                 key={value}
                 onClick={() => setConfig({ ...config, narrativeIntensity: value })}
                 className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                   (config.narrativeIntensity || 'standard') === value
-                    ? `bg-${color}-600/10 border-${color}-500/30 text-${color}-400`
+                    ? activeClass
                     : 'bg-black border-zinc-800 text-zinc-600 hover:text-zinc-400'
                 }`}
                 title={desc}

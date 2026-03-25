@@ -66,7 +66,7 @@ export function useStudioAI({
 
   const handleSend = useCallback(async (customPrompt?: string, inputValue?: string, clearInput?: () => void) => {
     const text = customPrompt || inputValue || '';
-    if (!text.trim() || isGenerating || !currentSessionId) return;
+    if (!text.trim() || isGenerating || !currentSessionId || !currentSession) return;
 
     // Tier gate: check generation limit
     if (!canGenerate()) {
@@ -101,8 +101,9 @@ export function useStudioAI({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const capturedSessionId = currentSessionId;
-    if (!currentSession) return;
-    const capturedConfig = currentSession.config;
+    // currentSession null 체크는 69행에서 이미 수행 — 여기서 early return하면
+    // isGenerating이 true로 고정되므로 제거
+    const capturedConfig = currentSession!.config;
 
     let fullContent = '';
     try {

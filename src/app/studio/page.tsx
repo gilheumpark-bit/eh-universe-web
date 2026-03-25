@@ -558,6 +558,9 @@ export default function StudioPage() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [language, doCreateNewSession, updateCurrentSession]);
 
+  // Quick Start 후 첫 생성을 위한 pending prompt
+  const [pendingQuickStartPrompt, setPendingQuickStartPrompt] = useState<string | null>(null);
+
   const handleQuickStart = async (genre: Genre, userPrompt: string) => {
     if (showQuickStartLock) {
       setShowApiKeyModal(true);
@@ -566,7 +569,7 @@ export default function StudioPage() {
     setIsQuickGenerating(true);
     try {
       const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
-      const config: StoryConfig = {
+      const qsConfig: StoryConfig = {
         ...INITIAL_CONFIG,
         title: world.title,
         genre: genre,
@@ -574,18 +577,15 @@ export default function StudioPage() {
         povCharacter: world.povCharacter,
         setting: world.setting,
         primaryEmotion: world.primaryEmotion,
-        // Tier 1
         corePremise: world.corePremise,
         powerStructure: world.powerStructure,
         currentConflict: world.currentConflict,
-        // Tier 2
         worldHistory: world.worldHistory || '',
         socialSystem: world.socialSystem || '',
         economy: world.economy || '',
         magicTechSystem: world.magicTechSystem || '',
         factionRelations: world.factionRelations || '',
         survivalEnvironment: world.survivalEnvironment || '',
-        // Tier 3
         culture: world.culture || '',
         religion: world.religion || '',
         education: world.education || '',
@@ -596,28 +596,28 @@ export default function StudioPage() {
         truthVsBeliefs: world.truthVsBeliefs || '',
       };
 
-      const characters = await generateCharacters(config, language);
-      config.characters = characters;
+      const characters = await generateCharacters(qsConfig, language);
+      qsConfig.characters = characters;
 
-      // Create session and set it up
+      // 프로젝트가 없으면 먼저 생성
+      if (!currentProjectId) createNewProject();
+
+      // createNewSession으로 세션 생성 통일 (직접 setSessions 금지)
       const newSessionId = `s-${Date.now()}`;
       const newSession: ChatSession = {
         id: newSessionId,
-        title: config.title,
-        config: config,
+        title: qsConfig.title,
+        config: qsConfig,
         messages: [],
         lastUpdate: Date.now(),
       };
-
       setSessions(prev => [newSession, ...prev]);
       setCurrentSessionId(newSessionId);
       setActiveTab('writing');
       setShowQuickStartModal(false);
 
-      // Trigger first generation
-      setTimeout(() => {
-        doHandleSend(`${userPrompt}\n\n첫 장면을 써줘.`, '', () => {});
-      }, 500);
+      // stale closure 방지: pending state에 저장 → useEffect에서 실행
+      setPendingQuickStartPrompt(`${userPrompt}\n\n첫 장면을 써줘.`);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '';
@@ -631,6 +631,15 @@ export default function StudioPage() {
       setIsQuickGenerating(false);
     }
   };
+
+  // P1-2: Quick Start 첫 생성 — 세션 확정 후 실행 (stale closure 제거)
+  useEffect(() => {
+    if (pendingQuickStartPrompt && currentSessionId && currentSession) {
+      doHandleSend(pendingQuickStartPrompt, '', () => {});
+      setPendingQuickStartPrompt(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingQuickStartPrompt, currentSessionId, currentSession]);
 
 
   const openQuickStart = useCallback(() => {
@@ -1525,6 +1534,7 @@ export default function StudioPage() {
                         language={language}
                         isOpen={rightPanelOpen}
                         onToggle={() => setRightPanelOpen(p => !p)}
+                        sessionId={currentSessionId || undefined}
                       />
                       </div>
                     )}
@@ -2276,6 +2286,14 @@ export default function StudioPage() {
                       items: currentSession?.config.items,
                       skills: currentSession?.config.skills,
                       magicSystems: currentSession?.config.magicSystems,
+                      // 최근 추가 필드 — 슬롯 누락 방지
+                      prismScale: currentSession?.config.prismScale,
+                      prismPreserve: currentSession?.config.prismPreserve,
+                      prismMode: currentSession?.config.prismMode,
+                      prismCustom: currentSession?.config.prismCustom,
+                      subGenres: currentSession?.config.subGenres,
+                      useSubGenrePrompt: currentSession?.config.useSubGenrePrompt,
+                      narrativeIntensity: currentSession?.config.narrativeIntensity,
                     },
                   };
                   updateCurrentSession({
@@ -2318,6 +2336,14 @@ export default function StudioPage() {
                       items: currentSession?.config.items,
                       skills: currentSession?.config.skills,
                       magicSystems: currentSession?.config.magicSystems,
+                      // 최근 추가 필드 — 슬롯 누락 방지
+                      prismScale: currentSession?.config.prismScale,
+                      prismPreserve: currentSession?.config.prismPreserve,
+                      prismMode: currentSession?.config.prismMode,
+                      prismCustom: currentSession?.config.prismCustom,
+                      subGenres: currentSession?.config.subGenres,
+                      useSubGenrePrompt: currentSession?.config.useSubGenrePrompt,
+                      narrativeIntensity: currentSession?.config.narrativeIntensity,
                     },
                   };
                   updateCurrentSession({

@@ -10,6 +10,7 @@ import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
 import TabAssistant from './TabAssistant';
+import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import WorldAnalysisView from './WorldAnalysisView';
 
 // WorldSimulator uses dynamic import to avoid circular deps
@@ -96,7 +97,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       {/* Sub-tab content */}
       {subTab === 'design' && (
         <>
-          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} />
+          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean)} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
             <TabAssistant tab="world" language={language} config={config} hostedProviders={hostedProviders} />
           </div>

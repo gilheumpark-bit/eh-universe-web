@@ -16,6 +16,7 @@ interface EditReferencePanelProps {
   language: AppLanguage;
   isOpen: boolean;
   onToggle: () => void;
+  sessionId?: string;
 }
 
 // IDENTITY_SEAL: PART-0 | role=types | inputs=none | outputs=EditReferencePanelProps
@@ -25,21 +26,22 @@ interface EditReferencePanelProps {
 // ============================================================
 
 const EditReferencePanel: React.FC<EditReferencePanelProps> = ({
-  config, manuscripts, language, isOpen, onToggle,
+  config, manuscripts, language, isOpen, onToggle, sessionId,
 }) => {
   const isKO = language === 'KO';
   const [activeRefTab, setActiveRefTab] = useState<RefTab>('config');
+  const memoKey = sessionId ? `noa_edit_memo_${sessionId}` : 'noa_edit_memo';
   const [memo, setMemo] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('noa_edit_memo') || '';
+    if (typeof window !== 'undefined') return localStorage.getItem(memoKey) || '';
     return '';
   });
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
 
-  // Memo persistence
+  // Memo persistence — 세션별 키로 분리
   useEffect(() => {
-    if (memo) localStorage.setItem('noa_edit_memo', memo);
-    else localStorage.removeItem('noa_edit_memo');
-  }, [memo]);
+    if (memo) localStorage.setItem(memoKey, memo);
+    else localStorage.removeItem(memoKey);
+  }, [memo, memoKey]);
 
   const tabs: { key: RefTab; label: string; icon: React.ElementType }[] = [
     { key: 'manuscript', label: isKO ? '원고' : 'MS', icon: FileText },
@@ -88,7 +90,7 @@ const EditReferencePanel: React.FC<EditReferencePanelProps> = ({
                 </p>
               ) : (
                 <div className="space-y-1">
-                  {manuscripts
+                  {[...manuscripts]
                     .sort((a, b) => b.episode - a.episode)
                     .map(ms => (
                       <div key={ms.episode} className="border border-border rounded-lg overflow-hidden">
