@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
+import { getStorageUsageBytes } from '@/lib/project-migration';
 
 type ConfirmOpts = {
   title: string;
@@ -545,6 +546,24 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 <Settings className="h-[1.125rem] w-[1.125rem]" />
               </button>
             </div>
+
+            {/* Storage usage bar */}
+            {(() => {
+              const mb = getStorageUsageBytes() / 1024 / 1024;
+              const pct = Math.min(100, (mb / 5) * 100);
+              const color = mb > 4 ? 'bg-red-500' : mb > 2 ? 'bg-yellow-500' : 'bg-green-500';
+              return (
+                <div className="mt-2">
+                  <div className="flex justify-between text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary mb-1">
+                    <span>{mb.toFixed(1)} MB / 5 MB</span>
+                    {mb > 3 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
+                  </div>
+                  <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+                    <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* IDENTITY_SEAL: PART-3 | role=footer (exports, auth, sync, language, settings) | inputs=user,syncStatus,language | outputs=UI actions */}

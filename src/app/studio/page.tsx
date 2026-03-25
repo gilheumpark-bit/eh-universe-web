@@ -1458,6 +1458,7 @@ export default function StudioPage() {
       {storageFull && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span className="text-sm">{t('ui.storageFull')}</span>
+          <button onClick={exportAllJSON} className="px-2 py-1 bg-yellow-600 text-white rounded text-xs font-bold shrink-0 hover:bg-yellow-500">{language === 'KO' ? '백업' : 'Backup'}</button>
           <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
         </div>
       )}
