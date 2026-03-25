@@ -29,11 +29,13 @@ const SUB_GENRE_SUGGESTIONS: Partial<Record<Genre, string[]>> = {
   [Genre.HORROR]: ['코즈믹호러', '심리호러', '생존호러', '괴담', '좀비'],
 };
 
-function SubGenreTagInput({ genre, subGenres, onChange, language }: {
+function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onTogglePrompt }: {
   genre: Genre;
   subGenres: string[];
   onChange: (tags: string[]) => void;
   language: AppLanguage;
+  usePrompt: boolean;
+  onTogglePrompt: (val: boolean) => void;
 }) {
   const [input, setInput] = React.useState('');
   const suggestions = SUB_GENRE_SUGGESTIONS[genre] || [];
@@ -49,9 +51,22 @@ function SubGenreTagInput({ genre, subGenres, onChange, language }: {
 
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
-        {isKO ? '서브 장르 태그' : 'Sub-genre Tags'}
-      </label>
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+          {isKO ? '서브 장르 태그' : 'Sub-genre Tags'}
+        </label>
+        {subGenres.length > 0 && (
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={usePrompt}
+              onChange={e => onTogglePrompt(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-blue-600"
+            />
+            <span className="text-[10px] text-zinc-500">{isKO ? 'AI 프롬프트에 반영' : 'Apply to AI prompt'}</span>
+          </label>
+        )}
+      </div>
       {/* Current tags */}
       <div className="flex flex-wrap gap-1.5">
         {subGenres.map(tag => (
@@ -292,6 +307,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           subGenres={config.subGenres || []}
           onChange={(tags) => setConfig({ ...config, subGenres: tags })}
           language={language}
+          usePrompt={config.useSubGenrePrompt ?? false}
+          onTogglePrompt={(val) => setConfig({ ...config, useSubGenrePrompt: val })}
         />
 
         {/* New: Total Episodes + Platform */}

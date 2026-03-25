@@ -773,8 +773,8 @@ export function buildSystemInstruction(
     }
   }
 
-  // Sub-genre tags injection
-  const subGenreBlock = (config.subGenres && config.subGenres.length > 0)
+  // Sub-genre tags injection (only when user opts in)
+  const subGenreBlock = (config.useSubGenrePrompt && config.subGenres && config.subGenres.length > 0)
     ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${isKO ? '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.' : 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).'}`
     : '';
 

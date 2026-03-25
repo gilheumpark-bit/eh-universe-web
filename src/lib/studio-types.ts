@@ -248,6 +248,7 @@ export interface StoryConfig {
   };
   // Sub-genre tags (서브 장르 태그)
   subGenres?: string[];
+  useSubGenrePrompt?: boolean; // 서브장르 태그를 AI 프롬프트에 삽입할지 여부
   // EH Engine — Narrative Intensity (서사 강도)
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
 }
