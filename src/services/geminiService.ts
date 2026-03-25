@@ -6,7 +6,7 @@
 //   (2) Gemini structured generation via server route
 // ============================================================
 
-import { StoryConfig, Character, AppLanguage, Message } from "../lib/studio-types";
+import { StoryConfig, Character, Item, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
@@ -204,6 +204,43 @@ export const generateWorldDesign = async (
     language,
     hints,
   });
+};
+
+// ============================================================
+// PART 4B: ITEM GENERATION
+// ============================================================
+
+export const generateItems = async (
+  config: StoryConfig,
+  language: AppLanguage = 'KO',
+  count: number = 3,
+): Promise<Item[]> => {
+  const existingNames = (config.items || []).map(i => i.name).filter(Boolean);
+  const results = await fetchStructuredGemini<unknown[]>({
+    task: 'items',
+    config: {
+      genre: config.genre,
+      synopsis: config.synopsis,
+    },
+    language,
+    count,
+    existingNames,
+  });
+
+  if (!Array.isArray(results)) return [];
+
+  return results
+    .filter((item): item is Omit<Item, 'id'> => {
+      return Boolean(
+        item
+        && typeof item === 'object'
+        && typeof (item as Item).name === 'string'
+      );
+    })
+    .map((item) => ({
+      ...item,
+      id: `item-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    }));
 };
 
 // ============================================================

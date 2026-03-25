@@ -11,6 +11,7 @@ import {
   Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
   BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
 } from 'lucide-react';
+import { generateItems } from '@/services/geminiService';
 
 // ============================================================
 // PART 1 — CONSTANTS & LABELS
@@ -400,7 +401,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   };
 
   // ============================================================
-  // PART 3D — AI GENERATION STUB
+  // PART 3D — AI GENERATION (real API call)
   // ============================================================
   const handleAIGenerate = async () => {
     if (!config.synopsis) {
@@ -409,30 +410,11 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
     }
     setIsGenerating(true);
     try {
-      // AI generation would call the LLM with config context
-      // For now, generate sample items based on genre
-      const genre = config.genre;
-      const sampleItems: Item[] = [
-        {
-          id: `item-ai-${Date.now()}`,
-          name: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemName1Hunter') : t('itemStudio.aiItemName1Other'),
-          category: 'weapon',
-          rarity: 'rare',
-          description: t('itemStudio.aiItemDesc'),
-          effect: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemEffect1Hunter') : t('itemStudio.aiItemEffect1Other'),
-          obtainedFrom: t('itemStudio.aiItemObtained1'),
-        },
-        {
-          id: `item-ai-${Date.now() + 1}`,
-          name: genre === 'SYSTEM_HUNTER' ? t('itemStudio.aiItemName2Hunter') : t('itemStudio.aiItemName2Other'),
-          category: 'consumable',
-          rarity: 'common',
-          description: t('itemStudio.aiItemDesc2'),
-          effect: t('itemStudio.aiItemEffect2'),
-          obtainedFrom: t('itemStudio.aiItemObtained2'),
-        },
-      ];
-      setItems(prev => [...prev, ...sampleItems]);
+      const generated = await generateItems(config, language, 3);
+      setItems(prev => [...prev, ...generated]);
+    } catch {
+      const msg = ({ KO: '아이템 생성 실패. API 키를 확인하세요.', EN: 'Item generation failed. Check API key.', JP: 'アイテム生成に失敗しました。', CN: '物品生成失败。' })[language];
+      alert(msg);
     } finally {
       setIsGenerating(false);
     }

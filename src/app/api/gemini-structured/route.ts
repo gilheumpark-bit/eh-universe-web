@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 const MAX_REQUEST_BYTES = 262_144; // 256KB
 const SAFE_MODEL_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
-type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection';
+type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items';
 type StoryHints = {
   title?: string;
   povCharacter?: string;
@@ -152,6 +152,56 @@ async function handleCharacters(
           values: { type: Type.STRING },
         },
         required: ['name', 'role', 'traits', 'appearance', 'dna'],
+      },
+    },
+    [],
+  );
+}
+
+async function handleItems(
+  apiKey: string,
+  model: string,
+  config: Pick<StoryConfig, 'genre' | 'synopsis'>,
+  language: AppLanguage,
+  count: number = 3,
+  existingNames: string[] = [],
+) {
+  const existingBlock = existingNames.length > 0
+    ? `\nExisting items (DO NOT duplicate): ${existingNames.join(', ')}`
+    : '';
+
+  return generateJson<unknown[]>(
+    apiKey,
+    model,
+    `Based on the genre [${config.genre}] and world setting [${config.synopsis}],
+generate exactly ${count} unique narrative items, weapons, artifacts, or consumables in ${LANGUAGE_NAMES[language]}.
+Each item must be deeply connected to the world's lore and serve a narrative purpose.
+
+For each item provide ALL of the following:
+- name: Unique item name
+- category: One of "weapon", "armor", "artifact", "consumable", "material", "key_item"
+- rarity: One of "common", "uncommon", "rare", "epic", "legendary", "mythic"
+- description: What the item is and its history (2-3 sentences)
+- effect: What it does mechanically or narratively
+- obtainedFrom: Where/how it can be found
+- worldConnection: How this item ties into the world's lore (1-2 sentences)
+- flavorText: An in-world quote or inscription about this item
+${existingBlock}`,
+    {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          name: { type: Type.STRING },
+          category: { type: Type.STRING },
+          rarity: { type: Type.STRING },
+          description: { type: Type.STRING },
+          effect: { type: Type.STRING },
+          obtainedFrom: { type: Type.STRING },
+          worldConnection: { type: Type.STRING },
+          flavorText: { type: Type.STRING },
+        },
+        required: ['name', 'category', 'rarity', 'description', 'effect'],
       },
     },
     [],
@@ -383,7 +433,7 @@ export async function POST(req: NextRequest) {
     }
 
     const task = body.task;
-    if (task !== 'characters' && task !== 'worldDesign' && task !== 'worldSim' && task !== 'sceneDirection') {
+    if (task !== 'characters' && task !== 'worldDesign' && task !== 'worldSim' && task !== 'sceneDirection' && task !== 'items') {
       return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
     }
 
@@ -438,6 +488,15 @@ export async function POST(req: NextRequest) {
             body.tierContext as SceneTierContext | undefined,
           ),
         );
+      }
+      case 'items': {
+        const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+        if (!config?.genre || !config?.synopsis) {
+          return NextResponse.json({ error: 'Invalid item config' }, { status: 400 });
+        }
+        const count = typeof body.count === 'number' ? Math.min(Math.max(body.count, 1), 10) : 3;
+        const existingNames = Array.isArray(body.existingNames) ? body.existingNames as string[] : [];
+        return NextResponse.json(await handleItems(apiKey, model, config, language, count, existingNames));
       }
       default:
         return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
