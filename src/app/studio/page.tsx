@@ -811,7 +811,7 @@ export default function StudioPage() {
         )}
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
             {/* API 키 미설정 안내 배너 */}
             {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !localStorage.getItem('noa_api_banner_dismissed') && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">

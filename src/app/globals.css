@@ -1047,3 +1047,45 @@ main[class~="pt-14"] {
 @media (min-width: 769px) and (max-width: 1024px) {
   .ss-ref-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   MOBILE / TABLET OPTIMIZATION
+   ============================================================ */
+
+/* 터치 타겟 최소 44px 보장 */
+@media (max-width: 768px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  /* 사이드바 내 작은 버튼 예외 */
+  [data-compact] button,
+  nav button {
+    min-height: unset;
+    min-width: unset;
+  }
+}
+
+/* 태블릿 (768px ~ 1024px) 레이아웃 보정 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .premium-panel {
+    padding: 24px;
+    border-radius: 20px;
+  }
+  .site-title {
+    font-size: 28px;
+  }
+}
+
+/* iOS safe area 대응 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* 모바일 스크롤바 숨김 (터치 스크롤) */
+@media (max-width: 768px) {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
