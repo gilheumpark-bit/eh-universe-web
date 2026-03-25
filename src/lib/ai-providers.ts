@@ -296,6 +296,19 @@ async function streamViaProxy(
 // PART 4: UNIFIED STREAM API
 // ============================================================
 
+function isQuotaError(msg: string): boolean {
+  return /429|quota|rate.?limit|resource.?exhausted|billing|limit.?exceeded/i.test(msg);
+}
+
+function getFallbackProviders(
+  activeProvider: ProviderId,
+): Array<{ id: ProviderId; model: string; key: string }> {
+  return PROVIDER_LIST
+    .filter((p) => p.id !== activeProvider)
+    .map((p) => ({ id: p.id, model: p.defaultModel, key: getApiKey(p.id) }))
+    .filter((p) => p.key.trim().length > 0);
+}
+
 export async function streamChat(opts: StreamOptions): Promise<string> {
   const provider = getActiveProvider();
   const apiKey = getApiKey(provider);
@@ -323,13 +336,10 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     }
 
     try {
-      // Try server-side proxy first
       return await streamViaProxy(provider, model, apiKey, safeOpts);
     } catch (proxyErr) {
-      // If AbortError, don't retry
       if (proxyErr instanceof DOMException && proxyErr.name === 'AbortError') throw proxyErr;
 
-      // Check if retryable (429 rate limit, 5xx server error, network)
       const errMsg = proxyErr instanceof Error ? proxyErr.message : '';
       const isRetryable = /429|500|502|503|504|fetch|network/i.test(errMsg);
 
@@ -339,9 +349,35 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
         continue;
       }
 
-      // No client-side fallback — all requests must go through server proxy
       lastError = proxyErr instanceof Error ? proxyErr : new Error(errMsg);
       break;
+    }
+  }
+
+  // Primary provider exhausted — attempt fallback providers on quota/rate-limit errors only.
+  // Falls back in PROVIDER_LIST order, skipping providers without a stored API key.
+  // Does NOT persist the switch to localStorage; active provider is unchanged.
+  if (lastError && isQuotaError(lastError.message)) {
+    const fallbacks = getFallbackProviders(provider);
+    for (const fallback of fallbacks) {
+      try {
+        console.warn(`[fallback] ${provider} quota/rate-limit hit. Switching to ${fallback.id}...`);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('noa:provider-fallback', {
+            detail: { from: provider, to: fallback.id },
+          }));
+        }
+        const fallbackMaxTokens = getMaxOutputTokens(fallback.model, systemTokens, messageTokens);
+        return await streamViaProxy(
+          fallback.id,
+          fallback.model,
+          fallback.key,
+          { ...safeOpts, maxTokens: fallbackMaxTokens },
+        );
+      } catch (fallbackErr) {
+        if (fallbackErr instanceof DOMException && fallbackErr.name === 'AbortError') throw fallbackErr;
+        console.warn(`[fallback] ${fallback.id} also failed:`, fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+      }
     }
   }
 

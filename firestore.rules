@@ -36,6 +36,30 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/planets/$(postData.planetId));
     }
 
+    // Data size guards — prevent oversized payloads from exhausting quota or storage
+    function validPlanetData(d) {
+      return d.name.size() <= 200
+        && d.summary.size() <= 2000
+        && d.representativeTags.size() <= 6
+        && d.tags.size() <= 10
+        && d.coreRules.size() <= 3;
+    }
+
+    function validPostData(d) {
+      return d.title.size() <= 300
+        && d.content.size() <= 50000
+        && d.summary.size() <= 500
+        && d.tags.size() <= 8;
+    }
+
+    function validCommentData(d) {
+      return d.content.size() <= 5000;
+    }
+
+    function validReportData(d) {
+      return d.detail.size() <= 2000;
+    }
+
     // IDENTITY_SEAL: PART-1 | role=shared access helpers | inputs=auth and linked docs | outputs=booleans
 
     // ============================================================
@@ -67,8 +91,15 @@ service cloud.firestore {
       allow read: if canReadVisibility(resource.data.visibility, resource.data.ownerId);
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.id == planetId;
-      allow update, delete: if signedIn()
+        && request.resource.data.id == planetId
+        && validPlanetData(request.resource.data);
+      allow update: if signedIn()
+        && (
+          resource.data.ownerId == request.auth.uid
+          || isAdmin()
+        )
+        && validPlanetData(request.resource.data);
+      allow delete: if signedIn()
         && (
           resource.data.ownerId == request.auth.uid
           || isAdmin()
@@ -78,13 +109,15 @@ service cloud.firestore {
       match /comments/{commentId} {
         allow read: if true;
         allow create: if signedIn()
-          && request.resource.data.authorId == request.auth.uid;
+          && request.resource.data.authorId == request.auth.uid
+          && validCommentData(request.resource.data);
         allow update: if signedIn()
           && (
             resource.data.authorId == request.auth.uid
             || isPlanetOwner(planetId)
             || isAdmin()
-          );
+          )
+          && validCommentData(request.resource.data);
         allow delete: if signedIn()
           && (
             resource.data.authorId == request.auth.uid
@@ -112,8 +145,16 @@ service cloud.firestore {
         && (
           isPlanetOwner(request.resource.data.planetId)
           || isAdmin()
-        );
-      allow update, delete: if signedIn()
+        )
+        && validPostData(request.resource.data);
+      allow update: if signedIn()
+        && (
+          resource.data.authorId == request.auth.uid
+          || isPlanetOwner(resource.data.planetId)
+          || isAdmin()
+        )
+        && validPostData(request.resource.data);
+      allow delete: if signedIn()
         && (
           resource.data.authorId == request.auth.uid
           || isPlanetOwner(resource.data.planetId)
@@ -136,8 +177,15 @@ service cloud.firestore {
       );
       allow create: if signedIn()
         && request.resource.data.id == commentId
-        && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && validCommentData(request.resource.data);
+      allow update: if signedIn()
+        && (
+          resource.data.authorId == request.auth.uid
+          || isAdmin()
+        )
+        && validCommentData(request.resource.data);
+      allow delete: if signedIn()
         && (
           resource.data.authorId == request.auth.uid
           || isAdmin()
@@ -157,7 +205,8 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if isAdmin();
       allow create: if signedIn()
-        && request.resource.data.reporterId == request.auth.uid;
+        && request.resource.data.reporterId == request.auth.uid
+        && validReportData(request.resource.data);
       allow update, delete: if isAdmin();
     }
 
