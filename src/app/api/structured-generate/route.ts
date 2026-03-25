@@ -122,6 +122,52 @@ async function generateJsonOpenAICompat(
 }
 
 // ============================================================
+// PART 2B — Claude structured output via tool_use
+// ============================================================
+
+async function generateJsonClaude(
+  apiKey: string,
+  model: string,
+  prompt: string,
+  schema: object | undefined,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fallback: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
+  const tool = {
+    name: 'structured_output',
+    description: 'Return structured JSON data matching the requested format.',
+    input_schema: schema || { type: 'object' as const, properties: { result: { type: 'string' as const } } },
+  };
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: model || 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      tools: [tool],
+      tool_choice: { type: 'tool', name: 'structured_output' },
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`Claude API ${res.status}: ${err.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const toolBlock = data.content?.find((b: { type: string }) => b.type === 'tool_use');
+  if (toolBlock?.input) return toolBlock.input;
+  return fallback;
+}
+
+// ============================================================
 // PART 3 — Gemini JSON generation (delegated to existing route logic)
 // ============================================================
 
@@ -173,10 +219,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
-    // Claude는 structured output 미지원
-    if (provider === 'claude') {
-      return NextResponse.json({ error: 'Claude does not support structured output. Use Gemini or OpenAI.' }, { status: 400 });
-    }
+    // Claude: tool_use 기반 structured output
 
     const apiKey = resolveServerProviderKey(provider, body.apiKey);
     if (!apiKey) {
@@ -201,6 +244,8 @@ export async function POST(req: NextRequest) {
 
     if (provider === 'gemini' && schema) {
       result = await generateJsonGemini(apiKey, model, prompt, schema, fallback);
+    } else if (provider === 'claude') {
+      result = await generateJsonClaude(apiKey, model, prompt, schema, fallback);
     } else {
       // OpenAI-compatible (openai/groq/mistral/ollama/lmstudio)
       const isLocal = provider === 'ollama' || provider === 'lmstudio';

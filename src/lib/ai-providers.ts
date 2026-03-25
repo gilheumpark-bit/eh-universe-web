@@ -81,7 +81,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_claude_key",
-    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 200_000, maxOutputTokens: 8192, isLocal: false, costTier: 'expensive' },
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 200_000, maxOutputTokens: 8192, isLocal: false, costTier: 'expensive' },
   },
   groq: {
     id: "groq",
