@@ -199,9 +199,10 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
             {writingMode === 'edit' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-text-tertiary">{hasApiKey ? t('writingMode.editDescWithApi') : t('writingMode.editDescNoApi')}</p>
-                  <button onClick={handleApplyEdit} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">{t('writingMode.applyToManuscript')}</button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setWritingMode('edit')} className="px-4 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">✏️ {t('writingMode.manualEdit')}</button>
+                  <button onClick={handleApplyEdit} disabled={!editDraft.trim()} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">📋 {t('writingMode.applyToManuscript')}</button>
+                  <span className="text-[9px] text-text-tertiary ml-auto">{editDraft.length}{language === 'KO' ? '자' : ' chars'}</span>
                 </div>
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">
