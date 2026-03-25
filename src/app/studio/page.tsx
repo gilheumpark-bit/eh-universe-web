@@ -68,7 +68,8 @@ const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModa
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { Wand2 } from 'lucide-react';
 import { setDriveEncryptionKey } from '@/services/driveService';
-import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
+import { ConfirmModal, useUnsavedWarning } from '@/components/studio/UXHelpers';
+import StudioToasts from '@/components/studio/StudioToasts';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
@@ -1403,73 +1404,17 @@ export default function StudioPage() {
         </div>
       )}
 
-      {/* UX: Sync reminder (every 2 hours) */}
-      {showSyncReminder && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-lg">
-          <span className="text-sm">
-            {user
-              ? `${t('syncReminder.lastSyncPrefix')}${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString(language === 'KO' ? 'ko-KR' : language === 'JP' ? 'ja-JP' : language === 'CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : t('syncReminder.never')}${t('syncReminder.lastSyncSuffix')}`
-              : t('syncReminder.browserOnly')}
-          </span>
-          {user ? (
-            <button
-              onClick={() => { setShowSyncReminder(false); handleSync(); }}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors"
-            >
-              {t('syncReminder.sync')}
-            </button>
-          ) : (
-            <button
-              onClick={() => { setShowSyncReminder(false); signInWithGoogle(); }}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors"
-            >
-              {t('syncReminder.signIn')}
-            </button>
-          )}
-          <button onClick={() => setShowSyncReminder(false)} className="text-blue-400 hover:text-blue-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
-        </div>
-      )}
-
-      {/* UX: Storage full warning */}
-      {storageFull && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
-          <span className="text-sm">{t('ui.storageFull')}</span>
-          <button onClick={exportAllJSON} className="px-2 py-1 bg-yellow-600 text-white rounded text-xs font-bold shrink-0 hover:bg-yellow-500">{language === 'KO' ? '백업' : 'Backup'}</button>
-          <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
-        </div>
-      )}
-
-      {/* UX: Provider fallback notice */}
-      {fallbackNotice && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
-          <span className="text-sm">{language === 'KO' ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}</span>
-          <button onClick={() => setFallbackNotice(null)} className="text-blue-400 hover:text-blue-200 shrink-0">&times;</button>
-        </div>
-      )}
-      {exportDoneFormat && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-green-900/95 border border-green-600 text-green-100 px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-bottom-4 duration-300">
-          <span className="text-sm">✅ {exportDoneFormat} {language === 'KO' ? '내보내기 완료' : 'export complete'}</span>
-        </div>
-      )}
-
-      {/* UX: World import from Network banner */}
-      {worldImportBanner && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-emerald-900/95 border border-emerald-600 text-emerald-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md animate-in fade-in slide-in-from-top-2 duration-300">
-          <Globe className="w-4 h-4 shrink-0" />
-          <span className="text-sm">{isKO ? 'Network에서 세계관을 불러왔습니다' : 'World imported from Network'}</span>
-          <button onClick={() => setWorldImportBanner(false)} className="text-emerald-400 hover:text-emerald-200 shrink-0" aria-label="close">&times;</button>
-        </div>
-      )}
-
-      {/* UX: Error Toast */}
-      {uxError && (
-        <ErrorToast
-          error={uxError.error}
-          language={language}
-          onDismiss={() => setUxError(null)}
-          onRetry={uxError.retry ? () => { setUxError(null); uxError.retry?.(); } : undefined}
-        />
-      )}
+      {/* UX: All toasts */}
+      <StudioToasts
+        language={language} isKO={isKO}
+        showSyncReminder={showSyncReminder} setShowSyncReminder={setShowSyncReminder}
+        user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
+        storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
+        fallbackNotice={fallbackNotice} setFallbackNotice={setFallbackNotice}
+        exportDoneFormat={exportDoneFormat}
+        worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
+        uxError={uxError} setUxError={setUxError}
+      />
     </div>
     </StudioUIProvider>
     </StudioConfigProvider>
