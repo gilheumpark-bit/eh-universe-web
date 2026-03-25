@@ -61,6 +61,13 @@ interface WritingTabProps {
   directorReport: DirectorReport | null;
   hfcpState: HFCPState;
   handleNextEpisode: () => void;
+  editDraftRef?: React.RefObject<HTMLTextAreaElement | null>;
+  showAiLock?: boolean;
+  hostedProviders?: Partial<Record<string, boolean>>;
+  advancedOutputMode?: string;
+  setAdvancedOutputMode?: (mode: string) => void;
+  saveFlash?: boolean;
+  triggerSave?: () => void;
 }
 
 const WritingTab: React.FC<WritingTabProps> = ({
