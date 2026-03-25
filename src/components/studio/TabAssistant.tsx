@@ -23,6 +23,7 @@ interface TabAssistantProps {
   tab: AppTab;
   language: AppLanguage;
   config: StoryConfig | null;
+  hostedProviders?: Partial<Record<string, boolean>>;
 }
 
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
@@ -434,10 +435,13 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
 
 const STORAGE_PREFIX = 'noa_tab_chat_';
 
-const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) => {
+const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, hostedProviders = {} }) => {
   const ctx = TAB_CONTEXT[tab];
   const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const tl = createT(language);
+
+  // Check AI access: local key OR hosted provider
+  const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()]);
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -468,8 +472,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     const text = input.trim();
     if (!text || isStreaming) return;
 
-    const apiKey = getApiKey(getActiveProvider());
-    if (!apiKey) {
+    if (!hasAiKey) {
       const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: tl('tabAssistant.apiKeyMissing') };
       setMessages(prev => [...prev, errMsg]);
       return;
@@ -521,7 +524,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages, config, tab, language, lk, ctx, tl]);
+  }, [input, isStreaming, messages, config, tab, language, lk, ctx, tl, hasAiKey]);
 
   const handleCancel = () => {
     abortRef.current?.abort();
@@ -609,12 +612,12 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={!getApiKey(getActiveProvider())
+                placeholder={!hasAiKey
                   ? tl('tabAssistant.apiKeyRequired')
                   : tl('tabAssistant.askQuestion')}
-                className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-24 transition-colors ${!getApiKey(getActiveProvider()) ? 'opacity-60' : ''}`}
+                className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-24 transition-colors ${!hasAiKey ? 'opacity-60' : ''}`}
                 rows={1}
-                disabled={isStreaming || !getApiKey(getActiveProvider())}
+                disabled={isStreaming || !hasAiKey}
               />
               {isStreaming ? (
                 <button onClick={handleCancel} aria-label="중단" className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">

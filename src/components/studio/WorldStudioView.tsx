@@ -26,6 +26,7 @@ interface WorldStudioViewProps {
   saveFlash: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleWorldSimChange: (data: any) => void;
+  hostedProviders?: Partial<Record<string, boolean>>;
 }
 
 // ============================================================
@@ -60,6 +61,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   onSave,
   saveFlash,
   handleWorldSimChange,
+  hostedProviders = {},
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
   const t = createT(language);
@@ -96,7 +98,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
         <>
           <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
-            <TabAssistant tab="world" language={language} config={config} />
+            <TabAssistant tab="world" language={language} config={config} hostedProviders={hostedProviders} />
           </div>
           <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
             <button onClick={onSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>

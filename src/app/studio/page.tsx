@@ -988,6 +988,7 @@ export default function StudioPage() {
                         },
                       });
                     }}
+                    hostedProviders={hostedProviders}
                   />
                 )}
                 {activeTab === 'characters' && currentSession && (
@@ -1012,7 +1013,7 @@ export default function StudioPage() {
 
                     {!showAiLock && (
                     <div className="max-w-[1400px] mx-auto px-4 pb-4">
-                      <TabAssistant tab="characters" language={language} config={currentSession.config} />
+                      <TabAssistant tab="characters" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
                     </div>
                     )}
                     <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
@@ -1090,7 +1091,7 @@ export default function StudioPage() {
                     />
                     {!showAiLock && (
                     <div className="mt-4">
-                      <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} />
+                      <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} hostedProviders={hostedProviders} />
                     </div>
                     )}
                     <div className="flex justify-end mt-4">
@@ -1616,7 +1617,7 @@ export default function StudioPage() {
                     />
                     {!showAiLock && (
                     <div className="max-w-6xl mx-auto px-4 pb-4">
-                      <TabAssistant tab="style" language={language} config={currentSession.config} />
+                      <TabAssistant tab="style" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
                     </div>
                     )}
                     <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
@@ -2095,7 +2096,7 @@ export default function StudioPage() {
 
                   {/* NOW AI 채팅 */}
                   <div className="p-4 border-t border-border">
-                    <TabAssistant tab="writing" language={language} config={currentSession.config} />
+                    <TabAssistant tab="writing" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
                   </div>
                 </div>
               )}
