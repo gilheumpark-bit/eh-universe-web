@@ -592,7 +592,12 @@ export function buildSystemInstruction(
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
   const targetTension = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
-  const charTarget = getTargetCharRange(platform);
+  const platformTarget = getTargetCharRange(platform);
+  // 가드레일이 설정되어 있으면 사용자 수치 우선, 아니면 플랫폼 기본값
+  const charTarget = {
+    min: config.guardrails?.min && config.guardrails.min > 0 ? config.guardrails.min : platformTarget.min,
+    max: config.guardrails?.max && config.guardrails.max > 0 ? config.guardrails.max : platformTarget.max,
+  };
   const isKO = language === 'KO';
   const t = createT(language);
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
