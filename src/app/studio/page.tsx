@@ -23,6 +23,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 // EngineReport type inferred from useStudioAI hook return
 import ChatMessage from '@/components/studio/ChatMessage';
+import { WritingToolbar } from '@/components/studio/WritingToolbar';
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
@@ -390,6 +391,7 @@ export default function StudioPage() {
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
   const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'>('ai');
   const [editDraft, setEditDraft] = useState('');
+  const editDraftRef = useRef<HTMLTextAreaElement>(null);
   const [advancedSettings, setAdvancedSettings] = useState<import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings>({
     sceneGoals: [], constraints: { pov: '3rd-limited', dialogueRatio: 40, tempo: 'stable', sentenceLen: 'normal', emotionExposure: 'normal' },
     references: { prevEpisodes: 3, characterCards: true, worldSetting: true, styleProfile: false, sceneSheet: false, platformPreset: false },
@@ -407,7 +409,26 @@ export default function StudioPage() {
     // Data is already auto-saved via localStorage, this is visual feedback
     setSaveFlash(true);
     setTimeout(() => setSaveFlash(false), 1500);
-  }, []); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+  }, []);
+
+  // editDraft 세션별 임시 저장 — 새로고침/크래시 대비
+  useEffect(() => {
+    if (!hydrated || !currentSessionId) return;
+    const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
+    setEditDraft(saved ?? '');
+  // currentSessionId가 바뀔 때만 복원
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId, hydrated]);
+
+  useEffect(() => {
+    if (!currentSessionId) return;
+    const key = `noa_editdraft_${currentSessionId}`;
+    if (editDraft) {
+      localStorage.setItem(key, editDraft);
+    } else {
+      localStorage.removeItem(key);
+    }
+  }, [editDraft, currentSessionId]); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
@@ -1481,6 +1502,7 @@ export default function StudioPage() {
                                 messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg],
                                 title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title
                               });
+                              if (currentSessionId) localStorage.removeItem(`noa_editdraft_${currentSessionId}`);
                               if (!showAiLock) setWritingMode('ai');
                               setEditDraft('');
                             }}
@@ -1489,17 +1511,28 @@ export default function StudioPage() {
                             </button>
                           </div>
                         </div>
+                        {/* 서식 툴바 + 찾기/바꾸기 + 통계 */}
+                        <WritingToolbar
+                          textareaRef={editDraftRef}
+                          value={editDraft}
+                          onChange={setEditDraft}
+                          language={language}
+                        />
+
                         {!editDraft.trim() ? (
                           /* ====== EMPTY EDIT ONBOARDING ====== */
-                          <div className="text-center py-16 space-y-4">
-                            <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
-                            <p className="text-sm text-text-secondary font-[family-name:var(--font-mono)]">
-                              {t('writingMode.writeManuscript')}
-                            </p>
-                            <p className="text-[10px] text-text-tertiary max-w-md mx-auto">
-                              {t('writingMode.writeManuscriptDesc')}
-                            </p>
+                          <div className="space-y-3">
+                            <div className="text-center py-10 space-y-2">
+                              <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
+                              <p className="text-sm text-text-secondary font-[family-name:var(--font-mono)]">
+                                {t('writingMode.writeManuscript')}
+                              </p>
+                              <p className="text-[10px] text-text-tertiary max-w-md mx-auto">
+                                {t('writingMode.writeManuscriptDesc')}
+                              </p>
+                            </div>
                             <textarea
+                              ref={editDraftRef}
                               value={editDraft}
                               onChange={e => setEditDraft(e.target.value)}
                               placeholder={t('writingMode.typeManuscript')}
