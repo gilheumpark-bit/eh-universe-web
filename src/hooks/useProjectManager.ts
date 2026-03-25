@@ -6,7 +6,7 @@ import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-
 import { backupToIndexedDB, restoreFromIndexedDB } from '@/lib/indexeddb-backup';
 import { PlatformType } from '@/engine/types';
 import { trackStudioSessionStart } from '@/lib/analytics';
-import { stripEngineArtifacts } from '@/engine/pipeline';
+import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -37,39 +37,6 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
 // ============================================================
 // PART 2 — Hook implementation
 // ============================================================
-
-function sanitizeLoadedProjects(projects: Project[]): Project[] {
-  return projects.map(project => ({
-    ...project,
-    sessions: project.sessions.map(session => {
-      const messages = session.messages.map(message => {
-        if (message.role !== 'assistant' || !message.content) return message;
-        const cleanContent = stripEngineArtifacts(message.content);
-        const cleanVersions = message.versions?.map(version => stripEngineArtifacts(version));
-        return {
-          ...message,
-          content: cleanContent,
-          versions: cleanVersions,
-        };
-      });
-
-      const manuscripts = session.config.manuscripts?.map(manuscript => {
-        const cleanContent = stripEngineArtifacts(manuscript.content);
-        return {
-          ...manuscript,
-          content: cleanContent,
-          charCount: cleanContent.length,
-        };
-      });
-
-      return {
-        ...session,
-        messages,
-        config: manuscripts ? { ...session.config, manuscripts } : session.config,
-      };
-    }),
-  }));
-}
 
 export function useProjectManager(language: AppLanguage) {
   const [projects, setProjects] = useState<Project[]>([]);
