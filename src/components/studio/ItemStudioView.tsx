@@ -12,6 +12,7 @@ import {
   BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
 } from 'lucide-react';
 import { generateItems } from '@/services/geminiService';
+import { activeSupportsStructured } from '@/lib/ai-providers';
 
 // ============================================================
 // PART 1 — CONSTANTS & LABELS
@@ -404,6 +405,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // PART 3D — AI GENERATION (real API call)
   // ============================================================
   const handleAIGenerate = async () => {
+    if (!activeSupportsStructured()) {
+      alert(language === 'KO' ? '현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current provider does not support structured generation. Please use Gemini.');
+      return;
+    }
     if (!config.synopsis) {
       alert(t('itemStudio.synopsisRequired'));
       return;

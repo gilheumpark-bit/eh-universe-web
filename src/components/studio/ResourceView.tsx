@@ -5,6 +5,7 @@ import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT } from '@/lib/i18n';
 import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
+import { activeSupportsStructured } from '@/lib/ai-providers';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
 
@@ -55,7 +56,14 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     return config.characters.filter(c => c.role === activeCategory);
   }, [config.characters, activeCategory]);
 
+  const canStructured = activeSupportsStructured();
+
   const handleAutoGenerate = async () => {
+    if (!canStructured) {
+      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
+      if (onError) { onError(msg); } else { console.warn(msg); }
+      return;
+    }
     if (!config.synopsis) {
       const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
       if (onError) { onError(msg); } else { console.warn(msg); }

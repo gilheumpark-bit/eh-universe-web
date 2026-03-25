@@ -138,6 +138,10 @@ export function getCapabilities(providerId: ProviderId): ProviderCapabilities {
 export function supportsStructuredOutput(providerId: ProviderId): boolean {
   return PROVIDERS[providerId]?.capabilities.structuredOutput ?? false;
 }
+/** 현재 활성 provider가 structured output을 지원하는지 */
+export function activeSupportsStructured(): boolean {
+  return supportsStructuredOutput(getActiveProvider());
+}
 
 export const PROVIDER_LIST = Object.values(PROVIDERS);
 const LEGACY_PROVIDER_KEY = "eh-active-provider";

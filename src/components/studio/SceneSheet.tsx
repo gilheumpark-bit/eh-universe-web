@@ -566,6 +566,8 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             </div>
           )}
           <button onClick={async () => {
+            const { activeSupportsStructured } = await import('@/lib/ai-providers');
+            if (!activeSupportsStructured()) { alert(lang === 'ko' ? '현재 프로바이더는 구조화 생성 미지원. Gemini를 사용하세요.' : 'Current provider does not support structured generation.'); return; }
             if (!synopsis) { alert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
