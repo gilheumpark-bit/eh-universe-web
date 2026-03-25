@@ -173,6 +173,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('noa_planning_advanced') === 'true';
+    return false;
+  });
   const router = useRouter();
 
   const handleAIGenerate = async () => {
@@ -308,15 +312,35 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </div>
         </div>
 
+        {/* 간단/고급 모드 토글 */}
+        <div className="flex items-center justify-end">
+          <button
+            onClick={() => {
+              const next = !advancedMode;
+              setAdvancedMode(next);
+              localStorage.setItem('noa_planning_advanced', String(next));
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border ${
+              advancedMode
+                ? 'border-blue-500/30 bg-blue-600/10 text-blue-400'
+                : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-400'
+            }`}
+          >
+            {advancedMode
+              ? (isKO ? '⚙ 고급 모드' : '⚙ Advanced')
+              : (isKO ? '✦ 간단 모드' : '✦ Simple')}
+          </button>
+        </div>
+
         {/* Sub-genre tags */}
-        <SubGenreTagInput
+        {advancedMode && <SubGenreTagInput
           genre={config.genre}
           subGenres={config.subGenres || []}
           onChange={(tags) => setConfig({ ...config, subGenres: tags })}
           language={language}
           usePrompt={config.useSubGenrePrompt ?? false}
           onTogglePrompt={(val) => setConfig({ ...config, useSubGenrePrompt: val })}
-        />
+        />}
 
         {/* New: Total Episodes + Platform */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -366,6 +390,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             </div>
           </div>
         </div>
+
+        {/* === 고급 모드 전용 섹션 === */}
+        <div className={advancedMode ? 'space-y-8' : 'hidden'}>
 
         {/* 서사 강도 (EH Engine Narrative Intensity) */}
         <div className="space-y-2">
@@ -881,6 +908,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           )}
         </div>
       </div>
+
+        </div>
+        {/* === 고급 모드 전용 섹션 끝 === */}
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
         <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-white text-black rounded-2xl font-black hover:scale-105 active:scale-95 transition-all shadow-2xl">

@@ -11,6 +11,7 @@ import {
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST } from '@/lib/ai-providers';
+import { getStorageUsageBytes } from '@/lib/project-migration';
 
 interface SettingsViewProps {
   language: AppLanguage;
@@ -91,6 +92,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
               <span className="text-xs text-zinc-400">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
+            </div>
+            <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-zinc-400">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
+                <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
+                  {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
+                </span>
+              </div>
+              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
+                  style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
+                />
+              </div>
+              {getStorageUsageBytes() > 4 * 1024 * 1024 && (
+                <p className="text-[10px] text-red-400">{language === 'KO' ? '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.' : 'Storage nearly full. Delete old sessions or export a backup.'}</p>
+              )}
             </div>
           </div>
         </div>
