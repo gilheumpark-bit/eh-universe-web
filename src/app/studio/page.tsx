@@ -103,7 +103,13 @@ export default function StudioPage() {
   const [activeTab, setActiveTab] = useState<AppTab>('world');
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('noa_studio_mode') as 'guided' | 'free') || 'guided';
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('noa_studio_mode');
+      // 이전 버그로 'api'/'manual'이 저장된 경우 → 'free'로 복구
+      if (raw === 'guided' || raw === 'free') return raw;
+      if (raw) localStorage.setItem('noa_studio_mode', 'free');
+      return raw ? 'free' : 'guided';
+    }
     return 'guided';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -282,15 +288,17 @@ export default function StudioPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
-  // API 키 추가/삭제 감지 → 모드 자동 전환 + localStorage 동기화
+  // API 키 추가/삭제 감지 → 집필 모드(writingMode) 자동 전환
+  // NOTE: noa_studio_mode 키는 가이드/자유 모드('guided'/'free')용이므로
+  //       여기서 건드리지 않는다. 별도 키(noa_writing_access)에 저장한다.
   useEffect(() => {
     if (!aiCapabilitiesLoaded) return;
     if (hasAiAccess) {
       setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
-      localStorage.setItem('noa_studio_mode', 'api');
+      localStorage.setItem('noa_writing_access', 'api');
     } else {
       setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
-      localStorage.setItem('noa_studio_mode', 'manual');
+      localStorage.setItem('noa_writing_access', 'manual');
     }
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
