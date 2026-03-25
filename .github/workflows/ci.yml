@@ -21,6 +21,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Null byte scan
+        run: |
+          BAD=$(find src -name '*.ts' -o -name '*.tsx' | xargs grep -Pl '\x00' 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "❌ Null bytes detected in:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "✅ No null bytes found"
+
       - name: TypeScript type check
         run: npx tsc --noEmit --strict
 
