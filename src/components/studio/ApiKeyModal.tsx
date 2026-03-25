@@ -158,19 +158,28 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
           })}
         </div>
 
-        {/* Key input */}
+        {/* Key / URL input */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-            {currentProvider.name} API Key
+            {currentProvider.isUrlBased
+              ? `${currentProvider.name} ${language === 'KO' ? '서버 주소' : 'Server URL'}`
+              : `${currentProvider.name} API Key`}
           </label>
           <input
-            type="password"
+            type={currentProvider.isUrlBased ? 'text' : 'password'}
             value={currentKey}
             onChange={e => handleKeyChange(e.target.value)}
             placeholder={currentProvider.placeholder}
             className="w-full bg-bg-secondary border border-border rounded-xl p-3 text-sm font-[family-name:var(--font-mono)] focus:border-accent-purple outline-none transition-all"
             autoFocus
           />
+          {currentProvider.capabilities.isLocal && (
+            <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              {language === 'KO'
+                ? '💡 로컬 서버가 실행 중이어야 합니다. Ollama: ollama serve / LM Studio: 서버 시작'
+                : '💡 Local server must be running. Ollama: ollama serve / LM Studio: Start server'}
+            </p>
+          )}
         </div>
 
         {/* Model selector */}
@@ -211,6 +220,20 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
               </div>
             )}
           </div>
+        </div>
+
+        {/* Custom model input */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+            placeholder={language === 'KO' ? '커스텀 모델명 직접 입력...' : 'Enter custom model name...'}
+            className="flex-1 bg-bg-secondary border border-border rounded-lg px-3 py-1.5 text-[10px] font-[family-name:var(--font-mono)] outline-none focus:border-accent-purple transition-colors"
+          />
+          <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0">
+            {language === 'KO' ? '직접 입력' : 'Custom'}
+          </span>
         </div>
 
         {/* Preview model warning */}

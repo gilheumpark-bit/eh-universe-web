@@ -60,14 +60,22 @@ const OPENAI_COMPAT_URLS: Record<string, string> = {
 
 async function streamOpenAICompat(
   provider: string, apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number
+  system: string, messages: { role: string; content: string }[], temperature: number,
+  customBaseUrl?: string,
 ): Promise<ReadableStream> {
-  const url = OPENAI_COMPAT_URLS[provider];
+  // 로컬 provider는 customBaseUrl 사용, 클라우드는 OPENAI_COMPAT_URLS
+  const url = customBaseUrl
+    ? `${customBaseUrl.replace(/\/$/, '')}/v1/chat/completions`
+    : OPENAI_COMPAT_URLS[provider];
   if (!url) throw new Error(`Unknown provider: ${provider}`);
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  // 로컬 provider는 Authorization 불필요
+  if (apiKey && !customBaseUrl) headers['Authorization'] = `Bearer ${apiKey}`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    headers,
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...messages],
@@ -240,6 +248,11 @@ export async function POST(req: NextRequest) {
       case 'groq':
       case 'mistral':
         stream = await streamOpenAICompat(provider, apiKey, model, finalSystemInstruction, messages, temperature);
+        break;
+      case 'ollama':
+      case 'lmstudio':
+        // 로컬 provider: apiKey는 base URL로 사용
+        stream = await streamOpenAICompat(provider, '', model, finalSystemInstruction, messages, temperature, apiKey);
         break;
       case 'claude':
         stream = await streamClaude(apiKey, model, finalSystemInstruction, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);

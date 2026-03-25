@@ -4,7 +4,17 @@
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
 
-export type ProviderId = "gemini" | "openai" | "claude" | "groq" | "mistral";
+export type ProviderId = "gemini" | "openai" | "claude" | "groq" | "mistral" | "ollama" | "lmstudio";
+
+export interface ProviderCapabilities {
+  streaming: boolean;
+  structuredOutput: boolean;
+  systemInstruction: boolean;
+  maxContextTokens: number;
+  maxOutputTokens: number;
+  isLocal: boolean;
+  costTier: 'free' | 'cheap' | 'moderate' | 'expensive';
+}
 
 export interface ProviderDef {
   id: ProviderId;
@@ -15,6 +25,9 @@ export interface ProviderDef {
   models: string[];
   testPrompt: string;
   storageKey: string;
+  capabilities: ProviderCapabilities;
+  /** 로컬 provider는 API key 대신 base URL을 저장 */
+  isUrlBased?: boolean;
 }
 
 export interface ChatMsg {
@@ -43,14 +56,10 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#4285f4",
     placeholder: "AIza...",
     defaultModel: "gemini-2.5-pro",
-    models: [
-      "gemini-2.5-pro",
-      "gemini-2.5-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3-flash-preview",
-    ],
+    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-3.1-pro-preview", "gemini-3-flash-preview"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_api_key",
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 1_000_000, maxOutputTokens: 8192, isLocal: false, costTier: 'cheap' },
   },
   openai: {
     id: "openai",
@@ -58,15 +67,10 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#10a37f",
     placeholder: "sk-...",
     defaultModel: "gpt-4o",
-    models: [
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-      "gpt-4.1-nano",
-    ],
+    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_openai_key",
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 16384, isLocal: false, costTier: 'expensive' },
   },
   claude: {
     id: "claude",
@@ -74,12 +78,10 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#d97706",
     placeholder: "sk-ant-...",
     defaultModel: "claude-sonnet-4-20250514",
-    models: [
-      "claude-sonnet-4-20250514",
-      "claude-3-5-haiku-20241022",
-    ],
+    models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_claude_key",
+    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 200_000, maxOutputTokens: 8192, isLocal: false, costTier: 'expensive' },
   },
   groq: {
     id: "groq",
@@ -87,13 +89,10 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#f55036",
     placeholder: "gsk_...",
     defaultModel: "llama-3.3-70b-versatile",
-    models: [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
-      "qwen-qwq-32b",
-    ],
+    models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen-qwq-32b"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_groq_key",
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 8192, isLocal: false, costTier: 'free' },
   },
   mistral: {
     id: "mistral",
@@ -101,15 +100,44 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#ff7000",
     placeholder: "...",
     defaultModel: "mistral-medium-3-latest",
-    models: [
-      "mistral-medium-3-latest",
-      "mistral-small-latest",
-      "mistral-large-latest",
-    ],
+    models: ["mistral-medium-3-latest", "mistral-small-latest", "mistral-large-latest"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_mistral_key",
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 8192, isLocal: false, costTier: 'moderate' },
+  },
+  ollama: {
+    id: "ollama",
+    name: "Ollama (Local)",
+    color: "#6c4c3e",
+    placeholder: "http://localhost:11434",
+    defaultModel: "llama3.1",
+    models: ["llama3.1", "llama3.2", "mistral", "gemma2", "qwen2.5", "deepseek-r1"],
+    testPrompt: 'Say "OK" in one word.',
+    storageKey: "noa_ollama_url",
+    isUrlBased: true,
+    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
+  },
+  lmstudio: {
+    id: "lmstudio",
+    name: "LM Studio (Local)",
+    color: "#2d5d8d",
+    placeholder: "http://localhost:1234",
+    defaultModel: "local-model",
+    models: ["local-model"],
+    testPrompt: 'Say "OK" in one word.',
+    storageKey: "noa_lmstudio_url",
+    isUrlBased: true,
+    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
   },
 };
+
+// Capability helpers
+export function getCapabilities(providerId: ProviderId): ProviderCapabilities {
+  return PROVIDERS[providerId]?.capabilities ?? PROVIDERS.gemini.capabilities;
+}
+export function supportsStructuredOutput(providerId: ProviderId): boolean {
+  return PROVIDERS[providerId]?.capabilities.structuredOutput ?? false;
+}
 
 export const PROVIDER_LIST = Object.values(PROVIDERS);
 const LEGACY_PROVIDER_KEY = "eh-active-provider";
@@ -220,7 +248,8 @@ function getStoredModelForProvider(providerId: ProviderId): string {
 
   const stored = localStorage.getItem("noa_active_model") || localStorage.getItem(LEGACY_MODEL_KEY);
   const provider = PROVIDERS[providerId];
-  const model = stored && provider.models.includes(stored) ? stored : provider.defaultModel;
+  // 커스텀 모델 허용: provider.models에 없어도 사용자가 입력한 모델 유지
+  const model = stored && (provider.models.includes(stored) || stored.length > 0) ? stored : provider.defaultModel;
 
   if (providerId === getActiveProvider()) {
     localStorage.setItem("noa_active_model", model);
