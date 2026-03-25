@@ -411,7 +411,6 @@ export default function WritingTabInline(props: Props) {
                       <div className="flex gap-4 items-stretch">
                       <div className="flex-1 min-w-0 space-y-3">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => setWritingMode('edit')} className="px-4 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">✏️ {t('writingMode.manualEdit')}</button>
                           <button onClick={() => {
                               if (!editDraft.trim()) return;
                               const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
