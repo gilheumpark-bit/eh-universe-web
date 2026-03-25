@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { netT } from "@/lib/network-translations";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
 import { CommentSection } from "@/components/network/CommentSection";
 import { PlanetHeaderCard } from "@/components/network/PlanetHeaderCard";

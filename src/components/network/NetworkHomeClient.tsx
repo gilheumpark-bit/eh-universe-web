@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { netT } from "@/lib/network-translations";
 import {
   getAllUniqueTags,
   getNetworkUserRecord,
@@ -255,7 +256,7 @@ export function NetworkHomeClient() {
                 {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
               </Link>
               <a href="#board-posts" className="premium-button secondary">
-                {lang === "ko" ? "최신 로그 보기" : "View Latest Logs"}
+                {netT('latestLogs', lang)}
               </a>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
@@ -346,8 +347,8 @@ export function NetworkHomeClient() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="site-kicker">{lang === "ko" ? "추천 행성" : "Featured Planets"}</div>
-              <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "최근 갱신된 행성" : "Recently Updated Planets"}</h2>
+              <div className="site-kicker">{netT('latestPlanets', lang)}</div>
+              <h2 className="site-title mt-2 text-2xl font-semibold">{netT('latestPlanets', lang)}</h2>
             </div>
             {user && bookmarkedIds.size > 0 ? (
               <button
