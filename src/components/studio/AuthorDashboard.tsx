@@ -139,27 +139,94 @@ export default function AuthorDashboard({ messages, language }: Props) {
         <MetricBar value={avg.eos} max={100} color="bg-purple-500" label="EOS" />
       </div>
 
-      {/* Per-chapter trend */}
+      {/* Per-chapter SVG trend chart */}
       <div className="bg-bg-secondary border border-border rounded-xl p-4">
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-3">
           {language === 'KO' ? '챕터별 추세' : 'Chapter Trend'}
         </h3>
-        <div className="flex items-end gap-1 h-20">
-          {metrics.map((m, i) => {
-            const h = Math.max(4, (m.tension / 100) * 80);
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`#${m.index} ${m.grade} T:${m.tension}%`}>
-                <div className={`w-full rounded-t ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-zinc-600'}`} style={{ height: `${h}px` }} />
-                <span className="text-[7px] text-text-tertiary">{m.index}</span>
-              </div>
-            );
-          })}
-        </div>
+        {metrics.length >= 2 ? (
+          <svg viewBox={`0 0 ${Math.max(200, metrics.length * 30)} 100`} className="w-full h-24" preserveAspectRatio="none">
+            {/* Grid lines */}
+            {[25, 50, 75].map(y => (
+              <line key={y} x1="0" y1={100 - y} x2={metrics.length * 30} y2={100 - y} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
+            ))}
+            {/* Tension line (red) */}
+            <polyline fill="none" stroke="#ef4444" strokeWidth="1.5"
+              points={metrics.map((m, i) => `${i * 30 + 15},${100 - m.tension}`).join(' ')} />
+            {/* Pacing line (blue) */}
+            <polyline fill="none" stroke="#3b82f6" strokeWidth="1" strokeDasharray="3,3"
+              points={metrics.map((m, i) => `${i * 30 + 15},${100 - m.pacing}`).join(' ')} />
+            {/* Immersion line (green) */}
+            <polyline fill="none" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3"
+              points={metrics.map((m, i) => `${i * 30 + 15},${100 - m.immersion}`).join(' ')} />
+            {/* Grade dots */}
+            {metrics.map((m, i) => (
+              <circle key={i} cx={i * 30 + 15} cy={100 - m.tension} r="3"
+                fill={GRADE_COLORS[m.grade]?.replace('text-', '').replace('-400', '') === 'yellow' ? '#facc15' : GRADE_COLORS[m.grade]?.includes('green') ? '#22c55e' : GRADE_COLORS[m.grade]?.includes('blue') ? '#3b82f6' : GRADE_COLORS[m.grade]?.includes('red') ? '#ef4444' : '#a855f7'}>
+                <title>#{m.index} {m.grade} T:{m.tension}% P:{m.pacing}% I:{m.immersion}%</title>
+              </circle>
+            ))}
+          </svg>
+        ) : (
+          <div className="flex items-end gap-1 h-20">
+            {metrics.map((m, i) => {
+              const h = Math.max(4, (m.tension / 100) * 80);
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`#${m.index} ${m.grade} T:${m.tension}%`}>
+                  <div className={`w-full rounded-t ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-zinc-600'}`} style={{ height: `${h}px` }} />
+                  <span className="text-[7px] text-text-tertiary">{m.index}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div className="flex justify-between mt-1">
-          <span className="text-[8px] text-text-tertiary">{language === 'KO' ? '← 처음' : '← Start'}</span>
-          <span className="text-[8px] text-text-tertiary">{language === 'KO' ? '최근 →' : 'Recent →'}</span>
+          <div className="flex gap-3">
+            <span className="text-[8px] text-red-400">● Tension</span>
+            <span className="text-[8px] text-blue-400">● Pacing</span>
+            <span className="text-[8px] text-green-400">● Immersion</span>
+          </div>
+          <span className="text-[8px] text-text-tertiary">{metrics.length} {language === 'KO' ? '챕터' : 'chapters'}</span>
         </div>
       </div>
+
+      {/* Export as Markdown */}
+      <button
+        onClick={() => {
+          const lines = [
+            `# ${language === 'KO' ? '작가 대시보드 리포트' : 'Author Dashboard Report'}`,
+            `> ${new Date().toISOString().slice(0, 10)}`,
+            '',
+            `## ${language === 'KO' ? '요약' : 'Summary'}`,
+            `- ${language === 'KO' ? '생성 챕터' : 'Chapters'}: ${metrics.length}`,
+            `- ${language === 'KO' ? '총 글자수' : 'Total chars'}: ${totalChars.toLocaleString()}`,
+            `- ${language === 'KO' ? '평균 글자수' : 'Avg chars'}: ${avg.charCount.toLocaleString()}`,
+            '',
+            `## ${language === 'KO' ? '평균 메트릭' : 'Average Metrics'}`,
+            `| Metric | Value |`,
+            `|--------|-------|`,
+            `| Tension | ${avg.tension}% |`,
+            `| Pacing | ${avg.pacing}% |`,
+            `| Immersion | ${avg.immersion}% |`,
+            `| EOS | ${avg.eos}% |`,
+            '',
+            `## ${language === 'KO' ? '챕터별 상세' : 'Per-Chapter Detail'}`,
+            `| # | Grade | Tension | Pacing | Immersion | Chars |`,
+            `|---|-------|---------|--------|-----------|-------|`,
+            ...metrics.map(m => `| ${m.index} | ${m.grade} | ${m.tension}% | ${m.pacing}% | ${m.immersion}% | ${m.charCount.toLocaleString()} |`),
+          ];
+          const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `dashboard-report-${new Date().toISOString().slice(0, 10)}.md`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }}
+        className="w-full py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] hover:bg-white/5 transition-colors"
+      >
+        📊 {language === 'KO' ? '마크다운 리포트 내보내기' : 'Export Markdown Report'}
+      </button>
     </div>
   );
 }
