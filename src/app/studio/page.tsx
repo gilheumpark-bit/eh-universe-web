@@ -1620,7 +1620,7 @@ export default function StudioPage() {
                         <div className="flex gap-2 flex-wrap items-center">
                           <button disabled={isGenerating} onClick={() => {
                             setCanvasPass(1);
-                            setWritingMode('ai');
+                            setCanvasContent('');
                             setTimeout(() => {
                               handleSend(isKO
                                 ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자). 중요: JSON 코드블록, 분석 리포트, grade, metrics 등 절대 출력하지 마세요. 순수 소설 본문만 출력하세요.'
@@ -1637,7 +1637,6 @@ export default function StudioPage() {
                             if (!draft) { alert(t('canvas.noPass1')); return; }
                             setCanvasContent(draft);
                             setCanvasPass(2);
-                            setWritingMode('ai');
                             setTimeout(() => {
                               handleSend(isKO
                                 ? `[2단계 — 감정선] 아래 초안을 전체 다시 써주세요. 인물 내면, 감정 밀도, 문장 리듬 강화. 고구마/사이다 타이밍. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---초안---\n${draft.slice(0, 4000)}`
@@ -1654,7 +1653,6 @@ export default function StudioPage() {
                             if (!ms) { alert(t('canvas.noPass2')); return; }
                             setCanvasContent(ms);
                             setCanvasPass(3);
-                            setWritingMode('ai');
                             setTimeout(() => {
                               handleSend(isKO
                                 ? `[3단계 — 감각 묘사] 아래 원고를 전체 다시 써주세요. 물성/시각/청각/촉각 묘사 추가. 클리프행어 마무리. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---원고---\n${ms.slice(0, 5000)}`

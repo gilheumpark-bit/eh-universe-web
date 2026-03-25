@@ -120,6 +120,9 @@ export function useStudioAI({
         (chunk) => {
           fullContent += chunk;
           const displayContent = stripEngineArtifacts(fullContent);
+          if (canvasPass >= 1 && canvasPass <= 3) {
+            setCanvasContent(displayContent);
+          }
           setSessions(prev => prev.map(s => {
             if (s.id === capturedSessionId) {
               const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: displayContent } : m);
