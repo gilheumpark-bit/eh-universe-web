@@ -584,6 +584,7 @@ export default function StudioPage() {
         confirmLabel: t('confirm.switch'),
         cancelLabel: t('confirm.keepEditing'),
         onConfirm: () => {
+          closeConfirm();
           setEditDraft('');
           setActiveTab(tab);
           if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -594,7 +595,7 @@ export default function StudioPage() {
     setActiveTab(tab);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
-  }, [activeTab, writingMode, editDraft, language, showConfirm]);
+  }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm]);
 
   const deleteSession = (sessionIdToDelete: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);

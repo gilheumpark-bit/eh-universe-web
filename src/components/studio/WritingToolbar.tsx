@@ -174,7 +174,7 @@ function useWritingStats(value: string) {
 // ============================================================
 export function WritingToolbar({ textareaRef, value, onChange, language }: WritingToolbarProps) {
   const isKO = language === 'KO';
-  const { wrapSelection, addHeading, adjustIndent } = useTextOps(textareaRef, value, onChange);
+  const { adjustIndent } = useTextOps(textareaRef, value, onChange);
   const {
     showFind, setShowFind,
     findText, setFindText,
@@ -191,19 +191,6 @@ export function WritingToolbar({ textareaRef, value, onChange, language }: Writi
     <div className="space-y-2">
       {/* ── 툴바 ── */}
       <div className="flex items-center gap-0.5 px-2 py-1 bg-bg-secondary border border-border rounded-lg flex-wrap gap-y-1">
-
-        {/* 서식 */}
-        <button onClick={() => wrapSelection('**')} title="굵게 (Ctrl+B)" className={`${btn} text-xs font-black w-6 h-6 flex items-center justify-center`}>B</button>
-        <button onClick={() => wrapSelection('*')} title="기울임 (Ctrl+I)" className={`${btn} text-xs italic font-semibold w-6 h-6 flex items-center justify-center`}>I</button>
-
-        {divider}
-
-        {/* 제목 */}
-        <button onClick={() => addHeading(1)} title="제목 1" className={`${btn} text-[10px] font-black font-mono px-1.5`}>H1</button>
-        <button onClick={() => addHeading(2)} title="제목 2" className={`${btn} text-[10px] font-black font-mono px-1.5`}>H2</button>
-        <button onClick={() => addHeading(3)} title="제목 3" className={`${btn} text-[10px] font-black font-mono px-1.5`}>H3</button>
-
-        {divider}
 
         {/* 들여쓰기 */}
         <button onClick={() => adjustIndent('out')} title="내어쓰기" className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇤</button>
