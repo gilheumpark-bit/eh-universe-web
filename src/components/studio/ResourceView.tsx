@@ -48,6 +48,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const [newChar, setNewChar] = useState<Partial<Character>>({
     name: '', role: 'hero', traits: '', appearance: '', dna: 50
   });
+  const [genCount, setGenCount] = useState(4);
 
   const filteredCharacters = useMemo(() => {
     if (activeCategory === 'all') return config.characters;
@@ -60,10 +61,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
       if (onError) { onError(msg); } else { console.warn(msg); }
       return;
     }
-    
+
     setIsGenerating(true);
     try {
-      const generated = await generateCharacters(config, language); 
+      const generated = await generateCharacters(config, language, genCount);
       setConfig(prev => ({
         ...prev,
         characters: [...prev.characters, ...generated]
@@ -109,14 +110,25 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
           </div>
         </div>
 
-        <button 
-          onClick={handleAutoGenerate}
-          disabled={isGenerating}
-          className="flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 disabled:opacity-50 group w-full md:w-auto"
-        >
-          {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {isGenerating ? "Synthesizing..." : t.autoGen}
-        </button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={genCount}
+            onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
+            className="w-14 bg-black border border-zinc-800 rounded-xl px-2 py-3 md:py-4 text-center text-sm font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
+          />
+          <button
+            onClick={handleAutoGenerate}
+            disabled={isGenerating}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 disabled:opacity-50 group"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isGenerating ? "Synthesizing..." : t.autoGen}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 md:gap-10 items-start relative">

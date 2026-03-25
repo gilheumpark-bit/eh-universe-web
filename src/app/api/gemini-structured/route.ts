@@ -109,10 +109,16 @@ async function handleCharacters(
   model: string,
   config: Pick<StoryConfig, 'genre' | 'synopsis'>,
   language: AppLanguage,
+  count: number = 4,
+  existingNames: string[] = [],
 ) {
+  const existingBlock = existingNames.length > 0
+    ? `\n\nIMPORTANT: The following characters already exist — DO NOT generate characters with the same or similar names. Create completely NEW and DIFFERENT characters:\nExisting: ${existingNames.join(', ')}`
+    : '';
+
   const prompt = `
     Based on the genre [${config.genre}] and world setting [${config.synopsis}],
-    generate 4 multidimensional characters in JSON format.
+    generate exactly ${count} multidimensional characters in JSON format.
     IMPORTANT: All character names, roles, traits, and appearance descriptions MUST be written in ${LANGUAGE_NAMES[language]}.
     Each character must have a unique narrative role and high narrative potential (dna score 0-100).
 
@@ -122,6 +128,7 @@ async function handleCharacters(
     - conflict: The central conflict they face in the story
     - changeArc: How they transform by the end of the story
     - values: Their core beliefs and lines they never cross
+    ${existingBlock}
   `;
 
   return generateJson<unknown[]>(
@@ -389,7 +396,9 @@ export async function POST(req: NextRequest) {
         if (!config?.genre || !config?.synopsis) {
           return NextResponse.json({ error: 'Invalid character config' }, { status: 400 });
         }
-        return NextResponse.json(await handleCharacters(apiKey, model, config, language));
+        const count = typeof body.count === 'number' ? Math.min(Math.max(body.count, 1), 10) : 4;
+        const existingNames = Array.isArray(body.existingNames) ? body.existingNames as string[] : [];
+        return NextResponse.json(await handleCharacters(apiKey, model, config, language, count, existingNames));
       }
       case 'worldDesign': {
         if (typeof body.genre !== 'string' || !body.genre.trim()) {

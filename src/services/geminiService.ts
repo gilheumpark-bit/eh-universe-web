@@ -135,8 +135,10 @@ export const generateStoryStream = async (
 
 export const generateCharacters = async (
   config: StoryConfig,
-  language: AppLanguage = 'KO'
+  language: AppLanguage = 'KO',
+  count: number = 4,
 ): Promise<Character[]> => {
+  const existingNames = (config.characters || []).map(c => c.name).filter(Boolean);
   const results = await fetchStructuredGemini<unknown[]>({
     task: 'characters',
     config: {
@@ -144,6 +146,8 @@ export const generateCharacters = async (
       synopsis: config.synopsis,
     },
     language,
+    count,
+    existingNames,
   });
 
   if (!Array.isArray(results)) return [];
