@@ -1293,10 +1293,24 @@ export default function WarpGatePage() {
               {sideTab === "upgrade" && <UpgradePanel s={s} en={en} onUpgrade={onUpgrade} />}
             </div>
 
-            {/* Main Column — 핵심만 기본 노출, 나머지 접기 */}
-            <div className="space-y-4">
-              <CampaignPanel s={s} metrics={metrics} en={en} onEvaluate={onEvaluate} onSkipHold={onSkipHold} onTutorial={onTutorial} onSelectDoc={onSelectDoc} />
-              <GateChamberPanel s={s} metrics={metrics} en={en} onCalibrate={onCalibrate} onCharge={onCharge} onFocus={onFocus} onJump={onJump} onSlider={onSlider} />
+            {/* Main Column — 전부 접기식 */}
+            <div className="space-y-3">
+              <details open className="group">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
+                  {en ? "▾ Campaign Layer" : "▾ 캠페인 레이어"}
+                </summary>
+                <div className="mt-2">
+                  <CampaignPanel s={s} metrics={metrics} en={en} onEvaluate={onEvaluate} onSkipHold={onSkipHold} onTutorial={onTutorial} onSelectDoc={onSelectDoc} />
+                </div>
+              </details>
+              <details open className="group">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
+                  {en ? "▾ Gate Chamber" : "▾ 게이트 챔버"}
+                </summary>
+                <div className="mt-2">
+                  <GateChamberPanel s={s} metrics={metrics} en={en} onCalibrate={onCalibrate} onCharge={onCharge} onFocus={onFocus} onJump={onJump} onSlider={onSlider} />
+                </div>
+              </details>
               <details className="group">
                 <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary">
                   {en ? "▸ Zone Map & Mission Archive" : "▸ 구역 지도 & 임무 아카이브"}
