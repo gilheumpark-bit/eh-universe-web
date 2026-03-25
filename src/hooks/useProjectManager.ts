@@ -128,6 +128,7 @@ export function useProjectManager(language: AppLanguage) {
         }));
       }
       backupToIndexedDB(projects).catch(err => console.warn('[IndexedDB] Backup failed:', err));
+      if (ok) window.dispatchEvent(new CustomEvent('noa:auto-saved'));
     }, 500);
     return () => clearTimeout(timer);
   }, [projects, hydrated]);

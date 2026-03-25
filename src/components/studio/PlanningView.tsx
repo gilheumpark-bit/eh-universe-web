@@ -312,6 +312,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
               aria-label={t.projectTitle}
+              maxLength={200}
               value={config.title}
               onChange={e => setConfig({ ...config, title: e.target.value })}
             />
@@ -373,7 +374,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                   : 'border-zinc-800 focus:border-blue-600'
               }`}
               value={totalEpisodes}
-              onChange={e => setConfig({ ...config, totalEpisodes: parseInt(e.target.value) || 25 })}
+              onChange={e => {
+                const raw = parseInt(e.target.value);
+                const clamped = isNaN(raw) ? 25 : Math.max(1, Math.min(500, raw));
+                setConfig({ ...config, totalEpisodes: clamped });
+              }}
             />
             {(totalEpisodes < 1 || totalEpisodes > 500) && (
               <p className="text-[10px] font-bold text-red-400 px-1">
@@ -492,6 +497,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
               placeholder={tl('planningExtra.povPlaceholder')}
+              maxLength={100}
               value={config.povCharacter}
               onChange={e => setConfig({ ...config, povCharacter: e.target.value })}
             />
@@ -501,6 +507,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <input
               className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
               placeholder={tl('planningExtra.settingPlaceholder')}
+              maxLength={300}
               value={config.setting}
               onChange={e => setConfig({ ...config, setting: e.target.value })}
             />
@@ -521,6 +528,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <textarea
             className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
             placeholder={t.synopsisPlaceholder}
+            maxLength={5000}
             value={config.synopsis}
             onChange={e => setConfig({ ...config, synopsis: e.target.value })}
           />

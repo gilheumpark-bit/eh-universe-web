@@ -184,6 +184,13 @@ export default function StudioPage() {
     return () => window.removeEventListener('noa:export-done', handler);
   }, []);
 
+  // C3: 자동저장 시각 추적 — useProjectManager의 auto-save 이벤트 수신
+  useEffect(() => {
+    const handler = () => setLastSaveTime(Date.now());
+    window.addEventListener('noa:auto-saved', handler);
+    return () => window.removeEventListener('noa:auto-saved', handler);
+  }, []);
+
   // UX: provider fallback notification
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   useEffect(() => {
@@ -448,11 +455,13 @@ export default function StudioPage() {
   const [promptDirective, setPromptDirective] = useState('');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [saveFlash, setSaveFlash] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
   const triggerSave = useCallback(() => {
     // Data is already auto-saved via localStorage, this is visual feedback
     setSaveFlash(true);
+    setLastSaveTime(Date.now());
     setTimeout(() => setSaveFlash(false), 1500);
   }, []);
 
@@ -885,7 +894,7 @@ export default function StudioPage() {
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
               <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
               <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
-              {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+              {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? t('ui.saved') : t('ui.autoSaved')}{lastSaveTime && !saveFlash ? ` · ${Math.max(1, Math.round((Date.now() - lastSaveTime) / 1000))}${isKO ? '초 전' : 's ago'}` : ''}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
