@@ -481,7 +481,6 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
     setDopamines(data.dopamines);
     setCliffs(data.cliffs);
     setShowScenePresetMenu(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- SCENE_PRESETS is defined inline but stable per lang
   }, [lang]);
 
   // Validation summary

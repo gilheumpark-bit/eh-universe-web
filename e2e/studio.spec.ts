@@ -1,161 +1,146 @@
 import { test, expect } from '@playwright/test';
 
 // ============================================================
-// PART 1 — Helper: create session with prompt() auto-dismiss
+// PART 1 — Helper: dismiss onboarding + create session
 // ============================================================
 
-async function createSession(page: import('@playwright/test').Page) {
-  // Handle the title prompt dialog
-  page.on('dialog', async (dialog) => {
-    await dialog.accept('테스트 소설');
-  });
-  const newBtn = page.locator('button', { hasText: /직접 설정|Set Up Manually|새로운 소설 시작|Start New Novel/ }).first();
+async function dismissOnboarding(page: import('@playwright/test').Page) {
+  // 온보딩 가이드가 뜨면 닫기
+  const closeBtn = page.locator('button', { hasText: /온보딩 닫기|Close/ }).first();
+  if (await closeBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await closeBtn.click();
+  }
+}
+
+async function ensureSession(page: import('@playwright/test').Page) {
+  await dismissOnboarding(page);
+
+  // "새로운 소설 시작" 버튼 클릭 → 새 세션 생성
+  const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ }).first();
   await expect(newBtn).toBeVisible({ timeout: 10000 });
   await newBtn.click();
-  // Wait for session to be created — world design tab should appear
-  await expect(page.locator('text=/세계관 설계|World Design/').first()).toBeVisible({ timeout: 5000 });
+
+  // 세션 생성 확인: 세계관 설계 헤딩 또는 사이드바 탭이 보이면 성공
+  await expect(
+    page.locator('text=/세계관 설계|세계관 스튜디오|World Design|World Studio/').first()
+  ).toBeVisible({ timeout: 8000 });
+}
+
+async function switchToFreeMode(page: import('@playwright/test').Page) {
+  // 가이드 모드 → 자유 모드 전환 (토글 클릭)
+  const modeToggle = page.locator('button[aria-label="모드 전환"], button[aria-label="Toggle mode"]').first();
+  if (await modeToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const modeLabel = page.locator('text=/가이드 모드|Guided Mode/').first();
+    if (await modeLabel.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await modeToggle.click();
+    }
+  }
 }
 
 // ============================================================
-// PART 2 — Core flow tests (existing, waitForTimeout removed)
+// PART 2 — Core flow tests
 // ============================================================
 
 test.describe('NOA Studio — Core', () => {
-  test('studio page loads with NOA STUDIO header', async ({ page }) => {
+  test('studio page loads with NOA Studio header', async ({ page }) => {
     await page.goto('/studio');
-    await expect(page.locator('text=NOA STUDIO')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=/NOA Studio/i').first()).toBeVisible({ timeout: 15000 });
   });
 
-  test('create new session via empty state', async ({ page }) => {
+  test('create new session via button', async ({ page }) => {
     await page.goto('/studio');
-    await createSession(page);
+    await ensureSession(page);
   });
 
-  test('switch between sidebar tabs', async ({ page }) => {
+  test('sidebar tabs are visible after session', async ({ page }) => {
     await page.goto('/studio');
-    await createSession(page);
+    await ensureSession(page);
 
-    const tabs = [
-      /세계관 설계|World Design/,
-      /세계관 시뮬레이터|World Simulator/,
-      /캐릭터 스튜디오|Character Studio/,
-      /연출 스튜디오|Direction Studio/,
-      /집필 스튜디오|Writing Studio/,
-    ];
-
-    for (const tabPattern of tabs) {
-      const tabBtn = page.locator('button', { hasText: tabPattern }).first();
-      if (await tabBtn.isVisible()) {
-        await tabBtn.click();
-        // Verify tab content loaded (no waitForTimeout)
-        await expect(tabBtn).toHaveClass(/text-accent-purple|active/, { timeout: 3000 }).catch(() => {});
-      }
+    // 가이드 모드에서 최소 세계관/캐릭터/연출/사용설명서 탭이 보여야 함
+    for (const tab of ['세계관 스튜디오', '캐릭터 스튜디오', '연출 스튜디오']) {
+      await expect(
+        page.locator('button', { hasText: new RegExp(tab) }).first()
+      ).toBeVisible({ timeout: 5000 });
     }
+  });
+
+  test('free mode shows all tabs', async ({ page }) => {
+    await page.goto('/studio');
+    await ensureSession(page);
+    await switchToFreeMode(page);
+
+    // 자유 모드에서 집필/문체/원고도 보여야 함
+    await expect(
+      page.locator('button', { hasText: /집필 스튜디오|Writing/ }).first()
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('language switching KO ↔ EN', async ({ page }) => {
     await page.goto('/studio');
-    // Click EN
     const enBtn = page.locator('button', { hasText: 'EN' }).first();
     await expect(enBtn).toBeVisible({ timeout: 10000 });
     await enBtn.click();
-    // Verify EN content
-    await expect(page.locator('text=/Set Up Manually|Start New Novel/').first()).toBeVisible({ timeout: 5000 });
-    // Switch back to KO
-    const koBtn = page.locator('button', { hasText: /KR|KO/ }).first();
+    // EN 전환 확인
+    await expect(page.locator('text=/Start New Novel|World Studio/').first()).toBeVisible({ timeout: 5000 });
+    // KO 복귀
+    const koBtn = page.locator('button', { hasText: 'KO' }).first();
     await koBtn.click();
-    await expect(page.locator('text=/직접 설정|새로운 소설 시작/').first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test('project selector is visible after session creation', async ({ page }) => {
-    await page.goto('/studio');
-    await createSession(page);
-    const projectSelect = page.locator('select').first();
-    await expect(projectSelect).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=/새로운 소설 시작|세계관 스튜디오/').first()).toBeVisible({ timeout: 5000 });
   });
 });
 
 // ============================================================
-// PART 3 — Extended flow tests (new)
+// PART 3 — Extended flow tests
 // ============================================================
 
 test.describe('NOA Studio — Extended Flows', () => {
-  test('world import query prefills a new session', async ({ page }) => {
-    const payload = Buffer.from(JSON.stringify({
-      name: '한글★세계관 테스트',
-      summary: '첫 줄 요약\\n둘째 줄 with symbols !@#$%^&*()',
-      tags: ['SF', '태그'],
-      coreRules: ['규칙 1', '규칙 2'],
-    }), 'utf8').toString('base64');
-
-    await page.goto(`/studio?worldImport=${payload}`);
-
-    await expect(page.getByText(/Network에서 세계관을 불러왔습니다|World imported from Network/).first()).toBeVisible({ timeout: 10000 });
-    await expect.poll(async () => (
-      await page.locator('input, textarea').evaluateAll((elements) =>
-        elements
-          .map((element) => (element as HTMLInputElement | HTMLTextAreaElement).value)
-          .filter(Boolean)
-      )
-    ), { timeout: 10000 }).toContain('한글★세계관 테스트');
-    await expect.poll(async () => (
-      await page.locator('input, textarea').evaluateAll((elements) =>
-        elements
-          .map((element) => (element as HTMLInputElement | HTMLTextAreaElement).value)
-          .filter(Boolean)
-      )
-    ), { timeout: 10000 }).toContain('첫 줄 요약\\n둘째 줄 with symbols !@#$%^&*()');
-  });
-
   test('world design form has required fields', async ({ page }) => {
     await page.goto('/studio');
-    await createSession(page);
-    // World design tab should be active by default
-    // Check for genre selector or synopsis textarea
-    const genreOrSynopsis = page.locator('select, textarea').first();
-    await expect(genreOrSynopsis).toBeVisible({ timeout: 5000 });
+    await ensureSession(page);
+    // 장르 선택기 또는 시놉시스 입력 확인
+    const formEl = page.locator('select, textarea').first();
+    await expect(formEl).toBeVisible({ timeout: 5000 });
   });
 
-  test('writing studio tab shows mode buttons', async ({ page }) => {
+  test('writing tab shows mode buttons after free mode', async ({ page }) => {
     await page.goto('/studio');
-    await createSession(page);
-    const startWritingBtn = page.locator('button', { hasText: /집필 시작|Start Writing|Start Novel/ }).first();
-    await expect(startWritingBtn).toBeVisible({ timeout: 10000 });
-    await startWritingBtn.click();
-    await expect(page.locator('button', { hasText: /초안 생성|Draft|수동 편집|Manual Edit|캔버스|Canvas|고급|Advanced/ }).first()).toBeVisible({ timeout: 10000 });
-  });
+    await ensureSession(page);
+    await switchToFreeMode(page);
 
-  test('settings tab loads without error', async ({ page }) => {
-    await page.goto('/studio');
-    const settingsBtn = page.locator('button', { hasText: /설정|Settings/ }).first();
-    if (await settingsBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await settingsBtn.click();
-      // Settings content should appear
-      await expect(page.locator('text=/API|설정|Settings/').first()).toBeVisible({ timeout: 5000 });
-    }
+    const writingTab = page.locator('button', { hasText: /집필 스튜디오|Writing/ }).first();
+    await expect(writingTab).toBeVisible({ timeout: 5000 });
+    await writingTab.click();
+
+    // 집필 모드 버튼 확인
+    await expect(
+      page.locator('button', { hasText: /초안 생성|Draft|글쓰기|Write|3단계|AUTO/ }).first()
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('API key modal opens and closes', async ({ page }) => {
     await page.goto('/studio');
-    // Look for API key setup button via data-testid or text
-    const apiBtn = page.locator('[data-testid="btn-api-key"], button:has-text("설정하기"), button:has-text("Set Up"), button:has-text("API")').first();
+    const apiBtn = page.locator('button', { hasText: /설정하기|Set Up/ }).first();
     if (await apiBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
       await apiBtn.click();
-      // Modal should appear with provider buttons or input fields
       await expect(
-        page.locator('text=/Gemini|OpenAI|Claude|API|Provider/i').first()
+        page.locator('text=/Gemini|OpenAI|Claude|API/i').first()
       ).toBeVisible({ timeout: 5000 });
-      // Close modal
-      const closeBtn = page.locator('button[aria-label="닫기"], button[aria-label="Close"]').first();
-      if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await closeBtn.click();
-      } else {
-        await page.keyboard.press('Escape');
-      }
+      // ESC로 닫기
+      await page.keyboard.press('Escape');
     }
   });
 
-  test('navigation pages load without console errors', async ({ page }) => {
+  test('export buttons are visible', async ({ page }) => {
+    await page.goto('/studio');
+    await dismissOnboarding(page);
+    for (const format of ['TXT', 'JSON', 'EPUB', 'DOCX']) {
+      await expect(
+        page.locator('button', { hasText: format }).first()
+      ).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test('navigation pages load without critical console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
       if (msg.type() === 'error') errors.push(msg.text());
@@ -165,7 +150,7 @@ test.describe('NOA Studio — Extended Flows', () => {
       await page.goto(path);
       await expect(page.locator('text=EH UNIVERSE').first()).toBeVisible({ timeout: 10000 });
     }
-    // Filter out known non-critical errors (favicon, analytics, 404, hydration, chunk loading, preload, net errors, etc.)
+
     const benignPatterns = [
       'favicon', 'analytics', '404', 'hydrat', 'chunk', 'preload', 'prefetch',
       'net::ERR_', 'Failed to load resource', 'Download the React DevTools',

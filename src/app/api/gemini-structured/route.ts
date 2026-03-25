@@ -43,11 +43,17 @@ const LANGUAGE_NAMES: Record<AppLanguage, string> = {
 // PART 1 — Shared request helpers
 // ============================================================
 
-function validateOrigin(req: NextRequest): NextResponse | null {
+function validateOrigin(req: NextRequest, hasClientKey: boolean): NextResponse | null {
   const origin = req.headers.get('origin');
   const host = req.headers.get('host');
-  if (!origin || !host) return null;
-  if (new URL(origin).host !== host) {
+  // Origin 없는 요청: BYOK면 허용, 서버 키 소모라면 차단
+  if (!origin) {
+    if (!hasClientKey) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    return null;
+  }
+  if (host && new URL(origin).host !== host) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return null;
@@ -456,11 +462,12 @@ Generate multiple items for each array field (2-4 items each). Be specific and d
 // ============================================================
 
 export async function POST(req: NextRequest) {
-  const forbidden = validateOrigin(req);
-  if (forbidden) return forbidden;
-
   try {
     const body = await parseRequest(req);
+    // CSRF: body 파싱 후 클라이언트 키 유무로 Origin 검사 수준 결정
+    const forbidden = validateOrigin(req, !!body.apiKey);
+    if (forbidden) return forbidden;
+
     const apiKey = resolveServerProviderKey('gemini', body.apiKey);
     if (!apiKey) {
       return NextResponse.json(
