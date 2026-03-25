@@ -205,13 +205,35 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
         signal: controller.signal,
       });
 
-      // JSON 파싱
+      // JSON 파싱 — 견고한 추출
       const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]) as AnalysisResult;
-        setResult(parsed);
+        try {
+          const parsed = JSON.parse(jsonMatch[0]) as AnalysisResult;
+          setResult(parsed);
+        } catch {
+          // JSON이 깨진 경우 — 키별로 수동 추출 시도
+          const fields = ['worldStructure', 'powerSystem', 'geography', 'factions', 'inconsistencies', 'summary'];
+          const fallback: Record<string, string> = {};
+          for (const field of fields) {
+            const re = new RegExp(`"${field}"\\s*:\\s*"([^"]*(?:\\\\"[^"]*)*)"`, 's');
+            const m = fullResponse.match(re);
+            fallback[field] = m ? m[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : '';
+          }
+          if (Object.values(fallback).some(v => v.length > 0)) {
+            setResult(fallback as unknown as AnalysisResult);
+          } else {
+            // 완전 실패 — 원문을 summary에 넣어 최소한 결과 표시
+            setResult({ worldStructure: '', powerSystem: '', geography: '', factions: '', inconsistencies: '', summary: fullResponse.slice(0, 2000) } as AnalysisResult);
+          }
+        }
       } else {
-        setError(t('worldAnalysis.parseFailed'));
+        // JSON 블록 없음 — 원문 응답을 summary로 표시
+        if (fullResponse.trim().length > 0) {
+          setResult({ worldStructure: '', powerSystem: '', geography: '', factions: '', inconsistencies: '', summary: fullResponse.slice(0, 2000) } as AnalysisResult);
+        } else {
+          setError(t('worldAnalysis.parseFailed'));
+        }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
