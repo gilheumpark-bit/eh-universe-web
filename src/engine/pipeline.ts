@@ -19,26 +19,36 @@ const LANG_NAMES: Record<AppLanguage, string> = {
   CN: 'Chinese (中文)',
 };
 
-const ACT_GUIDELINES: Record<number, { ko: string; en: string }> = {
+const ACT_GUIDELINES: Record<number, Record<AppLanguage, string>> = {
   1: {
-    ko: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드세요. 정보를 서사에 녹이세요.',
-    en: 'This is the setup. Introduce the world and characters naturally. Create a flow from normalcy to disruption. Weave exposition into narrative.',
+    KO: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드세요. 정보를 서사에 녹이세요.',
+    EN: 'This is the setup. Introduce the world and characters naturally. Create a flow from normalcy to disruption. Weave exposition into narrative.',
+    JP: '導入部です。世界と人物を自然に紹介し、日常→亀裂の流れを作ってください。情報を物語に溶け込ませてください。',
+    CN: '这是开篇。自然地介绍世界和人物，创造从日常到裂变的流程。将信息融入叙事中。',
   },
   2: {
-    ko: '상승 구간입니다. 갈등을 심화시키고, 캐릭터에게 선택을 강요하세요. 서브플롯을 엮으세요.',
-    en: 'Rising action. Deepen conflicts, force characters into choices. Weave in subplots.',
+    KO: '상승 구간입니다. 갈등을 심화시키고, 캐릭터에게 선택을 강요하세요. 서브플롯을 엮으세요.',
+    EN: 'Rising action. Deepen conflicts, force characters into choices. Weave in subplots.',
+    JP: '上昇局面です。葛藤を深め、キャラクターに選択を迫ってください。サブプロットを織り込んでください。',
+    CN: '上升阶段。深化冲突，迫使角色做出选择。编织副线情节。',
   },
   3: {
-    ko: '중반 전환점입니다. 반전이나 정보 공개로 이야기의 방향을 틀어주세요. 독자의 기대를 배신하세요.',
-    en: 'Midpoint pivot. Use a twist or revelation to shift the story direction. Subvert reader expectations.',
+    KO: '중반 전환점입니다. 반전이나 정보 공개로 이야기의 방향을 틀어주세요. 독자의 기대를 배신하세요.',
+    EN: 'Midpoint pivot. Use a twist or revelation to shift the story direction. Subvert reader expectations.',
+    JP: '中盤の転換点です。反転や情報公開で物語の方向を変えてください。読者の期待を裏切ってください。',
+    CN: '中段转折点。用反转或信息揭露改变故事方向。颠覆读者期待。',
   },
   4: {
-    ko: '하강/위기 구간입니다. 상황을 최악으로 몰아가세요. 캐릭터의 내면 갈등이 외부 갈등과 충돌해야 합니다.',
-    en: 'Falling action / crisis. Push things to their worst. Internal conflicts must collide with external ones.',
+    KO: '하강/위기 구간입니다. 상황을 최악으로 몰아가세요. 캐릭터의 내면 갈등이 외부 갈등과 충돌해야 합니다.',
+    EN: 'Falling action / crisis. Push things to their worst. Internal conflicts must collide with external ones.',
+    JP: '下降・危機局面です。状況を最悪に追い込んでください。キャラクターの内面の葛藤が外部の葛藤と衝突しなければなりません。',
+    CN: '下降/危机阶段。将局势推向最坏。角色的内心冲突必须与外部冲突碰撞。',
   },
   5: {
-    ko: '절정입니다. 모든 실마리를 수렴시키고, 캐릭터의 최종 선택을 묘사하세요. 감정의 밀도를 극대화하세요.',
-    en: 'Climax. Converge all threads. Depict the character\'s ultimate choice. Maximize emotional density.',
+    KO: '절정입니다. 모든 실마리를 수렴시키고, 캐릭터의 최종 선택을 묘사하세요. 감정의 밀도를 극대화하세요.',
+    EN: 'Climax. Converge all threads. Depict the character\'s ultimate choice. Maximize emotional density.',
+    JP: 'クライマックスです。すべての伏線を収束させ、キャラクターの最終選択を描いてください。感情の密度を最大化してください。',
+    CN: '高潮部分。收束所有线索，描绘角色的最终选择。将情感密度最大化。',
   },
 };
 
@@ -608,38 +618,57 @@ export function buildSystemInstruction(
   const injectedCharacters = config.characters.length > MAX_CHARACTERS
     ? config.characters.slice(0, MAX_CHARACTERS)
     : config.characters;
+  // 캐릭터 라벨 다국어 매핑
+  const CHAR_LABELS: Record<string, Record<AppLanguage, string>> = {
+    personality: { KO: '성격', EN: 'Personality', JP: '性格', CN: '性格' },
+    speechStyle: { KO: '말투', EN: 'Speech style', JP: '口調', CN: '语气' },
+    speechExample: { KO: '대사 예시', EN: 'Dialogue example', JP: '台詞例', CN: '台词示例' },
+    desire: { KO: '욕망', EN: 'Desire', JP: '欲望', CN: '欲望' },
+    deficiency: { KO: '결핍', EN: 'Deficiency', JP: '欠乏', CN: '缺陷' },
+    conflict: { KO: '갈등', EN: 'Conflict', JP: '葛藤', CN: '冲突' },
+    values: { KO: '가치관/금지선', EN: 'Values / Red lines', JP: '価値観/禁忌', CN: '价值观/底线' },
+    changeArc: { KO: '변화 방향', EN: 'Change arc', JP: '変化の方向', CN: '变化方向' },
+    strength: { KO: '강점', EN: 'Strength', JP: '強み', CN: '优势' },
+    weakness: { KO: '약점', EN: 'Weakness', JP: '弱み', CN: '弱点' },
+    backstory: { KO: '과거', EN: 'Backstory', JP: '過去', CN: '过去' },
+    noCharacters: { KO: '등록된 캐릭터 없음', EN: 'No characters registered', JP: 'キャラクター未登録', CN: '未注册角色' },
+  };
+  const cl = (key: string) => CHAR_LABELS[key]?.[language] ?? CHAR_LABELS[key]?.EN ?? key;
+
   const characterDNA = injectedCharacters.length > 0
     ? (config.characters.length > MAX_CHARACTERS
         ? `  [NOTE: Showing top ${MAX_CHARACTERS} of ${config.characters.length} characters]\n`
         : ''
       ) + injectedCharacters.map(c => {
       let entry = `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`;
-      if (c.personality) entry += `\n    성격: ${c.personality}`;
-      if (c.speechStyle) entry += `\n    말투: ${c.speechStyle}`;
-      if (c.speechExample) entry += `\n    대사 예시: ${c.speechExample}`;
-      // 3-tier 뼈대
-      if (c.desire) entry += `\n    욕망: ${c.desire}`;
-      if (c.deficiency) entry += `\n    결핍: ${c.deficiency}`;
-      if (c.conflict) entry += `\n    갈등: ${c.conflict}`;
-      if (c.values) entry += `\n    가치관/금지선: ${c.values}`;
-      if (c.changeArc) entry += `\n    변화 방향: ${c.changeArc}`;
-      // 2단계
-      if (c.strength) entry += `\n    강점: ${c.strength}`;
-      if (c.weakness) entry += `\n    약점: ${c.weakness}`;
-      if (c.backstory) entry += `\n    과거: ${c.backstory}`;
-      // Social Register Pack
+      if (c.personality) entry += `\n    ${cl('personality')}: ${c.personality}`;
+      if (c.speechStyle) entry += `\n    ${cl('speechStyle')}: ${c.speechStyle}`;
+      if (c.speechExample) entry += `\n    ${cl('speechExample')}: ${c.speechExample}`;
+      if (c.desire) entry += `\n    ${cl('desire')}: ${c.desire}`;
+      if (c.deficiency) entry += `\n    ${cl('deficiency')}: ${c.deficiency}`;
+      if (c.conflict) entry += `\n    ${cl('conflict')}: ${c.conflict}`;
+      if (c.values) entry += `\n    ${cl('values')}: ${c.values}`;
+      if (c.changeArc) entry += `\n    ${cl('changeArc')}: ${c.changeArc}`;
+      if (c.strength) entry += `\n    ${cl('strength')}: ${c.strength}`;
+      if (c.weakness) entry += `\n    ${cl('weakness')}: ${c.weakness}`;
+      if (c.backstory) entry += `\n    ${cl('backstory')}: ${c.backstory}`;
       if (c.socialProfile) {
         entry += `\n    ${formatSocialProfile(c.socialProfile, c.name, language)}`;
       }
       return entry;
     }).join('\n')
-    : '  등록된 캐릭터 없음';
+    : `  ${cl('noCharacters')}`;
 
   // Character relationships — filter to only include relations where BOTH characters
   // are within the injectedCharacters list (first 20) to avoid ghost references.
-  const REL_LABELS: Record<string, string> = {
-    lover: '연인', rival: '라이벌', friend: '친구', enemy: '적',
-    family: '가족', mentor: '사제', subordinate: '상하',
+  const REL_LABELS: Record<string, Record<AppLanguage, string>> = {
+    lover: { KO: '연인', EN: 'Lover', JP: '恋人', CN: '恋人' },
+    rival: { KO: '라이벌', EN: 'Rival', JP: 'ライバル', CN: '对手' },
+    friend: { KO: '친구', EN: 'Friend', JP: '友人', CN: '朋友' },
+    enemy: { KO: '적', EN: 'Enemy', JP: '敵', CN: '敌人' },
+    family: { KO: '가족', EN: 'Family', JP: '家族', CN: '家人' },
+    mentor: { KO: '사제', EN: 'Mentor', JP: '師弟', CN: '师徒' },
+    subordinate: { KO: '상하', EN: 'Superior-subordinate', JP: '上下', CN: '上下级' },
   };
   const injectedCharIds = new Set(injectedCharacters.map(c => c.id));
   const filteredRelations = (config.charRelations ?? []).filter(
@@ -649,7 +678,7 @@ export function buildSystemInstruction(
     ? filteredRelations.map(r => {
       const fromName = injectedCharacters.find(c => c.id === r.from)?.name || r.from;
       const toName = injectedCharacters.find(c => c.id === r.to)?.name || r.to;
-      const label = REL_LABELS[r.type] || r.type;
+      const label = REL_LABELS[r.type]?.[language] ?? REL_LABELS[r.type]?.EN ?? r.type;
       return `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
     }).join('\n')
     : '';
@@ -826,7 +855,7 @@ export function buildSystemInstruction(
 - Genre: ${config.genre}
 
 [ACT-SPECIFIC DIRECTIVE]
-${language === 'KO' ? actGuide.ko : actGuide.en}
+${actGuide[language] ?? actGuide.EN}
 
 ${buildGenrePreset(config.genre, isKO)}
 
