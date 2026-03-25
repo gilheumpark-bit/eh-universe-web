@@ -1,8 +1,8 @@
 import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey } from '../ai-providers';
 
 describe('PROVIDERS', () => {
-  it('has 5 providers', () => {
-    expect(PROVIDER_LIST).toHaveLength(5);
+  it('has 7 providers (cloud + local)', () => {
+    expect(PROVIDER_LIST).toHaveLength(7);
   });
 
   it('each provider has required fields', () => {
@@ -70,7 +70,7 @@ describe('API key obfuscation', () => {
     setApiKey('openai', 'sk-test-abc');
     const raw = localStorage.getItem('noa_openai_key');
     expect(raw).not.toBe('sk-test-abc');
-    expect(raw).toContain('noa:1:'); // obfuscation prefix
+    expect(raw).toContain('noa:2:'); // XOR+Base64 obfuscation prefix (v2)
   });
 
   it('handles empty key', () => {
