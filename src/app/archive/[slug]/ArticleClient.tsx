@@ -85,6 +85,8 @@ export default function ArticleClient({ slug }: { slug: string }) {
             {T({
               ko: `문서 등급: ${article.level} | 최종 갱신: 7000년대 | 작성: 비밀조사국`,
               en: `Document Level: ${article.level} | Last Updated: 7000s | Author: Bureau of Investigation`,
+              jp: `文書等級: ${article.level} | 最終更新: 7000年代 | 作成: 秘密調査局`,
+              cn: `文档等级: ${article.level} | 最后更新: 7000年代 | 作者: 秘密调查局`,
             })}
           </div>
 
@@ -137,9 +139,9 @@ export default function ArticleClient({ slug }: { slug: string }) {
 
             <div className="mt-8 border-t border-border pt-6">
               <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
-                {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}
+                {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only.", jp: "この文書は秘密調査局内部参照用である。", cn: "本文档仅供秘密调查局内部参考。" })}
                 <br />
-                {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
+                {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo.", jp: "無断流出した場合、該当人員はタイポとして処理される。", cn: "未经授权泄露者将被作为笔误处理。" })}
               </p>
             </div>
           </div>

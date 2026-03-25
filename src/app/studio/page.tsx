@@ -9,6 +9,8 @@ import {
   FileType, Key, BookOpen
 } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Message, StoryConfig, Genre,
   AppLanguage, AppTab,
@@ -21,7 +23,6 @@ import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 // EngineReport type inferred from useStudioAI hook return
 import ChatMessage from '@/components/studio/ChatMessage';
-const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 import ResourceView from '@/components/studio/ResourceView';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
@@ -35,10 +36,9 @@ import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
-import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
 // WorldSimulator loaded by WorldStudioView
 // const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
+const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> });
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
@@ -242,6 +242,28 @@ export default function StudioPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
+
+  // ?setup=1 → API 키 모달 자동 오픈 (StudioChoiceScreen에서 "API 사용" 선택 시)
+  useEffect(() => {
+    if (!hydrated) return;
+    if (searchParams.get('setup') !== '1') return;
+    setShowApiKeyModal(true);
+    studioRouter.replace('/studio', { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // API 키 추가/삭제 감지 → 모드 자동 전환 + localStorage 동기화
+  useEffect(() => {
+    if (!aiCapabilitiesLoaded) return;
+    if (hasAiAccess) {
+      setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
+      localStorage.setItem('noa_studio_mode', 'api');
+    } else {
+      setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
+      localStorage.setItem('noa_studio_mode', 'manual');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAiAccess, aiCapabilitiesLoaded]);
 
   // UX: confirm modal state
   const [confirmState, setConfirmState] = useState<{
@@ -507,6 +529,7 @@ export default function StudioPage() {
       setIsQuickGenerating(false);
     }
   };
+
 
   const openQuickStart = useCallback(() => {
     if (showQuickStartLock) {
@@ -1272,16 +1295,17 @@ export default function StudioPage() {
                     </details>
                     )}
 
-                    {/* AI / Edit sub-tabs + Directive — show when: has messages, not in default ai mode, or no API key (so manual users can find edit) */}
+                    {/* AI / Edit sub-tabs — API 없을 때는 edit 탭만 표시 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai' || showAiLock) && (<>
                     <div className="flex gap-1 items-center">
-                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${showAiLock && writingMode !== 'ai' ? 'opacity-50' : ''}`}
-                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                        🤖 {t('writingMode.draftGen')}{showAiLock && ' 🔒'}
-                      </button>
+                      {!showAiLock && (
+                        <button onClick={() => setWritingMode('ai')}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                            writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                          }`}>
+                          🤖 {t('writingMode.draftGen')}
+                        </button>
+                      )}
                       <button onClick={() => {
                         setWritingMode('edit');
                         if (!editDraft && currentSession.messages.length > 0) {
@@ -1297,37 +1321,35 @@ export default function StudioPage() {
                         }`}>
                         ✏️ {t('writingMode.manualEdit')}
                       </button>
-                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${showAiLock && writingMode !== 'canvas' ? 'opacity-50' : ''}`}
-                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                        🎨 {t('writingMode.threeStep')}{showAiLock && ' 🔒'}
-                      </button>
-                      <button onClick={() => {
-                        if (showAiLock) { setShowApiKeyModal(true); return; }
-                        setWritingMode('refine');
-                        if (!editDraft && currentSession.messages.length > 0) {
-                          const allText = currentSession.messages
-                            .filter(m => m.role === 'assistant' && m.content)
-                            .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
-                            .join('\n\n---\n\n');
-                          setEditDraft(allText);
-                        }
-                      }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${showAiLock && writingMode !== 'refine' ? 'opacity-50' : ''}`}
-                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                        ⚡ {t('writingMode.auto30')}{showAiLock && ' 🔒'}
-                      </button>
-                      <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        } ${showAiLock && writingMode !== 'advanced' ? 'opacity-50' : ''}`}
-                        title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                        🎯 {t('writingMode.advanced')}{showAiLock && ' 🔒'}
-                      </button>
+                      {!showAiLock && (<>
+                        <button onClick={() => { setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                            writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                          }`}>
+                          🎨 {t('writingMode.threeStep')}
+                        </button>
+                        <button onClick={() => {
+                          setWritingMode('refine');
+                          if (!editDraft && currentSession.messages.length > 0) {
+                            const allText = currentSession.messages
+                              .filter(m => m.role === 'assistant' && m.content)
+                              .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
+                              .join('\n\n---\n\n');
+                            setEditDraft(allText);
+                          }
+                        }}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                            writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                          }`}>
+                          ⚡ {t('writingMode.auto30')}
+                        </button>
+                        <button onClick={() => setWritingMode('advanced')}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+                            writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
+                          }`}>
+                          🎯 {t('writingMode.advanced')}
+                        </button>
+                      </>)}
                       {writingMode === 'edit' && (
                         <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
                           {editDraft.length.toLocaleString()}{t('writingMode.chars')}
@@ -1335,7 +1357,8 @@ export default function StudioPage() {
                       )}
                     </div>
 
-                    {/* Prompt Directive — AI에 추가 지시 */}
+                    {/* Prompt Directive — AI 있을 때만 표시 */}
+                    {!showAiLock && (
                     <div className="flex gap-2 items-center">
                       <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">
                         💡 {t('writingMode.directive')}
@@ -1350,6 +1373,7 @@ export default function StudioPage() {
                         <button onClick={() => setPromptDirective('')} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
                       )}
                     </div>
+                    )}
                     </>)}
 
                     {writingMode === 'ai' && (
@@ -1424,9 +1448,11 @@ export default function StudioPage() {
                       /* ====== INLINE REWRITE MODE ====== */
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
+                          {!showAiLock && (
                           <p className="text-[10px] text-text-tertiary">
-                            {showAiLock ? t('writingMode.editDescNoApi') : t('writingMode.editDescWithApi')}
+                            {t('writingMode.editDescWithApi')}
                           </p>
+                          )}
                           <div className="flex gap-2">
                             <button onClick={() => {
                               if (!editDraft.trim()) return;
@@ -1800,8 +1826,109 @@ export default function StudioPage() {
             )}
           </div>
 
-          {showDashboard && activeTab === 'writing' && currentSession && (
+          {showDashboard && activeTab === 'writing' && currentSession && !showAiLock && (
             <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
+          )}
+
+          {/* 수동 모드 설정 참조 패널 — API 없을 때 집필 탭에서 표시 */}
+          {activeTab === 'writing' && showAiLock && currentSession && (
+            <aside className="hidden lg:flex w-72 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
+              <div className="p-4 space-y-4">
+                <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                  📋 {isKO ? '설정 참조' : 'Config Reference'}
+                </div>
+
+                {/* 시놉시스 */}
+                {currentSession.config.synopsis && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-accent-amber uppercase tracking-wider font-[family-name:var(--font-mono)]">
+                      {isKO ? '시놉시스' : 'Synopsis'}
+                    </div>
+                    <p className="text-[11px] leading-6 text-text-secondary whitespace-pre-wrap">{currentSession.config.synopsis}</p>
+                  </div>
+                )}
+
+                {/* 세계관 핵심 */}
+                {(currentSession.config.corePremise || currentSession.config.powerStructure || currentSession.config.currentConflict) && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-accent-blue uppercase tracking-wider font-[family-name:var(--font-mono)]">
+                      {isKO ? '세계관' : 'World'}
+                    </div>
+                    {currentSession.config.corePremise && (
+                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '핵심전제 · ' : 'Premise · '}</span>{currentSession.config.corePremise}</p>
+                    )}
+                    {currentSession.config.powerStructure && (
+                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '권력구조 · ' : 'Power · '}</span>{currentSession.config.powerStructure}</p>
+                    )}
+                    {currentSession.config.currentConflict && (
+                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '갈등 · ' : 'Conflict · '}</span>{currentSession.config.currentConflict}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* 캐릭터 */}
+                {currentSession.config.characters && currentSession.config.characters.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-accent-green uppercase tracking-wider font-[family-name:var(--font-mono)]">
+                      {isKO ? '등장인물' : 'Characters'}
+                    </div>
+                    {currentSession.config.characters.slice(0, 5).map((c, i) => (
+                      <div key={i} className="text-[11px] leading-6 text-text-secondary">
+                        <span className="text-text-primary font-bold">{c.name}</span>
+                        {c.role && <span className="text-text-tertiary"> · {c.role}</span>}
+                        {c.traits && <span> — {c.traits.slice(0, 40)}{c.traits.length > 40 ? '…' : ''}</span>}
+                      </div>
+                    ))}
+                    {currentSession.config.characters.length > 5 && (
+                      <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">+{currentSession.config.characters.length - 5} more</p>
+                    )}
+                  </div>
+                )}
+
+                {/* 현재 에피소드 씬시트 */}
+                {(() => {
+                  const sheet = (currentSession.config.episodeSceneSheets || []).find(s => s.episode === currentSession.config.episode);
+                  if (!sheet || sheet.scenes.length === 0) return null;
+                  return (
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-bold text-accent-purple uppercase tracking-wider font-[family-name:var(--font-mono)]">
+                        {isKO ? `EP.${sheet.episode} 씬시트` : `EP.${sheet.episode} Scenes`}
+                      </div>
+                      {sheet.scenes.map((sc, i) => (
+                        <div key={i} className="text-[11px] leading-6 text-text-secondary">
+                          <span className="text-text-tertiary">{sc.sceneId} · </span>
+                          <span>{sc.sceneName}</span>
+                          {sc.summary && <span className="text-text-tertiary"> — {sc.summary.slice(0, 30)}{sc.summary.length > 30 ? '…' : ''}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* 배경/POV */}
+                <div className="space-y-1 border-t border-border pt-3">
+                  <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+                    {isKO ? '기본 설정' : 'Basics'}
+                  </div>
+                  {currentSession.config.setting && (
+                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '배경 · ' : 'Setting · '}</span>{currentSession.config.setting}</p>
+                  )}
+                  {currentSession.config.povCharacter && (
+                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">POV · </span>{currentSession.config.povCharacter}</p>
+                  )}
+                  {currentSession.config.primaryEmotion && (
+                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '감정 · ' : 'Emotion · '}</span>{currentSession.config.primaryEmotion}</p>
+                  )}
+                </div>
+
+                {/* API 키 추가 안내 */}
+                <button
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="w-full py-2 mt-2 border border-accent-purple/30 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-accent-purple hover:bg-accent-purple/10 transition-colors">
+                  🔑 {isKO ? 'API 키 추가' : 'Add API Key'}
+                </button>
+              </div>
+            </aside>
           )}
 
           {/* Right Panel — Save Slots (all tabs except writing) */}
