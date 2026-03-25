@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 // ============================================================
 // PART 1 — 타입 및 인터페이스
@@ -109,16 +109,15 @@ function useFindReplace(
     return result;
   }, [findText, value]);
 
-  useEffect(() => {
-    if (matchIndex >= matches.length && matches.length > 0) setMatchIndex(0);
-  }, [matches, matchIndex]);
+  // Clamp matchIndex without triggering a setState cascade
+  const clampedIndex = matches.length > 0 ? Math.min(matchIndex, matches.length - 1) : 0;
 
   const navigateTo = useCallback(
     (idx: number) => {
       if (matches.length === 0) return;
       const clamped = ((idx % matches.length) + matches.length) % matches.length;
       setMatchIndex(clamped);
-      const pos = matches[clamped];
+      const pos = matches[clamped] ?? 0;
       const ta = textareaRef.current;
       if (!ta) return;
       ta.focus();
@@ -132,8 +131,10 @@ function useFindReplace(
 
   const replaceOne = useCallback(() => {
     if (!findText || matches.length === 0) return;
-    const pos = matches[matchIndex] ?? matches[0];
+    const pos = matches[clampedIndex] ?? matches[0];
     onChange(value.slice(0, pos) + replaceText + value.slice(pos + findText.length));
+  // clampedIndex is derived from matchIndex + matches — list both to satisfy exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [findText, replaceText, matches, matchIndex, value, onChange]);
 
   const replaceAll = useCallback(() => {
@@ -146,7 +147,8 @@ function useFindReplace(
     showFind, setShowFind,
     findText, setFindText,
     replaceText, setReplaceText,
-    matchIndex, matches,
+    matchIndex: clampedIndex,
+    matches,
     navigateTo, replaceOne, replaceAll,
   };
 }
