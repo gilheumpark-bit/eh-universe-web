@@ -1927,12 +1927,6 @@ export default function StudioPage() {
                   )}
                 </div>
 
-                {/* API 키 추가 안내 */}
-                <button
-                  onClick={() => setShowApiKeyModal(true)}
-                  className="w-full py-2 mt-2 border border-accent-purple/30 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-accent-purple hover:bg-accent-purple/10 transition-colors">
-                  🔑 {isKO ? 'API 키 추가' : 'Add API Key'}
-                </button>
               </div>
             </aside>
           )}
