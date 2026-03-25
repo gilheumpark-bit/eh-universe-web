@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { provider, model, systemInstruction, messages, temperature = 0.7, apiKey: clientKey, maxTokens } = body as {
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body as {
       provider?: string; model?: string; systemInstruction?: string;
       messages?: { role: string; content: string }[];
       temperature?: number; apiKey?: string; maxTokens?: number;

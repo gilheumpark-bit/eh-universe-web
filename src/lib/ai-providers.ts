@@ -232,7 +232,7 @@ async function streamViaProxy(
       model,
       systemInstruction: opts.systemInstruction,
       messages: opts.messages,
-      temperature: opts.temperature ?? 0.7,
+      temperature: opts.temperature ?? 0.9,
       maxTokens: opts.maxTokens,
       apiKey: apiKey || undefined, // BYOK: send key to proxy, proxy uses it server-side
     }),

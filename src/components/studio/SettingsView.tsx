@@ -43,7 +43,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const [obfuscateDone, setObfuscateDone] = useState<number | null>(null);
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
-  const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.7'));
+  const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.9'));
 
   const activeProvider = typeof window !== 'undefined' ? getActiveProvider() : 'gemini';
   const activeModel = typeof window !== 'undefined' ? getActiveModel() : '';

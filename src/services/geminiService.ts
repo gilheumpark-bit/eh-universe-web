@@ -108,7 +108,7 @@ export const generateStoryStream = async (
 ): Promise<GenerateResult> => {
   const language = options.language ?? 'KO';
   const platform = options.platform ?? config.platform ?? PlatformType.MOBILE;
-  const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.7');
+  const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.9');
 
   const systemInstruction = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
   const userPrompt = buildUserPrompt(config, draft, {
