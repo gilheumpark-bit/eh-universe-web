@@ -88,10 +88,8 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
     setApiKey(activeId, currentKey.trim());
     setActiveProvider(activeId);
     setActiveModel(selectedModel);
-    // Backward compat: also save to noa_api_key if gemini
-    if (activeId === 'gemini') {
-      localStorage.setItem('noa_api_key', currentKey.trim());
-    }
+    // setApiKey already saves to the correct storageKey (noa_api_key for gemini)
+    // with proper obfuscation — no plaintext override needed
     onSave(currentKey.trim());
     onClose();
   };

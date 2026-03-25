@@ -22,14 +22,15 @@ interface SettingsViewProps {
 
 // Engine settings labels are now in TRANSLATIONS.settingsEngine
 
-const OBFUSCATION_PREFIX = 'noa:1:';
+const OBFUSCATION_PREFIXES = ['noa:1:', 'noa:2:'];
 
 function migrateAllKeysToObfuscated(): number {
   let migrated = 0;
   for (const provider of PROVIDER_LIST) {
     const raw = localStorage.getItem(provider.storageKey);
-    if (raw && !raw.startsWith(OBFUSCATION_PREFIX)) {
+    if (raw && !OBFUSCATION_PREFIXES.some(p => raw.startsWith(p))) {
       // Plain-text key detected — re-save through setApiKey which obfuscates it
+      // deobfuscateKey handles both noa:1: and noa:2: so won't double-encode
       setApiKey(provider.id, raw);
       migrated++;
     }

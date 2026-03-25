@@ -278,9 +278,14 @@ export function getPreferredModel(providerId: ProviderId): string {
 }
 
 export function setActiveModel(model: string): void {
-  const provider = getActiveProvider();
-  const safeModel = PROVIDERS[provider].models.includes(model) ? model : PROVIDERS[provider].defaultModel;
-  localStorage.setItem("noa_active_model", safeModel);
+  // 커스텀 모델명도 그대로 저장 — BYOK/로컬 LLM에서 사용자 입력 모델 지원
+  const trimmed = model.trim();
+  if (!trimmed) {
+    const provider = getActiveProvider();
+    localStorage.setItem("noa_active_model", PROVIDERS[provider].defaultModel);
+  } else {
+    localStorage.setItem("noa_active_model", trimmed);
+  }
   localStorage.removeItem(LEGACY_MODEL_KEY);
 }
 
