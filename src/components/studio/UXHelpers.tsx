@@ -67,10 +67,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 export type ErrorType = 'network' | 'api_key' | 'rate_limit' | 'parse' | 'timeout' | 'server' | 'not_found' | 'unknown';
 
 interface ErrorInfo {
-  type: ErrorType;
+  type?: ErrorType;
   title: string;
   message: string;
   action?: string;
+  retryable?: boolean;
 }
 
 function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
@@ -144,7 +145,16 @@ interface ErrorToastProps {
 
 export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismiss, onRetry }) => {
   const t = createT(language);
-  const info = classifyError(error, language);
+  // StudioError 체계 우선, 폴백으로 기존 classifyError
+  let info: ErrorInfo;
+  try {
+    const { classifyAsStudioError, getErrorMessage } = require('@/lib/errors');
+    const studioErr = classifyAsStudioError(error);
+    const msg = getErrorMessage(studioErr.code, language);
+    info = { title: msg.title, message: msg.message, action: msg.action, retryable: studioErr.retryable };
+  } catch {
+    info = classifyError(error, language);
+  }
 
   useEffect(() => {
     const timer = setTimeout(onDismiss, 8000);
@@ -166,9 +176,9 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismi
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
-        {onRetry && (
+        {onRetry && (info.retryable !== false) && (
           <button onClick={onRetry} className="mt-3 w-full px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-300 hover:bg-red-500/30 transition-colors">
-            {t('uxHelpers.retry')}
+            {info.action || t('uxHelpers.retry')}
           </button>
         )}
       </div>
