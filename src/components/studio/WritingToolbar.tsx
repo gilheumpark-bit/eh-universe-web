@@ -174,7 +174,17 @@ function useWritingStats(value: string) {
 // ============================================================
 export function WritingToolbar({ textareaRef, value, onChange, language }: WritingToolbarProps) {
   const isKO = language === 'KO';
-  const { adjustIndent } = useTextOps(textareaRef, value, onChange);
+  const { wrapSelection, adjustIndent } = useTextOps(textareaRef, value, onChange);
+
+  // Novel-friendly text insert: no raw markdown, visible section markers
+  const insertAtCursor = useCallback((text: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart;
+    onChange(value.slice(0, pos) + text + value.slice(pos));
+    const newPos = pos + text.length;
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(newPos, newPos); }, 0);
+  }, [textareaRef, value, onChange]);
   const {
     showFind, setShowFind,
     findText, setFindText,
@@ -191,6 +201,13 @@ export function WritingToolbar({ textareaRef, value, onChange, language }: Writi
     <div className="space-y-2">
       {/* ── 툴바 ── */}
       <div className="flex items-center gap-0.5 px-2 py-1 bg-bg-secondary border border-border rounded-lg flex-wrap gap-y-1">
+
+        {/* 서식 — 소설 작성용 (마크다운 기호 대신 가시적 구분자) */}
+        <button onClick={() => wrapSelection('「', '」')} title={isKO ? '강조 (괄호)' : 'Emphasis'} className={`${btn} text-xs font-black w-6 h-6 flex items-center justify-center`}>「」</button>
+        <button onClick={() => insertAtCursor('\n\n* * *\n\n')} title={isKO ? '장면 전환' : 'Scene Break'} className={`${btn} text-[10px] font-black font-mono px-1.5`}>***</button>
+        <button onClick={() => insertAtCursor('\n\n────────────────\n\n')} title={isKO ? '구분선' : 'Divider'} className={`${btn} text-[10px] font-mono px-1.5`}>──</button>
+
+        {divider}
 
         {/* 들여쓰기 */}
         <button onClick={() => adjustIndent('out')} title="내어쓰기" className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇤</button>

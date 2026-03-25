@@ -226,9 +226,20 @@ export function useProjectManager(language: AppLanguage) {
   }, [sessions, currentSessionId, setSessions]);
 
   const clearAllSessions = useCallback(() => {
-    setSessions([]);
+    // Clear ALL projects and sessions, not just sessions in the current project
+    const freshProject: Project = {
+      id: `project-${crypto.randomUUID()}`,
+      name: PROJECT_NAMES[language],
+      description: '',
+      genre: Genre.SF,
+      createdAt: Date.now(),
+      lastUpdate: Date.now(),
+      sessions: [],
+    };
+    setProjects([freshProject]);
+    setCurrentProjectId(freshProject.id);
     setCurrentSessionId(null);
-  }, [setSessions]);
+  }, [language, setProjects]);
 
   const updateCurrentSession = useCallback((updates: Partial<ChatSession>) => {
     if (!currentSessionId) return;
