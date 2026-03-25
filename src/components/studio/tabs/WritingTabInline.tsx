@@ -296,11 +296,26 @@ export default function WritingTabInline(props: Props) {
                           🎯 {t('writingMode.advanced')}
                         </button>
                       </>)}
-                      {writingMode === 'edit' && (
-                        <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
+                      {writingMode === 'edit' && (<>
+                        <button onClick={() => {
+                            if (!editDraft.trim()) return;
+                            const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
+                            updateCurrentSession({
+                              messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg],
+                              title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title
+                            });
+                            if (currentSessionId) localStorage.removeItem(`noa_editdraft_${currentSessionId}`);
+                            if (!showAiLock) setWritingMode('ai');
+                            setEditDraft('');
+                          }}
+                          disabled={!editDraft.trim()}
+                          className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
+                          📋 {t('writingMode.applyToManuscript')}
+                        </button>
+                        <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-auto">
                           {editDraft.length.toLocaleString()}{t('writingMode.chars')}
                         </span>
-                      )}
+                      </>)}
                     </div>
 
                     {/* Prompt Directive — AI 있을 때만 표시 */}
@@ -410,24 +425,6 @@ export default function WritingTabInline(props: Props) {
                       /* ====== INLINE REWRITE MODE + SPLIT VIEW ====== */
                       <div className="flex gap-4 items-stretch">
                       <div className="flex-1 min-w-0 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => {
-                              if (!editDraft.trim()) return;
-                              const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
-                              updateCurrentSession({
-                                messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg],
-                                title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title
-                              });
-                              if (currentSessionId) localStorage.removeItem(`noa_editdraft_${currentSessionId}`);
-                              if (!showAiLock) setWritingMode('ai');
-                              setEditDraft('');
-                            }}
-                            disabled={!editDraft.trim()}
-                            className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
-                            📋 {t('writingMode.applyToManuscript')}
-                          </button>
-                          <span className="text-[9px] text-text-tertiary ml-auto">{editDraft.length}{language === 'KO' ? '자' : ' chars'}</span>
-                        </div>
                         {/* 서식 툴바 + 찾기/바꾸기 + 통계 */}
                         <WritingToolbar
                           textareaRef={editDraftRef}
