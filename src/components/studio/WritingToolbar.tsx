@@ -9,6 +9,8 @@ interface WritingToolbarProps {
   value: string;
   onChange: (value: string) => void;
   language?: string;
+  targetMin?: number;
+  targetMax?: number;
 }
 // IDENTITY_SEAL: PART-1 | role=타입 정의 | inputs=props | outputs=interface
 
@@ -172,7 +174,7 @@ function useWritingStats(value: string) {
 // ============================================================
 // PART 5 — 메인 컴포넌트
 // ============================================================
-export function WritingToolbar({ textareaRef, value, onChange, language }: WritingToolbarProps) {
+export function WritingToolbar({ textareaRef, value, onChange, language, targetMin, targetMax }: WritingToolbarProps) {
   const isKO = language === 'KO';
   const { wrapSelection, adjustIndent } = useTextOps(textareaRef, value, onChange);
 
@@ -241,6 +243,25 @@ export function WritingToolbar({ textareaRef, value, onChange, language }: Writi
           )}
         </div>
       </div>
+
+      {/* ── 글자수 목표 프로그레스 ── */}
+      {targetMin != null && targetMin > 0 && (
+        <div className="px-2 py-1">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-bg-tertiary/50 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  stats.charsNoSpace >= targetMin ? 'bg-accent-green' : stats.charsNoSpace >= targetMin * 0.5 ? 'bg-accent-purple' : 'bg-border'
+                }`}
+                style={{ width: `${Math.min(100, (stats.charsNoSpace / (targetMax || targetMin)) * 100)}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-mono text-text-tertiary shrink-0">
+              {stats.charsNoSpace.toLocaleString()} / {(targetMin).toLocaleString()}{targetMax ? `~${targetMax.toLocaleString()}` : ''}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ── 찾기/바꾸기 바 ── */}
       {showFind && (

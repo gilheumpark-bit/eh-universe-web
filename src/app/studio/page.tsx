@@ -49,6 +49,7 @@ const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScene
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false });
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
+const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
@@ -1410,8 +1411,9 @@ export default function StudioPage() {
                     )}
 
                     {writingMode === 'edit' && (
-                      /* ====== INLINE REWRITE MODE ====== */
-                      <div className="space-y-4">
+                      /* ====== INLINE REWRITE MODE + SPLIT VIEW ====== */
+                      <div className="flex gap-0 items-stretch">
+                      <div className="flex-1 min-w-0 space-y-4">
                         <div className="flex items-center justify-between">
                           {!showAiLock && (
                           <p className="text-[10px] text-text-tertiary">
@@ -1441,6 +1443,8 @@ export default function StudioPage() {
                           value={editDraft}
                           onChange={setEditDraft}
                           language={language}
+                          targetMin={currentSession.config.guardrails.min}
+                          targetMax={currentSession.config.guardrails.max}
                         />
 
                         {!editDraft.trim() ? (
@@ -1471,6 +1475,15 @@ export default function StudioPage() {
                             onApply={(newContent) => setEditDraft(newContent)}
                           />
                         )}
+                      </div>
+                      {/* 우측 참조 패널 (데스크톱만) */}
+                      <EditReferencePanel
+                        config={currentSession.config}
+                        manuscripts={currentSession.config.manuscripts || []}
+                        language={language}
+                        isOpen={rightPanelOpen}
+                        onToggle={() => setRightPanelOpen(p => !p)}
+                      />
                       </div>
                     )}
 
