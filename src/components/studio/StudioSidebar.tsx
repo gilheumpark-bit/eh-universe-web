@@ -139,19 +139,27 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           : '-translate-x-full md:translate-x-0 md:w-0'
       }`}
     >
-      <div className="flex h-full flex-col overflow-hidden px-3 py-3 md:px-4 md:py-4">
+      <div className="flex h-full flex-col overflow-hidden px-2 py-2 md:px-3 md:py-3">
         <div className="premium-panel-soft flex h-full flex-col overflow-hidden border-white/8">
 
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest"
+          >
+            ◀ {language === 'KO' ? '접기' : 'Collapse'}
+          </button>
+
           {/* Header: logo + project selector + new session */}
-          <div className="border-b border-white/8 px-5 py-5">
-            <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="border-b border-white/8 px-4 py-3">
+            <div className="mb-3 flex items-start justify-between gap-2">
               <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-85">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(202,161,92,0.22)] bg-[linear-gradient(135deg,rgba(202,161,92,0.2),rgba(92,143,214,0.14))] text-[rgba(246,226,188,0.94)] shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-                  <Zap className="h-5 w-5" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(202,161,92,0.22)] bg-[linear-gradient(135deg,rgba(202,161,92,0.2),rgba(92,143,214,0.14))] text-[rgba(246,226,188,0.94)] shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+                  <Zap className="h-4 w-4" />
                 </span>
                 <div>
                   <div className="site-kicker text-[0.62rem]">Narrative Workbench</div>
-                  <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-[-0.04em] text-text-primary">
+                  <h1 className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-[-0.04em] text-text-primary">
                     NOA Studio
                   </h1>
                   <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-text-tertiary">
@@ -170,8 +178,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             </div>
 
             {/* Project selector */}
-            <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="rounded-[1.25rem] border border-white/8 bg-black/20 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="site-kicker text-[0.58rem]">{t('sidebar.activeProject')}</span>
                 <span className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
                   {projects.length} projects
@@ -233,7 +241,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
             <button
               onClick={createNewSession}
-              className="premium-button mt-4 flex w-full justify-center rounded-[1.25rem] px-5 py-4 text-[11px]"
+              className="premium-button mt-3 flex w-full justify-center rounded-[1.1rem] px-4 py-3 text-[11px]"
             >
               <Plus className="h-4 w-4" /> {t('sidebar.newProject')}
             </button>
@@ -244,9 +252,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* ============================================================
               PART 2 — NAV: mode toggle + tabs + episode jump
               ============================================================ */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="flex-1 overflow-y-auto px-4 py-3">
             {/* Studio mode toggle */}
-            <div className="mb-4 flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
               <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
                 {studioMode === 'guided'
                   ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
@@ -273,7 +281,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             </div>
 
             {/* Nav tabs */}
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               {([
                 { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true },
                 { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true },
@@ -290,14 +298,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     key={tab}
                     data-testid={`tab-${tab}`}
                     onClick={() => handleTabChange(tab)}
-                    className={`flex w-full items-center gap-3 rounded-[1.15rem] px-4 py-3.5 text-left transition-all ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all ${
                       activeTab === tab
                         ? 'border border-[rgba(202,161,92,0.24)] bg-[linear-gradient(135deg,rgba(202,161,92,0.16),rgba(92,143,214,0.1))] text-text-primary shadow-[0_14px_32px_rgba(0,0,0,0.22)]'
                         : 'border border-transparent text-text-secondary hover:border-white/8 hover:bg-white/[0.04] hover:text-text-primary'
                     }`}
                   >
                     <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl border ${
                         activeTab === tab
                           ? 'border-[rgba(202,161,92,0.22)] bg-[rgba(202,161,92,0.12)] text-[rgba(246,226,188,0.92)]'
                           : 'border-white/8 bg-black/20 text-text-tertiary'
@@ -378,7 +386,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* ============================================================
               PART 3 — FOOTER: exports, auth, sync, language, settings
               ============================================================ */}
-          <div className="space-y-4 border-t border-white/8 px-5 py-5">
+          <div className="space-y-2 border-t border-white/8 px-4 py-3">
             {/* Export buttons */}
             <div className="grid grid-cols-2 gap-2">
               <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
@@ -403,10 +411,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             </div>
 
             {/* Auth + Sync */}
-            <div className="rounded-[1.25rem] border border-white/8 bg-black/20 p-4">
+            <div className="rounded-xl border border-white/8 bg-black/20 p-3">
               {user ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-[rgba(216,230,255,0.92)] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-[rgba(216,230,255,0.92)] shrink-0">
                     {user.photoURL ? (
                       <Image src={user.photoURL} alt="" width={44} height={44} className="h-full w-full object-cover" />
                     ) : (

@@ -797,6 +797,17 @@ export default function StudioPage() {
         closeConfirm={closeConfirm}
       />
 
+      {/* Sidebar open toggle (visible when sidebar is closed on desktop) */}
+      {!isSidebarOpen && !focusMode && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-6 h-16 bg-bg-secondary/80 border border-border border-l-0 rounded-r-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-all"
+          title={language === 'KO' ? '사이드바 열기' : 'Open sidebar'}
+        >
+          <span className="text-[10px]">▶</span>
+        </button>
+      )}
+
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
         {focusMode && (
