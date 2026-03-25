@@ -20,6 +20,8 @@ interface InlineRewriterProps {
   language: AppLanguage;
   context?: string;
   onApply: (newContent: string) => void;
+  onChange?: (newContent: string) => void;
+  externalRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 interface Selection {
@@ -98,9 +100,10 @@ const QUICK_ACTIONS: QuickAction[] = [
 // PART 3 — Component
 // ============================================================
 
-const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, context, onApply }) => {
+const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, context, onApply, onChange, externalRef }) => {
   const t = createT(language);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = externalRef ?? internalRef;
   const [editableContent, setEditableContent] = useState(content);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -127,7 +130,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     setSelection({ start, end, text: editableContent.slice(start, end) });
     setShowActions(true);
     setPreview(null);
-  }, [editableContent]);
+  }, [editableContent, textareaRef]);
 
   const executeAction = useCallback(async (action: QuickAction) => {
     if (!selection || isStreaming) return;
@@ -310,6 +313,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         value={editableContent}
         onChange={e => {
           setEditableContent(e.target.value);
+          onChange?.(e.target.value);
           setSelection(null);
           setShowActions(false);
         }}

@@ -1473,6 +1473,8 @@ export default function StudioPage() {
                             language={language}
                             context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined}
                             onApply={(newContent) => setEditDraft(newContent)}
+                            onChange={(newContent) => setEditDraft(newContent)}
+                            externalRef={editDraftRef}
                           />
                         )}
                       </div>
@@ -1822,100 +1824,7 @@ export default function StudioPage() {
             <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
           )}
 
-          {/* 수동 모드 설정 참조 패널 — API 없을 때 집필 탭에서 표시 */}
-          {activeTab === 'writing' && showAiLock && currentSession && (
-            <aside className="hidden lg:flex w-72 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
-              <div className="p-4 space-y-4">
-                <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
-                  📋 {isKO ? '설정 참조' : 'Config Reference'}
-                </div>
-
-                {/* 시놉시스 */}
-                {currentSession.config.synopsis && (
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-bold text-accent-amber uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                      {isKO ? '시놉시스' : 'Synopsis'}
-                    </div>
-                    <p className="text-[11px] leading-6 text-text-secondary whitespace-pre-wrap">{currentSession.config.synopsis}</p>
-                  </div>
-                )}
-
-                {/* 세계관 핵심 */}
-                {(currentSession.config.corePremise || currentSession.config.powerStructure || currentSession.config.currentConflict) && (
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-bold text-accent-blue uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                      {isKO ? '세계관' : 'World'}
-                    </div>
-                    {currentSession.config.corePremise && (
-                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '핵심전제 · ' : 'Premise · '}</span>{currentSession.config.corePremise}</p>
-                    )}
-                    {currentSession.config.powerStructure && (
-                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '권력구조 · ' : 'Power · '}</span>{currentSession.config.powerStructure}</p>
-                    )}
-                    {currentSession.config.currentConflict && (
-                      <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '갈등 · ' : 'Conflict · '}</span>{currentSession.config.currentConflict}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* 캐릭터 */}
-                {currentSession.config.characters && currentSession.config.characters.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-bold text-accent-green uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                      {isKO ? '등장인물' : 'Characters'}
-                    </div>
-                    {currentSession.config.characters.slice(0, 5).map((c, i) => (
-                      <div key={i} className="text-[11px] leading-6 text-text-secondary">
-                        <span className="text-text-primary font-bold">{c.name}</span>
-                        {c.role && <span className="text-text-tertiary"> · {c.role}</span>}
-                        {c.traits && <span> — {c.traits.slice(0, 40)}{c.traits.length > 40 ? '…' : ''}</span>}
-                      </div>
-                    ))}
-                    {currentSession.config.characters.length > 5 && (
-                      <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">+{currentSession.config.characters.length - 5} more</p>
-                    )}
-                  </div>
-                )}
-
-                {/* 현재 에피소드 씬시트 */}
-                {(() => {
-                  const sheet = (currentSession.config.episodeSceneSheets || []).find(s => s.episode === currentSession.config.episode);
-                  if (!sheet || sheet.scenes.length === 0) return null;
-                  return (
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-bold text-accent-purple uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                        {isKO ? `EP.${sheet.episode} 씬시트` : `EP.${sheet.episode} Scenes`}
-                      </div>
-                      {sheet.scenes.map((sc, i) => (
-                        <div key={i} className="text-[11px] leading-6 text-text-secondary">
-                          <span className="text-text-tertiary">{sc.sceneId} · </span>
-                          <span>{sc.sceneName}</span>
-                          {sc.summary && <span className="text-text-tertiary"> — {sc.summary.slice(0, 30)}{sc.summary.length > 30 ? '…' : ''}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {/* 배경/POV */}
-                <div className="space-y-1 border-t border-border pt-3">
-                  <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                    {isKO ? '기본 설정' : 'Basics'}
-                  </div>
-                  {currentSession.config.setting && (
-                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '배경 · ' : 'Setting · '}</span>{currentSession.config.setting}</p>
-                  )}
-                  {currentSession.config.povCharacter && (
-                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">POV · </span>{currentSession.config.povCharacter}</p>
-                  )}
-                  {currentSession.config.primaryEmotion && (
-                    <p className="text-[11px] leading-6 text-text-secondary"><span className="text-text-tertiary">{isKO ? '감정 · ' : 'Emotion · '}</span>{currentSession.config.primaryEmotion}</p>
-                  )}
-                </div>
-
-              </div>
-            </aside>
-          )}
+          {/* 수동 모드 설정 참조 패널 → EditReferencePanel로 통합됨 (edit 모드 내부에 배치) */}
 
           {/* Right Panel — Save Slots (all tabs except writing) */}
           {activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && !(activeTab === 'writing' && writingMode === 'ai' && !showDashboard) && currentSession && (
