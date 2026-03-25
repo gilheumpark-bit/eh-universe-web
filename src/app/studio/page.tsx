@@ -165,6 +165,18 @@ export default function StudioPage() {
     return () => window.removeEventListener('noa:storage-full', handler);
   }, []);
 
+  // UX: provider fallback notification
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { from: string; to: string };
+      setFallbackNotice(`${detail.from} → ${detail.to}`);
+      setTimeout(() => setFallbackNotice(null), 5000);
+    };
+    window.addEventListener('noa:provider-fallback', handler);
+    return () => window.removeEventListener('noa:provider-fallback', handler);
+  }, []);
+
   // Hydration-safe: read localStorage values after mount
   useEffect(() => {
     if (!hydrated) return;
@@ -362,6 +374,9 @@ export default function StudioPage() {
             return;
           } catch (retryErr) {
             console.error('[Sync] Retry failed', retryErr);
+            setSyncStatus('error');
+            setTimeout(() => setSyncStatus('idle'), 5000);
+            return;
           }
         }
       }
@@ -2371,6 +2386,14 @@ export default function StudioPage() {
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span className="text-sm">{t('ui.storageFull')}</span>
           <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
+        </div>
+      )}
+
+      {/* UX: Provider fallback notice */}
+      {fallbackNotice && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
+          <span className="text-sm">{language === 'KO' ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}</span>
+          <button onClick={() => setFallbackNotice(null)} className="text-blue-400 hover:text-blue-200 shrink-0">&times;</button>
         </div>
       )}
 

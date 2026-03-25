@@ -127,7 +127,7 @@ export function useProjectManager(language: AppLanguage) {
           detail: { usageMB: mb },
         }));
       }
-      backupToIndexedDB(projects).catch(() => {});
+      backupToIndexedDB(projects).catch(err => console.warn('[IndexedDB] Backup failed:', err));
     }, 500);
     return () => clearTimeout(timer);
   }, [projects, hydrated]);

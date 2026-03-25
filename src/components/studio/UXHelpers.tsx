@@ -64,7 +64,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 // PART 2 — Error Toast (replaces vague error messages)
 // ============================================================
 
-export type ErrorType = 'network' | 'api_key' | 'rate_limit' | 'parse' | 'timeout' | 'unknown';
+export type ErrorType = 'network' | 'api_key' | 'rate_limit' | 'parse' | 'timeout' | 'server' | 'not_found' | 'unknown';
 
 interface ErrorInfo {
   type: ErrorType;
@@ -91,6 +91,20 @@ function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
       type: 'rate_limit',
       title: t('uxHelpers.rateLimitTitle'),
       message: t('uxHelpers.rateLimitMsg'),
+    };
+  }
+  if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504') || lower.includes('internal server')) {
+    return {
+      type: 'server',
+      title: language === 'KO' ? '서버 오류' : 'Server Error',
+      message: language === 'KO' ? 'AI 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.' : 'AI server is temporarily unavailable. Please try again shortly.',
+    };
+  }
+  if (lower.includes('404') || lower.includes('not found')) {
+    return {
+      type: 'not_found',
+      title: language === 'KO' ? '요청 경로 오류' : 'Not Found',
+      message: language === 'KO' ? '요청한 API 경로를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.' : 'API endpoint not found. Please refresh and try again.',
     };
   }
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
