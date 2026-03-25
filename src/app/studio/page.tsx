@@ -70,6 +70,7 @@ import { Wand2 } from 'lucide-react';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { ConfirmModal, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import StudioToasts from '@/components/studio/StudioToasts';
+import { ShortcutsModal, MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
@@ -774,42 +775,7 @@ export default function StudioPage() {
         )}
 
         {/* Shortcuts modal */}
-        {showShortcuts && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
-            <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center">
-                <h3 className="font-black text-sm">{t('ui.keyboardShortcuts')}</h3>
-                <button onClick={() => setShowShortcuts(false)} aria-label="닫기"><X className="w-4 h-4 text-text-tertiary" /></button>
-              </div>
-              <div className="space-y-2 text-xs">
-                {[
-                  ['F1', t('shortcuts.worldDesign')],
-                  ['F2', t('shortcuts.worldSimulator')],
-                  ['F3', t('shortcuts.characterStudio')],
-                  ['F4', t('shortcuts.rulebook')],
-                  ['F5', t('shortcuts.writingStudio')],
-                  ['F6', t('shortcuts.styleStudio')],
-                  ['F7', t('shortcuts.manuscript')],
-                  ['F8', t('shortcuts.archive')],
-                  ['F9', t('shortcuts.settings')],
-                  ['F11', t('shortcuts.focusMode')],
-                  ['F12', t('shortcuts.shortcutsHelp')],
-                  ['Ctrl+N', t('shortcuts.newSession')],
-                  ['Ctrl+F', t('shortcuts.search')],
-                  ['Ctrl+E', t('shortcuts.exportTxt')],
-                  ['Ctrl+P', t('shortcuts.print')],
-                  ['Enter', t('shortcuts.sendMessage')],
-                  ['Shift+Enter', t('shortcuts.newLine')],
-                ].map(([key, desc]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="px-2 py-0.5 bg-bg-secondary rounded text-text-tertiary font-[family-name:var(--font-mono)]">{key}</span>
-                    <span className="text-text-secondary">{desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {showShortcuts && <ShortcutsModal language={language} onClose={() => setShowShortcuts(false)} />}
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
@@ -1315,94 +1281,15 @@ export default function StudioPage() {
       />
 
       {/* Move Session Modal */}
-      {moveModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={() => setMoveModal(null)}>
-          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
-            <select
-              autoFocus
-              className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
-              defaultValue=""
-              onChange={e => {
-                if (e.target.value) {
-                  moveSessionToProject(moveModal.sessionId, e.target.value);
-                  setMoveModal(null);
-                }
-              }}
-            >
-              <option value="" disabled>{isKO ? '프로젝트 선택...' : 'Select project...'}</option>
-              {moveModal.others.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <button onClick={() => setMoveModal(null)} className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors">
-              {isKO ? '취소' : 'Cancel'}
-            </button>
-          </div>
-        </div>
-      )}
+      {moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
 
       {/* Save Slot Name Modal */}
-      {saveSlotModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSaveSlotModalOpen(false)}>
-          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-[360px] space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-bold text-text-primary">{t('saveSlot.enterSaveName')}</h3>
-            <input
-              autoFocus
-              type="text"
-              value={saveSlotName}
-              onChange={e => setSaveSlotName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && saveSlotName.trim()) {
-                  const slot: import('@/lib/studio-types').SavedSlot = {
-                    id: `slot-${Date.now()}`,
-                    name: saveSlotName.trim(),
-                    tab: activeTab,
-                    timestamp: Date.now(),
-                    // config 전체를 저장 — 향후 필드 추가 시 누락 방지
-                    data: { ...(currentSession?.config || INITIAL_CONFIG) },
-                  };
-                  updateCurrentSession({
-                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
-                  });
-                  triggerSave();
-                  setSaveSlotModalOpen(false);
-                }
-                if (e.key === 'Escape') setSaveSlotModalOpen(false);
-              }}
-              placeholder={t('saveSlot.saveNamePlaceholder')}
-              className="w-full px-3 py-2 bg-bg-secondary border border-border rounded-lg text-sm text-text-primary placeholder-zinc-500 focus:outline-none focus:border-accent-purple"
-            />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setSaveSlotModalOpen(false)} className="px-4 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors">
-                {t('confirm.cancel')}
-              </button>
-              <button
-                disabled={!saveSlotName.trim()}
-                onClick={() => {
-                  if (!saveSlotName.trim()) return;
-                  const slot: import('@/lib/studio-types').SavedSlot = {
-                    id: `slot-${Date.now()}`,
-                    name: saveSlotName.trim(),
-                    tab: activeTab,
-                    timestamp: Date.now(),
-                    // config 전체를 저장 — 향후 필드 추가 시 누락 방지
-                    data: { ...(currentSession?.config || INITIAL_CONFIG) },
-                  };
-                  updateCurrentSession({
-                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
-                  });
-                  triggerSave();
-                  setSaveSlotModalOpen(false);
-                }}
-                className="px-4 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {t('saveSlot.save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {saveSlotModalOpen && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
+        onSave={(slot) => {
+          updateCurrentSession({ config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] } });
+          triggerSave();
+        }}
+        onClose={() => setSaveSlotModalOpen(false)} />}
 
       {/* UX: All toasts */}
       <StudioToasts
