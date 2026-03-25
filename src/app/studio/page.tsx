@@ -60,6 +60,7 @@ const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { s
 const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
 const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false });
+const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false });
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
@@ -937,79 +938,17 @@ export default function StudioPage() {
                   <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
                 )}
                 {/* world studio (design/simulator/analysis) rendered above */}
-                {activeTab === 'rulebook' && (
-                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <SceneSheet language={language}
-                      synopsis={currentSession?.config.synopsis}
-                      characterNames={currentSession?.config.characters.map(c => c.name)}
-                      tierContext={{
-                        charProfiles: currentSession?.config.characters.map(c => ({
-                          name: c.name, desire: c.desire, conflict: c.conflict,
-                          changeArc: c.changeArc, values: c.values,
-                        })),
-                        corePremise: currentSession?.config.corePremise,
-                        powerStructure: currentSession?.config.powerStructure,
-                        currentConflict: currentSession?.config.currentConflict,
-                      }}
-                      initialDirection={currentSession?.config.sceneDirection ? {
-                        goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
-                        hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
-                        emotions: currentSession.config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: e.position ?? i * 25, emotion: e.emotion, intensity: e.intensity })),
-                        dialogueRules: currentSession.config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
-                        dopamines: currentSession.config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
-                        cliffs: currentSession.config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: currentSession.config.sceneDirection.cliffhanger.cliffType, desc: currentSession.config.sceneDirection.cliffhanger.desc, episode: currentSession.config.sceneDirection.cliffhanger.episode || 1 }] : [],
-                        foreshadows: currentSession.config.sceneDirection.foreshadows?.map((f, i) => ({ id: `r-${i}`, planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
-                        pacings: currentSession.config.sceneDirection.pacings?.map((p, i) => ({ id: `r-${i}`, section: p.section, percent: p.percent, desc: p.desc })),
-                        tensionPoints: currentSession.config.sceneDirection.tensionCurve?.map((t, i) => ({ id: `r-${i}`, position: t.position, level: t.level, label: t.label })),
-                        canons: currentSession.config.sceneDirection.canonRules?.map((c, i) => ({ id: `r-${i}`, character: c.character, rule: c.rule })),
-                        transitions: currentSession.config.sceneDirection.sceneTransitions?.map((t, i) => ({ id: `r-${i}`, fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
-                        writerNotes: currentSession.config.sceneDirection.writerNotes,
-                        plotStructure: currentSession.config.sceneDirection.plotStructure,
-                      } : undefined}
-                      onDirectionUpdate={(data) => {
-                        if (!currentSessionId) return;
-                        updateCurrentSession({
-                          config: {
-                            ...(currentSession?.config || INITIAL_CONFIG),
-                            sceneDirection: {
-                              goguma: data.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc, episode: g.episode })),
-                              hooks: data.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
-                              emotionTargets: data.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity, position: e.position })),
-                              dialogueTones: data.dialogueRules.map(d => ({ character: d.character, tone: d.tone, notes: d.notes })),
-                              dopamineDevices: data.dopamines.map(dp => ({ scale: dp.scale, device: dp.device, desc: dp.desc, resolved: dp.resolved })),
-                              cliffhanger: data.cliffs.length > 0 ? { cliffType: data.cliffs[0].cliffType, desc: data.cliffs[0].desc, episode: data.cliffs[0].episode } : undefined,
-                              foreshadows: data.foreshadows.map(f => ({ planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
-                              pacings: data.pacings.map(p => ({ section: p.section, percent: p.percent, desc: p.desc })),
-                              tensionCurve: data.tensionPoints.map(t => ({ position: t.position, level: t.level, label: t.label })),
-                              canonRules: data.canons.map(c => ({ character: c.character, rule: c.rule })),
-                              sceneTransitions: data.transitions.map(t => ({ fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
-                              writerNotes: data.writerNotes,
-                              plotStructure: data.plotStructure,
-                            },
-                          },
-                        });
-                      }}
-                      onSimRefUpdate={(ref) => {
-                        if (!currentSessionId) return;
-                        updateCurrentSession({
-                          config: {
-                            ...(currentSession?.config || INITIAL_CONFIG),
-                            simulatorRef: { ...ref },
-                          },
-                        });
-                      }}
-                    />
-                    {!showAiLock && (
-                    <div className="mt-4">
-                      <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} hostedProviders={hostedProviders} />
-                    </div>
-                    )}
-                    <div className="flex justify-end mt-4">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
-                      </button>
-                    </div>
-                  </div>
+                {activeTab === 'rulebook' && currentSession && (
+                  <RulebookTab
+                    language={language}
+                    config={currentSession.config}
+                    updateCurrentSession={updateCurrentSession}
+                    triggerSave={triggerSave}
+                    saveFlash={saveFlash}
+                    currentSessionId={currentSessionId}
+                    showAiLock={showAiLock}
+                    hostedProviders={hostedProviders}
+                  />
                 )}
                 {activeTab === 'writing' && currentSession && (
                   <div className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>

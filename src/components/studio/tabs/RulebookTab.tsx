@@ -17,6 +17,8 @@ interface RulebookTabProps {
   triggerSave: () => void;
   saveFlash: boolean;
   currentSessionId: string | null;
+  showAiLock?: boolean;
+  hostedProviders?: Partial<Record<string, boolean>>;
 }
 
 const RulebookTab: React.FC<RulebookTabProps> = ({
@@ -25,6 +27,9 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   updateCurrentSession,
   triggerSave,
   saveFlash,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showAiLock,
+  hostedProviders,
   currentSessionId
 }) => {
   const t = createT(language);
@@ -93,7 +98,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         }}
       />
       <div className="mt-4">
-        <TabAssistant tab="rulebook" language={language} config={config ?? null} />
+        <TabAssistant tab="rulebook" language={language} config={config ?? null} hostedProviders={hostedProviders} />
       </div>
       <div className="flex justify-end mt-4">
         <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
