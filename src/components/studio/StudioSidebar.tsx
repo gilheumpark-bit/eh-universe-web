@@ -386,7 +386,15 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* ============================================================
               PART 3 — FOOTER: exports, auth, sync, language, settings
               ============================================================ */}
-          <div className="space-y-2 border-t border-white/8 px-4 py-3">
+          <div className="border-t border-white/8 px-4 py-2">
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
+                <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+                  {language === 'KO' ? '내보내기 / 계정' : 'Export / Account'}
+                </span>
+                <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+            <div className="space-y-2 pt-2">
             {/* Export buttons */}
             <div className="grid grid-cols-2 gap-2">
               <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
@@ -502,6 +510,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 </>
               )}
             </div>
+
+            </div>{/* end space-y-2 */}
+            </details>
 
             {/* Language + Settings */}
             <div className="flex items-center justify-between gap-3">
