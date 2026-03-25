@@ -67,7 +67,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     color: "#10a37f",
     placeholder: "sk-...",
     defaultModel: "gpt-4o",
-    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"],
+    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"],
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_openai_key",
     capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 16384, isLocal: false, costTier: 'expensive' },
@@ -254,13 +254,19 @@ export function setApiKey(providerId: ProviderId, key: string): void {
 function getStoredModelForProvider(providerId: ProviderId): string {
   if (typeof window === "undefined") return PROVIDERS[providerId].defaultModel;
 
+  // 1) provider별 키 우선
+  const perProviderKey = `noa_model_${providerId}`;
+  const perProvider = localStorage.getItem(perProviderKey);
+  if (perProvider && perProvider.length > 0) return perProvider;
+
+  // 2) 전역 키 fallback (하위호환 + 마이그레이션)
   const stored = localStorage.getItem("noa_active_model") || localStorage.getItem(LEGACY_MODEL_KEY);
   const provider = PROVIDERS[providerId];
-  // 커스텀 모델 허용: provider.models에 없어도 사용자가 입력한 모델 유지
   const model = stored && (provider.models.includes(stored) || stored.length > 0) ? stored : provider.defaultModel;
 
+  // 마이그레이션: 전역 값을 현재 provider별 키로 이전
   if (providerId === getActiveProvider()) {
-    localStorage.setItem("noa_active_model", model);
+    localStorage.setItem(perProviderKey, model);
   }
   localStorage.removeItem(LEGACY_MODEL_KEY);
   return model;
@@ -271,21 +277,17 @@ export function getActiveModel(): string {
 }
 
 export function getPreferredModel(providerId: ProviderId): string {
-  const activeProvider = getActiveProvider();
-  return activeProvider === providerId
-    ? getStoredModelForProvider(providerId)
-    : PROVIDERS[providerId].defaultModel;
+  return getStoredModelForProvider(providerId);
 }
 
 export function setActiveModel(model: string): void {
   // 커스텀 모델명도 그대로 저장 — BYOK/로컬 LLM에서 사용자 입력 모델 지원
+  const provider = getActiveProvider();
   const trimmed = model.trim();
-  if (!trimmed) {
-    const provider = getActiveProvider();
-    localStorage.setItem("noa_active_model", PROVIDERS[provider].defaultModel);
-  } else {
-    localStorage.setItem("noa_active_model", trimmed);
-  }
+  const value = trimmed || PROVIDERS[provider].defaultModel;
+  // provider별 키에 저장 + 전역 키에도 동시 저장 (하위호환)
+  localStorage.setItem(`noa_model_${provider}`, value);
+  localStorage.setItem("noa_active_model", value);
   localStorage.removeItem(LEGACY_MODEL_KEY);
 }
 

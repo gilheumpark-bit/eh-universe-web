@@ -1,7 +1,7 @@
 // Genre Presets — pipeline.ts에서 추출
 
-export // Narrative Sentinel™ Genre Presets
-const GENRE_PRESETS: Record<string, { rules: string; pacing: string; tensionBase: number; cliffTypes: string; emotionFocus: string }> = {
+// Narrative Sentinel™ Genre Presets
+export const GENRE_PRESETS: Record<string, { rules: string; pacing: string; tensionBase: number; cliffTypes: string; emotionFocus: string }> = {
   ROMANCE: {
     rules: '해결을 의도적으로 지연. 행동보다 감정적 머뭇거림이 중요. 물리적 접촉은 절제 속에서 의미. 대화의 행간(말하지 않은 것)이 핵심. 시선/손끝/호흡 미세 묘사.',
     pacing: 'slow_burn_with_spikes', tensionBase: 0.4,
