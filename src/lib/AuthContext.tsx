@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 
 interface AuthContextType {
@@ -70,11 +70,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     if (!auth) return null;
+    // Firebase OAuth에서 Drive 토큰 갱신은 재인증이 필요합니다.
+    // reauthenticateWithPopup을 먼저 시도하고, 실패 시 signInWithPopup으로 폴백합니다.
     try {
       const provider = new GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/drive.file');
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
+
+      let credential: import('firebase/auth').OAuthCredential | null = null;
+      const currentUser = auth.currentUser;
+
+      if (currentUser) {
+        // 이미 로그인된 상태 → reauthenticate (팝업 최소화)
+        try {
+          const result = await reauthenticateWithPopup(currentUser, provider);
+          credential = GoogleAuthProvider.credentialFromResult(result);
+        } catch {
+          // reauthenticate 실패 → 전체 로그인으로 폴백
+          const result = await signInWithPopup(auth, provider);
+          credential = GoogleAuthProvider.credentialFromResult(result);
+        }
+      } else {
+        const result = await signInWithPopup(auth, provider);
+        credential = GoogleAuthProvider.credentialFromResult(result);
+      }
+
       const token = credential?.accessToken ?? null;
       setAccessToken(token);
       return token;

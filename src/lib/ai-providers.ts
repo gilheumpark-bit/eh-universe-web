@@ -408,7 +408,7 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
         provider: providerId,
         model: def.defaultModel,
         messages: [{ role: "user", content: def.testPrompt }],
-        max_tokens: 16,
+        maxTokens: 16,
         apiKey: key,
       }),
     });

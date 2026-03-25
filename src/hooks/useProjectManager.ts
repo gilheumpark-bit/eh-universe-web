@@ -137,7 +137,7 @@ export function useProjectManager(language: AppLanguage) {
   // PART 4 — Project management
   // ============================================================
 
-  const createNewProject = useCallback(() => {
+  const createNewProject = useCallback((): string => {
     const p: Project = {
       id: `project-${crypto.randomUUID()}`,
       name: PROJECT_NAMES[language],
@@ -150,6 +150,7 @@ export function useProjectManager(language: AppLanguage) {
     setProjects(prev => [...prev, p]);
     setCurrentProjectId(p.id);
     setCurrentSessionId(null);
+    return p.id;
   }, [language]);
 
   const deleteProject = useCallback((projectId: string) => {

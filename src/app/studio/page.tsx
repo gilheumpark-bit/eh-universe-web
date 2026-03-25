@@ -608,10 +608,10 @@ export default function StudioPage() {
       const characters = await generateCharacters(qsConfig, language);
       qsConfig.characters = characters;
 
-      // 프로젝트가 없으면 먼저 생성
-      if (!currentProjectId) createNewProject();
+      // 프로젝트가 없으면 먼저 생성 → 반환된 id로 세션을 직접 연결
+      const targetProjectId = currentProjectId || createNewProject();
 
-      // createNewSession으로 세션 생성 통일 (직접 setSessions 금지)
+      // 세션을 프로젝트에 직접 삽입 (setSessions 레이스 방지)
       const newSessionId = `s-${Date.now()}`;
       const newSession: ChatSession = {
         id: newSessionId,
@@ -620,7 +620,11 @@ export default function StudioPage() {
         messages: [],
         lastUpdate: Date.now(),
       };
-      setSessions(prev => [newSession, ...prev]);
+      setProjects(prev => prev.map(p =>
+        p.id === targetProjectId
+          ? { ...p, sessions: [newSession, ...p.sessions], lastUpdate: Date.now() }
+          : p,
+      ));
       setCurrentSessionId(newSessionId);
       setActiveTab('writing');
       setShowQuickStartModal(false);
@@ -1919,7 +1923,9 @@ export default function StudioPage() {
                         </div>
                         <button onClick={() => {
                           if (!confirm(`"${slot.name}"${t('confirm.loadSlotMsg')}`)) return;
-                          updateCurrentSession({ config: { ...currentSession.config, ...slot.data } });
+                          // INITIAL_CONFIG를 베이스로 슬롯 데이터로 완전 교체 (부분 덮어쓰기 방지)
+                          // savedSlots/manuscripts는 현재 세션 것을 유지
+                          updateCurrentSession({ config: { ...INITIAL_CONFIG, ...slot.data, savedSlots: currentSession.config.savedSlots, manuscripts: currentSession.config.manuscripts } });
                           triggerSave();
                         }}
                           className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
@@ -2279,31 +2285,8 @@ export default function StudioPage() {
                     name: saveSlotName.trim(),
                     tab: activeTab,
                     timestamp: Date.now(),
-                    data: {
-                      genre: currentSession?.config.genre,
-                      title: currentSession?.config.title,
-                      povCharacter: currentSession?.config.povCharacter,
-                      setting: currentSession?.config.setting,
-                      primaryEmotion: currentSession?.config.primaryEmotion,
-                      synopsis: currentSession?.config.synopsis,
-                      characters: currentSession?.config.characters,
-                      charRelations: currentSession?.config.charRelations,
-                      sceneDirection: currentSession?.config.sceneDirection,
-                      worldSimData: currentSession?.config.worldSimData,
-                      simulatorRef: currentSession?.config.simulatorRef,
-                      styleProfile: currentSession?.config.styleProfile,
-                      items: currentSession?.config.items,
-                      skills: currentSession?.config.skills,
-                      magicSystems: currentSession?.config.magicSystems,
-                      // 최근 추가 필드 — 슬롯 누락 방지
-                      prismScale: currentSession?.config.prismScale,
-                      prismPreserve: currentSession?.config.prismPreserve,
-                      prismMode: currentSession?.config.prismMode,
-                      prismCustom: currentSession?.config.prismCustom,
-                      subGenres: currentSession?.config.subGenres,
-                      useSubGenrePrompt: currentSession?.config.useSubGenrePrompt,
-                      narrativeIntensity: currentSession?.config.narrativeIntensity,
-                    },
+                    // config 전체를 저장 — 향후 필드 추가 시 누락 방지
+                    data: { ...(currentSession?.config || INITIAL_CONFIG) },
                   };
                   updateCurrentSession({
                     config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
@@ -2329,31 +2312,8 @@ export default function StudioPage() {
                     name: saveSlotName.trim(),
                     tab: activeTab,
                     timestamp: Date.now(),
-                    data: {
-                      genre: currentSession?.config.genre,
-                      title: currentSession?.config.title,
-                      povCharacter: currentSession?.config.povCharacter,
-                      setting: currentSession?.config.setting,
-                      primaryEmotion: currentSession?.config.primaryEmotion,
-                      synopsis: currentSession?.config.synopsis,
-                      characters: currentSession?.config.characters,
-                      charRelations: currentSession?.config.charRelations,
-                      sceneDirection: currentSession?.config.sceneDirection,
-                      worldSimData: currentSession?.config.worldSimData,
-                      simulatorRef: currentSession?.config.simulatorRef,
-                      styleProfile: currentSession?.config.styleProfile,
-                      items: currentSession?.config.items,
-                      skills: currentSession?.config.skills,
-                      magicSystems: currentSession?.config.magicSystems,
-                      // 최근 추가 필드 — 슬롯 누락 방지
-                      prismScale: currentSession?.config.prismScale,
-                      prismPreserve: currentSession?.config.prismPreserve,
-                      prismMode: currentSession?.config.prismMode,
-                      prismCustom: currentSession?.config.prismCustom,
-                      subGenres: currentSession?.config.subGenres,
-                      useSubGenrePrompt: currentSession?.config.useSubGenrePrompt,
-                      narrativeIntensity: currentSession?.config.narrativeIntensity,
-                    },
+                    // config 전체를 저장 — 향후 필드 추가 시 누락 방지
+                    data: { ...(currentSession?.config || INITIAL_CONFIG) },
                   };
                   updateCurrentSession({
                     config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
