@@ -34,6 +34,7 @@ import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 // generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
@@ -166,47 +167,15 @@ export default function StudioPage() {
   // UX: unsaved changes warning (moved after useStudioAI to avoid TDZ)
   // see useUnsavedWarning call below useStudioAI
 
-  // UX: error toast state
-  const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
-
-  // UX: storage-full warning listener
-  const [storageFull, setStorageFull] = useState(false);
-  useEffect(() => {
-    const handler = () => setStorageFull(true);
-    window.addEventListener('noa:storage-full', handler);
-    return () => window.removeEventListener('noa:storage-full', handler);
-  }, []);
-
-  // UX: export done toast
-  const [exportDoneFormat, setExportDoneFormat] = useState<string | null>(null);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { format: string };
-      setExportDoneFormat(detail.format);
-      setTimeout(() => setExportDoneFormat(null), 3000);
-    };
-    window.addEventListener('noa:export-done', handler);
-    return () => window.removeEventListener('noa:export-done', handler);
-  }, []);
-
-  // C3: 자동저장 시각 추적 — useProjectManager의 auto-save 이벤트 수신
-  useEffect(() => {
-    const handler = () => setLastSaveTime(Date.now());
-    window.addEventListener('noa:auto-saved', handler);
-    return () => window.removeEventListener('noa:auto-saved', handler);
-  }, []);
-
-  // UX: provider fallback notification
-  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { from: string; to: string };
-      setFallbackNotice(`${detail.from} → ${detail.to}`);
-      setTimeout(() => setFallbackNotice(null), 5000);
-    };
-    window.addEventListener('noa:provider-fallback', handler);
-    return () => window.removeEventListener('noa:provider-fallback', handler);
-  }, []);
+  // UX 상태 (토스트/알림/확인 모달) — useStudioUX 훅으로 추출
+  const {
+    uxError, setUxError,
+    storageFull, setStorageFull,
+    exportDoneFormat,
+    lastSaveTime, saveFlash, triggerSave,
+    fallbackNotice, setFallbackNotice,
+    confirmState, showConfirm, closeConfirm,
+  } = useStudioUX();
 
   // Hydration-safe: read localStorage values after mount
   useEffect(() => {
@@ -326,20 +295,7 @@ export default function StudioPage() {
     }
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
-  // UX: confirm modal state
-  const [confirmState, setConfirmState] = useState<{
-    open: boolean; title: string; message: string;
-    confirmLabel?: string; cancelLabel?: string;
-    variant?: 'danger' | 'warning' | 'info';
-    onConfirm: () => void;
-  }>({ open: false, title: '', message: '', onConfirm: () => {} });
-
-  const showConfirm = useCallback((opts: Omit<typeof confirmState, 'open'>) => {
-    setConfirmState({ ...opts, open: true });
-  }, []);
-  const closeConfirm = useCallback(() => {
-    setConfirmState(prev => ({ ...prev, open: false }));
-  }, []);
+  // confirmState, showConfirm, closeConfirm → useStudioUX에서 제공
 
   // ============================================================
   // SYNC STATE (projects only — API keys stay local per device)
@@ -459,16 +415,9 @@ export default function StudioPage() {
   }, [canvasPass]);
   const [promptDirective, setPromptDirective] = useState('');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [saveFlash, setSaveFlash] = useState(false);
-  const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
+  // saveFlash, lastSaveTime, triggerSave → useStudioUX에서 제공
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
-  const triggerSave = useCallback(() => {
-    // Data is already auto-saved via localStorage, this is visual feedback
-    setSaveFlash(true);
-    setLastSaveTime(Date.now());
-    setTimeout(() => setSaveFlash(false), 1500);
-  }, []);
 
   // editDraft 세션별 임시 저장 — 새로고침/크래시 대비
   useEffect(() => {
