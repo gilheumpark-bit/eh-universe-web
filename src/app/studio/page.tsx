@@ -445,7 +445,7 @@ export default function StudioPage() {
   }, [currentSessionId, hydrated]);
 
   useEffect(() => {
-    if (!currentSessionId) return;
+    if (!currentSessionId || !hydrated) return;
     const key = `noa_editdraft_${currentSessionId}`;
     if (editDraft) {
       localStorage.setItem(key, editDraft);
@@ -456,7 +456,7 @@ export default function StudioPage() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [editDraft, currentSessionId]);
+  }, [editDraft, currentSessionId, hydrated]);
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
@@ -1377,7 +1377,14 @@ export default function StudioPage() {
                             )}
                           </div>
                         ) : (
-                          (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
+                          <>
+                          {/* AI 메시지 — 최신 생성 결과만 중앙에 표시, 이전 대화는 우측 패널로 */}
+                          {(() => {
+                            const msgs = searchQuery ? filteredMessages : currentSession.messages;
+                            const lastAssistant = [...msgs].reverse().find(m => m.role === 'assistant' && m.content);
+                            const lastUser = [...msgs].reverse().find(m => m.role === 'user');
+                            const recentMsgs = [lastUser, lastAssistant].filter(Boolean) as typeof msgs;
+                            return recentMsgs.map(msg => (
                             <div key={msg.id}>
                               <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} onAutoFix={msg.role === 'assistant' ? async (messageId: string) => {
                                 const target = currentSession.messages.find(m => m.id === messageId);
@@ -1408,7 +1415,16 @@ export default function StudioPage() {
                                 </div>
                               )}
                             </div>
-                          ))
+                          ));
+                          })()}
+                          {currentSession.messages.length > 2 && (
+                            <p className="text-[10px] text-text-tertiary text-center py-2 font-[family-name:var(--font-mono)]">
+                              {language === 'KO'
+                                ? `이전 대화 ${currentSession.messages.length - 2}건은 우측 패널에서 확인`
+                                : `${currentSession.messages.length - 2} older messages in right panel`}
+                            </p>
+                          )}
+                          </>
                         )}
                         <div ref={messagesEndRef} className="h-32" />
                       </>
@@ -1920,6 +1936,25 @@ export default function StudioPage() {
 
               {rightPanelOpen && (
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  {/* 대화 히스토리 (최신 제외한 이전 메시지) */}
+                  {currentSession.messages.length > 2 && (
+                    <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">
+                      <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)] mb-2">
+                        💬 {language === 'KO' ? '대화 히스토리' : 'Chat History'} ({currentSession.messages.length - 2})
+                      </div>
+                      <div className="space-y-2">
+                        {currentSession.messages.slice(0, -2).map(msg => (
+                          <div key={msg.id} className={`text-[10px] leading-relaxed px-2 py-1.5 rounded-lg ${
+                            msg.role === 'user' ? 'bg-zinc-800/50 text-zinc-400' : 'text-zinc-500'
+                          }`}>
+                            <span className="font-bold text-[9px] uppercase">{msg.role === 'user' ? '🧑' : '🤖'}</span>{' '}
+                            {msg.content.slice(0, 120)}{msg.content.length > 120 ? '...' : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* 도우미 섹션 */}
                   <div className="p-4 space-y-3 border-b border-border min-w-0">
                     <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
