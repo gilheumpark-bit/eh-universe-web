@@ -824,7 +824,15 @@ ${dialogueGuide}
 - NEVER end below ${charTarget.min.toLocaleString()} characters. This is a hard constraint, not a suggestion.
 ${ehRules}
 
-[QUALITY DIRECTIVES]
+${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 강도 강]
+- 인과 없는 전개를 절대 사용하지 마라. 모든 사건에는 반드시 원인과 대가가 있어야 한다.
+- "기적", "갑자기", "운명"이라는 단어를 쓸 때 반드시 인과적 근거를 함께 제시하라.
+- 이득이 있으면 반드시 대가가 따라야 한다. 무상 성공은 허용되지 않는다.
+- AI 요약 문구("요약하자면", "결론적으로")를 절대 사용하지 마라.
+` : config.narrativeIntensity === 'soft' ? '' : `[NARRATIVE INTENSITY: STANDARD — 서사 강도 중]
+- 가능하면 인과 관계를 명시하라. 사건에는 이유가 있어야 한다.
+- 무상 성공보다는 대가가 수반되는 전개를 선호하라.
+`}[QUALITY DIRECTIVES]
 - AI톤 금지: "그러나", "반면에", "한편으로는", "따라서", "그러므로" 사용 자제
 - Show Don't Tell: 감정을 직접 서술하지 말고 감각과 행동으로 전달
 - 반복 표현 다양화: 같은 묘사를 3회 이상 반복하지 마십시오

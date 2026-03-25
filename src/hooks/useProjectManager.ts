@@ -23,6 +23,7 @@ export const INITIAL_CONFIG: StoryConfig = {
   guardrails: { min: 3000, max: 5000 },
   characters: [],
   platform: PlatformType.MOBILE,
+  narrativeIntensity: 'standard',
 };
 
 const PROJECT_NAMES: Record<AppLanguage, string> = {

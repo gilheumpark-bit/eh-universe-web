@@ -242,6 +242,8 @@ export interface StoryConfig {
     violence: number;  // 0-5
     profanity: number; // 0-5
   };
+  // EH Engine — Narrative Intensity (서사 강도)
+  narrativeIntensity?: 'iron' | 'standard' | 'soft';
 }
 
 // Episode manuscript entry
@@ -382,6 +384,9 @@ export interface Message {
     hfcpMode?: string;
     hfcpVerdict?: string;
     hfcpScore?: number;
+    qualityTag?: '🟢' | '🟡' | '🔴';
+    qualityLabel?: string;
+    qualityFindings?: Array<{ kind: string; severity: number; message: string; lineNo?: number; excerpt?: string }>;
   };
   timestamp: number;
 }

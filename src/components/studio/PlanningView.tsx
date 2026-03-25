@@ -252,6 +252,34 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </div>
         </div>
 
+        {/* 서사 강도 (EH Engine Narrative Intensity) */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+            {language === 'KO' ? '서사 강도' : 'Narrative Intensity'}
+          </label>
+          <div className="flex gap-3">
+            {([
+              { value: 'iron' as const, label: language === 'KO' ? '강 (Iron)' : 'Iron', color: 'red', desc: language === 'KO' ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
+              { value: 'standard' as const, label: language === 'KO' ? '중 (Standard)' : 'Standard', color: 'blue', desc: language === 'KO' ? '주요 경고만 표시' : 'Major warnings only' },
+              { value: 'soft' as const, label: language === 'KO' ? '약 (Soft)' : 'Soft', color: 'zinc', desc: language === 'KO' ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
+            ]).map(({ value, label, color, desc }) => (
+              <button
+                key={value}
+                onClick={() => setConfig({ ...config, narrativeIntensity: value })}
+                className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
+                  (config.narrativeIntensity || 'standard') === value
+                    ? `bg-${color}-600/10 border-${color}-500/30 text-${color}-400`
+                    : 'bg-black border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                }`}
+                title={desc}
+              >
+                <span>{label}</span>
+                <span className="text-[8px] font-normal normal-case tracking-normal text-zinc-600">{desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 연재 플랫폼 선택 */}
         <div className="space-y-2">
           <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">

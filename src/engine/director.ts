@@ -19,13 +19,17 @@ export interface DirectorReport {
 }
 
 const BLUR_WORDS = ['기적', '운명', '갑자기', '그냥', '원래'];
+const CAUSALITY_WORDS = ['때문에', '덕분에', '결과', '대가', '이유는', '원인', '하여', '탓에', '소모', '희생', '위해', '대신', '대가로', '치르'];
 const GAIN_WORDS = ['이득', '성공', '승리', '수익', '획득', '상승', '돌파'];
 const COST_WORDS = ['대가', '손실', '희생', '잃', '소실', '단축', '절단', '결손', '회수', '추방'];
 const AI_PHRASES = ['요약하자면', '결론적으로', '다음과 같습니다', '중요한 점은', '한편으로는'];
+const ESCAPE_WORDS = ['AI로서', '나는 AI', '챗봇', '인공지능으로서', '도움이 되었으면', '언어 모델', 'AI 입장에서'];
 const TYPO_PATTERNS = [/됬/, /안됬/, /했읍니다/, /할려고/, /있읍니다/, /되서[^요]/];
 const CONTEXT_MARKERS = ['결국', '하지만', '그럼에도', '마침내', '순간'];
 const CERTAINTY_MARKERS = ['확실히', '반드시', '항상', '절대', '100%', '완전히'];
 const NUANCE_MARKERS = ['아마도', '일 수 있', '가능성', '추정', '일부'];
+
+export type NarrativeIntensity = 'iron' | 'standard' | 'soft';
 
 // ============================================================
 // PART 2 — Individual Analyzers
@@ -37,15 +41,38 @@ function checkBlur(lines: string[]): { findings: DirectorFinding[]; count: numbe
   for (let i = 0; i < lines.length; i++) {
     for (const word of BLUR_WORDS) {
       if (lines[i].includes(word)) {
+        // 인과 맥락 검증: ±2줄 범위에 인과 키워드가 있으면 경고 해제
+        const windowStart = Math.max(0, i - 2);
+        const windowEnd = Math.min(lines.length, i + 3);
+        const window = lines.slice(windowStart, windowEnd).join(' ');
+        const hasCausality = CAUSALITY_WORDS.some(cw => window.includes(cw));
+        if (hasCausality) continue; // 인과 근거 있음 → 통과
+
         count++;
         findings.push({
           kind: 'BLUR',
           severity: 3,
-          message: `인과 흐림 '${word}' 감지`,
+          message: `인과 흐림 '${word}' 감지 (주변에 인과 근거 없음)`,
           lineNo: i + 1,
           excerpt: lines[i].trim().slice(0, 80),
         });
       }
+    }
+  }
+  return { findings, count };
+}
+
+function checkEscape(text: string): { findings: DirectorFinding[]; count: number } {
+  const findings: DirectorFinding[] = [];
+  let count = 0;
+  for (const phrase of ESCAPE_WORDS) {
+    if (text.includes(phrase)) {
+      count++;
+      findings.push({
+        kind: 'ESCAPE',
+        severity: 3,
+        message: `AI 역할 이탈 감지: '${phrase}'`,
+      });
     }
   }
   return { findings, count };
@@ -399,6 +426,9 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
   const aiTone = checkAITone(text);
   allFindings.push(...aiTone.findings);
 
+  const escape = checkEscape(text);
+  allFindings.push(...escape.findings);
+
   const typo = checkTypo(lines);
   allFindings.push(...typo.findings);
 
@@ -429,6 +459,7 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
     gain_no_cost: gain.noCostCount,
     similar_context: similar.count,
     ai_tone: aiTone.count,
+    escape: escape.count,
     typo: typo.count,
     ending_mono: ending.ratio,
     certainty: hallucination.certaintyCount,
@@ -450,7 +481,57 @@ export function gradeFromScore(score: number): string {
 }
 
 // ============================================================
-// PART 6 — Adaptive Learner
+// PART 6a — Quality Tag (레벨별 차등 태그)
+// ============================================================
+
+export interface QualityTag {
+  tag: '🟢' | '🟡' | '🔴';
+  label: string;
+  visibleFindings: DirectorFinding[];
+}
+
+export function calculateQualityTag(
+  report: DirectorReport,
+  intensity: NarrativeIntensity = 'standard',
+): QualityTag {
+  const { score, findings, stats } = report;
+
+  if (intensity === 'soft') {
+    // Soft: 태그 숨김, TYPO만 표시
+    return {
+      tag: '🟢',
+      label: 'CLEAR',
+      visibleFindings: findings.filter(f => f.kind === 'TYPO'),
+    };
+  }
+
+  if (intensity === 'iron') {
+    const hasHeavyBlur = (stats.blur ?? 0) >= 3;
+    const hasHeavyGainNoCost = (stats.gain_no_cost ?? 0) >= 2;
+
+    if (score < 60 || hasHeavyBlur || hasHeavyGainNoCost) {
+      return { tag: '🔴', label: 'ALERT', visibleFindings: findings };
+    }
+    if (score < 85) {
+      return { tag: '🟡', label: 'CAUTION', visibleFindings: findings };
+    }
+    return { tag: '🟢', label: 'CLEAR', visibleFindings: findings };
+  }
+
+  // Standard
+  if (score < 40) {
+    return { tag: '🔴', label: 'ALERT', visibleFindings: findings.filter(f => f.severity >= 3) };
+  }
+  if (score < 70) {
+    return { tag: '🟡', label: 'CAUTION', visibleFindings: findings.filter(f => f.severity >= 3) };
+  }
+  return { tag: '🟢', label: 'CLEAR', visibleFindings: findings.filter(f => f.severity >= 3) };
+}
+
+// IDENTITY_SEAL: PART-6a | role=레벨별 품질 태그 | inputs=DirectorReport,NarrativeIntensity | outputs=QualityTag
+
+// ============================================================
+// PART 6b — Adaptive Learner
 // ============================================================
 
 export interface AdaptiveThresholds {

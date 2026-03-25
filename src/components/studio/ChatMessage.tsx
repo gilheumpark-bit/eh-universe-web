@@ -177,6 +177,43 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             </div>
           )}
 
+          {/* Quality Tag (서사 강도 기반 품질 배지) */}
+          {!isUser && message.meta?.qualityTag && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowDetail(d => !d)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  message.meta.qualityTag === '🔴' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  : message.meta.qualityTag === '🟡' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                }`}
+              >
+                {message.meta.qualityTag} {message.meta.qualityLabel}
+                {(message.meta.qualityFindings?.length ?? 0) > 0 && (
+                  <span className="text-[8px] opacity-70">({message.meta.qualityFindings?.length})</span>
+                )}
+              </button>
+              {showDetail && message.meta.qualityFindings && message.meta.qualityFindings.length > 0 && (
+                <div className="mt-2 space-y-1 pl-2 border-l-2 border-zinc-800">
+                  {message.meta.qualityFindings.map((f, i) => (
+                    <div key={i} className="text-[10px] text-zinc-500">
+                      <span className={f.severity >= 4 ? 'text-red-400' : f.severity >= 3 ? 'text-amber-400' : 'text-zinc-500'}>
+                        [{f.kind}]
+                      </span>{' '}
+                      {f.message}
+                      {f.lineNo && <span className="text-zinc-700 ml-1">(L{f.lineNo})</span>}
+                    </div>
+                  ))}
+                  {message.meta.qualityTag === '🔴' && (
+                    <p className="text-[10px] text-red-400/80 font-bold mt-2">
+                      {language === 'KO' ? '⚠ 재작성을 권장합니다.' : '⚠ Rewrite recommended.'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Analysis Report (from structured report OR JSON fallback) */}
           {!isUser && (displayGrade || displayMetrics) && (
             <div className="mt-8 p-4 md:p-6 bg-zinc-900/50 border border-zinc-800 rounded-2xl space-y-4 animate-in fade-in duration-500">

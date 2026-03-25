@@ -11,7 +11,7 @@ import { EngineReport } from '@/engine/types';
 import { canGenerate, incrementGenerationCount } from '@/lib/tier';
 import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
-import { analyzeManuscript, type DirectorReport } from '@/engine/director';
+import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
@@ -132,13 +132,19 @@ export function useStudioAI({
       const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
       incrementGenerationCount();
-      // NOD Director analysis
-      setDirectorReport(analyzeManuscript(finalContent, capturedConfig.publishPlatform));
+      // NOD Director analysis + Quality Tag
+      const dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform);
+      setDirectorReport(dReport);
+      const qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId) {
           const msgs = s.messages.map(m =>
             m.id === aiMsgId
-              ? { ...m, content: finalContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
+              ? { ...m, content: finalContent, meta: {
+                  engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length,
+                  qualityTag: qTag.tag, qualityLabel: qTag.label,
+                  qualityFindings: qTag.visibleFindings.map(f => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
+                } }
               : m
           );
           // Auto-collect manuscript on generation complete
