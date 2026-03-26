@@ -14,6 +14,10 @@ import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
+import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
+import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
+import { updateProfile, loadProfile, saveProfile } from '@/engine/writer-profile';
+import type { ProactiveSuggestion } from '@/lib/studio-types';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -31,6 +35,9 @@ interface UseStudioAIParams {
   setShowApiKeyModal: (val: boolean) => void;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
   advancedOutputMode?: string;
+  // 3.8 자율 시스템 콜백
+  onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
+  onQualityGateRetry?: (attempt: number, maxRetries: number) => void;
 }
 
 // ============================================================
@@ -51,6 +58,8 @@ export function useStudioAI({
   setShowApiKeyModal,
   setUxError,
   advancedOutputMode,
+  onSuggestionsUpdate,
+  onQualityGateRetry,
 }: UseStudioAIParams) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
@@ -155,6 +164,61 @@ export function useStudioAI({
       }
       setDirectorReport(dReport);
       const qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
+
+      // ============================================================
+      // 3.8 — Quality Gate 평가
+      // ============================================================
+      const writerProfile = loadProfile('default');
+      const gateThresholds = getDefaultThresholds(writerProfile.skillLevel);
+      const gateResult = evaluateQuality(finalContent, capturedConfig, gateThresholds, language);
+      // Quality Gate 결과를 메타에 포함
+      const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons };
+
+      // ============================================================
+      // 3.8 — Proactive Suggestions 생성
+      // ============================================================
+      try {
+        const sgConfig = getDefaultSuggestionConfig(writerProfile.skillLevel);
+        const chars = capturedConfig.characters || [];
+        const recentMetrics = (capturedConfig.manuscripts || []).slice(-5).map(() => ({
+          tension: result.report.metrics.tension,
+          pacing: result.report.metrics.pacing,
+          immersion: result.report.metrics.immersion,
+          eos: result.report.eosScore,
+          grade: result.report.grade,
+        }));
+        const charLastAppearance: Record<string, number> = {};
+        chars.forEach(ch => { charLastAppearance[ch.name] = capturedConfig.episode ?? 1; });
+        const newSuggestions = generateSuggestions({
+          config: capturedConfig,
+          currentEpisode: capturedConfig.episode ?? 1,
+          recentMetrics,
+          characterNames: chars.map(c => c.name),
+          characterLastAppearance: charLastAppearance,
+          language,
+        }, sgConfig);
+        if (newSuggestions.length > 0) onSuggestionsUpdate?.(newSuggestions);
+      } catch { /* suggestions are advisory — never block */ }
+
+      // ============================================================
+      // 3.8 — Writer Profile 학습
+      // ============================================================
+      try {
+        const updated = updateProfile(writerProfile, {
+          text: finalContent,
+          grade: result.report.grade,
+          directorScore: dReport.score,
+          eosScore: result.report.eosScore,
+          tension: result.report.metrics.tension,
+          pacing: result.report.metrics.pacing,
+          immersion: result.report.metrics.immersion,
+          findings: dReport.findings,
+          wasRegenerated: false,
+          wasOverridden: false,
+        });
+        saveProfile(updated);
+      } catch { /* profile learning is meta — never block */ }
+
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId) {
           const msgs = s.messages.map(m =>
@@ -163,6 +227,7 @@ export function useStudioAI({
                   engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length,
                   qualityTag: qTag.tag, qualityLabel: qTag.label,
                   qualityFindings: qTag.visibleFindings.map(f => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
+                  ...gateMeta,
                 } }
               : m
           );
@@ -203,7 +268,7 @@ export function useStudioAI({
       abortControllerRef.current = null;
       trackAIGeneration('unknown', 'unknown', canvasPass > 0 ? 'canvas' : 'ai');
     }
-  }, [isGenerating, currentSessionId, currentSession, hfcpState, promptDirective, language, canvasPass, advancedOutputMode, setSessions, updateCurrentSession, setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError]);
+  }, [isGenerating, currentSessionId, currentSession, hfcpState, promptDirective, language, canvasPass, advancedOutputMode, setSessions, updateCurrentSession, setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError, onSuggestionsUpdate, onQualityGateRetry]);
 
   const handleRegenerate = useCallback(async (assistantMsgId: string) => {
     if (isGenerating || !currentSessionId || !currentSession) return;

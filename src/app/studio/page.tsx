@@ -623,6 +623,7 @@ export default function StudioPage() {
     hfcpState, promptDirective, language, canvasPass,
     setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
     advancedOutputMode: advancedSettings.outputMode,
+    onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
   });
 
   // UX: unsaved changes warning (must be after useStudioAI which provides isGenerating)
