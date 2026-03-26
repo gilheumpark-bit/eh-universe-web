@@ -141,7 +141,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       act: "막",
       tensionTarget: "목표 긴장도",
       byteSize: "바이트",
-      eosScore: "EOS 점수",
+      eosScore: "분량 점수",
       grade: "등급",
       cancel: "생성 취소",
       generating: "서사 생성 중...",
@@ -916,7 +916,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       expandDetail: "상세 보기"
     },
     director: {
-      nodDirector: "NOD 감독",
+      nodDirector: "감독 피드백",
       autoAnalysis: "AI 응답 후 자동 분석됩니다",
       noIssues: "이슈 없음",
       more: "건 더"
@@ -1336,7 +1336,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       act: "Act",
       tensionTarget: "Target Tension",
       byteSize: "Bytes",
-      eosScore: "EOS Score",
+      eosScore: "Volume Score",
       grade: "Grade",
       cancel: "Cancel",
       generating: "Generating narrative...",
@@ -2111,7 +2111,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       expandDetail: "Expand"
     },
     director: {
-      nodDirector: "NOD Director",
+      nodDirector: "Director Feedback",
       autoAnalysis: "Auto-analyzed after AI response",
       noIssues: "No issues",
       more: " more"
@@ -2531,7 +2531,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       act: "幕",
       tensionTarget: "目標テンション",
       byteSize: "バイト",
-      eosScore: "EOSスコア",
+      eosScore: "分量スコア",
       grade: "等級",
       cancel: "キャンセル",
       generating: "ナラティブ生成中...",
@@ -3306,7 +3306,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       expandDetail: "詳細を見る"
     },
     director: {
-      nodDirector: "NOD監督",
+      nodDirector: "監督フィードバック",
       autoAnalysis: "AI応答後に自動分析されます",
       noIssues: "問題なし",
       more: "件追加"
@@ -3726,7 +3726,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       act: "幕",
       tensionTarget: "目标张力",
       byteSize: "字节",
-      eosScore: "EOS评分",
+      eosScore: "篇幅评分",
       grade: "等级",
       cancel: "取消",
       generating: "正在生成叙事...",
@@ -4501,7 +4501,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       expandDetail: "展开详情"
     },
     director: {
-      nodDirector: "NOD导演",
+      nodDirector: "导演反馈",
       autoAnalysis: "AI响应后自动分析",
       noIssues: "无问题",
       more: "条更多"

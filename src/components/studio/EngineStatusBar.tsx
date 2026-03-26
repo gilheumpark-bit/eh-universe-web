@@ -53,7 +53,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
             <span className="text-blue-400">{report.grade}</span>
           </div>
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg whitespace-nowrap">
-            <span className="text-zinc-500">EOS</span>
+            <span className="text-zinc-500">{language === 'KO' ? '분량' : 'VOL'}</span>
             <span className={`${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
               {report.eosScore}
             </span>

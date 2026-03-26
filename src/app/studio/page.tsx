@@ -1130,7 +1130,7 @@ export default function StudioPage() {
                       </div>
                     </details>
 
-                    {/* ⑤ NOD 감독 */}
+                    {/* ⑤ 감독 피드백 */}
                     <DirectorPanel report={directorReport} language={language} />
 
                     {/* ⑥ 대화 온도 */}

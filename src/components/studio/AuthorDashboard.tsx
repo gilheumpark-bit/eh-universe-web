@@ -83,6 +83,7 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 export default function AuthorDashboard({ messages, language }: Props) {
+  const isKO = language === 'KO';
   const t = createT(language);
   const metrics = useMemo(() => extractMetrics(messages), [messages]);
 
@@ -133,10 +134,10 @@ export default function AuthorDashboard({ messages, language }: Props) {
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-2">
           {language === 'KO' ? '평균 메트릭' : 'Average Metrics'}
         </h3>
-        <MetricBar value={avg.tension} max={100} color="bg-red-500" label="Tension" />
-        <MetricBar value={avg.pacing} max={100} color="bg-blue-500" label="Pacing" />
-        <MetricBar value={avg.immersion} max={100} color="bg-green-500" label="Immerse" />
-        <MetricBar value={avg.eos} max={100} color="bg-purple-500" label="EOS" />
+        <MetricBar value={avg.tension} max={100} color="bg-red-500" label={isKO ? "긴장감" : "Tension"} />
+        <MetricBar value={avg.pacing} max={100} color="bg-blue-500" label={isKO ? "호흡" : "Pacing"} />
+        <MetricBar value={avg.immersion} max={100} color="bg-green-500" label={isKO ? "몰입도" : "Immerse"} />
+        <MetricBar value={avg.eos} max={100} color="bg-purple-500" label={isKO ? "분량" : "Volume"} />
       </div>
 
       {/* Per-chapter SVG trend chart */}
@@ -205,10 +206,10 @@ export default function AuthorDashboard({ messages, language }: Props) {
             `## ${language === 'KO' ? '평균 메트릭' : 'Average Metrics'}`,
             `| Metric | Value |`,
             `|--------|-------|`,
-            `| Tension | ${avg.tension}% |`,
-            `| Pacing | ${avg.pacing}% |`,
-            `| Immersion | ${avg.immersion}% |`,
-            `| EOS | ${avg.eos}% |`,
+            `| ${isKO ? '긴장감' : 'Tension'} | ${avg.tension}% |`,
+            `| ${isKO ? '호흡' : 'Pacing'} | ${avg.pacing}% |`,
+            `| ${isKO ? '몰입도' : 'Immersion'} | ${avg.immersion}% |`,
+            `| ${isKO ? '분량' : 'Volume'} | ${avg.eos}% |`,
             '',
             `## ${language === 'KO' ? '챕터별 상세' : 'Per-Chapter Detail'}`,
             `| # | Grade | Tension | Pacing | Immersion | Chars |`,

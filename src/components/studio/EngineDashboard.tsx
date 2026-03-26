@@ -14,7 +14,8 @@ interface EngineDashboardProps {
   language: AppLanguage;
 }
 
-const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGenerating }) => {
+const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGenerating, language }) => {
+  const isKO = language === 'KO';
   const totalEpisodes = config.totalEpisodes ?? 25;
   const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
 
@@ -107,17 +108,17 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
         {report && (
           <div className="space-y-3">
             <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-              <BarChart3 className="w-3 h-3" /> Last Report
+              <BarChart3 className="w-3 h-3" /> {isKO ? '품질 리포트' : 'Quality Report'}
             </div>
             <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800/50 space-y-4">
-              {/* Grade + EOS */}
+              {/* 등급 + 분량 */}
               <div className="flex gap-3">
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
-                  <div className="text-[10px] text-zinc-600 mb-1">GRADE</div>
+                  <div className="text-[10px] text-zinc-600 mb-1">{isKO ? '등급' : 'GRADE'}</div>
                   <div className="text-lg font-black text-blue-400">{report.grade}</div>
                 </div>
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
-                  <div className="text-[10px] text-zinc-600 mb-1">EOS</div>
+                  <div className="text-[10px] text-zinc-600 mb-1">{isKO ? '분량' : 'VOLUME'}</div>
                   <div className={`text-lg font-black ${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
                     {report.eosScore}
                   </div>
