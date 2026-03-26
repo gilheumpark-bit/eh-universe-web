@@ -6,7 +6,7 @@ import type { StoryConfig } from '@/lib/studio-types';
 const MOCK_CONFIG = { genre: 'SF', prismMode: 'OFF' } as unknown as StoryConfig;
 
 describe('prism-builder', () => {
-  let buildPrismBlock: (config: StoryConfig, isKO: boolean) => string;
+  let buildPrismBlock: ((config: StoryConfig, isKO: boolean) => string) | undefined;
 
   beforeAll(async () => {
     try {
@@ -44,8 +44,8 @@ describe('platform-builder (pipeline.ts)', () => {
     try {
       // buildPlatformBlock은 pipeline.ts에 인라인 — 별도 빌더 미분리
       // 향후 분리 시 여기서 import
-      const mod = await import('../builders/platform-builder').catch(() => null);
-      if (mod && 'buildPlatformBlock' in mod) buildPlatformBlock = mod.buildPlatformBlock as (p: string) => string;
+      const mod = await import('../builders/platform-builder').catch(() => null) as Record<string, unknown> | null;
+      if (mod && typeof mod.buildPlatformBlock === 'function') buildPlatformBlock = mod.buildPlatformBlock as (p: string) => string;
     } catch {
       // skip
     }

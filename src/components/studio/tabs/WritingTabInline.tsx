@@ -244,7 +244,7 @@ export default function WritingTabInline(props: Props) {
 
                     {/* AI / Edit sub-tabs — API 없을 때는 edit 탭만 표시 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai' || showAiLock) && (<>
-                    <div className="flex gap-1 items-center">
+                    <div className="flex flex-wrap gap-1 items-center">
                       {!showAiLock && (
                         <button onClick={() => setWritingMode('ai')}
                           className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
@@ -297,7 +297,7 @@ export default function WritingTabInline(props: Props) {
                           🎯 {t('writingMode.advanced')}
                         </button>
                       </>)}
-                      {writingMode === 'edit' && (<>
+                      {writingMode === 'edit' && (
                         <button onClick={() => {
                             if (!editDraft.trim()) return;
                             const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
@@ -313,10 +313,10 @@ export default function WritingTabInline(props: Props) {
                           className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
                           📋 {t('writingMode.applyToManuscript')}
                         </button>
-                        <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-auto">
-                          {editDraft.length.toLocaleString()}{t('writingMode.chars')}
-                        </span>
-                      </>)}
+                      )}
+                      <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] ml-auto">
+                        {writingMode === 'edit' ? `${editDraft.length.toLocaleString()}${t('writingMode.chars')}` : ''}
+                      </span>
                     </div>
 
                     {/* Prompt Directive — AI 있을 때만 표시 */}
