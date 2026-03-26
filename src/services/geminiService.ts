@@ -28,10 +28,17 @@ export interface GenerateResult {
 }
 
 function getStructuredModel(): string {
-  // Structured generation currently uses Gemini only.
-  // When more providers support structured output, this can check capabilities.
-  return getPreferredModel('gemini');
+  // 자동생성(캐릭터/세계관/연출/아이템)은 flash로 속도 우선
+  // 집필(스트리밍)은 사용자 선택 모델(pro) 유지
+  const userModel = getPreferredModel('gemini');
+  // 사용자가 명시적으로 pro를 선택했어도 structured는 flash 사용
+  if (userModel.includes('pro')) return 'gemini-2.5-flash';
+  return userModel;
 }
+
+// 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
+const structuredCache = new Map<string, { data: unknown; ts: number }>();
+const CACHE_TTL = 5 * 60 * 1000;
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
   const MAX_RETRIES = 2;
@@ -42,6 +49,14 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     apiKey: getApiKey('gemini') || undefined,
   });
 
+  // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
+  const cacheable = body.task === 'worldDesign' || body.task === 'worldSim';
+  const cacheKey = cacheable ? payload : '';
+  if (cacheable) {
+    const cached = structuredCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
+  }
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const response = await fetch('/api/gemini-structured', {
       method: 'POST',
@@ -50,7 +65,10 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     });
 
     const data = await response.json().catch(() => null);
-    if (response.ok) return data as T;
+    if (response.ok) {
+      if (cacheable && cacheKey) structuredCache.set(cacheKey, { data, ts: Date.now() });
+      return data as T;
+    }
 
     const errorMessage = data && typeof data.error === 'string'
       ? data.error
