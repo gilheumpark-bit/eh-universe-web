@@ -70,7 +70,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
       <div>
         <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{t('settings.settingsAccount')}</h2>
-        <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">System Control Center</p>
+        <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">System Control Center</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -79,25 +79,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
         {/* Engine Status Card */}
         <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
-          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
             <Cpu className="w-4 h-4 text-blue-500" /> Narrative Engine
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{t('settings.engineVersion')}</span>
+              <span className="text-xs text-text-secondary">{t('settings.engineVersion')}</span>
               <span className="text-xs font-black text-blue-400">ANS {ENGINE_VERSION}</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{t('settings.aiModel')}</span>
+              <span className="text-xs text-text-secondary">{t('settings.aiModel')}</span>
               <span className="text-xs font-black text-white">{providerName} — {activeModel}</span>
             </div>
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
-              <span className="text-xs text-zinc-400">{t('settings.latency')}</span>
+              <span className="text-xs text-text-secondary">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
             </div>
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-zinc-400">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
+                <span className="text-xs text-text-secondary">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
                 <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
                   {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
                 </span>
@@ -117,20 +117,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
         {/* Global Settings */}
         <div className="md:col-span-2 ds-card-lg">
-          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
+          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-8 flex items-center gap-2">
             <Shield className="w-4 h-4 text-blue-500" /> {t('settings.generalPreferences')}
           </h3>
 
           <div className="space-y-2">
             <div
               onClick={onManageApiKey}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-zinc-900/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Key className="w-5 h-5 text-zinc-500" /></div>
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Key className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settings.apiKeyManagement')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.apiKeyDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
                 </div>
               </div>
               <div className="text-[10px] font-black text-blue-500 uppercase shrink-0 ml-2">
@@ -144,15 +144,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 setObfuscateDone(count);
                 setTimeout(() => setObfuscateDone(null), 3000);
               }}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-zinc-900/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Shield className="w-5 h-5 text-zinc-500" /></div>
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Shield className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">
                     {language === 'KO' ? '저장된 키 암호화' : 'Encrypt Saved Keys'}
                   </div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">
                     {language === 'KO'
                       ? '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다'
                       : 'Re-saves any plain-text API keys in obfuscated format'}
@@ -161,7 +161,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               </div>
               <div className="text-[10px] font-black uppercase shrink-0 ml-2">
                 {obfuscateDone === null ? (
-                  <span className="text-zinc-600">RUN</span>
+                  <span className="text-text-tertiary">RUN</span>
                 ) : obfuscateDone === 0 ? (
                   <span className="text-green-500">ALL SECURE</span>
                 ) : (
@@ -172,13 +172,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
             <div
               onClick={() => setNotificationsOn(prev => !prev)}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-zinc-900/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Bell className="w-5 h-5 text-zinc-500" /></div>
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Bell className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settings.notifications')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.notificationsDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-zinc-700 justify-start'}`}>
@@ -194,17 +194,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-3 bg-zinc-900 rounded-2xl group-hover:bg-red-500/20 transition-colors"><Trash2 className="w-5 h-5 text-red-500" /></div>
                 <div>
                   <div className="text-sm font-bold text-red-500">{t('settings.resetData')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settings.resetDataDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-red-500" />
+              <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-red-500" />
             </div>
           </div>
         </div>
 
         {/* Engine Settings */}
         <div className="md:col-span-2 ds-card-lg">
-          <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
+          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-8 flex items-center gap-2">
             <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
           </h3>
           <div className="space-y-2">
@@ -212,11 +212,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-zinc-900 rounded-2xl">
-                  {defaultPlatform === 'MOBILE' ? <Smartphone className="w-5 h-5 text-zinc-500" /> : <Monitor className="w-5 h-5 text-zinc-500" />}
+                  {defaultPlatform === 'MOBILE' ? <Smartphone className="w-5 h-5 text-text-tertiary" /> : <Monitor className="w-5 h-5 text-text-tertiary" />}
                 </div>
                 <div>
                   <div className="text-sm font-bold">{t('settingsEngine.defaultPlatform')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -224,7 +224,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <button
                     key={p}
                     onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-zinc-500 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-text-tertiary hover:text-white'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -235,10 +235,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             {/* Default Episodes */}
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Hash className="w-5 h-5 text-zinc-500" /></div>
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Hash className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settingsEngine.defaultEpisodes')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
                 </div>
               </div>
               <input
@@ -254,10 +254,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             {/* Temperature */}
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Thermometer className="w-5 h-5 text-zinc-500" /></div>
+                <div className="p-3 bg-zinc-900 rounded-2xl"><Thermometer className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settingsEngine.temperature')}</div>
-                  <div className="text-[11px] text-zinc-500 hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
+                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -282,9 +282,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <Zap className="w-4 h-4 text-zinc-800" />
             <span className="text-[9px] font-black text-zinc-800 uppercase tracking-widest">Version {ENGINE_VERSION}-NEXUS</span>
           </div>
-          <div className="flex gap-6 text-[9px] font-black text-zinc-700 uppercase tracking-widest">
-            <a href="/about#privacy" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Privacy</a>
-            <a href="/about#license" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Terms</a>
+          <div className="flex gap-6 text-[9px] font-black text-text-tertiary uppercase tracking-widest">
+            <a href="/about#privacy" target="_blank" rel="noopener" className="hover:text-text-tertiary transition-colors">Privacy</a>
+            <a href="/about#license" target="_blank" rel="noopener" className="hover:text-text-tertiary transition-colors">Terms</a>
             <a href="https://github.com/gilheumpark-bit/eh-universe-web/issues/new" target="_blank" rel="noopener" className="hover:text-accent-red transition-colors">Bug Report</a>
           </div>
         </div>
@@ -310,7 +310,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
           </div>
           <div>
             <h3 className="font-black text-base md:text-lg">{user.displayName || t('settings.writer')}</h3>
-            <p className="text-zinc-500 text-xs">{user.email}</p>
+            <p className="text-text-tertiary text-xs">{user.email}</p>
           </div>
         </div>
         <button onClick={signOut}
@@ -325,11 +325,11 @@ function ProfileCard({ language }: { language: AppLanguage }) {
     <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0">
-          <User className="w-6 h-6 md:w-8 md:h-8 text-zinc-500" />
+          <User className="w-6 h-6 md:w-8 md:h-8 text-text-tertiary" />
         </div>
         <div>
           <h3 className="font-black text-base md:text-lg">{t('settings.guest')}</h3>
-          <p className="text-zinc-600 text-xs">{t('settings.guestDesc')}</p>
+          <p className="text-text-tertiary text-xs">{t('settings.guestDesc')}</p>
         </div>
       </div>
       <button onClick={() => {

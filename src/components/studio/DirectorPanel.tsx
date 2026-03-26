@@ -16,7 +16,7 @@ const SEV_COLORS: Record<number, string> = {
   4: 'text-red-400',
   3: 'text-amber-400',
   2: 'text-blue-400',
-  1: 'text-zinc-500',
+  1: 'text-text-tertiary',
 };
 
 const SEV_DOTS: Record<number, string> = {
@@ -96,13 +96,13 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
               <div key={i} className="flex items-start gap-1.5">
                 <span className="text-[9px] shrink-0 mt-0.5">{SEV_DOTS[f.severity] || '⚪'}</span>
                 <div className="min-w-0">
-                  <div className={`text-[10px] font-bold ${SEV_COLORS[f.severity] || 'text-zinc-500'}`}>
+                  <div className={`text-[10px] font-bold ${SEV_COLORS[f.severity] || 'text-text-tertiary'}`}>
                     {KIND_LABELS[f.kind]?.[language] || f.kind}
                     {f.lineNo ? ` L${f.lineNo}` : ''}
                   </div>
                   <div className="text-[9px] text-text-tertiary break-words">{f.message}</div>
                   {f.excerpt && (
-                    <div className="text-[9px] text-zinc-600 italic truncate">&quot;{f.excerpt}&quot;</div>
+                    <div className="text-[9px] text-text-tertiary italic truncate">&quot;{f.excerpt}&quot;</div>
                   )}
                 </div>
               </div>
@@ -116,7 +116,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         )}
 
         {/* Stats summary */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-zinc-800/50 text-[10px] text-zinc-600 font-[family-name:var(--font-mono)]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-border/50 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
           {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JP:'語尾',CN:'结尾'}[language])}{report.stats.ending_mono}%</span>}
           {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JP:'ぼかし',CN:'模糊'}[language])}{report.stats.blur}</span>}
           {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JP:'無対価',CN:'无代价'}[language])}{report.stats.gain_no_cost}</span>}

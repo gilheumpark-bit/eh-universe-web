@@ -83,7 +83,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
                   active
                     ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-zinc-800/50'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

@@ -23,11 +23,11 @@ const STATUS_ICONS: Record<StageStatus, React.ElementType> = {
 };
 
 const STATUS_COLORS: Record<StageStatus, string> = {
-  pending: 'text-zinc-500',
+  pending: 'text-text-tertiary',
   running: 'text-blue-400 animate-spin',
   passed: 'text-green-400',
   failed: 'text-red-400',
-  skipped: 'text-zinc-600',
+  skipped: 'text-text-tertiary',
 };
 
 const STAGE_LABELS: Record<string, { ko: string; en: string }> = {

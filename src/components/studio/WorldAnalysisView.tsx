@@ -273,7 +273,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
         <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
           {t('worldAnalysis.title')}
         </h2>
-        <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">
+        <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">
           WORLDBUILDING REVERSE ENGINEER
         </p>
       </div>
@@ -281,7 +281,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       {/* Input */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+          <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
             {t('worldAnalysis.inputLabel')}
           </label>
           {config && (
@@ -300,13 +300,13 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           onChange={e => setInputText(e.target.value)}
         />
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-zinc-600 font-mono">
+          <span className="text-[10px] text-text-tertiary font-mono">
             {inputText.length.toLocaleString()}{t('worldAnalysis.chars')}
           </span>
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-zinc-800 text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
+                className="px-4 py-2 bg-zinc-800 text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}
@@ -333,11 +333,11 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       {result && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
               {t('worldAnalysis.results')}
             </h3>
             <button onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[9px] font-bold text-zinc-400 hover:text-white transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white transition-colors">
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
               {copied ? t('worldAnalysis.copied') : t('worldAnalysis.copyAll')}
             </button>
@@ -362,9 +362,9 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
                 >
                   <div className="flex items-center gap-2">
                     <Icon className={`w-4 h-4 ${isWarning ? 'text-amber-400' : key === 'summary' ? 'text-accent-purple' : 'text-blue-400'}`} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">{label}</span>
                   </div>
-                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{value}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{value}</p>
                 </div>
               );
             })}

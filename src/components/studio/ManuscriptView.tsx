@@ -510,9 +510,9 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                               {diff.map((line, i) => (
                                 <div key={i} className={`whitespace-pre-wrap ${
                                   line.type === 'add' ? 'text-green-400/80 bg-green-900/10' :
-                                  line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-zinc-500'
+                                  line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-text-tertiary'
                                 }`}>
-                                  <span className="inline-block w-4 text-zinc-700 select-none">
+                                  <span className="inline-block w-4 text-text-tertiary select-none">
                                     {line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}
                                   </span>
                                   {line.text || '\u00A0'}

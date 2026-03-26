@@ -493,7 +493,7 @@ export default function WritingTabInline(props: Props) {
                             setWritingMode('ai');
                           }}
                         />
-                        <div className="text-[11px] text-zinc-600 font-[family-name:var(--font-mono)]">
+                        <div className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)]">
                           {t('writingMode.autoRefineGuide')}
                         </div>
                       </div>

@@ -82,7 +82,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
 
       {/* Presets */}
       <div>
-        <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-2">
+        <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-2">
           {isKO ? '프리셋' : 'Presets'}
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -90,7 +90,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
             <button
               key={p.id}
               onClick={() => update({ levels: { ...p.levels }, shotType: p.defaultShotType || card.shotType })}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-all"
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary hover:border-zinc-600 transition-all"
             >
               {p.name}
             </button>
@@ -100,13 +100,13 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
 
       {/* Level Controls */}
       <div>
-        <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">
+        <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-3">
           {isKO ? '레벨 컨트롤' : 'Level Controls'}
         </div>
         <div className="space-y-2">
           {LEVEL_KEYS.map(({ key, ko, en }) => (
             <div key={key} className="flex items-center gap-3">
-              <span className="w-20 text-[11px] text-zinc-500 font-semibold shrink-0">
+              <span className="w-20 text-[11px] text-text-tertiary font-semibold shrink-0">
                 {isKO ? ko : en}
               </span>
               <div className="flex gap-1">
@@ -117,7 +117,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
                     className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider transition-all ${
                       card.levels[key] === v
                         ? 'bg-blue-600/30 border-blue-500/50 text-blue-300 border'
-                        : 'bg-zinc-900 border border-zinc-800 text-zinc-600 hover:text-zinc-400'
+                        : 'bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary'
                     }`}
                   >
                     {LEVEL_LABELS[v]}
@@ -131,7 +131,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
 
       {/* Text Fields (advanced) */}
       <details className="group">
-        <summary className="text-[10px] font-black text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
+        <summary className="text-[10px] font-black text-text-tertiary uppercase tracking-widest cursor-pointer hover:text-text-secondary">
           {isKO ? '▸ 텍스트 직접 편집 (고급)' : '▸ Manual Text Edit (Advanced)'}
         </summary>
         <div className="mt-3 space-y-2">
@@ -141,12 +141,12 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
               : { subjectPrompt: 'Subject', backgroundPrompt: 'Background', scenePrompt: 'Scene', compositionPrompt: 'Composition', lightingPrompt: 'Lighting', stylePrompt: 'Style', negativePrompt: 'Negative' };
             return (
               <div key={field}>
-                <label className="text-[10px] text-zinc-600 font-semibold">{labels[field]}</label>
+                <label className="text-[10px] text-text-tertiary font-semibold">{labels[field]}</label>
                 <textarea
                   value={card[field] || ''}
                   onChange={e => update({ [field]: e.target.value })}
                   rows={2}
-                  className="w-full ds-input text-xs text-[11px] text-zinc-300 placeholder-zinc-700 outline-none resize-none focus:border-zinc-600"
+                  className="w-full ds-input text-xs text-[11px] text-text-secondary placeholder-zinc-700 outline-none resize-none focus:border-zinc-600"
                 />
               </div>
             );
@@ -157,17 +157,17 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
       {/* Final Prompt Preview */}
       <div className="bg-black/60 border border-zinc-800 rounded-xl p-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+          <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
             {isKO ? '최종 프롬프트' : 'Final Prompt'}
           </span>
           <button
             onClick={() => copyToClipboard(finalPrompt)}
-            className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-blue-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-text-tertiary hover:text-blue-400 transition-colors"
           >
             <Copy className="w-3 h-3" /> {isKO ? '복사' : 'Copy'}
           </button>
         </div>
-        <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-wrap">
+        <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">
           {finalPrompt || (isKO ? '레벨을 조절하면 자동 생성됩니다' : 'Adjust levels to auto-generate')}
         </p>
         {negPrompt && (
@@ -176,12 +176,12 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
               <span className="text-[9px] font-bold text-red-500/60 uppercase">Negative</span>
               <button
                 onClick={() => copyToClipboard(negPrompt)}
-                className="text-[9px] text-zinc-600 hover:text-red-400"
+                className="text-[9px] text-text-tertiary hover:text-red-400"
               >
                 <Copy className="w-2.5 h-2.5" />
               </button>
             </div>
-            <p className="text-[10px] text-zinc-600">{negPrompt}</p>
+            <p className="text-[10px] text-text-tertiary">{negPrompt}</p>
           </div>
         )}
       </div>
@@ -189,7 +189,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="flex items-center gap-1.5 text-[10px] text-zinc-600 hover:text-red-400 transition-colors"
+        className="flex items-center gap-1.5 text-[10px] text-text-tertiary hover:text-red-400 transition-colors"
       >
         <Trash2 className="w-3 h-3" /> {isKO ? '카드 삭제' : 'Delete Card'}
       </button>

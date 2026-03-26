@@ -221,7 +221,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, language, classNam
   return (
     <button
       onClick={handleCopy}
-      className={`p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors ${className}`}
+      className={`p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-zinc-800/50 transition-colors ${className}`}
       title={t('uxHelpers.copy')}
       aria-label={language === 'KO' ? '복사' : 'Copy'}
     >

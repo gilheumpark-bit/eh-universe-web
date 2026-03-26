@@ -19,15 +19,15 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         </div>
         <div>
           <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{t.title}</h2>
-          <p className="text-zinc-500 text-[10px] font-bold tracking-widest uppercase">{t.subtitle}</p>
+          <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">{t.subtitle}</p>
         </div>
       </div>
       
-      <div className="prose prose-sm sm:prose-base prose-invert max-w-none text-zinc-400
+      <div className="prose prose-sm sm:prose-base prose-invert max-w-none text-text-secondary
         prose-h2:text-lg md:prose-h2:text-xl prose-h2:text-white prose-h2:font-black prose-h2:tracking-tighter prose-h2:uppercase prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3
         prose-h3:text-sm prose-h3:text-blue-400 prose-h3:font-black prose-h3:tracking-widest prose-h3:uppercase
         prose-strong:text-zinc-200 prose-strong:font-bold
-        prose-blockquote:border-l-4 prose-blockquote:border-blue-700 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-zinc-500
+        prose-blockquote:border-l-4 prose-blockquote:border-blue-700 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-tertiary
         prose-ul:list-disc prose-ul:pl-5
         prose-li:my-1
         prose-p:font-serif prose-p:leading-relaxed

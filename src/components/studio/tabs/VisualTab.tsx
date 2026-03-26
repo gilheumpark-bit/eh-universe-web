@@ -77,14 +77,14 @@ export default function VisualTab({ config, setConfig, currentSession, language 
       <div className="w-full lg:w-64 shrink-0 space-y-4">
         {/* Analyzed episodes */}
         <div className="ds-card">
-          <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">
+          <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-3">
             NOI — Narrative Origin Imaging
           </div>
-          <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-2">
+          <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-2">
             {isKO ? '분석 완료 회차' : 'Analyzed Episodes'}
           </div>
           {analyzedEpisodes.length === 0 ? (
-            <p className="text-[11px] text-zinc-600">
+            <p className="text-[11px] text-text-tertiary">
               {isKO ? '원고탭에서 챕터 분석을 먼저 실행하세요' : 'Run chapter analysis in Manuscript tab first'}
             </p>
           ) : (
@@ -93,10 +93,10 @@ export default function VisualTab({ config, setConfig, currentSession, language 
                 <button
                   key={ep}
                   onClick={() => generateFromAnalysis(ep)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-black/40 border border-zinc-800 hover:border-blue-600/40 text-zinc-400 hover:text-blue-300 transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-black/40 border border-zinc-800 hover:border-blue-600/40 text-text-secondary hover:text-blue-300 transition-all"
                 >
                   <span>EP.{ep}</span>
-                  <span className="text-[9px] text-zinc-600">
+                  <span className="text-[9px] text-text-tertiary">
                     {isKO ? '카드 생성' : 'Generate'}
                   </span>
                 </button>
@@ -108,10 +108,10 @@ export default function VisualTab({ config, setConfig, currentSession, language 
         {/* Card list */}
         <div className="ds-card">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+            <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
               {isKO ? `카드 (${cards.length})` : `Cards (${cards.length})`}
             </span>
-            <button onClick={addEmptyCard} className="text-zinc-600 hover:text-blue-400 transition-colors">
+            <button onClick={addEmptyCard} className="text-text-tertiary hover:text-blue-400 transition-colors">
               <Plus className="w-4 h-4" />
             </button>
           </div>
@@ -123,11 +123,11 @@ export default function VisualTab({ config, setConfig, currentSession, language 
                 className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all ${
                   selectedCardId === c.id
                     ? 'bg-blue-600/15 border border-blue-500/30 text-blue-300'
-                    : 'bg-black/30 border border-transparent text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'
+                    : 'bg-black/30 border border-transparent text-text-tertiary hover:border-zinc-700 hover:text-text-secondary'
                 }`}
               >
                 <div className="font-semibold truncate">{c.title || `EP${c.episode} Card`}</div>
-                <div className="text-[9px] text-zinc-600 mt-0.5">{c.shotType} · EP{c.episode}</div>
+                <div className="text-[9px] text-text-tertiary mt-0.5">{c.shotType} · EP{c.episode}</div>
               </button>
             ))}
           </div>
@@ -148,10 +148,10 @@ export default function VisualTab({ config, setConfig, currentSession, language 
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <ImageIcon className="w-12 h-12 text-zinc-800 mb-4" />
-            <h3 className="text-lg font-black text-zinc-600 mb-2">
+            <h3 className="text-lg font-black text-text-tertiary mb-2">
               {isKO ? '비주얼 카드를 선택하거나 생성하세요' : 'Select or create a visual card'}
             </h3>
-            <p className="text-[12px] text-zinc-700 max-w-md">
+            <p className="text-[12px] text-text-tertiary max-w-md">
               {isKO
                 ? '원고탭에서 챕터 분석 후 자동 생성하거나, + 버튼으로 빈 카드를 만들 수 있습니다.'
                 : 'Auto-generate from chapter analysis or create an empty card with the + button.'}

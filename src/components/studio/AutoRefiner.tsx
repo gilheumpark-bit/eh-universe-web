@@ -390,7 +390,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             {t('autoRefiner.header')}
           </span>
           {suggestions.length > 0 && (
-            <span className="text-[9px] text-zinc-500 font-[family-name:var(--font-mono)]">
+            <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
               {appliedCount}/{suggestions.length}
             </span>
           )}
@@ -415,7 +415,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {undoStack.length > 0 && (
-            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-zinc-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={t('ui.undo')}>
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={t('ui.undo')}>
               <Undo2 className="w-3 h-3" />
             </button>
           )}
@@ -425,11 +425,11 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {phase !== 'idle' && (
-            <button onClick={cancel} aria-label="취소" className="p-1.5 text-zinc-600 hover:text-accent-red transition-colors">
+            <button onClick={cancel} aria-label="취소" className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-zinc-600 cursor-pointer" onClick={() => setExpanded(false)} /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-600 cursor-pointer" onClick={() => setExpanded(true)} />}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary cursor-pointer" onClick={() => setExpanded(false)} /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary cursor-pointer" onClick={() => setExpanded(true)} />}
         </div>
       </div>
 
@@ -448,11 +448,11 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
+                    <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
                       {actionInfo.label[language]}
                     </span>
-                    <span className="text-[10px] text-zinc-400">{sug.issue}</span>
+                    <span className="text-[10px] text-text-secondary">{sug.issue}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     {sug.status === 'pending' && (
@@ -460,7 +460,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                         <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={t('ui.generate')}>
                           <Play className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={t('ui.skip')}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -473,7 +473,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                         <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={t('ui.apply')}>
                           <Check className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={t('ui.skip')}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -485,12 +485,12 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                 </div>
 
                 {/* Original (truncated) */}
-                <p className="text-[10px] text-zinc-600 font-serif leading-relaxed line-clamp-2">{sug.original}</p>
+                <p className="text-[10px] text-text-tertiary font-serif leading-relaxed line-clamp-2">{sug.original}</p>
 
                 {/* Generated result */}
                 {sug.result && sug.status !== 'skipped' && (
                   <div className="border-t border-border pt-2">
-                    <p className="text-[11px] text-zinc-300 font-serif leading-relaxed whitespace-pre-wrap">
+                    <p className="text-[11px] text-text-secondary font-serif leading-relaxed whitespace-pre-wrap">
                       {sug.result}
                     </p>
                   </div>
@@ -504,7 +504,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       {/* Empty state */}
       {expanded && phase === 'idle' && suggestions.length === 0 && (
         <div className="px-4 pb-4 text-center">
-          <p className="text-[11px] text-zinc-600 italic">
+          <p className="text-[11px] text-text-tertiary italic">
             {t('autoRefiner.emptyState')}
           </p>
         </div>

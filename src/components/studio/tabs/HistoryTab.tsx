@@ -146,7 +146,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
                 <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
                 {s.messages.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
+                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
                 )}
                 {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
                   <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
@@ -157,7 +157,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                   <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
                 )}
               </div>
-              <div className="mt-2 text-[8px] text-zinc-600 font-[family-name:var(--font-mono)]">
+              <div className="mt-2 text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
                 {new Date(s.lastUpdate).toLocaleDateString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>

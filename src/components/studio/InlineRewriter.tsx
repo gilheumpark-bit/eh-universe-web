@@ -243,7 +243,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
             <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
               {t('inlineRewriter.selected').replace('{n}', String(selection.text.length))}
             </span>
-            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-zinc-800 rounded text-zinc-600 hover:text-zinc-400">
+            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-zinc-800 rounded text-text-tertiary hover:text-text-secondary">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -254,7 +254,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                 key={action.id}
                 onClick={() => executeAction(action)}
                 disabled={isStreaming}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-zinc-400 hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
               >
                 {action.icon}
                 {action.label[language]}
@@ -297,7 +297,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                   <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
                     {t('inlineRewriter.confirmYes')}
                   </button>
-                  <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-zinc-700/30 border border-zinc-600/40 rounded text-[9px] text-zinc-400 hover:bg-zinc-700/50">
+                  <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-zinc-700/30 border border-zinc-600/40 rounded text-[9px] text-text-secondary hover:bg-zinc-700/50">
                     {t('inlineRewriter.confirmNo')}
                   </button>
                 </span>
@@ -308,7 +308,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               </button>
             </div>
           </div>
-          <p className="text-[12px] leading-relaxed text-zinc-300 font-serif whitespace-pre-wrap">{preview || '...'}</p>
+          <p className="text-[12px] leading-relaxed text-text-secondary font-serif whitespace-pre-wrap">{preview || '...'}</p>
         </div>
       )}
 
@@ -330,7 +330,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
       {/* Footer info */}
       <div className="flex justify-between items-center text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
         <span>{editableContent.length.toLocaleString()}{t('inlineRewriter.charCount')}</span>
-        <span className="text-zinc-600">{t('inlineRewriter.tip')}</span>
+        <span className="text-text-tertiary">{t('inlineRewriter.tip')}</span>
       </div>
     </div>
   );
