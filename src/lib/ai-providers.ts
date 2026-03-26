@@ -459,7 +459,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     truncateMessages(opts.systemInstruction, opts.messages, model);
 
   if (truncated) {
-    console.warn(`[token-guard] Messages truncated to fit ${model} context window. System: ~${systemTokens} tokens, Messages: ~${messageTokens} tokens`);
+    // token-guard 로그는 프로덕션에서 노출하지 않음
   }
 
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);

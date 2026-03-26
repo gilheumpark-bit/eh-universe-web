@@ -152,7 +152,7 @@ export function useStudioAI({
       const ipCheck = filterTrademarks(fullContent);
       if (ipCheck.matches.length > 0) {
         fullContent = ipCheck.filtered;
-        console.info(`[IP Filter] ${ipCheck.matches.length}건 치환: ${[...new Set(ipCheck.matches.map(m => m.original))].join(', ')}`);
+        // IP Filter 로그는 프로덕션에서 노출하지 않음
       }
 
       const finalContent = stripEngineArtifacts(fullContent) || result.content;
