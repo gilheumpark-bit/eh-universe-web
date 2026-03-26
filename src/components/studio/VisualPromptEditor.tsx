@@ -45,8 +45,12 @@ const LEVEL_LABELS = ['OFF', 'LOW', 'MID', 'HIGH'];
 // ============================================================
 
 export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: VisualPromptEditorProps) {
-  const update = (patch: Partial<VisualPromptCard>) => onChange({ ...card, ...patch, updatedAt: Date.now() });
-  const updateLevel = (key: keyof VisualLevelPack, val: 0 | 1 | 2 | 3) => update({ levels: { ...card.levels, [key]: val } });
+  const update = React.useCallback((patch: Partial<VisualPromptCard>) => {
+    onChange({ ...card, ...patch, updatedAt: Date.now() });
+  }, [card, onChange]);
+  const updateLevel = React.useCallback((key: keyof VisualLevelPack, val: 0 | 1 | 2 | 3) => {
+    update({ levels: { ...card.levels, [key]: val } });
+  }, [card.levels, update]);
 
   const finalPrompt = buildFinalVisualPrompt(card);
   const negPrompt = buildNegativePrompt(card);

@@ -36,11 +36,16 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
     else sessionStorage.removeItem('noa_canvasPass');
   }, [canvasPass]);
 
-  // editDraft 세션별 임시 저장 — 새로고침/크래시 대비
+  // editDraft 세션별 임시 저장 복원
+  // hydration 후 localStorage에서 복원 — 의도적 setState
   useEffect(() => {
     if (!hydrated || !currentSessionId) return;
     const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
-    setEditDraft(saved ?? '');
+    if (saved !== null) {
+      // eslint-disable-next-line react-hooks/purity
+      setEditDraft(saved);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId, hydrated]);
 
   useEffect(() => {
