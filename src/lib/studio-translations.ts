@@ -3413,14 +3413,14 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       eraTimeline: "Era timeline referenced",
       territoryMap: "Territory map referenced",
       worldLanguageSystem: "World language system referenced",
-      corePremise: "Core Premise",
-      powerStructure: "Power Structure",
-      currentConflict: "Current Conflict",
+      corePremise: "核心設定",
+      powerStructure: "権力構造",
+      currentConflict: "現在の紛争",
       history: "History",
       magicTech: "Magic/Tech",
-      socialSystem: "Social System",
-      factionRelations: "Faction Relations",
-      dailyLife: "Daily Life",
+      socialSystem: "社会制度",
+      factionRelations: "勢力関係",
+      dailyLife: "日常生活",
       beliefsVsTruth: "Beliefs vs Truth",
       charLangBasis: "in target language",
       formattingRulesHeader: "FORMATTING RULES — WEB-NOVEL STYLE",
@@ -3545,7 +3545,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     apiKeyModalExtra: {
       hostedSubtitle: "基本AIが利用可能 · いつでも個人キーを追加",
       hostedHelper: "基本Geminiが準備済みなのですぐに開始できます。個人キーを追加するとモデル選択と使用量を直接管理できます。",
-      byokSubtitle: "Bring Your Own Key"
+      byokSubtitle: "自分のAPIキーを使用"
     },
     advancedWritingExtra: {
       goalConflict: "葛藤の高まり",
@@ -4608,14 +4608,14 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       eraTimeline: "Era timeline referenced",
       territoryMap: "Territory map referenced",
       worldLanguageSystem: "World language system referenced",
-      corePremise: "Core Premise",
-      powerStructure: "Power Structure",
-      currentConflict: "Current Conflict",
+      corePremise: "核心前提",
+      powerStructure: "权力结构",
+      currentConflict: "当前冲突",
       history: "History",
       magicTech: "Magic/Tech",
-      socialSystem: "Social System",
-      factionRelations: "Faction Relations",
-      dailyLife: "Daily Life",
+      socialSystem: "社会制度",
+      factionRelations: "势力关系",
+      dailyLife: "日常生活",
       beliefsVsTruth: "Beliefs vs Truth",
       charLangBasis: "in target language",
       formattingRulesHeader: "FORMATTING RULES — WEB-NOVEL STYLE",
@@ -4740,7 +4740,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     apiKeyModalExtra: {
       hostedSubtitle: "基础AI已就绪 · 随时添加个人密钥",
       hostedHelper: "基础Gemini已准备就绪，可以立即开始。添加个人密钥可直接管理模型选择和使用量。",
-      byokSubtitle: "Bring Your Own Key"
+      byokSubtitle: "使用您自己的API密钥"
     },
     advancedWritingExtra: {
       goalConflict: "冲突升级",
