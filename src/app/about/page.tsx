@@ -77,6 +77,11 @@ export default function AboutPage() {
                   className="premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-amber transition-colors text-sm">
                   <span className="font-[family-name:var(--font-mono)]" aria-hidden="true">→</span> GitHub Repository
                 </a>
+                <a href="https://github.com/gilheumpark-bit/eh-universe-web/issues/new" target="_blank" rel="noopener noreferrer"
+                  aria-label="Report a bug (opens in new tab)"
+                  className="premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-red transition-colors text-sm">
+                  <span className="font-[family-name:var(--font-mono)]" aria-hidden="true">→</span> Bug Report / 문제 제보
+                </a>
               </div>
             </section>
 

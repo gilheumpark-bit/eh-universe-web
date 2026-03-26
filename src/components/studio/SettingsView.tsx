@@ -285,6 +285,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="flex gap-6 text-[9px] font-black text-zinc-700 uppercase tracking-widest">
             <a href="/about#privacy" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Privacy</a>
             <a href="/about#license" target="_blank" rel="noopener" className="hover:text-zinc-500 transition-colors">Terms</a>
+            <a href="https://github.com/gilheumpark-bit/eh-universe-web/issues/new" target="_blank" rel="noopener" className="hover:text-accent-red transition-colors">Bug Report</a>
           </div>
         </div>
       </div>
