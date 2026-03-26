@@ -1242,7 +1242,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       loginRequired: "Sign in with Google to use",
     },
     writing: {
-      ready: "Neural Interface Connected",
+      ready: "AI Engine Ready",
       inputPlaceholder: "Enter plot points or scene descriptions...",
       quickNext: "Next Chapter",
       quickAction: "Plot Twist",
@@ -1353,7 +1353,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       apiKeySave: "Save",
       apiKeyCancel: "Cancel",
       apiKeyTest: "Test",
-      roles: { hero: "Hero", villain: "Villain", ally: "Ally", extra: "Extra" },
+      roles: { hero: "Hero", villain: "Villain", ally: "Ally", extra: "Supporting" },
     },
     confirm: {
       deleteProject: "Delete Project",
@@ -2397,7 +2397,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     sidebar: {
       newProject: "新しい小説を開始",
       settings: "設定",
-      activeProject: "アクティブな設計図",
+      activeProject: "現在の設計",
       noSessions: "履歴がありません。",
       masterBlueprint: "マスター設計図",
       worldBible: "世界観設計",
@@ -3463,7 +3463,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       soundtrack: "サウンドトラック",
       galaxyZoneGateMap: "銀河ゾーン＆ゲートマップ",
       category: "カテゴリー",
-      phase2Note: "Phase 2で追加予定"
+      phase2Note: "第2段階で追加予定"
     },
     studioExport: {
       noValidSession: "有効なセッションデータが見つかりません。",
@@ -3592,7 +3592,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     sidebar: {
       newProject: "开始新小说",
       settings: "设置",
-      activeProject: "激活的蓝图",
+      activeProject: "当前蓝图",
       noSessions: "未找到历史记录。",
       masterBlueprint: "主蓝图",
       worldBible: "世界观设计",
@@ -3859,7 +3859,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       generating: "生成中...",
       customInstruction: "💡 自定义指令（例：「战斗场景加长」「对话语气柔和」「更改悬念」）",
       send: "发送",
-      canvasPlaceholder: "3遍画布 — 在上方发送自定义指令，或按顺序点击下方步骤按钮完成稿件。",
+      canvasPlaceholder: "3步骤画布 — 在上方发送自定义指令，或按顺序点击下方步骤按钮完成稿件。",
       pass1: "步骤1: 骨架",
       pass2: "步骤2: 情感",
       pass3: "步骤3: 描写",
@@ -4654,11 +4654,11 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
     },
     archivePage: {
       tools: "工具",
-      nekaSoundInterface: "Neka Sound Interface",
-      soundtrack: "Soundtrack",
+      nekaSoundInterface: "内卡声音界面",
+      soundtrack: "原声音乐",
       galaxyZoneGateMap: "银河区域 & Gate 地图",
       category: "分类",
-      phase2Note: "Phase 2 计划添加更多文章"
+      phase2Note: "第2阶段 计划添加更多文章"
     },
     studioExport: {
       noValidSession: "未找到有效的会话数据。",
