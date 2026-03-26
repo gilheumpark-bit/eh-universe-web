@@ -5,6 +5,7 @@
 // PART 1 — Types & Imports
 // ============================================================
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useRef, useCallback } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
@@ -233,7 +234,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         setPhase('idle');
-        alert(t('autoRefiner.parseFailed'));
+        showAlert(t('autoRefiner.parseFailed'));
         return;
       }
 
@@ -254,7 +255,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       setSuggestions(sugs);
       setPhase(sugs.length > 0 ? 'ready' : 'idle');
       if (sugs.length === 0) {
-        alert(t('autoRefiner.noImprovements'));
+        showAlert(t('autoRefiner.noImprovements'));
       }
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }

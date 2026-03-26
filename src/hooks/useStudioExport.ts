@@ -2,6 +2,7 @@
 // PART 1 — Types & Imports
 // ============================================================
 
+import { showAlert } from '@/lib/show-alert';
 import { useCallback } from 'react';
 import { ChatSession, AppLanguage, AppTab, Project, Genre } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
@@ -135,7 +136,7 @@ export function useStudioExport({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      alert('File too large (max 10MB)');
+      showAlert('File too large (max 10MB)');
       return;
     }
     const reader = new FileReader();
@@ -146,7 +147,7 @@ export function useStudioExport({
         // Case 1: Full backup — Project[] (from exportAllJSON / BACKUP)
         if (Array.isArray(data) && data.length > 0 && isValidProject(data[0])) {
           const validProjects = data.filter(isValidProject);
-          if (validProjects.length === 0) { alert(t('studioExport.noValidSession')); return; }
+          if (validProjects.length === 0) { showAlert(t('studioExport.noValidSession')); return; }
           setProjects(prev => {
             const existingIds = new Set(prev.map(p => p.id));
             const newProjects = validProjects.filter(p => !existingIds.has(p.id));
@@ -161,7 +162,7 @@ export function useStudioExport({
         else if (Array.isArray(data)) {
           ensureProject();
           const valid = data.filter(isValidSession);
-          if (valid.length === 0) { alert(t('studioExport.noValidSession')); return; }
+          if (valid.length === 0) { showAlert(t('studioExport.noValidSession')); return; }
           setSessions(prev => {
             const existingIds = new Set(prev.map(s => s.id));
             const deduped = valid.filter(s => !existingIds.has(s.id));
@@ -188,12 +189,12 @@ export function useStudioExport({
           if (data.sessions.length > 0) setCurrentSessionId(data.sessions[0].id);
         }
         else {
-          alert(t('studioExport.invalidFormat'));
+          showAlert(t('studioExport.invalidFormat'));
           return;
         }
         setActiveTab('writing');
       } catch {
-        alert(t('studioExport.invalidJson'));
+        showAlert(t('studioExport.invalidJson'));
       }
     };
     reader.readAsText(file);

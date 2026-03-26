@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AppLanguage } from '@/lib/studio-types';
@@ -332,7 +333,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
       </div>
       <button onClick={() => {
         if (!isConfigured) {
-          alert(t('settings.firebaseRequired'));
+          showAlert(t('settings.firebaseRequired'));
           return;
         }
         signInWithGoogle();

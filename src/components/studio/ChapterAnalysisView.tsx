@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
 import { getApiKey } from "@/lib/ai-providers";
+import { showAlert } from "@/lib/show-alert";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -262,8 +263,8 @@ export default function ChapterAnalysisView({
       if (data.imagePromptPack) setImagePrompt(data.imagePromptPack);
       if (data.musicPromptPack) setMusicPrompt(data.musicPromptPack);
     } catch {
-      // [확인 필요] API 엔드포인트 미구현 시 수동 입력으로 폴백
-      console.warn("Auto-analysis API not available. Use manual input.");
+      // API 실패 시 수동 입력으로 폴백 (analyze-chapter 라우트 구현 완료)
+      showAlert(language === 'KO' ? '자동 분석 실패. 수동으로 입력해주세요.' : 'Auto-analysis failed. Please enter manually.', 'error');
     } finally {
       setAnalyzing(false);
     }

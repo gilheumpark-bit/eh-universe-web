@@ -1,4 +1,5 @@
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
 import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
@@ -130,7 +131,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const handleAIGenerate = async () => {
     // hosted provider가 있으면 로컬 키 없이도 사용 가능
     if (!getApiKey(getActiveProvider()) && !hasAiAccess) {
-      alert(tl('planningExtra.apiKeyAlert'));
+      showAlert(tl('planningExtra.apiKeyAlert'));
       return;
     }
     setAiGenerating(true);
@@ -176,7 +177,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         guardrails: { min: 4000, max: 6000 },
       }));
     } catch {
-      alert(tl('planningExtra.aiFailed'));
+      showAlert(tl('planningExtra.aiFailed'));
     } finally {
       setAiGenerating(false);
     }

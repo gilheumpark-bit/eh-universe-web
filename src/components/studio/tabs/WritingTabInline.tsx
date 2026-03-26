@@ -4,6 +4,7 @@
 // WritingTabInline — page.tsx writing 탭 인라인 코드 그대로 추출
 // ============================================================
 
+import { showAlert } from '@/lib/show-alert';
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool } from 'lucide-react';
@@ -560,7 +561,7 @@ export default function WritingTabInline(props: Props) {
                           <button disabled={isGenerating || canvasPass < 1} onClick={() => {
                             const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
                             const draft = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                            if (!draft) { alert(t('canvas.noPass1')); return; }
+                            if (!draft) { showAlert(t('canvas.noPass1')); return; }
                             setCanvasContent(draft);
                             setCanvasPass(2);
                             setTimeout(() => {
@@ -576,7 +577,7 @@ export default function WritingTabInline(props: Props) {
                           <button disabled={isGenerating || canvasPass < 2} onClick={() => {
                             const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
                             const ms = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                            if (!ms) { alert(t('canvas.noPass2')); return; }
+                            if (!ms) { showAlert(t('canvas.noPass2')); return; }
                             setCanvasContent(ms);
                             setCanvasPass(3);
                             setTimeout(() => {

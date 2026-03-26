@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
 import { createT } from '@/lib/i18n';
@@ -567,8 +568,8 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           )}
           <button onClick={async () => {
             const { activeSupportsStructured } = await import('@/lib/ai-providers');
-            if (!activeSupportsStructured()) { alert(lang === 'ko' ? '현재 프로바이더는 구조화 생성 미지원. Gemini를 사용하세요.' : 'Current provider does not support structured generation.'); return; }
-            if (!synopsis) { alert(tl('sceneSheet.synopsisRequired')); return; }
+            if (!activeSupportsStructured()) { showAlert(lang === 'ko' ? '현재 프로바이더는 구조화 생성 미지원. Gemini를 사용하세요.' : 'Current provider does not support structured generation.'); return; }
+            if (!synopsis) { showAlert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
               const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
@@ -591,7 +592,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               if (result.pacings?.length) setPacings(result.pacings.map((p, i) => ({ id: `ai-p-${ts}-${i}`, section: p.section, percent: p.percent || 25, desc: p.desc })));
               // tension curve
               if (result.tensionCurve?.length) setTensionPoints(result.tensionCurve.map((t, i) => ({ id: `ai-t-${ts}-${i}`, position: t.position, level: t.level, label: t.label })));
-            } catch { alert(tl('sceneSheet.aiFailed')); }
+            } catch { showAlert(tl('sceneSheet.aiFailed')); }
           }}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
             🤖 {tl('sceneSheet.aiGenerate')}

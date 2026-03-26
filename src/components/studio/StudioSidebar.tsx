@@ -4,6 +4,7 @@
 // PART 0 — IMPORTS & TYPES
 // ============================================================
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -453,7 +454,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 <button
                   onClick={() => {
                     if (!authConfigured) {
-                      alert(t('confirm.firebaseRequired'));
+                      showAlert(t('confirm.firebaseRequired'));
                       return;
                     }
                     signInWithGoogle();

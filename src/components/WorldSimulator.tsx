@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { createT } from '@/lib/i18n';
 
@@ -1743,7 +1744,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
       }
       // New genre — check max
       if (prev.length >= MAX_GENRE_SELECTIONS) {
-        alert(lang === "ko" ? `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다` : `Max ${MAX_GENRE_SELECTIONS} genres allowed`);
+        showAlert(lang === "ko" ? `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다` : `Max ${MAX_GENRE_SELECTIONS} genres allowed`);
         return prev;
       }
       return [...prev, { genre, level }];
@@ -1866,7 +1867,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
               type="button"
               disabled={aiGenerating}
               onClick={async () => {
-              if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
+              if (!synopsis) { showAlert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
               setAiGenerating(true);
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
@@ -1881,7 +1882,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                   setCivs(newCivs);
                   setRelations([]);
                 }
-              } catch { alert(lang === "ko" ? '자동 생성 실패. API 키를 확인하세요.' : 'Generation failed. Check API key.'); }
+              } catch { showAlert(lang === "ko" ? '자동 생성 실패. API 키를 확인하세요.' : 'Generation failed. Check API key.'); }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>

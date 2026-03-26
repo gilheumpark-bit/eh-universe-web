@@ -1,6 +1,7 @@
 // ============================================================
 // PART 0 — IMPORTS & TYPES
 // ============================================================
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Item, Skill, MagicSystem, ItemRarity, ItemCategory,
@@ -406,11 +407,11 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // ============================================================
   const handleAIGenerate = async () => {
     if (!activeSupportsStructured()) {
-      alert(language === 'KO' ? '현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current provider does not support structured generation. Please use Gemini.');
+      showAlert(language === 'KO' ? '현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current provider does not support structured generation. Please use Gemini.');
       return;
     }
     if (!config.synopsis) {
-      alert(t('itemStudio.synopsisRequired'));
+      showAlert(t('itemStudio.synopsisRequired'));
       return;
     }
     setIsGenerating(true);
@@ -419,7 +420,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       setItems(prev => [...prev, ...generated]);
     } catch {
       const msg = ({ KO: '아이템 생성 실패. API 키를 확인하세요.', EN: 'Item generation failed. Check API key.', JP: 'アイテム生成に失敗しました。', CN: '物品生成失败。' })[language];
-      alert(msg);
+      showAlert(msg);
     } finally {
       setIsGenerating(false);
     }

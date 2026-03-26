@@ -189,6 +189,18 @@ export default function StudioPage() {
     confirmState, showConfirm, closeConfirm,
   } = useStudioUX();
 
+  // UX: alert() 대체 토스트 수신
+  const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { message, variant } = (e as CustomEvent).detail;
+      setAlertToast({ message, variant });
+      setTimeout(() => setAlertToast(null), 4000);
+    };
+    window.addEventListener('noa:alert', handler);
+    return () => window.removeEventListener('noa:alert', handler);
+  }, []);
+
   // Hydration-safe: sidebar width
   useEffect(() => {
     if (!hydrated) return;
@@ -1315,6 +1327,16 @@ export default function StudioPage() {
         worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
         uxError={uxError} setUxError={setUxError}
       />
+      {alertToast && (
+        <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
+          alertToast.variant === 'error' ? 'bg-red-900/95 border border-red-600 text-red-100'
+          : alertToast.variant === 'info' ? 'bg-blue-900/95 border border-blue-600 text-blue-100'
+          : 'bg-amber-900/95 border border-amber-600 text-amber-100'
+        }`}>
+          <span>{alertToast.variant === 'error' ? '❌' : alertToast.variant === 'info' ? 'ℹ️' : '⚠️'} {alertToast.message}</span>
+          <button onClick={() => setAlertToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
+        </div>
+      )}
     </div>
     </StudioUIProvider>
     </StudioConfigProvider>
