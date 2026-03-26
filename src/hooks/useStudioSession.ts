@@ -18,6 +18,7 @@ interface UseStudioSessionParams {
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setActiveTab: (tab: AppTab) => void;
   setIsSidebarOpen: (open: boolean) => void;
+  setWritingMode?: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
   showConfirm: (opts: {
     title: string; message: string;
     confirmLabel?: string; cancelLabel?: string;
@@ -30,7 +31,7 @@ interface UseStudioSessionParams {
 export function useStudioSession({
   language, currentSession, editDraft,
   doCreateNewSession, updateCurrentSession,
-  setActiveTab, setIsSidebarOpen,
+  setActiveTab, setIsSidebarOpen, setWritingMode,
   showConfirm, closeConfirm,
 }: UseStudioSessionParams) {
   const t = createT(language);
@@ -84,6 +85,8 @@ export function useStudioSession({
         title: demoSession.title,
       });
       setActiveTab('writing');
+      // 데모 메시지가 있으면 AI 모드(대화 표시)로 진입
+      if (demoSession.messages.length > 0 && setWritingMode) setWritingMode('ai');
     }, 50);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [isKO, doCreateNewSession, updateCurrentSession, setActiveTab, setIsSidebarOpen]);

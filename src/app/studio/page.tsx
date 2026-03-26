@@ -391,7 +391,7 @@ export default function StudioPage() {
   } = useStudioSession({
     language, currentSession, editDraft,
     doCreateNewSession, updateCurrentSession,
-    setActiveTab, setIsSidebarOpen,
+    setActiveTab, setIsSidebarOpen, setWritingMode,
     showConfirm, closeConfirm,
   });
 
