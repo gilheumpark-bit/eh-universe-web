@@ -133,6 +133,9 @@ test.describe('NOA Studio — Extended Flows', () => {
   test('export buttons are visible', async ({ page }) => {
     await page.goto('/studio');
     await dismissOnboarding(page);
+    // 내보내기 섹션이 접기식이므로 먼저 펼침
+    const exportToggle = page.locator('summary', { hasText: /내보내기|Export/i }).first();
+    if (await exportToggle.isVisible()) await exportToggle.click();
     for (const format of ['TXT', 'JSON', 'EPUB', 'DOCX']) {
       await expect(
         page.locator('button', { hasText: format }).first()
