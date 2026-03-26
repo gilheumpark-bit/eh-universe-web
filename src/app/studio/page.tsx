@@ -674,13 +674,10 @@ export default function StudioPage() {
     <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
-    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={(() => {
-      const base: React.CSSProperties = { fontFamily: 'var(--font-sans)' };
-      if (themeLevel === 0) return base; // 다크
-      if (themeLevel === 1) return { ...base, '--color-bg-primary': '#1a1a2e', '--color-bg-secondary': '#22223a', '--color-bg-tertiary': '#2a2a42', '--color-text-primary': '#e0e0e8', '--color-text-secondary': '#a0a0b0', '--color-text-tertiary': '#707080', '--color-border': '#3a3a52', background: '#1a1a2e' } as React.CSSProperties; // 딤
-      if (themeLevel === 2) return { ...base, '--color-bg-primary': '#f5f5f5', '--color-bg-secondary': '#ebebeb', '--color-bg-tertiary': '#dcdcdc', '--color-text-primary': '#1a1a1a', '--color-text-secondary': '#4a4a4a', '--color-text-tertiary': '#8a8a8a', '--color-border': '#c8c8c8', background: '#f5f5f5', color: '#1a1a1a' } as React.CSSProperties; // 라이트
-      return { ...base, '--color-bg-primary': '#ffffff', '--color-bg-secondary': '#f8f8f8', '--color-bg-tertiary': '#f0f0f0', '--color-text-primary': '#000000', '--color-text-secondary': '#333333', '--color-text-tertiary': '#666666', '--color-border': '#d0d0d0', background: '#ffffff', color: '#000000' } as React.CSSProperties; // 최대
-    })()}>
+    <div
+      className="flex h-screen overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
+      data-theme={(['', 'dim', 'light', 'max'] as const)[themeLevel] || ''}
+    >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
       {/* Mobile bottom tab bar */}
