@@ -174,7 +174,7 @@ export default function AuthorDashboard({ messages, language }: Props) {
               const h = Math.max(4, (m.tension / 100) * 80);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`#${m.index} ${m.grade} T:${m.tension}%`}>
-                  <div className={`w-full rounded-t ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-zinc-600'}`} style={{ height: `${h}px` }} />
+                  <div className={`w-full rounded-t ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-text-tertiary'}`} style={{ height: `${h}px` }} />
                   <span className="text-[7px] text-text-tertiary">{m.index}</span>
                 </div>
               );

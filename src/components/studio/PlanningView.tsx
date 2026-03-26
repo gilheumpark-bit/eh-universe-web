@@ -221,7 +221,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               <Shuffle className="w-3.5 h-3.5" /> {tl('planningExtra.preset')}
             </button>
             {showPresetMenu && (
-              <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-zinc-700 rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
+              <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
                 {(AUTO_PRESETS[autoGenGenre] || []).map((preset, i) => {
                   const data = isKO ? preset.ko : preset.en;
                   return (
@@ -424,7 +424,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               setTimeout(() => setShareCopied(false), 2000);
             });
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
         >
           {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
           {shareCopied
@@ -444,7 +444,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(planetPayload))));
             router.push(`/network/new?import=${encoded}`);
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
         >
           <Globe className="w-4 h-4" />
           {isKO ? '행성으로 등록' : 'Register as Planet'}

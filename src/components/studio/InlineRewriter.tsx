@@ -238,7 +238,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     <div className="space-y-3">
       {/* Action toolbar */}
       {showActions && selection && (
-        <div className="bg-bg-secondary/80 border border-zinc-700/50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-bg-secondary/80 border border-border/50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
               {t('inlineRewriter.selected').replace('{n}', String(selection.text.length))}
@@ -254,7 +254,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                 key={action.id}
                 onClick={() => executeAction(action)}
                 disabled={isStreaming}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-bg-tertiary/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-bg-tertiary/80 border border-border/50 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
               >
                 {action.icon}
                 {action.label[language]}
@@ -268,7 +268,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               onChange={e => setCustomPrompt(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCustomAction(); }}
               placeholder={t('inlineRewriter.customPlaceholder')}
-              className="flex-1 bg-bg-tertiary/50 border border-zinc-700/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-[family-name:var(--font-mono)]"
+              className="flex-1 bg-bg-tertiary/50 border border-border/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-[family-name:var(--font-mono)]"
               disabled={isStreaming}
             />
             <button onClick={handleCustomAction} disabled={isStreaming || !customPrompt.trim()} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold disabled:opacity-30 font-[family-name:var(--font-mono)]">
@@ -280,7 +280,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
       {/* Preview */}
       {preview !== null && (
-        <div className="bg-zinc-950 border border-blue-500/20 rounded-xl p-4 space-y-3">
+        <div className="bg-bg-primary border border-blue-500/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 font-[family-name:var(--font-mono)]">
               {isStreaming ? t('inlineRewriter.generating') : t('inlineRewriter.preview')}
@@ -297,7 +297,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                   <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
                     {t('inlineRewriter.confirmYes')}
                   </button>
-                  <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-zinc-700/30 border border-zinc-600/40 rounded text-[9px] text-text-secondary hover:bg-zinc-700/50">
+                  <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-bg-tertiary/30 border border-zinc-600/40 rounded text-[9px] text-text-secondary hover:bg-bg-tertiary/50">
                     {t('inlineRewriter.confirmNo')}
                   </button>
                 </span>

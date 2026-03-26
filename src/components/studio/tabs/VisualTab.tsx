@@ -123,7 +123,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
                 className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all ${
                   selectedCardId === c.id
                     ? 'bg-blue-600/15 border border-blue-500/30 text-blue-300'
-                    : 'bg-black/30 border border-transparent text-text-tertiary hover:border-zinc-700 hover:text-text-secondary'
+                    : 'bg-black/30 border border-transparent text-text-tertiary hover:border-border hover:text-text-secondary'
                 }`}
               >
                 <div className="font-semibold truncate">{c.title || `EP${c.episode} Card`}</div>
@@ -147,7 +147,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <ImageIcon className="w-12 h-12 text-zinc-800 mb-4" />
+            <ImageIcon className="w-12 h-12 text-text-tertiary mb-4" />
             <h3 className="text-lg font-black text-text-tertiary mb-2">
               {isKO ? '비주얼 카드를 선택하거나 생성하세요' : 'Select or create a visual card'}
             </h3>

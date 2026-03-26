@@ -68,7 +68,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
   return (
     <div className={`flex w-full gap-3 md:gap-4 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-lg ${
-        isUser ? 'bg-bg-tertiary border-zinc-700' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
+        isUser ? 'bg-bg-tertiary border-border' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
       }`}>
         {isUser ? <User className="w-4 h-4 text-text-tertiary" /> : <Bot className="w-4 h-4 text-white" />}
       </div>
@@ -96,7 +96,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
                   h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,
                   hr: () => <div className="my-10 h-px bg-border"></div>,
-                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-zinc-950/70 p-4 text-xs text-text-secondary" {...props} />,
+                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-bg-primary/70 p-4 text-xs text-text-secondary" {...props} />,
                   code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
                 }}
               >

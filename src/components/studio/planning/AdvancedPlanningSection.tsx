@@ -45,7 +45,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
           {([
             { value: 'iron' as const, label: isKO ? '강 (Iron)' : 'Iron', activeClass: 'bg-red-600/10 border-red-500/30 text-red-400', desc: isKO ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
             { value: 'standard' as const, label: isKO ? '중 (Standard)' : 'Standard', activeClass: 'bg-blue-600/10 border-blue-500/30 text-blue-400', desc: isKO ? '주요 경고만 표시' : 'Major warnings only' },
-            { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-zinc-600/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
+            { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-text-tertiary/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
           ]).map(({ value, label, activeClass, desc }) => (
             <button key={value} onClick={() => setConfig({ ...config, narrativeIntensity: value })}
               className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-black border-border text-text-tertiary hover:text-text-secondary'}`}

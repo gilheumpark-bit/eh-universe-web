@@ -163,7 +163,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative group">
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
                    <input 
-                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-zinc-800"
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary"
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     value={newChar.name}
                     onChange={e => setNewChar({...newChar, name: e.target.value})}
@@ -236,7 +236,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                </button>
              )}
              
-             <div className="flex-1 flex items-center gap-2 bg-zinc-950/50 p-1.5 rounded-2xl border border-zinc-900 overflow-x-auto custom-scrollbar">
+             <div className="flex-1 flex items-center gap-2 bg-bg-primary/50 p-1.5 rounded-2xl border border-border overflow-x-auto custom-scrollbar">
                {[{ value: 'all', label: 'All Characters' }, ...roleLabels].map(cat => (
                  <button
                   key={cat.value}
@@ -253,7 +253,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
           <div className="relative min-h-[400px]">
             {filteredCharacters.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-zinc-900 rounded-[3rem] text-zinc-800">
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-[3rem] text-text-tertiary">
                 <div className="w-16 h-16 bg-bg-secondary/50 rounded-full flex items-center justify-center mb-6">
                   <Users className="w-8 h-8 opacity-20" />
                 </div>
@@ -270,7 +270,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl flex items-center justify-center text-text-tertiary font-black border border-white/5 text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                        <div className="w-14 h-14 bg-gradient-to-br from-bg-tertiary to-bg-secondary rounded-2xl flex items-center justify-center text-text-tertiary font-black border border-white/5 text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
                           {char.name[0]}
                         </div>
                         <div className="min-w-0">
@@ -279,7 +279,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                char.role === 'hero' ? 'bg-blue-500' :
                                char.role === 'villain' ? 'bg-red-500' :
-                               char.role === 'ally' ? 'bg-green-500' : 'bg-zinc-600'
+                               char.role === 'ally' ? 'bg-green-500' : 'bg-text-tertiary'
                              }`}></div>
                              <select
                                value={char.role}
@@ -307,7 +307,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     </div>
 
                     <div className="ds-card mb-4 relative group/traits">
-                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-zinc-800 opacity-50" />
+                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-text-tertiary opacity-50" />
                       <p className="text-[11px] text-text-secondary font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
                         {char.traits}
                       </p>
@@ -322,7 +322,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, personality: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🧠 성격 (예: 냉소적이지만 내면은 따뜻함)' : '🧠 Personality (e.g. cynical but warm inside)'}
-                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechStyle || ''}
@@ -331,7 +331,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechStyle: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🗣️ 억양/말투 (예: 반말, 짧은 문장, 냉담한 톤)' : '🗣️ Speech style (e.g. informal, short sentences, cold tone)'}
-                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechExample || ''}
@@ -340,7 +340,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechExample: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '💬 대사 예시 (예: "...그래서 뭐 어쩌라고.")' : '💬 Example dialogue (e.g. "...so what do you want me to do.")'}
-                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800 font-serif italic"
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary font-serif italic"
                       />
                     </div>
 
@@ -780,7 +780,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
           {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
             <button key={rt} onClick={() => setSelType(rt)}
               className={`px-2 py-2 rounded-lg text-[9px] font-bold border transition-all ${
-                selType === rt ? 'text-white' : 'text-text-tertiary border-border hover:border-zinc-600'
+                selType === rt ? 'text-white' : 'text-text-tertiary border-border hover:border-text-tertiary'
               }`}
               style={selType === rt ? { background: CHAR_REL_STYLES[rt].color, borderColor: CHAR_REL_STYLES[rt].color } : undefined}
             >

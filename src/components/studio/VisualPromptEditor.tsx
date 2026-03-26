@@ -90,7 +90,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
             <button
               key={p.id}
               onClick={() => update({ levels: { ...p.levels }, shotType: p.defaultShotType || card.shotType })}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary hover:border-zinc-600 transition-all"
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary hover:border-text-tertiary transition-all"
             >
               {p.name}
             </button>

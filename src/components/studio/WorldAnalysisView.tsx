@@ -306,7 +306,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-bg-tertiary text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
+                className="px-4 py-2 bg-bg-tertiary text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}

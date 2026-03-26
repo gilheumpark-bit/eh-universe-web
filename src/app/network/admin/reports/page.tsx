@@ -100,7 +100,7 @@ export default function ReportsAdminPage() {
                           처리
                         </button>
                         <button onClick={() => handleStatusChange(r.id, "dismissed")}
-                          className="px-2 py-1 bg-zinc-600/20 text-zinc-400 border border-zinc-600/30 rounded text-[10px] font-bold hover:bg-zinc-600/30">
+                          className="px-2 py-1 bg-text-tertiary/20 text-zinc-400 border border-zinc-600/30 rounded text-[10px] font-bold hover:bg-text-tertiary/30">
                           기각
                         </button>
                       </>

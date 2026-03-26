@@ -415,7 +415,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             </button>
           )}
           {undoStack.length > 0 && (
-            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={t('ui.undo')}>
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-bg-tertiary/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-bg-tertiary/50 transition-colors" title={t('ui.undo')}>
               <Undo2 className="w-3 h-3" />
             </button>
           )}

@@ -181,7 +181,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
-              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-zinc-700 justify-start'}`}>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>
@@ -279,8 +279,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         {/* Footer */}
         <div className="md:col-span-2 flex flex-col gap-4 md:flex-row justify-between items-center px-2 md:px-10">
           <div className="flex items-center gap-4">
-            <Zap className="w-4 h-4 text-zinc-800" />
-            <span className="text-[9px] font-black text-zinc-800 uppercase tracking-widest">Version {ENGINE_VERSION}-NEXUS</span>
+            <Zap className="w-4 h-4 text-text-tertiary" />
+            <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">Version {ENGINE_VERSION}-NEXUS</span>
           </div>
           <div className="flex gap-6 text-[9px] font-black text-text-tertiary uppercase tracking-widest">
             <a href="/about#privacy" target="_blank" rel="noopener" className="hover:text-text-tertiary transition-colors">Privacy</a>

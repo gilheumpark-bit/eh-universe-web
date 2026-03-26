@@ -20,14 +20,14 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
   const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
 
   return (
-    <div className="h-full bg-zinc-950 border-l border-border flex flex-col w-80 text-xs font-mono overflow-y-auto custom-scrollbar">
+    <div className="h-full bg-bg-primary border-l border-border flex flex-col w-80 text-xs font-mono overflow-y-auto custom-scrollbar">
       <div className="p-6 border-b border-border bg-bg-secondary/30">
         <h2 className="text-zinc-100 font-black flex items-center gap-2 tracking-widest uppercase">
           <Zap className="w-4 h-4 text-blue-500" />
           ANS {ENGINE_VERSION}
         </h2>
         <div className="flex items-center gap-2 mt-3">
-          <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-blue-500 animate-ping' : 'bg-zinc-700'}`} />
+          <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-blue-500 animate-ping' : 'bg-bg-tertiary'}`} />
           <span className="text-text-tertiary font-bold uppercase tracking-tighter">
             {isGenerating ? "Generating..." : "Idle"}
           </span>
