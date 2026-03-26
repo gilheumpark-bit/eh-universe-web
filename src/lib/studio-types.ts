@@ -498,3 +498,107 @@ export interface Project {
 
 export { PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
 export type { EngineReport } from '../engine/types';
+
+// ============================================================
+// 3.8 자율 시스템 타입
+// ============================================================
+
+// ① Quality Gate Loop
+export interface QualityThresholds {
+  minGrade: string;
+  minDirectorScore: number;
+  minEOS: number;
+  minTensionAlignment: number;
+  maxAITonePercent: number;
+  blockOnRedTag: boolean;
+}
+
+export interface QualityGateConfig {
+  enabled: boolean;
+  maxRetries: number;
+  thresholds: QualityThresholds;
+  autoMode: 'full_auto' | 'confirm' | 'off';
+}
+
+export interface QualityGateResult {
+  passed: boolean;
+  attempt: number;
+  failReasons: string[];
+  grade: string;
+  directorScore: number;
+  eosScore: number;
+  qualityTag: string;
+}
+
+// ② Proactive Suggestions
+export type SuggestionCategory =
+  | 'character_drift' | 'world_inconsistency' | 'tension_mismatch'
+  | 'thread_overdue' | 'pacing_anomaly' | 'emotion_flat'
+  | 'ai_tone_creep' | 'hallucination_risk' | 'foreshadow_urgent';
+
+export type SuggestionPriority = 'critical' | 'warning' | 'info';
+
+export interface ProactiveSuggestion {
+  id: string;
+  category: SuggestionCategory;
+  priority: SuggestionPriority;
+  message: string;
+  actionHint: string;
+  episode: number;
+  dismissed: boolean;
+  dismissCount: number;
+}
+
+export interface SuggestionConfig {
+  enabled: boolean;
+  maxPerGeneration: number;
+  cooldownTurns: number;
+  suppressAfterDismiss: number;
+  categories: Partial<Record<SuggestionCategory, boolean>>;
+}
+
+// ③ Auto-Pipeline
+export type PipelineStage = 'world_check' | 'character_sync' | 'direction_setup' | 'generation';
+export type StageStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
+
+export interface PipelineStageResult {
+  stage: PipelineStage;
+  status: StageStatus;
+  duration: number;
+  score?: number;
+  warnings: string[];
+}
+
+export interface AutoPipelineConfig {
+  enabled: boolean;
+  stages: Record<PipelineStage, {
+    enabled: boolean;
+    passThreshold: number;
+    failAction: 'block' | 'warn' | 'skip';
+  }>;
+  qualityGateEnabled: boolean;
+}
+
+// ④ Writer Profile
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface WriterProfile {
+  id: string;
+  createdAt: number;
+  updatedAt: number;
+  episodeCount: number;
+  avgSentenceLength: number;
+  dialogueRatio: number;
+  emotionDensity: number;
+  avgEpisodeLength: number;
+  pacingPreference: number;
+  avgGrade: number;
+  avgDirectorScore: number;
+  avgEOS: number;
+  commonIssues: Record<string, number>;
+  avgAITone: number;
+  regenerateRate: number;
+  overrideRate: number;
+  skillLevel: SkillLevel;
+  levelConfidence: number;
+}
