@@ -159,7 +159,7 @@ export default function StudioPage() {
 
   // UX feature states — useStudioTheme 훅
   const {
-    lightTheme, toggleTheme,
+    themeLevel, lightTheme, toggleTheme,
     focusMode, setFocusMode,
     showShortcuts, setShowShortcuts,
     showSearch, setShowSearch,
@@ -655,7 +655,13 @@ export default function StudioPage() {
     <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
-    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={lightTheme ? { fontFamily: 'var(--font-sans)', '--color-bg-primary': '#ffffff', '--color-bg-secondary': '#f3f4f6', '--color-bg-tertiary': '#e5e7eb', '--color-text-primary': '#111827', '--color-text-secondary': '#4b5563', '--color-text-tertiary': '#9ca3af', '--color-border': '#d1d5db' } as React.CSSProperties : { fontFamily: 'var(--font-sans)' }}>
+    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={(() => {
+      const base: React.CSSProperties = { fontFamily: 'var(--font-sans)' };
+      if (themeLevel === 0) return base; // 다크
+      if (themeLevel === 1) return { ...base, '--color-bg-primary': '#1a1a2e', '--color-bg-secondary': '#22223a', '--color-bg-tertiary': '#2a2a42', '--color-text-primary': '#e0e0e8', '--color-text-secondary': '#a0a0b0', '--color-text-tertiary': '#707080', '--color-border': '#3a3a52', background: '#1a1a2e' } as React.CSSProperties; // 딤
+      if (themeLevel === 2) return { ...base, '--color-bg-primary': '#f5f5f5', '--color-bg-secondary': '#ebebeb', '--color-bg-tertiary': '#dcdcdc', '--color-text-primary': '#1a1a1a', '--color-text-secondary': '#4a4a4a', '--color-text-tertiary': '#8a8a8a', '--color-border': '#c8c8c8', background: '#f5f5f5', color: '#1a1a1a' } as React.CSSProperties; // 라이트
+      return { ...base, '--color-bg-primary': '#ffffff', '--color-bg-secondary': '#f8f8f8', '--color-bg-tertiary': '#f0f0f0', '--color-text-primary': '#000000', '--color-text-secondary': '#333333', '--color-text-tertiary': '#666666', '--color-border': '#d0d0d0', background: '#ffffff', color: '#000000' } as React.CSSProperties; // 최대
+    })()}>
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
       {/* Mobile bottom tab bar */}
@@ -754,7 +760,10 @@ export default function StudioPage() {
             <div className="flex items-center gap-1">
               <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.searchCtrlF')} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
               <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.focusMode')} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.toggleTheme')} aria-label={t('ui.toggleThemeLabel')}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
+              <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple flex items-center gap-1" title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} aria-label={t('ui.toggleThemeLabel')}>
+                {themeLevel === 0 ? <Moon className="w-4 h-4" /> : themeLevel === 1 ? <Sun className="w-4 h-4 opacity-40" /> : themeLevel === 2 ? <Sun className="w-4 h-4 opacity-70" /> : <Sun className="w-4 h-4" />}
+                <span className="text-[9px] font-[family-name:var(--font-mono)] hidden md:inline">{isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['D','DM','L','MX'][themeLevel]}</span>
+              </button>
               <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
