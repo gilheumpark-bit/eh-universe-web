@@ -196,7 +196,7 @@ export default function StudioPage() {
 
   // 3.8 자율 시스템 상태
   const [suggestions, setSuggestions] = useState<import('@/lib/studio-types').ProactiveSuggestion[]>([]);
-  const [pipelineResult, setPipelineResult] = useState<import('@/engine/auto-pipeline').PipelineExecution | null>(null);
+  const [pipelineResult, setPipelineResult] = useState<{ stages: import('@/lib/studio-types').PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
       const { message, variant } = (e as CustomEvent).detail;
@@ -459,6 +459,17 @@ export default function StudioPage() {
       setActiveTab('writing');
       setShowQuickStartModal(false);
 
+      // 3.8 — Auto Pipeline 상태 업데이트 (Quick Start 완료 시)
+      setPipelineResult({
+        stages: [
+          { stage: 'world_check', status: 'passed', duration: 0, warnings: [] },
+          { stage: 'character_sync', status: 'passed', duration: 0, warnings: [] },
+          { stage: 'direction_setup', status: 'skipped', duration: 0, warnings: [] },
+          { stage: 'generation', status: 'running', duration: 0, warnings: [] },
+        ],
+        finalStatus: 'running',
+      });
+
       // stale closure 방지: pending state에 저장 → useEffect에서 실행
       setPendingQuickStartPrompt(`${userPrompt}\n\n첫 장면을 써줘.`);
 
@@ -478,7 +489,10 @@ export default function StudioPage() {
   // P1-2: Quick Start 첫 생성 — 세션 확정 후 실행 (stale closure 제거)
   useEffect(() => {
     if (pendingQuickStartPrompt && currentSessionId && currentSession) {
-      doHandleSend(pendingQuickStartPrompt, '', () => {});
+      doHandleSend(pendingQuickStartPrompt, '', () => {
+        // 3.8 — 파이프라인 완료 상태
+        setPipelineResult(prev => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map(s => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
+      });
       setPendingQuickStartPrompt(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -16,7 +16,7 @@ import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/e
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
-import { updateProfile, loadProfile, saveProfile } from '@/engine/writer-profile';
+import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
 import type { ProactiveSuggestion } from '@/lib/studio-types';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
@@ -125,8 +125,11 @@ export function useStudioAI({
           genreSelections: capturedConfig.worldSimData?.genreSelections || capturedConfig.simulatorRef?.genreSelections,
         },
       };
+      // 3.8 — Writer Profile 힌트를 프롬프트에 주입
+      const profileHint = buildProfileHint(loadProfile('default'), language === 'KO');
+      const fullPrompt = directivePrefix + outputModePrefix + hfcpPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
       const result = await generateStoryStream(
-        configForAI, directivePrefix + outputModePrefix + hfcpPrefix + text,
+        configForAI, fullPrompt,
         (chunk) => {
           fullContent += chunk;
           const displayContent = stripEngineArtifacts(fullContent);
@@ -171,8 +174,9 @@ export function useStudioAI({
       const writerProfile = loadProfile('default');
       const gateThresholds = getDefaultThresholds(writerProfile.skillLevel);
       const gateResult = evaluateQuality(finalContent, capturedConfig, gateThresholds, language);
-      // Quality Gate 결과를 메타에 포함
-      const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons };
+      // Quality Gate 결과를 메타에 포함 + 재시도 힌트 생성
+      const retryHint = !gateResult.passed ? buildRetryHint(gateResult, gateResult.attempt, language === 'KO') : '';
+      const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons, qualityGateRetryHint: retryHint };
 
       // ============================================================
       // 3.8 — Proactive Suggestions 생성
@@ -180,13 +184,16 @@ export function useStudioAI({
       try {
         const sgConfig = getDefaultSuggestionConfig(writerProfile.skillLevel);
         const chars = capturedConfig.characters || [];
-        const recentMetrics = (capturedConfig.manuscripts || []).slice(-5).map(() => ({
-          tension: result.report.metrics.tension,
-          pacing: result.report.metrics.pacing,
-          immersion: result.report.metrics.immersion,
-          eos: result.report.eosScore,
-          grade: result.report.grade,
-        }));
+        // 과거 메시지에서 엔진 리포트를 추출하여 최근 메트릭 구성
+        const pastReports = (currentSession?.messages || [])
+          .filter(m => m.role === 'assistant' && m.meta?.engineReport)
+          .slice(-5)
+          .map(m => {
+            const r = m.meta!.engineReport!;
+            return { tension: r.metrics?.tension ?? 50, pacing: r.metrics?.pacing ?? 60, immersion: r.metrics?.immersion ?? 60, eos: r.eosScore ?? 50, grade: r.grade ?? 'B' };
+          });
+        // 현재 에피소드 메트릭 추가
+        const recentMetrics = [...pastReports, { tension: result.report.metrics.tension, pacing: result.report.metrics.pacing, immersion: result.report.metrics.immersion, eos: result.report.eosScore, grade: result.report.grade }];
         const charLastAppearance: Record<string, number> = {};
         chars.forEach(ch => { charLastAppearance[ch.name] = capturedConfig.episode ?? 1; });
         const newSuggestions = generateSuggestions({

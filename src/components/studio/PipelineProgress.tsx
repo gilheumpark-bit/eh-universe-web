@@ -10,7 +10,7 @@ import type { PipelineStageResult, StageStatus, AppLanguage } from '@/lib/studio
 
 interface PipelineProgressProps {
   stages: PipelineStageResult[];
-  finalStatus: 'completed' | 'failed' | 'partial';
+  finalStatus: 'completed' | 'failed' | 'partial' | 'running';
   language: AppLanguage;
 }
 
