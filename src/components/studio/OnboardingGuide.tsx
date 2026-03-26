@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Sparkles, Pen, BookOpen } from "lucide-react";
+import { X, Sparkles, Pen, BookOpen, Sword, RotateCcw } from "lucide-react";
 import type { AppLanguage } from "@/lib/studio-types";
 import { createT } from "@/lib/i18n";
+import { DEMO_PRESETS } from "@/lib/demo-presets";
 
 // ============================================================
 // PART 1 — Types
@@ -14,7 +15,7 @@ interface OnboardingGuideProps {
   onComplete: () => void;
   onNavigate?: (tab: string) => void;
   onQuickStart?: () => void;
-  onDemo?: () => void;
+  onDemo?: (presetId?: string) => void;
   showQuickStartLock?: boolean;
 }
 
@@ -108,6 +109,7 @@ export default function OnboardingGuide({
   const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JP" ? "JP" : lang === "CN" ? "CN" : "EN") as AppLanguage;
   const L = LABELS[language];
   const [visible, setVisible] = useState(false);
+  const [showDemoList, setShowDemoList] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setVisible(true), 100);
@@ -115,16 +117,24 @@ export default function OnboardingGuide({
   }, []);
 
   const handleAction = useCallback((action: "quickstart" | "manual" | "demo") => {
+    if (action === "demo") {
+      setShowDemoList(true);
+      return;
+    }
     markOnboardingDone();
     if (action === "quickstart" && onQuickStart) {
       onQuickStart();
     } else if (action === "manual" && onNavigate) {
       onNavigate("world");
-    } else if (action === "demo" && onDemo) {
-      onDemo();
     }
     onComplete();
   }, [onComplete, onQuickStart, onNavigate, onDemo]);
+
+  const handleDemoSelect = useCallback((presetId: string) => {
+    markOnboardingDone();
+    if (onDemo) onDemo(presetId);
+    onComplete();
+  }, [onComplete, onDemo]);
 
   const skip = useCallback(() => {
     markOnboardingDone();
@@ -159,39 +169,78 @@ export default function OnboardingGuide({
         </p>
 
         {/* 3 Cards */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {cards.map(({ key, icon, title, desc, accent, badge }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => handleAction(key)}
-              className={`group relative flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                accent
-                  ? "border-accent-purple/30 bg-accent-purple/8 hover:border-accent-purple/50 hover:bg-accent-purple/12"
-                  : "border-border/50 bg-bg-primary/50 hover:border-border hover:bg-bg-primary"
-              }`}
-            >
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                accent ? "bg-accent-purple/15 text-accent-purple" : "bg-white/5 text-text-tertiary group-hover:text-text-primary"
-              }`}>
-                {icon}
-              </div>
-              <span className={`text-sm font-black uppercase tracking-wider font-[family-name:var(--font-mono)] ${
-                accent ? "text-accent-purple" : "text-text-primary"
-              }`}>
-                {title}
-              </span>
-              <span className="text-[11px] leading-5 text-text-tertiary">
-                {desc}
-              </span>
-              {badge && (
-                <span className="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-400">
-                  {badge}
+        {!showDemoList ? (
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {cards.map(({ key, icon, title, desc, accent, badge }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleAction(key)}
+                className={`group relative flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                  accent
+                    ? "border-accent-purple/30 bg-accent-purple/8 hover:border-accent-purple/50 hover:bg-accent-purple/12"
+                    : "border-border/50 bg-bg-primary/50 hover:border-border hover:bg-bg-primary"
+                }`}
+              >
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                  accent ? "bg-accent-purple/15 text-accent-purple" : "bg-white/5 text-text-tertiary group-hover:text-text-primary"
+                }`}>
+                  {icon}
+                </div>
+                <span className={`text-sm font-black uppercase tracking-wider font-[family-name:var(--font-mono)] ${
+                  accent ? "text-accent-purple" : "text-text-primary"
+                }`}>
+                  {title}
                 </span>
-              )}
+                <span className="text-[11px] leading-5 text-text-tertiary">
+                  {desc}
+                </span>
+                {badge && (
+                  <span className="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-400">
+                    {badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          /* Demo Preset Selection */
+          <div className="mt-6 space-y-3">
+            <button type="button" onClick={() => setShowDemoList(false)}
+              className="text-[11px] text-text-tertiary hover:text-text-primary transition-colors">
+              ← {language === 'KO' ? '돌아가기' : 'Back'}
             </button>
-          ))}
-        </div>
+            <p className="text-center text-sm font-bold text-text-primary">
+              {language === 'KO' ? '체험할 장르를 선택하세요' : 'Choose a genre to explore'}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {DEMO_PRESETS.map((preset) => {
+                const icons = [<Sword key="s" className="h-5 w-5" />, <BookOpen key="b" className="h-5 w-5" />, <RotateCcw key="r" className="h-5 w-5" />];
+                const colors = ['border-red-500/30 hover:border-red-500/50', 'border-blue-500/30 hover:border-blue-500/50', 'border-amber-500/30 hover:border-amber-500/50'];
+                const idx = DEMO_PRESETS.indexOf(preset);
+                return (
+                  <button key={preset.id} type="button" onClick={() => handleDemoSelect(preset.id)}
+                    className={`group flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] bg-bg-primary/50 ${colors[idx] || 'border-border/50'}`}>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-text-tertiary group-hover:text-text-primary">
+                      {icons[idx]}
+                    </div>
+                    <span className="text-sm font-black font-[family-name:var(--font-mono)] text-text-primary">
+                      {preset.name[language === 'KO' ? 'ko' : 'en']}
+                    </span>
+                    <span className="text-[11px] leading-5 text-text-tertiary line-clamp-3">
+                      {preset.description[language === 'KO' ? 'ko' : 'en']}
+                    </span>
+                    <div className="flex flex-wrap justify-center gap-1 mt-1">
+                      {preset.tags.slice(0, 3).map(tag => (
+                        <span key={tag} className="rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-text-tertiary">{tag}</span>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
