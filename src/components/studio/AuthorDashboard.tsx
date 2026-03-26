@@ -7,7 +7,7 @@
 import React, { useMemo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 
 interface Props {
   messages: Message[];
@@ -134,10 +134,10 @@ export default function AuthorDashboard({ messages, language }: Props) {
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-2">
           {language === 'KO' ? '평균 메트릭' : 'Average Metrics'}
         </h3>
-        <MetricBar value={avg.tension} max={100} color="bg-red-500" label={isKO ? "긴장감" : "Tension"} />
-        <MetricBar value={avg.pacing} max={100} color="bg-blue-500" label={isKO ? "호흡" : "Pacing"} />
-        <MetricBar value={avg.immersion} max={100} color="bg-green-500" label={isKO ? "몰입도" : "Immerse"} />
-        <MetricBar value={avg.eos} max={100} color="bg-purple-500" label={isKO ? "분량" : "Volume"} />
+        <MetricBar value={avg.tension} max={100} color="bg-red-500" label={L4(language, { ko: "긴장감", en: "Tension", jp: "緊張感", cn: "紧张感" })} />
+        <MetricBar value={avg.pacing} max={100} color="bg-blue-500" label={L4(language, { ko: "호흡", en: "Pacing", jp: "テンポ", cn: "节奏" })} />
+        <MetricBar value={avg.immersion} max={100} color="bg-green-500" label={L4(language, { ko: "몰입도", en: "Immerse", jp: "没入度", cn: "沉浸度" })} />
+        <MetricBar value={avg.eos} max={100} color="bg-purple-500" label={L4(language, { ko: "분량", en: "Volume", jp: "分量", cn: "篇幅" })} />
       </div>
 
       {/* Per-chapter SVG trend chart */}
@@ -206,10 +206,10 @@ export default function AuthorDashboard({ messages, language }: Props) {
             `## ${language === 'KO' ? '평균 메트릭' : 'Average Metrics'}`,
             `| Metric | Value |`,
             `|--------|-------|`,
-            `| ${isKO ? '긴장감' : 'Tension'} | ${avg.tension}% |`,
-            `| ${isKO ? '호흡' : 'Pacing'} | ${avg.pacing}% |`,
-            `| ${isKO ? '몰입도' : 'Immersion'} | ${avg.immersion}% |`,
-            `| ${isKO ? '분량' : 'Volume'} | ${avg.eos}% |`,
+            `| ${L4(language, { ko: "긴장감", en: "Tension", jp: "緊張感", cn: "紧张感" })} | ${avg.tension}% |`,
+            `| ${L4(language, { ko: "호흡", en: "Pacing", jp: "テンポ", cn: "节奏" })} | ${avg.pacing}% |`,
+            `| ${L4(language, { ko: "몰입도", en: "Immersion", jp: "没入度", cn: "沉浸度" })} | ${avg.immersion}% |`,
+            `| ${L4(language, { ko: "분량", en: "Volume", jp: "分量", cn: "篇幅" })} | ${avg.eos}% |`,
             '',
             `## ${language === 'KO' ? '챕터별 상세' : 'Per-Chapter Detail'}`,
             `| # | Grade | Tension | Pacing | Immersion | Chars |`,

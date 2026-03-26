@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 
 function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => void; onWithApi: () => void; onWithout: () => void }) {
@@ -21,16 +22,16 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
             onClick={onBack}
             className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-text-tertiary hover:text-text-secondary transition-colors mb-6 flex items-center gap-2 mx-auto"
           >
-            ← {isKO ? "돌아가기" : "Back"}
+            ← {L4(lang, { ko: "돌아가기", en: "Back", jp: "戻る", cn: "返回" })}
           </button>
           <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
             NOA STUDIO
           </p>
           <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold text-text-primary">
-            {isKO ? "어떻게 사용할까요?" : "How will you write?"}
+            {L4(lang, { ko: "어떻게 사용할까요?", en: "How will you write?", jp: "どのように書きますか？", cn: "您将如何写作？" })}
           </h1>
           <p className="mt-4 text-sm text-text-tertiary">
-            {isKO ? "AI 연동 여부에 따라 최적화된 화면으로 진입합니다." : "Enter the workspace optimized for your setup."}
+            {L4(lang, { ko: "AI 연동 여부에 따라 최적화된 화면으로 진입합니다.", en: "Enter the workspace optimized for your setup.", jp: "設定に合わせた最適な画面に進みます。", cn: "进入为您的设置优化的工作区。" })}
           </p>
         </div>
 
@@ -44,10 +45,10 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
-              {isKO ? "AI 집필 모드" : "AI Mode"}
+              {L4(lang, { ko: "AI 집필 모드", en: "AI Mode", jp: "AI執筆モード", cn: "AI写作模式" })}
             </p>
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
-              {isKO ? "API 사용" : "With API"}
+              {L4(lang, { ko: "API 사용", en: "With API", jp: "API使用", cn: "使用API" })}
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
               {isKO
@@ -55,7 +56,7 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
                 : "Connect your API key and use the NOA engine as a tool."}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
-              {isKO ? "API 키 설정하기" : "Set up API key"} →
+              {L4(lang, { ko: "API 키 설정하기", en: "Set up API key", jp: "APIキーを設定", cn: "设置API密钥" })} →
             </div>
           </button>
 
@@ -68,10 +69,10 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
-              {isKO ? "수동 집필 모드" : "Manual Mode"}
+              {L4(lang, { ko: "수동 집필 모드", en: "Manual Mode", jp: "手動執筆モード", cn: "手动写作模式" })}
             </p>
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
-              {isKO ? "미사용" : "Without API"}
+              {L4(lang, { ko: "미사용", en: "Without API", jp: "API不使用", cn: "不使用API" })}
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
               {isKO
@@ -79,7 +80,7 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
                 : "Use worldbuilding, character tools, and manual writing without an API key."}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
-              {isKO ? "바로 시작하기" : "Start now"} →
+              {L4(lang, { ko: "바로 시작하기", en: "Start now", jp: "すぐに始める", cn: "立即开始" })} →
             </div>
           </button>
         </div>
@@ -101,7 +102,7 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
             EH UNIVERSE
           </p>
           <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold text-text-primary">
-            {isKO ? "어디로 향할까요?" : "Where are you headed?"}
+            {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", jp: "どこへ向かいますか？", cn: "您要去哪里？" })}
           </h1>
         </div>
 
@@ -115,7 +116,7 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
-              {isKO ? "세계관 탐색" : "Explore"}
+              {L4(lang, { ko: "세계관 탐색", en: "Explore", jp: "世界観探索", cn: "探索世界观" })}
             </p>
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
               UNIVERSE
@@ -126,7 +127,7 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
                 : "Browse the archive, network, and worldbuilding docs."}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
-              {isKO ? "탐색 시작" : "Enter"} →
+              {L4(lang, { ko: "탐색 시작", en: "Enter", jp: "探索開始", cn: "开始探索" })} →
             </div>
           </button>
 
@@ -139,7 +140,7 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
-              {isKO ? "집필 시작" : "Write"}
+              {L4(lang, { ko: "집필 시작", en: "Write", jp: "執筆開始", cn: "开始写作" })}
             </p>
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
               STUDIO
@@ -150,7 +151,7 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
                 : "Enter the world design and writing workspace."}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
-              {isKO ? "스튜디오 열기" : "Open Studio"} →
+              {L4(lang, { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" })} →
             </div>
           </button>
         </div>
