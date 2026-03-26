@@ -358,7 +358,8 @@ async function streamViaProxy(
   provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
 ): Promise<string> {
   // 로컬 프로바이더는 브라우저 직접 호출 (서버 프록시 우회)
-  if (PROVIDERS[provider]?.capabilities.isLocal && apiKey.trim()) {
+  if (PROVIDERS[provider]?.capabilities.isLocal) {
+    if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in BYOK settings.');
     return streamLocalDirect(apiKey, model, opts);
   }
 

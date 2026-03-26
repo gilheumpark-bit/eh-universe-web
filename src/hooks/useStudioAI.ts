@@ -111,9 +111,9 @@ export function useStudioAI({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const capturedSessionId = currentSessionId;
-    // currentSession null 체크는 69행에서 이미 수행 — 여기서 early return하면
-    // isGenerating이 true로 고정되므로 제거
-    const capturedConfig = currentSession!.config;
+    // 비동기 타이밍에 currentSession이 null일 수 있으므로 방어 체크
+    if (!currentSession) { setIsGenerating(false); return; }
+    const capturedConfig = currentSession.config;
 
     let fullContent = '';
     try {
