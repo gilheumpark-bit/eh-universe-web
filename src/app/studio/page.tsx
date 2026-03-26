@@ -64,6 +64,8 @@ const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), 
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false });
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
+const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false });
+const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
@@ -191,6 +193,10 @@ export default function StudioPage() {
 
   // UX: alert() 대체 토스트 수신
   const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
+
+  // 3.8 자율 시스템 상태
+  const [suggestions, setSuggestions] = useState<import('@/lib/studio-types').ProactiveSuggestion[]>([]);
+  const [pipelineResult, setPipelineResult] = useState<import('@/engine/auto-pipeline').PipelineExecution | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
       const { message, variant } = (e as CustomEvent).detail;
@@ -1153,6 +1159,24 @@ export default function StudioPage() {
 
                     {/* ⑤ 감독 피드백 */}
                     <DirectorPanel report={directorReport} language={language} />
+
+                    {/* ⑤-b 선제 경고 (3.8 Proactive Suggestions) */}
+                    {suggestions.length > 0 && (
+                      <SuggestionPanel
+                        suggestions={suggestions}
+                        onDismiss={(id) => setSuggestions(prev => prev.map(s => s.id === id ? { ...s, dismissed: true, dismissCount: s.dismissCount + 1 } : s))}
+                        language={language}
+                      />
+                    )}
+
+                    {/* ⑤-c 파이프라인 진행 (3.8 Auto-Pipeline) */}
+                    {pipelineResult && (
+                      <PipelineProgress
+                        stages={pipelineResult.stages}
+                        finalStatus={pipelineResult.finalStatus}
+                        language={language}
+                      />
+                    )}
 
                     {/* ⑥ 대화 온도 */}
                     <div className="flex items-center gap-2 pt-1">
