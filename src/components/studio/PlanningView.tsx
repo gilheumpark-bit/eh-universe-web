@@ -253,7 +253,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         </div>
       </div>
 
-      <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10 space-y-8">
+      <div className="ds-card-lg space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">{t.projectTitle}</label>
@@ -385,7 +385,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
 
       {/* === 고급 모드 전용 섹션 === */}
       {advancedMode && (
-        <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10">
+        <div className="ds-card-lg">
           <AdvancedPlanningSection language={language} config={config} setConfig={setConfig} totalEpisodes={totalEpisodes} tensionData={tensionData} />
         </div>
       )}

@@ -116,7 +116,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         </div>
 
         {/* Global Settings */}
-        <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10">
+        <div className="md:col-span-2 ds-card-lg">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
             <Shield className="w-4 h-4 text-blue-500" /> {t('settings.generalPreferences')}
           </h3>
@@ -203,7 +203,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         </div>
 
         {/* Engine Settings */}
-        <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-10">
+        <div className="md:col-span-2 ds-card-lg">
           <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8 flex items-center gap-2">
             <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
           </h3>

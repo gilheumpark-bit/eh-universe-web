@@ -264,7 +264,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 isPanelOpen ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               }`}>
                 {filteredCharacters.map(char => (
-                  <div key={char.id} className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
+                  <div key={char.id} className="ds-card-lg md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
                     {/* Visual DNA Bar */}
                     <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 opacity-20 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
                     
