@@ -20,8 +20,8 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
   const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
 
   return (
-    <div className="h-full bg-zinc-950 border-l border-zinc-800 flex flex-col w-80 text-xs font-mono overflow-y-auto custom-scrollbar">
-      <div className="p-6 border-b border-zinc-800 bg-zinc-900/30">
+    <div className="h-full bg-zinc-950 border-l border-border flex flex-col w-80 text-xs font-mono overflow-y-auto custom-scrollbar">
+      <div className="p-6 border-b border-border bg-bg-secondary/30">
         <h2 className="text-zinc-100 font-black flex items-center gap-2 tracking-widest uppercase">
           <Zap className="w-4 h-4 text-blue-500" />
           ANS {ENGINE_VERSION}
@@ -40,7 +40,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
           <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
             <Database className="w-3 h-3" /> Context
           </div>
-          <div className="bg-zinc-900/50 rounded-2xl p-4 border border-border/50 space-y-3">
+          <div className="bg-bg-secondary/50 rounded-2xl p-4 border border-border/50 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-text-tertiary">Platform</span>
               <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-black">
@@ -69,7 +69,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
           <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
             <Activity className="w-3 h-3" /> Tension Arc
           </div>
-          <div className="bg-zinc-900/50 p-4 rounded-2xl border border-border/50 h-24 flex items-end gap-0.5">
+          <div className="bg-bg-secondary/50 p-4 rounded-2xl border border-border/50 h-24 flex items-end gap-0.5">
             {tensionData.map((t, i) => {
               const isCurrentEp = i + 1 === config.episode;
               const height = Math.round(t * 100);
@@ -110,7 +110,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
             <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
               <BarChart3 className="w-3 h-3" /> {isKO ? '품질 리포트' : 'Quality Report'}
             </div>
-            <div className="bg-zinc-900/50 rounded-2xl p-4 border border-border/50 space-y-4">
+            <div className="bg-bg-secondary/50 rounded-2xl p-4 border border-border/50 space-y-4">
               {/* 등급 + 분량 */}
               <div className="flex gap-3">
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
@@ -132,7 +132,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     <span>{k}</span>
                     <span>{v}%</span>
                   </div>
-                  <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
                     <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${v}%` }} />
                   </div>
                 </div>
@@ -146,7 +146,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     {(report.serialization.byteSize / 1024).toFixed(1)}KB
                   </span>
                 </div>
-                <div className="h-1 bg-zinc-800 rounded-full overflow-hidden relative">
+                <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative">
                   <div
                     className={`h-full transition-all duration-500 ${report.serialization.withinRange ? 'bg-green-600' : 'bg-amber-600'}`}
                     style={{ width: `${Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100)}%` }}
@@ -171,7 +171,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                         {chars.toLocaleString()}
                       </span>
                     </div>
-                    <div className="h-1 bg-zinc-800 rounded-full overflow-hidden relative">
+                    <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative">
                       <div
                         className={`h-full transition-all duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
                         style={{ width: `${Math.min(100, (chars / charRange.max) * 100)}%` }}

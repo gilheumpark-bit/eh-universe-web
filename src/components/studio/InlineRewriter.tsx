@@ -238,12 +238,12 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     <div className="space-y-3">
       {/* Action toolbar */}
       {showActions && selection && (
-        <div className="bg-zinc-900/80 border border-zinc-700/50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-bg-secondary/80 border border-zinc-700/50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
               {t('inlineRewriter.selected').replace('{n}', String(selection.text.length))}
             </span>
-            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-zinc-800 rounded text-text-tertiary hover:text-text-secondary">
+            <button onClick={() => { setShowActions(false); setPreview(null); }} aria-label="닫기" className="p-1 hover:bg-bg-tertiary rounded text-text-tertiary hover:text-text-secondary">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -254,7 +254,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                 key={action.id}
                 onClick={() => executeAction(action)}
                 disabled={isStreaming}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-bg-tertiary/80 border border-zinc-700/50 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white hover:border-accent-purple/40 disabled:opacity-30 transition-colors font-[family-name:var(--font-mono)]"
               >
                 {action.icon}
                 {action.label[language]}
@@ -268,7 +268,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               onChange={e => setCustomPrompt(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCustomAction(); }}
               placeholder={t('inlineRewriter.customPlaceholder')}
-              className="flex-1 bg-zinc-800/50 border border-zinc-700/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-[family-name:var(--font-mono)]"
+              className="flex-1 bg-bg-tertiary/50 border border-zinc-700/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-[family-name:var(--font-mono)]"
               disabled={isStreaming}
             />
             <button onClick={handleCustomAction} disabled={isStreaming || !customPrompt.trim()} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold disabled:opacity-30 font-[family-name:var(--font-mono)]">

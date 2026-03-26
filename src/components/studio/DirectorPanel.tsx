@@ -76,7 +76,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
       <div className="mt-2 pl-1 space-y-2">
         {/* Score bar */}
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-bg-tertiary rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full ${report.score >= 80 ? 'bg-green-500' : report.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
               style={{ width: `${report.score}%` }}

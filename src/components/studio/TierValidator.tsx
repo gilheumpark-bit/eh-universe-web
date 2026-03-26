@@ -163,7 +163,7 @@ export const CompletionBar: React.FC<CompletionBarProps> = ({ score, language })
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
         <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${score}%` }} />
       </div>
       <span className={`text-[9px] font-black ${textColor}`}>

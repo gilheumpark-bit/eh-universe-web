@@ -584,13 +584,13 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
-                  msg.role === 'user' ? 'bg-zinc-800' : 'bg-accent-purple/20'
+                  msg.role === 'user' ? 'bg-bg-tertiary' : 'bg-accent-purple/20'
                 }`}>
                   {msg.role === 'user' ? <User className="w-3 h-3 text-text-tertiary" /> : <Bot className="w-3 h-3 text-accent-purple" />}
                 </div>
                 <div className={`max-w-[90%] sm:max-w-[80%] px-3 py-2.5 rounded-xl text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-zinc-800/80 text-text-secondary'
+                    ? 'bg-bg-tertiary/80 text-text-secondary'
                     : 'bg-transparent text-text-secondary'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content || (isStreaming ? '...' : '')}</p>
@@ -604,7 +604,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
           <div className="p-3 border-t border-border">
             <div className="flex items-end gap-2">
               {messages.length > 0 && (
-                <button onClick={clearChat} className="p-2 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-zinc-800/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
+                <button onClick={clearChat} className="p-2 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-bg-tertiary/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}

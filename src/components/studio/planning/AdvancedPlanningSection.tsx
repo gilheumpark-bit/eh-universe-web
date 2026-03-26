@@ -48,7 +48,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-zinc-600/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
           ]).map(({ value, label, activeClass, desc }) => (
             <button key={value} onClick={() => setConfig({ ...config, narrativeIntensity: value })}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-black border-zinc-800 text-text-tertiary hover:text-text-secondary'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-black border-border text-text-tertiary hover:text-text-secondary'}`}
               title={desc}>
               <span>{label}</span>
               <span className="text-[8px] font-normal normal-case tracking-normal text-text-tertiary">{desc}</span>
@@ -75,14 +75,14 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 if (preset) updates.guardrails = { min: preset.episodeLength.min, max: preset.episodeLength.max };
                 setConfig(prev => ({ ...prev, ...updates }));
               }}
-                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-black border-zinc-800 text-text-tertiary hover:text-text-secondary'}`}>
+                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-black border-border text-text-tertiary hover:text-text-secondary'}`}>
                 {labels[pp] || pp}
               </button>
             );
           })}
         </div>
         {config.publishPlatform && config.publishPlatform !== PublishPlatform.NONE && PLATFORM_PRESETS[config.publishPlatform] && (
-          <div className="mt-2 p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-[10px] text-text-tertiary space-y-1">
+          <div className="mt-2 p-3 bg-bg-secondary/50 border border-border rounded-xl text-[10px] text-text-tertiary space-y-1">
             <div><span className="text-text-secondary font-bold">{tl('planningExtra.target')}:</span> {PLATFORM_PRESETS[config.publishPlatform].targetReader}</div>
             <div><span className="text-text-secondary font-bold">{tl('planningExtra.length')}:</span> {PLATFORM_PRESETS[config.publishPlatform].episodeLength.min.toLocaleString()}~{PLATFORM_PRESETS[config.publishPlatform].episodeLength.max.toLocaleString()}{tl('planningExtra.chars')}</div>
             <div><span className="text-text-secondary font-bold">{tl('planningExtra.pace')}:</span> {PLATFORM_PRESETS[config.publishPlatform].pace}</div>
@@ -94,26 +94,26 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
-          <input className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
+          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
-          <input className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
+          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
-          <input className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
+          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
         </div>
       </div>
 
       {/* 시놉시스 */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.synopsis}</label>
-        <textarea className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
+        <textarea className="w-full bg-black border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
       </div>
 
       {/* 세계관 Tier 1 */}
-      <div className="space-y-4 pt-6 border-t border-zinc-800">
+      <div className="space-y-4 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.worldTier1}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {([
@@ -123,7 +123,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
           ] as const).map(f => (
             <div key={f.key} className="space-y-2">
               <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
-              <textarea className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+              <textarea className="w-full bg-black border border-border rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
             </div>
           ))}
         </div>
@@ -139,7 +139,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* Tier 2 */}
-      <div className="space-y-4 pt-6 border-t border-zinc-800">
+      <div className="space-y-4 pt-6 border-t border-border">
         <button type="button" onClick={() => setShowWorldTier2(v => !v)} className="text-[10px] font-black text-text-tertiary uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:text-text-secondary transition-colors">
           {showWorldTier2 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />} {t.worldTier2}
         </button>
@@ -163,7 +163,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* Tier 3 */}
-      <div className="space-y-4 pt-6 border-t border-zinc-800">
+      <div className="space-y-4 pt-6 border-t border-border">
         <button type="button" onClick={() => setShowWorldTier3(v => !v)} className="text-[10px] font-black text-text-tertiary uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:text-text-secondary transition-colors">
           {showWorldTier3 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />} {t.worldTier3}
         </button>
@@ -189,7 +189,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* Tension Curve */}
-      <div className="space-y-4 pt-6 border-t border-zinc-800">
+      <div className="space-y-4 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-blue-500" /> {te.tensionPreview}
         </h3>
@@ -202,7 +202,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 <div key={i} className="flex-1 relative h-full group cursor-default">
                   <div className={`absolute bottom-0 w-full rounded-t-sm transition-all duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
                   {isCurrentEp && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full" />}
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-zinc-800 text-text-secondary text-[7px] px-1 py-0.5 rounded whitespace-nowrap">EP.{i + 1}: {height}%</div>
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[7px] px-1 py-0.5 rounded whitespace-nowrap">EP.{i + 1}: {height}%</div>
                 </div>
               );
             })}
@@ -212,31 +212,31 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* Guardrails */}
-      <div className="space-y-6 pt-6 border-t border-zinc-800">
+      <div className="space-y-6 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2"><BarChart3 className="w-4 h-4" /> {tl('planningExtra.narrativeGuardrails')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{t.minDensity}</span><span>{config.guardrails.min}{tl('planningExtra.chars')}</span></div>
-            <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
+            <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
           </div>
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{t.maxCapacity}</span><span>{config.guardrails.max}{tl('planningExtra.chars')}</span></div>
-            <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
+            <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
           </div>
         </div>
       </div>
 
       {/* PRISM */}
-      <div className="space-y-6 pt-6 border-t border-zinc-800">
+      <div className="space-y-6 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2"><Shield className="w-4 h-4" /> {tl('planningExtra.prismTitle')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismPreserve')}</span><span className="font-[family-name:var(--font-mono)]">{config.prismPreserve ?? 100}</span></div>
-            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismPreserve')} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.prismPreserve ?? 100} onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })} />
+            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismPreserve')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismPreserve ?? 100} onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })} />
           </div>
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismExpand')}</span><span className="font-[family-name:var(--font-mono)]">{config.prismScale ?? 120}</span></div>
-            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismExpand')} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={config.prismScale ?? 120} onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })} />
+            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismExpand')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismScale ?? 120} onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -248,13 +248,13 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { label: tl('planningExtra.prism150'), preserve: 100, scale: 150 },
           ]).map(p => {
             const isActive = (config.prismPreserve ?? 100) === p.preserve && (config.prismScale ?? 120) === p.scale;
-            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
+            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
           })}
         </div>
       </div>
 
       {/* PRISM-MODE */}
-      <div className="space-y-6 pt-6 border-t border-zinc-800">
+      <div className="space-y-6 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2"><Shield className="w-4 h-4" /> {tl('planningExtra.prismModeTitle')}</h3>
         <div className="flex flex-wrap gap-2">
           {([
@@ -266,19 +266,19 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
           ]).map(pm => (
             <button key={pm.key} onClick={() => setConfig({ ...config, prismMode: pm.key })}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
         {config.prismMode === 'CUSTOM' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-4 p-4 bg-bg-secondary/50 border border-border rounded-xl">
             {(['sexual', 'violence', 'profanity'] as const).map(axis => {
               const labelKey = axis === 'sexual' ? 'prismSexual' : axis === 'violence' ? 'prismViolence' : 'prismProfanity';
               const val = config.prismCustom?.[axis] ?? 0;
               return (
                 <div key={axis} className="space-y-2">
                   <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl(`planningExtra.${labelKey}`)}</span><span className="font-[family-name:var(--font-mono)]">{val}/5</span></div>
-                  <input type="range" min="0" max="5" step="1" aria-label={tl(`planningExtra.${labelKey}`)} className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none" value={val}
+                  <input type="range" min="0" max="5" step="1" aria-label={tl(`planningExtra.${labelKey}`)} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={val}
                     onChange={e => setConfig({ ...config, prismCustom: { sexual: config.prismCustom?.sexual ?? 0, violence: config.prismCustom?.violence ?? 0, profanity: config.prismCustom?.profanity ?? 0, [axis]: parseInt(e.target.value) } })} />
                 </div>
               );

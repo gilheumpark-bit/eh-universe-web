@@ -93,7 +93,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
                 <button
                   key={ep}
                   onClick={() => generateFromAnalysis(ep)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-black/40 border border-zinc-800 hover:border-blue-600/40 text-text-secondary hover:text-blue-300 transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-black/40 border border-border hover:border-blue-600/40 text-text-secondary hover:text-blue-300 transition-all"
                 >
                   <span>EP.{ep}</span>
                   <span className="text-[9px] text-text-tertiary">
@@ -137,7 +137,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
       {/* Center: Editor */}
       <div className="flex-1 min-w-0">
         {selectedCard ? (
-          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-6">
+          <div className="bg-bg-secondary/20 border border-border rounded-2xl p-6">
             <VisualPromptEditor
               card={selectedCard}
               onChange={updateCard}

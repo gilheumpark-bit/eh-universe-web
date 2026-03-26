@@ -107,7 +107,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     <div className="max-w-[1400px] mx-auto w-full p-4 md:p-10 space-y-8 lg:space-y-12 animate-in fade-in duration-500">
       
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-zinc-900/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="p-4 md:p-5 bg-blue-600/10 border border-blue-500/20 rounded-2xl md:rounded-3xl shrink-0">
             <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
@@ -125,7 +125,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
             max={10}
             value={genCount}
             onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
-            className="w-14 bg-black border border-zinc-800 rounded-xl px-2 py-3 md:py-4 text-center text-sm font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="w-14 bg-black border border-border rounded-xl px-2 py-3 md:py-4 text-center text-sm font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
           />
           <button
@@ -143,7 +143,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
         
         {/* Left Side: Character Creator Panel */}
         <div className={`w-full lg:shrink-0 transition-all duration-500 ease-in-out ${isPanelOpen ? 'lg:w-80 opacity-100' : 'lg:w-0 opacity-0 lg:-translate-x-10'}`}>
-          <div className="bg-zinc-900/40 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+          <div className="bg-bg-secondary/40 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
                 <UserPlus className="w-4 h-4 text-blue-400" /> {t.creator}
@@ -163,7 +163,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative group">
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
                    <input 
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-zinc-800"
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-zinc-800"
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     value={newChar.name}
                     onChange={e => setNewChar({...newChar, name: e.target.value})}
@@ -176,7 +176,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative group">
                   <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                   <select
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer"
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer"
                     value={newChar.role}
                     onChange={e => setNewChar({...newChar, role: e.target.value})}
                   >
@@ -192,7 +192,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative">
                   <ScrollText className="absolute left-4 top-4 w-4 h-4 text-text-tertiary" />
                   <textarea 
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
                     placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
                     value={newChar.traits}
                     onChange={e => setNewChar({...newChar, traits: e.target.value})}
@@ -207,7 +207,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 </div>
                 <input 
                   type="range" min="0" max="100"
-                  className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer"
+                  className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                   value={newChar.dna}
                   onChange={e => setNewChar({...newChar, dna: parseInt(e.target.value)})}
                 />
@@ -230,7 +230,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
              {!isPanelOpen && (
                <button 
                 onClick={() => setIsPanelOpen(true)}
-                className="hidden lg:flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black text-text-secondary hover:text-white transition-all uppercase tracking-widest"
+                className="hidden lg:flex items-center gap-2 px-5 py-3 bg-bg-secondary border border-border rounded-xl text-[10px] font-black text-text-secondary hover:text-white transition-all uppercase tracking-widest"
                >
                  <UserPlus className="w-3.5 h-3.5 text-blue-500" /> {t.creator}
                </button>
@@ -242,7 +242,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   key={cat.value}
                   onClick={() => setActiveCategory(cat.value)}
                   className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                    activeCategory === cat.value ? 'bg-zinc-800 text-white shadow-lg ring-1 ring-white/10' : 'text-text-tertiary hover:text-text-secondary'
+                    activeCategory === cat.value ? 'bg-bg-tertiary text-white shadow-lg ring-1 ring-white/10' : 'text-text-tertiary hover:text-text-secondary'
                   }`}
                  >
                    {cat.label}
@@ -254,7 +254,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
           <div className="relative min-h-[400px]">
             {filteredCharacters.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-zinc-900 rounded-[3rem] text-zinc-800">
-                <div className="w-16 h-16 bg-zinc-900/50 rounded-full flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-bg-secondary/50 rounded-full flex items-center justify-center mb-6">
                   <Users className="w-8 h-8 opacity-20" />
                 </div>
                 <span className="text-xs font-black tracking-[0.4em] uppercase">No Characters Found</span>
@@ -552,7 +552,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                   characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
                                 }));
                               }}
-                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
                             >
                               {Object.entries(RELATION_LABELS[language] ?? RELATION_LABELS.KO).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
@@ -576,7 +576,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                   characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
                                 }));
                               }}
-                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
                             >
                               {Object.entries(AGE_LABELS[language] ?? AGE_LABELS.KO).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
@@ -601,7 +601,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                 }));
                               }}
                               placeholder={t.socialProfessionPH ?? 'Soldier, doctor...'}
-                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-cyan-500 transition-colors placeholder:text-text-tertiary"
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-cyan-500 transition-colors placeholder:text-text-tertiary"
                             />
                           </div>
                           <div className="space-y-1">
@@ -621,7 +621,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                   characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
                                 }));
                               }}
-                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
                             >
                               {Object.entries(EXPLICIT_LABELS[language] ?? EXPLICIT_LABELS.KO).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
@@ -645,7 +645,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                   characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
                                 }));
                               }}
-                              className="w-full bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
                             >
                               {Object.entries(PROFANITY_LABELS[language] ?? PROFANITY_LABELS.KO).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
@@ -755,7 +755,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
   };
 
   return (
-    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+    <div className="bg-bg-secondary/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
       <div className="flex items-center gap-4">
         <div className="p-3 bg-pink-600/10 border border-pink-500/20 rounded-2xl">
           <Link2 className="w-6 h-6 text-pink-400" />
@@ -768,11 +768,11 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
 
       {/* Add relation controls */}
       <div className="flex flex-wrap gap-2 items-end">
-        <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
+        <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none">
           <option value="">{tl('resourceExtra.characterA')}</option>
           {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
+        <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none">
           <option value="">{tl('resourceExtra.characterB')}</option>
           {chars.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
@@ -780,7 +780,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
           {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
             <button key={rt} onClick={() => setSelType(rt)}
               className={`px-2 py-2 rounded-lg text-[9px] font-bold border transition-all ${
-                selType === rt ? 'text-white' : 'text-text-tertiary border-zinc-800 hover:border-zinc-600'
+                selType === rt ? 'text-white' : 'text-text-tertiary border-border hover:border-zinc-600'
               }`}
               style={selType === rt ? { background: CHAR_REL_STYLES[rt].color, borderColor: CHAR_REL_STYLES[rt].color } : undefined}
             >
@@ -789,7 +789,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
           ))}
         </div>
         <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={tl('resourceExtra.description')}
-          className="flex-1 min-w-[120px] bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none" />
+          className="flex-1 min-w-[120px] bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none" />
         <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
           {tl('resourceExtra.add')}
         </button>

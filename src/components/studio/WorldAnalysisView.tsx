@@ -294,7 +294,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           )}
         </div>
         <textarea
-          className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
+          className="w-full bg-black border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
           placeholder={t('worldAnalysis.inputPlaceholder')}
           value={inputText}
           onChange={e => setInputText(e.target.value)}
@@ -306,7 +306,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-zinc-800 text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
+                className="px-4 py-2 bg-bg-tertiary text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-700 transition-all">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}
@@ -337,7 +337,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
               {t('worldAnalysis.results')}
             </h3>
             <button onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[9px] font-bold text-text-secondary hover:text-white transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-white transition-colors">
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
               {copied ? t('worldAnalysis.copied') : t('worldAnalysis.copyAll')}
             </button>
@@ -357,7 +357,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
                       ? 'md:col-span-2 bg-accent-purple/5 border-accent-purple/20'
                       : isWarning
                         ? 'bg-amber-500/5 border-amber-500/20'
-                        : 'bg-zinc-900/30 border-zinc-800'
+                        : 'bg-bg-secondary/30 border-border'
                   }`}
                 >
                   <div className="flex items-center gap-2">

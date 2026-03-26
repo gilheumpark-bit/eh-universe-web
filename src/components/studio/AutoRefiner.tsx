@@ -441,7 +441,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             return (
               <div key={sug.id} className={`border rounded-xl p-3 space-y-2 transition-all ${
                 sug.status === 'applied' ? 'border-green-500/20 bg-green-900/5' :
-                sug.status === 'skipped' ? 'border-zinc-800/30 bg-zinc-900/30 opacity-40' :
+                sug.status === 'skipped' ? 'border-border/30 bg-bg-secondary/30 opacity-40' :
                 sug.status === 'generating' ? 'border-blue-500/30 bg-blue-900/5' :
                 'border-border bg-bg-secondary/30'
               }`}>
@@ -460,7 +460,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                         <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={t('ui.generate')}>
                           <Play className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -473,7 +473,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                         <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={t('ui.apply')}>
                           <Check className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>

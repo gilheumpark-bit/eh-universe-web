@@ -87,7 +87,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
           onClick={() => canPrev && onSwitch(currentIndex - 1)}
           disabled={!canPrev}
           aria-label="이전 버전"
-          className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
+          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
         >
           <ChevronLeft className="w-3 h-3" />
         </button>
@@ -98,7 +98,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
           onClick={() => canNext && onSwitch(currentIndex + 1)}
           disabled={!canNext}
           aria-label="다음 버전"
-          className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
+          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
         >
           <ChevronRight className="w-3 h-3" />
         </button>
@@ -109,7 +109,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
             className={`flex items-center gap-1 px-2 py-0.5 rounded-md border transition-colors ${
               showDiff
                 ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
-                : 'border-zinc-800 text-text-tertiary hover:text-text-secondary'
+                : 'border-border text-text-tertiary hover:text-text-secondary'
             }`}
           >
             <GitCompare className="w-2.5 h-2.5" />
@@ -120,7 +120,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         <button
           onClick={handleCopy}
           aria-label="버전 복사"
-          className="p-1 rounded hover:bg-zinc-800 text-text-tertiary hover:text-text-secondary transition-colors"
+          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors"
         >
           {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
         </button>
@@ -128,7 +128,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
 
       {/* Diff view */}
       {showDiff && currentIndex > 0 && (
-        <div className="mt-2 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono leading-relaxed max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
+        <div className="mt-2 p-3 bg-zinc-950 border border-border rounded-lg text-[11px] font-mono leading-relaxed max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
           <div className="text-[10px] text-text-tertiary uppercase tracking-widest mb-2">
             v{currentIndex} → v{currentIndex + 1}
           </div>

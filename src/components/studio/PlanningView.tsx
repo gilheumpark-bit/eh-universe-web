@@ -71,7 +71,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(input); } }}
           placeholder={isKO ? '태그 입력 후 Enter' : 'Type tag + Enter'}
-          className="flex-1 bg-black border border-zinc-800 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-600 transition-colors"
+          className="flex-1 bg-black border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-600 transition-colors"
           maxLength={20}
         />
       </div>
@@ -82,7 +82,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
             <button
               key={s}
               onClick={() => addTag(s)}
-              className="px-2 py-0.5 text-[10px] font-bold text-text-tertiary bg-zinc-900 border border-zinc-800 rounded-full hover:border-blue-500/30 hover:text-blue-400 transition-colors"
+              className="px-2 py-0.5 text-[10px] font-bold text-text-tertiary bg-bg-secondary border border-border rounded-full hover:border-blue-500/30 hover:text-blue-400 transition-colors"
             >
               +{s}
             </button>
@@ -211,7 +211,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <select value={autoGenGenre} onChange={e => setAutoGenGenre(e.target.value as Genre)}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-black text-text-secondary outline-none cursor-pointer uppercase">
+            className="bg-bg-secondary border border-border rounded-xl px-3 py-2 text-[10px] font-black text-text-secondary outline-none cursor-pointer uppercase">
             {Object.values(Genre).map(g => (
               <option key={g} value={g}>{GENRE_LABELS[language][g]}</option>
             ))}
@@ -221,7 +221,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               <Shuffle className="w-3.5 h-3.5" /> {tl('planningExtra.preset')}
             </button>
             {showPresetMenu && (
-              <div className="absolute top-full mt-1 right-0 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
+              <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-zinc-700 rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
                 {(AUTO_PRESETS[autoGenGenre] || []).map((preset, i) => {
                   const data = isKO ? preset.ko : preset.en;
                   return (
@@ -233,7 +233,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                       }));
                       setShowPresetMenu(false);
                     }}
-                      className="w-full text-left px-4 py-3 text-[11px] text-text-secondary hover:bg-blue-600/20 hover:text-white transition-colors border-b border-zinc-800 last:border-0">
+                      className="w-full text-left px-4 py-3 text-[11px] text-text-secondary hover:bg-blue-600/20 hover:text-white transition-colors border-b border-border last:border-0">
                       <div className="font-bold text-zinc-200">{data.title}</div>
                       <div className="text-[9px] mt-0.5 opacity-70">{data.pov} · {data.emotion}</div>
                     </button>
@@ -258,7 +258,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.projectTitle}</label>
             <input
-              className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
+              className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
               aria-label={t.projectTitle}
               maxLength={200}
               value={config.title}
@@ -268,7 +268,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.primaryGenre}</label>
             <select
-              className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none cursor-pointer"
+              className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none cursor-pointer"
               aria-label={t.primaryGenre}
               value={config.genre}
               onChange={e => setConfig({ ...config, genre: e.target.value as Genre })}
@@ -291,7 +291,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border ${
               advancedMode
                 ? 'border-blue-500/30 bg-blue-600/10 text-blue-400'
-                : 'border-zinc-800 bg-zinc-900 text-text-tertiary hover:text-text-secondary'
+                : 'border-border bg-bg-secondary text-text-tertiary hover:text-text-secondary'
             }`}
           >
             {advancedMode
@@ -319,7 +319,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               className={`w-full bg-black border rounded-xl p-4 text-sm font-bold outline-none transition-all ${
                 totalEpisodes < 1 || totalEpisodes > 500
                   ? 'border-red-500/60 focus:border-red-500 text-red-400'
-                  : 'border-zinc-800 focus:border-blue-600'
+                  : 'border-border focus:border-blue-600'
               }`}
               value={totalEpisodes}
               onChange={e => {
@@ -344,7 +344,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                   config.platform === PlatformType.MOBILE
                     ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
-                    : 'bg-black border-zinc-800 text-text-tertiary hover:text-text-secondary'
+                    : 'bg-black border-border text-text-tertiary hover:text-text-secondary'
                 }`}
               >
                 <Smartphone className="w-4 h-4" /> {te.mobile}
@@ -354,7 +354,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                   config.platform === PlatformType.WEB
                     ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
-                    : 'bg-black border-zinc-800 text-text-tertiary hover:text-text-secondary'
+                    : 'bg-black border-border text-text-tertiary hover:text-text-secondary'
                 }`}
               >
                 <Monitor className="w-4 h-4" /> {te.web}
@@ -375,7 +375,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-all ${
                 (config.prismMode ?? 'OFF') === mode
                   ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
-                  : 'bg-zinc-900 border-zinc-800 text-text-tertiary hover:text-text-secondary'
+                  : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-secondary'
               }`}>
               {mode}
             </button>
@@ -424,7 +424,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               setTimeout(() => setShareCopied(false), 2000);
             });
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-zinc-900 border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
         >
           {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
           {shareCopied
@@ -444,7 +444,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(planetPayload))));
             router.push(`/network/new?import=${encoded}`);
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-zinc-900 border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-zinc-700 text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
         >
           <Globe className="w-4 h-4" />
           {isKO ? '행성으로 등록' : 'Register as Planet'}

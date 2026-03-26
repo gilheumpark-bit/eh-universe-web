@@ -68,7 +68,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
   return (
     <div className={`flex w-full gap-3 md:gap-4 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-lg ${
-        isUser ? 'bg-zinc-800 border-zinc-700' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
+        isUser ? 'bg-bg-tertiary border-zinc-700' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
       }`}>
         {isUser ? <User className="w-4 h-4 text-text-tertiary" /> : <Bot className="w-4 h-4 text-white" />}
       </div>
@@ -81,7 +81,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
         )}
         <div className={`overflow-hidden transition-all ${
           isUser
-            ? 'bg-zinc-900/80 border border-zinc-800 px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-text-secondary'
+            ? 'bg-bg-secondary/80 border border-border px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-text-secondary'
             : 'bg-transparent text-zinc-200'
         }`}>
           {isUser ? (
@@ -96,7 +96,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
                   h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,
                   hr: () => <div className="my-10 h-px bg-border"></div>,
-                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-xs text-text-secondary" {...props} />,
+                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-zinc-950/70 p-4 text-xs text-text-secondary" {...props} />,
                   code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
                 }}
               >
@@ -118,7 +118,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
               }`}>
                 <Zap className="w-2.5 h-2.5" /> EOS {report.eosScore}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-900/50 border border-border/50 rounded-lg text-[9px] font-black text-text-tertiary">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-bg-secondary/50 border border-border/50 rounded-lg text-[9px] font-black text-text-tertiary">
                 <Activity className="w-2.5 h-2.5" /> {report.actPosition.act}{language === 'KO' ? '막' : ''}
               </span>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black border ${
@@ -139,7 +139,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                 {language === 'KO' ? '검증 상세' : 'Validation Detail'}
               </button>
               {showDetail && (
-                <div className="mt-2 p-3 bg-zinc-900/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-[family-name:var(--font-mono)] animate-in fade-in duration-300">
+                <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-[family-name:var(--font-mono)] animate-in fade-in duration-300">
                   <div className="flex justify-between text-text-tertiary">
                     <span>AI {language === 'KO' ? '톤' : 'Tone'}</span>
                     <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>
@@ -194,7 +194,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                 )}
               </button>
               {showDetail && message.meta.qualityFindings && message.meta.qualityFindings.length > 0 && (
-                <div className="mt-2 space-y-1 pl-2 border-l-2 border-zinc-800">
+                <div className="mt-2 space-y-1 pl-2 border-l-2 border-border">
                   {message.meta.qualityFindings.map((f, i) => (
                     <div key={i} className="text-[10px] text-text-tertiary">
                       <span className={f.severity >= 4 ? 'text-red-400' : f.severity >= 3 ? 'text-amber-400' : 'text-text-tertiary'}>
@@ -216,7 +216,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
 
           {/* Analysis Report (from structured report OR JSON fallback) */}
           {!isUser && (displayGrade || displayMetrics) && (
-            <div className="mt-8 p-4 md:p-6 bg-zinc-900/50 border border-zinc-800 rounded-2xl space-y-4 animate-in fade-in duration-500">
+            <div className="mt-8 p-4 md:p-6 bg-bg-secondary/50 border border-border rounded-2xl space-y-4 animate-in fade-in duration-500">
               <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
                 <div className="flex items-center gap-2"><Activity className="w-3 h-3 text-blue-500" /> Engine Report</div>
                 {displayGrade && <div className="text-blue-500">{displayGrade} Grade</div>}
@@ -226,7 +226,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                   {Object.entries(displayMetrics as Record<string, number>).map(([k, v]) => (
                     <div key={k} className="space-y-1">
                       <div className="flex justify-between text-[7px] font-black text-text-tertiary uppercase"><span>{k}</span><span>{v}%</span></div>
-                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
                         <div className="h-full bg-blue-600" style={{ width: `${v}%` }} />
                       </div>
                     </div>

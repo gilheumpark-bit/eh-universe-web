@@ -14,7 +14,7 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 animate-in fade-in duration-500 pb-32">
       <div className="flex items-center gap-4 md:gap-6">
-        <div className="p-4 md:p-5 bg-zinc-900 border border-zinc-800 rounded-2xl md:rounded-3xl">
+        <div className="p-4 md:p-5 bg-bg-secondary border border-border rounded-2xl md:rounded-3xl">
           <FileText className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
         </div>
         <div>
@@ -24,14 +24,14 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
       </div>
       
       <div className="prose prose-sm sm:prose-base prose-invert max-w-none text-text-secondary
-        prose-h2:text-lg md:prose-h2:text-xl prose-h2:text-white prose-h2:font-black prose-h2:tracking-tighter prose-h2:uppercase prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-3
+        prose-h2:text-lg md:prose-h2:text-xl prose-h2:text-white prose-h2:font-black prose-h2:tracking-tighter prose-h2:uppercase prose-h2:border-b prose-h2:border-border prose-h2:pb-3
         prose-h3:text-sm prose-h3:text-blue-400 prose-h3:font-black prose-h3:tracking-widest prose-h3:uppercase
         prose-strong:text-zinc-200 prose-strong:font-bold
         prose-blockquote:border-l-4 prose-blockquote:border-blue-700 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-tertiary
         prose-ul:list-disc prose-ul:pl-5
         prose-li:my-1
         prose-p:font-serif prose-p:leading-relaxed
-        prose-hr:border-zinc-800
+        prose-hr:border-border
       ">
         <h2>{t.whatIsEH.title}</h2>
         <p>{t.whatIsEH.p1}</p>

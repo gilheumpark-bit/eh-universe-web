@@ -78,31 +78,31 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         <ProfileCard language={language} />
 
         {/* Engine Status Card */}
-        <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+        <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
             <Cpu className="w-4 h-4 text-blue-500" /> Narrative Engine
           </h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
+            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.engineVersion')}</span>
               <span className="text-xs font-black text-blue-400">ANS {ENGINE_VERSION}</span>
             </div>
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
+            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.aiModel')}</span>
               <span className="text-xs font-black text-white">{providerName} — {activeModel}</span>
             </div>
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-zinc-800">
+            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
             </div>
-            <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 space-y-2">
+            <div className="bg-black/40 p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
                 <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
                   {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
                 </span>
               </div>
-              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
                   style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
@@ -124,10 +124,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="space-y-2">
             <div
               onClick={onManageApiKey}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Key className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl"><Key className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settings.apiKeyManagement')}</div>
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
@@ -144,10 +144,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 setObfuscateDone(count);
                 setTimeout(() => setObfuscateDone(null), 3000);
               }}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800 active:scale-[0.98]"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Shield className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl"><Shield className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">
                     {language === 'KO' ? '저장된 키 암호화' : 'Encrypt Saved Keys'}
@@ -172,10 +172,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
             <div
               onClick={() => setNotificationsOn(prev => !prev)}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-zinc-800"
+              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Bell className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl"><Bell className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settings.notifications')}</div>
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
@@ -191,7 +191,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               className="flex items-center justify-between p-4 md:p-6 hover:bg-red-500/10 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-red-500/30 group active:scale-[0.98] active:bg-red-500/20"
             >
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl group-hover:bg-red-500/20 transition-colors"><Trash2 className="w-5 h-5 text-red-500" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl group-hover:bg-red-500/20 transition-colors"><Trash2 className="w-5 h-5 text-red-500" /></div>
                 <div>
                   <div className="text-sm font-bold text-red-500">{t('settings.resetData')}</div>
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
@@ -211,7 +211,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             {/* Default Platform */}
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl">
+                <div className="p-3 bg-bg-secondary rounded-2xl">
                   {defaultPlatform === 'MOBILE' ? <Smartphone className="w-5 h-5 text-text-tertiary" /> : <Monitor className="w-5 h-5 text-text-tertiary" />}
                 </div>
                 <div>
@@ -224,7 +224,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <button
                     key={p}
                     onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-text-tertiary hover:text-white'}`}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary hover:text-white'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -235,7 +235,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             {/* Default Episodes */}
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Hash className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl"><Hash className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settingsEngine.defaultEpisodes')}</div>
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
@@ -247,14 +247,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 max={200}
                 value={defaultEpisodes}
                 onChange={e => { const v = parseInt(e.target.value) || 25; setDefaultEpisodes(v); localStorage.setItem('noa_default_episodes', String(v)); }}
-                className="w-20 bg-black/50 border border-zinc-800 rounded-xl px-3 py-2 text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none"
+                className="w-20 bg-black/50 border border-border rounded-xl px-3 py-2 text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none"
               />
             </div>
 
             {/* Temperature */}
             <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-zinc-900 rounded-2xl"><Thermometer className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="p-3 bg-bg-secondary rounded-2xl"><Thermometer className="w-5 h-5 text-text-tertiary" /></div>
                 <div>
                   <div className="text-sm font-bold">{t('settingsEngine.temperature')}</div>
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
@@ -268,7 +268,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   step="0.1"
                   value={temperature}
                   onChange={e => { const v = parseFloat(e.target.value); setTemperature(v); localStorage.setItem('noa_temperature', String(v)); }}
-                  className="w-24 accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer"
+                  className="w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
                 <span className="text-sm font-black text-blue-400 w-8 text-right">{temperature.toFixed(1)}</span>
               </div>
@@ -299,7 +299,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
 
   if (user) {
     return (
-      <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+      <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
             {user.photoURL ? (
@@ -314,7 +314,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
           </div>
         </div>
         <button onClick={signOut}
-          className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-all active:scale-[0.98]">
+          className="w-full flex items-center justify-between px-6 py-4 bg-bg-secondary/50 border border-border rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-all active:scale-[0.98]">
           {t('settings.signOut')} <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -322,7 +322,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
   }
 
   return (
-    <div className="bg-zinc-900/20 border border-zinc-800 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+    <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0">
           <User className="w-6 h-6 md:w-8 md:h-8 text-text-tertiary" />

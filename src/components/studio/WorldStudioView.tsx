@@ -72,7 +72,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
     <div className="animate-in fade-in duration-500">
       {/* Sub-tab bar */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
-        <div className="flex items-center gap-1 p-1 bg-zinc-900/50 border border-zinc-800 rounded-2xl w-fit">
+        <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 border border-border rounded-2xl w-fit">
           {SUB_TAB_ORDER.map(tab => {
             const Icon = SUB_TAB_ICONS[tab];
             const active = subTab === tab;
@@ -83,7 +83,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
                   active
                     ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20'
-                    : 'text-text-tertiary hover:text-text-secondary hover:bg-zinc-800/50'
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

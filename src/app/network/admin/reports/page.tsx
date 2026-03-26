@@ -8,7 +8,7 @@ import type { ReportRecord } from "@/lib/network-types";
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-400 bg-yellow-900/30 border-yellow-600/30",
   resolved: "text-green-400 bg-green-900/30 border-green-600/30",
-  dismissed: "text-zinc-400 bg-zinc-900/30 border-zinc-600/30",
+  dismissed: "text-zinc-400 bg-bg-secondary/30 border-zinc-600/30",
 };
 
 export default function ReportsAdminPage() {

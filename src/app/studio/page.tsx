@@ -1073,7 +1073,7 @@ export default function StudioPage() {
                       <div className="space-y-2">
                         {currentSession.messages.slice(0, -2).map(msg => (
                           <div key={msg.id} className={`text-[10px] leading-relaxed px-2 py-1.5 rounded-lg ${
-                            msg.role === 'user' ? 'bg-zinc-800/50 text-zinc-400' : 'text-zinc-500'
+                            msg.role === 'user' ? 'bg-bg-tertiary/50 text-zinc-400' : 'text-zinc-500'
                           }`}>
                             <span className="font-bold text-[9px] uppercase">{msg.role === 'user' ? '🧑' : '🤖'}</span>{' '}
                             {msg.content.slice(0, 120)}{msg.content.length > 120 ? '...' : ''}

@@ -143,10 +143,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
               )}
               <div className="flex flex-wrap gap-1.5 mt-1">
-                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
-                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
+                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
+                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
                 {s.messages.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
+                  <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
                 )}
                 {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
                   <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">

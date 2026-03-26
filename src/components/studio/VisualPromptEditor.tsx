@@ -72,7 +72,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
         <select
           value={card.shotType}
           onChange={e => update({ shotType: e.target.value as VisualShotType })}
-          className="bg-black/40 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+          className="bg-black/40 border border-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
         >
           {SHOT_TYPES.map(s => (
             <option key={s.value} value={s.value}>{isKO ? s.ko : s.en}</option>
@@ -90,7 +90,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
             <button
               key={p.id}
               onClick={() => update({ levels: { ...p.levels }, shotType: p.defaultShotType || card.shotType })}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary hover:border-zinc-600 transition-all"
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary hover:border-zinc-600 transition-all"
             >
               {p.name}
             </button>
@@ -117,7 +117,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
                     className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider transition-all ${
                       card.levels[key] === v
                         ? 'bg-blue-600/30 border-blue-500/50 text-blue-300 border'
-                        : 'bg-zinc-900 border border-zinc-800 text-text-tertiary hover:text-text-secondary'
+                        : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'
                     }`}
                   >
                     {LEVEL_LABELS[v]}
@@ -155,7 +155,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
       </details>
 
       {/* Final Prompt Preview */}
-      <div className="bg-black/60 border border-zinc-800 rounded-xl p-4">
+      <div className="bg-black/60 border border-border rounded-xl p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
             {isKO ? '최종 프롬프트' : 'Final Prompt'}
@@ -171,7 +171,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
           {finalPrompt || (isKO ? '레벨을 조절하면 자동 생성됩니다' : 'Adjust levels to auto-generate')}
         </p>
         {negPrompt && (
-          <div className="mt-3 pt-3 border-t border-zinc-800">
+          <div className="mt-3 pt-3 border-t border-border">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[9px] font-bold text-red-500/60 uppercase">Negative</span>
               <button
