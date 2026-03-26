@@ -76,7 +76,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
       {/* Left: Episode list + card list */}
       <div className="w-full lg:w-64 shrink-0 space-y-4">
         {/* Analyzed episodes */}
-        <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-4">
+        <div className="ds-card">
           <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">
             NOI — Narrative Origin Imaging
           </div>
@@ -106,7 +106,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
         </div>
 
         {/* Card list */}
-        <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-4">
+        <div className="ds-card">
           <div className="flex justify-between items-center mb-3">
             <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
               {isKO ? `카드 (${cards.length})` : `Cards (${cards.length})`}

@@ -67,7 +67,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
           value={card.title}
           onChange={e => update({ title: e.target.value })}
           placeholder={isKO ? '카드 제목' : 'Card title'}
-          className="flex-1 bg-black/40 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-zinc-600"
+          className="flex-1 ds-input text-sm text-white placeholder-zinc-600 outline-none focus:border-zinc-600"
         />
         <select
           value={card.shotType}
@@ -146,7 +146,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO }: V
                   value={card[field] || ''}
                   onChange={e => update({ [field]: e.target.value })}
                   rows={2}
-                  className="w-full bg-black/40 border border-zinc-800 rounded-lg px-3 py-2 text-[11px] text-zinc-300 placeholder-zinc-700 outline-none resize-none focus:border-zinc-600"
+                  className="w-full ds-input text-xs text-[11px] text-zinc-300 placeholder-zinc-700 outline-none resize-none focus:border-zinc-600"
                 />
               </div>
             );

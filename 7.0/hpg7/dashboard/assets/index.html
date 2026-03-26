@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HPG 7.0 Command Center</title>
+  <style>
+    :root {
+      --bg-0: #08111f;
+      --bg-1: #10233e;
+      --bg-2: #18385d;
+      --panel: rgba(9, 19, 36, 0.82);
+      --line: rgba(145, 199, 255, 0.22);
+      --text: #ebf5ff;
+      --muted: #a8c0db;
+      --cold: #74d4ff;
+      --ok: #88f0b2;
+      --warn: #ffd37d;
+      --alert: #ff8d7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Bahnschrift", "Segoe UI Variable", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(116, 212, 255, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(255, 149, 102, 0.2), transparent 35%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1), var(--bg-2));
+    }
+    .shell { max-width: 1200px; margin: 0 auto; padding: 32px 20px 60px; }
+    .hero, .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(8, 17, 31, 0.55), rgba(8, 17, 31, 0.82));
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+    }
+    .hero { padding: 24px; }
+    .eyebrow { color: var(--cold); letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; }
+    h1 { margin: 8px 0 12px; font-size: clamp(32px, 5vw, 60px); line-height: 0.95; }
+    .sub { color: var(--muted); max-width: 760px; line-height: 1.5; margin: 0; }
+    .grid, .two-col { display: grid; gap: 16px; margin-top: 22px; }
+    .grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .two-col { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .panel { padding: 16px; }
+    .layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .kpi-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .kpi-value { margin-top: 10px; font-size: 32px; font-weight: 700; }
+    .section-title { margin: 0 0 12px; font-size: 18px; color: var(--cold); }
+    .tree, .metrics, .events { display: grid; gap: 10px; }
+    .branch {
+      padding: 12px; border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(136, 199, 255, 0.14);
+    }
+    .branch.locked { border-color: rgba(136, 240, 178, 0.45); background: rgba(136, 240, 178, 0.08); }
+    .branch.resonant { border-color: rgba(255, 211, 125, 0.45); background: rgba(255, 211, 125, 0.08); }
+    .branch.drifting { border-color: rgba(255, 141, 122, 0.45); background: rgba(255, 141, 122, 0.08); }
+    .branch.pruned { opacity: 0.6; border-style: dashed; }
+    .branch small { display: block; color: var(--muted); margin-top: 4px; }
+    .metric-row {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .metric-row:last-child { border-bottom: 0; }
+    code, pre { font-family: "Cascadia Code", "Consolas", monospace; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; color: #dff2ff; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+      border-radius: 999px; border: 1px solid var(--line); color: var(--cold);
+      background: rgba(116, 212, 255, 0.08); font-size: 13px;
+    }
+    .pill.ok { color: var(--ok); border-color: rgba(136, 240, 178, 0.4); background: rgba(136, 240, 178, 0.12); }
+    .pill.warn { color: var(--warn); border-color: rgba(255, 211, 125, 0.4); background: rgba(255, 211, 125, 0.12); }
+    .pill.alert { color: var(--alert); border-color: rgba(255, 141, 122, 0.4); background: rgba(255, 141, 122, 0.12); }
+    .consistency-meter {
+      margin-top: 14px;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .consistency-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--alert), var(--warn), var(--ok));
+      transition: width 220ms ease;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">HPG 7.0 Omniverse Platform</div>
+      <h1>Command Center Bridge</h1>
+      <p class="sub">실시간 분기 트리, 양자 측정 이벤트, GUT 결합상수 스냅샷, 호킹 복사 상태를 한 화면에서 보는 7.0 대시보드입니다.</p>
+      <div class="grid">
+        <div class="panel"><div class="kpi-label">Active Branches</div><div class="kpi-value" id="kpi-branches">-</div></div>
+        <div class="panel"><div class="kpi-label">Audit Events</div><div class="kpi-value" id="kpi-audit">-</div></div>
+        <div class="panel"><div class="kpi-label">Latest Branch</div><div class="kpi-value" id="kpi-latest" style="font-size:24px">-</div></div>
+        <div class="panel"><div class="kpi-label">Bell Outcome</div><div class="kpi-value" id="kpi-bell" style="font-size:24px">-</div></div>
+        <div class="panel">
+          <div class="kpi-label">Consistency</div>
+          <div class="kpi-value" id="kpi-consistency" style="font-size:24px">-</div>
+          <div class="pill" id="consistency-badge" style="margin-top:10px">-</div>
+          <div class="consistency-meter"><div class="consistency-fill" id="consistency-fill"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <h2 class="section-title">Multiverse Branch Tree</h2>
+        <div class="tree" id="branch-tree"></div>
+      </div>
+      <div class="panel">
+        <h2 class="section-title">Stream Packet</h2>
+        <div class="pill">snapshot / delta / event</div>
+        <div class="events" style="margin-top:14px">
+          <pre id="event-payload">loading...</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <div class="panel">
+        <h2 class="section-title">Physics Modules</h2>
+        <div class="metrics" id="physics-metrics"></div>
+      </div>
+      <div class="panel">
+        <h2 class="section-title">Bridge Payloads</h2>
+        <pre id="bridge-payloads">loading...</pre>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function consistencyClass(status, pruned) {
+      if (pruned) return "alert";
+      if (status === "phase_locked") return "ok";
+      if (status === "resonant") return "warn";
+      return "alert";
+    }
+    function branchCard(node) {
+      const meta = node.metadata ?? {};
+      const branchClass = [
+        "branch",
+        meta.pruned ? "pruned" : "",
+        meta.consistency_status === "phase_locked" ? "locked" : "",
+        meta.consistency_status === "resonant" ? "resonant" : "",
+        meta.consistency_status === "drifting" ? "drifting" : ""
+      ].filter(Boolean).join(" ");
+      const statusLine = meta.pruned
+        ? `pruned | ${meta.prune_reason ?? "policy"}`
+        : (meta.consistency_status ? `consistency ${meta.consistency_status} | score ${meta.consistency_score}` : "consistency pending");
+      return `<div class="${branchClass}"><strong>${node.branch_id}</strong><small>depth ${node.depth} | parent ${node.parent_id ?? "ROOT"}</small><small>probability ${node.probability} | entities ${node.entity_count}</small><small>${statusLine}</small><small>children ${node.child_ids.length ? node.child_ids.join(", ") : "none"}</small></div>`;
+    }
+    function metricRow(label, value) {
+      return `<div class="metric-row"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+    async function refresh() {
+      const response = await fetch("/api/bootstrap", { cache: "no-store" });
+      const data = await response.json();
+      const quantum = data.module_outputs.quantum_vm;
+      const gut = data.module_outputs.gut;
+      const hawking = data.module_outputs.hawking;
+      const kk = data.module_outputs.kk_projection;
+      const consistency = data.consistency;
+      const policy = data.consistency_policy;
+      document.getElementById("kpi-branches").textContent = data.active_branches;
+      document.getElementById("kpi-audit").textContent = data.audit_events;
+      document.getElementById("kpi-latest").textContent = data.latest_branch;
+      document.getElementById("kpi-bell").textContent = quantum.measurement.join("");
+      document.getElementById("kpi-consistency").textContent = consistency.score.toFixed(6);
+      const badge = document.getElementById("consistency-badge");
+      const badgeClass = consistencyClass(consistency.status, policy.pruned);
+      badge.className = `pill ${badgeClass}`;
+      badge.textContent = `${consistency.status} | gate ${policy.event_gate}`;
+      document.getElementById("consistency-fill").style.width = `${Math.max(0, Math.min(consistency.score, 1)) * 100}%`;
+      document.getElementById("branch-tree").innerHTML = data.branch_tree.map(branchCard).join("");
+      document.getElementById("physics-metrics").innerHTML = [
+        metricRow("Consistency target", `${consistency.target.toFixed(3)} ± ${consistency.band.toFixed(3)}`),
+        metricRow("Consistency status", consistency.status),
+        metricRow("Policy event gate", policy.event_gate),
+        metricRow("Policy prune floor", policy.prune_floor.toFixed(6)),
+        metricRow("Policy actions", policy.actions.length ? policy.actions.join(", ") : "none"),
+        metricRow("Kaluza-Klein coupling", kk.coupling_balance.toFixed(6)),
+        metricRow("Hawking temperature", hawking.temperature.toFixed(6)),
+        metricRow("Hawking paradox gap", hawking.paradox_gap.toFixed(6)),
+        metricRow("GUT unified gap", gut.unified_gap.toFixed(6)),
+        metricRow("GUT phase", gut.phase),
+        metricRow("Quantum dominant outcome", quantum.dominant_outcome)
+      ].join("");
+      document.getElementById("bridge-payloads").textContent = JSON.stringify({ unreal: data.unreal_payload, unity: data.unity_payload }, null, 2);
+      document.getElementById("event-payload").textContent = JSON.stringify({ snapshot: data.command_center_snapshot, delta: data.command_center_delta, event: data.command_center_event }, null, 2);
+    }
+    refresh();
+    setInterval(refresh, 2500);
+  </script>
+</body>
+</html>
