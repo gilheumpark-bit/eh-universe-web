@@ -27,6 +27,18 @@ export function LangProvider({ children }: { children: ReactNode }) {
     if (saved && VALID_LANGS.has(saved)) {
       setTimeout(() => setLang(saved as Lang), 0);
       document.documentElement.lang = saved === "jp" ? "ja" : saved === "cn" ? "zh" : saved;
+    } else {
+      // 브라우저 언어 자동 감지 — 첫 방문 시만 적용
+      const browserLang = (navigator.language || '').toLowerCase();
+      let detected: Lang = "ko";
+      if (browserLang.startsWith("en")) detected = "en";
+      else if (browserLang.startsWith("ja")) detected = "jp";
+      else if (browserLang.startsWith("zh")) detected = "cn";
+      // ko는 기본값이므로 별도 처리 불필요
+      if (detected !== "ko") {
+        setTimeout(() => setLang(detected), 0);
+        applyLang(detected);
+      }
     }
   }, []);
 
