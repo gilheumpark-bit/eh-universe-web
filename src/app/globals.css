@@ -141,14 +141,14 @@
 
 /* DS: Metric Bar */
 .ds-metric-bar {
-  height: 4px;
-  border-radius: 2px;
+  height: 6px;
+  border-radius: 6px;
   background: var(--color-bg-tertiary);
   overflow: hidden;
 }
 .ds-metric-bar > div {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 6px;
   transition: width 0.3s;
 }
 
@@ -329,7 +329,7 @@ main[class~="pt-14"] {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 3px;
+  border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-amber);
@@ -381,7 +381,7 @@ main[class~="pt-14"] {
   padding: 1rem 1.25rem;
   font-family: var(--font-document);
   font-size: 0.95rem;
-  color: #8fd3c3;
+  color: var(--color-accent-green);
   line-height: 1.9;
   border-radius: 18px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
@@ -674,7 +674,7 @@ main[class~="pt-14"] {
 .ss-preset-trigger {
   padding: 8px 16px;
   background: linear-gradient(135deg, rgba(127, 96, 255, 0.92), rgba(96, 61, 198, 0.92));
-  color: #fff;
+  color: var(--color-text-primary);
   border: 1px solid rgba(171, 154, 255, 0.26);
   border-radius: 999px;
   font-size: 12px;
@@ -718,7 +718,7 @@ main[class~="pt-14"] {
 .ss-preset-item:last-child { border-bottom: none; }
 .ss-preset-item:hover {
   background: rgba(124, 58, 237, 0.18);
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 /* Tabs */
@@ -1002,7 +1002,7 @@ main[class~="pt-14"] {
   color: var(--color-text-primary);
 }
 .ss-check-item:hover { background: var(--color-bg-tertiary); }
-.ss-check-item.done { border-color: #1a2a1a; background: #0e150f; }
+.ss-check-item.done { border-color: rgba(47, 155, 131, 0.2); background: rgba(14, 21, 15, 0.8); }
 .ss-check-box {
   width: 16px;
   height: 16px;
@@ -1017,7 +1017,7 @@ main[class~="pt-14"] {
   color: var(--color-accent-amber);
   transition: all 0.15s;
 }
-.ss-check-item.done .ss-check-box { background: #0f2a0f; border-color: #3a6a3a; }
+.ss-check-item.done .ss-check-box { background: rgba(15, 42, 15, 0.8); border-color: rgba(58, 106, 58, 0.7); }
 .ss-check-text {
   display: flex;
   flex-direction: column;
@@ -1053,7 +1053,7 @@ main[class~="pt-14"] {
   letter-spacing: 1px;
 }
 .ss-style-toggle:hover { border-color: var(--color-text-secondary); color: var(--color-text-secondary); }
-.ss-style-toggle.on { border-color: var(--color-accent-amber); color: var(--color-accent-amber); background: #1a1505; }
+.ss-style-toggle.on { border-color: var(--color-accent-amber); color: var(--color-accent-amber); background: rgba(26, 21, 5, 0.8); }
 
 .ss-lab-split {
   display: grid;
@@ -1111,6 +1111,7 @@ main[class~="pt-14"] {
   background: var(--color-accent-amber);
   color: #0a0a08;
   border: none;
+  border-radius: 12px;
   padding: 15px 34px;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -1131,6 +1132,7 @@ main[class~="pt-14"] {
   background: transparent;
   color: var(--color-text-tertiary);
   border: 1px solid var(--color-border);
+  border-radius: 12px;
   padding: 15px 24px;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -1219,14 +1221,14 @@ main[class~="pt-14"] {
   letter-spacing: 1px;
   border-radius: 6px;
 }
-.ss-tag-gold { background: #1f1a05; color: var(--color-accent-amber); border: 1px solid #2e2510; }
+.ss-tag-gold { background: rgba(31, 26, 5, 0.8); color: var(--color-accent-amber); border: 1px solid rgba(46, 37, 16, 0.7); }
 .ss-profile-items { margin-top: 8px; }
 .ss-profile-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #141418;
+  border-bottom: 1px solid var(--color-border);
   font-size: 13px;
   color: var(--color-text-primary);
 }
