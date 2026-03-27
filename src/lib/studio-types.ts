@@ -254,6 +254,15 @@ export interface StoryConfig {
   useSubGenrePrompt?: boolean; // 서브장르 태그를 AI 프롬프트에 삽입할지 여부
   // EH Engine — Narrative Intensity (서사 강도)
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
+  // Translation Engine — 번역 설정
+  translationConfig?: {
+    targetLang: 'EN' | 'JP' | 'CN' | 'KO';
+    fidelity: number;             // 0.480 ~ 0.520
+    scoreThreshold: number;       // 기본 0.70
+    maxRecreate: number;          // 기본 2
+    glossary: { source: string; target: string; context?: string; locked: boolean }[];
+  };
+  translatedManuscripts?: TranslatedManuscriptEntry[];
 }
 
 // Episode manuscript entry
@@ -262,6 +271,18 @@ export interface EpisodeManuscript {
   title: string;
   content: string;
   charCount: number;
+  lastUpdate: number;
+}
+
+// Translated manuscript entry (번역 원고)
+export interface TranslatedManuscriptEntry {
+  episode: number;
+  targetLang: 'EN' | 'JP' | 'CN' | 'KO';
+  translatedTitle: string;
+  translatedContent: string;
+  charCount: number;
+  avgScore: number;           // 번역 품질 점수 (0~1)
+  fidelity: number;           // 사용된 fidelity 값
   lastUpdate: number;
 }
 
