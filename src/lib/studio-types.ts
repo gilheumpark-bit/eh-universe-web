@@ -256,8 +256,9 @@ export interface StoryConfig {
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
   // Translation Engine — 번역 설정
   translationConfig?: {
+    mode: 'fidelity' | 'experience';  // MODE1: 원문 보존 / MODE2: 독자 경험
     targetLang: 'EN' | 'JP' | 'CN' | 'KO';
-    fidelity: number;             // 0.480 ~ 0.520
+    band: number;                 // 0.480 ~ 0.520 (모드 내 미세 조정)
     scoreThreshold: number;       // 기본 0.70
     maxRecreate: number;          // 기본 2
     glossary: { source: string; target: string; context?: string; locked: boolean }[];
