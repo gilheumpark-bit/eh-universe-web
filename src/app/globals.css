@@ -391,6 +391,7 @@ main[class~="pt-14"] {
 .doc-header {
   border: 1px solid rgba(202, 161, 92, 0.2);
   border-bottom-color: rgba(202, 161, 92, 0.12);
+  border-radius: 18px;
   padding: 0.95rem 1.2rem;
   font-family: var(--font-document);
   font-size: 0.82rem;

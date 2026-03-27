@@ -49,7 +49,7 @@ function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }
       <div className="flex items-center gap-3">
         <button
           onClick={onRetry}
-          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
+          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10 active:scale-[0.97] transition-all duration-200"
         >
           {L4(lang, {
             ko: '다시 시도',
@@ -60,7 +60,7 @@ function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }
         </button>
         <a
           href="/"
-          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 transition-all"
+          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 active:scale-[0.97] transition-all duration-200"
         >
           {L4(lang, {
             ko: '홈으로',
