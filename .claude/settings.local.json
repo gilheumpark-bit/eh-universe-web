@@ -79,7 +79,12 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(find src/ -name *.test.* -o -name *.spec.*)",
       "Bash(grep -rn '문제가 발생' src/ --include=*.tsx)",
-      "Bash(ls public/icon-* public/icons/ public/favicon*)"
+      "Bash(ls public/icon-* public/icons/ public/favicon*)",
+      "Bash(grep -r import.*from.*@/ '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/app')",
+      "Bash(/tmp/check_rates.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(npx kill-port:*)",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq next*\")"
     ]
   }
 }

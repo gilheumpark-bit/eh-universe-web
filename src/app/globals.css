@@ -787,7 +787,7 @@ main[class~="pt-14"] {
 .ss-dna-card {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 2px;
+  border-radius: 16px;
   padding: 24px;
   position: relative;
   cursor: pointer;
@@ -819,7 +819,7 @@ main[class~="pt-14"] {
   font-size: 9px;
   letter-spacing: 2px;
   padding: 3px 8px;
-  border-radius: 1px;
+  border-radius: 6px;
   margin-bottom: 10px;
   text-transform: uppercase;
 }
@@ -946,6 +946,7 @@ main[class~="pt-14"] {
 .ss-progress-wrap {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: 14px;
   padding: 16px 20px;
   margin-bottom: 24px;
   display: flex;
@@ -992,6 +993,7 @@ main[class~="pt-14"] {
   margin-bottom: 8px;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s;
   align-items: flex-start;
@@ -1005,6 +1007,7 @@ main[class~="pt-14"] {
   width: 16px;
   height: 16px;
   border: 1px solid var(--color-border);
+  border-radius: 4px;
   flex-shrink: 0;
   margin-top: 2px;
   display: flex;
@@ -1042,6 +1045,7 @@ main[class~="pt-14"] {
   font-family: var(--font-mono);
   font-size: 11px;
   border: 1px solid var(--color-border);
+  border-radius: 10px;
   color: var(--color-text-tertiary);
   cursor: pointer;
   transition: all 0.15s;
@@ -1073,6 +1077,7 @@ main[class~="pt-14"] {
   width: 100%;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: 14px;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -1087,6 +1092,7 @@ main[class~="pt-14"] {
 .ss-result-box {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: 14px;
   padding: 22px;
   font-size: 15px;
   line-height: 1.95;
@@ -1158,6 +1164,7 @@ main[class~="pt-14"] {
 .ss-tip {
   background: var(--color-bg-secondary);
   border-left: 3px solid var(--color-accent-blue);
+  border-radius: 0 12px 12px 0;
   padding: 16px 20px;
   margin-bottom: 12px;
 }
@@ -1190,6 +1197,7 @@ main[class~="pt-14"] {
 .ss-profile-card {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: 16px;
   padding: 24px;
 }
 .ss-profile-card h3 {
@@ -1209,7 +1217,7 @@ main[class~="pt-14"] {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 1px;
-  border-radius: 1px;
+  border-radius: 6px;
 }
 .ss-tag-gold { background: #1f1a05; color: var(--color-accent-amber); border: 1px solid #2e2510; }
 .ss-profile-items { margin-top: 8px; }
@@ -1228,6 +1236,7 @@ main[class~="pt-14"] {
 .ss-author-dna {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-accent-amber);
+  border-radius: 18px;
   padding: 28px;
   position: relative;
   overflow: hidden;

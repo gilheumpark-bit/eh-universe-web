@@ -1,12 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+
+/** Intersection Observer 기반 fade-in 훅 (prefers-reduced-motion 존중) */
+function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+    el.style.opacity = "0";
+    el.style.transform = "translateY(24px)";
+    el.style.transition = "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)";
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0)";
+          io.disconnect();
+        }
+      },
+      { threshold: 0.12 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
 
 
 function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => void; onWithApi: () => void; onWithout: () => void }) {
@@ -254,11 +281,15 @@ export default function Home() {
   ];
 
   const colorMap = {
-    amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", glow: "bg-accent-amber/8" },
-    blue: { border: "border-accent-blue/20", bg: "bg-accent-blue/10", text: "text-accent-blue", glow: "bg-accent-blue/8" },
-    green: { border: "border-accent-green/20", bg: "bg-accent-green/10", text: "text-accent-green", glow: "bg-accent-green/8" },
-    purple: { border: "border-accent-purple/20", bg: "bg-accent-purple/10", text: "text-accent-purple", glow: "bg-accent-purple/8" },
+    amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", hoverText: "group-hover:text-accent-amber", glow: "bg-accent-amber/8" },
+    blue: { border: "border-accent-blue/20", bg: "bg-accent-blue/10", text: "text-accent-blue", hoverText: "group-hover:text-accent-blue", glow: "bg-accent-blue/8" },
+    green: { border: "border-accent-green/20", bg: "bg-accent-green/10", text: "text-accent-green", hoverText: "group-hover:text-accent-green", glow: "bg-accent-green/8" },
+    purple: { border: "border-accent-purple/20", bg: "bg-accent-purple/10", text: "text-accent-purple", hoverText: "group-hover:text-accent-purple", glow: "bg-accent-purple/8" },
   };
+
+  const catRef = useFadeIn<HTMLElement>();
+  const hubRef = useFadeIn<HTMLElement>();
+  const ctaRef = useFadeIn<HTMLElement>();
 
   if (showStudioChoice) {
     return (
@@ -345,7 +376,7 @@ export default function Home() {
       </section>
 
       {/* CATEGORY GRID */}
-      <section className="section-divider py-20">
+      <section ref={catRef} className="section-divider py-20">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -381,7 +412,7 @@ export default function Home() {
       </section>
 
       {/* HUB GRID */}
-      <section className="section-divider py-20">
+      <section ref={hubRef} className="section-divider py-20">
         <div className="site-shell">
           <div className="mb-8 px-1">
             <p className="site-kicker">
@@ -404,12 +435,12 @@ export default function Home() {
                     {hub.badge}
                   </span>
                   <div className="mt-4">
-                    <h3 className={`font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:${c.text}`}>
+                    <h3 className={`font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors ${c.hoverText}`}>
                       {hub.title}
                     </h3>
                     <p className="mt-2 text-sm leading-7 text-text-secondary">{hub.desc}</p>
                   </div>
-                  <div className={`mt-4 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors group-hover:${c.text}`}>
+                  <div className={`mt-4 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
                     {hub.meta} →
                   </div>
                 </>
@@ -432,7 +463,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="section-divider pb-24 pt-8">
+      <section ref={ctaRef} className="section-divider pb-24 pt-8">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -459,8 +490,17 @@ export default function Home() {
 
       <footer className="px-4 pb-10">
         <div className="site-shell">
-          <div className="premium-panel-soft flex flex-col items-center justify-between gap-4 rounded-[24px] px-6 py-5 sm:flex-row">
-            <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.16em] text-text-tertiary">EH UNIVERSE · CC-BY-NC-4.0</p>
+          {/* gradient divider */}
+          <div className="mx-auto mb-8 h-px w-2/3 bg-[linear-gradient(90deg,transparent,rgba(202,161,92,0.22),transparent)]" />
+          <div className="premium-panel-soft flex flex-col items-center gap-5 rounded-[24px] px-6 py-7 sm:flex-row sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
+                EH
+              </span>
+              <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.16em] text-text-tertiary">
+                EH UNIVERSE · CC-BY-NC-4.0
+              </p>
+            </div>
             <p className="font-[family-name:var(--font-document)] text-xs italic text-text-tertiary">
               {T({ ko: "세계관을 탐색하고, 이야기를 만든다.", en: "Explore the universe. Build the story.", jp: "世界観を探索し、物語を作る。", cn: "探索世界观，创造故事。" })}
             </p>
