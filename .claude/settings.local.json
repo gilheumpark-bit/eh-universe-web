@@ -44,7 +44,32 @@
       "Bash(sort -t: -k2 -rn)",
       "Bash(PYTHONIOENCODING=utf-8 python3 -c \":*)",
       "Bash(grep -v \":0$\")",
-      "Bash(wc -l \"/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/csl-ide-web/src/lib/pipeline/teams\"/*.ts)"
+      "Bash(wc -l \"/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/csl-ide-web/src/lib/pipeline/teams\"/*.ts)",
+      "Bash(xargs grep:*)",
+      "Bash(find src/components -name *Graph* -o -name *Network* -o -name *Arc* -o -name *Fatigue* -o -name *Consistency* -o -name *Rhythm*)",
+      "Bash(grep -r \"RelationshipGraph\\\\|characterGraph\\\\|character.*graph\\\\|relation.*graph\\\\|relat.*network\" src/ --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"RelationshipGraph\\\\|EmotionArc\\\\|FatigueDetect\\\\|consistency.*tag.*auto\\\\|sentence.*rhythm\" . --include=*.ts --include=*.tsx)",
+      "mcp__ddef6c03-7e87-4a90-9321-846485e68771__create_new_file",
+      "mcp__ddef6c03-7e87-4a90-9321-846485e68771__use_figma",
+      "Bash(ls src/components/studio/*.tsx)",
+      "Bash(ls src/engine/*.ts)",
+      "Bash(ls src/hooks/*.ts)",
+      "Bash(ls src/lib/*.ts)",
+      "Bash(ls -1 ./src/components/studio/*.tsx)",
+      "Bash(wc -l ./src/engine/*.ts)",
+      "Bash(wc -l ./src/components/studio/*.tsx)",
+      "Bash(ls -1 ./src/lib/*.ts)",
+      "Bash(wc -l ./src/lib/*.ts)",
+      "Bash(find ./src/engine/builders -name *.ts -type f)",
+      "Bash(ls -1 ./src/app/api/*/route.ts)",
+      "Bash(wc -l ./src/contexts/*.tsx)",
+      "Bash(npm run:*)",
+      "Bash(grep -r MobileDrawer '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"EmotionArcChart\\\\|FatigueDetector\\\\|RhythmAnalyzer\\\\|EmptyState\\\\|LoadingSkeleton\\\\|SectionErrorBoundary\" '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"noi-auto-tags\\\\|safe-storage\" '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(taskkill /PID 15012 /F)",
+      "Bash(TASKKILL //PID 15012 //F)"
     ]
   }
 }
