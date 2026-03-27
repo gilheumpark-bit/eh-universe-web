@@ -25,28 +25,24 @@ function applyLangToDOM(next: Lang): void {
   document.documentElement.lang = next === "jp" ? "ja" : next === "cn" ? "zh" : next;
 }
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("ko");
+function getInitialLang(): Lang {
+  if (typeof window === "undefined") return "ko";
+  const saved = localStorage.getItem("eh-lang");
+  if (saved && VALID_LANGS.has(saved)) return saved as Lang;
+  const browserLang = (navigator.language || "").toLowerCase();
+  if (browserLang.startsWith("en")) return "en";
+  if (browserLang.startsWith("ja")) return "jp";
+  if (browserLang.startsWith("zh")) return "cn";
+  return "ko";
+}
 
+export function LangProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useState<Lang>(getInitialLang);
+
+  // Sync DOM lang attribute on mount and when lang changes
   useEffect(() => {
-    const saved = localStorage.getItem("eh-lang");
-    if (saved && VALID_LANGS.has(saved)) {
-      setLang(saved as Lang);
-      document.documentElement.lang = saved === "jp" ? "ja" : saved === "cn" ? "zh" : saved;
-    } else {
-      // 브라우저 언어 자동 감지 — 첫 방문 시만 적용
-      const browserLang = (navigator.language || '').toLowerCase();
-      let detected: Lang = "ko";
-      if (browserLang.startsWith("en")) detected = "en";
-      else if (browserLang.startsWith("ja")) detected = "jp";
-      else if (browserLang.startsWith("zh")) detected = "cn";
-      // ko는 기본값이므로 별도 처리 불필요
-      if (detected !== "ko") {
-        setLang(detected);
-        applyLangToDOM(detected);
-      }
-    }
-  }, []);
+    document.documentElement.lang = lang === "jp" ? "ja" : lang === "cn" ? "zh" : lang;
+  }, [lang]);
 
   const toggleLang = useCallback(() => {
     setLang((prev) => {

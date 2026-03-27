@@ -84,15 +84,15 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
 
   // Enter animation: delay animReady to allow CSS transition from height:0
   useEffect(() => {
-    if (open) {
-      setSnap(0.5);
-      const id = requestAnimationFrame(() => {
+    const id = requestAnimationFrame(() => {
+      if (open) {
+        setSnap(0.5);
         setAnimReady(true);
-      });
-      return () => cancelAnimationFrame(id);
-    } else {
-      setAnimReady(false);
-    }
+      } else {
+        setAnimReady(false);
+      }
+    });
+    return () => cancelAnimationFrame(id);
   }, [open]);
 
   // Derive visible directly from props — no setState sync

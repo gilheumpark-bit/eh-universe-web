@@ -35,7 +35,7 @@ function createHarness<T>(initialState: T, maxHistory?: number) {
 
   function TestComponent() {
     const hook = useUndoRedo({ initialState, maxHistory });
-    ref.current = hook;
+    React.useEffect(() => { ref.current = hook; });
     return null;
   }
 

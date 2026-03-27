@@ -1,9 +1,9 @@
 'use client';
 
 import React, { Component } from 'react';
+import Link from 'next/link';
 import { L4 } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
-import type { Lang } from '@/lib/LangContext';
 
 // ============================================================
 // PART 1 — Top-level Error Boundary for route segments
@@ -58,7 +58,7 @@ function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }
             cn: '重试',
           })}
         </button>
-        <a
+        <Link
           href="/"
           className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 active:scale-[0.97] transition-all duration-200"
         >
@@ -68,7 +68,7 @@ function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }
             jp: 'ホームへ',
             cn: '回到首页',
           })}
-        </a>
+        </Link>
       </div>
     </div>
   );
