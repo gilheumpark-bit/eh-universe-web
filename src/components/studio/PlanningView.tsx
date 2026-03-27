@@ -316,6 +316,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{te.totalEpisodes}</label>
             <input
               type="number"
+              min={1}
+              max={500}
               className={`w-full bg-black border rounded-xl p-4 text-sm font-bold outline-none transition-all ${
                 totalEpisodes < 1 || totalEpisodes > 500
                   ? 'border-red-500/60 focus:border-red-500 text-red-400'
@@ -422,7 +424,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             navigator.clipboard.writeText(url).then(() => {
               setShareCopied(true);
               setTimeout(() => setShareCopied(false), 2000);
-            });
+            }).catch(() => { /* clipboard permission denied — silently ignore */ });
           }}
           className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
         >

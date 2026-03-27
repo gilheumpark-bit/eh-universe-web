@@ -225,7 +225,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
               <div className="flex items-center gap-2">
                 {comment.authorPhoto ? (
                   /* eslint-disable-next-line @next/next/no-img-element -- external user avatar URL */
-                  <img src={comment.authorPhoto} alt="" className="h-5 w-5 rounded-full" />
+                  <img src={comment.authorPhoto} alt={`${comment.authorName} 프로필`} className="h-5 w-5 rounded-full" />
                 ) : null}
                 <span className="text-xs font-medium text-text-primary">{comment.authorName}</span>
                 <span className="text-xs text-text-tertiary">

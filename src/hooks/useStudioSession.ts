@@ -78,16 +78,16 @@ export function useStudioSession({
       : DEMO_PRESETS[0];
     const demoSession = buildDemoSession(preset, isKO);
     doCreateNewSession();
-    setTimeout(() => {
+    // requestAnimationFrame ensures React has flushed the new session state
+    requestAnimationFrame(() => {
       updateCurrentSession({
         messages: demoSession.messages as Message[],
         config: demoSession.config as StoryConfig,
         title: demoSession.title,
       });
       setActiveTab('writing');
-      // 데모 메시지가 있으면 AI 모드(대화 표시)로 진입
       if (demoSession.messages.length > 0 && setWritingMode) setWritingMode('ai');
-    }, 50);
+    });
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [isKO, doCreateNewSession, updateCurrentSession, setActiveTab, setIsSidebarOpen]);
 

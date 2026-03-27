@@ -20,7 +20,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
   useEffect(() => {
     import("@/lib/articles").then((mod) => {
       setArticleModule({ articles: mod.articles, getArticleTitle: mod.getArticleTitle });
-    });
+    }).catch(() => { /* dynamic import failure — page will show loading fallback */ });
   }, []);
 
   // Loading state while articles chunk loads
