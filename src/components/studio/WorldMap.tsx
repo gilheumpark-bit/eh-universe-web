@@ -4,7 +4,7 @@
 // PART 1 — Types & Imports
 // ============================================================
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, memo } from 'react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { Plus, Link, Trash2, Map as MapIcon } from 'lucide-react';
@@ -35,7 +35,7 @@ const MAP_H = 400;
 // PART 2 — Territory Canvas (SVG-based draggable regions)
 // ============================================================
 
-export default function WorldMap({ simData, language, onChange, highlightEra }: Props) {
+function WorldMap({ simData, language, onChange, highlightEra }: Props) {
   const isKO = language === 'KO';
   const territories = simData.territories || [];
   const links = simData.territoryLinks || [];
@@ -298,5 +298,7 @@ export default function WorldMap({ simData, language, onChange, highlightEra }: 
     </div>
   );
 }
+
+export default memo(WorldMap);
 
 // IDENTITY_SEAL: PART-2 | role=map-canvas | inputs=WorldSimData,language | outputs=JSX

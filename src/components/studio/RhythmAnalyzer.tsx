@@ -4,7 +4,7 @@
 // PART 1 — 문장 리듬 분석: 단문/장문 비율 시각화
 // ============================================================
 
-import React, { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -119,7 +119,7 @@ function analyzeRhythm(messages: Message[], isKO: boolean): RhythmStats | null {
 // PART 3 — 시각화 렌더링
 // ============================================================
 
-export default function RhythmAnalyzer({ messages, language }: Props) {
+function RhythmAnalyzer({ messages, language }: Props) {
   const isKO = language === 'KO';
   const stats = useMemo(() => analyzeRhythm(messages, isKO), [messages, isKO]);
 
@@ -224,5 +224,7 @@ export default function RhythmAnalyzer({ messages, language }: Props) {
     </div>
   );
 }
+
+export default memo(RhythmAnalyzer);
 
 // IDENTITY_SEAL: PART-3 | role=rhythm visualization | inputs=messages+language | outputs=JSX

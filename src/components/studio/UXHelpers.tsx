@@ -7,7 +7,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { AlertTriangle, X, Copy, Check } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { classifyAsStudioError, getErrorMessage } from '@/lib/errors';
 
 interface ConfirmModalProps {
@@ -40,7 +40,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className={`flex items-start gap-3 p-3 rounded-lg mb-4 ${colors[variant]}`}>
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
@@ -98,15 +98,15 @@ function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
   if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504') || lower.includes('internal server')) {
     return {
       type: 'server',
-      title: language === 'KO' ? '서버 오류' : 'Server Error',
-      message: language === 'KO' ? 'AI 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.' : 'AI server is temporarily unavailable. Please try again shortly.',
+      title: L4(language, { ko: '서버 오류', en: 'Server Error', jp: 'サーバーエラー', cn: '服务器错误' }),
+      message: L4(language, { ko: 'AI 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.', en: 'AI server is temporarily unavailable. Please try again shortly.', jp: 'AIサーバーが一時的に応答していません。しばらくしてから再試行してください。', cn: 'AI服务器暂时无法响应，请稍后重试。' }),
     };
   }
   if (lower.includes('404') || lower.includes('not found')) {
     return {
       type: 'not_found',
-      title: language === 'KO' ? '요청 경로 오류' : 'Not Found',
-      message: language === 'KO' ? '요청한 API 경로를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.' : 'API endpoint not found. Please refresh and try again.',
+      title: L4(language, { ko: '요청 경로 오류', en: 'Not Found', jp: 'リクエストパスエラー', cn: '请求路径错误' }),
+      message: L4(language, { ko: '요청한 API 경로를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.', en: 'API endpoint not found. Please refresh and try again.', jp: 'リクエストしたAPIパスが見つかりません。ページを更新してから再試行してください。', cn: '找不到请求的API路径，请刷新页面后重试。' }),
     };
   }
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
@@ -223,7 +223,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, language, classNam
       onClick={handleCopy}
       className={`p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 transition-colors ${className}`}
       title={t('uxHelpers.copy')}
-      aria-label={language === 'KO' ? '복사' : 'Copy'}
+      aria-label={L4(language, { ko: '복사', en: 'Copy', jp: 'コピー', cn: '复制' })}
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
     </button>

@@ -387,7 +387,7 @@ export function buildDemoSession(preset: DemoPreset, isKO: boolean): ChatSession
       ...INITIAL_CONFIG,
       ...preset.config,
       title: preset.config.title || preset.name[lang],
-    } as any,
+    },
     messages: preset.messages.map((m, i) => ({
       id: `${preset.id}-msg-${i}`,
       role: m.role,

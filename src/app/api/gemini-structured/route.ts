@@ -554,6 +554,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[API:gemini-structured]', error instanceof Error ? error.message : error);
     const status = /Request too large/i.test(message) ? 413 : /Invalid JSON/i.test(message) ? 400 : /401|403|unauthorized/i.test(message) ? 401 : 500;
     return NextResponse.json({ error: message.slice(0, 240) }, { status });
   }

@@ -6,30 +6,34 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { apiLog } from '@/lib/api-logger';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const MAX_BODY_SIZE = 4096;
 
-// Rate limit: 60 reports/min per IP
-const reportMap = new Map<string, { count: number; resetAt: number }>();
-
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-
-  // Rate check
-  const now = Date.now();
-  const entry = reportMap.get(ip);
-  if (entry && now < entry.resetAt) {
-    if (entry.count >= 60) return new NextResponse(null, { status: 429 });
-    entry.count++;
-  } else {
-    reportMap.set(ip, { count: 1, resetAt: now + 60_000 });
+  // Same-origin validation
+  const origin = req.headers.get('origin') || req.headers.get('referer') || '';
+  const host = req.headers.get('host') || '';
+  if (origin && host) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return new NextResponse(null, { status: 403 });
+      }
+    } catch {
+      return new NextResponse(null, { status: 403 });
+    }
   }
 
-  // Lazy cleanup
-  if (reportMap.size > 5000) {
-    for (const [k, v] of reportMap) {
-      if (now > v.resetAt) reportMap.delete(k);
-    }
+  const ip = getClientIp(req.headers);
+
+  // Rate check using shared limiter
+  const rl = checkRateLimit(ip, 'error-report', RATE_LIMITS.default);
+  if (!rl.allowed) {
+    return new NextResponse(null, {
+      status: 429,
+      headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) },
+    });
   }
 
   try {
@@ -53,7 +57,8 @@ export async function POST(req: NextRequest) {
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch {
+  } catch (error) {
+    console.error('[API:error-report]', error instanceof Error ? error.message : error);
     return new NextResponse(null, { status: 400 });
   }
 }

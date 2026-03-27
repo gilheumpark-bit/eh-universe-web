@@ -7,6 +7,7 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { Search, X, UserCircle, Globe, FileText } from 'lucide-react';
 import type { StoryConfig, ChatSession, AppLanguage } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
 
 type ResultType = 'character' | 'episode' | 'world';
 
@@ -46,12 +47,23 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   query, setQuery, sessions, config, language, onSelect, onClose,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isKO = language === 'KO';
   const debouncedQuery = useDebounce(query, 300);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const worldFieldLabels = useMemo(() => [
+    { key: 'setting', label: L4(language, { ko: '배경', en: 'Setting', jp: '背景', cn: '背景' }) },
+    { key: 'corePremise', label: L4(language, { ko: '핵심 전제', en: 'Core Premise', jp: 'コアプレミス', cn: '核心前提' }) },
+    { key: 'synopsis', label: L4(language, { ko: '시놉시스', en: 'Synopsis', jp: 'シノプシス', cn: '剧情简介' }) },
+    { key: 'worldHistory', label: L4(language, { ko: '역사', en: 'History', jp: '歴史', cn: '历史' }) },
+    { key: 'socialSystem', label: L4(language, { ko: '사회 시스템', en: 'Social System', jp: '社会システム', cn: '社会系统' }) },
+    { key: 'powerStructure', label: L4(language, { ko: '권력 구조', en: 'Power Structure', jp: '権力構造', cn: '权力结构' }) },
+    { key: 'currentConflict', label: L4(language, { ko: '현재 갈등', en: 'Current Conflict', jp: '現在の対立', cn: '当前冲突' }) },
+    { key: 'culture', label: L4(language, { ko: '문화', en: 'Culture', jp: '文化', cn: '文化' }) },
+    { key: 'magicTechSystem', label: L4(language, { ko: '마법/기술', en: 'Magic/Tech', jp: '魔法/技術', cn: '魔法/科技' }) },
+  ], [language]);
 
   const results = useMemo<SearchResult[]>(() => {
     const q = debouncedQuery.toLowerCase().trim();
@@ -92,18 +104,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
 
     // Search world settings text fields
     if (config) {
-      const worldFields: { key: string; label: string }[] = [
-        { key: 'setting', label: isKO ? '배경' : 'Setting' },
-        { key: 'corePremise', label: isKO ? '핵심 전제' : 'Core Premise' },
-        { key: 'synopsis', label: isKO ? '시놉시스' : 'Synopsis' },
-        { key: 'worldHistory', label: isKO ? '역사' : 'History' },
-        { key: 'socialSystem', label: isKO ? '사회 시스템' : 'Social System' },
-        { key: 'powerStructure', label: isKO ? '권력 구조' : 'Power Structure' },
-        { key: 'currentConflict', label: isKO ? '현재 갈등' : 'Current Conflict' },
-        { key: 'culture', label: isKO ? '문화' : 'Culture' },
-        { key: 'magicTechSystem', label: isKO ? '마법/기술' : 'Magic/Tech' },
-      ];
-      for (const wf of worldFields) {
+      for (const wf of worldFieldLabels) {
         const val = (config as unknown as Record<string, unknown>)[wf.key];
         if (typeof val === 'string' && val.toLowerCase().includes(q)) {
           out.push({
@@ -117,12 +118,18 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
     }
 
     return out.slice(0, 12);
-  }, [debouncedQuery, sessions, config, isKO]);
+  }, [debouncedQuery, sessions, config, worldFieldLabels]);
 
   const iconMap: Record<ResultType, React.ReactNode> = {
     character: <UserCircle className="w-4 h-4 text-accent-purple" />,
     episode: <FileText className="w-4 h-4 text-accent-green" />,
     world: <Globe className="w-4 h-4 text-[rgba(202,161,92,0.8)]" />,
+  };
+
+  const categoryLabel = (type: ResultType): string => {
+    if (type === 'character') return L4(language, { ko: '캐릭터', en: 'CHAR', jp: 'キャラ', cn: '角色' });
+    if (type === 'episode') return L4(language, { ko: '에피소드', en: 'EP', jp: 'エピソード', cn: '章节' });
+    return L4(language, { ko: '세계관', en: 'WORLD', jp: '世界観', cn: '世界观' });
   };
 
   return (
@@ -131,6 +138,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
         className="w-full max-w-lg bg-bg-secondary border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         data-modal
       >
         {/* Search input */}
@@ -140,7 +148,12 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder={isKO ? '캐릭터, 에피소드, 세계관 검색... (Ctrl+K)' : 'Search characters, episodes, world... (Ctrl+K)'}
+            placeholder={L4(language, {
+              ko: '캐릭터, 에피소드, 세계관 검색... (Ctrl+K)',
+              en: 'Search characters, episodes, world... (Ctrl+K)',
+              jp: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
+              cn: '搜索角色、章节、世界观... (Ctrl+K)',
+            })}
             className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary"
           />
           <button onClick={onClose} className="text-text-tertiary hover:text-text-primary">
@@ -152,7 +165,12 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
         <div className="max-h-80 overflow-y-auto">
           {debouncedQuery && results.length === 0 && (
             <div className="px-4 py-6 text-center text-text-tertiary text-sm">
-              {isKO ? '검색 결과가 없습니다' : 'No results found'}
+              {L4(language, {
+                ko: '검색 결과가 없습니다',
+                en: 'No results found',
+                jp: '検索結果がありません',
+                cn: '没有找到结果',
+              })}
             </div>
           )}
           {results.map((r, i) => (
@@ -167,7 +185,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
                 <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
               </div>
               <span className="text-[9px] font-[family-name:var(--font-mono)] uppercase text-text-tertiary tracking-widest shrink-0">
-                {r.type === 'character' ? (isKO ? '캐릭터' : 'CHAR') : r.type === 'episode' ? (isKO ? '에피소드' : 'EP') : (isKO ? '세계관' : 'WORLD')}
+                {categoryLabel(r.type)}
               </span>
             </button>
           ))}

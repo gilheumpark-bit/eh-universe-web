@@ -668,6 +668,6 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
   );
 };
 
-export default CharRelationGraph;
+export default React.memo(CharRelationGraph);
 
 // IDENTITY_SEAL: PART-6 | role=main-component+detail+state | inputs=characters,relations,language | outputs=JSX

@@ -246,8 +246,7 @@ export async function POST(req: NextRequest) {
       : DEFAULT_MODELS[provider] ?? 'gemini-2.5-flash';
     const language = getLanguage(body.language);
     const schema = typeof body.schema === 'object' && body.schema ? body.schema : undefined;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fallback = (body.fallback as any) ?? {};
+    const fallback = (body.fallback as Record<string, unknown>) ?? {};
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any;
@@ -279,6 +278,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[API:structured-generate]', error instanceof Error ? error.message : error);
     const status = /Request too large/i.test(message) ? 413
       : /Invalid JSON/i.test(message) ? 400
       : /401|403|unauthorized/i.test(message) ? 401

@@ -284,9 +284,25 @@ Be specific, detailed, and extract everything directly from the text. Do not inv
 // PART 4 — Route handler
 // ============================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const EMPTY_FALLBACK: Record<string, any> = {
-  characterState: [] as any[],
+interface CharacterStateEntry {
+  name?: string;
+  presence?: string;
+  emotion?: { primary?: string; intensity?: string };
+  [key: string]: unknown;
+}
+
+interface AnalysisFallback {
+  characterState: CharacterStateEntry[];
+  backgroundState: Record<string, string | string[]>;
+  sceneState: { tension: string; [key: string]: string | string[] };
+  soundState: Record<string, string[]>;
+  imagePromptPack: Record<string, string | string[]>;
+  musicPromptPack: Record<string, string | string[]>;
+  [key: string]: unknown;
+}
+
+const EMPTY_FALLBACK: AnalysisFallback = {
+  characterState: [],
   backgroundState: {
     location: '', spaceType: '', time: '', weather: '', lighting: '',
     mood: [], keyObjects: [], environmentCondition: [],
@@ -345,10 +361,10 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(result.characterState)) {
       result.characterState = result.characterState.map((c) => ({
         ...c,
-        presence: validPresence.has(c.presence) ? c.presence : 'direct',
+        presence: (c.presence && validPresence.has(c.presence)) ? c.presence : 'direct',
         emotion: {
           primary: c.emotion?.primary ?? '',
-          intensity: validIntensity.has(c.emotion?.intensity) ? c.emotion.intensity : 'mid',
+          intensity: (c.emotion?.intensity && validIntensity.has(c.emotion.intensity)) ? c.emotion.intensity : 'mid',
         },
       }));
     }
@@ -356,6 +372,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[API:analyze-chapter]', error instanceof Error ? error.message : error);
     const status =
       /Request too large/i.test(message) ? 413
       : /Invalid JSON/i.test(message) ? 400

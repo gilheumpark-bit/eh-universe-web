@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Plus, Send,
+  Send,
   Sparkles, Menu,
-  X, PenTool, StopCircle,
+  X, StopCircle,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
-  Message, StoryConfig, Genre,
+  StoryConfig, Genre,
   AppLanguage, AppTab,
   ChatSession, Project
 } from '@/lib/studio-types';
@@ -22,12 +22,11 @@ import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 // EngineReport type inferred from useStudioAI hook return
-import ChatMessage from '@/components/studio/ChatMessage';
-import { WritingToolbar } from '@/components/studio/WritingToolbar';
+// ChatMessage and WritingToolbar used in dynamic sub-components
 import CharacterTab from '@/components/studio/tabs/CharacterTab';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
-import EngineStatusBar from '@/components/studio/EngineStatusBar';
+// EngineStatusBar used in dynamic sub-components
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
@@ -51,29 +50,19 @@ import WorldTab from '@/components/studio/tabs/WorldTab';
 import StyleTab from '@/components/studio/tabs/StyleTab';
 // StyleStudioView는 StyleTab 내부에서 import됨
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
-const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: DynSkeleton });
-const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false, loading: DynSkeleton });
-const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false, loading: DynSkeleton });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false, loading: DynSkeleton });
 const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
-const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: DynSkeleton });
-const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false, loading: DynSkeleton });
-const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: DynSkeleton });
 // ItemStudioView는 CharacterTab 내부에서 import됨
-const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
-const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
 const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
 const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
-const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: DynSkeleton });
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
-import { Wand2 } from 'lucide-react';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { ConfirmModal, useUnsavedWarning } from '@/components/studio/UXHelpers';
 import StudioToasts from '@/components/studio/StudioToasts';
@@ -856,6 +845,7 @@ export default function StudioPage() {
     <StudioUIProvider value={studioUIValue}>
     <div
       className="flex h-screen overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
+      data-testid="studio-content"
       data-theme={(['', 'dim', 'light', 'max'] as const)[themeLevel] || ''}
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}

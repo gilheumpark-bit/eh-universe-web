@@ -170,7 +170,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-bg-primary border border-border rounded-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-lg bg-bg-primary border border-border rounded-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

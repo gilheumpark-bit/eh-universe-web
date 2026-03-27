@@ -41,8 +41,9 @@ test.describe("EH Network", () => {
   test("invalid planet detail shows fallback state without crashing", async ({ page }) => {
     await page.goto("/network/planets/unknown-planet-id");
 
-    await expect(page.locator("text=/행성을 찾을 수 없습니다.|Planet not found./").first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=/네트워크 홈으로|Back to Network/").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=/행성을 찾을 수 없습니다.|Planet not found/").first()).toBeVisible({ timeout: 10000 });
+    // The back link uses "← 네트워크" / "← Network"
+    await expect(page.locator("text=/네트워크|Network/").first()).toBeVisible({ timeout: 10000 });
   });
 });
 

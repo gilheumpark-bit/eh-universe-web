@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -163,8 +163,25 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
 export default function Home() {
   const { lang } = useLang();
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("eh-splash-seen");
+    }
+    return false;
+  });
   const [showStudioChoice, setShowStudioChoice] = useState(false);
+
+  // Auto-dismiss splash after 2.5s; mark as seen so it won't block again this session
+  useEffect(() => {
+    if (!showSplash) return;
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("eh-splash-seen", "1");
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [showSplash]);
 
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
     lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
@@ -262,8 +279,16 @@ export default function Home() {
   if (showSplash) {
     return (
       <SplashScreen
-        onUniverse={() => router.push('/studio')}
-        onStudio={() => setShowStudioChoice(true)}
+        onUniverse={() => {
+          setShowSplash(false);
+          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
+          router.push('/archive');
+        }}
+        onStudio={() => {
+          setShowSplash(false);
+          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
+          setShowStudioChoice(true);
+        }}
       />
     );
   }

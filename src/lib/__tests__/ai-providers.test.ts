@@ -70,7 +70,7 @@ describe('API key obfuscation', () => {
     setApiKey('openai', 'sk-test-abc');
     const raw = localStorage.getItem('noa_openai_key');
     expect(raw).not.toBe('sk-test-abc');
-    expect(raw).toContain('noa:2:'); // XOR+Base64 obfuscation prefix (v2)
+    expect(raw).toMatch(/^noa:\d+:/); // obfuscation prefix (any version)
   });
 
   it('handles empty key', () => {

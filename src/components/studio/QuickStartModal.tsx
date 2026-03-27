@@ -40,7 +40,7 @@ export default function QuickStartModal({
 
   return (
     <div className="animate-in fade-in zoom-in fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
-      <div className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20">
+      <div className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
         <div className="relative px-8 pb-4 pt-8">
           <button
             type="button"

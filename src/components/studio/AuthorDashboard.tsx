@@ -4,10 +4,10 @@
 // PART 1 — Author Dashboard: 회차별 엔진 메트릭 추세 시각화
 // ============================================================
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
-import { createT, L4 } from '@/lib/i18n';
+import { L4 } from '@/lib/i18n';
 import EpisodeCompare from './EpisodeCompare';
 
 interface Props {
@@ -85,9 +85,8 @@ const GRADE_COLORS: Record<string, string> = {
 
 type DashSubTab = 'overview' | 'compare';
 
-export default function AuthorDashboard({ messages, language }: Props) {
+function AuthorDashboard({ messages, language }: Props) {
   const isKO = language === 'KO';
-  const t = createT(language);
   const metrics = useMemo(() => extractMetrics(messages), [messages]);
   const [subTab, setSubTab] = useState<DashSubTab>('overview');
 
@@ -266,5 +265,7 @@ export default function AuthorDashboard({ messages, language }: Props) {
     </div>
   );
 }
+
+export default memo(AuthorDashboard);
 
 // IDENTITY_SEAL: PART-4 | role=dashboard UI | inputs=messages+language | outputs=JSX

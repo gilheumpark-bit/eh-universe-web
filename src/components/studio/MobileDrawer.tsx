@@ -72,7 +72,8 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
   const [snap, setSnap] = useState(0.5);
   const [dragging, setDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
-  const [visible, setVisible] = useState(false); // for enter/exit animation
+  // Derive visible from open prop + a brief RAF delay for enter animation
+  const [animReady, setAnimReady] = useState(false);
   const startY = useRef(0);
   const startTime = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,19 +82,21 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
   // Note: parent must pass an `onOpen` callback for this; here we just track visibility
   useEdgeSwipe(() => {/* parent controls open state */}, false);
 
-  // Enter animation: delay visibility to allow CSS transition
+  // Enter animation: delay animReady to allow CSS transition from height:0
   useEffect(() => {
     if (open) {
-      // Small RAF delay so initial height:0 is painted before transitioning
+      setSnap(0.5);
       const id = requestAnimationFrame(() => {
-        setSnap(0.5);
-        setVisible(true);
+        setAnimReady(true);
       });
       return () => cancelAnimationFrame(id);
     } else {
-      setVisible(false);
+      setAnimReady(false);
     }
   }, [open]);
+
+  // Derive visible directly from props — no setState sync
+  const visible = open && animReady;
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     startY.current = e.clientY;

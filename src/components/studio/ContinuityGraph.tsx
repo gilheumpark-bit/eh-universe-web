@@ -297,4 +297,4 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
   );
 };
 
-export default ContinuityGraph;
+export default React.memo(ContinuityGraph);

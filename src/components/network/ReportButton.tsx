@@ -84,6 +84,8 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
           <div
             className="w-full max-w-md rounded-2xl border border-white/8 bg-bg-primary p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             <h3 className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-red">
               {L2(LABELS.title, lang)}

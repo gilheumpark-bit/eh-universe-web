@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 
 export type Lang = "ko" | "en" | "jp" | "cn";
 
@@ -19,13 +19,19 @@ const LangContext = createContext<LangContextType>({
   setLangDirect: () => {},
 });
 
+// Stable pure function — defined at module level to avoid hoisting issues
+function applyLangToDOM(next: Lang): void {
+  localStorage.setItem("eh-lang", next);
+  document.documentElement.lang = next === "jp" ? "ja" : next === "cn" ? "zh" : next;
+}
+
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>("ko");
 
   useEffect(() => {
     const saved = localStorage.getItem("eh-lang");
     if (saved && VALID_LANGS.has(saved)) {
-      setTimeout(() => setLang(saved as Lang), 0);
+      setLang(saved as Lang);
       document.documentElement.lang = saved === "jp" ? "ja" : saved === "cn" ? "zh" : saved;
     } else {
       // 브라우저 언어 자동 감지 — 첫 방문 시만 적용
@@ -36,29 +42,25 @@ export function LangProvider({ children }: { children: ReactNode }) {
       else if (browserLang.startsWith("zh")) detected = "cn";
       // ko는 기본값이므로 별도 처리 불필요
       if (detected !== "ko") {
-        setTimeout(() => setLang(detected), 0);
-        applyLang(detected);
+        setLang(detected);
+        applyLangToDOM(detected);
       }
     }
   }, []);
 
-  const applyLang = (next: Lang) => {
-    localStorage.setItem("eh-lang", next);
-    document.documentElement.lang = next === "jp" ? "ja" : next === "cn" ? "zh" : next;
-    return next;
-  };
-
-  const toggleLang = () => {
+  const toggleLang = useCallback(() => {
     setLang((prev) => {
       const idx = LANG_CYCLE.indexOf(prev);
       const next = LANG_CYCLE[(idx + 1) % LANG_CYCLE.length];
-      return applyLang(next);
+      applyLangToDOM(next);
+      return next;
     });
-  };
+  }, []);
 
-  const setLangDirect = (l: Lang) => {
-    setLang(applyLang(l));
-  };
+  const setLangDirect = useCallback((l: Lang) => {
+    applyLangToDOM(l);
+    setLang(l);
+  }, []);
 
   return (
     <LangContext.Provider value={{ lang, toggleLang, setLangDirect }}>

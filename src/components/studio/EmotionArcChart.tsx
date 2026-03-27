@@ -4,7 +4,7 @@
 // PART 1 — 감정 아크 그래프: 회차별 감정 추이 시각화
 // ============================================================
 
-import React, { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { L4 } from '@/lib/i18n';
@@ -88,7 +88,7 @@ function getEmotionColor(score: number): string {
   return EMOTION_COLORS.low;
 }
 
-export default function EmotionArcChart({ messages, language }: Props) {
+function EmotionArcChart({ messages, language }: Props) {
   const points = useMemo(() => extractEmotionArc(messages), [messages]);
   const { peaks, valleys } = useMemo(() => findPeaksAndValleys(points), [points]);
 
@@ -270,5 +270,7 @@ export default function EmotionArcChart({ messages, language }: Props) {
     </div>
   );
 }
+
+export default memo(EmotionArcChart);
 
 // IDENTITY_SEAL: PART-3 | role=SVG emotion arc rendering | inputs=messages+language | outputs=JSX

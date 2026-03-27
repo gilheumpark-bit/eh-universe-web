@@ -22,6 +22,7 @@ import {
 import { canManagePlanet, canWritePlanetLog } from "@/lib/network-permissions";
 import type { PlanetRecord, PostRecord, SettlementRecord, UserRecord } from "@/lib/network-types";
 import { REPORT_TYPE_LABELS, pickNetworkLabel } from "@/lib/network-labels";
+import { L4 } from "@/lib/i18n";
 
 interface PlanetDetailClientProps {
   planetId: string;
@@ -82,7 +83,15 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : lang === "ko" ? "상세 정보를 불러오지 못했습니다." : "Failed to load.");
+          // User-friendly error — never expose raw Firestore/internal messages
+          console.error('[PlanetDetailClient]', caught);
+          const userMsg = L4(lang, {
+            ko: "데이터를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+            en: "Something went wrong while loading data. Please try again shortly.",
+            jp: "データの読み込み中に問題が発生しました。しばらくしてからもう一度お試しください。",
+            cn: "加载数据时出现问题，请稍后重试。",
+          });
+          setError(userMsg);
         }
       } finally {
         if (!cancelled) {
@@ -163,16 +172,18 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
     return (
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
-          <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{lang === "ko" ? "행성 상세" : "Planet Detail"}</div>
+          <section data-testid="error-fallback" className="premium-panel p-8 text-center">
+            <div className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Detail", jp: "惑星詳細", cn: "星球详情" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {lang === "ko" ? "행성을 찾을 수 없습니다." : "Planet not found."}
+              {L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", jp: "惑星が見つかりません。", cn: "未找到星球。" })}
             </h1>
-            <p className="site-lede mt-4">{error ?? (lang === "ko" ? "유효한 행성 ID를 확인하세요." : "Check the requested planet id.")}</p>
+            <p className="site-lede mt-4">
+              {error ?? L4(lang, { ko: "유효한 행성 ID를 확인하세요.", en: "Check the requested planet id.", jp: "有効な惑星IDを確認してください。", cn: "请检查请求的星球ID。" })}
+            </p>
             <div className="mt-8">
-              <a href="/network" className="premium-button inline-block">
-                {lang === "ko" ? "← 네트워크" : "← Network"}
-              </a>
+              <Link href="/network" className="premium-button inline-block">
+                {L4(lang, { ko: "← 네트워크로 돌아가기", en: "← Back to Network", jp: "← ネットワークに戻る", cn: "← 返回网络" })}
+              </Link>
             </div>
           </section>
         </div>
@@ -225,7 +236,14 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
           }
         />
 
-        {error ? <p className="text-sm text-accent-red">{error}</p> : null}
+        {error ? (
+          <div className="premium-panel-soft p-6 text-center space-y-4">
+            <p className="text-sm text-accent-red">{error}</p>
+            <Link href="/network" className="premium-button inline-block">
+              {L4(lang, { ko: "네트워크로 돌아가기", en: "Back to Network", jp: "ネットワークに戻る", cn: "返回网络" })}
+            </Link>
+          </div>
+        ) : null}
 
         <div className="premium-panel-soft p-4">
           <ReactionBar targetType="planet" targetId={planet.id} />

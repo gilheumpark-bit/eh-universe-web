@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
   } catch (e) {
+    console.error('[API:image-gen]', e instanceof Error ? e.message : e);
     const msg = e instanceof Error ? e.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

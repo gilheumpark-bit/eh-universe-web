@@ -4,7 +4,7 @@
 // PART 1 — Types & Imports
 // ============================================================
 
-import React, { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Clock } from 'lucide-react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
@@ -80,7 +80,7 @@ const TRACK_H = 40;
 const ERA_W = 120;
 const PAD = { top: 40, left: 100, right: 20, bottom: 20 };
 
-export default function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
+function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
   const isKO = language === 'KO';
   const { tracks, allEras } = useMemo(() => buildTracks(simData), [simData]);
 
@@ -215,5 +215,7 @@ export default function WorldTimeline({ simData, language, selectedEra, onSelect
     </div>
   );
 }
+
+export default memo(WorldTimeline);
 
 // IDENTITY_SEAL: PART-3 | role=svg-timeline | inputs=WorldSimData,language | outputs=JSX

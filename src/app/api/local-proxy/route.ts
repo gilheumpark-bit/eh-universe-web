@@ -37,13 +37,39 @@ function validateBaseUrl(raw: string): URL | null {
   }
 }
 
-// IDENTITY_SEAL: PART-1 | role=proxy validation | inputs=baseUrl | outputs=validated URL
+/**
+ * Block requests in production and validate same-origin.
+ * Returns an error response if blocked, or null if allowed.
+ */
+function guardProxy(req: NextRequest): NextResponse | null {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Local proxy is disabled in production' }, { status: 403 });
+  }
+  const origin = req.headers.get('origin') || req.headers.get('referer') || '';
+  const host = req.headers.get('host') || '';
+  if (origin && host) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return NextResponse.json({ error: 'Cross-origin requests are not allowed' }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+  }
+  return null;
+}
+
+// IDENTITY_SEAL: PART-1 | role=proxy validation + guard | inputs=baseUrl,req | outputs=validated URL or error
 
 // ============================================================
 // PART 2 — GET handler (model list)
 // ============================================================
 
 export async function GET(req: NextRequest) {
+  const guardResult = guardProxy(req);
+  if (guardResult) return guardResult;
+
   const ip = getClientIp(req.headers);
   const rl = checkRateLimit(ip, 'local-proxy', RATE_LIMITS.default);
   if (!rl.allowed) {
@@ -72,6 +98,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err) {
+    console.error('[API:local-proxy:GET]', err instanceof Error ? err.message : err);
     const msg = err instanceof Error ? err.message : 'proxy error';
     return NextResponse.json({ error: msg }, { status: 502 });
   }
@@ -84,6 +111,9 @@ export async function GET(req: NextRequest) {
 // ============================================================
 
 export async function POST(req: NextRequest) {
+  const postGuard = guardProxy(req);
+  if (postGuard) return postGuard;
+
   const postIp = getClientIp(req.headers);
   const postRl = checkRateLimit(postIp, 'local-proxy', RATE_LIMITS.default);
   if (!postRl.allowed) {
@@ -140,6 +170,7 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err) {
+    console.error('[API:local-proxy:POST]', err instanceof Error ? err.message : err);
     const msg = err instanceof Error ? err.message : 'proxy error';
     return NextResponse.json({ error: msg }, { status: 502 });
   }

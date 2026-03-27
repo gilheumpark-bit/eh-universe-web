@@ -4,7 +4,7 @@
 // PART 1 — 독자 피로도 감지: 반복 패턴 경고 시스템
 // ============================================================
 
-import React, { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { L4 } from '@/lib/i18n';
@@ -200,7 +200,7 @@ const LEVEL_STYLES: Record<FatigueLevel, { bg: string; border: string; icon: str
   info:    { bg: 'bg-blue-500/5', border: 'border-blue-500/20', icon: '🔵', text: 'text-blue-400' },
 };
 
-export default function FatigueDetector({ messages, language }: Props) {
+function FatigueDetector({ messages, language }: Props) {
   const isKO = language === 'KO';
   const snapshots = useMemo(() => extractSnapshots(messages), [messages]);
   const alerts = useMemo(() => detectFatigue(snapshots, isKO), [snapshots, isKO]);
@@ -257,5 +257,7 @@ export default function FatigueDetector({ messages, language }: Props) {
     </div>
   );
 }
+
+export default memo(FatigueDetector);
 
 // IDENTITY_SEAL: PART-3 | role=fatigue UI | inputs=messages+language | outputs=JSX alert cards

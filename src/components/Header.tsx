@@ -69,7 +69,7 @@ export default function Header() {
   }, [toolsOpen, closeToolsMenu]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
+    <header data-testid="home-header" className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
       <div className="site-shell">
         <div className="premium-panel-soft flex min-h-16 items-center justify-between px-4 py-3 md:px-5">
           <Link
@@ -103,6 +103,7 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-testid={`${item.label.toLowerCase()}-link`}
                 className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
               >
                 {item.label}
