@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
+import EmotionArcChart from '@/components/studio/EmotionArcChart';
+import FatigueDetector from '@/components/studio/FatigueDetector';
 
 interface ManuscriptTabProps {
   language: AppLanguage;
@@ -31,8 +33,10 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
         </button>
       </div>
       {showDashboard && (
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
           <AuthorDashboard messages={messages} language={language} />
+          <EmotionArcChart messages={messages} language={language} />
+          <FatigueDetector messages={messages} language={language} />
         </div>
       )}
       <ManuscriptView

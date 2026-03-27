@@ -4,10 +4,11 @@
 // PART 1 — Author Dashboard: 회차별 엔진 메트릭 추세 시각화
 // ============================================================
 
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { createT, L4 } from '@/lib/i18n';
+import EpisodeCompare from './EpisodeCompare';
 
 interface Props {
   messages: Message[];
@@ -82,10 +83,13 @@ const GRADE_COLORS: Record<string, string> = {
   C: 'text-purple-400', D: 'text-orange-400', F: 'text-red-400',
 };
 
+type DashSubTab = 'overview' | 'compare';
+
 export default function AuthorDashboard({ messages, language }: Props) {
   const isKO = language === 'KO';
   const t = createT(language);
   const metrics = useMemo(() => extractMetrics(messages), [messages]);
+  const [subTab, setSubTab] = useState<DashSubTab>('overview');
 
   if (metrics.length === 0) {
     return (
@@ -107,6 +111,34 @@ export default function AuthorDashboard({ messages, language }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Sub-tab navigation */}
+      {metrics.length >= 2 && (
+        <div className="flex gap-1 bg-bg-secondary/50 border border-border rounded-xl p-1">
+          {([
+            ['overview', isKO ? '개요' : 'Overview'],
+            ['compare', isKO ? '비교 분석' : 'Compare'],
+          ] as [DashSubTab, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSubTab(key)}
+              className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                subTab === key ? 'bg-white/10 text-white' : 'text-text-tertiary hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Compare tab */}
+      {subTab === 'compare' && metrics.length >= 2 && (
+        <EpisodeCompare messages={messages} language={language} />
+      )}
+
+      {/* Overview tab (original dashboard content) */}
+      {subTab === 'overview' && (
+      <>
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="bg-bg-secondary border border-border rounded-xl p-3 text-center">
@@ -146,7 +178,7 @@ export default function AuthorDashboard({ messages, language }: Props) {
           {language === 'KO' ? '챕터별 추세' : 'Chapter Trend'}
         </h3>
         {metrics.length >= 2 ? (
-          <svg viewBox={`0 0 ${Math.max(200, metrics.length * 30)} 100`} className="w-full h-24" preserveAspectRatio="none">
+          <svg viewBox={`0 0 ${Math.max(200, metrics.length * 30)} 100`} className="w-full h-24" preserveAspectRatio="none" role="img" aria-label={language === 'KO' ? '챕터별 메트릭 추세 차트' : 'Per-chapter metric trend chart'}>
             {/* Grid lines */}
             {[25, 50, 75].map(y => (
               <line key={y} x1="0" y1={100 - y} x2={metrics.length * 30} y2={100 - y} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
@@ -190,6 +222,9 @@ export default function AuthorDashboard({ messages, language }: Props) {
           <span className="text-[8px] text-text-tertiary">{metrics.length} {language === 'KO' ? '챕터' : 'chapters'}</span>
         </div>
       </div>
+
+      </>
+      )}
 
       {/* Export as Markdown */}
       <button

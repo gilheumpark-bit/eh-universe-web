@@ -5,13 +5,15 @@
 // ============================================================
 
 import React, { useState } from 'react';
-import { Compass, Cpu, Search } from 'lucide-react';
+import { Compass, Cpu, Search, Clock, Map } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
 import TabAssistant from './TabAssistant';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import WorldAnalysisView from './WorldAnalysisView';
+import WorldTimeline from './WorldTimeline';
+import WorldMap from './WorldMap';
 
 // WorldSimulator uses dynamic import to avoid circular deps
 import dynamic from 'next/dynamic';
@@ -35,19 +37,21 @@ interface WorldStudioViewProps {
 // ============================================================
 
 const SUB_TABS: Record<AppLanguage, Record<WorldSubTab, string>> = {
-  KO: { design: '설계', simulator: '시뮬레이터', analysis: '분석' },
-  EN: { design: 'Design', simulator: 'Simulator', analysis: 'Analysis' },
-  JP: { design: '設計', simulator: 'シミュレーター', analysis: '分析' },
-  CN: { design: '设计', simulator: '模拟器', analysis: '分析' },
+  KO: { design: '설계', simulator: '시뮬레이터', analysis: '분석', timeline: '타임라인', map: '지도' },
+  EN: { design: 'Design', simulator: 'Simulator', analysis: 'Analysis', timeline: 'Timeline', map: 'Map' },
+  JP: { design: '設計', simulator: 'シミュレーター', analysis: '分析', timeline: 'タイムライン', map: 'マップ' },
+  CN: { design: '设计', simulator: '模拟器', analysis: '分析', timeline: '时间线', map: '地图' },
 };
 
 const SUB_TAB_ICONS: Record<WorldSubTab, React.ElementType> = {
   design: Compass,
   simulator: Cpu,
   analysis: Search,
+  timeline: Clock,
+  map: Map,
 };
 
-const SUB_TAB_ORDER: WorldSubTab[] = ['design', 'simulator', 'analysis'];
+const SUB_TAB_ORDER: WorldSubTab[] = ['design', 'simulator', 'analysis', 'timeline', 'map'];
 
 // ============================================================
 // PART 3 — Component
@@ -133,6 +137,27 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 
       {subTab === 'analysis' && (
         <WorldAnalysisView language={language} config={config} />
+      )}
+
+      {subTab === 'timeline' && (
+        <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
+          <WorldTimeline simData={config.worldSimData || {}} language={language} />
+        </div>
+      )}
+
+      {subTab === 'map' && (
+        <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
+          <WorldMap
+            simData={config.worldSimData || {}}
+            language={language}
+            onChange={(updated) => {
+              setConfig(prev => ({
+                ...prev,
+                worldSimData: { ...prev.worldSimData, ...updated },
+              }));
+            }}
+          />
+        </div>
       )}
     </div>
   );

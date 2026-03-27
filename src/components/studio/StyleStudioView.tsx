@@ -8,6 +8,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
+import StylePreview from "./StylePreview";
 
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
@@ -394,8 +395,8 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   // ============================================================
 
   const tabLabels = en
-    ? ["① DNA Diagnosis", "② Technique Checklist", "③ Sentence Lab", "④ My Profile"]
-    : ["① 문체 DNA 진단", "② 기법 체크리스트", "③ 문장 실험실", "④ 내 문체 프로필"];
+    ? ["① DNA Diagnosis", "② Technique Checklist", "③ Sentence Lab", "④ My Profile", "⑤ Preview & Compare"]
+    : ["① 문체 DNA 진단", "② 기법 체크리스트", "③ 문장 실험실", "④ 내 문체 프로필", "⑤ 프리뷰 비교"];
 
   return (
     <div>
@@ -821,6 +822,21 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
               })()}
             </div>
           </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* PART 7 — 패널 5: 프리뷰 & 아키타입 비교                     */}
+        {/* ============================================================ */}
+        {tab === 4 && (
+          <StylePreview
+            profile={{
+              selectedDNA: Array.from(selectedCards),
+              sliders: { ...sliderVals },
+              checkedSF: Array.from(checkedSF),
+              checkedWeb: Array.from(checkedWeb),
+            }}
+            language={language}
+          />
         )}
         </div>
       </div>

@@ -615,6 +615,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
                 placeholder={!hasAiKey
                   ? tl('tabAssistant.apiKeyRequired')
                   : tl('tabAssistant.askQuestion')}
+                maxLength={5000}
                 className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-24 transition-colors ${!hasAiKey ? 'opacity-60' : ''}`}
                 rows={1}
                 disabled={isStreaming || !hasAiKey}

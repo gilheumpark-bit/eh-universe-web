@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { StoryConfig } from '@/lib/studio-types';
+import { StoryConfig, Message } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
+import RhythmAnalyzer from '@/components/studio/RhythmAnalyzer';
 import { createT } from '@/lib/i18n';
 
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false });
@@ -14,6 +15,7 @@ interface StyleTabProps {
   saveFlash: boolean;
   showAiLock?: boolean;
   hostedProviders?: Record<string, boolean>;
+  messages?: Message[];
 }
 
 const StyleTab: React.FC<StyleTabProps> = ({
@@ -24,8 +26,10 @@ const StyleTab: React.FC<StyleTabProps> = ({
   saveFlash,
   showAiLock = false,
   hostedProviders = {},
+  messages = [],
 }) => {
   const t = createT(language);
+  const [showRhythm, setShowRhythm] = useState(false);
 
   return (
     <>
@@ -38,6 +42,22 @@ const StyleTab: React.FC<StyleTabProps> = ({
           });
         }}
       />
+      {/* 문장 리듬 분석 */}
+      {messages.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 pt-2 pb-2">
+          <button onClick={() => setShowRhythm(!showRhythm)}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all ${
+              showRhythm ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+            }`}>
+            📐 {language === 'KO' ? '문장 리듬 분석' : 'Sentence Rhythm'}
+          </button>
+          {showRhythm && (
+            <div className="mt-3">
+              <RhythmAnalyzer messages={messages} language={language} />
+            </div>
+          )}
+        </div>
+      )}
       {!showAiLock && (
       <div className="max-w-6xl mx-auto px-4 pb-4">
         <TabAssistant tab="style" language={language} config={config} hostedProviders={hostedProviders} />

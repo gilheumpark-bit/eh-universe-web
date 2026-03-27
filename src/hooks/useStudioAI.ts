@@ -65,6 +65,7 @@ export function useStudioAI({
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const generationLockRef = useRef(false);
 
   // Cleanup: abort streaming on unmount
   useEffect(() => () => { abortControllerRef.current?.abort(); }, []);
@@ -77,6 +78,8 @@ export function useStudioAI({
   const handleSend = useCallback(async (customPrompt?: string, inputValue?: string, clearInput?: () => void) => {
     const text = customPrompt || inputValue || '';
     if (!text.trim() || isGenerating || !currentSessionId || !currentSession) return;
+    if (generationLockRef.current) return;
+    generationLockRef.current = true;
 
     // Tier gate: check generation limit
     if (!canGenerate()) {
@@ -110,9 +113,10 @@ export function useStudioAI({
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    const timeoutId = setTimeout(() => abortControllerRef.current?.abort(), 180_000);
     const capturedSessionId = currentSessionId;
     // 비동기 타이밍에 currentSession이 null일 수 있으므로 방어 체크
-    if (!currentSession) { setIsGenerating(false); return; }
+    if (!currentSession) { clearTimeout(timeoutId); generationLockRef.current = false; setIsGenerating(false); return; }
     const capturedConfig = currentSession.config;
 
     let fullContent = '';
@@ -265,6 +269,8 @@ export function useStudioAI({
         }
       }
     } finally {
+      clearTimeout(timeoutId);
+      generationLockRef.current = false;
       // 3-pass canvas mode: auto-inject on pass completion
       if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
         const clean = stripEngineArtifacts(fullContent);

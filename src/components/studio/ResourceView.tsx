@@ -8,6 +8,7 @@ import { generateCharacters } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
+import CharRelationGraph from './CharRelationGraph';
 
 const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
   lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
@@ -162,9 +163,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.name}</span>
                 <div className="relative group">
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
-                   <input 
+                   <input
                     className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary"
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
+                    maxLength={50}
                     value={newChar.name}
                     onChange={e => setNewChar({...newChar, name: e.target.value})}
                   />
@@ -191,9 +193,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.traits}</span>
                 <div className="relative">
                   <ScrollText className="absolute left-4 top-4 w-4 h-4 text-text-tertiary" />
-                  <textarea 
+                  <textarea
                     className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
                     placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
+                    maxLength={500}
                     value={newChar.traits}
                     onChange={e => setNewChar({...newChar, traits: e.target.value})}
                   />
@@ -322,6 +325,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, personality: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🧠 성격 (예: 냉소적이지만 내면은 따뜻함)' : '🧠 Personality (e.g. cynical but warm inside)'}
+                        maxLength={200}
                         className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
@@ -331,6 +335,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechStyle: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🗣️ 억양/말투 (예: 반말, 짧은 문장, 냉담한 톤)' : '🗣️ Speech style (e.g. informal, short sentences, cold tone)'}
+                        maxLength={200}
                         className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
@@ -340,6 +345,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechExample: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '💬 대사 예시 (예: "...그래서 뭐 어쩌라고.")' : '💬 Example dialogue (e.g. "...so what do you want me to do.")'}
+                        maxLength={300}
                         className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary font-serif italic"
                       />
                     </div>
@@ -354,6 +360,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, desire: e.target.value } : c)
                         }))}
                         placeholder={t.desirePH}
+                        maxLength={200}
                         className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
@@ -363,6 +370,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, deficiency: e.target.value } : c)
                         }))}
                         placeholder={t.deficiencyPH}
+                        maxLength={200}
                         className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
@@ -372,6 +380,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, conflict: e.target.value } : c)
                         }))}
                         placeholder={t.conflictPH}
+                        maxLength={200}
                         className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <div className="grid grid-cols-2 gap-2">
@@ -382,6 +391,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                             characters: prev.characters.map(c => c.id === char.id ? { ...c, values: e.target.value } : c)
                           }))}
                           placeholder={t.valuesPH}
+                          maxLength={200}
                           className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                         />
                         <input
@@ -391,6 +401,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                             characters: prev.characters.map(c => c.id === char.id ? { ...c, changeArc: e.target.value } : c)
                           }))}
                           placeholder={t.changeArcPH}
+                          maxLength={200}
                           className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                         />
                       </div>
@@ -415,6 +426,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, strength: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '💪 강점 (예: 뛰어난 관찰력)' : '💪 Strength (e.g. keen observation)'}
+                            maxLength={200}
                             className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -424,6 +436,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, weakness: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '🩹 약점 (예: 타인을 믿지 못함)' : '🩹 Weakness (e.g. inability to trust)'}
+                            maxLength={200}
                             className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <textarea
@@ -434,6 +447,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                             }))}
                             rows={2}
                             placeholder={language === 'KO' ? '📜 과거 — 현재를 만든 사건' : '📜 Backstory — the event that shaped them'}
+                            maxLength={1000}
                             className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary resize-none"
                           />
                           <input
@@ -443,6 +457,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, failureCost: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '⚠️ 실패 대가 (예: 가족을 잃는다)' : '⚠️ Failure cost (e.g. loses family)'}
+                            maxLength={200}
                             className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -452,6 +467,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, currentProblem: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '🔥 현재 문제 (예: 조직의 배신자 색출)' : '🔥 Current problem (e.g. finding the traitor)'}
+                            maxLength={200}
                             className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
                           />
                         </div>
@@ -477,6 +493,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, emotionStyle: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '😶 감정 표현 방식 (예: 웃으면서 우는 타입)' : '😶 Emotion style (e.g. smiles while crying)'}
+                            maxLength={200}
                             className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -486,6 +503,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, relationPattern: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '🤝 인간관계 패턴 (예: 밀당, 의존형)' : '🤝 Relation pattern (e.g. push-pull, dependent)'}
+                            maxLength={200}
                             className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -495,6 +513,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, symbol: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '🔮 상징 요소 (예: 항상 끼고 있는 반지)' : '🔮 Symbol (e.g. a ring they always wear)'}
+                            maxLength={200}
                             className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -504,6 +523,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, secret: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '🤫 비밀 요소 (예: 과거에 사람을 죽인 적 있음)' : '🤫 Secret (e.g. once killed someone)'}
+                            maxLength={200}
                             className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
                           />
                           <input
@@ -513,6 +533,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                               characters: prev.characters.map(c => c.id === char.id ? { ...c, externalPerception: e.target.value } : c)
                             }))}
                             placeholder={language === 'KO' ? '👁️ 타인이 보는 인상 (예: 차갑고 무관심해 보임)' : '👁️ External perception (e.g. seems cold and indifferent)'}
+                            maxLength={200}
                             className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
                           />
                         </div>
@@ -601,6 +622,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                                 }));
                               }}
                               placeholder={t.socialProfessionPH ?? 'Soldier, doctor...'}
+                              maxLength={100}
                               className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-cyan-500 transition-colors placeholder:text-text-tertiary"
                             />
                           </div>
@@ -742,18 +764,6 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
     }));
   };
 
-  // SVG circular layout
-  const cx = 200, cy = 200, r = 140;
-  const nodePositions = chars.map((c, i) => {
-    const angle = (i / Math.max(chars.length, 1)) * Math.PI * 2 - Math.PI / 2;
-    return { id: c.id, name: c.name, role: c.role, x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-  });
-  const getPos = (id: string) => nodePositions.find(n => n.id === id);
-
-  const ROLE_COLORS: Record<string, string> = {
-    hero: '#3b82f6', villain: '#ef4444', ally: '#22c55e', extra: '#6b7280'
-  };
-
   return (
     <div className="bg-bg-secondary/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
       <div className="flex items-center gap-4">
@@ -789,63 +799,21 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
           ))}
         </div>
         <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={tl('resourceExtra.description')}
+          maxLength={200}
           className="flex-1 min-w-[120px] bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none" />
         <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
           {tl('resourceExtra.add')}
         </button>
       </div>
 
-      {/* SVG Relation Graph */}
-      <div className="flex justify-center">
-        <svg viewBox="0 0 400 400" className="w-full max-w-[500px]" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
-          {/* Relation lines */}
-          {relations.map((rel, i) => {
-            const from = getPos(rel.from);
-            const to = getPos(rel.to);
-            if (!from || !to) return null;
-            const style = CHAR_REL_STYLES[rel.type];
-            return (
-              <g key={i}>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={style.color} strokeWidth="2" opacity="0.6" />
-                <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 6} fill={style.color} fontSize="8" textAnchor="middle" fontWeight="bold">
-                  {isKO ? style.ko : style.en}
-                </text>
-                {rel.desc && (
-                  <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 + 5} fill={style.color} fontSize="6" textAnchor="middle" opacity="0.7">
-                    {rel.desc}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-          {/* Character nodes */}
-          {nodePositions.map(node => {
-            const roleColor = ROLE_COLORS[chars.find(c => c.id === node.id)?.role || 'extra'] || '#6b7280';
-            return (
-              <g key={node.id}>
-                <circle cx={node.x} cy={node.y} r="22" fill={roleColor} opacity="0.12" stroke={roleColor} strokeWidth="2" />
-                <text x={node.x} y={node.y - 2} fill="white" fontSize="11" textAnchor="middle" fontWeight="bold">
-                  {node.name.slice(0, 3)}
-                </text>
-                <text x={node.x} y={node.y + 10} fill={roleColor} fontSize="7" textAnchor="middle" opacity="0.8">
-                  {node.role}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
+      {/* Interactive Force-Directed Graph */}
+      <CharRelationGraph
+        characters={chars}
+        relations={relations}
+        language={language}
+      />
 
-      {/* Legend + list */}
-      <div className="flex flex-wrap gap-3 text-[9px]">
-        {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
-          <span key={rt} className="flex items-center gap-1">
-            <span className="w-3 h-0.5 inline-block rounded" style={{ background: CHAR_REL_STYLES[rt].color }} />
-            {isKO ? CHAR_REL_STYLES[rt].ko : CHAR_REL_STYLES[rt].en}
-          </span>
-        ))}
-      </div>
-
+      {/* Relation list with delete */}
       {relations.length > 0 && (
         <div className="space-y-1.5">
           {relations.map((rel, i) => {

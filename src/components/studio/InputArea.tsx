@@ -47,6 +47,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               className={fieldInputClass}
               placeholder={t.pov}
               aria-label={t.pov}
+              maxLength={100}
               value={config.povCharacter}
               onChange={e => setConfig({ ...config, povCharacter: e.target.value })}
             />
@@ -63,6 +64,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               className={fieldInputClass}
               placeholder={t.loc}
               aria-label={t.loc}
+              maxLength={200}
               value={config.setting}
               onChange={e => setConfig({ ...config, setting: e.target.value })}
             />
@@ -79,6 +81,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               className={fieldInputClass}
               placeholder={t.epTitle}
               aria-label={t.epTitle}
+              maxLength={200}
               value={config.title}
               onChange={e => setConfig({ ...config, title: e.target.value })}
             />
@@ -94,6 +97,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
           disabled={disabled}
           placeholder={t.inputPlaceholder}
           aria-label={t.inputPlaceholder}
+          maxLength={15000}
           className="min-h-[130px] max-h-[360px] w-full resize-none scrollbar-hide bg-transparent px-6 py-6 font-serif text-[1.02rem] leading-8 text-text-primary placeholder:text-text-tertiary outline-none disabled:opacity-30 lg:min-h-[190px] lg:px-7 lg:py-7 lg:text-[1.08rem]"
         />
 
@@ -107,7 +111,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               {disabled ? t.architecting : t.ready}
             </span>
             <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary">
-              {draft.trim().length} chars
+              {draft.trim().length} {t.chars}
             </span>
           </div>
 
@@ -118,7 +122,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               className="flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.14em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-accent-red/30 hover:text-accent-red sm:px-5"
             >
               <Eraser className="h-4 w-4" />
-              Clear
+              {t.clear}
             </button>
             <button
               onClick={handleSubmit}
@@ -134,7 +138,7 @@ const InputArea: React.FC<InputAreaProps> = ({ language, onGenerate, disabled, c
               ) : (
                 <Sparkles className={`h-4 w-4 ${canSubmit ? 'text-[rgba(246,226,188,0.9)]' : 'text-text-tertiary'}`} />
               )}
-              {disabled ? 'SYNC' : t.execute}
+              {disabled ? t.sync : t.execute}
             </button>
           </div>
         </div>

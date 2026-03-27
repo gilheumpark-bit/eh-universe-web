@@ -21,7 +21,7 @@ export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual';
 
 // 세계관 스튜디오 서브탭
-export type WorldSubTab = 'design' | 'simulator' | 'analysis';
+export type WorldSubTab = 'design' | 'simulator' | 'analysis' | 'timeline' | 'map';
 
 export interface PclGuardrails {
   min: number;
@@ -109,6 +109,8 @@ export interface WorldSimData {
   selectedLevel?: number;
   genreSelections?: GenreSelection[];
   ruleLevel?: number;
+  territories?: { id: string; name: string; civName: string; x: number; y: number; color?: string }[];
+  territoryLinks?: { from: string; to: string; type: 'trade' | 'conflict' | 'border' | 'alliance' }[];
 }
 
 // World Simulator reference flags

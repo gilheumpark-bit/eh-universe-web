@@ -56,7 +56,10 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       loc: "장소",
       epTitle: "에피소드 제목",
       architecting: "설계 중...",
-      execute: "집필 실행"
+      execute: "집필 실행",
+      clear: "초기화",
+      sync: "동기화",
+      chars: "자"
     },
     planning: {
       title: "세계관 설계",
@@ -1251,7 +1254,10 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       loc: "Location",
       epTitle: "Episode Title",
       architecting: "Architecting...",
-      execute: "Execute"
+      execute: "Execute",
+      clear: "Clear",
+      sync: "SYNC",
+      chars: "chars"
     },
     planning: {
       title: "World Planning",
@@ -2446,7 +2452,10 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       loc: "場所",
       epTitle: "エピソードタイトル",
       architecting: "設計中...",
-      execute: "実行"
+      execute: "実行",
+      clear: "クリア",
+      sync: "同期",
+      chars: "文字"
     },
     planning: {
       title: "世界観設計",
@@ -3641,7 +3650,10 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       loc: "地点",
       epTitle: "章节标题",
       architecting: "设计中...",
-      execute: "执行"
+      execute: "执行",
+      clear: "清除",
+      sync: "同步",
+      chars: "字符"
     },
     planning: {
       title: "世界观规划",

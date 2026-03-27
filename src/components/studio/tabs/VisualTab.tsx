@@ -143,6 +143,7 @@ export default function VisualTab({ config, setConfig, currentSession, language 
               onChange={updateCard}
               onDelete={() => deleteCard(selectedCard.id)}
               isKO={isKO}
+              characters={config.characters}
             />
           </div>
         ) : (

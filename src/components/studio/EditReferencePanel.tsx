@@ -174,6 +174,7 @@ const EditReferencePanel: React.FC<EditReferencePanelProps> = ({
                   value={memo}
                   onChange={e => setMemo(e.target.value)}
                   placeholder={isKO ? '이번 에피소드 메모, 복선, 주의사항 등...' : 'Episode notes, foreshadowing, reminders...'}
+                  maxLength={10000}
                   className="w-full min-h-[200px] bg-bg-secondary/50 border border-border rounded-lg p-3 text-[12px] text-text-primary placeholder-text-tertiary resize-y outline-none focus:border-accent-purple/30"
                 />
                 <div className="text-[9px] text-text-tertiary text-right">

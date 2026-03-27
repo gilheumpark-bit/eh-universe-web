@@ -230,6 +230,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
           <div key={seg.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2" style={{ borderLeftWidth: 3, borderLeftColor: seg.color }}>
             <div className="flex justify-between items-center">
               <input value={seg.label} onChange={e => updateSegment(i, { label: e.target.value })}
+                maxLength={100}
                 className="bg-transparent font-bold text-xs outline-none flex-1" />
               <div className="flex items-center gap-1">
                 <input type="color" value={seg.color} onChange={e => updateSegment(i, { color: e.target.value })} className="w-5 h-5 rounded cursor-pointer border-0" />
@@ -240,6 +241,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             </div>
             <input value={seg.desc} onChange={e => updateSegment(i, { desc: e.target.value })}
               placeholder={lang === "ko" ? "설명..." : "Description..."}
+              maxLength={500}
               className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
             <div className="flex items-center gap-2">
               <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "비중" : "Weight"}:</span>
@@ -782,7 +784,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                       {g.type === "goguma" ? g.intensity : "RELEASE"}
                     </span>
                     <input value={g.desc} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, desc: e.target.value } : gg))}
-                      placeholder={lang === "ko" ? "설명..." : "Description..."} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
+                      placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
                     <input type="number" min={1} value={g.episode} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, episode: parseInt(e.target.value) || 1 } : gg))}
                       className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" />
                     <button onClick={() => setGogumas(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -818,6 +820,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 </div>
                 <input value={h.desc} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, desc: e.target.value } : hh))}
                   placeholder={lang === "ko" ? "훅 내용 (예: \"문이 열렸다. 죽었어야 할 사람이 서 있었다.\")" : "Hook content..."}
+                  maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none" />
               </div>
             ))}
@@ -833,7 +836,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             {/* Emotion curve visualization */}
             {emotions.length > 0 && (
               <div className="relative h-24 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "감정 곡선 시각화" : "Emotion curve visualization"}>
                   {emotions.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-purple)" strokeWidth="0.5"
                       points={sortedEmotions.map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
@@ -877,13 +880,14 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               <div key={dr.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
                 <div className="flex gap-2">
                   <input value={dr.character} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, character: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "캐릭터명" : "Character"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
+                    placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
                   <input value={dr.tone} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, tone: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "톤 (예: 냉소적, 다정함)" : "Tone (e.g. sarcastic, warm)"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
+                    placeholder={lang === "ko" ? "톤 (예: 냉소적, 다정함)" : "Tone (e.g. sarcastic, warm)"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
                   <button onClick={() => setDialogueRules(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red">✕</button>
                 </div>
                 <input value={dr.notes} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, notes: e.target.value } : d))}
                   placeholder={lang === "ko" ? "특이사항 (예: 긴장 시 짧게, 경어 사용)" : "Notes (e.g. short in tension, uses formal speech)"}
+                  maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
               </div>
             ))}
@@ -909,7 +913,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   {DOPAMINE_DEVICES.map(dd => <option key={dd.id} value={dd.id}>{lang === "ko" ? dd.ko : dd.en}</option>)}
                 </select>
                 <input value={dp.desc} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, desc: e.target.value } : d))}
-                  placeholder={lang === "ko" ? "설명..." : "Description..."} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
+                  placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <label className="flex items-center gap-1 text-[9px] text-text-tertiary cursor-pointer">
                   <input type="checkbox" checked={dp.resolved} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, resolved: e.target.checked } : d))} className="accent-accent-green" />
                   {lang === "ko" ? "회수" : "Resolved"}
@@ -934,7 +938,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 </select>
                 <input value={cl.desc} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, desc: e.target.value } : c))}
                   placeholder={lang === "ko" ? "내용 (예: \"칼끝이 목에 닿았다. 그 순간—\")" : "Content..."}
-                  className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
+                  maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <input type="number" min={1} value={cl.episode} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, episode: parseInt(e.target.value) || 1 } : c))}
                   className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" title="EP" />
                 <button onClick={() => setCliffs(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -958,12 +962,12 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   <div className="flex-1">
                     <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🌱 심기" : "🌱 Plant"}</span>
                     <input value={fs.planted} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, planted: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                   <div className="flex-1">
                     <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🎯 회수" : "🎯 Payoff"}</span>
                     <input value={fs.payoff} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, payoff: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1000,7 +1004,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 }} className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
                 <input value={p.desc} onChange={e => setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, desc: e.target.value } : pp))}
-                  placeholder={lang === "ko" ? "메모..." : "Note..."} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "메모..." : "Note..."} maxLength={500} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
               </div>
             ))}
           </div>
@@ -1015,7 +1019,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             </button>
             {tensionPoints.length > 0 && (
               <div className="relative h-32 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "텐션 곡선 시각화" : "Tension curve visualization"}>
                   {tensionPoints.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
                       points={sortedTensionPoints.map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
@@ -1029,7 +1033,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             {tensionPoints.map((tp, i) => (
               <div key={tp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
                 <input type="range" min={0} max={100} value={tp.position}
                   aria-label={lang === "ko" ? "텐션 위치" : "Tension position"}
@@ -1058,9 +1062,9 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             {canons.map((cn, i) => (
               <div key={cn.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={cn.character} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, character: e.target.value } : c))}
-                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
+                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
                 <input value={cn.rule} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, rule: e.target.value } : c))}
-                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -1078,12 +1082,12 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             {transitions.map((tr, i) => (
               <div key={tr.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tr.fromScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, fromScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <span className="text-text-tertiary text-xs">→</span>
                 <input value={tr.toScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, toScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <input value={tr.method} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, method: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -1097,6 +1101,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             <textarea
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}
+              maxLength={10000}
               className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
               placeholder={tl('sceneSheet.writerNotesPlaceholder')}
             />

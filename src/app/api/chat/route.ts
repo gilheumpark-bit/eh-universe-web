@@ -76,6 +76,7 @@ async function streamOpenAICompat(
   const res = await fetch(url, {
     method: 'POST',
     headers,
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...messages],
@@ -109,6 +110,7 @@ async function streamClaude(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({ model, max_tokens: maxTokens ?? 8192, system, messages, temperature, stream: true }),
   });
 
@@ -140,6 +142,7 @@ async function streamGemini(
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({
       contents,
       systemInstruction: { parts: [{ text: system }] },

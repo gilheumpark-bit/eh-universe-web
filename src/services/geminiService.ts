@@ -61,6 +61,7 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     const response = await fetch('/api/gemini-structured', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(60_000),
       body: payload,
     });
 

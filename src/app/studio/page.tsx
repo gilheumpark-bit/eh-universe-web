@@ -31,6 +31,8 @@ import EngineStatusBar from '@/components/studio/EngineStatusBar';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
+import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
+import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 // generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
@@ -48,26 +50,27 @@ import WorldTab from '@/components/studio/tabs/WorldTab';
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 import StyleTab from '@/components/studio/tabs/StyleTab';
 // StyleStudioView는 StyleTab 내부에서 import됨
-const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
-const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
-const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
-const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false });
-const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false });
-const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
-const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false });
-const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
+const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false, loading: DynSkeleton });
+const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false, loading: DynSkeleton });
+const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false, loading: DynSkeleton });
+const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
+const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
+const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
+const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: DynSkeleton });
+const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false, loading: DynSkeleton });
+const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: DynSkeleton });
 // ItemStudioView는 CharacterTab 내부에서 import됨
-const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
-const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false });
-const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false });
-const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false });
-const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false });
-const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
-const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false });
-const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false });
-const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
-const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false });
+const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false, loading: DynSkeleton });
+const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
+const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
+const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
+const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
+const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
+const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
+const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
+const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: DynSkeleton });
+const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { Wand2 } from 'lucide-react';
 import { setDriveEncryptionKey } from '@/services/driveService';
@@ -855,26 +858,33 @@ export default function StudioPage() {
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
+                  <SectionErrorBoundary sectionName="World">
                   <WorldTab
                     language={language} config={currentSession.config} setConfig={setConfig}
                     onStart={() => setActiveTab('writing')} onSave={triggerSave} saveFlash={saveFlash}
                     updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId}
                     hostedProviders={hostedProviders}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'characters' && currentSession && (
+                  <SectionErrorBoundary sectionName="Characters">
                   <CharacterTab
                     language={language} config={currentSession.config} setConfig={setConfig}
                     charSubTab={charSubTab} setCharSubTab={setCharSubTab}
                     triggerSave={triggerSave} saveFlash={saveFlash}
                     setUxError={setUxError} showAiLock={showAiLock} hostedProviders={hostedProviders}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'settings' && (
+                  <SectionErrorBoundary sectionName="Settings">
                   <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
+                  </SectionErrorBoundary>
                 )}
                 {/* world studio (design/simulator/analysis) rendered above */}
                 {activeTab === 'rulebook' && currentSession && (
+                  <SectionErrorBoundary sectionName="Rulebook">
                   <RulebookTab
                     language={language}
                     config={currentSession.config}
@@ -885,8 +895,10 @@ export default function StudioPage() {
                     showAiLock={showAiLock}
                     hostedProviders={hostedProviders}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'writing' && currentSession && (
+                  <SectionErrorBoundary sectionName="Writing" fallbackHeight={400}>
                   <WritingTabInline
                     language={language} currentSession={currentSession} currentSessionId={currentSessionId}
                     updateCurrentSession={updateCurrentSession} setConfig={setConfig}
@@ -913,23 +925,30 @@ export default function StudioPage() {
                     writingColumnShell={writingColumnShell}
                     input={input} setInput={setInput}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'style' && currentSession && (
+                  <SectionErrorBoundary sectionName="Style">
                   <StyleTab
                     language={language} config={currentSession.config}
                     updateCurrentSession={updateCurrentSession}
                     triggerSave={triggerSave} saveFlash={saveFlash}
                     showAiLock={showAiLock} hostedProviders={hostedProviders}
+                    messages={currentSession.messages}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'manuscript' && currentSession && (
+                  <SectionErrorBoundary sectionName="Manuscript">
                   <ManuscriptTab
                     language={language} config={currentSession.config} setConfig={setConfig}
                     messages={currentSession.messages}
                     onEditInStudio={(content) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'history' && (
+                  <SectionErrorBoundary sectionName="History">
                   <HistoryTab
                     language={language}
                     archiveScope={archiveScope}
@@ -955,12 +974,17 @@ export default function StudioPage() {
                     deleteSession={deleteSession}
                     currentSession={currentSession}
                   />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'docs' && (
+                  <SectionErrorBoundary sectionName="Docs">
                   <StudioDocsView lang={language} />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'visual' && currentSession && (
+                  <SectionErrorBoundary sectionName="Visual">
                   <VisualTab config={currentSession.config} setConfig={setConfig} currentSession={currentSession} language={language} />
+                  </SectionErrorBoundary>
                 )}
               </>
             )}
