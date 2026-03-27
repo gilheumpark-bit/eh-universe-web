@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import ErrorReporterInit from "@/components/ErrorReporterInit";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider><LangProvider>{children}</LangProvider></AuthProvider>
+        <ErrorReporterInit />
         <Analytics />
       </body>
     </html>

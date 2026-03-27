@@ -43,6 +43,17 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build size report
+        run: |
+          echo "## Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          du -sh .next/static/ 2>/dev/null || echo "static: N/A"
+          du -sh .next/static/ >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          find .next/static -name '*.js' -exec du -sh {} \; | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "Total JS chunks:"
+          find .next/static -name '*.js' | wc -l
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

@@ -18,7 +18,7 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
 
 // In-memory rate limiter (per IP, sliding window) with size cap
-const RATE_LIMIT_MAX_ENTRIES = 10_000;
+const RATE_LIMIT_MAX_ENTRIES = 2_000; // serverless memory footprint: ~40KB max
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 let lastCleanup = Date.now();
