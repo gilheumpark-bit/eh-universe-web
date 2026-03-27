@@ -313,7 +313,6 @@ export default function Home() {
         onUniverse={() => {
           setShowSplash(false);
           if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
-          router.push('/archive');
         }}
         onStudio={() => {
           setShowSplash(false);

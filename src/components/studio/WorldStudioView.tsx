@@ -92,7 +92,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   return (
     <div className="animate-in fade-in duration-500">
       {/* Sub-tab bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
         <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 border border-border rounded-2xl w-fit" role="tablist">
           {SUB_TAB_ORDER.map(tab => {
             const Icon = SUB_TAB_ICONS[tab];
@@ -122,7 +122,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
         <>
           {/* Empty state guide — 제목/시놉시스 미입력 시 시작 안내 */}
           {!config.title && !config.synopsis && (
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
               <div className="flex items-center gap-3 px-5 py-4 bg-accent-purple/10 border border-accent-purple/20 rounded-xl">
                 <ArrowDown className="w-4 h-4 text-accent-purple shrink-0 animate-bounce" />
                 <span className="text-xs text-text-secondary font-[family-name:var(--font-mono)]">

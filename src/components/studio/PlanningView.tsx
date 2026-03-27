@@ -203,7 +203,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-10 space-y-12 animate-in fade-in duration-700 pb-32">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 md:px-10 md:pt-4 md:pb-10 space-y-8 animate-in fade-in duration-700 pb-32">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">{t.title}</h2>
