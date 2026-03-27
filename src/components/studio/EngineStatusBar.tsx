@@ -20,10 +20,18 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
   const targetTension = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
 
+  const isKO = language === 'KO';
+  const tipAct = isKO ? '현재 3막 구조에서의 위치' : 'Current position in 3-act structure';
+  const tipTension = isKO ? '이 에피소드의 목표 긴장도' : 'Target tension for this episode';
+  const tipPlatform = isKO ? '출판 플랫폼 (글자수 기준)' : 'Publishing platform (char count target)';
+  const tipGrade = isKO ? 'AI가 평가한 품질 등급' : 'Quality grade from AI';
+  const tipVol = isKO ? '분량 적정성 점수' : 'Volume adequacy score';
+  const tipChars = isKO ? '현재 글자수 / 목표 범위' : 'Current chars / target range';
+
   return (
     <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest overflow-x-auto custom-scrollbar">
       {/* Act Position */}
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+      <div title={tipAct} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
         <Activity className="w-3 h-3 text-blue-500" />
         <span className="text-text-tertiary">{t.act} {actInfo.act}</span>
         <span className="text-text-tertiary">|</span>
@@ -31,7 +39,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
       </div>
 
       {/* Tension Target */}
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+      <div title={tipTension} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
         <Zap className="w-3 h-3 text-amber-500" />
         <span className="text-text-tertiary">{t.tensionTarget}</span>
         <span className={`${targetTension > 70 ? 'text-red-400' : targetTension > 40 ? 'text-amber-400' : 'text-green-400'}`}>
@@ -40,7 +48,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
       </div>
 
       {/* Platform */}
-      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+      <div title={tipPlatform} className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
         <Cpu className="w-3 h-3 text-text-tertiary" />
         <span className="text-text-secondary">{config.platform === PlatformType.WEB ? t.web : t.mobile}</span>
       </div>
@@ -48,11 +56,11 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
       {/* Live Report Data */}
       {report && !isGenerating && (
         <>
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+          <div title={tipGrade} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
             <span className="text-text-tertiary">{t.grade}</span>
             <span className="text-blue-400">{report.grade}</span>
           </div>
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+          <div title={tipVol} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
             <span className="text-text-tertiary">{language === 'KO' ? '분량' : 'VOL'}</span>
             <span className={`${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
               {report.eosScore}
@@ -64,7 +72,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
             const charRange = getTargetCharRange(config.platform);
             const inRange = chars >= charRange.min && chars <= charRange.max;
             return (
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
+              <div title={tipChars} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
                 <span className="text-text-tertiary">{language === 'KO' ? '글자' : 'Chars'}</span>
                 <span className={inRange ? 'text-green-400' : chars < charRange.min ? 'text-amber-400' : 'text-red-400'}>
                   {chars.toLocaleString()}

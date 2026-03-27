@@ -270,6 +270,29 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
+        {/* 선택된 등급 설명 + 국가별 등급 기준 안내 */}
+        {(() => {
+          const activePm = ([
+            { key: 'OFF', desc: tl('planningExtra.prismModeOffDesc') },
+            { key: 'FREE', desc: tl('planningExtra.prismModeFreeDesc') },
+            { key: 'ALL', desc: tl('planningExtra.prismModeAllDesc') },
+            { key: 'T15', desc: tl('planningExtra.prismModeT15Desc') },
+            { key: 'M18', desc: tl('planningExtra.prismModeM18Desc') },
+            { key: 'CUSTOM', desc: tl('planningExtra.prismModeCustomDesc') },
+          ] as const).find(p => p.key === (config.prismMode ?? 'OFF'));
+          return (
+            <div className="space-y-1.5 mt-2">
+              {activePm && (
+                <p className="text-[10px] text-text-secondary font-[family-name:var(--font-mono)]">
+                  {activePm.key}: {activePm.desc}
+                </p>
+              )}
+              <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                {tl('planningExtra.ratingGuide')}
+              </p>
+            </div>
+          );
+        })()}
         {config.prismMode === 'CUSTOM' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-4 p-4 bg-bg-secondary/50 border border-border rounded-xl">
             {(['sexual', 'violence', 'profanity'] as const).map(axis => {

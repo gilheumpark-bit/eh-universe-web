@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback } from 'react';
-import { Compass, Cpu, Search, Clock, Map, X } from 'lucide-react';
+import { Compass, Cpu, Search, Clock, Map, X, ArrowDown } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
@@ -106,11 +106,33 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       {/* Sub-tab content */}
       {subTab === 'design' && (
         <>
+          {/* Empty state guide — 제목/시놉시스 미입력 시 시작 안내 */}
+          {!config.title && !config.synopsis && (
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
+              <div className="flex items-center gap-3 px-5 py-4 bg-accent-purple/10 border border-accent-purple/20 rounded-xl">
+                <ArrowDown className="w-4 h-4 text-accent-purple shrink-0 animate-bounce" />
+                <span className="text-xs text-text-secondary font-[family-name:var(--font-mono)]">
+                  {language === 'EN' ? 'Enter a title and synopsis below — AI will design your world' : language === 'JP' ? 'タイトルとシノプシスを入力すると、AIが世界を設計します' : language === 'CN' ? '输入标题和大纲，AI将设计您的世界' : '아래에 제목과 시놉시스를 입력하면 AI가 세계를 설계합니다'}
+                </span>
+              </div>
+            </div>
+          )}
           <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean)} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
             <TabAssistant tab="world" language={language} config={config} hostedProviders={hostedProviders} />
           </div>
-          <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
+          <div className="max-w-6xl mx-auto px-4 pb-8 flex gap-3 justify-end">
+            {/* CTA: 세계관 설정 유무에 따라 다른 동선 */}
+            {config.title || config.synopsis ? (
+              <>
+                <button onClick={() => setSubTab('simulator')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 bg-bg-secondary border border-border text-text-secondary hover:text-text-primary hover:border-accent-purple/50">
+                  🧪 {language === 'EN' ? 'Open Simulator' : language === 'JP' ? 'シミュレーターへ' : language === 'CN' ? '打开模拟器' : '시뮬레이터로 이동'}
+                </button>
+                <button onClick={onStart} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 bg-accent-purple text-white hover:opacity-80">
+                  ✍️ {startLabel ?? t('planning.commence')}
+                </button>
+              </>
+            ) : null}
             <button onClick={onSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
               💾 {saveFlash ? t('worldStudio.saved') : t('worldStudio.saveSettings')}
             </button>

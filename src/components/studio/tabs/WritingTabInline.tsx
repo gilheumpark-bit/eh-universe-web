@@ -245,6 +245,11 @@ export default function WritingTabInline(props: Props) {
                     {/* AI / Edit sub-tabs — API 없을 때는 edit 탭만 표시 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai' || showAiLock) && (<>
                     <div className="flex flex-wrap gap-1 items-center">
+                      {showAiLockBanner && (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] text-amber-400/80 font-[family-name:var(--font-mono)]">
+                          🔑 {isKO ? 'API 키를 설정하면 AI 기능이 활성화됩니다' : 'Set an API key to unlock AI features'}
+                        </span>
+                      )}
                       {!showAiLock && (
                         <button onClick={() => setWritingMode('ai')}
                           className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${

@@ -842,7 +842,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       prismModeCustomDesc: "사용자 설정",
       prismSexual: "성적 수위",
       prismViolence: "폭력 수위",
-      prismProfanity: "비속어 수위"
+      prismProfanity: "비속어 수위",
+      ratingGuide: "한국 웹소설 플랫폼 기준: ALL=전체이용가, T15=15세이용가, M18=청소년이용불가"
     },
     resourceExtra: {
       charRelations: "캐릭터 관계도",
@@ -2040,7 +2041,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       prismModeCustomDesc: "Custom levels",
       prismSexual: "Sexual",
       prismViolence: "Violence",
-      prismProfanity: "Profanity"
+      prismProfanity: "Profanity",
+      ratingGuide: "Based on international standards: ALL=General, T15=Teen(13+), M18=Mature(18+)"
     },
     resourceExtra: {
       charRelations: "Character Relations",
@@ -3238,7 +3240,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       prismModeCustomDesc: "カスタム設定",
       prismSexual: "性的表現",
       prismViolence: "暴力表現",
-      prismProfanity: "罵倒語"
+      prismProfanity: "罵倒語",
+      ratingGuide: "日本基準: ALL=全年齢, T15=R-15, M18=R-18"
     },
     resourceExtra: {
       charRelations: "キャラクター関係図",
@@ -4436,7 +4439,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       prismModeCustomDesc: "自定义",
       prismSexual: "色情",
       prismViolence: "暴力",
-      prismProfanity: "脏话"
+      prismProfanity: "脏话",
+      ratingGuide: "中国标准: ALL=全年龄, T15=限制级, M18=成人级"
     },
     resourceExtra: {
       charRelations: "角色关系图",

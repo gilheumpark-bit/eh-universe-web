@@ -134,6 +134,7 @@ export default function StudioPage() {
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(() => typeof window !== 'undefined' && localStorage.getItem('noa_api_banner_dismissed') === '1');
   const [showDashboard, setShowDashboard] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
@@ -911,14 +912,14 @@ export default function StudioPage() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
             {/* API 키 미설정 안내 배너 */}
-            {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !localStorage.getItem('noa_api_banner_dismissed') && (
+            {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{apiBannerMessage}</span>
                 <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
                   {apiSetupLabel}
                 </button>
-                <button onClick={() => { localStorage.setItem('noa_api_banner_dismissed', '1'); window.dispatchEvent(new Event('storage')); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
+                <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
                   ✕
                 </button>
               </div>
