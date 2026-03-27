@@ -22,6 +22,12 @@ export interface GlossaryEntry {
   locked: boolean;      // true면 절대 변경 불가
 }
 
+/**
+ * 축약형 강도 (대사 밖 서술 기준)
+ * 건조한 작품/기록체에서는 low가 적합
+ */
+export type ContractionLevel = 'none' | 'low' | 'normal' | 'high';
+
 /** 번역 설정 */
 export interface TranslationConfig {
   mode: TranslationMode;          // 사용자 선택: 원문 보존 vs 독자 경험
@@ -31,6 +37,8 @@ export interface TranslationConfig {
   scoreThreshold: number;         // 기본 0.70 — 이 미만이면 재창조
   maxRecreate: number;            // 재창조 최대 횟수 (기본 2)
   contextBridge: string;          // 이전 화 요약 (문맥 연결용)
+  // MODE2 세부 제어
+  contractionLevel: ContractionLevel;  // 축약형 강도 (기본 'normal')
 }
 
 /** 3문장 청크 */
@@ -52,13 +60,15 @@ export interface FidelityScoreDetail {
   consistency: number;       // 용어 일관성
 }
 
-/** MODE2 채점 — 독자 경험형 */
+/** MODE2 채점 — 독자 경험형 (6축) */
 export interface ExperienceScoreDetail {
   overall: number;
   immersion: number;         // 독자 몰입도 — 멈추지 않고 읽히는가
-  emotionResonance: number;  // 감정 재현도 — 원문이 주는 감정이 살아있는가
+  emotionResonance: number;  // 감정 재현도 — 원문이 주는 감정이 살아있는가 (과잉도 감점)
   culturalFit: number;       // 문화 적합도 — 타겟 독자에게 어색함이 없는가
   consistency: number;       // 일관성 — 인명/용어/시점/톤
+  groundedness: number;      // 무근거 보강 없음 — 모든 요소가 원문에 근거하는가
+  voiceInvisibility: number; // 번역자 투명성 — 번역자의 문학적 목소리가 숨어있는가
 }
 
 /** 통합 채점 결과 (모드에 따라 내부 구조 다름) */
@@ -69,7 +79,7 @@ export function isFidelityScore(s: ChunkScoreDetail): s is FidelityScoreDetail {
   return 'translationese' in s;
 }
 export function isExperienceScore(s: ChunkScoreDetail): s is ExperienceScoreDetail {
-  return 'immersion' in s;
+  return 'immersion' in s && 'groundedness' in s;
 }
 
 /** 번역 진행 상태 */
@@ -121,6 +131,7 @@ export function getDefaultConfig(mode: TranslationMode = 'fidelity'): Translatio
     scoreThreshold: 0.70,
     maxRecreate: 2,
     contextBridge: '',
+    contractionLevel: 'normal',
   };
 }
 
@@ -246,6 +257,74 @@ function buildExperienceDirective(band: number, targetLang: TranslationTarget): 
 }
 
 // ============================================================
+// PART 4B — MODE2 경험형 가드 (무근거 보강 / 세공 제한 / 축약형)
+// ============================================================
+
+/**
+ * MODE2 전용 3중 가드:
+ * 1) 무근거 보강 금지 — 원문에 없는 시간감, 정서, 암시 추가 차단
+ * 2) 세공된 재치 문장 제한 — 번역자의 저자성 침범 방지
+ * 3) 축약형 강도 제어 — 작품 톤에 맞는 수축형 레벨
+ */
+function buildExperienceGuards(config: TranslationConfig): string {
+  const sections: string[] = [];
+
+  // 1) 무근거 보강 금지
+  sections.push(`[GUARD: No Groundless Reinforcement]
+Do NOT insert words, phrases, or implications that have no basis in the source text.
+Specifically forbidden additions:
+- Time markers not in source: "for years", "always", "never", "once", "already", "still" (unless source has equivalent)
+- Emotional hedging: "somehow", "almost", "as if", "seemed to", "a kind of" (unless source has equivalent)
+- Interpretive additions: "or care", "for all she knew", "like it had always been"
+- Causal links the source doesn't make: "because", "so that", "which meant"
+- Atmospheric padding: "in the silence", "without a word", "just like that"
+If the source states a fact flatly, translate it flatly. Do not dramatize neutral statements.
+If the source is ambiguous, stay ambiguous — do not resolve ambiguity with added words.`);
+
+  // 2) 세공된 재치 문장 제한
+  sections.push(`[GUARD: No Translator Wit]
+Do NOT craft clever, polished, or aphoristic sentences that exceed the source's literary register.
+If the source says something plainly, the translation must be plain.
+Examples of forbidden translator wit:
+- Turning a simple observation into an elegant paradox
+- Adding rhetorical symmetry the source doesn't have
+- Making a flat statement "quotable" or "literary"
+- Inserting wordplay, alliteration, or rhythmic flourishes beyond the source's own
+The author's voice is the only voice allowed. The translator is invisible.`);
+
+  // 3) 축약형 제어
+  const contractionRule = buildContractionRule(config.contractionLevel);
+  sections.push(contractionRule);
+
+  return sections.join('\n\n');
+}
+
+function buildContractionRule(level: ContractionLevel): string {
+  switch (level) {
+    case 'none':
+      return `[GUARD: Contractions — NONE]
+Do not use contractions in narration or dialogue. Write all words in full form.
+"do not" instead of "don't", "could not" instead of "couldn't", etc.
+This applies to all text including dialogue.`;
+    case 'low':
+      return `[GUARD: Contractions — LOW]
+Narration/description: Do NOT use contractions. Write in full form ("did not", "could not", "was not").
+Dialogue only: Contractions are allowed when they match the character's natural speech.
+This creates a formal, documentary tone in narration while keeping dialogue alive.`;
+    case 'normal':
+      return `[GUARD: Contractions — NORMAL]
+Dialogue: Use contractions naturally.
+Narration: Use contractions sparingly — only where the prose rhythm strongly benefits.
+Default to full forms in narration for dry, restrained, or formal source texts.`;
+    case 'high':
+      return `[GUARD: Contractions — HIGH]
+Use contractions freely in both narration and dialogue for a casual, conversational tone.
+"didn't", "couldn't", "wasn't", "it's", "that's" — all allowed everywhere.
+Appropriate for light novels, web fiction, casual first-person narration.`;
+  }
+}
+
+// ============================================================
 // PART 5 — 통합 시스템 프롬프트 빌더
 // ============================================================
 
@@ -296,13 +375,18 @@ Output ONLY the recreated text, nothing else.`);
 - Do NOT add emotions the author chose not to write. Restraint is a choice — respect it.`);
   }
 
-  // 번역투 금지 (공통, 표현만 모드에 맞게)
+  // 번역투 금지 (공통)
   parts.push(`[Anti-Translationese Rules]
 - No unnatural passive voice inherited from Korean grammar.
 - No excessive subject repetition — use pronouns where ${lang} naturally would.
 - No stiff formal register unless the source is formally written.
 - No "translation smell": awkward collocations, unnatural word order, robotic rhythm.
 - The result must read as if originally written in ${lang}.`);
+
+  // MODE2 전용 가드: 무근거 보강 금지 + 세공 제한 + 축약형 제어
+  if (!isMode1) {
+    parts.push(buildExperienceGuards(config));
+  }
 
   // 용어집
   if (config.glossary.length > 0) {
@@ -399,8 +483,9 @@ function buildExperienceScoringPrompt(
 ): string {
   return `You are a literary quality judge for Korean→${lang} fiction (READER EXPERIENCE mode).
 The goal is NOT literal accuracy — it is whether the ${lang} reader feels what the Korean reader felt.
+ALSO check for translator overreach: additions, dramatization, or literary polish not present in the source.
 
-Score on 4 axes (0.00 to 1.00):
+Score on 6 axes (0.00 to 1.00):
 
 1. **immersion** (HIGHER is better): Can a ${lang} reader read this without pausing?
    Does every sentence flow naturally? Would they ever think "this feels translated"?
@@ -409,7 +494,8 @@ Score on 4 axes (0.00 to 1.00):
 2. **emotionResonance** (HIGHER is better): Does the translation produce the same emotional effect?
    If the source is cold and detached, is the translation cold and detached?
    If the source builds unease, does the translation build unease?
-   0.00 = emotional tone completely lost. 1.00 = identical emotional impact.
+   IMPORTANT: If the translation is MORE emotional than the source, score DOWN. Restraint must be preserved.
+   0.00 = emotional tone completely lost or distorted. 1.00 = identical emotional impact.
 
 3. **culturalFit** (HIGHER is better): Are there moments where a ${lang} reader would be confused or distracted by cultural context?
    0.00 = full of unexplained cultural references. 1.00 = perfectly adapted for ${lang} readers.
@@ -417,8 +503,18 @@ Score on 4 axes (0.00 to 1.00):
 4. **consistency** (HIGHER is better): Are character names, terminology, tone, and point of view consistent?
    ${config.glossary.length > 0 ? config.glossary.map(g => `"${g.source}"→"${g.target}"`).join(', ') : 'No glossary — score 1.00.'}
 
+5. **groundedness** (HIGHER is better): Does every word in the translation trace back to the source?
+   Check for: added time markers ("for years", "always"), emotional hedging ("somehow", "as if"),
+   interpretive additions ("or care", "for all she knew"), causal links not in source, atmospheric padding.
+   0.00 = many groundless additions. 1.00 = every element traces to source.
+
+6. **voiceInvisibility** (HIGHER is better): Is the translator's own literary voice invisible?
+   Check for: clever paradoxes the source doesn't have, aphoristic rewrites of plain statements,
+   rhetorical polish beyond the source's register, quotable sentences crafted from flat observations.
+   0.00 = translator's wit dominates. 1.00 = only the author's voice is present.
+
 Respond ONLY with JSON:
-{"immersion": 0.00, "emotionResonance": 0.00, "culturalFit": 0.00, "consistency": 0.00}
+{"immersion": 0.00, "emotionResonance": 0.00, "culturalFit": 0.00, "consistency": 0.00, "groundedness": 0.00, "voiceInvisibility": 0.00}
 
 --- SOURCE ---
 ${sourceText}
@@ -456,19 +552,25 @@ function parseFidelityScore(raw: string): FidelityScoreDetail {
 
 function parseExperienceScore(raw: string): ExperienceScoreDetail {
   const fallback: ExperienceScoreDetail = {
-    overall: 0.5, immersion: 0.5, emotionResonance: 0.5, culturalFit: 0.5, consistency: 1.0,
+    overall: 0.5, immersion: 0.5, emotionResonance: 0.5, culturalFit: 0.5,
+    consistency: 1.0, groundedness: 0.5, voiceInvisibility: 0.5,
   };
   try {
     const jsonMatch = raw.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) return fallback;
     const p = JSON.parse(jsonMatch[0]);
-    const i = clamp01(p.immersion ?? 0.5);
-    const e = clamp01(p.emotionResonance ?? 0.5);
+    const im = clamp01(p.immersion ?? 0.5);
+    const er = clamp01(p.emotionResonance ?? 0.5);
     const cf = clamp01(p.culturalFit ?? 0.5);
-    const c = clamp01(p.consistency ?? 1.0);
-    // 종합: 몰입도*0.30 + 감정재현*0.30 + 문화적합*0.25 + 일관성*0.15
-    const overall = i * 0.30 + e * 0.30 + cf * 0.25 + c * 0.15;
-    return { overall: round3(overall), immersion: i, emotionResonance: e, culturalFit: cf, consistency: c };
+    const co = clamp01(p.consistency ?? 1.0);
+    const gr = clamp01(p.groundedness ?? 0.5);
+    const vi = clamp01(p.voiceInvisibility ?? 0.5);
+    // 6축 가중치: 몰입*0.22 + 감정재현*0.22 + 문화적합*0.16 + 일관성*0.10 + 무근거*0.15 + 투명성*0.15
+    const overall = im * 0.22 + er * 0.22 + cf * 0.16 + co * 0.10 + gr * 0.15 + vi * 0.15;
+    return {
+      overall: round3(overall), immersion: im, emotionResonance: er,
+      culturalFit: cf, consistency: co, groundedness: gr, voiceInvisibility: vi,
+    };
   } catch { return fallback; }
 }
 
@@ -492,9 +594,11 @@ export function buildRecreatePrompt(
     if (scoreDetail.consistency < 0.8) issues.push('Glossary terms inconsistent.');
   } else if (mode === 'experience' && isExperienceScore(scoreDetail)) {
     if (scoreDetail.immersion < 0.6) issues.push('Reader would pause — not immersive enough. Sounds translated.');
-    if (scoreDetail.emotionResonance < 0.6) issues.push('Emotional impact lost. The feeling doesn\'t match the source.');
+    if (scoreDetail.emotionResonance < 0.6) issues.push('Emotional impact lost or distorted. The feeling doesn\'t match the source.');
     if (scoreDetail.culturalFit < 0.6) issues.push('Cultural references confuse the target reader.');
     if (scoreDetail.consistency < 0.8) issues.push('Names, terms, or tone inconsistent.');
+    if (scoreDetail.groundedness < 0.7) issues.push('Groundless additions detected: words/phrases/implications not in the source were inserted. Remove ALL added time markers, emotional hedging, interpretive additions, and atmospheric padding.');
+    if (scoreDetail.voiceInvisibility < 0.7) issues.push('Translator\'s literary voice is showing. Simplify crafted sentences back to the source\'s own register. The translator must be invisible.');
   }
 
   const strategy = attempt === 1
@@ -586,8 +690,8 @@ export function modeDescription(mode: TranslationMode, isKO: boolean): { title: 
       : { title: 'MODE 1 — Source Preservation', desc: 'Preserves the original structure, sentence form, and rhythm.' };
   }
   return isKO
-    ? { title: 'MODE 2 — 독자 경험', desc: '타겟 독자가 원문 독자와 같은 감정과 몰입을 느끼도록 재창조합니다.' }
-    : { title: 'MODE 2 — Reader Experience', desc: 'Recreates the text so target readers feel the same emotions and immersion.' };
+    ? { title: 'MODE 2 — 독자 경험', desc: '감정선을 보존하되, 타겟 독자의 몰입을 위해 리듬 재구성과 문화 적응을 허용합니다. 무근거 보강과 번역자 세공은 차단됩니다.' }
+    : { title: 'MODE 2 — Reader Experience', desc: 'Preserves emotional arc while allowing rhythm restructuring and cultural adaptation. Groundless additions and translator literary polish are blocked.' };
 }
 
 // IDENTITY_SEAL: PART-1  | role=Types | inputs=none | outputs=TranslationMode,TranslationConfig,FidelityScoreDetail,ExperienceScoreDetail

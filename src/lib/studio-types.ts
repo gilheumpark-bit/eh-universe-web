@@ -261,6 +261,7 @@ export interface StoryConfig {
     band: number;                 // 0.480 ~ 0.520 (모드 내 미세 조정)
     scoreThreshold: number;       // 기본 0.70
     maxRecreate: number;          // 기본 2
+    contractionLevel: 'none' | 'low' | 'normal' | 'high';  // 축약형 강도
     glossary: { source: string; target: string; context?: string; locked: boolean }[];
   };
   translatedManuscripts?: TranslatedManuscriptEntry[];
