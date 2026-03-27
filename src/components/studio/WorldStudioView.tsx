@@ -4,8 +4,8 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState } from 'react';
-import { Compass, Cpu, Search, Clock, Map } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Compass, Cpu, Search, Clock, Map, X } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
@@ -69,8 +69,13 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   hostedProviders = {},
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
+  const [selectedEra, setSelectedEra] = useState<string | null>(null);
   const t = createT(language);
   const labels = SUB_TABS[language];
+
+  const handleSelectEra = useCallback((era: string) => {
+    setSelectedEra(prev => prev === era ? null : era);
+  }, []);
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -141,15 +146,41 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 
       {subTab === 'timeline' && (
         <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-          <WorldTimeline simData={config.worldSimData || {}} language={language} />
+          {selectedEra && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold text-accent-purple font-[family-name:var(--font-mono)]">
+                {language === 'KO' ? `선택된 시대: ${selectedEra}` : `Selected era: ${selectedEra}`}
+              </span>
+              <button onClick={() => setSelectedEra(null)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-all">
+                <X className="w-3 h-3" />
+                {language === 'KO' ? '해제' : 'Clear'}
+              </button>
+            </div>
+          )}
+          <WorldTimeline simData={config.worldSimData || {}} language={language}
+            selectedEra={selectedEra ?? undefined} onSelectEra={handleSelectEra} />
         </div>
       )}
 
       {subTab === 'map' && (
         <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
+          {selectedEra && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold text-accent-purple font-[family-name:var(--font-mono)]">
+                {language === 'KO' ? `필터: ${selectedEra} 시대` : `Filter: ${selectedEra} era`}
+              </span>
+              <button onClick={() => setSelectedEra(null)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-all">
+                <X className="w-3 h-3" />
+                {language === 'KO' ? '해제' : 'Clear'}
+              </button>
+            </div>
+          )}
           <WorldMap
             simData={config.worldSimData || {}}
             language={language}
+            highlightEra={selectedEra ?? undefined}
             onChange={(updated) => {
               setConfig(prev => ({
                 ...prev,

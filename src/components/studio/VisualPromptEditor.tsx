@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Copy, Trash2, Sparkles, Image, Loader2, Download } from 'lucide-react';
-import { VisualPromptCard, VisualShotType, VisualLevelPack, Character } from '@/lib/studio-types';
+import { VisualPromptCard, VisualShotType, VisualLevelPack, Character, GeneratedVisualAsset } from '@/lib/studio-types';
 import { generateImage, ImageGenProvider, ImageGenResult } from '@/services/imageGenerationService';
 import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
 import { VISUAL_PRESETS } from '@/lib/visual-defaults';
@@ -20,6 +20,8 @@ interface VisualPromptEditorProps {
   characters?: Character[];
   imageApiKey?: string;
   imageProvider?: ImageGenProvider;
+  /** Called after a successful image generation (used by batch generation) */
+  onImageGenerated?: (cardId: string) => void;
 }
 
 const SHOT_TYPES: { value: VisualShotType; ko: string; en: string }[] = [
@@ -49,7 +51,7 @@ const LEVEL_LABELS = ['OFF', 'LOW', 'MID', 'HIGH'];
 // PART 2 — Component
 // ============================================================
 
-export default function VisualPromptEditor({ card, onChange, onDelete, isKO, characters, imageApiKey, imageProvider }: VisualPromptEditorProps) {
+export default function VisualPromptEditor({ card, onChange, onDelete, isKO, characters, imageApiKey, imageProvider, onImageGenerated }: VisualPromptEditorProps) {
   const update = React.useCallback((patch: Partial<VisualPromptCard>) => {
     onChange({ ...card, ...patch, updatedAt: Date.now() });
   }, [card, onChange]);
@@ -60,8 +62,10 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
   const finalPrompt = buildFinalVisualPrompt(card);
   const negPrompt = buildNegativePrompt(card);
 
-  // Image generation state
-  const [genImages, setGenImages] = useState<ImageGenResult[]>([]);
+  // Image generation state — seed from persisted generatedImages
+  const [genImages, setGenImages] = useState<ImageGenResult[]>(() =>
+    (card.generatedImages ?? []).map(a => ({ url: a.imageUrl, revised_prompt: a.revisedPrompt }))
+  );
   const [genLoading, setGenLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -79,6 +83,21 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
       setGenError(result.error);
     } else {
       setGenImages(prev => [...result.images, ...prev].slice(0, 4));
+      // Persist into card.generatedImages for gallery collection
+      const newAssets: GeneratedVisualAsset[] = result.images.map(img => ({
+        id: `ga-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        promptCardId: card.id,
+        provider: imageProvider,
+        model: imageProvider === 'openai' ? 'dall-e-3' : 'sdxl',
+        imageUrl: img.url,
+        promptSnapshot: finalPrompt,
+        createdAt: Date.now(),
+        assignedEpisode: card.episode,
+        revisedPrompt: img.revised_prompt,
+      }));
+      const existing = card.generatedImages ?? [];
+      update({ generatedImages: [...newAssets, ...existing].slice(0, 8) });
+      onImageGenerated?.(card.id);
     }
     setGenLoading(false);
   };

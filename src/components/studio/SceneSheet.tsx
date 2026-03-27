@@ -199,23 +199,26 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             >
               <span className="truncate px-1">{seg.label}</span>
               <span className="absolute bottom-0.5 right-1 text-[7px] opacity-60">{seg.width}%</span>
-              {/* Drag handle */}
+              {/* Drag handle — supports both mouse and touch */}
               {i < segments.length - 1 && (
-                <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-white/30 z-10"
-                  onMouseDown={(e) => {
+                <div className="absolute right-0 top-0 bottom-0 w-3 sm:w-1 cursor-col-resize hover:bg-white/30 z-10"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
                     const startX = e.clientX;
                     const barWidth = (e.target as HTMLElement).closest('.flex')?.getBoundingClientRect().width || 600;
-                    const handleMove = (me: MouseEvent) => {
-                      const delta = Math.round(((me.clientX - startX) / barWidth) * 100);
+                    const handleMove = (pe: PointerEvent) => {
+                      const delta = Math.round(((pe.clientX - startX) / barWidth) * 100);
                       if (Math.abs(delta) >= 1) updateWidth(i, delta);
                     };
                     const handleUp = () => {
-                      document.removeEventListener('mousemove', handleMove);
-                      document.removeEventListener('mouseup', handleUp);
+                      document.removeEventListener('pointermove', handleMove);
+                      document.removeEventListener('pointerup', handleUp);
                     };
-                    document.addEventListener('mousemove', handleMove);
-                    document.addEventListener('mouseup', handleUp);
+                    document.addEventListener('pointermove', handleMove);
+                    document.addEventListener('pointerup', handleUp);
                   }}
                 />
               )}
@@ -731,7 +734,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   <span className="text-[10px] group-open/tab:rotate-90 transition-transform">▶</span>
                   {groupLabel}
                 </summary>
-                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5" role="tablist">
+                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5 overflow-x-auto overscroll-x-contain" role="tablist" style={{ WebkitOverflowScrolling: 'touch' }}>
                   {group.tabs.map(tabId => {
                     const tab = TAB_DEF.find(t => t.id === tabId);
                     if (!tab) return null;
@@ -739,10 +742,10 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                       <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                         role="tab"
                         aria-selected={activeTab === tab.id}
-                        className={`px-2.5 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
+                        className={`px-2.5 py-2 sm:py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap min-h-[36px] sm:min-h-0 shrink-0 ${
                           activeTab === tab.id
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
-                            : "text-text-tertiary hover:text-text-secondary border border-transparent"
+                            : "text-text-tertiary hover:text-text-secondary border border-transparent active:bg-white/5"
                         }`}>
                         {tab.emoji} {lang === "ko" ? tab.ko : tab.en}
                       </button>

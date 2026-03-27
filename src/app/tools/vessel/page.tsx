@@ -180,11 +180,56 @@ const FACTION_COLORS: Record<FactionKey, { accent: string; dim: string; glow: st
   lib:     { accent: "#44aa66", dim: "#0d2a18", glow: "rgba(68,170,102,0.15)", gradient: "linear-gradient(90deg,#0d2a18,#44aa66)" },
 };
 
+/* ── Stat system for radar chart / comparison ── */
+interface ShipStat {
+  key: string;
+  faction: FactionKey;
+  name: string;
+  ko: string;
+  firepower: number;   // 0–10
+  defense: number;
+  speed: number;
+  capacity: number;    // crew / drone capacity
+  stealth: number;
+  tonnageNum: number;  // raw tonnage for silhouette
+}
+
+const ALL_SHIPS: ShipStat[] = [
+  // Council
+  { key: "c-corvette", faction: "council", name: "Corvette-1", ko: "초계함 Strike", firepower: 3, defense: 2, speed: 8, capacity: 2, stealth: 5, tonnageNum: 3500 },
+  { key: "c-frigate", faction: "council", name: "Frigate-1", ko: "프리깃 Strike", firepower: 5, defense: 4, speed: 6, capacity: 4, stealth: 4, tonnageNum: 6500 },
+  { key: "c-destroyer", faction: "council", name: "Destroyer-1", ko: "구축함 Strike", firepower: 7, defense: 6, speed: 5, capacity: 6, stealth: 3, tonnageNum: 15000 },
+  { key: "c-cruiser", faction: "council", name: "Cruiser-1", ko: "순양함 Strike", firepower: 8, defense: 7, speed: 4, capacity: 7, stealth: 2, tonnageNum: 42000 },
+  { key: "c-battleship", faction: "council", name: "Battleship-1", ko: "전함 Strike", firepower: 9, defense: 9, speed: 2, capacity: 9, stealth: 1, tonnageNum: 130000 },
+  { key: "c-flagship", faction: "council", name: "Flagship", ko: "기함", firepower: 10, defense: 10, speed: 2, capacity: 10, stealth: 1, tonnageNum: 500000 },
+  // Neka
+  { key: "n-raider", faction: "neka", name: "Raider-1", ko: "레이더 Strike", firepower: 4, defense: 2, speed: 9, capacity: 2, stealth: 6, tonnageNum: 4000 },
+  { key: "n-hunter", faction: "neka", name: "Hunter-1", ko: "헌터 Strike", firepower: 6, defense: 5, speed: 7, capacity: 5, stealth: 4, tonnageNum: 9000 },
+  { key: "n-lancer", faction: "neka", name: "Lancer-1", ko: "랜서 Strike", firepower: 7, defense: 6, speed: 5, capacity: 6, stealth: 3, tonnageNum: 25000 },
+  { key: "n-sovereign", faction: "neka", name: "Sovereign-1", ko: "소버린 Strike", firepower: 9, defense: 8, speed: 3, capacity: 8, stealth: 2, tonnageNum: 55000 },
+  { key: "n-praetorian", faction: "neka", name: "Praetorian-1", ko: "프레토리안 Strike", firepower: 10, defense: 9, speed: 2, capacity: 9, stealth: 1, tonnageNum: 200000 },
+  { key: "n-imperator", faction: "neka", name: "Imperator", ko: "임페라토르", firepower: 10, defense: 10, speed: 1, capacity: 10, stealth: 0, tonnageNum: 1200000 },
+  // Liberation
+  { key: "l-needle", faction: "lib", name: "Needle", ko: "니들", firepower: 1, defense: 1, speed: 10, capacity: 1, stealth: 9, tonnageNum: 200 },
+  { key: "l-spike", faction: "lib", name: "Spike", ko: "스파이크", firepower: 4, defense: 2, speed: 8, capacity: 2, stealth: 7, tonnageNum: 1500 },
+  { key: "l-thorn", faction: "lib", name: "Thorn", ko: "손", firepower: 6, defense: 4, speed: 5, capacity: 4, stealth: 5, tonnageNum: 8000 },
+  { key: "l-bastion", faction: "lib", name: "Bastion", ko: "배스천", firepower: 5, defense: 6, speed: 2, capacity: 7, stealth: 3, tonnageNum: 40000 },
+];
+
+const STAT_LABELS = [
+  { key: "firepower", label: "Firepower", ko: "화력" },
+  { key: "defense", label: "Defense", ko: "방어" },
+  { key: "speed", label: "Speed", ko: "속도" },
+  { key: "capacity", label: "Capacity", ko: "탑재량" },
+  { key: "stealth", label: "Stealth", ko: "은밀" },
+];
+
 const TABS: { key: string; label: string; faction?: FactionKey }[] = [
   { key: "council", label: "I. COUNCIL", faction: "council" },
   { key: "neka", label: "II. NEKA EMPIRE", faction: "neka" },
   { key: "lib", label: "III. LIBERATION FRONT", faction: "lib" },
   { key: "compare", label: "IV. COMPARISON" },
+  { key: "detail", label: "V. SHIP DETAIL" },
 ];
 
 // ============================================================
@@ -347,6 +392,7 @@ export default function VesselPage() {
             {activeTab === "neka" && renderFactionPanel("neka")}
             {activeTab === "lib" && renderFactionPanel("lib")}
             {activeTab === "compare" && <ComparePanel />}
+            {activeTab === "detail" && <ShipDetailPanel en={en} />}
 
             {/* Footer */}
             <div className="mt-10 border-t border-border pt-6">
@@ -457,6 +503,225 @@ function ComparePanel() {
             <div className="text-[10px] text-text-tertiary w-[100px] text-right flex-shrink-0">{bar.value}</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PART 6 — Ship Detail Panel (Radar Chart + Comparison + Silhouette)
+// ============================================================
+
+function RadarChart({ ships, en }: { ships: ShipStat[]; en: boolean }) {
+  const cx = 140, cy = 140, r = 100;
+  const n = STAT_LABELS.length;
+  const angleStep = (Math.PI * 2) / n;
+
+  const getPoint = (i: number, val: number) => {
+    const angle = angleStep * i - Math.PI / 2;
+    const dist = (val / 10) * r;
+    return { x: cx + dist * Math.cos(angle), y: cy + dist * Math.sin(angle) };
+  };
+
+  const gridLevels = [2, 4, 6, 8, 10];
+  const shipColors = [FACTION_COLORS[ships[0]?.faction ?? "council"].accent, ships[1] ? FACTION_COLORS[ships[1].faction].accent : "#888"];
+
+  return (
+    <svg viewBox="0 0 280 280" className="w-full max-w-[320px] mx-auto">
+      {/* Grid */}
+      {gridLevels.map(lv => (
+        <polygon
+          key={lv}
+          points={Array.from({ length: n }, (_, i) => {
+            const p = getPoint(i, lv);
+            return `${p.x},${p.y}`;
+          }).join(" ")}
+          fill="none" stroke="var(--color-border)" strokeWidth="0.5" opacity={0.5}
+        />
+      ))}
+      {/* Axes */}
+      {STAT_LABELS.map((_, i) => {
+        const p = getPoint(i, 10);
+        return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="var(--color-border)" strokeWidth="0.5" opacity={0.3} />;
+      })}
+      {/* Labels */}
+      {STAT_LABELS.map((sl, i) => {
+        const p = getPoint(i, 12);
+        return (
+          <text key={sl.key} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle"
+            fill="var(--color-text-tertiary)" fontSize="9" fontFamily="var(--font-mono)">
+            {en ? sl.label : sl.ko}
+          </text>
+        );
+      })}
+      {/* Data polygons */}
+      {ships.map((ship, si) => {
+        const vals = [ship.firepower, ship.defense, ship.speed, ship.capacity, ship.stealth];
+        const pts = vals.map((v, i) => getPoint(i, v));
+        const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + "Z";
+        return (
+          <g key={ship.key}>
+            <path d={d} fill={shipColors[si]} fillOpacity={0.15} stroke={shipColors[si]} strokeWidth="1.5" />
+            {pts.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={shipColors[si]} />
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function ShipSilhouette({ ship }: { ship: ShipStat }) {
+  const color = FACTION_COLORS[ship.faction].accent;
+  const logScale = Math.log10(ship.tonnageNum + 1);
+  const maxLog = Math.log10(1200001);
+  const w = Math.max(24, (logScale / maxLog) * 260);
+  const h = Math.max(8, w * 0.18);
+  return (
+    <svg viewBox="0 0 280 60" className="w-full max-w-[300px] mx-auto">
+      <rect x={(280 - w) / 2} y={(60 - h) / 2} width={w} height={h} rx={h * 0.2}
+        fill={color} fillOpacity={0.2} stroke={color} strokeWidth="1" />
+      <rect x={(280 - w * 0.15) / 2} y={(60 - h) / 2 - h * 0.5} width={w * 0.15} height={h * 0.5} rx={2}
+        fill={color} fillOpacity={0.35} stroke={color} strokeWidth="0.5" />
+      <rect x={(280 - w) / 2 - 3} y={(60 - h * 0.5) / 2} width={4} height={h * 0.5} rx={1}
+        fill={color} fillOpacity={0.6} />
+      <polygon
+        points={`${(280 + w) / 2},${(60 - h * 0.3) / 2} ${(280 + w) / 2 + w * 0.12},${30} ${(280 + w) / 2},${(60 + h * 0.3) / 2}`}
+        fill={color} fillOpacity={0.3} stroke={color} strokeWidth="0.5"
+      />
+      <text x={140} y={56} textAnchor="middle" fill={color} fontSize="8" fontFamily="var(--font-mono)" opacity={0.7}>
+        {ship.name} — {ship.tonnageNum.toLocaleString()}t
+      </text>
+    </svg>
+  );
+}
+
+function ShipDetailPanel({ en }: { en: boolean }) {
+  const [selA, setSelA] = useState<string>(ALL_SHIPS[0].key);
+  const [selB, setSelB] = useState<string>("");
+  const shipA = ALL_SHIPS.find(s => s.key === selA) ?? ALL_SHIPS[0];
+  const shipB = selB ? ALL_SHIPS.find(s => s.key === selB) : null;
+  const radarShips = shipB ? [shipA, shipB] : [shipA];
+
+  const amber = "#f0c040";
+
+  return (
+    <div>
+      <div className="flex items-start gap-4 mb-7 p-5" style={{ borderLeft: `3px solid ${amber}`, background: "rgba(240,192,64,0.1)" }}>
+        <div>
+          <div className="text-xl font-bold tracking-wider" style={{ color: amber }}>
+            {en ? "Ship Detail & Comparison" : "함선 상세 · 비교"}
+          </div>
+          <div className="text-[11px] text-text-tertiary mt-1.5">
+            {en ? "Select one or two ships to compare stats, radar profile, and silhouette." : "1~2척의 함선을 선택하여 스탯, 레이더 프로파일, 실루엣을 비교합니다."}
+          </div>
+        </div>
+      </div>
+
+      {/* Selectors */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div>
+          <label className="font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary block mb-2">
+            {en ? "SHIP A (Primary)" : "함선 A (주)"}
+          </label>
+          <select
+            value={selA}
+            onChange={e => setSelA(e.target.value)}
+            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-[family-name:var(--font-mono)]"
+          >
+            {ALL_SHIPS.map(s => (
+              <option key={s.key} value={s.key}>
+                [{s.faction.toUpperCase()}] {s.name} ({en ? s.name : s.ko})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary block mb-2">
+            {en ? "SHIP B (Compare)" : "함선 B (비교)"}
+          </label>
+          <select
+            value={selB}
+            onChange={e => setSelB(e.target.value)}
+            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-[family-name:var(--font-mono)]"
+          >
+            <option value="">{en ? "— None —" : "— 없음 —"}</option>
+            {ALL_SHIPS.filter(s => s.key !== selA).map(s => (
+              <option key={s.key} value={s.key}>
+                [{s.faction.toUpperCase()}] {s.name} ({en ? s.name : s.ko})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Radar Chart */}
+      <div className="mb-8">
+        <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest text-text-tertiary mb-3">
+          {en ? "STAT RADAR" : "스탯 레이더"}
+        </div>
+        <div className="border border-border bg-bg-secondary p-4 rounded flex justify-center">
+          <RadarChart ships={radarShips} en={en} />
+        </div>
+        <div className="flex gap-6 justify-center mt-3">
+          <div className="flex items-center gap-2 text-[10px]">
+            <div className="w-3 h-3 rounded-sm" style={{ background: FACTION_COLORS[shipA.faction].accent }} />
+            <span style={{ color: FACTION_COLORS[shipA.faction].accent }}>{shipA.name}</span>
+          </div>
+          {shipB && (
+            <div className="flex items-center gap-2 text-[10px]">
+              <div className="w-3 h-3 rounded-sm" style={{ background: FACTION_COLORS[shipB.faction].accent }} />
+              <span style={{ color: FACTION_COLORS[shipB.faction].accent }}>{shipB.name}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Stat Table */}
+      <div className="overflow-x-auto mb-8">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="border-b-2 border-border">
+              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">STAT</th>
+              <th className="p-3 text-center font-[family-name:var(--font-mono)] text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipA.faction].accent }}>{shipA.name}</th>
+              {shipB && (
+                <th className="p-3 text-center font-[family-name:var(--font-mono)] text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipB.faction].accent }}>{shipB.name}</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {STAT_LABELS.map(sl => {
+              const va = shipA[sl.key as keyof ShipStat] as number;
+              const vb = shipB ? (shipB[sl.key as keyof ShipStat] as number) : null;
+              return (
+                <tr key={sl.key} className="border-b border-border/40 hover:bg-white/[0.02]">
+                  <td className="p-3 text-text-tertiary">{en ? sl.label : sl.ko}</td>
+                  <td className="p-3 text-center font-bold" style={{ color: FACTION_COLORS[shipA.faction].accent }}>{va}/10</td>
+                  {shipB && (
+                    <td className="p-3 text-center font-bold" style={{ color: FACTION_COLORS[shipB.faction].accent }}>{vb}/10</td>
+                  )}
+                </tr>
+              );
+            })}
+            <tr className="border-b border-border/40">
+              <td className="p-3 text-text-tertiary">{en ? "Tonnage" : "톤수"}</td>
+              <td className="p-3 text-center font-bold" style={{ color: FACTION_COLORS[shipA.faction].accent }}>{shipA.tonnageNum.toLocaleString()}t</td>
+              {shipB && (
+                <td className="p-3 text-center font-bold" style={{ color: FACTION_COLORS[shipB.faction].accent }}>{shipB.tonnageNum.toLocaleString()}t</td>
+              )}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Silhouettes */}
+      <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest text-text-tertiary mb-3">
+        {en ? "SILHOUETTE (Log Scale)" : "실루엣 (로그 스케일)"}
+      </div>
+      <div className="border border-border bg-bg-secondary p-4 rounded space-y-4">
+        <ShipSilhouette ship={shipA} />
+        {shipB && <ShipSilhouette ship={shipB} />}
       </div>
     </div>
   );

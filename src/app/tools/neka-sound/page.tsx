@@ -90,7 +90,9 @@ export default function NekaSoundPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ttsCanvasRef = useRef<HTMLCanvasElement>(null);
   const vizFrameRef = useRef<number | null>(null);
+  const ttsVizFrameRef = useRef<number | null>(null);
 
   const getAudioCtx = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -145,6 +147,52 @@ export default function NekaSoundPage() {
     };
   }, [tab]);
 
+  /* ── TTS Tab Visualizer ── */
+  useEffect(() => {
+    if (tab !== "tts") {
+      if (ttsVizFrameRef.current) cancelAnimationFrame(ttsVizFrameRef.current);
+      return;
+    }
+    const canvas = ttsCanvasRef.current;
+    if (!canvas) return;
+    const ctx2 = canvas.getContext("2d");
+    if (!ctx2) return;
+    const analyser = analyserRef.current;
+    const bufLen = analyser ? analyser.frequencyBinCount : 512;
+    const dataArr = new Uint8Array(bufLen);
+
+    function draw() {
+      ttsVizFrameRef.current = requestAnimationFrame(draw);
+      const w = canvas!.offsetWidth;
+      const h = canvas!.offsetHeight;
+      canvas!.width = w;
+      canvas!.height = h;
+      ctx2!.fillStyle = "#0a0a0c";
+      ctx2!.fillRect(0, 0, w, h);
+      if (analyser) {
+        analyser.getByteTimeDomainData(dataArr);
+        ctx2!.lineWidth = 1.2;
+        ctx2!.strokeStyle = "#d4a017";
+        ctx2!.shadowBlur = 4;
+        ctx2!.shadowColor = "#d4a017";
+        ctx2!.beginPath();
+        const sliceW = w / bufLen;
+        let x = 0;
+        for (let i = 0; i < bufLen; i++) {
+          const v = dataArr[i] / 128.0;
+          const y = (v * h) / 2;
+          if (i === 0) { ctx2!.moveTo(x, y); } else { ctx2!.lineTo(x, y); }
+          x += sliceW;
+        }
+        ctx2!.stroke();
+      }
+    }
+    draw();
+    return () => {
+      if (ttsVizFrameRef.current) cancelAnimationFrame(ttsVizFrameRef.current);
+    };
+  }, [tab]);
+
   // Cleanup AudioContext on unmount
   useEffect(() => {
     return () => {
@@ -184,6 +232,50 @@ export default function NekaSoundPage() {
     speechSynthesis.cancel();
     speechSynthesis.speak(utt);
   };
+
+  /* ── Synthesize all syllables via Web Audio (signal-style) ── */
+  const [isSynthPlaying, setIsSynthPlaying] = useState(false);
+  const synthAll = useCallback(() => {
+    if (syllables.length === 0) return;
+    setIsSynthPlaying(true);
+    const ctx = getAudioCtx();
+    let offset = ctx.currentTime + 0.05;
+    const noteDur = 0.25;
+    const gap = 0.05;
+
+    for (const syl of syllables) {
+      if (syl.roman.trim() === "") { offset += 0.15; continue; }
+      // find matching consonant + vowel
+      const chars = syl.roman;
+      const matchedCons = CONSONANTS.find(c => c.ttsRoman && chars.startsWith(c.ttsRoman));
+      const vowPart = matchedCons ? chars.slice(matchedCons.ttsRoman.length) : chars;
+      const matchedVow = VOWELS.find(v => v.ttsRoman === vowPart);
+
+      const freq = matchedCons && matchedCons.freq > 0
+        ? matchedCons.freq + (matchedVow ? matchedVow.freq * 0.3 : 0)
+        : (matchedVow ? matchedVow.freq : 440);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = matchedCons?.sig === "byun" ? "sawtooth" : matchedCons?.sig === "chung" ? "square" : "sine";
+      osc.frequency.setValueAtTime(freq, offset);
+      if (matchedVow) {
+        osc.frequency.linearRampToValueAtTime(freq * 1.05, offset + noteDur * 0.5);
+        osc.frequency.linearRampToValueAtTime(freq, offset + noteDur);
+      }
+      osc.connect(gain);
+      gain.connect(analyserRef.current ?? ctx.destination);
+      gain.gain.setValueAtTime(0, offset);
+      gain.gain.linearRampToValueAtTime(0.18, offset + 0.02);
+      gain.gain.setValueAtTime(0.18, offset + noteDur - 0.04);
+      gain.gain.linearRampToValueAtTime(0, offset + noteDur);
+      osc.start(offset);
+      osc.stop(offset + noteDur);
+      offset += noteDur + gap;
+    }
+    const totalDur = (offset - ctx.currentTime) * 1000 + 100;
+    setTimeout(() => setIsSynthPlaying(false), totalDur);
+  }, [syllables, getAudioCtx]);
 
   /* ── Signal Sound ── */
   const playSigSound = (data: { sig?: SigType; freq: number; roman: string; id: string }, type: "cons" | "vow") => {
@@ -446,9 +538,24 @@ export default function NekaSoundPage() {
                       )}
                     </div>
                     {/* Buttons */}
+                    {/* TTS Mini Visualizer */}
+                    <div className="border border-border border-t-2 border-t-[#d4a017] bg-bg-primary rounded overflow-hidden relative">
+                      <span className="absolute top-1 left-2.5 font-[family-name:var(--font-mono)] text-[7px] tracking-widest text-[#d4a017]/50">
+                        SYNTH OUTPUT
+                      </span>
+                      <canvas ref={ttsCanvasRef} className="block w-full h-14" />
+                    </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={speakAll} aria-label={en ? "Play all syllables" : "전체 재생"} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
-                        ▶ {en ? "PLAY ALL" : "전체 재생"}
+                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
+                        ▶ {en ? "TTS SPEAK" : "TTS 발음"}
+                      </button>
+                      <button
+                        onClick={synthAll}
+                        disabled={isSynthPlaying || syllables.length === 0}
+                        aria-label={en ? "Synthesize all syllables" : "음향 합성 재생"}
+                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-all rounded disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        ♫ {en ? "SYNTH PLAY" : "음향 합성"}
                       </button>
                       <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
                         SPACE

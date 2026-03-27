@@ -11,6 +11,8 @@ import { L4 } from '@/lib/i18n';
 interface Props {
   simData: WorldSimData;
   language: AppLanguage;
+  selectedEra?: string;
+  onSelectEra?: (era: string) => void;
 }
 
 interface TimelineTrack {
@@ -77,7 +79,7 @@ const TRACK_H = 40;
 const ERA_W = 120;
 const PAD = { top: 40, left: 100, right: 20, bottom: 20 };
 
-export default function WorldTimeline({ simData, language }: Props) {
+export default function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
   const isKO = language === 'KO';
   const { tracks, allEras } = useMemo(() => buildTracks(simData), [simData]);
 
@@ -111,16 +113,28 @@ export default function WorldTimeline({ simData, language }: Props) {
           {/* Background */}
           <rect width={w} height={h} fill="var(--color-bg-secondary, #0f141c)" rx="8" opacity="0.5" />
 
-          {/* Era column headers */}
-          {allEras.map((era, i) => (
-            <g key={era}>
-              <line x1={PAD.left + i * ERA_W} y1={PAD.top - 10} x2={PAD.left + i * ERA_W} y2={h - PAD.bottom}
-                stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-              <text x={eraX(era)} y={PAD.top - 18} fill="rgba(255,255,255,0.4)" fontSize="8" textAnchor="middle" fontWeight="bold">
-                {era.length > 12 ? era.slice(0, 12) + '…' : era}
-              </text>
-            </g>
-          ))}
+          {/* Era column headers (clickable) */}
+          {allEras.map((era, i) => {
+            const isSelected = selectedEra === era;
+            return (
+              <g key={era} style={{ cursor: onSelectEra ? 'pointer' : undefined }}
+                onClick={() => onSelectEra?.(era)}>
+                {/* Highlight background for selected era */}
+                {isSelected && (
+                  <rect x={PAD.left + i * ERA_W} y={PAD.top - 10}
+                    width={ERA_W} height={h - PAD.top - PAD.bottom + 10}
+                    fill="rgba(139,92,246,0.08)" rx="4" />
+                )}
+                <line x1={PAD.left + i * ERA_W} y1={PAD.top - 10} x2={PAD.left + i * ERA_W} y2={h - PAD.bottom}
+                  stroke={isSelected ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)'} strokeWidth="0.5" />
+                <text x={eraX(era)} y={PAD.top - 18}
+                  fill={isSelected ? 'rgba(139,92,246,0.9)' : 'rgba(255,255,255,0.4)'}
+                  fontSize="8" textAnchor="middle" fontWeight="bold">
+                  {era.length > 12 ? era.slice(0, 12) + '…' : era}
+                </text>
+              </g>
+            );
+          })}
 
           {/* Track labels */}
           {tracks.map((track, i) => (
@@ -139,10 +153,12 @@ export default function WorldTimeline({ simData, language }: Props) {
               <g key={`band-${track.civName}`}>
                 <rect x={startX} y={trackY(i) - 12} width={Math.max(endX - startX, 20)} height={24}
                   rx="6" fill={track.color} opacity="0.12" stroke={track.color} strokeWidth="1" />
-                {/* Era dots */}
+                {/* Era dots (clickable) */}
                 {track.eras.map(era => (
                   <circle key={era} cx={eraX(era)} cy={trackY(i)} r="4"
-                    fill={track.color} opacity="0.8">
+                    fill={track.color} opacity={selectedEra && selectedEra !== era ? 0.3 : 0.8}
+                    style={{ cursor: onSelectEra ? 'pointer' : undefined }}
+                    onClick={e => { e.stopPropagation(); onSelectEra?.(era); }}>
                     <title>{track.civName} — {era}</title>
                   </circle>
                 ))}

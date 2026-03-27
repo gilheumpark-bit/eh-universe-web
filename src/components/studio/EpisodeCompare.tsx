@@ -4,11 +4,11 @@
 // PART 1 — Types & State
 // ============================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { L4 } from '@/lib/i18n';
-import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 
 interface Props {
   messages: Message[];
@@ -27,6 +27,24 @@ interface EpMetric {
   avgSentenceLen: number;
 }
 
+/** Paragraph-level analysis for drilldown */
+interface ParaAnalysis {
+  text: string;
+  tension: number;   // 0–100 estimated from sentence length variance
+  pacing: number;     // 0–100 estimated from dialogue density
+  isDialogue: boolean;
+}
+
+/** Full drilldown data for a single episode */
+interface DrilldownData {
+  index: number;
+  fullText: string;
+  paragraphs: ParaAnalysis[];
+  longestSentence: string;
+  shortestSentence: string;
+  highDialogueParagraphIdx: number;
+}
+
 const MAX_COMPARE = 4;
 
 const METRIC_KEYS = ['tension', 'pacing', 'immersion', 'eos'] as const;
@@ -37,6 +55,13 @@ const METRIC_COLORS: Record<MetricKey, string> = {
   pacing: '#3b82f6',
   immersion: '#22c55e',
   eos: '#a855f7',
+};
+
+const METRIC_LABELS: Record<MetricKey, string> = {
+  tension: 'TEN',
+  pacing: 'PAC',
+  immersion: 'IMM',
+  eos: 'EOS',
 };
 
 const COMPARE_PALETTE = ['#f59e0b', '#06b6d4', '#ec4899', '#84cc16'];
@@ -84,10 +109,169 @@ function extractEpMetrics(messages: Message[]): EpMetric[] {
   return metrics;
 }
 
-// IDENTITY_SEAL: PART-2 | role=extraction | inputs=Message[] | outputs=EpMetric[]
+/** Extract drilldown data for a specific episode index */
+function extractDrilldown(messages: Message[], targetIdx: number): DrilldownData | null {
+  let idx = 0;
+  for (const msg of messages) {
+    if (msg.role !== 'assistant' || !msg.content) continue;
+    idx++;
+    if (idx !== targetIdx) continue;
+
+    const text = msg.content;
+    const rawParas = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+
+    // Paragraph-level analysis
+    const paragraphs: ParaAnalysis[] = rawParas.map(p => {
+      const lines = p.split('\n').filter(l => l.trim());
+      const dialogueLines = lines.filter(l => /^[\s]*["「『—]/.test(l));
+      const isDialogue = dialogueLines.length > lines.length * 0.5;
+      const sents = p.split(/[.!?。！？]+/).filter(s => s.trim().length > 2);
+      const lengths = sents.map(s => s.trim().length);
+      const avgLen = lengths.length > 0 ? lengths.reduce((a, b) => a + b, 0) / lengths.length : 0;
+      const variance = lengths.length > 1
+        ? Math.sqrt(lengths.reduce((s, l) => s + (l - avgLen) ** 2, 0) / lengths.length)
+        : 0;
+      // Tension heuristic: higher variance = higher tension
+      const tension = Math.min(100, Math.round((variance / Math.max(avgLen, 1)) * 100));
+      // Pacing heuristic: dialogue-heavy = faster pacing
+      const pacing = isDialogue ? Math.min(100, 60 + dialogueLines.length * 10) : Math.min(100, Math.round(30 + lines.length * 5));
+      return { text: p, tension, pacing, isDialogue };
+    });
+
+    // Key sentences
+    const allSentences = text.split(/[.!?。！？]+/).map(s => s.trim()).filter(s => s.length > 5);
+    const longestSentence = allSentences.length > 0
+      ? allSentences.reduce((a, b) => a.length >= b.length ? a : b)
+      : '';
+    const shortestSentence = allSentences.length > 0
+      ? allSentences.reduce((a, b) => a.length <= b.length ? a : b)
+      : '';
+
+    // Highest dialogue density paragraph
+    let highDialogueParagraphIdx = 0;
+    let maxDialogueRatio = 0;
+    paragraphs.forEach((p, i) => {
+      const lines = p.text.split('\n').filter(l => l.trim());
+      const dlg = lines.filter(l => /^[\s]*["「『—]/.test(l));
+      const ratio = lines.length > 0 ? dlg.length / lines.length : 0;
+      if (ratio > maxDialogueRatio) {
+        maxDialogueRatio = ratio;
+        highDialogueParagraphIdx = i;
+      }
+    });
+
+    return { index: targetIdx, fullText: text, paragraphs, longestSentence, shortestSentence, highDialogueParagraphIdx };
+  }
+  return null;
+}
+
+// IDENTITY_SEAL: PART-2 | role=extraction | inputs=Message[] | outputs=EpMetric[],DrilldownData
 
 // ============================================================
-// PART 3 — Episode Selector
+// PART 3 — Full Trend Sparkline
+// ============================================================
+
+function FullTrendSparkline({ metrics, language }: { metrics: EpMetric[]; language: AppLanguage }) {
+  const [visibleMetrics, setVisibleMetrics] = useState<Record<MetricKey, boolean>>({
+    tension: true,
+    pacing: true,
+    immersion: true,
+    eos: true,
+  });
+
+  if (metrics.length < 2) return null;
+
+  const isKO = language === 'KO';
+  const w = 600;
+  const h = 100;
+  const padX = 24;
+  const padY = 12;
+  const chartW = w - padX * 2;
+  const chartH = h - padY * 2;
+
+  const toggleMetric = (key: MetricKey) => {
+    setVisibleMetrics(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div className="bg-black/20 border border-border/30 rounded-xl p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+          <Eye className="w-3.5 h-3.5" />
+          {isKO ? '전체 에피소드 추이' : 'Full Series Trajectory'}
+        </h4>
+        {/* Metric legend toggles */}
+        <div className="flex gap-2">
+          {METRIC_KEYS.map(key => (
+            <button
+              key={key}
+              onClick={() => toggleMetric(key)}
+              className={`flex items-center gap-1 text-[8px] font-bold uppercase transition-opacity ${
+                visibleMetrics[key] ? 'opacity-100' : 'opacity-30'
+              }`}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ background: METRIC_COLORS[key] }} />
+              {METRIC_LABELS[key]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-24" role="img" aria-label="Full trend sparkline">
+        {/* Subtle horizontal grid */}
+        {[25, 50, 75].map(v => (
+          <line key={v} x1={padX} y1={padY + chartH - (v / 100) * chartH} x2={w - padX} y2={padY + chartH - (v / 100) * chartH}
+            stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+        ))}
+
+        {/* One line per metric */}
+        {METRIC_KEYS.filter(key => visibleMetrics[key]).map(key => {
+          const color = METRIC_COLORS[key];
+          const points = metrics.map((m, i) => {
+            const x = padX + (metrics.length > 1 ? (i / (metrics.length - 1)) * chartW : chartW / 2);
+            const y = padY + chartH - (m[key] / 100) * chartH;
+            return `${x},${y}`;
+          }).join(' ');
+
+          // Gradient fill area
+          const areaPoints = [
+            `${padX},${padY + chartH}`,
+            ...metrics.map((m, i) => {
+              const x = padX + (metrics.length > 1 ? (i / (metrics.length - 1)) * chartW : chartW / 2);
+              const y = padY + chartH - (m[key] / 100) * chartH;
+              return `${x},${y}`;
+            }),
+            `${padX + (metrics.length > 1 ? ((metrics.length - 1) / (metrics.length - 1)) * chartW : chartW / 2)},${padY + chartH}`,
+          ].join(' ');
+
+          return (
+            <g key={key}>
+              <polygon fill={`${color}08`} points={areaPoints} />
+              <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"
+                points={points} opacity="0.8" />
+            </g>
+          );
+        })}
+
+        {/* Episode index labels at bottom (sparse) */}
+        {metrics.filter((_, i) => i === 0 || i === metrics.length - 1 || (i + 1) % Math.max(1, Math.ceil(metrics.length / 10)) === 0).map(m => {
+          const i = metrics.indexOf(m);
+          const x = padX + (metrics.length > 1 ? (i / (metrics.length - 1)) * chartW : chartW / 2);
+          return (
+            <text key={m.index} x={x} y={h - 1} fill="rgba(255,255,255,0.2)" fontSize="6" textAnchor="middle">
+              {m.index}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-3 | role=full-trend-sparkline | inputs=EpMetric[] | outputs=JSX
+
+// ============================================================
+// PART 4 — Episode Selector (with delta badges)
 // ============================================================
 
 function EpisodeSelector({ metrics, selected, onToggle, language }: {
@@ -97,6 +281,15 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
   language: AppLanguage;
 }) {
   const isKO = language === 'KO';
+
+  // Pre-compute delta map: index -> tension delta vs predecessor
+  const deltaMap = useMemo(() => {
+    const map = new Map<number, number>();
+    for (let i = 1; i < metrics.length; i++) {
+      map.set(metrics[i].index, metrics[i].tension - metrics[i - 1].tension);
+    }
+    return map;
+  }, [metrics]);
 
   return (
     <div className="space-y-2">
@@ -108,6 +301,7 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
           const selIdx = selected.indexOf(m.index);
           const isSelected = selIdx >= 0;
           const color = isSelected ? COMPARE_PALETTE[selIdx % COMPARE_PALETTE.length] : undefined;
+          const delta = deltaMap.get(m.index);
           return (
             <button
               key={m.index}
@@ -120,6 +314,14 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
               }`}
               style={isSelected ? { background: `${color}15`, borderColor: color } : undefined}
             >
+              {/* Delta badge */}
+              {delta != null && delta !== 0 && (
+                <span className={`absolute -top-1.5 -right-1.5 text-[7px] font-black px-1 py-px rounded-full leading-none ${
+                  delta > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {delta > 0 ? `▲+${delta}` : `▼${delta}`}
+                </span>
+              )}
               <div className="text-xs font-black">#{m.index}</div>
               <div className="text-[8px] opacity-60">{m.grade}</div>
               {/* Mini sparkline bar */}
@@ -136,13 +338,17 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
   );
 }
 
-// IDENTITY_SEAL: PART-3 | role=episode-selector | inputs=metrics,selected | outputs=JSX
+// IDENTITY_SEAL: PART-4 | role=episode-selector | inputs=metrics,selected | outputs=JSX
 
 // ============================================================
-// PART 4 — Overlay Chart & Comparison Table
+// PART 5 — Overlay Chart & Comparison Table (with click-to-drill)
 // ============================================================
 
-function OverlayChart({ episodes, language }: { episodes: EpMetric[]; language: AppLanguage }) {
+function OverlayChart({ episodes, language, onEpisodeClick }: {
+  episodes: EpMetric[];
+  language: AppLanguage;
+  onEpisodeClick?: (idx: number) => void;
+}) {
   if (episodes.length === 0) return null;
 
   const w = 400;
@@ -203,9 +409,10 @@ function OverlayChart({ episodes, language }: { episodes: EpMetric[]; language: 
                   </g>
                 );
               })}
-              {/* Episode label */}
+              {/* Episode label (clickable) */}
               <text x={w - padX + 5} y={padY + chartH - (ep[metricLabels[metricLabels.length - 1]] / 100) * chartH + 3}
-                fill={color} fontSize="8" fontWeight="bold">
+                fill={color} fontSize="8" fontWeight="bold" className="cursor-pointer"
+                onClick={() => onEpisodeClick?.(ep.index)}>
                 #{ep.index}
               </text>
             </g>
@@ -220,7 +427,9 @@ function OverlayChart({ episodes, language }: { episodes: EpMetric[]; language: 
             <tr className="text-text-tertiary uppercase tracking-wider">
               <th className="text-left py-1 px-2">{language === 'KO' ? '지표' : 'Metric'}</th>
               {episodes.map((ep, i) => (
-                <th key={ep.index} className="text-center py-1 px-2" style={{ color: COMPARE_PALETTE[i] }}>
+                <th key={ep.index} className="text-center py-1 px-2 cursor-pointer hover:underline"
+                  style={{ color: COMPARE_PALETTE[i] }}
+                  onClick={() => onEpisodeClick?.(ep.index)}>
                   #{ep.index} ({ep.grade})
                 </th>
               ))}
@@ -262,10 +471,114 @@ function OverlayChart({ episodes, language }: { episodes: EpMetric[]; language: 
   );
 }
 
-// IDENTITY_SEAL: PART-4 | role=overlay-chart-table | inputs=EpMetric[] | outputs=JSX
+// IDENTITY_SEAL: PART-5 | role=overlay-chart-table | inputs=EpMetric[],onEpisodeClick | outputs=JSX
 
 // ============================================================
-// PART 5 — Trend Analysis + Main Component
+// PART 6 — Drilldown Panel
+// ============================================================
+
+function DrilldownPanel({ data, language, onClose }: {
+  data: DrilldownData;
+  language: AppLanguage;
+  onClose: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isKO = language === 'KO';
+  const previewLen = 500;
+  const textPreview = data.fullText.slice(0, previewLen);
+  const hasMore = data.fullText.length > previewLen;
+
+  return (
+    <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-4 animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold text-white flex items-center gap-2">
+          <Eye className="w-3.5 h-3.5 text-text-tertiary" />
+          {isKO ? `에피소드 #${data.index} 상세` : `Episode #${data.index} Drilldown`}
+        </h3>
+        <button onClick={onClose} className="text-[9px] text-text-tertiary hover:text-white transition-colors uppercase tracking-wider font-bold">
+          {isKO ? '닫기' : 'Close'}
+        </button>
+      </div>
+
+      {/* Text preview */}
+      <div className="space-y-1">
+        <p className="text-[9px] text-text-tertiary uppercase tracking-widest font-bold">
+          {isKO ? '본문 미리보기' : 'Text Preview'}
+        </p>
+        <div className="bg-black/20 rounded-lg p-3 text-[10px] text-text-secondary leading-relaxed whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
+          {expanded ? data.fullText : textPreview}
+          {hasMore && !expanded && '...'}
+        </div>
+        {hasMore && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[8px] text-text-tertiary hover:text-white transition-colors font-bold uppercase"
+          >
+            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {expanded ? (isKO ? '접기' : 'Show less') : (isKO ? '더 보기' : 'Show more')}
+          </button>
+        )}
+      </div>
+
+      {/* Per-paragraph tension/pacing bars */}
+      <div className="space-y-1">
+        <p className="text-[9px] text-text-tertiary uppercase tracking-widest font-bold">
+          {isKO ? '문단별 긴장감 / 호흡' : 'Per-Paragraph Tension / Pacing'}
+        </p>
+        <div className="space-y-1 max-h-48 overflow-y-auto">
+          {data.paragraphs.map((p, i) => (
+            <div key={i} className={`flex items-center gap-2 p-1.5 rounded-md text-[8px] ${
+              i === data.highDialogueParagraphIdx ? 'bg-purple-500/10 border border-purple-500/20' : 'bg-black/10'
+            }`}>
+              <span className="text-text-tertiary font-mono w-5 shrink-0 text-right">P{i + 1}</span>
+              {/* Tension bar */}
+              <div className="flex-1 h-2 bg-black/20 rounded-full overflow-hidden" title={`Tension: ${p.tension}`}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${p.tension}%`, background: METRIC_COLORS.tension }} />
+              </div>
+              {/* Pacing bar */}
+              <div className="flex-1 h-2 bg-black/20 rounded-full overflow-hidden" title={`Pacing: ${p.pacing}`}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${p.pacing}%`, background: METRIC_COLORS.pacing }} />
+              </div>
+              {p.isDialogue && <span className="text-[7px] text-purple-400 font-bold shrink-0">DLG</span>}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-4 text-[7px] text-text-tertiary">
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-1 rounded-full" style={{ background: METRIC_COLORS.tension }} /> {isKO ? '긴장감' : 'Tension'}</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-1 rounded-full" style={{ background: METRIC_COLORS.pacing }} /> {isKO ? '호흡' : 'Pacing'}</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-1 rounded-sm bg-purple-500/30" /> {isKO ? '최다대화 문단' : 'Top dialogue para'}</span>
+        </div>
+      </div>
+
+      {/* Key sentences */}
+      <div className="space-y-1">
+        <p className="text-[9px] text-text-tertiary uppercase tracking-widest font-bold">
+          {isKO ? '주요 문장' : 'Key Sentences'}
+        </p>
+        <div className="space-y-1.5">
+          {data.longestSentence && (
+            <div className="bg-black/10 rounded-lg p-2">
+              <span className="text-[7px] text-text-tertiary uppercase font-bold block mb-0.5">{isKO ? '최장 문장' : 'Longest'}</span>
+              <p className="text-[9px] text-text-secondary leading-relaxed">{data.longestSentence.slice(0, 200)}{data.longestSentence.length > 200 ? '...' : ''}</p>
+            </div>
+          )}
+          {data.shortestSentence && (
+            <div className="bg-black/10 rounded-lg p-2">
+              <span className="text-[7px] text-text-tertiary uppercase font-bold block mb-0.5">{isKO ? '최단 문장' : 'Shortest'}</span>
+              <p className="text-[9px] text-text-secondary leading-relaxed">{data.shortestSentence}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-6 | role=drilldown-panel | inputs=DrilldownData,language | outputs=JSX
+
+// ============================================================
+// PART 7 — Trend Analysis + Main Component
 // ============================================================
 
 function TrendIndicator({ current, previous }: { current: number; previous: number }) {
@@ -326,6 +639,7 @@ export default function EpisodeCompare({ messages, language }: Props) {
   const isKO = language === 'KO';
   const metrics = useMemo(() => extractEpMetrics(messages), [messages]);
   const [selected, setSelected] = useState<number[]>([]);
+  const [drilldownIdx, setDrilldownIdx] = useState<number | null>(null);
 
   const toggleEpisode = (idx: number) => {
     setSelected(prev =>
@@ -335,10 +649,19 @@ export default function EpisodeCompare({ messages, language }: Props) {
     );
   };
 
+  const handleDrilldown = useCallback((idx: number) => {
+    setDrilldownIdx(prev => prev === idx ? null : idx);
+  }, []);
+
   const selectedEpisodes = useMemo(
     () => selected.map(idx => metrics.find(m => m.index === idx)).filter((m): m is EpMetric => !!m),
     [selected, metrics]
   );
+
+  const drilldownData = useMemo(() => {
+    if (drilldownIdx == null) return null;
+    return extractDrilldown(messages, drilldownIdx);
+  }, [drilldownIdx, messages]);
 
   if (metrics.length < 2) {
     return (
@@ -350,10 +673,13 @@ export default function EpisodeCompare({ messages, language }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Trend overview */}
+      {/* Full trend sparkline — series-wide trajectory */}
+      <FullTrendSparkline metrics={metrics} language={language} />
+
+      {/* Trend overview (moving averages) */}
       <TrendSection metrics={metrics} language={language} />
 
-      {/* Episode selector */}
+      {/* Episode selector with delta badges */}
       <EpisodeSelector metrics={metrics} selected={selected} onToggle={toggleEpisode} language={language} />
 
       {/* Overlay chart + table */}
@@ -361,8 +687,11 @@ export default function EpisodeCompare({ messages, language }: Props) {
         <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
           <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
             {isKO ? '에피소드 비교' : 'Episode Comparison'}
+            <span className="ml-2 text-[8px] text-text-tertiary/50 font-normal">
+              {isKO ? '(헤더 클릭 시 상세 분석)' : '(click header to drill down)'}
+            </span>
           </h3>
-          <OverlayChart episodes={selectedEpisodes} language={language} />
+          <OverlayChart episodes={selectedEpisodes} language={language} onEpisodeClick={handleDrilldown} />
         </div>
       )}
 
@@ -371,8 +700,13 @@ export default function EpisodeCompare({ messages, language }: Props) {
           {isKO ? '위에서 에피소드를 선택하면 비교 차트가 표시됩니다' : 'Select episodes above to see comparison chart'}
         </div>
       )}
+
+      {/* Drilldown panel */}
+      {drilldownData && (
+        <DrilldownPanel data={drilldownData} language={language} onClose={() => setDrilldownIdx(null)} />
+      )}
     </div>
   );
 }
 
-// IDENTITY_SEAL: PART-5 | role=trend-analysis+main | inputs=messages,language | outputs=JSX
+// IDENTITY_SEAL: PART-7 | role=trend-analysis+main | inputs=messages,language | outputs=JSX

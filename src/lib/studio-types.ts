@@ -420,6 +420,10 @@ export interface GeneratedVisualAsset {
   imageUrl: string;
   promptSnapshot: string;
   createdAt: number;
+  // Scene gallery extensions
+  assignedEpisode?: number;
+  favorite?: boolean;
+  revisedPrompt?: string;
 }
 
 export interface VisualPreset {

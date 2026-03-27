@@ -1,13 +1,16 @@
 "use client";
 
 // ============================================================
-// Share to Network — publish studio content to community
+// PART 1 — Types, constants, and planet loader
 // ============================================================
 
-import React, { useState } from 'react';
-import { Share2, X, Globe, Lock, Users as UsersIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Share2, X, Globe, Lock, Users as UsersIcon, Check, AlertCircle, ChevronDown } from 'lucide-react';
 import type { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
+import { listPlanetsByOwner, createBoardPost } from '@/lib/network-firestore';
+import type { PlanetRecord, BoardType } from '@/lib/network-types';
 
 interface Props {
   language: AppLanguage;
@@ -23,16 +26,19 @@ export interface SharePayload {
   content: string;
   visibility: 'public' | 'members' | 'private';
   episodeIndices?: number[];
+  /** Set after successful network publish */
+  publishedPostId?: string;
 }
 
 type ShareType = SharePayload['type'];
 type Visibility = SharePayload['visibility'];
+type PublishStatus = 'idle' | 'loading' | 'success' | 'error';
 
-const SHARE_TYPES: { value: ShareType; ko: string; en: string }[] = [
-  { value: 'episode', ko: '에피소드', en: 'Episode' },
-  { value: 'character_sheet', ko: '캐릭터 시트', en: 'Character Sheet' },
-  { value: 'world_bible', ko: '세계관 설정', en: 'World Bible' },
-  { value: 'style_profile', ko: '문체 프로필', en: 'Style Profile' },
+const SHARE_TYPES: { value: ShareType; ko: string; en: string; boardType: BoardType }[] = [
+  { value: 'episode', ko: '에피소드', en: 'Episode', boardType: 'log' },
+  { value: 'character_sheet', ko: '캐릭터 시트', en: 'Character Sheet', boardType: 'log' },
+  { value: 'world_bible', ko: '세계관 설정', en: 'World Bible', boardType: 'registry' },
+  { value: 'style_profile', ko: '문체 프로필', en: 'Style Profile', boardType: 'feedback' },
 ];
 
 const VISIBILITIES: { value: Visibility; ko: string; en: string; icon: React.ElementType }[] = [
@@ -41,12 +47,50 @@ const VISIBILITIES: { value: Visibility; ko: string; en: string; icon: React.Ele
   { value: 'private', ko: '비공개', en: 'Private', icon: Lock },
 ];
 
+// IDENTITY_SEAL: PART-1 | role=type definitions and constants | inputs=none | outputs=share type enums and planet loader
+
+// ============================================================
+// PART 2 — Main component
+// ============================================================
+
 export default function ShareToNetwork({ language, config, messages, onClose, onShare }: Props) {
   const isKO = language === 'KO';
+  const { user } = useAuth();
   const [shareType, setShareType] = useState<ShareType>('episode');
   const [visibility, setVisibility] = useState<Visibility>('members');
   const [title, setTitle] = useState(config.title || '');
-  const [sending, setSending] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle');
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  // Planet selection for network publish
+  const [planets, setPlanets] = useState<PlanetRecord[]>([]);
+  const [selectedPlanetId, setSelectedPlanetId] = useState<string>('');
+  const [planetsLoading, setPlanetsLoading] = useState(false);
+  const [showPlanetDropdown, setShowPlanetDropdown] = useState(false);
+
+  // Load user's planets
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    const load = async () => {
+      setPlanetsLoading(true);
+      try {
+        const owned = await listPlanetsByOwner(user.uid);
+        if (!cancelled) {
+          setPlanets(owned);
+          if (owned.length > 0) setSelectedPlanetId(owned[0].id);
+        }
+      } catch {
+        // Non-critical — user can still share without planet
+      } finally {
+        if (!cancelled) setPlanetsLoading(false);
+      }
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [user]);
 
   // Count assistant messages as episodes
   const episodes = messages.filter(m => m.role === 'assistant' && m.content);
@@ -74,17 +118,55 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
     }
   };
 
-  const handleShare = async () => {
-    setSending(true);
+  const handlePublishToNetwork = async () => {
+    if (!user) return;
+
+    setPublishStatus('loading');
+    setPublishError(null);
+
+    const content = buildContent();
+    const matchedType = SHARE_TYPES.find(st => st.value === shareType);
+    const boardType: BoardType = matchedType?.boardType ?? 'log';
+
+    try {
+      const postRecord = await createBoardPost({
+        authorId: user.uid,
+        boardType,
+        title: title.trim(),
+        content,
+        tags: shareType === 'world_bible' ? ['world-bible', 'studio-export'] : ['studio-export'],
+        planetId: selectedPlanetId || undefined,
+        visibility,
+      });
+
+      setPublishStatus('success');
+      onShare?.({ type: shareType, title, content, visibility, publishedPostId: postRecord.id });
+
+      // Auto-close after 2s on success
+      setTimeout(() => onClose(), 2000);
+    } catch (caught) {
+      setPublishStatus('error');
+      setPublishError(
+        caught instanceof Error
+          ? caught.message
+          : isKO ? '게시에 실패했습니다.' : 'Failed to publish.',
+      );
+    }
+  };
+
+  const handleLocalShare = () => {
     const content = buildContent();
     onShare?.({ type: shareType, title, content, visibility });
-    // In real implementation, this would call network-firestore.ts
-    // For now, signal the parent
-    setTimeout(() => {
-      setSending(false);
-      onClose();
-    }, 500);
+    onClose();
   };
+
+  const selectedPlanet = planets.find(p => p.id === selectedPlanetId);
+
+  // IDENTITY_SEAL: PART-2 | role=main share modal component | inputs=studio config, messages, auth | outputs=share/publish UI
+
+  // ============================================================
+  // PART 3 — Render
+  // ============================================================
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -134,6 +216,53 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           />
         </div>
 
+        {/* Planet selection (only if user has planets) */}
+        {user && planets.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">
+              {isKO ? '게시할 행성' : 'Target Planet'}
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowPlanetDropdown(prev => !prev)}
+                className="w-full flex items-center justify-between ds-input text-sm text-left"
+              >
+                <span className={selectedPlanet ? 'text-text-primary' : 'text-text-tertiary'}>
+                  {planetsLoading
+                    ? (isKO ? '불러오는 중...' : 'Loading...')
+                    : selectedPlanet?.name ?? (isKO ? '행성 선택 (선택사항)' : 'Select planet (optional)')
+                  }
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />
+              </button>
+              {showPlanetDropdown && (
+                <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto bg-bg-primary border border-border rounded-xl shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPlanetId(''); setShowPlanetDropdown(false); }}
+                    className="w-full text-left px-3 py-2 text-[11px] text-text-tertiary hover:bg-white/5 transition"
+                  >
+                    {isKO ? '행성 없이 게시' : 'Post without planet'}
+                  </button>
+                  {planets.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setSelectedPlanetId(p.id); setShowPlanetDropdown(false); }}
+                      className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition ${
+                        selectedPlanetId === p.id ? 'text-accent-amber font-semibold' : 'text-text-secondary'
+                      }`}
+                    >
+                      {p.name} <span className="text-text-tertiary">· {p.genre}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Visibility */}
         <div className="space-y-1.5">
           <label className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">
@@ -172,20 +301,51 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           )}
         </div>
 
+        {/* Publish status feedback */}
+        {publishStatus === 'success' && (
+          <div className="flex items-center gap-2 text-[11px] text-green-400 bg-green-900/20 border border-green-800/40 rounded-xl px-4 py-2.5">
+            <Check className="w-4 h-4" />
+            {isKO ? '네트워크에 게시되었습니다!' : 'Published to Network!'}
+          </div>
+        )}
+        {publishStatus === 'error' && publishError && (
+          <div className="flex items-center gap-2 text-[11px] text-red-400 bg-red-900/20 border border-red-800/40 rounded-xl px-4 py-2.5">
+            <AlertCircle className="w-4 h-4" />
+            {publishError}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-[10px] font-bold border border-border text-text-tertiary hover:text-white transition-all">
             {isKO ? '취소' : 'Cancel'}
           </button>
-          <button
-            onClick={handleShare}
-            disabled={!title.trim() || sending}
-            className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-all active:scale-95"
-          >
-            {sending ? (isKO ? '공유 중...' : 'Sharing...') : (isKO ? '공유하기' : 'Share')}
-          </button>
+          {!user ? (
+            <button
+              onClick={handleLocalShare}
+              disabled={!title.trim()}
+              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-all active:scale-95"
+            >
+              {isKO ? '로컬 공유' : 'Share Locally'}
+            </button>
+          ) : (
+            <button
+              onClick={handlePublishToNetwork}
+              disabled={!title.trim() || publishStatus === 'loading' || publishStatus === 'success'}
+              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-all active:scale-95"
+            >
+              {publishStatus === 'loading'
+                ? (isKO ? '게시 중...' : 'Publishing...')
+                : publishStatus === 'success'
+                  ? (isKO ? '완료!' : 'Done!')
+                  : (isKO ? '네트워크에 게시' : 'Publish to Network')
+              }
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+// IDENTITY_SEAL: PART-3 | role=share modal renderer | inputs=state, publish handlers | outputs=share modal UI with planet selection and publish feedback

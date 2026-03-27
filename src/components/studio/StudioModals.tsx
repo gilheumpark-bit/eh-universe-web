@@ -62,7 +62,7 @@ export function MoveSessionModal({
   const isKO = language === 'KO';
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4" onClick={e => e.stopPropagation()}>
+      <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
         <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
         <select autoFocus
           className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
@@ -96,7 +96,7 @@ export function SaveSlotModal({
   const isKO = language === 'KO';
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-bg-primary border border-border rounded-2xl p-6 w-[360px] space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
         <h3 className="text-sm font-bold text-text-primary">{t('saveSlot.enterSaveName')}</h3>
         <input
           autoFocus

@@ -4,7 +4,7 @@
 // PART 1 — 상태 및 상수 정의
 // ============================================================
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
@@ -113,6 +113,190 @@ const getSliderTrackStyle = (value: number): React.CSSProperties => {
     background: `linear-gradient(90deg, var(--color-accent-amber) 0%, var(--color-accent-amber) ${progress}%, rgba(107, 114, 142, 0.34) ${progress}%, rgba(107, 114, 142, 0.34) 100%)`,
   };
 };
+
+// ============================================================
+// PART 1-B — 레이더 차트 + 텍스트 분석 컴포넌트
+// ============================================================
+
+/** Benchmark author style profiles — slider values [s1..s5] mapped 1–5 */
+const AUTHOR_PROFILES: Record<string, { ko: string; en: string; values: [number, number, number, number, number] }> = {
+  "ted-chiang": { ko: "테드 창", en: "Ted Chiang", values: [3, 1, 3, 2, 5] },
+  "liu-cixin": { ko: "류츠신", en: "Liu Cixin", values: [4, 2, 4, 2, 5] },
+  "han-kang": { ko: "한강", en: "Han Kang", values: [4, 5, 5, 5, 4] },
+  "murakami": { ko: "무라카미 하루키", en: "Haruki Murakami", values: [4, 3, 4, 4, 3] },
+  "sanderson": { ko: "브랜든 샌더슨", en: "Brandon Sanderson", values: [2, 3, 3, 3, 3] },
+  "sing-shong": { ko: "싱숑", en: "Sing Shong", values: [1, 3, 3, 5, 2] },
+  "djuna": { ko: "듀나", en: "Djuna", values: [2, 1, 3, 2, 4] },
+  "leguin": { ko: "어슐러 르 귄", en: "Ursula K. Le Guin", values: [3, 3, 4, 3, 4] },
+};
+
+/** Pentagon radar chart — pure SVG, no deps */
+function RadarChart({ values, benchmarkValues, labels, size = 220 }: {
+  values: number[];
+  benchmarkValues?: number[];
+  labels: string[];
+  size?: number;
+}) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = size * 0.38;
+  const angleOffset = -Math.PI / 2;
+
+  const pointAt = (index: number, value: number): [number, number] => {
+    const angle = angleOffset + (2 * Math.PI * index) / 5;
+    const r = (value / 5) * maxR;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  };
+
+  const polygonPoints = (vals: number[]) =>
+    vals.map((v, i) => pointAt(i, v).join(",")).join(" ");
+
+  const gridLevels = [1, 2, 3, 4, 5];
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ display: "block", margin: "0 auto" }}>
+      {/* Grid lines */}
+      {gridLevels.map((level) => (
+        <polygon
+          key={level}
+          points={Array.from({ length: 5 }, (_, i) => pointAt(i, level).join(",")).join(" ")}
+          fill="none"
+          stroke="rgba(107,114,142,0.18)"
+          strokeWidth={level === 5 ? 1.2 : 0.6}
+        />
+      ))}
+      {/* Axis lines */}
+      {Array.from({ length: 5 }, (_, i) => {
+        const [ex, ey] = pointAt(i, 5);
+        return <line key={i} x1={cx} y1={cy} x2={ex} y2={ey} stroke="rgba(107,114,142,0.15)" strokeWidth={0.6} />;
+      })}
+      {/* Benchmark fill */}
+      {benchmarkValues && (
+        <polygon
+          points={polygonPoints(benchmarkValues)}
+          fill="rgba(99,180,255,0.15)"
+          stroke="rgba(99,180,255,0.7)"
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+        />
+      )}
+      {/* User fill */}
+      <polygon
+        points={polygonPoints(values)}
+        fill="rgba(245,166,35,0.2)"
+        stroke="var(--color-accent-amber, #f5a623)"
+        strokeWidth={2}
+      />
+      {/* User dots */}
+      {values.map((v, i) => {
+        const [px, py] = pointAt(i, v);
+        return <circle key={i} cx={px} cy={py} r={3.5} fill="var(--color-accent-amber, #f5a623)" />;
+      })}
+      {/* Benchmark dots */}
+      {benchmarkValues?.map((v, i) => {
+        const [px, py] = pointAt(i, v);
+        return <circle key={`b${i}`} cx={px} cy={py} r={2.5} fill="rgba(99,180,255,0.8)" />;
+      })}
+      {/* Labels */}
+      {labels.map((label, i) => {
+        const [lx, ly] = pointAt(i, 5.8);
+        return (
+          <text
+            key={i}
+            x={lx}
+            y={ly}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={10}
+            fill="var(--color-text-secondary, #999)"
+            fontFamily="inherit"
+          >
+            {label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+// IDENTITY_SEAL: PART-1B | role=RadarChart+AuthorProfiles | inputs=sliderVals,benchmarkKey | outputs=SVG
+
+/** Text analysis metrics computed from raw text */
+interface TextMetrics {
+  avgSentenceLen: number;
+  dialogueRatio: number;
+  vocabDiversity: number;
+  readingTimeSec: number;
+}
+
+function analyzeText(text: string): TextMetrics | null {
+  if (!text.trim()) return null;
+
+  const sentences = text.split(/[.!?。？！\n]+/).filter((s) => s.trim().length > 0);
+  const avgSentenceLen = sentences.length > 0
+    ? Math.round(sentences.reduce((sum, s) => sum + s.trim().length, 0) / sentences.length)
+    : 0;
+
+  // Dialogue: count chars inside quotes
+  const dialogueMatches = text.match(/["'""\u201C\u201D\u300C\u300D][^"'""\u201C\u201D\u300C\u300D]*["'""\u201C\u201D\u300C\u300D]/g);
+  const dialogueChars = dialogueMatches ? dialogueMatches.join("").length : 0;
+  const dialogueRatio = text.length > 0 ? Math.round((dialogueChars / text.length) * 100) : 0;
+
+  // Vocabulary diversity: unique / total (word-level, handles Korean via spaces)
+  const words = text.split(/\s+/).filter((w) => w.length > 0);
+  const unique = new Set(words.map((w) => w.toLowerCase()));
+  const vocabDiversity = words.length > 0 ? Math.round((unique.size / words.length) * 100) : 0;
+
+  // Reading time: ~200 words/min EN, ~500 chars/min KO (use char-based as universal fallback)
+  const charCount = text.replace(/\s/g, "").length;
+  const readingTimeSec = Math.max(1, Math.round((charCount / 500) * 60));
+
+  return { avgSentenceLen, dialogueRatio, vocabDiversity, readingTimeSec };
+}
+
+function TextAnalysisCards({ metrics, en }: { metrics: TextMetrics | null; en: boolean }) {
+  if (!metrics) return null;
+
+  const cards: { label: string; value: string }[] = [
+    {
+      label: en ? "Avg. Sentence" : "평균 문장 길이",
+      value: `${metrics.avgSentenceLen}${en ? " chars" : "자"}`,
+    },
+    {
+      label: en ? "Dialogue" : "대화 비율",
+      value: `${metrics.dialogueRatio}%`,
+    },
+    {
+      label: en ? "Vocab Diversity" : "어휘 다양성",
+      value: `${metrics.vocabDiversity}%`,
+    },
+    {
+      label: en ? "Reading Time" : "읽기 시간",
+      value: metrics.readingTimeSec < 60
+        ? `${metrics.readingTimeSec}${en ? "s" : "초"}`
+        : `${Math.floor(metrics.readingTimeSec / 60)}${en ? "m " : "분 "}${metrics.readingTimeSec % 60}${en ? "s" : "초"}`,
+    },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8 }}>
+      {cards.map((c) => (
+        <div
+          key={c.label}
+          style={{
+            background: "rgba(107,114,142,0.08)",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontSize: 12,
+          }}
+        >
+          <div style={{ color: "var(--color-text-tertiary, #888)", fontSize: 10, marginBottom: 2 }}>{c.label}</div>
+          <div style={{ fontWeight: 600, color: "var(--color-accent-amber, #f5a623)" }}>{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+// IDENTITY_SEAL: PART-1B-2 | role=TextAnalysis+MetricsCards | inputs=sourceText | outputs=TextMetrics
 
 interface CheckItem {
   title: string;
@@ -231,6 +415,29 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   const [resultText, setResultText] = useState("");
   const [loading, setLoading] = useState(false);
   const [showStylePresetMenu, setShowStylePresetMenu] = useState(false);
+  const [benchmarkAuthor, setBenchmarkAuthor] = useState<string>("");
+  const [textMetrics, setTextMetrics] = useState<TextMetrics | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced text analysis (500ms)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setTextMetrics(analyzeText(sourceText));
+    }, 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [sourceText]);
+
+  // Radar chart data
+  const radarValues = useMemo(
+    () => SLIDERS_I18N.map((s) => sliderVals[s.id] ?? s.defaultVal),
+    [sliderVals]
+  );
+  const radarLabels = useMemo(
+    () => SLIDERS_I18N.map((s) => (en ? s.en.split(" ")[0] : s.ko)),
+    [en]
+  );
+  const benchmarkProfile = benchmarkAuthor ? AUTHOR_PROFILES[benchmarkAuthor] : undefined;
 
   // 10 style presets — each sets slider values + DNA card selection
   const STYLE_PRESETS: { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
@@ -525,7 +732,79 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
               })}
             </div>
 
-            <button className="ss-btn-primary" onClick={() => setTab(1)}>
+            {/* Radar Chart + Benchmark Comparison */}
+            <hr className="ss-divider" />
+            <div className="ss-section-title">
+              {en ? "Style Radar" : "문체 레이더"}
+            </div>
+            <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div style={{ flex: "0 0 auto" }}>
+                <RadarChart
+                  values={radarValues}
+                  benchmarkValues={benchmarkProfile?.values}
+                  labels={radarLabels}
+                  size={240}
+                />
+                {/* Legend */}
+                <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, fontSize: 11 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(245,166,35,0.5)", display: "inline-block" }} />
+                    {en ? "My Style" : "내 문체"}
+                  </span>
+                  {benchmarkProfile && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(99,180,255,0.5)", display: "inline-block" }} />
+                      {en ? benchmarkProfile.en : benchmarkProfile.ko}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ fontSize: 12, color: "var(--color-text-secondary, #999)", display: "block", marginBottom: 6 }}>
+                  {en ? "Compare with..." : "비교 작가 선택"}
+                </label>
+                <select
+                  value={benchmarkAuthor}
+                  onChange={(e) => setBenchmarkAuthor(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: 6,
+                    border: "1px solid rgba(107,114,142,0.25)",
+                    background: "rgba(107,114,142,0.06)",
+                    color: "inherit",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">{en ? "— None —" : "— 선택 안 함 —"}</option>
+                  {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (
+                    <option key={key} value={key}>{en ? prof.en : prof.ko}</option>
+                  ))}
+                </select>
+                {benchmarkProfile && (
+                  <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6, color: "var(--color-text-secondary, #999)" }}>
+                    {SLIDERS_I18N.map((s, i) => {
+                      const mine = radarValues[i];
+                      const theirs = benchmarkProfile.values[i];
+                      const diff = mine - theirs;
+                      const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "=";
+                      const clr = diff > 0 ? "#f5a623" : diff < 0 ? "#63b4ff" : "#888";
+                      return (
+                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{en ? s.en : s.ko}</span>
+                          <span style={{ color: clr, fontWeight: 600 }}>
+                            {mine} vs {theirs} <span style={{ fontSize: 10 }}>{arrow}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button className="ss-btn-primary" onClick={() => setTab(1)} style={{ marginTop: 20 }}>
               {en ? "Next: Technique Checklist →" : "다음: 기법 체크리스트 →"}
             </button>
           </div>
@@ -629,6 +908,8 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                     : "여기에 원문을 붙여넣으세요.\n\n예시: '그는 창밖을 바라보며 무언가를 생각했다. 오늘따라 하늘이 특별히 파랗게 느껴졌다.'"
                   }
                 />
+                {/* Real-time text analysis */}
+                <TextAnalysisCards metrics={textMetrics} en={en} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

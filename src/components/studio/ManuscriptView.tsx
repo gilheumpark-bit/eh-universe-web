@@ -299,7 +299,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
   const progressPercent = totalTarget > 0 ? Math.min(100, Math.round((totalChars / totalTarget) * 100)) : 0;
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 md:py-12 md:px-6 space-y-6">
+    <div className="max-w-6xl mx-auto py-4 px-3 sm:py-8 sm:px-4 md:py-12 md:px-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -394,14 +394,14 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                 onClick={() => setExpandedEp(expandedEp === m.episode ? null : m.episode)}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-tertiary/30 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-black font-[family-name:var(--font-mono)] text-accent-purple">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <span className="text-xs font-black font-[family-name:var(--font-mono)] text-accent-purple shrink-0">
                     EP.{m.episode}
                   </span>
-                  <span className="text-xs font-bold text-text-primary truncate max-w-[200px]">
+                  <span className="text-xs font-bold text-text-primary truncate min-w-0">
                     {m.title}
                   </span>
-                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 hidden sm:inline">
                     {m.charCount.toLocaleString()}{t('manuscript.charUnit')}
                   </span>
                   {m.charCount >= targetPerEp ? (
@@ -447,7 +447,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                     </div>
                   ) : (
                     <div className="p-4">
-                      <div className="flex justify-end gap-2 mb-3">
+                      <div className="flex flex-wrap justify-end gap-2 mb-3">
                         <button
                           onClick={() => setAnalysisEp(analysisEp === m.episode ? null : m.episode)}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors ${
@@ -537,7 +537,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         </div>
                       )}
 
-                      <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-sm">
+                      <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[60vh] sm:max-h-[50vh] overflow-y-auto overscroll-contain whitespace-pre-wrap text-sm sm:text-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
                         {m.content}
                       </div>
                       <div className="mt-3 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">

@@ -4,7 +4,7 @@
 // PART 1 — Types & Imports
 // ============================================================
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { Plus, Link, Trash2 } from 'lucide-react';
@@ -13,6 +13,7 @@ interface Props {
   simData: WorldSimData;
   language: AppLanguage;
   onChange: (updated: Partial<WorldSimData>) => void;
+  highlightEra?: string;
 }
 
 type Territory = NonNullable<WorldSimData['territories']>[number];
@@ -34,7 +35,7 @@ const MAP_H = 400;
 // PART 2 — Territory Canvas (SVG-based draggable regions)
 // ============================================================
 
-export default function WorldMap({ simData, language, onChange }: Props) {
+export default function WorldMap({ simData, language, onChange, highlightEra }: Props) {
   const isKO = language === 'KO';
   const territories = simData.territories || [];
   const links = simData.territoryLinks || [];
@@ -47,6 +48,14 @@ export default function WorldMap({ simData, language, onChange }: Props) {
 
   const civNames = Array.from(new Set((simData.civs || []).map(c => c.name)));
   const civColors = Object.fromEntries((simData.civs || []).map(c => [c.name, c.color || '#6b7280']));
+
+  // Civs active in the highlighted era (for timeline sync)
+  const activeCivNames = useMemo(() => {
+    if (!highlightEra) return null;
+    const names = new Set<string>();
+    (simData.civs || []).forEach(c => { if (c.era === highlightEra) names.add(c.name); });
+    return names;
+  }, [highlightEra, simData.civs]);
 
   const toSVG = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
@@ -170,11 +179,20 @@ export default function WorldMap({ simData, language, onChange }: Props) {
         onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}
         role="img" aria-label={isKO ? '세계관 영토 지도' : 'World territory map'}
       >
-        {/* Grid */}
+        {/* Grid + Animations */}
         <defs>
           <pattern id="mapGrid" width="50" height="50" patternUnits="userSpaceOnUse">
             <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
           </pattern>
+          {highlightEra && (
+            <style>{`
+              @keyframes eraPulse {
+                0%, 100% { stroke-opacity: 1; stroke-width: 3; }
+                50% { stroke-opacity: 0.4; stroke-width: 1.5; }
+              }
+              .era-active-border { animation: eraPulse 1.5s ease-in-out infinite; }
+            `}</style>
+          )}
         </defs>
         <rect width={MAP_W} height={MAP_H} fill="url(#mapGrid)" />
 
@@ -199,14 +217,17 @@ export default function WorldMap({ simData, language, onChange }: Props) {
         {territories.map(t => {
           const color = t.color || civColors[t.civName] || '#6b7280';
           const isLinkTarget = linkMode && linkFrom === t.id;
+          const isEraActive = activeCivNames == null || activeCivNames.has(t.civName);
+          const dimmed = activeCivNames != null && !isEraActive;
           return (
             <g key={t.id}
-              style={{ cursor: linkMode ? 'crosshair' : 'grab' }}
+              style={{ cursor: linkMode ? 'crosshair' : 'grab', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}
               onPointerDown={e => handlePointerDown(t.id, e)}
             >
               {/* Territory circle */}
               <circle cx={t.x} cy={t.y} r="25" fill={color} opacity="0.1" stroke={color}
-                strokeWidth={isLinkTarget ? 3 : 1.5} strokeDasharray={isLinkTarget ? '4,2' : undefined} />
+                strokeWidth={isLinkTarget ? 3 : 1.5} strokeDasharray={isLinkTarget ? '4,2' : undefined}
+                className={isEraActive && activeCivNames != null ? 'era-active-border' : undefined} />
               <circle cx={t.x} cy={t.y} r="6" fill={color} opacity="0.7" />
               {/* Name */}
               <text x={t.x} y={t.y + 18} fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">

@@ -306,6 +306,60 @@ export default function StudioPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
+  // ============================================================
+  // POST IMPORT FROM NETWORK (Open in Studio)
+  // ============================================================
+  useEffect(() => {
+    if (!hydrated) return;
+    const raw = searchParams.get('postImport');
+    if (!raw) return;
+    try {
+      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      const importedConfig: Partial<StoryConfig> = {
+        title: json.title ?? '',
+        synopsis: json.content?.slice(0, 500) ?? '',
+      };
+      if (json.planetName) {
+        importedConfig.setting = json.planetName;
+      }
+      const importedSessionId = doCreateNewSession();
+      setProjects(prevProjects => prevProjects.map(project => {
+        if (!project.sessions.some(session => session.id === importedSessionId)) {
+          return project;
+        }
+        return {
+          ...project,
+          lastUpdate: Date.now(),
+          sessions: project.sessions.map(session =>
+            session.id === importedSessionId
+              ? {
+                  ...session,
+                  config: { ...session.config, ...importedConfig },
+                  messages: [
+                    ...session.messages,
+                    {
+                      id: `import-${Date.now()}`,
+                      role: 'assistant' as const,
+                      content: json.content ?? '',
+                      timestamp: Date.now(),
+                    },
+                  ],
+                  lastUpdate: Date.now(),
+                }
+              : session,
+          ),
+        };
+      }));
+      setActiveTab('writing');
+      setWorldImportBanner(true);
+      setTimeout(() => setWorldImportBanner(false), 5000);
+      studioRouter.replace('/studio', { scroll: false });
+    } catch {
+      // invalid payload — ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
   // ?setup=1 → API 키 모달 자동 오픈 (StudioChoiceScreen에서 "API 사용" 선택 시)
   useEffect(() => {
     if (!hydrated) return;
@@ -727,7 +781,7 @@ export default function StudioPage() {
       {currentSession && activeTab !== 'writing' && (
         <button
           onClick={() => setMobileDrawerOpen(true)}
-          className="fixed bottom-20 right-4 z-30 lg:hidden p-3 bg-accent-purple text-white rounded-full shadow-lg shadow-accent-purple/30 active:scale-90 transition-transform"
+          className="fixed bottom-24 right-4 z-30 lg:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center bg-accent-purple text-white rounded-full shadow-lg shadow-accent-purple/30 active:scale-90 transition-transform"
           aria-label={language === 'KO' ? '참고 패널 열기' : 'Open reference panel'}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -855,7 +909,7 @@ export default function StudioPage() {
         {showShortcuts && <ShortcutsModal language={language} onClose={() => setShowShortcuts(false)} />}
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
+          <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
             {/* API 키 미설정 안내 배너 */}
             {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !localStorage.getItem('noa_api_banner_dismissed') && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">

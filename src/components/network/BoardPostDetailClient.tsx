@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/LangContext";
 import { CommentSection } from "@/components/network/CommentSection";
@@ -43,6 +44,7 @@ interface BoardPostDetailClientProps {
 
 export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
   const { lang } = useLang();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<PostRecord | null>(null);
@@ -177,6 +179,24 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
             <span>{lang === "ko" ? `조회 ${post.metrics.viewCount}` : `${post.metrics.viewCount} views`}</span>
             <span>{lang === "ko" ? `댓글 ${post.metrics.commentCount}` : `${post.metrics.commentCount} comments`}</span>
             <span>{lang === "ko" ? `반응 ${post.metrics.reactionCount}` : `${post.metrics.reactionCount} reactions`}</span>
+            <button
+              type="button"
+              onClick={() => {
+                const payload = {
+                  title: post.title,
+                  content: post.content,
+                  tags: post.tags,
+                  planetName: planet?.name ?? '',
+                  boardType: post.boardType,
+                  reportType: post.reportType,
+                };
+                const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+                router.push(`/studio?postImport=${encoded}`);
+              }}
+              className="ml-auto rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
+            >
+              {lang === "ko" ? "Studio에서 열기" : "Open in Studio"}
+            </button>
           </div>
         </article>
 
