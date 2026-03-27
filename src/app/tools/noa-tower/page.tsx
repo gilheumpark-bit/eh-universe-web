@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 // ============================================================
 // PART 1 — Data Types & Constants
@@ -1195,6 +1196,14 @@ export default function NoaTowerPage() {
       <Header />
       <main className={`min-h-screen bg-bg-primary pt-28 pb-8 bg-gradient-to-b ${conditionColor} to-transparent`}>
         <div className="mx-auto max-w-7xl px-4">
+          <ToolNav
+            toolName={lang === "ko" ? "NOA 타워" : "NOA Tower"}
+            isKO={lang === "ko"}
+            relatedTools={[
+              { href: '/tools/warp-gate', label: lang === "ko" ? '워프 게이트' : 'Warp Gate' },
+              { href: '/tools/neka-sound', label: lang === "ko" ? '네카 사운드' : 'NEKA Sound' },
+            ]}
+          />
           {/* --- Top Bar --- */}
           <div className="mb-6 flex items-center justify-between">
             <div>

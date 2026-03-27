@@ -4,6 +4,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useLang } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 // ============================================================
 // PART 1 — Data Types & Ship Definitions
@@ -298,14 +299,14 @@ export default function VesselPage() {
       <Header />
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
-          <Link
-            href="#"
-            onClick={(e) => { e.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href = "/archive"; } }}
-            aria-label="Go back to previous page"
-            className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
-          >
-            &larr; BACK
-          </Link>
+          <ToolNav
+            toolName={en ? "Vessel" : "함선 비교"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/galaxy-map', label: en ? 'Galaxy Map' : '은하 지도' },
+              { href: '/tools/warp-gate', label: en ? 'Warp Gate' : '워프 게이트' },
+            ]}
+          />
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>

@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useLang, L2 } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── ZONE DATA ─── */
 const ZONES = [
@@ -177,9 +178,14 @@ export default function GalaxyMapPage() {
       <Header />
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
-          <Link href="/archive" aria-label="Back to Archive" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
-            ← ARCHIVE
-          </Link>
+          <ToolNav
+            toolName={en ? "Galaxy Map" : "은하 지도"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/vessel', label: en ? 'Vessel' : '함선 비교' },
+              { href: '/tools/warp-gate', label: en ? 'Warp Gate' : '워프 게이트' },
+            ]}
+          />
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>

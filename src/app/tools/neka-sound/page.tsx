@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── DATA ─── */
 interface Consonant {
@@ -309,10 +310,14 @@ export default function NekaSoundPage() {
       <Header />
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
-          {/* Doc Header */}
-          <Link href="/archive" aria-label="Back to Archive" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
-            ← ARCHIVE
-          </Link>
+          <ToolNav
+            toolName={en ? "NEKA Sound" : "네카 사운드"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/soundtrack', label: en ? 'Soundtrack' : '사운드트랙' },
+              { href: '/tools/noa-tower', label: en ? 'NOA Tower' : 'NOA 타워' },
+            ]}
+          />
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-blue mr-2">TOOL</span>

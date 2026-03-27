@@ -34,6 +34,7 @@ import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
 import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import MobileTabBar from '@/components/studio/MobileTabBar';
+import MobileDrawer from '@/components/studio/MobileDrawer';
 // generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
 import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
@@ -368,6 +369,7 @@ export default function StudioPage() {
     promptDirective, setPromptDirective,
   } = useStudioWritingMode(currentSessionId, hydrated);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   // saveFlash, lastSaveTime, triggerSave → useStudioUX에서 제공
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
@@ -699,6 +701,38 @@ export default function StudioPage() {
 
       {/* Mobile bottom tab bar */}
       <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
+
+      {/* Mobile drawer for right panel content */}
+      <MobileDrawer
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        title={language === 'KO' ? '참고 패널' : 'Reference Panel'}
+      >
+        {currentSession && (
+          <div className="space-y-3">
+            <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+              📂 {t('saveSlot.savedVersions')}
+            </div>
+            <div className="text-[10px] text-text-tertiary">
+              {(currentSession.config.savedSlots || []).length === 0
+                ? (language === 'KO' ? '저장된 슬롯이 없습니다.' : 'No saved slots.')
+                : `${(currentSession.config.savedSlots || []).length} ${language === 'KO' ? '개 저장됨' : 'saved'}`
+              }
+            </div>
+          </div>
+        )}
+      </MobileDrawer>
+
+      {/* Mobile-only: open right panel button */}
+      {currentSession && activeTab !== 'writing' && (
+        <button
+          onClick={() => setMobileDrawerOpen(true)}
+          className="fixed bottom-20 right-4 z-30 lg:hidden p-3 bg-accent-purple text-white rounded-full shadow-lg shadow-accent-purple/30 active:scale-90 transition-transform"
+          aria-label={language === 'KO' ? '참고 패널 열기' : 'Open reference panel'}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+        </button>
+      )}
 
       {/* Sidebar */}
       <StudioSidebar

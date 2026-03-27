@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useLang } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 // ============================================================
 // PART 1 — Constants & Data Definitions
@@ -1247,10 +1248,14 @@ export default function WarpGatePage() {
       <Header />
       <main className="pt-24 bg-bg-primary min-h-screen">
         <div className="site-shell py-16 md:py-20">
-          <Link href="#" onClick={e => { e.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href = "/archive"; } }}
-            aria-label="Go back" className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6">
-            &larr; {en ? "BACK" : "뒤로"}
-          </Link>
+          <ToolNav
+            toolName={en ? "Warp Gate" : "워프 게이트"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/galaxy-map', label: en ? 'Galaxy Map' : '은하 지도' },
+              { href: '/tools/vessel', label: en ? 'Vessel' : '함선 비교' },
+            ]}
+          />
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">{en ? "FIELD PROTOTYPE" : "현장 시제품"}</span>

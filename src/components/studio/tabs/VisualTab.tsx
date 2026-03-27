@@ -4,11 +4,12 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { Plus, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Plus, Image as ImageIcon, Settings } from 'lucide-react';
 import { ChatSession, VisualPromptCard, StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { createVisualCard, createCardFromAnalysis } from '@/lib/visual-defaults';
 import VisualPromptEditor from '../VisualPromptEditor';
+import type { ImageGenProvider } from '@/services/imageGenerationService';
 
 interface VisualTabProps {
   config: StoryConfig;
@@ -28,6 +29,28 @@ export default function VisualTab({ config, setConfig, currentSession, language 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const cards = config.visualPromptCards ?? [];
   const episode = config.episode ?? 1;
+
+  // Image generation API key + provider (persisted in localStorage)
+  const [imgProvider, setImgProvider] = useState<ImageGenProvider>('openai');
+  const [imgApiKey, setImgApiKey] = useState('');
+  const [showImgSettings, setShowImgSettings] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('noa-img-provider');
+      const savedKey = localStorage.getItem('noa-img-apikey');
+      if (saved === 'openai' || saved === 'stability') setImgProvider(saved);
+      if (savedKey) setImgApiKey(savedKey);
+    } catch { /* SSR safe */ }
+  }, []);
+
+  const saveImgSettings = () => {
+    try {
+      localStorage.setItem('noa-img-provider', imgProvider);
+      localStorage.setItem('noa-img-apikey', imgApiKey);
+    } catch { /* quota */ }
+    setShowImgSettings(false);
+  };
 
   // Episodes that have chapter analysis
   const analyzedEpisodes = useMemo(() => {
@@ -132,6 +155,43 @@ export default function VisualTab({ config, setConfig, currentSession, language 
             ))}
           </div>
         </div>
+
+        {/* Image Generation Settings */}
+        <div className="ds-card">
+          <button onClick={() => setShowImgSettings(!showImgSettings)}
+            className="w-full flex items-center justify-between text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+            <span className="flex items-center gap-1.5">
+              <Settings className="w-3 h-3" />
+              {isKO ? '이미지 생성 설정' : 'Image Gen Settings'}
+            </span>
+            <span>{showImgSettings ? '▲' : '▼'}</span>
+          </button>
+          {showImgSettings && (
+            <div className="mt-3 space-y-2">
+              <select value={imgProvider} onChange={e => setImgProvider(e.target.value as ImageGenProvider)}
+                className="w-full bg-black/50 border border-border rounded-lg px-3 py-2 text-[11px] outline-none">
+                <option value="openai">OpenAI DALL-E 3</option>
+                <option value="stability">Stability AI (SDXL)</option>
+              </select>
+              <input
+                type="password"
+                value={imgApiKey}
+                onChange={e => setImgApiKey(e.target.value)}
+                placeholder={isKO ? 'API 키 입력...' : 'API Key...'}
+                className="w-full bg-black/50 border border-border rounded-lg px-3 py-2 text-[11px] outline-none"
+              />
+              <button onClick={saveImgSettings}
+                className="w-full py-2 bg-blue-600/20 border border-blue-500/30 rounded-lg text-[10px] font-bold text-blue-300 hover:bg-blue-600/30 transition-all">
+                {isKO ? '저장' : 'Save'}
+              </button>
+              {imgApiKey && (
+                <p className="text-[9px] text-green-400">
+                  {isKO ? '키 설정됨 — 카드 편집기에서 "이미지 생성" 버튼 사용 가능' : 'Key set — "Generate" button available in card editor'}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Center: Editor */}
@@ -144,6 +204,8 @@ export default function VisualTab({ config, setConfig, currentSession, language 
               onDelete={() => deleteCard(selectedCard.id)}
               isKO={isKO}
               characters={config.characters}
+              imageApiKey={imgApiKey || undefined}
+              imageProvider={imgApiKey ? imgProvider : undefined}
             />
           </div>
         ) : (

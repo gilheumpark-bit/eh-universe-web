@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useLang, L2 } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── TRACK DATA ─── */
 interface Track {
@@ -176,14 +177,14 @@ export default function SoundtrackPage() {
       <Header />
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
-          <Link
-            href="#"
-            onClick={(e) => { e.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/archive'; } }}
-            aria-label="Go back to previous page"
-            className="motion-rise inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
-          >
-            ← BACK
-          </Link>
+          <ToolNav
+            toolName={en ? "Soundtrack" : "사운드트랙"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/neka-sound', label: en ? 'NEKA Sound' : '네카 사운드' },
+              { href: '/tools/noa-tower', label: en ? 'NOA Tower' : 'NOA 타워' },
+            ]}
+          />
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
