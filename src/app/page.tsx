@@ -262,7 +262,7 @@ export default function Home() {
   if (showSplash) {
     return (
       <SplashScreen
-        onUniverse={() => setShowSplash(false)}
+        onUniverse={() => router.push('/studio')}
         onStudio={() => setShowStudioChoice(true)}
       />
     );
