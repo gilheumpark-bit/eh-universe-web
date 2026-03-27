@@ -110,9 +110,13 @@ vercel rollback
 
 | 엔드포인트 | 제한 | 윈도우 |
 |-----------|------|--------|
-| /api/chat | 30 req | 60초 |
-| /api/image-gen | 10 req | 60초 |
-| /api/structured-generate | 30 req | 60초 |
+| /api/chat | 60 req | 60초 |
+| /api/image-gen | 30 req | 60초 |
+| /api/analyze-chapter | 120 req | 60초 |
+| /api/gemini-structured | 120 req | 60초 |
+| /api/structured-generate | 120 req | 60초 |
+| /api/local-proxy | 120 req | 60초 |
+| /api/error-report | 60 req | 60초 |
 
 429 응답 시 사용자에게 "잠시 후 다시 시도" 안내.
 BYOK 사용자는 자체 프로바이더 한도 적용.
