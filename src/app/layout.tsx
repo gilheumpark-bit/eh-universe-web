@@ -3,29 +3,43 @@ import { Analytics } from "@vercel/analytics/next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
+import "@/lib/env"; // validate environment variables at startup
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
+  title: {
+    default: "EH Universe — A Narrative Engine That Prevents Story Collapse",
+    template: "NOA Studio | %s",
+  },
   description:
     "66 million years of verified SF universe. Open-source narrative engine EH Rulebook. 200+ article archive.",
   metadataBase: new URL("https://eh-universe.com"),
+  alternates: {
+    canonical: "https://eh-universe.com",
+  },
   openGraph: {
     title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
     description:
       "66 million years of verified SF universe. Open-source narrative engine EH Rulebook.",
     type: "website",
     url: "https://eh-universe.com",
+    images: [{ url: "/images/hero-mina.jpg", width: 1200, height: 630, alt: "EH Universe" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "EH Universe — Narrative Engine",
     description: "66 million years of verified SF universe. Open-source narrative engine.",
+    images: ["/images/hero-mina.jpg"],
   },
   robots: {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({

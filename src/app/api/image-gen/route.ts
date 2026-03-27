@@ -6,23 +6,9 @@
 // BYOK mode: user-provided API key. No server fallback for image gen.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const MAX_REQUEST_BYTES = 1_048_576;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 10; // more restrictive for image gen
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count++;
-  return true;
-}
 
 export const maxDuration = 60;
 
@@ -38,9 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: 'Rate limit exceeded. Max 10 image generations per minute.' }, { status: 429 });
+    const ip = getClientIp(req.headers);
+    const rl = sharedCheckRateLimit(ip, 'image-gen', RATE_LIMITS.imageGen);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Max 30 image generations per minute.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
     }
 
     const contentLength = parseInt(req.headers.get('content-length') || '0', 10);

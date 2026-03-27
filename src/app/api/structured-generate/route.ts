@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
 import type { AppLanguage } from '@/lib/studio-types';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -210,6 +211,15 @@ async function generateJsonGemini(
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req.headers);
+    const rl = checkRateLimit(ip, 'structured-generate', RATE_LIMITS.default);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
     const body = await parseRequest(req);
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;

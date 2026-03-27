@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -32,6 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isConfigured = auth !== null;
+
+  // Mutex for token refresh — prevents concurrent refresh popups
+  const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
 
   useEffect(() => {
     if (!auth) return;
@@ -70,39 +73,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     if (!auth) return null;
-    // Firebase OAuth에서 Drive 토큰 갱신은 재인증이 필요합니다.
-    // reauthenticateWithPopup을 먼저 시도하고, 실패 시 signInWithPopup으로 폴백합니다.
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.addScope('https://www.googleapis.com/auth/drive.file');
 
-      let credential: import('firebase/auth').OAuthCredential | null = null;
-      const currentUser = auth.currentUser;
+    // Mutex: if a refresh is already in progress, await the same promise
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
 
-      if (currentUser) {
-        // 이미 로그인된 상태 → reauthenticate (팝업 최소화)
-        try {
-          const result = await reauthenticateWithPopup(currentUser, provider);
-          credential = GoogleAuthProvider.credentialFromResult(result);
-        } catch {
-          // reauthenticate 실패 → 전체 로그인으로 폴백
-          const result = await signInWithPopup(auth, provider);
+    const authInstance = auth; // Narrow type — auth is non-null here (checked above)
+    const doRefresh = async (): Promise<string | null> => {
+      // Firebase OAuth에서 Drive 토큰 갱신은 재인증이 필요합니다.
+      // reauthenticateWithPopup을 먼저 시도하고, 실패 시 signInWithPopup으로 폴백합니다.
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/drive.file');
+
+        let credential: import('firebase/auth').OAuthCredential | null = null;
+        const currentUser = authInstance.currentUser;
+
+        if (currentUser) {
+          // 이미 로그인된 상태 → reauthenticate (팝업 최소화)
+          try {
+            const result = await reauthenticateWithPopup(currentUser, provider);
+            credential = GoogleAuthProvider.credentialFromResult(result);
+          } catch {
+            // reauthenticate 실패 → 전체 로그인으로 폴백
+            const result = await signInWithPopup(authInstance, provider);
+            credential = GoogleAuthProvider.credentialFromResult(result);
+          }
+        } else {
+          const result = await signInWithPopup(authInstance, provider);
           credential = GoogleAuthProvider.credentialFromResult(result);
         }
-      } else {
-        const result = await signInWithPopup(auth, provider);
-        credential = GoogleAuthProvider.credentialFromResult(result);
-      }
 
-      const token = credential?.accessToken ?? null;
-      setAccessToken(token);
-      return token;
-    } catch {
-      // 토큰 갱신 실패 — accessToken을 null로 설정하여 이후 Drive 호출이 자연스럽게 실패하도록
-      setAccessToken(null);
-      setError('Google Drive 토큰 갱신 실패: 재로그인이 필요합니다.');
-      return null;
-    }
+        const token = credential?.accessToken ?? null;
+        setAccessToken(token);
+        return token;
+      } catch {
+        // 토큰 갱신 실패 — accessToken을 null로 설정하여 이후 Drive 호출이 자연스럽게 실패하도록
+        setAccessToken(null);
+        setError('Google Drive 토큰 갱신 실패: 재로그인이 필요합니다.');
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    };
+
+    refreshPromiseRef.current = doRefresh();
+    return refreshPromiseRef.current;
   }, []);
 
   const signOut = async () => {

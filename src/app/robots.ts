@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/studio/'],
       },
     ],
-    sitemap: 'https://eh-universe-web.vercel.app/sitemap.xml',
+    sitemap: 'https://eh-universe.com/sitemap.xml',
   };
 }

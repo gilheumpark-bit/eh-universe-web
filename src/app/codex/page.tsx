@@ -5,9 +5,10 @@ import { useLang } from "@/lib/LangContext";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
-const RulebookPage = dynamic(() => import("../rulebook/page"), { ssr: false });
-const ReferencePage = dynamic(() => import("../reference/page"), { ssr: false });
-const DocsPage = dynamic(() => import("../docs/page"), { ssr: false });
+const DynLoading = () => <div className="text-center py-12 text-text-tertiary text-xs animate-pulse">Loading...</div>;
+const RulebookPage = dynamic(() => import("../rulebook/page"), { ssr: false, loading: DynLoading });
+const ReferencePage = dynamic(() => import("../reference/page"), { ssr: false, loading: DynLoading });
+const DocsPage = dynamic(() => import("../docs/page"), { ssr: false, loading: DynLoading });
 
 const TABS = [
   { id: "rulebook", ko: "EH RULEBOOK", en: "EH RULEBOOK", jp: "EH RULEBOOK", cn: "EH RULEBOOK", desc: { ko: "서사 붕괴 방지 엔진", en: "Narrative Collapse Prevention Engine", jp: "物語崩壊防止エンジン", cn: "叙事崩溃防止引擎" } },

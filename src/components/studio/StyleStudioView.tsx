@@ -702,7 +702,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
 
                 return (
                   <div key={s.id} className="ss-slider-row">
-                    <div className="ss-slider-topline">
+                    <div className="ss-slider-topline" title={`${en ? s.en : s.ko}: ${currentLabel} — ${en ? s.noteEN : s.noteKO}`}>
                       <div className="ss-slider-meta">
                         <div className="ss-slider-label">{en ? s.en : s.ko}</div>
                         <p className="ss-slider-note">{en ? s.noteEN : s.noteKO}</p>

@@ -286,6 +286,30 @@ export function getApiKey(providerId: ProviderId): string {
 export function setApiKey(providerId: ProviderId, key: string): void {
   const def = PROVIDERS[providerId];
   localStorage.setItem(def.storageKey, obfuscateKey(key));
+  // Store key creation timestamp for age tracking
+  localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
+}
+
+/**
+ * Returns the number of days since the API key for a given provider was stored.
+ * Returns null if no timestamp is recorded (legacy key).
+ */
+export function getKeyAge(providerId: ProviderId): number | null {
+  if (typeof window === 'undefined') return null;
+  const def = PROVIDERS[providerId];
+  const ts = localStorage.getItem(`${def.storageKey}_ts`);
+  if (!ts) return null;
+  const storedAt = parseInt(ts, 10);
+  if (isNaN(storedAt)) return null;
+  return Math.floor((Date.now() - storedAt) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Returns true if the API key for the given provider is older than the specified days.
+ */
+export function isKeyExpiringSoon(providerId: ProviderId, thresholdDays = 90): boolean {
+  const age = getKeyAge(providerId);
+  return age !== null && age > thresholdDays;
 }
 
 function getStoredModelForProvider(providerId: ProviderId): string {

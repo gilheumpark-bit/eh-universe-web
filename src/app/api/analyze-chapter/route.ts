@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import type { AppLanguage } from '@/lib/studio-types';
 import { resolveServerProviderKey } from '@/lib/server-ai';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -301,6 +302,15 @@ const EMPTY_FALLBACK: Record<string, any> = {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req.headers);
+    const rl = checkRateLimit(ip, 'analyze-chapter', RATE_LIMITS.default);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
     const body = await parseRequest(req);
 
     const forbidden = validateOrigin(req, !!body.apiKey);

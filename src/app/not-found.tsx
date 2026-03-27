@@ -31,13 +31,22 @@ export default function NotFound() {
               cn: "请求的坐标在已知银河系中不存在。该页面可能已被作为笔误处理。",
             })}
           </p>
-          <Link
-            href="/"
-            aria-label={T({ ko: "홈으로 돌아가기", en: "Return to home page", jp: "ホームに戻る", cn: "返回首页" })}
-            className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
-          >
-            {T({ ko: "기지로 귀환", en: "RETURN TO BASE", jp: "基地へ帰還", cn: "返回基地" })}
-          </Link>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/"
+              aria-label={T({ ko: "홈으로 돌아가기", en: "Return to home page", jp: "ホームに戻る", cn: "返回首页" })}
+              className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+            >
+              {T({ ko: "기지로 귀환", en: "RETURN TO BASE", jp: "基地へ帰還", cn: "返回基地" })}
+            </Link>
+            <Link
+              href="/studio"
+              aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", jp: "スタジオへ", cn: "前往工作室" })}
+              className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+            >
+              {T({ ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" })}
+            </Link>
+          </div>
         </div>
       </main>
     </>

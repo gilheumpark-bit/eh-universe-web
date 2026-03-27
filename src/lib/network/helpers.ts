@@ -88,5 +88,36 @@ export function sanitizePlanetStatus(status: PlanetStatus | null | undefined, fa
   return status ?? fallback;
 }
 
+/**
+ * Strip HTML tags from user input to prevent XSS via Firestore stored content.
+ */
+export function stripHtml(value: string): string {
+  return value.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Sanitize user-provided title: strip HTML, trim, enforce max length.
+ */
+export function sanitizeTitle(value: string | undefined | null): string {
+  const raw = normalizeText(value);
+  return stripHtml(raw).slice(0, 200);
+}
+
+/**
+ * Sanitize user-provided content: strip HTML, trim, enforce max length.
+ */
+export function sanitizeContent(value: string | undefined | null, maxLength = 50_000): string {
+  const raw = normalizeText(value);
+  return stripHtml(raw).slice(0, maxLength);
+}
+
+/**
+ * Sanitize user-provided comment: strip HTML, trim, enforce max length.
+ */
+export function sanitizeComment(value: string | undefined | null): string {
+  const raw = normalizeText(value);
+  return stripHtml(raw).slice(0, 5_000);
+}
+
 // IDENTITY_SEAL: PART-1 | role=shared firestore helpers | inputs=raw form values | outputs=sanitized payload values
 

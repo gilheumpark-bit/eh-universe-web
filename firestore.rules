@@ -1,3 +1,19 @@
+// ============================================================
+// EH Universe — Firestore Security Rules
+// ============================================================
+// DEPLOYMENT: This file must be manually deployed via Firebase CLI:
+//   firebase deploy --only firestore:rules
+//
+// Or via Firebase Console > Firestore > Rules tab.
+//
+// These rules enforce:
+//   - Authenticated writes only (no anonymous writes)
+//   - Owner-only updates and deletes (ownerId/authorId must match auth.uid)
+//   - Visibility-based read permissions per collection
+//   - Data size guards to prevent oversized payloads
+//   - Admin role escalation for settlements and reports
+// ============================================================
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

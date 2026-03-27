@@ -62,9 +62,9 @@ function extractMetrics(messages: Message[]): EpisodeMetric[] {
 function MetricBar({ value, max, color, label }: { value: number; max: number; color: string; label: string }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={`${label}: ${value}% (max ${max}%)`}>
       <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] w-16 shrink-0 uppercase">{label}</span>
-      <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden" title={`${pct.toFixed(0)}%`}>
         <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] w-8 text-right">{value}%</span>

@@ -3,7 +3,7 @@ import {
   Project, ChatSession, Genre, StoryConfig, AppLanguage,
 } from '@/lib/studio-types';
 import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-migration';
-import { backupToIndexedDB, restoreFromIndexedDB } from '@/lib/indexeddb-backup';
+import { backupToIndexedDB, restoreFromIndexedDB, saveVersionedBackup, listVersionedBackups, restoreVersionedBackup, type VersionedBackup } from '@/lib/indexeddb-backup';
 import { PlatformType } from '@/engine/types';
 import { trackStudioSessionStart } from '@/lib/analytics';
 import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
@@ -137,6 +137,48 @@ export function useProjectManager(language: AppLanguage) {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hydrated]);
+
+  // ============================================================
+  // PART 3.5 — Versioned auto-backup (every 10 minutes, max 5)
+  // ============================================================
+
+  const [versionedBackups, setVersionedBackups] = useState<VersionedBackup[]>([]);
+
+  // Load backup list on hydration
+  useEffect(() => {
+    if (!hydrated) return;
+    listVersionedBackups().then(setVersionedBackups).catch(() => {});
+  }, [hydrated]);
+
+  // Auto-backup every 10 minutes
+  useEffect(() => {
+    if (!hydrated || projects.length === 0) return;
+    const BACKUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
+    const interval = setInterval(() => {
+      const current = projectsRef.current;
+      if (current.length === 0) return;
+      saveVersionedBackup(current)
+        .then(() => listVersionedBackups().then(setVersionedBackups))
+        .catch(err => console.warn('[IndexedDB] Versioned backup failed:', err));
+    }, BACKUP_INTERVAL);
+    return () => clearInterval(interval);
+  }, [hydrated, projects.length]);
+
+  const doRestoreVersionedBackup = useCallback(async (timestamp: number) => {
+    const restored = await restoreVersionedBackup(timestamp);
+    if (restored && restored.length > 0) {
+      setProjects(restored);
+      setCurrentProjectId(restored[0].id);
+      setCurrentSessionId(restored[0].sessions?.[0]?.id ?? null);
+      return true;
+    }
+    return false;
+  }, []);
+
+  const refreshBackupList = useCallback(async () => {
+    const list = await listVersionedBackups();
+    setVersionedBackups(list);
+  }, []);
 
   // ============================================================
   // PART 4 — Project management
@@ -278,5 +320,7 @@ export function useProjectManager(language: AppLanguage) {
     // Session ops
     createNewSession, deleteSession, clearAllSessions,
     updateCurrentSession, setConfig,
+    // Versioned backup
+    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
   };
 }

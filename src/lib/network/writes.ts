@@ -14,7 +14,7 @@ import {
   type ReportRecord, type SettlementRecord, type UserRecord,
   REPORT_TYPE_TO_BOARD_TYPE,
 } from "@/lib/network-types";
-import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus } from "./helpers";
+import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus, sanitizeTitle, sanitizeContent } from "./helpers";
 import { ensureNetworkUserRecord } from "./users";
 
 // ============================================================
@@ -88,9 +88,9 @@ export async function createPlanetWithFirstLog(input: CreatePlanetWithFirstLogIn
     planetId: planetRef.id,
     boardType: REPORT_TYPE_TO_BOARD_TYPE[input.firstLog.reportType],
     reportType: input.firstLog.reportType,
-    title: normalizeText(input.firstLog.title),
-    content: normalizeText(input.firstLog.content),
-    summary: summarizeContent(input.firstLog.content),
+    title: sanitizeTitle(input.firstLog.title),
+    content: sanitizeContent(input.firstLog.content),
+    summary: summarizeContent(sanitizeContent(input.firstLog.content)),
     eventCategory: normalizeOptionalText(input.firstLog.eventCategory),
     region: normalizeOptionalText(input.firstLog.region),
     intervention: input.firstLog.intervention,
@@ -151,9 +151,9 @@ export async function createPost(input: CreatePostInput) {
     planetId: input.planetId,
     boardType,
     reportType: input.reportType,
-    title: normalizeText(input.title),
-    content: normalizeText(input.content),
-    summary: summarizeContent(input.content),
+    title: sanitizeTitle(input.title),
+    content: sanitizeContent(input.content),
+    summary: summarizeContent(sanitizeContent(input.content)),
     eventCategory: normalizeOptionalText(input.eventCategory),
     region: normalizeOptionalText(input.region),
     intervention: input.intervention,
@@ -261,9 +261,9 @@ export async function createBoardPost(input: CreateBoardPostInput) {
     planetId: input.planetId ?? "",
     boardType: input.boardType,
     reportType: "observation",
-    title: normalizeText(input.title),
-    content: normalizeText(input.content),
-    summary: summarizeContent(input.content),
+    title: sanitizeTitle(input.title),
+    content: sanitizeContent(input.content),
+    summary: summarizeContent(sanitizeContent(input.content)),
     tags: normalizeStringArray([input.boardType, ...(input.tags ?? [])], 8),
     officiality: "pending",
     visibility: input.visibility ?? "public",

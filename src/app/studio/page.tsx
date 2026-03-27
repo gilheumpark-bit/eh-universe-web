@@ -3,9 +3,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, Send,
-  Sparkles, Menu, Globe,
-  Ghost, X, PenTool, StopCircle,
-  Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon,
+  Sparkles, Menu,
+  X, PenTool, StopCircle,
+  Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key
 } from 'lucide-react';
 import Image from 'next/image';
@@ -82,6 +82,7 @@ import DirectorPanel from '@/components/studio/DirectorPanel';
 // analyzeManuscript + DirectorReport → moved to useStudioAI hook
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
 import StudioSidebar from '@/components/studio/StudioSidebar';
+import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -118,6 +119,7 @@ export default function StudioPage() {
     createNewProject, deleteProject: doDeleteProject, renameProject, moveSessionToProject,
     createNewSession: doCreateNewSession, deleteSession: doDeleteSession, clearAllSessions: doClearAllSessions,
     updateCurrentSession, setConfig,
+    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
   } = pm;
 
   // Fix #1: Restore tab from URL query params on mount
@@ -231,6 +233,35 @@ export default function StudioPage() {
     window.addEventListener('noa:alert', handler);
     return () => window.removeEventListener('noa:alert', handler);
   }, []);
+
+  // Batch operations event handlers
+  useEffect(() => {
+    const handleBatchDelete = (e: Event) => {
+      const { ids } = (e as CustomEvent).detail as { ids: string[] };
+      setSessions(prev => prev.filter(s => !ids.includes(s.id)));
+      if (currentSessionId && ids.includes(currentSessionId)) {
+        setCurrentSessionId(null);
+      }
+    };
+    const handleBatchExport = (e: Event) => {
+      const { ids } = (e as CustomEvent).detail as { ids: string[] };
+      const selected = sessions.filter(s => ids.includes(s.id));
+      if (selected.length === 0) return;
+      const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-export-${selected.length}-episodes.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    window.addEventListener('noa:batch-delete', handleBatchDelete);
+    window.addEventListener('noa:batch-export', handleBatchExport);
+    return () => {
+      window.removeEventListener('noa:batch-delete', handleBatchDelete);
+      window.removeEventListener('noa:batch-export', handleBatchExport);
+    };
+  }, [sessions, currentSessionId, setSessions, setCurrentSessionId]);
 
   // Hydration-safe: sidebar width
   useEffect(() => {
@@ -661,6 +692,7 @@ export default function StudioPage() {
   const {
     exportTXT, exportJSON, exportAllJSON, handleImportJSON,
     handlePrint, handleExportEPUB, handleExportDOCX,
+    exportProjectJSON, exportAllEpisodesTXT, exportMarkdown,
   } = useStudioExport({
     currentSession, sessions, currentSessionId,
     currentProjectId, projects, setProjects, setCurrentProjectId,
@@ -681,6 +713,17 @@ export default function StudioPage() {
     setRenamingSessionId(null);
     setRenameValue('');
   };
+
+  // Reorder sessions (drag-and-drop)
+  const handleReorderSessions = useCallback((fromIndex: number, toIndex: number) => {
+    setSessions(prev => {
+      const sorted = [...prev].sort((a, b) => a.lastUpdate - b.lastUpdate);
+      const [moved] = sorted.splice(fromIndex, 1);
+      sorted.splice(toIndex, 0, moved);
+      // Reassign lastUpdate to preserve new order
+      return sorted.map((s, i) => ({ ...s, lastUpdate: i + 1 }));
+    });
+  }, [setSessions]);
 
   // Search filter
   const filteredMessages = currentSession?.messages.filter(m =>
@@ -716,6 +759,10 @@ export default function StudioPage() {
   }, [currentSessionId, setSessions]);
 
   // Keyboard shortcuts (extracted to hook)
+  // Global search palette state
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
   useStudioKeyboard({
     onTabChange: handleTabChange,
     onToggleSearch: () => setShowSearch(prev => !prev),
@@ -724,6 +771,24 @@ export default function StudioPage() {
     onNewSession: createNewSession,
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
+    onSave: triggerSave,
+    onNewEpisode: () => {
+      if (!currentSession) return;
+      const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
+      setConfig({ ...currentSession.config, episode: nextEp });
+    },
+    onToggleAssistant: () => setRightPanelOpen(prev => !prev),
+    onEscape: () => {
+      // Close any open modal
+      if (showShortcuts) { setShowShortcuts(false); return; }
+      if (showApiKeyModal) { setShowApiKeyModal(false); return; }
+      if (confirmState.open) { closeConfirm(); return; }
+      if (saveSlotModalOpen) { setSaveSlotModalOpen(false); return; }
+      if (moveModal) { setMoveModal(null); return; }
+      if (showQuickStartModal) { setShowQuickStartModal(false); return; }
+      if (showGlobalSearch) { setShowGlobalSearch(false); setGlobalSearchQuery(''); return; }
+    },
+    onGlobalSearch: () => setShowGlobalSearch(prev => !prev),
     disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 
@@ -856,6 +921,9 @@ export default function StudioPage() {
         exportAllJSON={exportAllJSON}
         handleExportEPUB={handleExportEPUB}
         handleExportDOCX={handleExportDOCX}
+        exportProjectJSON={exportProjectJSON}
+        exportAllEpisodesTXT={exportAllEpisodesTXT}
+        exportMarkdown={exportMarkdown}
         fileInputRef={fileInputRef}
         user={user}
         signInWithGoogle={signInWithGoogle}
@@ -868,6 +936,7 @@ export default function StudioPage() {
         setLanguage={setLanguage}
         showConfirm={showConfirm}
         closeConfirm={closeConfirm}
+        onReorderSessions={handleReorderSessions}
       />
 
       {/* Sidebar open toggle (visible when sidebar is closed on desktop) */}
@@ -892,7 +961,7 @@ export default function StudioPage() {
         )}
         <header className={`h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
           <div className="flex items-center gap-2 md:gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors" aria-label="사이드바 토글">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors" aria-label="사이드바 토글" title={isKO ? '사이드바 토글' : 'Toggle sidebar'}>
               <Menu className="w-5 h-5 text-text-tertiary" />
             </button>
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
@@ -921,13 +990,14 @@ export default function StudioPage() {
             )}
             {/* Tool buttons */}
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.searchCtrlF')} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
-              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={t('ui.focusMode')} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
+              <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '전체 검색' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '전체 검색' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
+              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
               <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple flex items-center gap-1" title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} aria-label={t('ui.toggleThemeLabel')}>
                 {themeLevel === 0 ? <Moon className="w-4 h-4" /> : themeLevel === 1 ? <Sun className="w-4 h-4 opacity-40" /> : themeLevel === 2 ? <Sun className="w-4 h-4 opacity-70" /> : <Sun className="w-4 h-4" />}
                 <span className="text-[9px] font-[family-name:var(--font-mono)] hidden md:inline">{isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['D','DM','L','MX'][themeLevel]}</span>
               </button>
-              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
+              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '키보드 단축키' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
         </header>
@@ -949,6 +1019,25 @@ export default function StudioPage() {
 
         {/* Shortcuts modal */}
         {showShortcuts && <ShortcutsModal language={language} onClose={() => setShowShortcuts(false)} />}
+
+        {/* Global Search Palette (Ctrl+K) */}
+        {showGlobalSearch && (
+          <GlobalSearchPalette
+            query={globalSearchQuery}
+            setQuery={setGlobalSearchQuery}
+            sessions={sessions}
+            config={currentSession?.config ?? null}
+            language={language}
+            onSelect={(type, id) => {
+              setShowGlobalSearch(false);
+              setGlobalSearchQuery('');
+              if (type === 'character') handleTabChange('characters');
+              else if (type === 'episode') { if (id) setCurrentSessionId(id); handleTabChange('writing'); }
+              else if (type === 'world') handleTabChange('world');
+            }}
+            onClose={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}
+          />
+        )}
 
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
@@ -1009,7 +1098,7 @@ export default function StudioPage() {
                 )}
                 {activeTab === 'settings' && (
                   <SectionErrorBoundary sectionName="Settings">
-                  <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
+                  <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} />
                   </SectionErrorBoundary>
                 )}
                 {/* world studio (design/simulator/analysis) rendered above */}

@@ -12,7 +12,7 @@ export function trackAIGeneration(provider: string, model: string, mode: string)
   track('ai_generation_complete', { provider, model, mode });
 }
 
-export function trackExport(format: 'epub' | 'docx' | 'txt' | 'json' | 'html') {
+export function trackExport(format: 'epub' | 'docx' | 'txt' | 'json' | 'html' | 'project-json' | 'all-episodes-txt' | 'markdown') {
   track('export', { format });
 }
 

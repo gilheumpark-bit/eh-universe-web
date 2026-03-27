@@ -236,6 +236,117 @@ export function useStudioExport({
     showExportToast('DOCX');
   }, [currentSession, showExportToast]);
 
+  // Export full project config as JSON
+  const exportProjectJSON = useCallback(() => {
+    if (!currentSession) return;
+    const payload = {
+      project: projects.find(p => p.id === currentProjectId) ?? null,
+      config: currentSession.config,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentSession.config.title || 'project-config'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showExportToast('Project JSON');
+    trackExport('project-json');
+  }, [currentSession, projects, currentProjectId, showExportToast]);
+
+  // Export all episodes concatenated as plain text
+  const exportAllEpisodesTXT = useCallback(() => {
+    const project = projects.find(p => p.id === currentProjectId);
+    if (!project) return;
+    const allSessions = project.sessions;
+    if (allSessions.length === 0) return;
+
+    let progress = 0;
+    const total = allSessions.length;
+    const parts: string[] = [];
+
+    for (const session of allSessions) {
+      progress++;
+      const title = session.config?.title || session.title || `Episode ${progress}`;
+      const manuscripts = session.config?.manuscripts ?? [];
+      let content: string;
+      if (manuscripts.length > 0) {
+        content = manuscripts
+          .sort((a, b) => a.episode - b.episode)
+          .map(m => m.content)
+          .join('\n\n');
+      } else {
+        content = session.messages
+          .filter(m => m.role === 'assistant')
+          .map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim())
+          .join('\n\n');
+      }
+      parts.push(`${'='.repeat(60)}\n${title}\n${'='.repeat(60)}\n\n${content}`);
+      // Dispatch progress event for large projects
+      if (total > 5) {
+        window.dispatchEvent(new CustomEvent('noa:export-progress', {
+          detail: { current: progress, total, format: 'TXT' },
+        }));
+      }
+    }
+
+    const blob = new Blob([parts.join('\n\n\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name || 'all-episodes'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showExportToast('All Episodes TXT');
+    trackExport('all-episodes-txt');
+  }, [projects, currentProjectId, showExportToast]);
+
+  // Export all episodes as Markdown
+  const exportMarkdown = useCallback(() => {
+    const project = projects.find(p => p.id === currentProjectId);
+    if (!project) return;
+    const allSessions = project.sessions;
+    if (allSessions.length === 0) return;
+
+    const parts: string[] = [`# ${project.name}\n`];
+
+    for (let i = 0; i < allSessions.length; i++) {
+      const session = allSessions[i];
+      const title = session.config?.title || session.title || `Episode ${i + 1}`;
+      const manuscripts = session.config?.manuscripts ?? [];
+      let content: string;
+      if (manuscripts.length > 0) {
+        content = manuscripts
+          .sort((a, b) => a.episode - b.episode)
+          .map(m => m.content)
+          .join('\n\n');
+      } else {
+        content = session.messages
+          .filter(m => m.role === 'assistant')
+          .map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim())
+          .join('\n\n');
+      }
+      parts.push(`## ${title}\n\n${content}`);
+      // Progress for large projects
+      if (allSessions.length > 5) {
+        window.dispatchEvent(new CustomEvent('noa:export-progress', {
+          detail: { current: i + 1, total: allSessions.length, format: 'MD' },
+        }));
+      }
+    }
+
+    const blob = new Blob([parts.join('\n\n---\n\n')], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name || 'project'}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showExportToast('Markdown');
+    trackExport('markdown');
+  }, [projects, currentProjectId, showExportToast]);
+
   return {
     exportTXT,
     exportJSON,
@@ -244,5 +355,8 @@ export function useStudioExport({
     handlePrint,
     handleExportEPUB,
     handleExportDOCX,
+    exportProjectJSON,
+    exportAllEpisodesTXT,
+    exportMarkdown,
   };
 }

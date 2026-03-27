@@ -5,6 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 /**
  * Validate that a hostname is a private/local network address.
@@ -43,6 +44,15 @@ function validateBaseUrl(raw: string): URL | null {
 // ============================================================
 
 export async function GET(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const rl = checkRateLimit(ip, 'local-proxy', RATE_LIMITS.default);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
+
   const baseUrl = req.nextUrl.searchParams.get('baseUrl');
   if (!baseUrl) {
     return NextResponse.json({ error: 'baseUrl required' }, { status: 400 });
@@ -74,6 +84,15 @@ export async function GET(req: NextRequest) {
 // ============================================================
 
 export async function POST(req: NextRequest) {
+  const postIp = getClientIp(req.headers);
+  const postRl = checkRateLimit(postIp, 'local-proxy', RATE_LIMITS.default);
+  if (!postRl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(postRl.retryAfterMs / 1000)) } },
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();

@@ -11,14 +11,22 @@ import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
-import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST } from '@/lib/ai-providers';
+import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST, isKeyExpiringSoon, getKeyAge } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
+
+interface VersionedBackup {
+  timestamp: number;
+  label: string;
+}
 
 interface SettingsViewProps {
   language: AppLanguage;
   hostedProviders?: Partial<Record<string, boolean>>;
   onClearAll: () => void;
   onManageApiKey: () => void;
+  versionedBackups?: VersionedBackup[];
+  onRestoreBackup?: (timestamp: number) => Promise<boolean>;
+  onRefreshBackups?: () => void;
 }
 
 // Engine settings labels are now in TRANSLATIONS.settingsEngine
@@ -39,7 +47,7 @@ function migrateAllKeysToObfuscated(): number {
   return migrated;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders = {}, onClearAll, onManageApiKey }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders = {}, onClearAll, onManageApiKey, versionedBackups, onRestoreBackup, onRefreshBackups }) => {
   const t = createT(language);
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [obfuscateDone, setObfuscateDone] = useState<number | null>(null);
@@ -133,8 +141,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
                 </div>
               </div>
-              <div className="text-[10px] font-black text-blue-500 uppercase shrink-0 ml-2">
-                {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
+              <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
+                <div className="text-[10px] font-black text-blue-500 uppercase">
+                  {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
+                </div>
+                {apiKeyStatus && isKeyExpiringSoon(activeProvider) && (
+                  <div className="text-[9px] text-yellow-400">
+                    {language === 'KO'
+                      ? `키 갱신을 권장합니다 (${getKeyAge(activeProvider)}일 경과)`
+                      : `Consider rotating your API key (${getKeyAge(activeProvider)}d old)`}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -201,6 +218,54 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
           </div>
         </div>
+
+        {/* Versioned Backup Section */}
+        {versionedBackups && onRestoreBackup && (
+          <div className="md:col-span-2 ds-card-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+                <Shield className="w-4 h-4 text-green-500" /> {language === 'KO' ? '자동 백업 (10분 간격)' : 'Auto Backup (every 10 min)'}
+              </h3>
+              {onRefreshBackups && (
+                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors" title={language === 'KO' ? '목록 새로고침' : 'Refresh list'}>
+                  {language === 'KO' ? '새로고침' : 'Refresh'}
+                </button>
+              )}
+            </div>
+            {versionedBackups.length === 0 ? (
+              <div className="text-sm text-text-tertiary py-4 text-center">
+                {language === 'KO' ? '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.' : 'No backups yet. Auto-backup runs every 10 minutes.'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {versionedBackups.map((b) => (
+                  <div key={b.timestamp} className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-border">
+                    <div>
+                      <div className="text-xs font-bold text-text-primary">{new Date(b.timestamp).toLocaleString()}</div>
+                      <div className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        {language === 'KO' ? '자동 백업' : 'Auto backup'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const ok = await onRestoreBackup(b.timestamp);
+                        if (ok) {
+                          showAlert(language === 'KO' ? '백업에서 복원되었습니다.' : 'Restored from backup.');
+                        } else {
+                          showAlert(language === 'KO' ? '복원에 실패했습니다.' : 'Restore failed.');
+                        }
+                      }}
+                      className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors px-3 py-1.5 border border-blue-500/30 rounded-lg hover:bg-blue-500/10"
+                      title={language === 'KO' ? '이 백업으로 복원' : 'Restore from this backup'}
+                    >
+                      {language === 'KO' ? '복원' : 'Restore'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Engine Settings */}
         <div className="md:col-span-2 ds-card-lg">

@@ -9,45 +9,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isServerProviderId, resolveServerProviderKey } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
+import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 // ============================================================
 // PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
 const MAX_REQUEST_BYTES = 1_048_576; // 1MB
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 30;
-
-// In-memory rate limiter (per IP, sliding window) with size cap
-const RATE_LIMIT_MAX_ENTRIES = 2_000; // serverless memory footprint: ~40KB max
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-let lastCleanup = Date.now();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-
-  // Lazy cleanup — runs inline every RATE_LIMIT_WINDOW_MS instead of setInterval
-  // (setInterval is unreliable in serverless/edge environments)
-  if (now - lastCleanup > RATE_LIMIT_WINDOW_MS) {
-    for (const [k, v] of rateLimitMap) {
-      if (now > v.resetAt) rateLimitMap.delete(k);
-    }
-    lastCleanup = now;
-  }
-
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    if (rateLimitMap.size >= RATE_LIMIT_MAX_ENTRIES) {
-      const firstKey = rateLimitMap.keys().next().value;
-      if (firstKey !== undefined) rateLimitMap.delete(firstKey);
-    }
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) return false;
-  entry.count++;
-  return true;
-}
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
@@ -166,7 +133,7 @@ async function streamGemini(
 
 export async function POST(req: NextRequest) {
   const timer = createRequestTimer();
-  const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(req.headers);
   try {
     // CSRF: Origin 헤더 검증 — BYOK 포함 모든 요청에 적용
     const origin = req.headers.get('origin');
@@ -182,8 +149,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limiting
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    const rl = sharedCheckRateLimit(ip, 'chat', RATE_LIMITS.chat);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
     }
 
     // Request size guard — parse body directly (not trusting Content-Length header)

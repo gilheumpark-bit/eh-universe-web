@@ -17,18 +17,18 @@ import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
-const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
-const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false });
-const ChatMessage = dynamic(() => import('@/components/studio/ChatMessage'), { ssr: false });
-const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
-const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
-const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
-const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
-const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
-const DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false });
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
-const WritingToolbar = dynamic(() => import('@/components/studio/WritingToolbar').then(m => ({ default: m.WritingToolbar })), { ssr: false });
-const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false });
+const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
+const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
+const ChatMessage = dynamic(() => import('@/components/studio/ChatMessage'), { ssr: false, loading: () => null });
+const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false, loading: () => null });
+const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false, loading: () => null });
+const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: () => null });
+const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: () => null });
+const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
+const DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: () => null });
+const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: () => null });
+const WritingToolbar = dynamic(() => import('@/components/studio/WritingToolbar').then(m => ({ default: m.WritingToolbar })), { ssr: false, loading: () => null });
+const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false, loading: () => null });
 
 interface Props {
   language: AppLanguage;

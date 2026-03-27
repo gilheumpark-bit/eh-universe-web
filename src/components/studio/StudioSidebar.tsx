@@ -50,6 +50,9 @@ interface StudioSidebarProps {
   exportAllJSON: () => void;
   handleExportEPUB: () => void;
   handleExportDOCX: () => void;
+  exportProjectJSON?: () => void;
+  exportAllEpisodesTXT?: () => void;
+  exportMarkdown?: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
   signInWithGoogle: () => void;
@@ -62,6 +65,7 @@ interface StudioSidebarProps {
   setLanguage: (lang: AppLanguage) => void;
   showConfirm: (opts: ConfirmOpts) => void;
   closeConfirm: () => void;
+  onReorderSessions?: (fromIndex: number, toIndex: number) => void;
 }
 
 // IDENTITY_SEAL: PART-0 | role=imports and types | inputs=none | outputs=StudioSidebarProps
@@ -95,6 +99,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   exportAllJSON,
   handleExportEPUB,
   handleExportDOCX,
+  exportProjectJSON,
+  exportAllEpisodesTXT,
+  exportMarkdown,
   fileInputRef,
   user,
   signInWithGoogle,
@@ -107,10 +114,16 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   setLanguage,
   showConfirm,
   closeConfirm,
+  onReorderSessions,
 }) => {
   const t = createT(language);
   const [showSessionList, setShowSessionList] = useState(false);
   const [jumpValue, setJumpValue] = useState('');
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+  const [lastClickedIdx, setLastClickedIdx] = useState<number | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
 
   const exportButtonClass =
     'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
@@ -326,29 +339,159 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             {/* Episode Jump */}
             {orderedSessions.length > 0 && (
               <div className="mt-5 rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
-                <button
-                  onClick={() => setShowSessionList(prev => !prev)}
-                  className="mb-3 flex w-full items-center justify-between gap-2"
-                >
-                  <span className="flex items-center gap-2 site-kicker text-[0.58rem]">
-                    <Hash className="h-3 w-3" />
-                    {language === 'KO' ? `에피소드 (${orderedSessions.length})` : `Episodes (${orderedSessions.length})`}
-                  </span>
-                  <span className="text-[10px] text-text-tertiary">{showSessionList ? '▲' : '▼'}</span>
-                </button>
+                <div className="mb-3 flex w-full items-center justify-between gap-2">
+                  <button
+                    onClick={() => setShowSessionList(prev => !prev)}
+                    className="flex items-center gap-2 flex-1"
+                  >
+                    <span className="flex items-center gap-2 site-kicker text-[0.58rem]">
+                      <Hash className="h-3 w-3" />
+                      {language === 'KO' ? `에피소드 (${orderedSessions.length})` : `Episodes (${orderedSessions.length})`}
+                    </span>
+                    <span className="text-[10px] text-text-tertiary">{showSessionList ? '▲' : '▼'}</span>
+                  </button>
+                  {showSessionList && orderedSessions.length > 1 && (
+                    <button
+                      onClick={() => { setBatchMode(prev => !prev); setSelectedSessionIds(new Set()); }}
+                      className={`text-[9px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all ${
+                        batchMode ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30' : 'text-text-tertiary border-white/8 hover:text-text-secondary'
+                      }`}
+                      title={language === 'KO' ? '일괄 선택 모드' : 'Batch select mode'}
+                    >
+                      {language === 'KO' ? '일괄' : 'Batch'}
+                    </button>
+                  )}
+                </div>
+
+                {showSessionList && batchMode && orderedSessions.length > 1 && (
+                  <div className="mb-2 flex items-center gap-2 flex-wrap">
+                    <label className="flex items-center gap-1.5 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedSessionIds.size === orderedSessions.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSessionIds(new Set(orderedSessions.map(s => s.id)));
+                          } else {
+                            setSelectedSessionIds(new Set());
+                          }
+                        }}
+                        className="accent-[rgba(202,161,92,0.8)]"
+                      />
+                      {language === 'KO' ? '전체 선택' : 'Select All'}
+                    </label>
+                    {selectedSessionIds.size > 0 && (
+                      <>
+                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                          ({selectedSessionIds.size})
+                        </span>
+                        <button
+                          onClick={() => {
+                            showConfirm({
+                              title: language === 'KO' ? '일괄 삭제' : 'Batch Delete',
+                              message: language === 'KO'
+                                ? `${selectedSessionIds.size}개 에피소드를 삭제하시겠습니까?`
+                                : `Delete ${selectedSessionIds.size} episodes?`,
+                              variant: 'danger',
+                              confirmLabel: language === 'KO' ? '삭제' : 'Delete',
+                              cancelLabel: language === 'KO' ? '취소' : 'Cancel',
+                              onConfirm: () => {
+                                closeConfirm();
+                                // Dispatch batch delete event — handled by studio page
+                                window.dispatchEvent(new CustomEvent('noa:batch-delete', {
+                                  detail: { ids: Array.from(selectedSessionIds) },
+                                }));
+                                setSelectedSessionIds(new Set());
+                                setBatchMode(false);
+                              },
+                            });
+                          }}
+                          className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-accent-red hover:text-red-400 transition-colors"
+                          title={language === 'KO' ? '선택 삭제' : 'Delete selected'}
+                        >
+                          {language === 'KO' ? '삭제' : 'Del'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('noa:batch-export', {
+                              detail: { ids: Array.from(selectedSessionIds) },
+                            }));
+                            setSelectedSessionIds(new Set());
+                            setBatchMode(false);
+                          }}
+                          className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors"
+                          title={language === 'KO' ? '선택 내보내기' : 'Export selected'}
+                        >
+                          {language === 'KO' ? '내보내기' : 'Export'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {showSessionList && (
                   <div className="mb-3 max-h-36 overflow-y-auto space-y-1 pr-1">
                     {orderedSessions.map((s, i) => (
                       <button
                         key={s.id}
-                        onClick={() => { setCurrentSessionId(s.id); setShowSessionList(false); }}
+                        draggable={!!onReorderSessions && !batchMode}
+                        onDragStart={() => setDragIdx(i)}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverIdx(i); }}
+                        onDragLeave={() => setDragOverIdx(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragIdx !== null && dragIdx !== i && onReorderSessions) {
+                            onReorderSessions(dragIdx, i);
+                          }
+                          setDragIdx(null);
+                          setDragOverIdx(null);
+                        }}
+                        onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                        onClick={(e) => {
+                          if (batchMode) {
+                            // Shift-click for range select
+                            if (e.shiftKey && lastClickedIdx !== null) {
+                              const start = Math.min(lastClickedIdx, i);
+                              const end = Math.max(lastClickedIdx, i);
+                              const range = orderedSessions.slice(start, end + 1).map(ss => ss.id);
+                              setSelectedSessionIds(prev => {
+                                const next = new Set(prev);
+                                for (const id of range) next.add(id);
+                                return next;
+                              });
+                            } else {
+                              setSelectedSessionIds(prev => {
+                                const next = new Set(prev);
+                                if (next.has(s.id)) next.delete(s.id); else next.add(s.id);
+                                return next;
+                              });
+                            }
+                            setLastClickedIdx(i);
+                          } else {
+                            setCurrentSessionId(s.id);
+                            setShowSessionList(false);
+                          }
+                        }}
                         className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all ${
-                          currentSessionId === s.id
+                          batchMode && selectedSessionIds.has(s.id)
+                            ? 'bg-accent-purple/15 text-accent-purple'
+                            : currentSessionId === s.id
                             ? 'bg-[rgba(202,161,92,0.12)] text-[rgba(246,226,188,0.92)]'
                             : 'text-text-tertiary hover:bg-white/[0.04] hover:text-text-secondary'
-                        }`}
+                        } ${dragIdx === i ? 'opacity-40' : ''} ${dragOverIdx === i && dragIdx !== i ? 'border-t-2 border-accent-purple' : ''}`}
+                        title={batchMode ? (language === 'KO' ? 'Shift+클릭으로 범위 선택' : 'Shift+click for range select') : (language === 'KO' ? '드래그하여 순서 변경' : 'Drag to reorder')}
                       >
+                        {batchMode && (
+                          <input
+                            type="checkbox"
+                            checked={selectedSessionIds.has(s.id)}
+                            readOnly
+                            className="accent-[rgba(202,161,92,0.8)] shrink-0 pointer-events-none"
+                          />
+                        )}
+                        {!batchMode && onReorderSessions && (
+                          <span className="text-[10px] text-text-tertiary cursor-grab shrink-0" title={language === 'KO' ? '드래그 핸들' : 'Drag handle'}>⠿</span>
+                        )}
                         <span className="font-[family-name:var(--font-mono)] text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary">
                           {i + 1}
                         </span>
@@ -412,12 +555,27 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               <button onClick={handleExportDOCX} disabled={!currentSessionId} className={exportButtonClass}>
                 <Download className="h-3.5 w-3.5" /> DOCX
               </button>
-              <button onClick={exportAllJSON} className={exportButtonClass}>
+              <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
                 <Download className="h-3.5 w-3.5" /> Backup
               </button>
-              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass}>
+              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '파일 가져오기' : 'Import file'}>
                 <Upload className="h-3.5 w-3.5" /> {t('export.import')}
               </button>
+              {exportProjectJSON && (
+                <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
+                  <Download className="h-3.5 w-3.5" /> Config
+                </button>
+              )}
+              {exportAllEpisodesTXT && (
+                <button onClick={exportAllEpisodesTXT} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '전체 에피소드 텍스트' : 'All episodes as text'}>
+                  <Download className="h-3.5 w-3.5" /> All TXT
+                </button>
+              )}
+              {exportMarkdown && (
+                <button onClick={exportMarkdown} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '마크다운 내보내기' : 'Export as Markdown'}>
+                  <Download className="h-3.5 w-3.5" /> MD
+                </button>
+              )}
               <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
             </div>
 

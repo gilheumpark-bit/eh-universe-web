@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { resolveServerProviderKey } from '@/lib/server-ai';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -460,6 +461,15 @@ Generate multiple items for each array field (2-4 items each). Be specific and d
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req.headers);
+    const rl = checkRateLimit(ip, 'gemini-structured', RATE_LIMITS.default);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
     const body = await parseRequest(req);
     // CSRF: body 파싱 후 클라이언트 키 유무로 Origin 검사 수준 결정
     const forbidden = validateOrigin(req, !!body.apiKey);
