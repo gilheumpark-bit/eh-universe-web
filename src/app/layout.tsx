@@ -36,6 +36,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live; object-src 'none'; base-uri 'self';"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

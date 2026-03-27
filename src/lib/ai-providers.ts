@@ -166,12 +166,15 @@ export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string
 // PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
 
-// 2-layer key protection:
-// Layer 1: XOR + Base64 (synchronous, for UI thread)
-// Layer 2: Web Crypto AES-GCM (async, for background operations)
+// 3-layer key protection:
+// Layer 1: XOR with origin+UA mask (synchronous, for UI thread)
+// Layer 2: Random salt per key (stored alongside) — prevents identical ciphertext across keys
+// Layer 3: Web Crypto AES-GCM (async, for background operations — future)
 // XSS에서 메모리 접근은 방어 불가하나, localStorage 직접 읽기는 난독화로 지연.
+const _OBFUSCATION_PREFIX_V3 = 'noa:3:';
 const _OBFUSCATION_PREFIX = 'noa:2:';
 const _LEGACY_PREFIX = 'noa:1:';
+const _SALT_LENGTH = 16;
 
 // Derive a stable XOR mask from domain + user-agent (not cryptographic, but unique per browser)
 function _xorMask(): number[] {
@@ -183,14 +186,31 @@ function _xorMask(): number[] {
   return mask;
 }
 
+function _generateSalt(): Uint8Array {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    return crypto.getRandomValues(new Uint8Array(_SALT_LENGTH));
+  }
+  // Fallback: non-cryptographic random (server-side / old environments)
+  const salt = new Uint8Array(_SALT_LENGTH);
+  for (let i = 0; i < _SALT_LENGTH; i++) salt[i] = Math.floor(Math.random() * 256);
+  return salt;
+}
+
 function obfuscateKey(plain: string): string {
   if (!plain) return '';
   try {
-    const mask = _xorMask();
+    const baseMask = _xorMask();
+    const salt = _generateSalt();
+    // Combine base mask with salt for per-key uniqueness
+    const combinedMask = baseMask.map((b, i) => b ^ salt[i % salt.length]);
     const bytes = new TextEncoder().encode(plain);
     const xored = new Uint8Array(bytes.length);
-    for (let i = 0; i < bytes.length; i++) xored[i] = bytes[i] ^ mask[i % mask.length];
-    return _OBFUSCATION_PREFIX + btoa(String.fromCharCode(...xored));
+    for (let i = 0; i < bytes.length; i++) xored[i] = bytes[i] ^ combinedMask[i % combinedMask.length];
+    // Prepend salt to ciphertext so deobfuscation can recover it
+    const combined = new Uint8Array(salt.length + xored.length);
+    combined.set(salt, 0);
+    combined.set(xored, salt.length);
+    return _OBFUSCATION_PREFIX_V3 + btoa(String.fromCharCode(...combined));
   } catch {
     return plain;
   }
@@ -198,7 +218,24 @@ function obfuscateKey(plain: string): string {
 
 function deobfuscateKey(stored: string): string {
   if (!stored) return '';
-  // v2: XOR + Base64
+  // v3: Salt + XOR + Base64
+  if (stored.startsWith(_OBFUSCATION_PREFIX_V3)) {
+    try {
+      const baseMask = _xorMask();
+      const raw = atob(stored.slice(_OBFUSCATION_PREFIX_V3.length));
+      const allBytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) allBytes[i] = raw.charCodeAt(i);
+      const salt = allBytes.slice(0, _SALT_LENGTH);
+      const xored = allBytes.slice(_SALT_LENGTH);
+      const combinedMask = baseMask.map((b, i) => b ^ salt[i % salt.length]);
+      const bytes = new Uint8Array(xored.length);
+      for (let i = 0; i < xored.length; i++) bytes[i] = xored[i] ^ combinedMask[i % combinedMask.length];
+      return new TextDecoder().decode(bytes);
+    } catch {
+      return '';
+    }
+  }
+  // v2: XOR + Base64 (backward compat)
   if (stored.startsWith(_OBFUSCATION_PREFIX)) {
     try {
       const mask = _xorMask();

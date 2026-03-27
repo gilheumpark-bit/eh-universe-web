@@ -28,6 +28,16 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Origin 검증 — BYOK 포함 모든 요청에 적용
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (!origin) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    if (host && new URL(origin).host !== host) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
     if (!checkRateLimit(ip)) {
       return NextResponse.json({ error: 'Rate limit exceeded. Max 10 image generations per minute.' }, { status: 429 });

@@ -6,13 +6,30 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/;
+/**
+ * Validate that a hostname is a private/local network address.
+ * Uses numeric range checks instead of regex to prevent invalid IPs (e.g., 192.168.999.999).
+ */
+function isValidPrivateHost(host: string): boolean {
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  const parts = host.split('.');
+  if (parts.length !== 4) return false;
+  const nums = parts.map(Number);
+  if (nums.some(n => isNaN(n) || n < 0 || n > 255 || !Number.isInteger(n))) return false;
+  // 192.168.x.x
+  if (nums[0] === 192 && nums[1] === 168) return true;
+  // 10.x.x.x
+  if (nums[0] === 10) return true;
+  // 172.16.0.0 – 172.31.255.255
+  if (nums[0] === 172 && nums[1] >= 16 && nums[1] <= 31) return true;
+  return false;
+}
 
 function validateBaseUrl(raw: string): URL | null {
   try {
     const url = new URL(raw);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-    if (!ALLOWED_HOSTS.test(url.hostname)) return null;
+    if (!isValidPrivateHost(url.hostname)) return null;
     return url;
   } catch {
     return null;
@@ -81,6 +98,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!res.ok) {

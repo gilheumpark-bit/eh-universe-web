@@ -168,20 +168,13 @@ export async function POST(req: NextRequest) {
   const timer = createRequestTimer();
   const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   try {
-    // CSRF: Origin 헤더가 없는 요청(curl, 스크립트, 서버간 호출)은 차단
-    // 클라이언트 키 없이 서버 키를 소모하는 경우만 차단 (BYOK는 허용)
+    // CSRF: Origin 헤더 검증 — BYOK 포함 모든 요청에 적용
     const origin = req.headers.get('origin');
     const host = req.headers.get('host');
     if (!origin) {
-      // Origin 없는 요청 → BYOK(클라이언트 키)가 있으면 허용, 없으면 차단
-      const rawText = await req.text();
-      const peek = (() => { try { return JSON.parse(rawText); } catch { return null; } })();
-      if (!peek?.apiKey) {
-        return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-      }
-      // BYOK 요청은 Origin 없이도 허용 — 아래에서 rawText를 재사용
-      (req as NextRequest & { _parsedBody?: string })._parsedBody = rawText;
-    } else if (host) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    if (host) {
       const originHost = new URL(origin).host;
       if (originHost !== host) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -194,8 +187,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Request size guard — parse body directly (not trusting Content-Length header)
-    // CSRF 체크에서 이미 파싱한 경우 재사용
-    const rawText = (req as NextRequest & { _parsedBody?: string })._parsedBody ?? await req.text();
+    const rawText = await req.text();
     if (Buffer.byteLength(rawText, 'utf8') > MAX_REQUEST_BYTES) {
       return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }

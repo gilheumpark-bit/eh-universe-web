@@ -98,6 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(token);
       return token;
     } catch {
+      // 토큰 갱신 실패 — accessToken을 null로 설정하여 이후 Drive 호출이 자연스럽게 실패하도록
+      setAccessToken(null);
+      setError('Google Drive 토큰 갱신 실패: 재로그인이 필요합니다.');
       return null;
     }
   }, []);

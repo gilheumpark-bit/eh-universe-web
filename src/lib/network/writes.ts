@@ -4,7 +4,7 @@ import {
   limit, orderBy, query, setDoc, updateDoc, writeBatch, where,
   type QueryConstraint,
 } from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
+import { auth, getDb } from "@/lib/firebase";
 import {
   type BoardType, type BookmarkRecord, type CommentRecord,
   type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
@@ -18,10 +18,31 @@ import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalize
 import { ensureNetworkUserRecord } from "./users";
 
 // ============================================================
+// PART 2.5 — WRITE AUTH GUARD
+// ============================================================
+
+/**
+ * Verify that the current Firebase Auth user matches the claimed owner/author ID.
+ * Prevents unauthorized writes where a client supplies someone else's UID.
+ */
+function assertOwnership(claimedUid: string): void {
+  const currentUser = auth?.currentUser;
+  if (!currentUser) {
+    throw new Error('Unauthorized: not signed in');
+  }
+  if (currentUser.uid !== claimedUid) {
+    throw new Error('Unauthorized: owner mismatch');
+  }
+}
+
+// IDENTITY_SEAL: PART-2.5 | role=write auth guard | inputs=claimedUid | outputs=void or throw
+
+// ============================================================
 // PART 3 - PLANET AND POST WRITES
 // ============================================================
 
 export async function createPlanetWithFirstLog(input: CreatePlanetWithFirstLogInput) {
+  assertOwnership(input.ownerId);
   const database = requireDb();
   const timestamp = nowIso();
   const planetsRef = collection(database, COLLECTIONS.planets);
@@ -116,6 +137,7 @@ export async function createPlanetWithFirstLog(input: CreatePlanetWithFirstLogIn
 }
 
 export async function createPost(input: CreatePostInput) {
+  assertOwnership(input.authorId);
   const database = requireDb();
   const timestamp = nowIso();
   const postsRef = collection(database, COLLECTIONS.posts);
@@ -175,6 +197,7 @@ export async function createPost(input: CreatePostInput) {
 }
 
 export async function createSettlement(input: CreateSettlementInput) {
+  assertOwnership(input.operatorId);
   const database = requireDb();
   const timestamp = nowIso();
   const settlementsRef = collection(database, COLLECTIONS.settlements);
@@ -226,6 +249,7 @@ export async function createSettlement(input: CreateSettlementInput) {
 }
 
 export async function createBoardPost(input: CreateBoardPostInput) {
+  assertOwnership(input.authorId);
   const database = requireDb();
   const timestamp = nowIso();
   const postsRef = collection(database, COLLECTIONS.posts);

@@ -43,15 +43,12 @@ const LANGUAGE_NAMES: Record<AppLanguage, string> = {
 // PART 1 — Shared request helpers
 // ============================================================
 
-function validateOrigin(req: NextRequest, hasClientKey: boolean): NextResponse | null {
+function validateOrigin(req: NextRequest, _hasClientKey?: boolean): NextResponse | null {
   const origin = req.headers.get('origin');
   const host = req.headers.get('host');
-  // Origin 없는 요청: BYOK면 허용, 서버 키 소모라면 차단
+  // Origin 검증 — BYOK 포함 모든 요청에 적용
   if (!origin) {
-    if (!hasClientKey) {
-      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    }
-    return null;
+    return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
   }
   if (host && new URL(origin).host !== host) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
