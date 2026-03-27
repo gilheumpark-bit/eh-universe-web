@@ -69,7 +69,17 @@
       "Bash(grep -r \"noi-auto-tags\\\\|safe-storage\" '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts)",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(taskkill /PID 15012 /F)",
-      "Bash(TASKKILL //PID 15012 //F)"
+      "Bash(TASKKILL //PID 15012 //F)",
+      "WebFetch(domain:eh-universe-web.vercel.app)",
+      "Bash(ls -1 src/components/studio/*.tsx)",
+      "Bash(done)",
+      "Bash(ls -1 src/engine/*.ts)",
+      "Bash(npx vercel:*)",
+      "Bash(grep -r \"contentRating\\\\|SYSTEM_HUNTER\\\\|ANS 10.0\" '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(find src/ -name *.test.* -o -name *.spec.*)",
+      "Bash(grep -rn '문제가 발생' src/ --include=*.tsx)",
+      "Bash(ls public/icon-* public/icons/ public/favicon*)"
     ]
   }
 }

@@ -1,0 +1,120 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e5]:
+        - button "◀ Collapse" [ref=e6]
+        - generic [ref=e7]:
+          - link "Narrative Workbench NOA Studio EH Universe" [ref=e9] [cursor=pointer]:
+            - /url: /
+            - img [ref=e11]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Narrative Workbench
+              - heading "NOA Studio" [level=1] [ref=e15]
+              - text: EH Universe
+          - generic [ref=e16]:
+            - generic [ref=e17]:
+              - generic [ref=e18]: Active Blueprint
+              - generic [ref=e19]: 1 projects
+            - generic [ref=e20]:
+              - combobox [ref=e21]:
+                - option "미분류 (1)" [selected]
+              - button "New Project" [ref=e22]:
+                - img [ref=e23]
+            - button "Rename" [ref=e25]
+          - button "Start New Novel" [active] [ref=e26]:
+            - img [ref=e27]
+            - text: Start New Novel
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: Guided Mode
+            - button "Toggle mode" [ref=e31]
+          - navigation [ref=e32]:
+            - button "World Studio" [ref=e33]:
+              - img [ref=e35]
+              - generic [ref=e38]: World Studio
+            - button "Character Studio" [ref=e39]:
+              - img [ref=e41]
+              - generic [ref=e45]: Character Studio
+            - button "Direction Studio" [ref=e46]:
+              - img [ref=e48]
+              - generic [ref=e51]: Direction Studio
+            - button "User Guide" [ref=e52]:
+              - img [ref=e54]
+              - generic [ref=e56]: User Guide
+          - generic [ref=e57]:
+            - button "Episodes (1) ▼" [ref=e59]:
+              - generic [ref=e60]:
+                - img [ref=e61]
+                - text: Episodes (1)
+              - generic [ref=e64]: ▼
+            - generic [ref=e65]:
+              - spinbutton [ref=e66]
+              - button "↵" [ref=e67]:
+                - generic [ref=e68]: ↵
+        - generic [ref=e69]:
+          - group [ref=e70]:
+            - generic "Export / Account ▼" [ref=e71] [cursor=pointer]:
+              - generic [ref=e72]: Export / Account
+              - generic [ref=e73]: ▼
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - button "KO" [ref=e76]
+              - button "EN" [ref=e77]
+              - button "JP" [ref=e78]
+              - button "CN" [ref=e79]
+            - button "Settings" [ref=e80]:
+              - img [ref=e81]
+          - generic [ref=e86]: 0.0 MB / 5 MB
+    - main [ref=e89]:
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - button "사이드바 토글" [ref=e92]:
+            - img [ref=e93]
+          - generic [ref=e94]:
+            - generic [ref=e95]: "Active Blueprint:"
+            - generic [ref=e96]: New Story
+            - generic [ref=e97]: ✓ Auto-saved · 1s ago
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - generic [ref=e100]: SYSTEM_HUNTER
+            - button "ANS 10.0" [ref=e101]
+          - generic [ref=e102]:
+            - button "Search" [ref=e103]:
+              - img [ref=e104]
+            - button "Global Search" [ref=e107]:
+              - img [ref=e108]
+            - button "Focus mode" [ref=e111]:
+              - img [ref=e112]
+            - button "Toggle theme" [ref=e117]:
+              - img [ref=e118]
+              - generic [ref=e120]: D
+            - button "Keyboard shortcuts" [ref=e121]:
+              - img [ref=e122]
+      - generic [ref=e124]:
+        - generic [ref=e126]:
+          - img [ref=e127]
+          - generic [ref=e131]: Set your API key to use AI features.
+          - button "Set Up" [ref=e132]
+          - button "Dismiss" [ref=e133]: ✕
+        - complementary [ref=e134]:
+          - button "▶" [ref=e135]
+          - generic [ref=e136]:
+            - generic [ref=e137]: 📂 Saved Versions
+            - button "💾 Save Current" [ref=e138]
+            - paragraph [ref=e140]: No saved versions
+  - generic [ref=e145] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e146]:
+      - img [ref=e147]
+    - generic [ref=e150]:
+      - button "Open issues overlay" [ref=e151]:
+        - generic [ref=e152]:
+          - generic [ref=e153]: "0"
+          - generic [ref=e154]: "1"
+        - generic [ref=e155]: Issue
+      - button "Collapse issues badge" [ref=e156]:
+        - img [ref=e157]
+  - alert [ref=e159]
+```
