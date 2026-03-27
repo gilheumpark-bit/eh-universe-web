@@ -46,13 +46,12 @@ src/
 │       ├── chat/               # AI 스트리밍 프록시
 │       └── gemini-structured/  # 구조화 생성 API
 │
-├── components/studio/ (49개)   # 스튜디오 UI 컴포넌트
+├── components/studio/ (44개)   # 스튜디오 UI 컴포넌트
 │   ├── tabs/                   # 탭 컨테이너 8종
 │   │   ├── WorldTab       CharacterTab     WritingTabInline
 │   │   ├── StyleTab        ManuscriptTab    HistoryTab
 │   │   └── RulebookTab    VisualTab
 │   ├── SectionErrorBoundary    # 섹션별 에러 바운더리
-│   ├── EmptyState              # 재사용 빈 상태
 │   ├── LoadingSkeleton         # 로딩 스켈레톤
 │   ├── EmotionArcChart         # 감정 아크 그래프
 │   ├── FatigueDetector         # 독자 피로도 감지
@@ -72,14 +71,12 @@ src/
 │   ├── quality-gate.ts         # 품질 게이트 루프
 │   └── auto-pipeline.ts        # 자동 파이프라인
 │
-├── hooks/ (10개)               # 커스텀 훅
+├── hooks/ (8개)                # 커스텀 훅
 │   ├── useStudioAI.ts          # AI 생성 (타임아웃 + 동시실행 잠금)
 │   ├── useProjectManager.ts    # 프로젝트 CRUD
-│   ├── useAsyncGuard.ts        # 비동기 가드 (dedup + timeout)
 │   └── useStudioSession / Sync / Theme / Keyboard / Export / UX
 │
-├── lib/ (31개)                 # 유틸리티
-│   ├── safe-storage.ts         # localStorage 안전 래퍼
+├── lib/ (29개)                 # 유틸리티
 │   ├── ai-providers.ts         # 멀티 AI 프로바이더 관리
 │   ├── studio-types.ts         # 전체 타입 정의
 │   ├── studio-translations.ts  # i18n (KO/EN/JP/CN)
@@ -99,17 +96,19 @@ src/
 
 ### Studio Tabs
 
-| 탭 | 기능 |
-|----|------|
-| 세계관 | 3-tier 세계관 설계, 문명 시뮬레이터, 세계관 분석 |
-| 캐릭터 | 22필드 3-tier 캐릭터, 관계 그래프, 아이템/스킬/마법 체계 |
-| 연출 | 씬시트, 고구마/사이다, 복선 관리, 텐션 커브, 장면 전환 |
-| 집필 | AI 초안 생성 (5종 프로바이더), 캔버스 모드, 인라인 리라이터, 버전 관리 |
-| 문체 | 5축 슬라이더, DNA 카드 4종, 문장 리듬 분석 |
-| 원고 | 원고 목록, 작가 대시보드, 감정 아크 그래프, 독자 피로도 감지 |
-| 비주얼 | NOI 프롬프트 카드, 일관성 태그 자동생성, 이미지 생성 |
-| 히스토리 | 프로젝트/세션 관리, 검색, 내보내기 |
-| 설정 | API 키 (BYOK), 플랫폼, 언어, 테마 |
+| 탭 | 기능 | 등급 |
+|----|------|------|
+| 세계관 | 3-tier 세계관 설계, 문명 시뮬레이터, 세계관 분석, 타임라인, 지도 | Stable |
+| 캐릭터 | 22필드 3-tier 캐릭터, 관계 그래프, 아이템/스킬/마법 체계 | Stable |
+| 연출 | 씬시트, 고구마/사이다, 복선 관리, 텐션 커브, 장면 전환 | Stable |
+| 집필 | AI 초안 생성 (5종 프로바이더), 캔버스 모드, 인라인 리라이터 | Stable |
+| 문체 | 5축 슬라이더, DNA 카드 4종, 문장 리듬 분석, 프리뷰 비교 | Stable |
+| 원고 | 원고 목록, 작가 대시보드, 감정 아크 그래프, 독자 피로도 감지 | Stable |
+| 비주얼 | NOI 프롬프트 카드, 일관성 태그 자동생성, 이미지 생성 | Beta |
+| 히스토리 | 프로젝트/세션 관리, 검색, 내보내기 | Stable |
+| 설정 | API 키 (BYOK), 플랫폼, 언어, 테마 | Stable |
+
+> **등급**: Stable = QA 통과, 프로덕션 사용 가능 / Beta = 핵심 동작 확인, 엣지케이스 미검증 / Experimental = 프로토타입
 
 ### i18n
 한국어(KO), 영어(EN), 일본어(JP), 중국어(CN) 4개 언어 실시간 전환.
@@ -148,10 +147,10 @@ ErrorBoundary (전역 — app 전체)
 
 | 기능 | 구현 |
 |------|------|
-| localStorage 안전 | `safe-storage.ts` — 모든 접근 try/catch |
+| localStorage 안전 | 모든 접근 try/catch 래핑 |
 | 용량 감지 | `getStorageQuotaPercent()` — 90% 초과 시 경고 |
 | 백업 폴백 | IndexedDB 자동 백업 |
-| 비동기 가드 | `useAsyncGuard` — 동시 실행 방지 + 취소 |
+| API 키 보호 | XOR + Base64 난독화 (`noa:2:` 프리픽스) |
 
 ### Input Validation
 - 모든 텍스트 입력에 `maxLength` 적용 (45건)

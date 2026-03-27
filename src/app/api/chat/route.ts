@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isServerProviderId, resolveServerProviderKey } from '@/lib/server-ai';
+import { apiLog, createRequestTimer } from '@/lib/api-logger';
 
 // ============================================================
 // PART 1: ENV KEY FALLBACKS & CONSTANTS
@@ -164,6 +165,8 @@ async function streamGemini(
 // ============================================================
 
 export async function POST(req: NextRequest) {
+  const timer = createRequestTimer();
+  const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   try {
     // CSRF: Origin 헤더가 없는 요청(curl, 스크립트, 서버간 호출)은 차단
     // 클라이언트 키 없이 서버 키를 소모하는 경우만 차단 (BYOK는 허용)
@@ -185,8 +188,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Rate limiting — x-real-ip 우선 (Vercel이 직접 설정, 스푸핑 불가)
-    const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    // Rate limiting
     if (!checkRateLimit(ip)) {
       return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
     }
@@ -264,6 +266,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
+    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, durationMs: timer.elapsed() });
+
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -273,13 +277,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    // Sanitize: strip API keys and sensitive data
     const safeMsg = raw
       .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
       .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
       .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
       .slice(0, 200);
     const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : /Request too large/i.test(raw) ? 413 : 500;
+    apiLog({ level: 'error', event: 'chat_error', route: '/api/chat', ip, status, error: safeMsg, durationMs: timer.elapsed() });
     return NextResponse.json({ error: safeMsg }, { status });
   }
 }
