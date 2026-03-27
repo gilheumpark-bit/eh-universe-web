@@ -34,8 +34,23 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [expandedTiers, setExpandedTiers] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
+  // Fix #3: Inline toast for API error visibility when onError not provided
+  const [inlineToast, setInlineToast] = useState<string | null>(null);
+  // Fix #7: Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
+  // Fix #6: Character name validation
+  const [nameError, setNameError] = useState(false);
   const t = TRANSLATIONS[language].resource;
   const te = TRANSLATIONS[language].engine;
+
+  const showError = (msg: string) => {
+    if (onError) { onError(msg); }
+    else {
+      setInlineToast(msg);
+      setTimeout(() => setInlineToast(null), 5000);
+    }
+  };
 
   const roleLabels = ROLE_KEYS.map(key => ({
     value: key,
@@ -62,12 +77,12 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const handleAutoGenerate = async () => {
     if (!canStructured) {
       const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
-      if (onError) { onError(msg); } else { console.warn(msg); }
+      showError(msg);
       return;
     }
     if (!config.synopsis) {
       const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
-      if (onError) { onError(msg); } else { console.warn(msg); }
+      showError(msg);
       return;
     }
 
@@ -80,14 +95,18 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
       }));
     } catch {
       const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
-      if (onError) { onError(msg); } else { console.warn(msg); }
+      showError(msg);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const addCharacter = () => {
-    if (!newChar.name) return;
+    if (!newChar.name || !newChar.name.trim()) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
     const char: Character = {
       id: `c-manual-${Date.now()}`,
       name: newChar.name || '',
@@ -104,9 +123,29 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     setConfig({ ...config, characters: config.characters.filter(c => c.id !== id) });
   };
 
+  // Fix #7: Paginate large lists
+  const totalPages = Math.ceil(filteredCharacters.length / PAGE_SIZE);
+  const paginatedCharacters = filteredCharacters.length > PAGE_SIZE
+    ? filteredCharacters.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredCharacters;
+
+  // Reset page when filter changes
+  const prevCategory = React.useRef(activeCategory);
+  if (prevCategory.current !== activeCategory) {
+    prevCategory.current = activeCategory;
+    if (currentPage !== 1) setCurrentPage(1);
+  }
+
   return (
     <div className="max-w-[1400px] mx-auto w-full p-4 md:p-10 space-y-8 lg:space-y-12 animate-in fade-in duration-500">
-      
+      {/* Fix #3: Inline error toast */}
+      {inlineToast && (
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg bg-red-900/95 border border-red-600 text-red-100 text-sm flex items-center gap-2 max-w-md">
+          <span>{inlineToast}</span>
+          <button onClick={() => setInlineToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
         <div className="flex items-center gap-4 md:gap-6">
@@ -164,13 +203,19 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative group">
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
                    <input
-                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary"
+                    className={`w-full bg-black/50 border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary ${nameError ? 'border-red-500' : 'border-border'}`}
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     maxLength={50}
                     value={newChar.name}
-                    onChange={e => setNewChar({...newChar, name: e.target.value})}
+                    onChange={e => { setNewChar({...newChar, name: e.target.value}); if (nameError) setNameError(false); }}
                   />
                 </div>
+                {/* Fix #6: Name validation warning */}
+                {nameError && (
+                  <p className="text-[10px] text-red-400 font-bold ml-2">
+                    {language === 'KO' ? '이름을 입력해주세요' : 'Name is required'}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -239,10 +284,12 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                </button>
              )}
              
-             <div className="flex-1 flex items-center gap-2 bg-bg-primary/50 p-1.5 rounded-2xl border border-border overflow-x-auto custom-scrollbar">
+             <div className="flex-1 flex items-center gap-2 bg-bg-primary/50 p-1.5 rounded-2xl border border-border overflow-x-auto custom-scrollbar" role="tablist">
                {[{ value: 'all', label: 'All Characters' }, ...roleLabels].map(cat => (
                  <button
                   key={cat.value}
+                  role="tab"
+                  aria-selected={activeCategory === cat.value}
                   onClick={() => setActiveCategory(cat.value)}
                   className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                     activeCategory === cat.value ? 'bg-bg-tertiary text-white shadow-lg ring-1 ring-white/10' : 'text-text-tertiary hover:text-text-secondary'
@@ -258,15 +305,20 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
             {filteredCharacters.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-[3rem] text-text-tertiary">
                 <div className="w-16 h-16 bg-bg-secondary/50 rounded-full flex items-center justify-center mb-6">
-                  <Users className="w-8 h-8 opacity-20" />
+                  <Users className="w-8 h-8 opacity-30" />
                 </div>
-                <span className="text-xs font-black tracking-[0.4em] uppercase">No Characters Found</span>
+                <span className="text-xs font-black tracking-[0.4em] uppercase mb-2">
+                  {language === 'KO' ? '캐릭터 없음' : language === 'JP' ? 'キャラクターなし' : language === 'CN' ? '没有角色' : 'No Characters Found'}
+                </span>
+                <p className="text-[11px] text-text-tertiary max-w-[280px] text-center">
+                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, AI 자동 생성 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、AI自動生成を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用AI自动生成按钮。' : 'Add manually from the left panel, or use the AI auto-generate button.'}
+                </p>
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${
                 isPanelOpen ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               }`}>
-                {filteredCharacters.map(char => (
+                {paginatedCharacters.map(char => (
                   <div key={char.id} className="ds-card-lg md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
                     {/* Visual DNA Bar */}
                     <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 opacity-20 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
@@ -714,10 +766,32 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 ))}
               </div>
             )}
+            {/* Fix #7: Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  {language === 'KO' ? '이전' : 'Prev'}
+                </button>
+                <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  {language === 'KO' ? '다음' : 'Next'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* ====== CHARACTER RELATIONSHIP MAP ====== */}
       {config.characters.length >= 2 && (
         <CharRelationMap language={language} config={config} setConfig={setConfig} />

@@ -14,7 +14,7 @@ interface EngineStatusBarProps {
   isGenerating: boolean;
 }
 
-const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, report, isGenerating }) => {
+const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function EngineStatusBar({ language, config, report, isGenerating }) {
   const t = TRANSLATIONS[language].engine;
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
@@ -92,7 +92,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = ({ language, config, rep
       )}
     </div>
   );
-};
+});
 
 export default EngineStatusBar;
 

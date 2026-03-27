@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { isTestEnvironment } from "@/lib/firebase";
 
@@ -26,7 +26,47 @@ const toolItems = [
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [toolsFocusIdx, setToolsFocusIdx] = useState(-1);
   const { lang, toggleLang } = useLang();
+  const toolMenuRef = useRef<HTMLDivElement>(null);
+  const toolItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+
+  const closeToolsMenu = useCallback(() => {
+    setToolsOpen(false);
+    setToolsFocusIdx(-1);
+  }, []);
+
+  useEffect(() => {
+    if (toolsOpen && toolsFocusIdx >= 0 && toolItemRefs.current[toolsFocusIdx]) {
+      toolItemRefs.current[toolsFocusIdx]?.focus();
+    }
+  }, [toolsOpen, toolsFocusIdx]);
+
+  const handleToolsKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!toolsOpen) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setToolsFocusIdx(prev => (prev + 1) % toolItems.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setToolsFocusIdx(prev => (prev - 1 + toolItems.length) % toolItems.length);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        closeToolsMenu();
+        break;
+      case 'Home':
+        e.preventDefault();
+        setToolsFocusIdx(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setToolsFocusIdx(toolItems.length - 1);
+        break;
+    }
+  }, [toolsOpen, closeToolsMenu]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
@@ -68,11 +108,11 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={() => setToolsOpen(false)}>
+            <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={closeToolsMenu} onKeyDown={handleToolsKeyDown} ref={toolMenuRef}>
               <button
-                onClick={() => setToolsOpen((p) => !p)}
+                onClick={() => { setToolsOpen((p) => !p); setToolsFocusIdx(-1); }}
                 aria-expanded={toolsOpen}
-                aria-haspopup="true"
+                aria-haspopup="menu"
                 aria-label="Tools menu"
                 className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
               >
@@ -80,12 +120,15 @@ export default function Header() {
               </button>
               {toolsOpen && (
                 <div className="absolute right-0 top-full z-[100] pt-3">
-                  <div className="premium-panel-soft min-w-[220px] overflow-hidden rounded-3xl border border-white/8 p-2">
-                    {toolItems.map((ti) => (
+                  <div className="premium-panel-soft min-w-[220px] overflow-hidden rounded-3xl border border-white/8 p-2" role="menu" aria-label="Tools">
+                    {toolItems.map((ti, idx) => (
                       <Link
                         key={ti.href}
                         href={ti.href}
-                        onClick={() => setToolsOpen(false)}
+                        ref={(el) => { toolItemRefs.current[idx] = el; }}
+                        role="menuitem"
+                        tabIndex={toolsFocusIdx === idx ? 0 : -1}
+                        onClick={closeToolsMenu}
                         className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-[0.14em] text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
                       >
                         {ti.label}

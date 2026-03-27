@@ -17,7 +17,19 @@ import WorldMap from './WorldMap';
 
 // WorldSimulator uses dynamic import to avoid circular deps
 import dynamic from 'next/dynamic';
-const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false });
+const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-3 p-6 animate-pulse">
+      <div className="h-8 bg-bg-secondary rounded-xl w-1/3" />
+      <div className="h-64 bg-bg-secondary rounded-2xl" />
+      <div className="flex gap-3">
+        <div className="h-10 bg-bg-secondary rounded-xl flex-1" />
+        <div className="h-10 bg-bg-secondary rounded-xl flex-1" />
+      </div>
+    </div>
+  ),
+});
 
 interface WorldStudioViewProps {
   language: AppLanguage;
@@ -81,13 +93,15 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
     <div className="animate-in fade-in duration-500">
       {/* Sub-tab bar */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
-        <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 border border-border rounded-2xl w-fit">
+        <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 border border-border rounded-2xl w-fit" role="tablist">
           {SUB_TAB_ORDER.map(tab => {
             const Icon = SUB_TAB_ICONS[tab];
             const active = subTab === tab;
             return (
               <button
                 key={tab}
+                role="tab"
+                aria-selected={active}
                 onClick={() => setSubTab(tab)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
                   active

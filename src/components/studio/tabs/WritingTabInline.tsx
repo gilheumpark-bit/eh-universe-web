@@ -5,7 +5,7 @@
 // ============================================================
 
 import { showAlert } from '@/lib/show-alert';
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool } from 'lucide-react';
 import type { AppLanguage, AppTab, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
@@ -105,6 +105,27 @@ export default function WritingTabInline(props: Props) {
   const showAiLockBanner = showAiLock;
   const showApiLockBanner = showAiLock;
 
+  // Fix #10: Streaming auto-scroll with manual scroll detection
+  const streamContainerRef = useRef<HTMLDivElement>(null);
+  const userScrolledUpRef = useRef(false);
+  const handleStreamScroll = useCallback(() => {
+    const el = streamContainerRef.current;
+    if (!el) return;
+    // If user has scrolled more than 100px from bottom, stop auto-scrolling
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    userScrolledUpRef.current = !atBottom;
+  }, []);
+  // Auto-scroll during streaming
+  const lastMsgContent = currentSession.messages[currentSession.messages.length - 1]?.content;
+  useEffect(() => {
+    if (!isGenerating) {
+      userScrolledUpRef.current = false;
+      return;
+    }
+    if (userScrolledUpRef.current) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [isGenerating, lastMsgContent, messagesEndRef]);
+
   const handleApplyEdit = () => {
     if (!editDraft.trim()) return;
     const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
@@ -121,7 +142,7 @@ export default function WritingTabInline(props: Props) {
   const doHandleSend = handleSend;
 
   return (
-                  <div className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
+                  <div ref={streamContainerRef} onScroll={handleStreamScroll} className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
                     {/* Continuity Tracker Graph — 맥락 추적 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
                       <ContinuityGraph language={language} config={currentSession.config} />

@@ -304,11 +304,11 @@ export default function Home() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 lg:w-80 lg:shrink-0">
                 {universeStats.map((item) => (
-                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-5">
-                    <div className="font-[family-name:var(--font-display)] text-[1.9rem] font-bold leading-none text-text-primary">
+                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/[0.06] hover:border-accent-amber/20 transition-all hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
+                    <div className="font-[family-name:var(--font-display)] text-[2.4rem] font-bold leading-none text-text-primary">
                       {item.value}
                     </div>
-                    <p className="mt-3 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-secondary">
+                    <p className="mt-3 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
                       {item.label}
                     </p>
                   </div>

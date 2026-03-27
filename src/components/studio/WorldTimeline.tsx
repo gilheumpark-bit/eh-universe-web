@@ -5,6 +5,7 @@
 // ============================================================
 
 import React, { useMemo } from 'react';
+import { Clock } from 'lucide-react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -85,10 +86,18 @@ export default function WorldTimeline({ simData, language, selectedEra, onSelect
 
   if (tracks.length === 0) {
     return (
-      <div className="text-center py-12 text-text-tertiary text-xs">
-        {isKO
-          ? '시뮬레이터에서 문명을 추가하면 타임라인이 표시됩니다.'
-          : 'Add civilizations in the Simulator to see the timeline.'}
+      <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-border rounded-2xl">
+        <div className="w-14 h-14 bg-bg-secondary/60 rounded-full flex items-center justify-center mb-4">
+          <Clock className="w-7 h-7 text-text-tertiary opacity-30" />
+        </div>
+        <p className="text-xs font-black text-text-tertiary uppercase tracking-[0.3em] mb-2">
+          {isKO ? '타임라인 없음' : 'No Timeline'}
+        </p>
+        <p className="text-[11px] text-text-tertiary max-w-[280px]">
+          {isKO
+            ? '시뮬레이터에서 문명을 추가하면 타임라인이 표시됩니다.'
+            : 'Add civilizations in the Simulator to see the timeline.'}
+        </p>
       </div>
     );
   }

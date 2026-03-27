@@ -2,9 +2,15 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, StoryConfig, ChatSession } from '@/lib/studio-types';
 
-const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), { 
-  ssr: false, 
-  loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Studio...</div> 
+const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-4 p-8 animate-pulse">
+      <div className="h-10 bg-bg-secondary rounded-2xl w-2/5" />
+      <div className="h-48 bg-bg-secondary rounded-2xl" />
+      <div className="h-32 bg-bg-secondary rounded-2xl" />
+    </div>
+  ),
 });
 
 interface WorldTabProps {

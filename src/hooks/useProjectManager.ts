@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Project, ChatSession, Genre, StoryConfig, AppLanguage,
 } from '@/lib/studio-types';
@@ -43,6 +43,9 @@ export function useProjectManager(language: AppLanguage) {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [restoreWarning, setRestoreWarning] = useState<string | null>(null);
+  const projectsRef = useRef(projects);
+  projectsRef.current = projects;
 
   // Derived state
   const currentProject = projects.find(p => p.id === currentProjectId) ?? null;
@@ -69,8 +72,19 @@ export function useProjectManager(language: AppLanguage) {
     (async () => {
       let loaded = loadProjects();
       if (loaded.length === 0) {
-        const restored = await restoreFromIndexedDB();
-        if (restored && restored.length > 0) loaded = restored;
+        try {
+          const restored = await restoreFromIndexedDB();
+          if (restored && restored.length > 0) loaded = restored;
+        } catch (err) {
+          console.error('[IndexedDB] Restore failed:', err);
+          const msg = language === 'KO'
+            ? 'IndexedDB 복원에 실패했습니다. 데이터가 유실될 수 있습니다.'
+            : 'IndexedDB restore failed. Data may be lost.';
+          setRestoreWarning(msg);
+          window.dispatchEvent(new CustomEvent('noa:alert', {
+            detail: { message: msg, variant: 'error' },
+          }));
+        }
       }
       loaded = sanitizeLoadedProjects(loaded);
       if (loaded.length > 0) {
@@ -80,6 +94,7 @@ export function useProjectManager(language: AppLanguage) {
       }
       setHydrated(true);
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -99,6 +114,29 @@ export function useProjectManager(language: AppLanguage) {
     }, 500);
     return () => clearTimeout(timer);
   }, [projects, hydrated]);
+
+  // Fix #4: beforeunload — flush save synchronously to prevent data loss
+  useEffect(() => {
+    if (!hydrated) return;
+    const handleBeforeUnload = () => {
+      const current = projectsRef.current;
+      if (current.length === 0) return;
+      // Attempt synchronous localStorage write first
+      try {
+        saveProjects(current);
+      } catch {
+        // Fallback: sendBeacon with JSON payload
+        try {
+          const blob = new Blob([JSON.stringify(current)], { type: 'application/json' });
+          navigator.sendBeacon?.('/api/noop', blob);
+        } catch {
+          // Last resort — already attempted sync save above
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hydrated]);
 
   // ============================================================
   // PART 4 — Project management
@@ -234,6 +272,7 @@ export function useProjectManager(language: AppLanguage) {
     hydrated,
     currentProject, sessions, currentSession,
     setSessions,
+    restoreWarning,
     // Project ops
     createNewProject, deleteProject, renameProject, moveSessionToProject,
     // Session ops

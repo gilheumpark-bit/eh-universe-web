@@ -132,7 +132,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     <span>{k}</span>
                     <span>{v}%</span>
                   </div>
-                  <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
+                  <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={v} aria-valuemin={0} aria-valuemax={100} aria-label={`${k} ${v}%`}>
                     <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${v}%` }} />
                   </div>
                 </div>
@@ -146,7 +146,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     {(report.serialization.byteSize / 1024).toFixed(1)}KB
                   </span>
                 </div>
-                <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative">
+                <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Byte size ${(report.serialization.byteSize / 1024).toFixed(1)}KB`}>
                   <div
                     className={`h-full transition-all duration-500 ${report.serialization.withinRange ? 'bg-green-600' : 'bg-amber-600'}`}
                     style={{ width: `${Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100)}%` }}
@@ -171,7 +171,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                         {chars.toLocaleString()}
                       </span>
                     </div>
-                    <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative">
+                    <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (chars / charRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Character count ${chars.toLocaleString()}`}>
                       <div
                         className={`h-full transition-all duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
                         style={{ width: `${Math.min(100, (chars / charRange.max) * 100)}%` }}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, Send,
   Sparkles, Menu, Globe,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   Message, StoryConfig, Genre,
   AppLanguage, AppTab,
@@ -48,10 +48,10 @@ import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import WorldTab from '@/components/studio/tabs/WorldTab';
 // WorldStudioView는 WorldTab 내부에서 import됨
-const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
 import StyleTab from '@/components/studio/tabs/StyleTab';
 // StyleStudioView는 StyleTab 내부에서 import됨
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: DynSkeleton });
 const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false, loading: DynSkeleton });
 const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false, loading: DynSkeleton });
 const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false, loading: DynSkeleton });
@@ -93,7 +93,9 @@ export default function StudioPage() {
   const { lang } = useLang();
   const searchParams = useSearchParams();
   const studioRouter = useRouter();
+  const pathname = usePathname();
   const [worldImportBanner, setWorldImportBanner] = useState(false);
+  const [worldImportDone, setWorldImportDone] = useState<string | null>(null);
   const [language, setLanguage] = useState<AppLanguage>(() => {
     const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
     return map[lang] || 'KO';
@@ -118,7 +120,25 @@ export default function StudioPage() {
     updateCurrentSession, setConfig,
   } = pm;
 
-  const [activeTab, setActiveTab] = useState<AppTab>('world');
+  // Fix #1: Restore tab from URL query params on mount
+  const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'rulebook', 'style', 'manuscript', 'docs', 'visual'];
+  const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {
+    if (typeof window === 'undefined') return 'world';
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab && VALID_TABS.includes(urlTab as AppTab)) return urlTab as AppTab;
+    return 'world';
+  });
+  // Sync tab state → URL query params
+  const setActiveTab = useCallback((tab: AppTab) => {
+    setActiveTabRaw(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    // Remove transient import params
+    params.delete('worldImport');
+    params.delete('postImport');
+    params.delete('setup');
+    studioRouter.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [studioRouter, pathname]);
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
     if (typeof window !== 'undefined') {
@@ -219,6 +239,8 @@ export default function StudioPage() {
     // lightTheme은 useStudioTheme 내부에서 localStorage 로드
   }, [hydrated]);
 
+  // Fix #9: Modal focus trap — moved below all state declarations (see below)
+
   useEffect(() => {
     if (!hydrated) return;
     let cancelled = false;
@@ -262,6 +284,11 @@ export default function StudioPage() {
     if (!hydrated) return;
     const raw = searchParams.get('worldImport');
     if (!raw) return;
+    // Fix #2: Prevent re-importing if the same data was already loaded
+    if (worldImportDone === raw) {
+      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
+      return;
+    }
     try {
       const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
       const genreGuess = (json.tags as string[] | undefined)?.find((tag: string) =>
@@ -298,11 +325,13 @@ export default function StudioPage() {
       }));
       setActiveTab('world');
       setWorldImportBanner(true);
+      setWorldImportDone(raw);
       setTimeout(() => setWorldImportBanner(false), 5000);
       // Clear query param without full reload
-      studioRouter.replace('/studio', { scroll: false });
+      studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
     } catch {
       // invalid payload — ignore
+      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
@@ -354,7 +383,7 @@ export default function StudioPage() {
       setActiveTab('writing');
       setWorldImportBanner(true);
       setTimeout(() => setWorldImportBanner(false), 5000);
-      studioRouter.replace('/studio', { scroll: false });
+      studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
     } catch {
       // invalid payload — ignore
     }
@@ -366,7 +395,7 @@ export default function StudioPage() {
     if (!hydrated) return;
     if (searchParams.get('setup') !== '1') return;
     setShowApiKeyModal(true);
-    studioRouter.replace('/studio', { scroll: false });
+    studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
@@ -430,6 +459,18 @@ export default function StudioPage() {
   const [saveSlotName, setSaveSlotName] = useState('');
 
   // editDraft persist → useStudioWritingMode 내부로 이동
+
+  // Fix #9: Modal focus trap — save/restore active element on modal open/close
+  const prevFocusRef = useRef<Element | null>(null);
+  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
+  useEffect(() => {
+    if (anyModalOpen) {
+      prevFocusRef.current = document.activeElement;
+    } else if (prevFocusRef.current && prevFocusRef.current instanceof HTMLElement) {
+      prevFocusRef.current.focus();
+      prevFocusRef.current = null;
+    }
+  }, [anyModalOpen]);
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);

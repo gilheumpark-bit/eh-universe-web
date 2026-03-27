@@ -21,7 +21,7 @@ interface UseStudioExportParams {
   setCurrentProjectId: (id: string | null) => void;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>> | ((updater: (prev: ChatSession[]) => ChatSession[]) => void);
   setCurrentSessionId: (id: string | null) => void;
-  setActiveTab: React.Dispatch<React.SetStateAction<AppTab>>;
+  setActiveTab: (tab: AppTab) => void;
   isKO: boolean;
   language: AppLanguage;
   writingMode: WritingMode;
