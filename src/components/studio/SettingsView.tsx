@@ -132,24 +132,24 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="space-y-2">
             <div
               onClick={onManageApiKey}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl"><Key className="w-5 h-5 text-text-tertiary" /></div>
-                <div>
-                  <div className="text-sm font-bold">{t('settings.apiKeyManagement')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
-                <div className="text-[10px] font-black text-blue-500 uppercase">
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <div className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
                   {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
                 </div>
                 {apiKeyStatus && isKeyExpiringSoon(activeProvider) && (
-                  <div className="text-[9px] text-yellow-400">
+                  <div className="text-[8px] md:text-[9px] text-yellow-400">
                     {language === 'KO'
-                      ? `키 갱신을 권장합니다 (${getKeyAge(activeProvider)}일 경과)`
-                      : `Consider rotating your API key (${getKeyAge(activeProvider)}d old)`}
+                      ? `키 갱신 권장 (${getKeyAge(activeProvider)}일)`
+                      : `Rotate key (${getKeyAge(activeProvider)}d old)`}
                   </div>
                 )}
               </div>
@@ -161,22 +161,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 setObfuscateDone(count);
                 setTimeout(() => setObfuscateDone(null), 3000);
               }}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl"><Shield className="w-5 h-5 text-text-tertiary" /></div>
-                <div>
-                  <div className="text-sm font-bold">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Shield className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">
                     {language === 'KO' ? '저장된 키 암호화' : 'Encrypt Saved Keys'}
                   </div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
                     {language === 'KO'
                       ? '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다'
                       : 'Re-saves any plain-text API keys in obfuscated format'}
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] font-black uppercase shrink-0 ml-2">
+              <div className="text-[9px] md:text-[10px] font-black uppercase shrink-0">
                 {obfuscateDone === null ? (
                   <span className="text-text-tertiary">RUN</span>
                 ) : obfuscateDone === 0 ? (
@@ -189,13 +189,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
             <div
               onClick={() => setNotificationsOn(prev => !prev)}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl"><Bell className="w-5 h-5 text-text-tertiary" /></div>
-                <div>
-                  <div className="text-sm font-bold">{t('settings.notifications')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Bell className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settings.notifications')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'}`}>
@@ -205,16 +205,16 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
             <div
               onClick={(e) => { e.stopPropagation(); onClearAll(); }}
-              className="flex items-center justify-between p-4 md:p-6 hover:bg-red-500/10 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-red-500/30 group active:scale-[0.98] active:bg-red-500/20"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-red-500/10 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-red-500/30 group active:scale-[0.98] active:bg-red-500/20"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl group-hover:bg-red-500/20 transition-colors"><Trash2 className="w-5 h-5 text-red-500" /></div>
-                <div>
-                  <div className="text-sm font-bold text-red-500">{t('settings.resetData')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl group-hover:bg-red-500/20 transition-colors shrink-0"><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold text-red-500 truncate">{t('settings.resetData')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-red-500" />
+              <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-red-500 shrink-0" />
             </div>
           </div>
         </div>
@@ -274,22 +274,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           </h3>
           <div className="space-y-2">
             {/* Default Platform */}
-            <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl">
-                  {defaultPlatform === 'MOBILE' ? <Smartphone className="w-5 h-5 text-text-tertiary" /> : <Monitor className="w-5 h-5 text-text-tertiary" />}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  {defaultPlatform === 'MOBILE' ? <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /> : <Monitor className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />}
                 </div>
-                <div>
-                  <div className="text-sm font-bold">{t('settingsEngine.defaultPlatform')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.defaultPlatform')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 {(['MOBILE', 'WEB'] as const).map(p => (
                   <button
                     key={p}
                     onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary hover:text-white'}`}
+                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary hover:text-white'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -298,12 +298,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
 
             {/* Default Episodes */}
-            <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl"><Hash className="w-5 h-5 text-text-tertiary" /></div>
-                <div>
-                  <div className="text-sm font-bold">{t('settingsEngine.defaultEpisodes')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Hash className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.defaultEpisodes')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
                 </div>
               </div>
               <input
@@ -312,20 +312,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 max={200}
                 value={defaultEpisodes}
                 onChange={e => { const v = parseInt(e.target.value) || 25; setDefaultEpisodes(v); localStorage.setItem('noa_default_episodes', String(v)); }}
-                className="w-20 bg-black/50 border border-border rounded-xl px-3 py-2 text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none"
+                className="w-16 md:w-20 bg-black/50 border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none shrink-0"
               />
             </div>
 
             {/* Temperature */}
-            <div className="flex items-center justify-between p-4 md:p-6 rounded-3xl border border-transparent">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-bg-secondary rounded-2xl"><Thermometer className="w-5 h-5 text-text-tertiary" /></div>
-                <div>
-                  <div className="text-sm font-bold">{t('settingsEngine.temperature')}</div>
-                  <div className="text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Thermometer className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.temperature')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 <input
                   type="range"
                   min="0"
@@ -333,9 +333,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   step="0.1"
                   value={temperature}
                   onChange={e => { const v = parseFloat(e.target.value); setTemperature(v); localStorage.setItem('noa_temperature', String(v)); }}
-                  className="w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
+                  className="w-20 md:w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className="text-sm font-black text-blue-400 w-8 text-right">{temperature.toFixed(1)}</span>
+                <span className="text-xs md:text-sm font-black text-blue-400 w-7 md:w-8 text-right">{temperature.toFixed(1)}</span>
               </div>
             </div>
           </div>
