@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
-import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
+import { streamChat, getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
 import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions, type StoredChatSession } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
@@ -1086,6 +1086,39 @@ function CodeStudioShellInner() {
                   className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.minimap ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
                   {settings.minimap ? "ON" : "OFF"}
                 </button>
+              </div>
+              {/* AI Provider + API Key */}
+              <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">AI</label>
+                <select
+                  value={getActiveProvider()}
+                  onChange={(e) => { setActiveProvider(e.target.value as Parameters<typeof setActiveProvider>[0]); toast("Provider changed", "info"); }}
+                  className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none">
+                  <option value="gemini">Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="claude">Claude</option>
+                  <option value="groq">Groq</option>
+                  <option value="mistral">Mistral</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-1">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Key</label>
+                <input
+                  type="password"
+                  placeholder="API Key"
+                  defaultValue={getApiKey(getActiveProvider()) ? "••••••••" : ""}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val && val !== "••••••••") {
+                      setApiKey(getActiveProvider(), val);
+                      toast("API key saved", "success");
+                    }
+                  }}
+                  className="w-32 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none focus:border-accent-purple/30"
+                />
+                {getApiKey(getActiveProvider()) && (
+                  <span className="h-2 w-2 rounded-full bg-accent-green" title="API key set" />
+                )}
               </div>
             </div>
           </div>
