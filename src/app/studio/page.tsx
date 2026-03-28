@@ -350,7 +350,8 @@ export default function StudioPage() {
       // Clear query param without full reload
       studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
     } catch {
-      // invalid payload — ignore
+      // invalid payload — 사용자에게 알림
+      setAlertToast({ message: language === 'KO' ? '세계관 데이터를 불러오지 못했습니다. 링크가 손상됐을 수 있습니다.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
       studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -405,7 +406,7 @@ export default function StudioPage() {
       setTimeout(() => setWorldImportBanner(false), 5000);
       studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
     } catch {
-      // invalid payload — ignore
+      setAlertToast({ message: language === 'KO' ? '게시글 데이터를 불러오지 못했습니다.' : 'Failed to import post data.', variant: 'error' });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);

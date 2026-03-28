@@ -425,7 +425,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             navigator.clipboard.writeText(url).then(() => {
               setShareCopied(true);
               setTimeout(() => setShareCopied(false), 2000);
-            }).catch(() => { /* clipboard permission denied — silently ignore */ });
+            }).catch(() => {
+              // clipboard 권한 거부 — 수동 복사 안내
+              window.prompt(language === 'KO' ? '클립보드 접근이 거부됐습니다. 아래 링크를 직접 복사하세요:' : 'Clipboard access denied. Copy the link below:', url);
+            });
           }}
           className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
         >
