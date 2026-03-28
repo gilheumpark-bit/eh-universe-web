@@ -4,7 +4,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
-import type { EpisodeManuscript } from '@/lib/studio-types';
+import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
 import {
   type TranslationConfig,
   type TranslationMode,
@@ -69,6 +69,10 @@ async function callAI(
   return result.trim();
 }
 
+/**
+ * 채점: structured output 우선 시도 → 실패 시 스트리밍 폴백.
+ * structured output은 JSON 파싱 안정성이 높음.
+ */
 async function scoreTranslation(
   sourceText: string,
   translatedText: string,
@@ -76,6 +80,30 @@ async function scoreTranslation(
   signal?: AbortSignal
 ): Promise<ChunkScoreDetail> {
   const prompt = buildScoringPrompt(sourceText, translatedText, config);
+
+  // 1차: structured output (서버 라우트 경유)
+  try {
+    const resp = await fetch('/api/gemini-structured', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(30_000),
+      body: JSON.stringify({
+        task: 'translationScore',
+        prompt,
+        provider: 'gemini',
+        apiKey: getApiKey('gemini') || undefined,
+      }),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const raw = typeof data === 'string' ? data : JSON.stringify(data);
+      return parseScoreResponse(raw, config.mode);
+    }
+  } catch {
+    // structured output 실패 → 스트리밍 폴백
+  }
+
+  // 2차: 스트리밍 폴백
   const raw = await callAI(
     'You are a translation quality scoring system. Respond ONLY with the JSON object requested.',
     prompt,

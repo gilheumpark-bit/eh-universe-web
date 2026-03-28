@@ -280,11 +280,12 @@ export interface EpisodeManuscript {
 export interface TranslatedManuscriptEntry {
   episode: number;
   targetLang: 'EN' | 'JP' | 'CN' | 'KO';
+  mode: 'fidelity' | 'experience';
   translatedTitle: string;
   translatedContent: string;
   charCount: number;
   avgScore: number;           // 번역 품질 점수 (0~1)
-  fidelity: number;           // 사용된 fidelity 값
+  band: number;               // 사용된 band 값 (0.480~0.520)
   lastUpdate: number;
 }
 
