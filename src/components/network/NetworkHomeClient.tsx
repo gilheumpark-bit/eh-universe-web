@@ -196,7 +196,12 @@ export function NetworkHomeClient() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : lang === "ko" ? "불러오기에 실패했습니다." : "Failed to load.");
+          const msg = caught instanceof Error ? caught.message : "";
+          if (msg.includes("Firestore is not available")) {
+            setError(lang === "ko" ? "데이터베이스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요." : "Unable to connect to the database. Please try again later.");
+          } else {
+            setError(msg || (lang === "ko" ? "불러오기에 실패했습니다." : "Failed to load."));
+          }
         }
       } finally {
         if (!cancelled) {

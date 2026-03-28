@@ -255,7 +255,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             </div>
 
             <button
-              onClick={createNewSession}
+              onClick={() => createNewSession()}
               className="premium-button mt-3 flex w-full justify-center rounded-[1.1rem] px-4 py-3 text-[11px]"
             >
               <Plus className="h-4 w-4" /> {language === 'KO' ? '새 에피소드' : language === 'JP' ? '新しいエピソード' : language === 'CN' ? '新剧集' : 'New Episode'}
