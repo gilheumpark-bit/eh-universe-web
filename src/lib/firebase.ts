@@ -31,9 +31,9 @@ export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'de
 // Falls back to project defaults when env vars are not set (e.g. local dev without .env.local).
 const productionConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'gen-lang-client-0645063497.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gen-lang-client-0645063497',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'gen-lang-client-0645063497.firebasestorage.app',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'eh-universe.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'eh-universe',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'eh-universe.firebasestorage.app',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '262025911233',
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:262025911233:web:e49fe5b774538b808f2d40',
 };
