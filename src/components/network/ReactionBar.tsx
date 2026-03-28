@@ -39,6 +39,7 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
   const [reactions, setReactions] = useState<ReactionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<ReactionType | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +81,8 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
           return prev.filter((r) => !(r.userId === user.uid && r.reactionType === type));
         });
       } catch {
-        /* silent */
+        setError(lang === "ko" ? "반응 처리에 실패했습니다." : "Failed to toggle reaction.");
+        setTimeout(() => setError(null), 3000);
       } finally {
         setToggling(null);
       }
@@ -95,6 +97,7 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {error && <span className="w-full text-xs text-accent-red mb-1">{error}</span>}
       {REACTION_TYPES.map((type) => {
         const active = userHas(type);
         const count = countByType(type);

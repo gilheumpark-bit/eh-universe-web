@@ -31,6 +31,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const { user, signInWithGoogle } = useAuth();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errShake, setErrShake] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -66,7 +67,8 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
         setSaved(true);
       }
     } catch {
-      /* silent */
+      setErrShake(true);
+      setTimeout(() => setErrShake(false), 600);
     } finally {
       setLoading(false);
     }
@@ -81,6 +83,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       onClick={() => void handleToggle()}
       title={label}
       className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        errShake ? "animate-[shake_0.3s_ease-in-out_2] border-accent-red/40" :
         saved
           ? "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
           : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"

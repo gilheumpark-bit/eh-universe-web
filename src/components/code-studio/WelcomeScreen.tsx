@@ -10,6 +10,7 @@ import { Code2, Play, Upload, Cpu, MessageSquare, Shield, Layers } from "lucide-
 interface WelcomeScreenProps {
   onNewFile: () => void;
   onOpenDemo: () => void;
+  onBlankProject?: () => void;
   onImportProject?: () => void;
 }
 
@@ -89,7 +90,7 @@ function FeatureBadge({ icon, label, delay }: { icon: React.ReactNode; label: st
 // PART 4 — Main WelcomeScreen
 // ============================================================
 
-export default function WelcomeScreen({ onNewFile, onOpenDemo, onImportProject }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject }: WelcomeScreenProps) {
   const [titleVisible, setTitleVisible] = useState(false);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
   const [shortcutsVisible, setShortcutsVisible] = useState(false);
@@ -153,6 +154,17 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onImportProject }
             onClick={onOpenDemo}
             delay={500}
           />
+          {onBlankProject && (
+            <CTACard
+              icon={<Layers className="h-6 w-6 text-accent-amber" />}
+              title="Blank Project"
+              description="Empty project with README"
+              accentClass="bg-accent-amber/10"
+              glowColor="#d4a259"
+              onClick={onBlankProject}
+              delay={550}
+            />
+          )}
           <CTACard
             icon={<Upload className="h-6 w-6 text-accent-blue" />}
             title="Import"

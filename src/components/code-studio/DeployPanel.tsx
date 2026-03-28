@@ -465,6 +465,10 @@ export default function DeployPanel({ files, language }: DeployPanelProps) {
 
   return (
     <div className="flex h-full flex-col bg-bg-secondary text-text-primary">
+      {/* Simulation notice */}
+      <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08]">
+        Simulation mode — export files or connect a real deploy target
+      </div>
       {/* Tab bar */}
       <div className="flex border-b border-border/30">
         {tabs.map((tab) => (

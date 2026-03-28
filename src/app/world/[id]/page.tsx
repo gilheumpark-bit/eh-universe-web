@@ -437,7 +437,7 @@ export default function WorldSharePage() {
             <div className="text-4xl">&#x26A0;</div>
             <p className="text-text-secondary text-sm">{t.invalidData}</p>
             <button
-              onClick={() => window.history.back()}
+              onClick={() => { if (window.history.length > 1) router.back(); else router.push("/"); }}
               className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
             >
               {t.backHome}

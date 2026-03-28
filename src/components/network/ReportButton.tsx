@@ -48,11 +48,13 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(async () => {
     if (!user || submitting) return;
     try {
       setSubmitting(true);
+      setSubmitError(null);
       await submitReport({
         reporterId: user.uid,
         targetType,
@@ -61,9 +63,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
         detail,
       });
       setSubmitted(true);
-      setTimeout(() => { setOpen(false); setSubmitted(false); setDetail(""); }, 2000);
+      setTimeout(() => { setOpen(false); setSubmitted(false); setDetail(""); setSubmitError(null); }, 2000);
     } catch {
-      /* silent */
+      setSubmitError(lang === "ko" ? "신고 제출에 실패했습니다." : "Failed to submit report.");
     } finally {
       setSubmitting(false);
     }
@@ -121,6 +123,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
                   />
                 </div>
 
+                {submitError && (
+                  <p className="text-xs text-accent-red">{submitError}</p>
+                )}
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"

@@ -438,6 +438,10 @@ export default function GitPanel({
 
   return (
     <div className="flex h-full flex-col bg-bg-secondary text-text-primary">
+      {/* Simulation notice */}
+      <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08]">
+        Local simulation — changes are saved in browser only
+      </div>
       {/* Branch selector */}
       <div className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5">
         <GitBranch size={14} className="shrink-0 text-accent-green" />

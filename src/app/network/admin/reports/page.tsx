@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { listReports, updateReportStatus } from "@/lib/network-firestore";
 import type { ReportRecord } from "@/lib/network-types";
@@ -12,6 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ReportsAdminPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [reports, setReports] = useState<ReportRecord[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "reviewed">("pending");
@@ -51,7 +53,7 @@ export default function ReportsAdminPage() {
           <h1 className="font-[family-name:var(--font-mono)] text-2xl font-black tracking-tight">
             신고 관리
           </h1>
-          <button onClick={() => window.history.back()} className="text-text-tertiary text-xs hover:text-text-primary">
+          <button onClick={() => { if (window.history.length > 1) router.back(); else router.push("/"); }} className="text-text-tertiary text-xs hover:text-text-primary">
             ← 뒤로
           </button>
         </div>

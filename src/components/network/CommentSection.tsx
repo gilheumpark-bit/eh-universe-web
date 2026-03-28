@@ -79,11 +79,11 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       const records = await listCommentsForPost(postId);
       setComments(records);
     } catch {
-      /* silent */
+      setError(lang === "ko" ? "댓글을 불러오지 못했습니다." : "Failed to load comments.");
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [postId, lang]);
 
   useEffect(() => {
     void loadComments();
@@ -163,7 +163,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         await deleteComment(comment.id, comment.postId);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       } catch {
-        /* silent */
+        setError(lang === "ko" ? "삭제에 실패했습니다." : "Failed to delete comment.");
       }
     },
     [lang],
