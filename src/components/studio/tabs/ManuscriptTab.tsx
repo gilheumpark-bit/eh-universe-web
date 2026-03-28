@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Share2 } from 'lucide-react';
+import { Share2, Languages } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
 import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
 import ShareToNetwork from '@/components/studio/ShareToNetwork';
+import TranslationPanel from '@/components/studio/TranslationPanel';
 
 interface ManuscriptTabProps {
   language: AppLanguage;
@@ -24,6 +25,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
 }) => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
 
   return (
     <>
@@ -33,6 +35,12 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
             showDashboard ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           📊 {language === 'KO' ? '작가 대시보드' : 'Author Dashboard'}
+        </button>
+        <button onClick={() => { setShowTranslation(!showTranslation); if (!showTranslation) setShowDashboard(false); }}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+            showTranslation ? 'bg-accent-green text-white border-accent-green' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+          }`}>
+          <Languages className="w-3 h-3" /> {language === 'KO' ? '번역' : 'Translate'}
         </button>
         <button onClick={() => setShowShare(true)}
           className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
@@ -54,13 +62,18 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           <FatigueDetector messages={messages} language={language} />
         </div>
       )}
-      <ManuscriptView
-        language={language}
-        config={config}
-        setConfig={setConfig}
-        messages={messages}
-        onEditInStudio={onEditInStudio}
-      />
+      {showTranslation && (
+        <TranslationPanel language={language} config={config} setConfig={setConfig} />
+      )}
+      {!showTranslation && (
+        <ManuscriptView
+          language={language}
+          config={config}
+          setConfig={setConfig}
+          messages={messages}
+          onEditInStudio={onEditInStudio}
+        />
+      )}
     </>
   );
 };

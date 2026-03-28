@@ -17,6 +17,7 @@ import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
 import { saveFileTree, loadFileTree, saveSettings, loadSettings } from "@/lib/code-studio-store";
+import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import type { NoaResult } from "@/lib/noa/types";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -548,7 +549,13 @@ export default function CodeStudioShell() {
                   bracketPairColorization: { enabled: true }, smoothScrolling: true,
                   cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
                 }}
-                onMount={(editor) => { editorRef.current = editor; }}
+                onMount={(editor, monaco) => {
+                  editorRef.current = editor;
+                  // Ghost Text: AI 인라인 완성 등록 (전 언어)
+                  registerGhostTextProvider(monaco);
+                  // 에디터 해제 시 Ghost Text 취소
+                  editor.onDidDispose(() => cancelGhostText());
+                }}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
