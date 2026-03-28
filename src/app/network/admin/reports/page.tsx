@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { listReports, updateReportStatus } from "@/lib/network-firestore";
 import type { ReportRecord } from "@/lib/network-types";
@@ -52,18 +53,18 @@ export default function ReportsAdminPage() {
             >
               Google 로그인
             </button>
-            <a
+            <Link
               href="/network"
               className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
             >
               &larr; Network로 돌아가기
-            </a>
-            <a
+            </Link>
+            <Link
               href="/"
               className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
             >
               홈으로
-            </a>
+            </Link>
           </div>
         </div>
       </main>

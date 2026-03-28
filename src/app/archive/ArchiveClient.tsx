@@ -2,7 +2,7 @@
 
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLang, L2 } from "@/lib/LangContext";
 import { createT } from "@/lib/i18n";
@@ -176,13 +176,11 @@ export default function ArchiveClient() {
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";
-    setActiveCategory(cat);
-  }, [searchParams]);
-
-  // Re-sync search query from URL on browser back/forward
-  useEffect(() => {
     const q = searchParams.get("q") || "";
-    setSearchQuery(q);
+    startTransition(() => {
+      setActiveCategory(cat);
+      setSearchQuery(q);
+    });
   }, [searchParams]);
 
   // Debounced URL sync for search query

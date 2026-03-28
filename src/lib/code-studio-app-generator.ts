@@ -171,7 +171,7 @@ export async function generateApp(
   }
 
   // Determine install/start commands from package.json
-  let installCommand = 'npm install';
+  const installCommand = 'npm install';
   let startCommand = 'npm run dev';
   const pkgFile = files.find((f) => f.path === 'package.json');
   if (pkgFile) {

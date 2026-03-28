@@ -1,20 +1,14 @@
-import type { User } from "firebase/auth";
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, increment,
-  limit, orderBy, query, setDoc, updateDoc, writeBatch, where,
+  collection, doc, getDocs,
+  limit, orderBy, query, setDoc, where,
   type QueryConstraint,
 } from "firebase/firestore";
-import { auth, getDb } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import {
-  type BoardType, type BookmarkRecord, type CommentRecord,
-  type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
-  type CreatePostInput, type CreateSettlementInput,
-  type PlanetRecord, type PlanetStatus, type PostRecord,
-  type ReactionRecord, type ReactionType, type ReportReason,
-  type ReportRecord, type SettlementRecord, type UserRecord,
-  REPORT_TYPE_TO_BOARD_TYPE,
+  type ReportReason,
+  type ReportRecord,
 } from "@/lib/network-types";
-import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus } from "./helpers";
+import { requireDb, normalizeText, COLLECTIONS, nowIso } from "./helpers";
 
 // ============================================================
 // PART 8 — REPORT OPERATIONS

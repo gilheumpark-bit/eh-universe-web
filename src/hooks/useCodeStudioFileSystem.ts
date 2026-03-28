@@ -108,19 +108,29 @@ const MAX_UNDO = 50;
 
 export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeStudioFileSystemReturn {
   const [tree, setTreeState] = useState<FileNode[]>(initialTree);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const undoStack = useRef<FileNode[][]>([]);
   const redoStack = useRef<FileNode[][]>([]);
+
+  const syncStackFlags = useCallback(() => {
+    setCanUndo(undoStack.current.length > 0);
+    setCanRedo(redoStack.current.length > 0);
+  }, []);
 
   const pushUndo = useCallback((current: FileNode[]) => {
     undoStack.current.push(JSON.parse(JSON.stringify(current)));
     if (undoStack.current.length > MAX_UNDO) undoStack.current.shift();
     redoStack.current = [];
-  }, []);
+    syncStackFlags();
+  }, [syncStackFlags]);
 
   const setTree = useCallback((newTree: FileNode[]) => {
-    pushUndo(tree);
-    setTreeState(newTree);
-  }, [tree, pushUndo]);
+    setTreeState((prev) => {
+      pushUndo(prev);
+      return newTree;
+    });
+  }, [pushUndo]);
 
   const createFile = useCallback((parentId: string | null, name: string, content = ''): FileNode => {
     const node: FileNode = {
@@ -130,10 +140,12 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
       content,
       language: detectLanguage(name),
     };
-    pushUndo(tree);
-    setTreeState((prev) => insertIntoTree(prev, parentId, node));
+    setTreeState((prev) => {
+      pushUndo(prev);
+      return insertIntoTree(prev, parentId, node);
+    });
     return node;
-  }, [tree, pushUndo]);
+  }, [pushUndo]);
 
   const createFolder = useCallback((parentId: string | null, name: string): FileNode => {
     const node: FileNode = {
@@ -142,26 +154,30 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
       type: 'folder',
       children: [],
     };
-    pushUndo(tree);
-    setTreeState((prev) => insertIntoTree(prev, parentId, node));
+    setTreeState((prev) => {
+      pushUndo(prev);
+      return insertIntoTree(prev, parentId, node);
+    });
     return node;
-  }, [tree, pushUndo]);
+  }, [pushUndo]);
 
   const deleteNode = useCallback((id: string) => {
-    pushUndo(tree);
-    setTreeState((prev) => removeFromTree(prev, id));
-  }, [tree, pushUndo]);
+    setTreeState((prev) => {
+      pushUndo(prev);
+      return removeFromTree(prev, id);
+    });
+  }, [pushUndo]);
 
   const renameNode = useCallback((id: string, newName: string) => {
-    pushUndo(tree);
-    setTreeState((prev) =>
-      updateInTree(prev, id, (n) => ({
+    setTreeState((prev) => {
+      pushUndo(prev);
+      return updateInTree(prev, id, (n) => ({
         ...n,
         name: newName,
         language: n.type === 'file' ? detectLanguage(newName) : n.language,
-      })),
-    );
-  }, [tree, pushUndo]);
+      }));
+    });
+  }, [pushUndo]);
 
   const updateContent = useCallback((id: string, content: string) => {
     // Content updates don't push undo (too frequent). Use file-level version history instead.
@@ -171,12 +187,14 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
   }, []);
 
   const moveNode = useCallback((id: string, newParentId: string | null) => {
-    const node = findInTree(tree, id);
-    if (!node) return;
-    pushUndo(tree);
-    const cleaned = removeFromTree(tree, id);
-    setTreeState(insertIntoTree(cleaned, newParentId, node));
-  }, [tree, pushUndo]);
+    setTreeState((prev) => {
+      const node = findInTree(prev, id);
+      if (!node) return prev;
+      pushUndo(prev);
+      const cleaned = removeFromTree(prev, id);
+      return insertIntoTree(cleaned, newParentId, node);
+    });
+  }, [pushUndo]);
 
   const findNode = useCallback((id: string): FileNode | null => {
     return findInTree(tree, id);
@@ -188,17 +206,23 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
 
   const undo = useCallback(() => {
     if (undoStack.current.length === 0) return;
-    redoStack.current.push(JSON.parse(JSON.stringify(tree)));
-    const prev = undoStack.current.pop()!;
-    setTreeState(prev);
-  }, [tree]);
+    setTreeState((prev) => {
+      redoStack.current.push(JSON.parse(JSON.stringify(prev)));
+      const restored = undoStack.current.pop()!;
+      syncStackFlags();
+      return restored;
+    });
+  }, [syncStackFlags]);
 
   const redo = useCallback(() => {
     if (redoStack.current.length === 0) return;
-    undoStack.current.push(JSON.parse(JSON.stringify(tree)));
-    const next = redoStack.current.pop()!;
-    setTreeState(next);
-  }, [tree]);
+    setTreeState((prev) => {
+      undoStack.current.push(JSON.parse(JSON.stringify(prev)));
+      const restored = redoStack.current.pop()!;
+      syncStackFlags();
+      return restored;
+    });
+  }, [syncStackFlags]);
 
   const persist = useCallback(async () => {
     await saveFileTree(tree);
@@ -222,8 +246,8 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
     findByPath,
     undo,
     redo,
-    canUndo: undoStack.current.length > 0,
-    canRedo: redoStack.current.length > 0,
+    canUndo,
+    canRedo,
     persist,
     load,
   };

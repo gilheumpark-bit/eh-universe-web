@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, startTransition } from "react";
 import {
   Package, Search, Download, Trash2, Loader2,
   ChevronDown, ChevronRight, Terminal,
@@ -74,7 +74,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
     }
   }, [files]);
 
-  useEffect(() => { refreshInstalled(); }, [refreshInstalled]);
+  useEffect(() => { startTransition(() => { refreshInstalled(); }); }, [refreshInstalled]);
   useEffect(() => { if (terminalRef.current) terminalRef.current.scrollTop = terminalRef.current.scrollHeight; }, [terminalOutput]);
 
   const handleSearch = async () => {

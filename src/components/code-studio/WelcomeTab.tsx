@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { FileText, FolderOpen, GitBranch, Lightbulb, Clock, Plus } from "lucide-react";
 
 interface RecentFileInfo {
@@ -50,11 +50,7 @@ export default function WelcomeTab({
   onOpenFolder,
   onCloneRepo,
 }: WelcomeTabProps) {
-  const [tipIndex, setTipIndex] = useState(0);
-
-  useEffect(() => {
-    setTipIndex(Math.floor(Math.random() * TIPS.length));
-  }, []);
+  const [tipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
 
   const actions = [
     { icon: <Plus size={16} />, label: "New File", onClick: onNewFile, accent: "text-green-400" },
@@ -62,13 +58,14 @@ export default function WelcomeTab({
     { icon: <GitBranch size={16} />, label: "Clone Repository", onClick: onCloneRepo, accent: "text-purple-400" },
   ].filter((a) => a.onClick);
 
-  const formatTime = (ts: number) => {
-    const diff = Date.now() - ts;
+  const [now] = useState(() => Date.now());
+  const formatTime = useCallback((ts: number) => {
+    const diff = now - ts;
     if (diff < 60_000) return "just now";
     if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
     if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
     return `${Math.floor(diff / 86_400_000)}d ago`;
-  };
+  }, [now]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-8 text-center">
