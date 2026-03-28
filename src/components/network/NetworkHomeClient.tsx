@@ -392,9 +392,12 @@ export function NetworkHomeClient() {
 
           <div className="grid gap-4 lg:grid-cols-3">
             {loading
-              ? Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="premium-panel-soft min-h-[220px] animate-pulse p-6" />
-                ))
+              ? (
+                  <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-green border-t-transparent mb-3" />
+                    <p className="text-sm text-text-tertiary">{lang === "ko" ? "행성을 불러오는 중..." : "Loading planets..."}</p>
+                  </div>
+                )
               : !loading && filteredPlanets.length === 0 && state.planets.length === 0
                 ? (
                   <>
@@ -493,9 +496,12 @@ export function NetworkHomeClient() {
 
           <div className="grid gap-4">
             {loading
-              ? Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="premium-panel-soft min-h-[140px] animate-pulse p-5" />
-                ))
+              ? (
+                  <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
+                    <p className="text-sm text-text-tertiary">{lang === "ko" ? "게시글을 불러오는 중..." : "Loading posts..."}</p>
+                  </div>
+                )
               : filteredPosts.length === 0
                 ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">

@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import {
   Files, Plus, X, Play, Settings, ChevronRight, ChevronDown,
   FileText, FolderOpen, Folder, Terminal as TermIcon,
@@ -999,9 +1000,9 @@ function CodeStudioShellInner() {
       {/* Left — File Explorer */}
       <div className="flex w-56 shrink-0 flex-col border-r border-white/8 bg-bg-secondary">
         <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-          <a href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Back to Home">
+          <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Back to Home">
             <Home className="h-3.5 w-3.5" />
-          </a>
+          </Link>
           <Files className="h-4 w-4 text-accent-green" />
           <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
           <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
