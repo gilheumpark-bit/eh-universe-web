@@ -223,13 +223,15 @@ export default function Home() {
     }
   }, []);
 
-  // Auto-dismiss splash after 2.5s
+  // Auto-dismiss: desktop 2.5s, mobile needs more time to read & tap
   useEffect(() => {
     if (!showSplash) return;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const delay = isMobile ? 6000 : 2500;
     const timer = setTimeout(() => {
       setShowSplash(false);
       sessionStorage.setItem("eh-splash-seen", "1");
-    }, 2500);
+    }, delay);
     return () => clearTimeout(timer);
   }, [showSplash]);
 
