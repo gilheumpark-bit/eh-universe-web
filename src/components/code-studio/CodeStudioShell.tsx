@@ -8,17 +8,17 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  Files, Plus, X, Play, Settings, ChevronRight, ChevronDown,
+  Files, Plus, X, Play, Settings, ChevronRight,
   FileText, FolderOpen, Folder, Terminal as TermIcon,
   MessageSquare, Shield, Activity, Send, Trash2, Edit3,
-  AlertTriangle, CheckCircle, XCircle, Loader2,
+  AlertTriangle, Loader2,
   Search, GitBranch, Upload, Bug, Command, Home, Columns2,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
-import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions, type StoredChatSession } from "@/lib/code-studio-store";
+import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import type { NoaResult } from "@/lib/noa/types";
@@ -33,16 +33,43 @@ const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"),
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 
-// Lazy-loaded panels
+// Lazy-loaded panels — external components
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
 const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
 const GitPanel = dynamic(() => import("@/components/code-studio/GitPanel"), { ssr: false });
 const DeployPanel = dynamic(() => import("@/components/code-studio/DeployPanel"), { ssr: false });
-// MobileLayout imported but rendered via CSS responsive, not component swap
+
+// External panel components (replacing inline definitions)
+const ExternalSearchPanel = dynamic(
+  () => import("@/components/code-studio/SearchPanel").then((m) => ({ default: m.SearchPanel })),
+  { ssr: false },
+);
+const ExternalAutopilotPanel = dynamic(
+  () => import("@/components/code-studio/AutopilotPanel").then((m) => ({ default: m.AutopilotPanel })),
+  { ssr: false },
+);
+const ExternalAgentPanel = dynamic(
+  () => import("@/components/code-studio/AgentPanel").then((m) => ({ default: m.AgentPanel })),
+  { ssr: false },
+);
+const StatusBarComponent = dynamic(
+  () => import("@/components/code-studio/StatusBar").then((m) => ({ default: m.StatusBar })),
+  { ssr: false },
+);
+const EditorTabsComponent = dynamic(
+  () => import("@/components/code-studio/EditorTabs").then((m) => ({ default: m.EditorTabs })),
+  { ssr: false },
+);
+const ProblemsPanelComponent = dynamic(
+  () => import("@/components/code-studio/ProblemsPanel").then((m) => ({ default: m.ProblemsPanel })),
+  { ssr: false },
+);
+
+// IDENTITY_SEAL: PART-1 | role=ImportsState | inputs=none | outputs=imports,dynamic-components
 
 // ============================================================
-// PART 2 — 데모 파일 트리
+// PART 2 — Demo Files & Types
 // ============================================================
 
 const DEMO_FILES: FileNode[] = [
@@ -63,10 +90,6 @@ const DEMO_FILES: FileNode[] = [
   },
 ];
 
-// ============================================================
-// PART 3 — Chat Message Type
-// ============================================================
-
 interface ChatMsg {
   id: string;
   role: "user" | "assistant";
@@ -75,8 +98,17 @@ interface ChatMsg {
   noaResult?: NoaResult;
 }
 
+interface PipelineStage {
+  name: string;
+  status: "pass" | "warn" | "fail" | "running" | "pending";
+  score?: number;
+  message?: string;
+}
+
+// IDENTITY_SEAL: PART-2 | role=DemoFiles+Types | inputs=none | outputs=DEMO_FILES,ChatMsg,PipelineStage
+
 // ============================================================
-// PART 4 — File Tree Component
+// PART 3 — File Tree Component
 // ============================================================
 
 function FileTreeItem({
@@ -105,9 +137,6 @@ function FileTreeItem({
           onClick={() => { if (isFolder) setOpen(!open); else onSelect(node); }}
           className="flex flex-1 items-center gap-1.5 text-left min-w-0"
         >
-          {isFolder ? (
-            open ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />
-          ) : <span className="w-3" />}
           {isFolder ? (
             open ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent-amber" /> : <Folder className="h-3.5 w-3.5 shrink-0 text-accent-amber" />
           ) : (
@@ -141,8 +170,10 @@ function FileTreeItem({
   );
 }
 
+// IDENTITY_SEAL: PART-3 | role=FileTree | inputs=node,depth | outputs=UI+CRUD
+
 // ============================================================
-// PART 5 — AI Chat Panel
+// PART 4 — AI Chat Panel (kept inline — uses real streaming + NOA)
 // ============================================================
 
 function AIChatPanel({
@@ -159,7 +190,6 @@ function AIChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef("chat-" + Date.now());
 
-  // 채팅 히스토리 IndexedDB 복원
   useEffect(() => {
     (async () => {
       const sessions = await listChatSessions();
@@ -171,7 +201,6 @@ function AIChatPanel({
     })();
   }, []);
 
-  // 메시지 변경 시 자동 저장 (디바운스)
   useEffect(() => {
     if (messages.length === 0) return;
     const t = setTimeout(() => {
@@ -196,16 +225,13 @@ function AIChatPanel({
     setInput("");
     setNoaBlocked(null);
 
-    // NOA 보안 게이트
     try {
       const noaResult = await runNoa({ text });
       if (!noaResult.allowed) {
         setNoaBlocked(`[NOA ${noaResult.tactical?.selectedPath ?? "BLOCK"}] ${noaResult.fastTrack?.verdict === "BLOCK" ? "Blocked by safety filter" : `Risk grade: ${noaResult.judgment?.grade ?? "unknown"}`}`);
         return;
       }
-    } catch {
-      // NOA 실패 시 통과 (기능 장애가 사용을 막지 않음)
-    }
+    } catch { /* NOA failure → pass through */ }
 
     const userMsg: ChatMsg = { id: crypto.randomUUID(), role: "user", content: text, timestamp: Date.now() };
     setMessages((prev) => [...prev, userMsg]);
@@ -318,254 +344,10 @@ Respond concisely. Use markdown code blocks for code.`;
   );
 }
 
-// ============================================================
-// PART 6 — Pipeline Results Panel
-// ============================================================
-
-interface PipelineStage { name: string; status: "pass" | "warn" | "fail" | "running" | "pending"; score?: number; message?: string; }
-
-function PipelinePanel({ stages }: { stages: PipelineStage[] }) {
-  const icons = { pass: CheckCircle, warn: AlertTriangle, fail: XCircle, running: Loader2, pending: Activity };
-  const colors = { pass: "text-accent-green", warn: "text-accent-amber", fail: "text-accent-red", running: "text-accent-blue animate-spin", pending: "text-text-tertiary" };
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Activity className="h-4 w-4 text-accent-blue" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Pipeline</span>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {stages.length === 0 && (
-          <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">
-            8-Team pipeline runs on code changes.
-            <br />Edit a file to trigger analysis.
-          </div>
-        )}
-        {stages.map((s) => {
-          const Icon = icons[s.status];
-          return (
-            <div key={s.name} className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-              <Icon className={`h-4 w-4 shrink-0 ${colors[s.status]}`} />
-              <div className="flex-1 min-w-0">
-                <div className="font-[family-name:var(--font-mono)] text-[11px] font-semibold text-text-primary">{s.name}</div>
-                {s.message && <div className="text-[10px] text-text-tertiary truncate">{s.message}</div>}
-              </div>
-              {s.score !== undefined && (
-                <span className={`font-[family-name:var(--font-mono)] text-[11px] font-bold ${s.score >= 80 ? "text-accent-green" : s.score >= 60 ? "text-accent-amber" : "text-accent-red"}`}>
-                  {s.score}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// IDENTITY_SEAL: PART-4 | role=AIChatPanel | inputs=activeFile | outputs=chat+NOA
 
 // ============================================================
-// PART 6B — Bug Panel (inline)
-// ============================================================
-
-function BugPanel({ bugs, onRunAI }: { bugs: BugReport[]; onRunAI?: () => void }) {
-  const severityColor: Record<string, string> = { critical: "text-accent-red", high: "text-accent-red", medium: "text-accent-amber", low: "text-accent-blue", info: "text-text-tertiary" };
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Bug className="h-4 w-4 text-accent-red" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Bug Finder</span>
-        <span className="ml-auto rounded-full bg-accent-red/20 px-2 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-accent-red">{bugs.length}</span>
-        {onRunAI && <button onClick={onRunAI} className="ml-1 rounded bg-accent-purple/20 px-2 py-0.5 font-[family-name:var(--font-mono)] text-[9px] text-accent-purple hover:bg-accent-purple/30">AI Scan</button>}
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {bugs.length === 0 && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">No bugs detected. Edit code to trigger analysis.</div>}
-        {bugs.map((b) => (
-          <div key={b.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-3">
-            <div className="flex items-center gap-2">
-              <span className={`font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase ${severityColor[b.severity] ?? "text-text-tertiary"}`}>{b.severity}</span>
-              <span className="text-[10px] text-text-tertiary">L{b.line}</span>
-              <span className="rounded bg-white/8 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">{b.category}</span>
-            </div>
-            <div className="mt-1 text-[11px] text-text-primary">{b.description}</div>
-            <div className="mt-1 text-[10px] text-accent-green">{b.suggestion}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 6C — Search Panel (inline)
-// ============================================================
-
-function SearchPanel({ files, onFileOpen, onReplace }: { files: FileNode[]; onFileOpen: (fileId: string) => void; onReplace?: (newFiles: FileNode[]) => void }) {
-  const [query, setQuery] = useState("");
-  const [replace, setReplace] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [showReplace, setShowReplace] = useState(false);
-
-  const handleSearch = useCallback(() => {
-    if (!query.trim()) { setResults([]); return; }
-    const r = searchCode(query, files, { maxResults: 50 });
-    setResults(r);
-  }, [query, files]);
-
-  const handleReplaceAll = useCallback(() => {
-    if (!query.trim() || !onReplace) return;
-    const newFiles = searchReplaceAll(query, replace, files);
-    onReplace(newFiles);
-    setResults([]);
-  }, [query, replace, files, onReplace]);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Search className="h-4 w-4 text-accent-amber" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Search</span>
-        <button onClick={() => setShowReplace(!showReplace)} className="ml-auto font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary hover:text-text-primary">
-          {showReplace ? "Hide Replace" : "Replace"}
-        </button>
-      </div>
-      <div className="px-3 py-2 border-b border-white/8 space-y-1.5">
-        <input value={query} onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-          placeholder="Search in files..."
-          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-amber/30" />
-        {showReplace && (
-          <div className="flex gap-1">
-            <input value={replace} onChange={(e) => setReplace(e.target.value)} placeholder="Replace with..."
-              className="flex-1 rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green/30" />
-            <button onClick={handleReplaceAll} className="rounded bg-accent-green/20 px-2 py-1 font-[family-name:var(--font-mono)] text-[9px] text-accent-green hover:bg-accent-green/30">All</button>
-          </div>
-        )}
-      </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {results.length === 0 && query && <div className="text-center py-4 text-text-tertiary text-[10px]">No results</div>}
-        {results.map((r, i) => (
-          <button key={i} onClick={() => onFileOpen(r.fileId)}
-            className="w-full text-left rounded px-2 py-1.5 hover:bg-white/[0.06] transition-colors">
-            <div className="font-[family-name:var(--font-mono)] text-[10px] text-accent-amber">{r.fileName}:{r.line}</div>
-            <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary truncate">{r.lineContent}</div>
-          </button>
-        ))}
-        {results.length > 0 && <div className="text-center text-[10px] text-text-tertiary">{results.length} results</div>}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 6D — Autopilot Panel
-// ============================================================
-
-function AutopilotPanel({ activeFile, onApplyCode, onShowDiff }: {
-  activeFile: OpenFile | null;
-  onApplyCode: (code: string) => void;
-  onShowDiff: (orig: string, mod: string, name: string) => void;
-}) {
-  const [task, setTask] = useState("");
-  const [plan, setPlan] = useState<AutopilotPlan | null>(null);
-  const [running, setRunning] = useState(false);
-
-  const handleRun = useCallback(async () => {
-    if (!task.trim() || running) return;
-    setRunning(true);
-    try {
-      const context = activeFile ? `File: ${activeFile.name}\n\`\`\`${activeFile.language}\n${activeFile.content.slice(0, 2000)}\n\`\`\`` : "No file open";
-      const result = await runAutopilot(task, context, (p) => setPlan({ ...p }));
-      setPlan(result);
-      // 마지막 스텝 출력을 Apply
-      const lastOutput = result.steps.filter(s => s.output).pop()?.output;
-      if (lastOutput && activeFile) {
-        onShowDiff(activeFile.content, lastOutput, activeFile.name);
-      }
-    } catch { /* */ }
-    setRunning(false);
-  }, [task, running, activeFile, onShowDiff]);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Play className="h-4 w-4 text-accent-amber" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Autopilot</span>
-      </div>
-      <div className="px-3 py-2 border-b border-white/8">
-        <textarea value={task} onChange={(e) => setTask(e.target.value)} rows={3} placeholder="Describe what you want to build..."
-          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none resize-none focus:border-accent-amber/30" />
-        <button onClick={handleRun} disabled={running || !task.trim()}
-          className="mt-2 w-full rounded bg-accent-amber/20 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-accent-amber hover:bg-accent-amber/30 disabled:opacity-30">
-          {running ? "Running..." : "Run Autopilot"}
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {!plan && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">Describe a task. Autopilot will plan and execute in multiple steps.</div>}
-        {plan?.steps.map((s) => (
-          <div key={s.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-2">
-            <div className="flex items-center gap-2">
-              {s.status === "done" ? <CheckCircle className="h-3 w-3 text-accent-green" /> : s.status === "running" ? <Loader2 className="h-3 w-3 text-accent-amber animate-spin" /> : <Activity className="h-3 w-3 text-text-tertiary" />}
-              <span className="font-[family-name:var(--font-mono)] text-[10px] text-text-primary">{s.description}</span>
-            </div>
-            {s.output && <pre className="mt-1 text-[9px] text-text-tertiary overflow-x-auto max-h-20 overflow-y-auto">{s.output.slice(0, 200)}</pre>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 6E — Agent Panel
-// ============================================================
-
-function AgentPanel({ activeFile }: { activeFile: OpenFile | null }) {
-  const [task, setTask] = useState("");
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [running, setRunning] = useState(false);
-
-  const roleColors: Record<string, string> = { architect: "text-accent-purple", developer: "text-accent-green", reviewer: "text-accent-amber", tester: "text-accent-blue", documenter: "text-text-secondary" };
-
-  const handleRun = useCallback(async () => {
-    if (!task.trim() || running) return;
-    setRunning(true);
-    setMessages([]);
-    const context = activeFile ? `File: ${activeFile.name}\n${activeFile.content.slice(0, 2000)}` : "";
-    try {
-      await runAgentPipeline(task, context, ["architect", "developer", "reviewer"], (msg) => setMessages((prev) => [...prev, msg]));
-    } catch { /* */ }
-    setRunning(false);
-  }, [task, running, activeFile]);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Shield className="h-4 w-4 text-accent-purple" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Agents</span>
-      </div>
-      <div className="px-3 py-2 border-b border-white/8">
-        <input value={task} onChange={(e) => setTask(e.target.value)} placeholder="Task for agents..."
-          onKeyDown={(e) => { if (e.key === "Enter") handleRun(); }}
-          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-purple/30" />
-        <button onClick={handleRun} disabled={running || !task.trim()}
-          className="mt-2 w-full rounded bg-accent-purple/20 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-accent-purple hover:bg-accent-purple/30 disabled:opacity-30">
-          {running ? "Agents working..." : "Run Agent Pipeline"}
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {messages.length === 0 && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">Architect → Developer → Reviewer pipeline. Enter a task to start.</div>}
-        {messages.map((m) => (
-          <div key={m.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-2">
-            <div className={`font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase ${roleColors[m.role] ?? "text-text-tertiary"}`}>{m.role}</div>
-            <pre className="mt-1 text-[10px] text-text-secondary whitespace-pre-wrap max-h-32 overflow-y-auto">{m.content}</pre>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 7 — File Tree Helpers (CRUD)
+// PART 5 — File Tree Helpers (CRUD)
 // ============================================================
 
 function addFileToTree(tree: FileNode[], parentId: string, newFile: FileNode): FileNode[] {
@@ -594,7 +376,6 @@ function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
   });
 }
 
-/** 파일 트리에서 특정 파일의 content를 업데이트 */
 function updateContentInTree(tree: FileNode[], id: string, content: string): FileNode[] {
   return tree.map((n) => {
     if (n.id === id) return { ...n, content };
@@ -603,8 +384,10 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
   });
 }
 
+// IDENTITY_SEAL: PART-5 | role=TreeHelpers | inputs=tree,id | outputs=FileNode[]
+
 // ============================================================
-// PART 8 — Main Shell
+// PART 6 — Main Shell
 // ============================================================
 
 type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | null;
@@ -624,16 +407,11 @@ function CodeStudioShellInner() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
-  const [autopilotPlan, setAutopilotPlan] = useState<AutopilotPlan | null>(null);
-  const [agentSession, setAgentSession] = useState<AgentSession | null>(null);
   const [diffState, setDiffState] = useState<{ original: string; modified: string; fileName: string } | null>(null);
-  const [replaceText, setReplaceText] = useState("");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [hasEverOpened, setHasEverOpened] = useState(false);
   const [showMultiKey, setShowMultiKey] = useState(false);
-  // Split Editor state
   const [splitFileId, setSplitFileId] = useState<string | null>(null);
-  // Tab Drag-and-Drop state
   const [dragTabIdx, setDragTabIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const editorRef = useRef<unknown>(null);
@@ -660,7 +438,7 @@ function CodeStudioShellInner() {
     });
   }, []);
 
-  // IndexedDB에서 파일 트리 + 설정 로드 (최초 1회)
+  // IndexedDB load (once)
   useEffect(() => {
     (async () => {
       const [savedTree, savedSettings] = await Promise.all([loadFileTree(), loadSettings()]);
@@ -670,28 +448,25 @@ function CodeStudioShellInner() {
     })();
   }, []);
 
-  // 파일 트리 변경 → IndexedDB 자동 저장 (디바운스)
+  // Auto-save file tree
   useEffect(() => {
     if (!loaded) return;
     const t = setTimeout(() => { saveFileTree(files); }, 1000);
     return () => clearTimeout(t);
   }, [files, loaded]);
 
-  // 설정 변경 → IndexedDB 자동 저장
+  // Auto-save settings
   useEffect(() => {
     if (!loaded) return;
     saveSettings(settings);
   }, [settings, loaded]);
 
-  // 키보드 단축키 (전역)
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
-      // Ctrl+Shift+P → 커맨드 팔레트
       if (mod && e.shiftKey && e.key === "P") { e.preventDefault(); setShowCommandPalette((v) => !v); }
-      // Ctrl+Shift+F → 검색 패널
       if (mod && e.shiftKey && e.key === "F") { e.preventDefault(); setRightPanel((v) => v === "search" ? null : "search"); }
-      // Ctrl+S → 파일 저장 (dirty 해제 + IndexedDB 저장)
       if (mod && !e.shiftKey && e.key === "s") {
         e.preventDefault();
         if (activeFileId) {
@@ -700,14 +475,10 @@ function CodeStudioShellInner() {
           toast("Saved locally in this browser", "success");
         }
       }
-      // Ctrl+= / Ctrl+- → 줌
       if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })); }
       if (mod && e.key === "-") { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })); }
-      // Ctrl+` → 터미널 토글
       if (mod && e.key === "`") { e.preventDefault(); setShowTerminal((v) => !v); }
-      // Ctrl+N → 새 파일
       if (mod && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
-      // Ctrl+W → 탭 닫기
       if (mod && e.key === "w") {
         e.preventDefault();
         if (activeFileId) {
@@ -721,7 +492,7 @@ function CodeStudioShellInner() {
     return () => window.removeEventListener("keydown", handler);
   }, [activeFileId, files, openFiles, toast]);
 
-  // 버그 분석 (파일 변경 시)
+  // Bug analysis on file change
   useEffect(() => {
     if (!activeFile?.isDirty) return;
     const t = setTimeout(() => {
@@ -731,7 +502,7 @@ function CodeStudioShellInner() {
     return () => clearTimeout(t);
   }, [activeFile?.isDirty, activeFile?.content, activeFile?.language]);
 
-  // xterm 초기화 + 명령 처리
+  // xterm terminal
   useEffect(() => {
     if (!showTerminal || !termRef.current) return;
     let term: import("@xterm/xterm").Terminal | null = null;
@@ -795,8 +566,8 @@ function CodeStudioShellInner() {
             t.writeln("  \x1b[36mRunning pipeline on " + af.name + "...\x1b[0m");
             const result = runStaticPipeline(af.content, af.language);
             result.stages.forEach((s) => {
-              const icon = s.status === "pass" ? "\x1b[32m✓\x1b[0m" : s.status === "warn" ? "\x1b[33m⚠\x1b[0m" : "\x1b[31m✗\x1b[0m";
-              t.writeln(`  ${icon} ${s.name}: ${s.score}/100 — ${s.message}`);
+              const icon = s.status === "pass" ? "\x1b[32m+\x1b[0m" : s.status === "warn" ? "\x1b[33m!\x1b[0m" : "\x1b[31mx\x1b[0m";
+              t.writeln(`  ${icon} ${s.name}: ${s.score}/100 -- ${s.message}`);
             });
             t.writeln(`  \x1b[36mOverall: ${result.overallScore}/100 (${result.overallStatus})\x1b[0m`);
           } else t.writeln("  \x1b[31mNo file open\x1b[0m");
@@ -822,9 +593,7 @@ function CodeStudioShellInner() {
       term.loadAddon(fit);
       term.open(termRef.current);
       fit.fit();
-      term.writeln("\x1b[32m╔══════════════════════════════════════╗\x1b[0m");
-      term.writeln("\x1b[32m║  EH Code Studio Terminal v1.0       ║\x1b[0m");
-      term.writeln("\x1b[32m╚══════════════════════════════════════╝\x1b[0m");
+      term.writeln("\x1b[32m== EH Code Studio Terminal v1.0 ==\x1b[0m");
       term.writeln("  Type \x1b[36mhelp\x1b[0m for commands");
       term.write("\x1b[32m$ \x1b[0m");
 
@@ -837,37 +606,15 @@ function CodeStudioShellInner() {
           cmdBuffer = "";
           term.write("\x1b[32m$ \x1b[0m");
         } else if (data === "\x7f" || data === "\b") {
-          if (cmdBuffer.length > 0) {
-            cmdBuffer = cmdBuffer.slice(0, -1);
-            term.write("\b \b");
-          }
+          if (cmdBuffer.length > 0) { cmdBuffer = cmdBuffer.slice(0, -1); term.write("\b \b"); }
         } else if (data === "\x03") {
-          cmdBuffer = "";
-          term.writeln("^C");
-          term.write("\x1b[32m$ \x1b[0m");
+          cmdBuffer = ""; term.writeln("^C"); term.write("\x1b[32m$ \x1b[0m");
         } else if (data === "\x1b[A") {
-          // Up arrow — 히스토리 이전
-          if (historyIdx > 0) {
-            historyIdx--;
-            const old = cmdBuffer;
-            cmdBuffer = cmdHistory[historyIdx];
-            term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer);
-          }
+          if (historyIdx > 0) { historyIdx--; cmdBuffer = cmdHistory[historyIdx]; term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer); }
         } else if (data === "\x1b[B") {
-          // Down arrow — 히스토리 다음
-          if (historyIdx < cmdHistory.length - 1) {
-            historyIdx++;
-            cmdBuffer = cmdHistory[historyIdx];
-            term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer);
-          } else {
-            historyIdx = cmdHistory.length;
-            cmdBuffer = "";
-            term.write("\r\x1b[K\x1b[32m$ \x1b[0m");
-          }
-        } else if (data >= " ") {
-          cmdBuffer += data;
-          term.write(data);
-        }
+          if (historyIdx < cmdHistory.length - 1) { historyIdx++; cmdBuffer = cmdHistory[historyIdx]; term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer); }
+          else { historyIdx = cmdHistory.length; cmdBuffer = ""; term.write("\r\x1b[K\x1b[32m$ \x1b[0m"); }
+        } else if (data >= " ") { cmdBuffer += data; term.write(data); }
       });
 
       const ro = new ResizeObserver(() => fit.fit());
@@ -876,7 +623,7 @@ function CodeStudioShellInner() {
     return () => { mounted = false; term?.dispose(); };
   }, [showTerminal, files, openFiles, activeFileId]);
 
-  // 파일 선택
+  // File select
   const handleFileSelect = useCallback((node: FileNode) => {
     if (node.type === "folder") return;
     if (!openFiles.find((f) => f.id === node.id)) {
@@ -886,9 +633,8 @@ function CodeStudioShellInner() {
     setHasEverOpened(true);
   }, [openFiles]);
 
-  // 탭 닫기
-  const handleCloseTab = useCallback((id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Close tab
+  const handleCloseTab = useCallback((id: string) => {
     const file = openFiles.find((f) => f.id === id);
     if (file?.isDirty) {
       if (!window.confirm("Unsaved changes will be lost. Close anyway?")) return;
@@ -900,34 +646,29 @@ function CodeStudioShellInner() {
     });
   }, [activeFileId, openFiles]);
 
-  // 에디터 변경 → openFiles + files 트리 양쪽 동기화
+  // Editor change
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (!activeFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: value, isDirty: true } : f));
-    // files 트리에도 반영 (IndexedDB 저장 대상)
     setFiles((prev) => updateContentInTree(prev, activeFileId, value));
   }, [activeFileId]);
 
-  // 파일 CRUD
+  // File CRUD
   const handleNewFile = useCallback(() => {
     if (!newFileName.trim()) { setShowNewFile(true); return; }
     const id = `file-${Date.now()}`;
     const newFile: FileNode = { id, name: newFileName.trim(), type: "file", content: "" };
-    // 첫 폴더에 추가 (src가 없으면 root 폴더, 폴더 자체가 없으면 루트에 직접)
     setFiles((prev) => {
       const findFirstFolder = (nodes: FileNode[]): string | null => {
         for (const n of nodes) { if (n.type === "folder") return n.id; }
         return null;
       };
-      // src > 첫 폴더 > 루트 직접 추가 순
       const targetId = findFirstFolder(prev.flatMap(n => n.children ?? [])) ?? findFirstFolder(prev);
       if (targetId) return addFileToTree(prev, targetId, newFile);
-      // 폴더가 전혀 없으면 루트에 직접 추가
       return [...prev, newFile];
     });
     setNewFileName("");
     setShowNewFile(false);
-    // 새 파일 바로 열기
     setOpenFiles((prev) => [...prev, { id, name: newFileName.trim(), content: "", language: detectLanguage(newFileName.trim()) }]);
     setActiveFileId(id);
     setHasEverOpened(true);
@@ -946,10 +687,8 @@ function CodeStudioShellInner() {
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
   }, []);
 
-  // 데모 파일 열기 (Welcome → Open Demo)
   const handleOpenDemo = useCallback(() => {
     setFiles(DEMO_FILES);
-    // index.ts 자동 열기
     const indexFile: FileNode = { id: "index-ts", name: "index.ts", type: "file", content: DEMO_FILES[0]?.children?.[0]?.children?.[0]?.content ?? "" };
     setOpenFiles([{ id: indexFile.id, name: indexFile.name, content: indexFile.content ?? "", language: detectLanguage(indexFile.name) }]);
     setActiveFileId(indexFile.id);
@@ -957,15 +696,11 @@ function CodeStudioShellInner() {
     toast("Demo project loaded", "success");
   }, [toast]);
 
-  // Welcome → Blank Project (README only)
   const handleBlankProject = useCallback(() => {
     const blankFiles: FileNode[] = [
-      {
-        id: "root", name: "project", type: "folder",
-        children: [
-          { id: "readme", name: "README.md", type: "file", content: "# New Project\n\nDescribe your project here.\n" },
-        ],
-      },
+      { id: "root", name: "project", type: "folder", children: [
+        { id: "readme", name: "README.md", type: "file", content: "# New Project\n\nDescribe your project here.\n" },
+      ]},
     ];
     setFiles(blankFiles);
     setOpenFiles([{ id: "readme", name: "README.md", content: "# New Project\n\nDescribe your project here.\n", language: "markdown" }]);
@@ -974,20 +709,18 @@ function CodeStudioShellInner() {
     toast("Blank project created", "success");
   }, [toast]);
 
-  // Welcome → New File
   const handleWelcomeNewFile = useCallback(() => {
     setShowNewFile(true);
     setHasEverOpened(true);
   }, []);
 
-  // AI 코드 적용 — 양쪽 동기화
   const handleApplyCode = useCallback((code: string) => {
     if (!activeFileId) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: code, isDirty: true } : f));
     setFiles((prev) => updateContentInTree(prev, activeFileId, code));
   }, [activeFileId]);
 
-  // 파이프라인 실제 정적 분석 (파일 변경 시 1초 디바운스)
+  // Pipeline analysis on file change
   useEffect(() => {
     if (!activeFile?.isDirty) return;
     const timer = setTimeout(() => {
@@ -999,420 +732,470 @@ function CodeStudioShellInner() {
     return () => clearTimeout(timer);
   }, [activeFile?.isDirty, activeFile?.content, toast]);
 
+  // Compute pipeline score for StatusBar
+  const pipelineScore = pipelineStages.length > 0
+    ? Math.round(pipelineStages.reduce((sum, s) => sum + (s.score ?? 0), 0) / pipelineStages.length)
+    : null;
+
+  // Convert BugReport[] to ProblemFinding[] for ProblemsPanel
+  const problemFindings = bugReports.map((b) => ({
+    severity: (b.severity === "critical" ? "critical" : b.severity === "high" ? "major" : b.severity === "medium" ? "minor" : "info") as "critical" | "major" | "minor" | "info",
+    message: b.description,
+    line: b.line,
+    team: b.category,
+  }));
+
   return (
-    <div className="flex h-full w-full bg-bg-primary text-text-primary">
-      {/* Left — File Explorer */}
-      <div className="flex w-56 shrink-0 flex-col border-r border-white/8 bg-bg-secondary">
-        <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-          <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Back to Home">
-            <Home className="h-3.5 w-3.5" />
-          </Link>
-          <Files className="h-4 w-4 text-accent-green" />
-          <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
-          <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
-        {showNewFile && (
-          <div className="px-2 py-1 border-b border-white/8">
-            <input
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
-              placeholder="filename.ts"
-              className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green"
-              autoFocus
-            />
-          </div>
-        )}
-        <div className="flex-1 overflow-y-auto py-1">
-          {files.map((node) => (
-            <FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />
-          ))}
-        </div>
-      </div>
-
-      {/* Resize Handle */}
-      <div className="cs-resize-handle" />
-
-      {/* Center — Editor + Terminal */}
-      <div className="flex flex-1 flex-col min-w-0">
-        {/* Breadcrumb */}
-        {activeFile && (
-          <div className="flex items-center gap-1 border-b border-white/8 bg-bg-secondary px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
-            <span className="text-accent-amber">project</span>
-            <ChevronRight className="h-2.5 w-2.5" />
-            <span>src</span>
-            <ChevronRight className="h-2.5 w-2.5" />
-            <span className={fileIconColor(activeFile.name)}>{activeFile.name}</span>
-          </div>
-        )}
-
-        {/* Tab Bar */}
-        <div className="flex items-center border-b border-white/8 bg-bg-secondary">
-          <div className="flex flex-1 overflow-x-auto">
-            {openFiles.map((f, idx) => (
-              <button key={f.id}
-                draggable
-                onDragStart={() => setDragTabIdx(idx)}
-                onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
-                onDrop={() => { if (dragTabIdx !== null) { handleTabDrop(dragTabIdx, idx); } setDragTabIdx(null); setDragOverIdx(null); }}
-                onDragEnd={() => { setDragTabIdx(null); setDragOverIdx(null); }}
-                onClick={() => setActiveFileId(f.id)}
-                className={`group flex items-center gap-2 border-r border-white/8 px-3 py-1.5 text-[12px] font-[family-name:var(--font-mono)] transition-colors ${
-                  f.id === activeFileId ? "bg-bg-primary text-text-primary border-t-2 border-t-accent-green" : "text-text-tertiary hover:bg-white/[0.04]"
-                } ${dragTabIdx === idx ? "opacity-50" : ""} ${dragOverIdx === idx && dragTabIdx !== idx ? "border-l-2 border-l-accent-green" : ""}`}>
-                {f.isDirty && <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" />}
-                {f.name}
-                <span onClick={(e) => handleCloseTab(f.id, e)} className="ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10"><X className="h-3 w-3" /></span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1 px-2">
-            <button
-              onClick={() => {
-                if (splitFileId) { setSplitFileId(null); }
-                else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
-              }}
-              disabled={openFiles.length === 0}
-              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
-              title="Split Editor"
-            >
-              <Columns2 className="h-4 w-4" />
+    <div className="flex h-full w-full flex-col bg-bg-primary text-text-primary">
+      <div className="flex flex-1 min-h-0">
+        {/* Left -- File Explorer */}
+        <div className="flex w-56 shrink-0 flex-col border-r border-white/8 bg-bg-secondary">
+          <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+            <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Back to Home">
+              <Home className="h-3.5 w-3.5" />
+            </Link>
+            <Files className="h-4 w-4 text-accent-green" />
+            <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
+            <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
+              <Plus className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
-              <Bug className="h-4 w-4" />
-              {bugReports.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>}
-            </button>
-            <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
-            <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
-            <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
           </div>
-        </div>
-
-        {/* Settings Panel (overlay) */}
-        {showSettings && (
-          <div className="border-b border-white/8 bg-bg-secondary px-4 py-3">
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Font Size</label>
-                <input type="number" min={10} max={24} value={settings.fontSize}
-                  onChange={(e) => setSettings((s) => ({ ...s, fontSize: parseInt(e.target.value) || 14 }))}
-                  className="w-14 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none" />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Tab Size</label>
-                <select value={settings.tabSize}
-                  onChange={(e) => setSettings((s) => ({ ...s, tabSize: parseInt(e.target.value) }))}
-                  className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none">
-                  <option value={2}>2</option><option value={4}>4</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Word Wrap</label>
-                <button
-                  onClick={() => setSettings((s) => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
-                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.wordWrap === "on" ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
-                  {settings.wordWrap}
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Minimap</label>
-                <button
-                  onClick={() => setSettings((s) => ({ ...s, minimap: !s.minimap }))}
-                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.minimap ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
-                  {settings.minimap ? "ON" : "OFF"}
-                </button>
-              </div>
-              {/* AI Provider + API Key */}
-              <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">AI</label>
-                <select
-                  value={getActiveProvider()}
-                  onChange={(e) => { setActiveProvider(e.target.value as Parameters<typeof setActiveProvider>[0]); toast("Provider changed", "info"); }}
-                  className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none">
-                  <option value="gemini">Gemini</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="claude">Claude</option>
-                  <option value="groq">Groq</option>
-                  <option value="mistral">Mistral</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-1">
-                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Key</label>
-                <input
-                  key={getActiveProvider()} // provider 전환 시 input 리마운트
-                  type="password"
-                  placeholder="API Key"
-                  defaultValue={getApiKey(getActiveProvider()) ? "••••••••" : ""}
-                  onBlur={(e) => {
-                    const provider = getActiveProvider(); // 캡처 시점의 provider
-                    const val = e.target.value.trim();
-                    if (val && val !== "••••••••") {
-                      setApiKey(provider, val);
-                      toast("API key saved", "success");
-                    }
-                  }}
-                  className="w-32 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none focus:border-accent-purple/30"
-                />
-                {getApiKey(getActiveProvider()) && (
-                  <span className="h-2 w-2 rounded-full bg-accent-green" title="API key set" />
-                )}
-              </div>
-              {/* Multi-Key Manager Button */}
-              <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
-                <button
-                  onClick={() => setShowMultiKey(true)}
-                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] transition-colors ${
-                    isMultiKeyActive()
-                      ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
-                      : "border-white/8 text-text-tertiary hover:text-text-secondary"
-                  }`}
-                  title="Multi-Key Manager (7 slots)"
-                >
-                  {isMultiKeyActive() ? "⚡ Multi-Key" : "Multi-Key"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Multi-Key Panel Modal */}
-        {showMultiKey && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="w-[480px] max-h-[80vh] rounded-xl border border-white/10 bg-[#0d1117] shadow-2xl overflow-hidden">
-              <MultiKeyPanel language="ko" onClose={() => setShowMultiKey(false)} />
-            </div>
-          </div>
-        )}
-
-        {/* Editor + Right Panel */}
-        <div className="flex flex-1 min-h-0">
-          {/* Diff Viewer Overlay */}
-          {diffState && (
-            <div className="absolute inset-0 z-20 bg-bg-primary">
-              <DiffViewer
-                original={diffState.original}
-                modified={diffState.modified}
-                language={activeFile?.language ?? "plaintext"}
-                fileName={diffState.fileName}
-                onAccept={(content) => { handleApplyCode(content); setDiffState(null); }}
-                onReject={() => setDiffState(null)}
+          {showNewFile && (
+            <div className="px-2 py-1 border-b border-white/8">
+              <input
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
+                placeholder="filename.ts"
+                className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green"
+                autoFocus
               />
             </div>
           )}
-          {/* Editor Area (supports split view) */}
-          <div className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
-            {/* Primary Editor */}
-            <div className={splitFileId ? "flex-1 min-w-0" : "h-full"}>
-              {activeFile ? (
-                <MonacoEditor
-                  height="100%" language={activeFile.language} value={activeFile.content}
-                  onChange={handleEditorChange} theme="vs-dark"
-                  options={{
-                    fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
-                    minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
-                    fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-                    lineNumbers: "on", renderLineHighlight: "line",
-                    bracketPairColorization: { enabled: true },
-                    guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
-                    smoothScrolling: true,
-                    cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
-                    stickyScroll: { enabled: true },
-                  }}
-                  onMount={(editor, monaco) => {
-                    editorRef.current = editor;
-                    registerGhostTextProvider(monaco);
-                    editor.onDidDispose(() => cancelGhostText());
-                    editor.onDidChangeCursorPosition((e) => {
-                      setCursorPos({ line: e.position.lineNumber, col: e.position.column });
-                    });
-                  }}
-                />
-              ) : !loaded ? (
-                <div className="flex h-full items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
-                </div>
-              ) : !hasEverOpened ? (
-                <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <div className="text-center">
-                    <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
-                    <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Split Editor (right side) */}
-            {splitFileId && splitFile && (
-              <>
-                <div className="w-px bg-white/8" />
-                <div className="flex flex-1 min-w-0 flex-col">
-                  {/* Split tab header */}
-                  <div className="flex items-center gap-2 border-b border-white/8 bg-bg-secondary px-2 py-1">
-                    <Columns2 className="h-3 w-3 text-accent-green" />
-                    <select
-                      value={splitFileId}
-                      onChange={(e) => setSplitFileId(e.target.value)}
-                      className="flex-1 bg-transparent font-[family-name:var(--font-mono)] text-[11px] text-text-secondary outline-none"
-                    >
-                      {openFiles.map((f) => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => setSplitFileId(null)} className="rounded p-0.5 text-text-tertiary hover:text-text-primary hover:bg-white/10" title="Close Split">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-0">
-                    <MonacoEditor
-                      height="100%" language={splitFile.language} value={splitFile.content}
-                      onChange={handleSplitEditorChange} theme="vs-dark"
-                      options={{
-                        fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
-                        minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 },
-                        fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-                        lineNumbers: "on", renderLineHighlight: "line",
-                        bracketPairColorization: { enabled: true },
-                        smoothScrolling: true,
-                        cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
-                      }}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
+          <div className="flex-1 overflow-y-auto py-1">
+            {files.map((node) => (
+              <FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />
+            ))}
           </div>
+        </div>
 
-          {/* Right Panel */}
-          {rightPanel && (
-            <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
-              {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
-              {rightPanel === "pipeline" && <PipelinePanel stages={pipelineStages} />}
-              {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => {
-                setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
-                setFiles((prev) => updateContentInTree(prev, fid, content));
-              }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />}
-              {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
-              {rightPanel === "bugs" && <BugPanel bugs={bugReports} onRunAI={async () => {
-                if (!activeFile) return;
-                const aiBugs = await findBugs(activeFile.content, activeFile.language, activeFile.name);
-                setBugReports((prev) => [...prev, ...aiBugs]);
-              }} />}
-              {rightPanel === "autopilot" && <AutopilotPanel activeFile={activeFile} onApplyCode={handleApplyCode} onShowDiff={(orig, mod, name) => setDiffState({ original: orig, modified: mod, fileName: name })} />}
-              {rightPanel === "agents" && <AgentPanel activeFile={activeFile} />}
-              {rightPanel === "search" && <SearchPanel files={files} onReplace={(newFiles) => {
-                setFiles(newFiles);
-                // 열린 탭도 동기화 — replace된 내용 반영
-                const flatFind = (nodes: FileNode[], id: string): FileNode | null => {
-                  for (const n of nodes) { if (n.id === id) return n; if (n.children) { const f = flatFind(n.children, id); if (f) return f; } } return null;
-                };
-                setOpenFiles((prev) => prev.map((of) => {
-                  const updated = flatFind(newFiles, of.id);
-                  return updated?.content !== undefined ? { ...of, content: updated.content } : of;
-                }));
-              }} onFileOpen={(fid) => {
-                const findFile = (nodes: FileNode[]): FileNode | null => { for (const n of nodes) { if (n.id === fid) return n; if (n.children) { const f = findFile(n.children); if (f) return f; } } return null; };
-                const node = findFile(files);
-                if (node && node.type === "file") { handleFileSelect(node); }
-              }} />}
+        {/* Resize Handle */}
+        <div className="cs-resize-handle" />
+
+        {/* Center -- Editor + Terminal */}
+        <div className="flex flex-1 flex-col min-w-0">
+          {/* Breadcrumb */}
+          {activeFile && (
+            <div className="flex items-center gap-1 border-b border-white/8 bg-bg-secondary px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+              <span className="text-accent-amber">project</span>
+              <ChevronRight className="h-2.5 w-2.5" />
+              <span>src</span>
+              <ChevronRight className="h-2.5 w-2.5" />
+              <span className={fileIconColor(activeFile.name)}>{activeFile.name}</span>
             </div>
           )}
-        </div>
 
-        {/* Terminal */}
-        {showTerminal && (
-          <div className="h-48 border-t border-white/8 bg-[#0d0d0d]">
-            <div className="flex items-center gap-2 border-b border-white/8 px-3 py-1">
-              <TermIcon className="h-3.5 w-3.5 text-accent-green" />
-              <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wider text-text-tertiary">Terminal</span>
-              <button onClick={() => setShowTerminal(false)} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary"><X className="h-3 w-3" /></button>
+          {/* Editor Tabs -- external component */}
+          <div className="flex items-center border-b border-white/8 bg-bg-secondary">
+            <div className="flex-1 min-w-0">
+              <EditorTabsComponent
+                openFiles={openFiles}
+                activeFileId={activeFileId}
+                onSelectFile={(id) => setActiveFileId(id)}
+                onCloseFile={handleCloseTab}
+              />
             </div>
-            <div ref={termRef} className="h-[calc(100%-28px)]" />
+            <div className="flex items-center gap-1 px-2 flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (splitFileId) { setSplitFileId(null); }
+                  else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
+                }}
+                disabled={openFiles.length === 0}
+                className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
+                title="Split Editor"
+              >
+                <Columns2 className="h-4 w-4" />
+              </button>
+              <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`relative rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
+                <Bug className="h-4 w-4" />
+                {bugReports.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>}
+              </button>
+              <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "agents" ? null : "agents")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "agents" ? "text-accent-purple" : "text-text-tertiary"}`} title="Agent Pipeline"><Shield className="h-4 w-4" /></button>
+              <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
+              <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
+            </div>
           </div>
-        )}
 
-        {/* Command Palette */}
-        {showCommandPalette && (
-          <CommandPalette
-            open={showCommandPalette}
-            onClose={() => setShowCommandPalette(false)}
-            onExecute={(cmdId) => {
-              setShowCommandPalette(false);
-              switch (cmdId) {
-                case "new-file": setShowNewFile(true); break;
-                case "toggle-terminal": setShowTerminal((v) => !v); break;
-                case "toggle-chat": setRightPanel((v) => v === "chat" ? null : "chat"); break;
-                case "toggle-pipeline": setRightPanel((v) => v === "pipeline" ? null : "pipeline"); break;
-                case "toggle-git": setRightPanel((v) => v === "git" ? null : "git"); break;
-                case "toggle-deploy": setRightPanel((v) => v === "deploy" ? null : "deploy"); break;
-                case "toggle-search": setRightPanel((v) => v === "search" ? null : "search"); break;
-                case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
-                case "toggle-autopilot": setRightPanel((v) => v === "autopilot" ? null : "autopilot"); break;
-                case "toggle-agents": setRightPanel((v) => v === "agents" ? null : "agents"); break;
-                case "toggle-settings": setShowSettings((v) => !v); break;
-              }
-            }}
-            commands={[
-              { id: "new-file", label: "New File", shortcut: "Ctrl+N", category: "File" },
-              { id: "toggle-terminal", label: "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
-              { id: "toggle-chat", label: "Toggle AI Chat", category: "View" },
-              { id: "toggle-pipeline", label: "Toggle Pipeline", category: "View" },
-              { id: "toggle-git", label: "Toggle Git", category: "View" },
-              { id: "toggle-deploy", label: "Toggle Deploy", category: "View" },
-              { id: "toggle-search", label: "Search in Files", shortcut: "Ctrl+Shift+F", category: "Edit" },
-              { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
-              { id: "toggle-autopilot", label: "Autopilot (Multi-step AI)", category: "Tools" },
-              { id: "toggle-agents", label: "Agent Pipeline (Architect→Dev→Review)", category: "Tools" },
-              { id: "toggle-settings", label: "Toggle Settings", category: "View" },
-            ]}
-          />
-        )}
+          {/* Settings Panel (overlay) */}
+          {showSettings && (
+            <div className="border-b border-white/8 bg-bg-secondary px-4 py-3">
+              <div className="flex items-center gap-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Font Size</label>
+                  <input type="number" min={10} max={24} value={settings.fontSize}
+                    onChange={(e) => setSettings((s) => ({ ...s, fontSize: parseInt(e.target.value) || 14 }))}
+                    className="w-14 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Tab Size</label>
+                  <select value={settings.tabSize}
+                    onChange={(e) => setSettings((s) => ({ ...s, tabSize: parseInt(e.target.value) }))}
+                    className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none">
+                    <option value={2}>2</option><option value={4}>4</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Word Wrap</label>
+                  <button
+                    onClick={() => setSettings((s) => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
+                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.wordWrap === "on" ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
+                    {settings.wordWrap}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Minimap</label>
+                  <button
+                    onClick={() => setSettings((s) => ({ ...s, minimap: !s.minimap }))}
+                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.minimap ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
+                    {settings.minimap ? "ON" : "OFF"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">AI</label>
+                  <select
+                    value={getActiveProvider()}
+                    onChange={(e) => { setActiveProvider(e.target.value as Parameters<typeof setActiveProvider>[0]); toast("Provider changed", "info"); }}
+                    className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none">
+                    <option value="gemini">Gemini</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="claude">Claude</option>
+                    <option value="groq">Groq</option>
+                    <option value="mistral">Mistral</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Key</label>
+                  <input
+                    key={getActiveProvider()}
+                    type="password"
+                    placeholder="API Key"
+                    defaultValue={getApiKey(getActiveProvider()) ? "--------" : ""}
+                    onBlur={(e) => {
+                      const provider = getActiveProvider();
+                      const val = e.target.value.trim();
+                      if (val && val !== "--------") {
+                        setApiKey(provider, val);
+                        toast("API key saved", "success");
+                      }
+                    }}
+                    className="w-32 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none focus:border-accent-purple/30"
+                  />
+                  {getApiKey(getActiveProvider()) && (
+                    <span className="h-2 w-2 rounded-full bg-accent-green" title="API key set" />
+                  )}
+                </div>
+                <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
+                  <button
+                    onClick={() => setShowMultiKey(true)}
+                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] transition-colors ${
+                      isMultiKeyActive()
+                        ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
+                        : "border-white/8 text-text-tertiary hover:text-text-secondary"
+                    }`}
+                    title="Multi-Key Manager (7 slots)"
+                  >
+                    {isMultiKeyActive() ? "Multi-Key Active" : "Multi-Key"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Multi-Key Panel Modal */}
+          {showMultiKey && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="w-[480px] max-h-[80vh] rounded-xl border border-white/10 bg-[#0d1117] shadow-2xl overflow-hidden">
+                <MultiKeyPanel language="ko" onClose={() => setShowMultiKey(false)} />
+              </div>
+            </div>
+          )}
 
-        {/* Status Bar */}
-        <div className="flex items-center justify-between border-t border-white/8 bg-bg-secondary px-3 py-0.5">
-          <div className="flex items-center gap-3 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-green" />Ready</span>
-            {activeFile && <span className={fileIconColor(activeFile.name)}>{activeFile.language}</span>}
-            <span className="flex items-center gap-1"><Shield className="h-2.5 w-2.5" />NOA</span>
-            <span className="border-l border-white/10 pl-3 flex items-center gap-1">
-              {getApiKey(getActiveProvider()) ? (
-                <><span className="h-2 w-2 rounded-full bg-accent-green" />AI Active</>
-              ) : (
-                <><span className="h-2 w-2 rounded-full bg-amber-400" /><span className="text-amber-400/80">AI Inactive — Set key in &#x2699;</span></>
-              )}
-            </span>
-            <span className="border-l border-white/10 pl-3 flex items-center gap-1">
-              <FolderOpen className="h-2.5 w-2.5" />Local Storage
-            </span>
-          </div>
-          <div className="flex items-center gap-3 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
-            {activeFile && <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>}
-            {activeFile && <span>{activeFile.content.split("\n").length} lines</span>}
-            {pipelineStages.length > 0 && (
-              <span className="flex items-center gap-1">
-                <Activity className="h-2.5 w-2.5" />
-                {pipelineStages.filter((s) => s.status === "pass").length}/{pipelineStages.length} pass
-              </span>
+          {/* Editor + Right Panel */}
+          <div className="flex flex-1 min-h-0">
+            {/* Diff Viewer Overlay */}
+            {diffState && (
+              <div className="absolute inset-0 z-20 bg-bg-primary">
+                <DiffViewer
+                  original={diffState.original}
+                  modified={diffState.modified}
+                  language={activeFile?.language ?? "plaintext"}
+                  fileName={diffState.fileName}
+                  onAccept={(content) => { handleApplyCode(content); setDiffState(null); }}
+                  onReject={() => setDiffState(null)}
+                />
+              </div>
             )}
-            {bugReports.length > 0 && <span className="text-accent-red">{bugReports.length} bugs</span>}
-            <span>{openFiles.length} files</span>
+            {/* Editor Area (supports split view) */}
+            <div className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
+              {/* Primary Editor */}
+              <div className={splitFileId ? "flex-1 min-w-0" : "h-full"}>
+                {activeFile ? (
+                  <MonacoEditor
+                    height="100%" language={activeFile.language} value={activeFile.content}
+                    onChange={handleEditorChange} theme="vs-dark"
+                    options={{
+                      fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+                      minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
+                      fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                      lineNumbers: "on", renderLineHighlight: "line",
+                      bracketPairColorization: { enabled: true },
+                      guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
+                      smoothScrolling: true,
+                      cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                      stickyScroll: { enabled: true },
+                    }}
+                    onMount={(editor, monaco) => {
+                      editorRef.current = editor;
+                      registerGhostTextProvider(monaco);
+                      editor.onDidDispose(() => cancelGhostText());
+                      editor.onDidChangeCursorPosition((e) => {
+                        setCursorPos({ line: e.position.lineNumber, col: e.position.column });
+                      });
+                    }}
+                  />
+                ) : !loaded ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
+                  </div>
+                ) : !hasEverOpened ? (
+                  <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
+                      <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Split Editor (right side) */}
+              {splitFileId && splitFile && (
+                <>
+                  <div className="w-px bg-white/8" />
+                  <div className="flex flex-1 min-w-0 flex-col">
+                    <div className="flex items-center gap-2 border-b border-white/8 bg-bg-secondary px-2 py-1">
+                      <Columns2 className="h-3 w-3 text-accent-green" />
+                      <select
+                        value={splitFileId}
+                        onChange={(e) => setSplitFileId(e.target.value)}
+                        className="flex-1 bg-transparent font-[family-name:var(--font-mono)] text-[11px] text-text-secondary outline-none"
+                      >
+                        {openFiles.map((f) => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => setSplitFileId(null)} className="rounded p-0.5 text-text-tertiary hover:text-text-primary hover:bg-white/10" title="Close Split">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <div className="flex-1 min-h-0">
+                      <MonacoEditor
+                        height="100%" language={splitFile.language} value={splitFile.content}
+                        onChange={handleSplitEditorChange} theme="vs-dark"
+                        options={{
+                          fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+                          minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 },
+                          fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                          lineNumbers: "on", renderLineHighlight: "line",
+                          bracketPairColorization: { enabled: true },
+                          smoothScrolling: true,
+                          cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Right Panel -- uses external components where possible */}
+            {rightPanel && (
+              <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
+                {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
+                {rightPanel === "pipeline" && (
+                  <PipelinePanelInline stages={pipelineStages} />
+                )}
+                {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => {
+                  setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
+                  setFiles((prev) => updateContentInTree(prev, fid, content));
+                }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />}
+                {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
+                {rightPanel === "bugs" && (
+                  <ProblemsPanelComponent findings={problemFindings} />
+                )}
+                {rightPanel === "autopilot" && (
+                  <ExternalAutopilotPanel
+                    code={activeFile?.content ?? ""}
+                    language={activeFile?.language ?? "plaintext"}
+                    fileName={activeFile?.name ?? "untitled"}
+                    onComplete={() => {}}
+                    onClose={() => setRightPanel(null)}
+                  />
+                )}
+                {rightPanel === "agents" && (
+                  <ExternalAgentPanel
+                    code={activeFile?.content ?? ""}
+                    language={activeFile?.language ?? "plaintext"}
+                    fileName={activeFile?.name ?? "untitled"}
+                  />
+                )}
+                {rightPanel === "search" && (
+                  <ExternalSearchPanel
+                    files={files}
+                    onOpenFile={(name) => {
+                      const findByName = (nodes: FileNode[]): FileNode | null => {
+                        for (const n of nodes) { if (n.name === name && n.type === "file") return n; if (n.children) { const f = findByName(n.children); if (f) return f; } } return null;
+                      };
+                      const node = findByName(files);
+                      if (node) handleFileSelect(node);
+                    }}
+                    onClose={() => setRightPanel(null)}
+                  />
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Terminal */}
+          {showTerminal && (
+            <div className="h-48 border-t border-white/8 bg-[#0d0d0d]">
+              <div className="flex items-center gap-2 border-b border-white/8 px-3 py-1">
+                <TermIcon className="h-3.5 w-3.5 text-accent-green" />
+                <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wider text-text-tertiary">Terminal</span>
+                <button onClick={() => setShowTerminal(false)} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary"><X className="h-3 w-3" /></button>
+              </div>
+              <div ref={termRef} className="h-[calc(100%-28px)]" />
+            </div>
+          )}
+
+          {/* Command Palette */}
+          {showCommandPalette && (
+            <CommandPalette
+              open={showCommandPalette}
+              onClose={() => setShowCommandPalette(false)}
+              onExecute={(cmdId) => {
+                setShowCommandPalette(false);
+                switch (cmdId) {
+                  case "new-file": setShowNewFile(true); break;
+                  case "toggle-terminal": setShowTerminal((v) => !v); break;
+                  case "toggle-chat": setRightPanel((v) => v === "chat" ? null : "chat"); break;
+                  case "toggle-pipeline": setRightPanel((v) => v === "pipeline" ? null : "pipeline"); break;
+                  case "toggle-git": setRightPanel((v) => v === "git" ? null : "git"); break;
+                  case "toggle-deploy": setRightPanel((v) => v === "deploy" ? null : "deploy"); break;
+                  case "toggle-search": setRightPanel((v) => v === "search" ? null : "search"); break;
+                  case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
+                  case "toggle-autopilot": setRightPanel((v) => v === "autopilot" ? null : "autopilot"); break;
+                  case "toggle-agents": setRightPanel((v) => v === "agents" ? null : "agents"); break;
+                  case "toggle-settings": setShowSettings((v) => !v); break;
+                }
+              }}
+              commands={[
+                { id: "new-file", label: "New File", shortcut: "Ctrl+N", category: "File" },
+                { id: "toggle-terminal", label: "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
+                { id: "toggle-chat", label: "Toggle AI Chat", category: "View" },
+                { id: "toggle-pipeline", label: "Toggle Pipeline", category: "View" },
+                { id: "toggle-git", label: "Toggle Git", category: "View" },
+                { id: "toggle-deploy", label: "Toggle Deploy", category: "View" },
+                { id: "toggle-search", label: "Search in Files", shortcut: "Ctrl+Shift+F", category: "Edit" },
+                { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
+                { id: "toggle-autopilot", label: "Autopilot (Multi-step AI)", category: "Tools" },
+                { id: "toggle-agents", label: "Agent Pipeline (Architect>Dev>Review)", category: "Tools" },
+                { id: "toggle-settings", label: "Toggle Settings", category: "View" },
+              ]}
+            />
+          )}
         </div>
+      </div>
+
+      {/* StatusBar -- external component */}
+      <StatusBarComponent
+        activeFile={activeFile}
+        pipelineScore={pipelineScore}
+        cursorLine={cursorPos.line}
+        cursorColumn={cursorPos.col}
+        fontSize={settings.fontSize}
+      />
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-6 | role=MainShell | inputs=none | outputs=IDE-layout
+
+// ============================================================
+// PART 7 — Inline Pipeline Panel (kept: different data model from external)
+// ============================================================
+
+// TODO: Migrate to external PipelinePanel when TeamResult data flow is integrated
+function PipelinePanelInline({ stages }: { stages: PipelineStage[] }) {
+  const icons: Record<string, typeof Activity> = {
+    pass: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Activity className={`${className} text-accent-green`} {...p} />,
+    warn: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <AlertTriangle className={`${className} text-accent-amber`} {...p} />,
+    fail: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <X className={`${className} text-accent-red`} {...p} />,
+    running: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Loader2 className={`${className} text-accent-blue animate-spin`} {...p} />,
+    pending: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Activity className={`${className} text-text-tertiary`} {...p} />,
+  } as unknown as Record<string, typeof Activity>;
+  const colors: Record<string, string> = { pass: "text-accent-green", warn: "text-accent-amber", fail: "text-accent-red", running: "text-accent-blue animate-spin", pending: "text-text-tertiary" };
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Activity className="h-4 w-4 text-accent-blue" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Pipeline</span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {stages.length === 0 && (
+          <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">
+            8-Team pipeline runs on code changes.
+            <br />Edit a file to trigger analysis.
+          </div>
+        )}
+        {stages.map((s) => {
+          const StatusIcon = s.status === "pass" ? Activity :
+            s.status === "warn" ? AlertTriangle :
+            s.status === "fail" ? X :
+            s.status === "running" ? Loader2 : Activity;
+          return (
+            <div key={s.name} className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
+              <StatusIcon className={`h-4 w-4 shrink-0 ${colors[s.status]}`} />
+              <div className="flex-1 min-w-0">
+                <div className="font-[family-name:var(--font-mono)] text-[11px] font-semibold text-text-primary">{s.name}</div>
+                {s.message && <div className="text-[10px] text-text-tertiary truncate">{s.message}</div>}
+              </div>
+              {s.score !== undefined && (
+                <span className={`font-[family-name:var(--font-mono)] text-[11px] font-bold ${s.score >= 80 ? "text-accent-green" : s.score >= 60 ? "text-accent-amber" : "text-accent-red"}`}>
+                  {s.score}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+// IDENTITY_SEAL: PART-7 | role=PipelinePanelInline | inputs=stages | outputs=UI
+
 // ============================================================
-// PART 9 — Export Wrapper (ToastProvider)
+// PART 8 — Export Wrapper (ToastProvider)
 // ============================================================
 
 export default function CodeStudioShell() {
@@ -1423,12 +1206,4 @@ export default function CodeStudioShell() {
   );
 }
 
-// IDENTITY_SEAL: PART-1 | role=ImportsState | inputs=none | outputs=state,refs
-// IDENTITY_SEAL: PART-2 | role=DemoFiles | inputs=none | outputs=FileNode[]
-// IDENTITY_SEAL: PART-3 | role=ChatTypes | inputs=none | outputs=ChatMsg
-// IDENTITY_SEAL: PART-4 | role=FileTree | inputs=node,depth | outputs=UI+CRUD
-// IDENTITY_SEAL: PART-5 | role=AIChatPanel | inputs=activeFile | outputs=chat+NOA
-// IDENTITY_SEAL: PART-6 | role=PipelinePanel | inputs=stages | outputs=UI
-// IDENTITY_SEAL: PART-7 | role=TreeHelpers | inputs=tree,id | outputs=FileNode[]
-// IDENTITY_SEAL: PART-8 | role=MainShell | inputs=none | outputs=IDE layout
-// IDENTITY_SEAL: PART-9 | role=ExportWrapper | inputs=none | outputs=ToastProvider+Shell
+// IDENTITY_SEAL: PART-8 | role=ExportWrapper | inputs=none | outputs=ToastProvider+Shell
