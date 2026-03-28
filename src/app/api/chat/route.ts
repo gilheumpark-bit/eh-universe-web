@@ -7,7 +7,7 @@
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isServerProviderId, resolveServerProviderKey } from '@/lib/server-ai';
+import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -15,6 +15,31 @@ import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from
 // PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
 const MAX_REQUEST_BYTES = 1_048_576; // 1MB
+
+// Per-IP daily token budget (output tokens). Prevents cost runaway.
+// BYOK requests are exempt (user pays their own).
+const DAILY_TOKEN_BUDGET_PER_IP = 500_000; // ~$7.50/day at GPT-4o rates
+const dailyTokenMap = new Map<string, { tokens: number; resetAt: number }>();
+
+function checkTokenBudget(ip: string, isbyok: boolean): { allowed: boolean; remaining: number } {
+  if (isbyok) return { allowed: true, remaining: Infinity };
+  const now = Date.now();
+  const dayMs = 86_400_000;
+  const entry = dailyTokenMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    dailyTokenMap.set(ip, { tokens: 0, resetAt: now + dayMs });
+    return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP };
+  }
+  if (entry.tokens >= DAILY_TOKEN_BUDGET_PER_IP) {
+    return { allowed: false, remaining: 0 };
+  }
+  return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP - entry.tokens };
+}
+
+function recordTokenUsage(ip: string, tokens: number): void {
+  const entry = dailyTokenMap.get(ip);
+  if (entry) entry.tokens += tokens;
+}
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
@@ -191,7 +216,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid temperature' }, { status: 400 });
     }
 
-    // Resolve API key: client BYOK > server env
+    // ── AUTH GATE: Server-hosted keys require BYOK ──
+    // If the client did NOT provide their own key, we refuse to use server keys.
+    // This prevents public traffic from burning server-side API credits.
+    const isByok = typeof clientKey === 'string' && clientKey.trim().length > 0;
+    if (!isByok && SERVER_ENV_KEYS[provider]) {
+      // Server has a key but client didn't provide their own → block
+      return NextResponse.json(
+        { error: 'API key required. Please enter your own API key in Settings (BYOK mode).' },
+        { status: 401 }
+      );
+    }
+
+    // Token budget check (server-key exempt since we blocked it above, but future-proof)
+    const budget = checkTokenBudget(ip, isByok);
+    if (!budget.allowed) {
+      return NextResponse.json(
+        { error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' },
+        { status: 429 }
+      );
+    }
+
+    // Resolve API key: client BYOK only (server keys blocked above for non-BYOK)
     const apiKey = resolveServerProviderKey(provider, clientKey);
     if (!apiKey) {
       return NextResponse.json(
@@ -231,6 +277,10 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
+
+    // Rough token estimate for budget tracking (4 chars ≈ 1 token)
+    const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
+    recordTokenUsage(ip, inputEstimate);
 
     apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, durationMs: timer.elapsed() });
 

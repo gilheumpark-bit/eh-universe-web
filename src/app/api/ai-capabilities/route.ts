@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getFirstHostedProvider, getHostedProviderAvailability } from '@/lib/server-ai';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * AI Capabilities endpoint — intentionally opaque.
+ * Returns only boolean flags, NOT which specific providers are hosted.
+ * This prevents attackers from discovering which server keys are available.
+ */
 export async function GET() {
-  const hosted = getHostedProviderAvailability();
+  // Only expose whether BYOK mode is required (always true now)
   return NextResponse.json({
-    hosted,
-    anyHosted: Object.values(hosted).some(Boolean),
-    defaultHostedProvider: getFirstHostedProvider(),
-    quickStartReady: hosted.gemini,
+    byokRequired: true,
+    supportedProviders: ['gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'],
+    message: 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
   });
 }

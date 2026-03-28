@@ -67,9 +67,9 @@ export function checkRateLimit(
 // ============================================================
 
 export const RATE_LIMITS = {
-  chat:     { windowMs: 60_000, maxRequests: 60 },
-  imageGen: { windowMs: 60_000, maxRequests: 30 },
-  default:  { windowMs: 60_000, maxRequests: 120 },
+  chat:     { windowMs: 60_000, maxRequests: 30 },  // 30/min (was 60)
+  imageGen: { windowMs: 60_000, maxRequests: 10 },  // 10/min (was 30)
+  default:  { windowMs: 60_000, maxRequests: 60 },   // 60/min (was 120)
 } as const;
 
 /**

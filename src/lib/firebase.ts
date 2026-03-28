@@ -28,14 +28,15 @@ export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'de
 // ============================================================
 
 // Production Firebase config — read from NEXT_PUBLIC_FIREBASE_* env vars.
-// Falls back to project defaults when env vars are not set (e.g. local dev without .env.local).
+// NO hardcoded fallbacks. If env vars are missing, Firebase features are disabled.
+// This prevents env misconfiguration from silently connecting to a wrong project.
 const productionConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBVL9hNAfmCpBvjmujXaiWM3VESqAedRmE',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'eh-universe.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'eh-universe',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'eh-universe.firebasestorage.app',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '169294097312',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:169294097312:web:5cd8874ef85719a5a392c5',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
 };
 
 // Test environment config — same project but can be overridden via env vars.
