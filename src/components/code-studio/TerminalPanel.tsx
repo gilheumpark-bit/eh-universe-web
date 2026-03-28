@@ -31,10 +31,13 @@ import {
   highlightInput,
   type HighlightedSpan,
 } from "@/lib/code-studio-terminal-emulator";
+import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import type { FileNode } from "@/lib/code-studio-types";
 
-interface Props {
+export interface TerminalPanelProps {
   files?: FileNode[];
+  onRunPipeline?: (fileName: string) => void;
+  onAskAI?: (prompt: string) => void;
 }
 
 interface TermLine {
@@ -42,9 +45,10 @@ interface TermLine {
   color?: string;
   isCommand?: boolean;
   rawCommand?: string;
+  executionTime?: number;
 }
 
-// IDENTITY_SEAL: PART-1 | role=imports+types | inputs=none | outputs=Props,TermLine
+// IDENTITY_SEAL: PART-1 | role=imports+types | inputs=none | outputs=TerminalPanelProps,TermLine
 
 // ============================================================
 // PART 2 — Shell State (persistent singletons)
@@ -78,10 +82,64 @@ const LOCAL_ONLY_CMDS = new Set([
 // IDENTITY_SEAL: PART-2 | role=shell state | inputs=none | outputs=shellHistory,shellEnv,shellJobs
 
 // ============================================================
-// PART 3 — Component
+// PART 3 — AI Error Analysis Helper
 // ============================================================
 
-export function TerminalPanel({ files = [] }: Props) {
+async function analyzeErrorWithAI(
+  command: string,
+  stderr: string,
+  exitCode: number,
+): Promise<{ summary: string; suggestion: string } | null> {
+  try {
+    const provider = getActiveProvider();
+    const apiKey = getApiKey(provider);
+    if (!apiKey) return null;
+
+    let result = "";
+    await streamChat({
+      systemInstruction:
+        "You are a terminal error analyst. Given a failed command and its stderr, " +
+        "provide a brief 1-line summary of the error and a 1-line fix suggestion. " +
+        "Respond in Korean. Format: SUMMARY: ...\nSUGGESTION: ...",
+      messages: [
+        {
+          role: "user",
+          content: `Command: ${command}\nExit code: ${exitCode}\nStderr:\n${stderr.slice(0, 1000)}`,
+        },
+      ],
+      temperature: 0.3,
+      maxTokens: 200,
+      onChunk: (text: string) => {
+        result += text;
+      },
+    });
+
+    const summaryMatch = result.match(/SUMMARY:\s*(.+)/);
+    const suggestionMatch = result.match(/SUGGESTION:\s*(.+)/);
+
+    if (summaryMatch || suggestionMatch) {
+      return {
+        summary: summaryMatch?.[1]?.trim() ?? "분석 완료",
+        suggestion: suggestionMatch?.[1]?.trim() ?? "stderr 로그를 확인하세요.",
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// IDENTITY_SEAL: PART-3 | role=AI error analysis | inputs=command,stderr,exitCode | outputs=analysis|null
+
+// ============================================================
+// PART 4 — Component
+// ============================================================
+
+export function TerminalPanel({
+  files = [],
+  onRunPipeline,
+  onAskAI,
+}: TerminalPanelProps) {
   const [lines, setLines] = useState<TermLine[]>([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -96,13 +154,12 @@ export function TerminalPanel({ files = [] }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Copy all output to clipboard
   const handleCopyOutput = useCallback(() => {
     const text = lines.map((l) => l.text).join("\n");
     navigator.clipboard.writeText(text).then(() => {
       setLines((prev) => [
         ...prev,
-        { text: "[\uCD9C\uB825\uC774 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB428]", color: "blue" },
+        { text: "[출력이 클립보드에 복사됨]", color: "blue" },
       ]);
     });
   }, [lines]);
@@ -111,7 +168,7 @@ export function TerminalPanel({ files = [] }: Props) {
   useEffect(() => {
     let cancelled = false;
     setWcBooting(true);
-    setLines([{ text: "WebContainer \uBD80\uD305 \uC911\u2026", color: "blue" }]);
+    setLines([{ text: "WebContainer 부팅 중\u2026", color: "blue" }]);
 
     (async () => {
       try {
@@ -121,14 +178,14 @@ export function TerminalPanel({ files = [] }: Props) {
         setLines([
           {
             text: instance.isAvailable
-              ? "EH Code Studio Terminal v1.0 \u2014 WebContainer Ready"
-              : "EH Code Studio Terminal v1.0 \u2014 Simulated Mode",
+              ? "EH Code Studio Terminal v2.0 \u2014 WebContainer Ready"
+              : "EH Code Studio Terminal v2.0 \u2014 Simulated Mode",
             color: "green",
           },
           {
             text: instance.isAvailable
-              ? "\uC2E4\uC81C \uBA85\uB839 \uC2E4\uD589 \uAC00\uB2A5: npm, node, git, ls, cat \uB4F1"
-              : "\uC2DC\uBBAC\uB808\uC774\uC158 \uBAA8\uB4DC \u2014 \uB0B4\uC7A5 \uBA85\uB839 \uC0AC\uC6A9 \uAC00\uB2A5 (type 'help')",
+              ? "실제 명령 실행 가능: npm, node, git, ls, cat 등"
+              : "시뮬레이션 모드 \u2014 내장 명령 사용 가능 (type 'help')",
             color: instance.isAvailable ? "green" : "yellow",
           },
           { text: "" },
@@ -136,13 +193,13 @@ export function TerminalPanel({ files = [] }: Props) {
       } catch (err) {
         if (cancelled) return;
         setLines([
-          { text: "EH Code Studio Terminal v1.0", color: "green" },
+          { text: "EH Code Studio Terminal v2.0", color: "green" },
           {
-            text: `WebContainer \uBD80\uD305 \uC2E4\uD328: ${(err as Error).message}`,
+            text: `WebContainer 부팅 실패: ${(err as Error).message}`,
             color: "red",
           },
           {
-            text: "\uB0B4\uC7A5 \uBA85\uB839\uC73C\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4 (type 'help')",
+            text: "내장 명령으로 대체합니다 (type 'help')",
             color: "yellow",
           },
           { text: "" },
@@ -169,10 +226,10 @@ export function TerminalPanel({ files = [] }: Props) {
     setInputHighlight(highlightInput(input, shellEnv));
   }, [input]);
 
-  // IDENTITY_SEAL: PART-3 | role=component state+effects | inputs=Props | outputs=React state
+  // IDENTITY_SEAL: PART-4 | role=component state+effects | inputs=Props | outputs=React state
 
   // ============================================================
-  // PART 4 — Command Handler
+  // PART 5 — Command Handler
   // ============================================================
 
   const resetInput = useCallback((cmd: string) => {
@@ -190,13 +247,21 @@ export function TerminalPanel({ files = [] }: Props) {
 
     const processed = preprocessCommand(cmd, shellEnv);
     if (processed.segments.length > 0 && processed.segments[0].command) {
-      cmd = processed.segments.map((s) => [s.command, ...s.args].join(" ")).join(" | ");
+      cmd = processed.segments
+        .map((s) => [s.command, ...s.args].join(" "))
+        .join(" | ");
     }
 
     const firstWord = cmd.split(/\s+/)[0].toLowerCase();
-    if (COMMAND_ALIASES[firstWord]) { cmd = COMMAND_ALIASES[firstWord] + cmd.slice(firstWord.length); }
+    if (COMMAND_ALIASES[firstWord]) {
+      cmd = COMMAND_ALIASES[firstWord] + cmd.slice(firstWord.length);
+    }
 
-    if (firstWord === "clear") { resetInput(cmd); setLines([]); return; }
+    if (firstWord === "clear") {
+      resetInput(cmd);
+      setLines([]);
+      return;
+    }
 
     if (firstWord === "aliases") {
       resetInput(cmd);
@@ -204,7 +269,10 @@ export function TerminalPanel({ files = [] }: Props) {
         ...prev,
         { text: `$ ${cmd}`, color: "blue", isCommand: true, rawCommand: cmd },
         { text: "Command Aliases:", color: "green" },
-        ...Object.entries(COMMAND_ALIASES).map(([k, v]) => ({ text: `  ${k} \u2192 ${v}`, color: "yellow" as string })),
+        ...Object.entries(COMMAND_ALIASES).map(([k, v]) => ({
+          text: `  ${k} \u2192 ${v}`,
+          color: "yellow" as string,
+        })),
         { text: "" },
       ]);
       return;
@@ -217,12 +285,24 @@ export function TerminalPanel({ files = [] }: Props) {
       if (isLocal) {
         const seg = processed.segments[0];
         if (seg) {
-          const br = executeBuiltin(seg.command, seg.args, shellEnv, shellHistory, shellJobs, files);
+          const br = executeBuiltin(
+            seg.command,
+            seg.args,
+            shellEnv,
+            shellHistory,
+            shellJobs,
+            files,
+          );
           if (br !== null) {
             resetInput(cmd);
             setLines((prev) => [
               ...prev,
-              { text: `${shellEnv.buildPrompt()}${cmd}`, color: "blue", isCommand: true, rawCommand: cmd },
+              {
+                text: `${shellEnv.buildPrompt()}${cmd}`,
+                color: "blue",
+                isCommand: true,
+                rawCommand: cmd,
+              },
               ...br.output.map((l) => ({ text: l.text, color: l.color })),
               { text: "" },
             ]);
@@ -233,17 +313,16 @@ export function TerminalPanel({ files = [] }: Props) {
       }
 
       resetInput(cmd);
-
       const cmdStart = performance.now();
       setLines((prev) => [
         ...prev,
         { text: `$ ${cmd}`, color: "blue", isCommand: true, rawCommand: cmd },
       ]);
 
-      // Track cd for prompt display
       if (cmd.startsWith("cd ")) {
         const target = cmd.slice(3).trim();
-        if (target === "..") setCwd((prev) => prev.split("/").slice(0, -1).join("/") || "~");
+        if (target === "..")
+          setCwd((prev) => prev.split("/").slice(0, -1).join("/") || "~");
         else if (target.startsWith("/")) setCwd(target);
         else setCwd((prev) => `${prev}/${target}`);
       }
@@ -252,15 +331,46 @@ export function TerminalPanel({ files = [] }: Props) {
         const result = await wcInstance.run(cmd);
         const elapsed = Math.round(performance.now() - cmdStart);
         const newLines: TermLine[] = [];
-        if (result.stdout) newLines.push({ text: result.stdout, color: "green" });
+        if (result.stdout)
+          newLines.push({ text: result.stdout, color: "green" });
         if (result.stderr) newLines.push({ text: result.stderr, color: "red" });
+
         if (result.exitCode !== 0) {
-          newLines.push({ text: `Exit code: ${result.exitCode} (${elapsed}ms)`, color: "red" });
+          newLines.push({
+            text: `Exit code: ${result.exitCode} (${elapsed}ms)`,
+            color: "red",
+            executionTime: elapsed,
+          });
+          // AI error analysis
+          setLines((prev) => [...prev, ...newLines]);
+          setLines((prev) => [
+            ...prev,
+            { text: "[AI 분석 중\u2026]", color: "blue" },
+          ]);
+          const analysis = await analyzeErrorWithAI(
+            cmd,
+            result.stderr,
+            result.exitCode,
+          );
+          if (analysis) {
+            setLines((prev) => [
+              ...prev,
+              { text: `[AI] ${analysis.summary}`, color: "blue" },
+              { text: `[AI] 제안: ${analysis.suggestion}`, color: "blue" },
+              { text: "" },
+            ]);
+          } else {
+            setLines((prev) => [...prev, { text: "" }]);
+          }
         } else {
-          newLines.push({ text: `Done (${elapsed}ms)`, color: "green" });
+          newLines.push({
+            text: `Done (${elapsed}ms)`,
+            color: "green",
+            executionTime: elapsed,
+          });
+          newLines.push({ text: "" });
+          setLines((prev) => [...prev, ...newLines]);
         }
-        newLines.push({ text: "" });
-        setLines((prev) => [...prev, ...newLines]);
       } catch (err) {
         setLines((prev) => [
           ...prev,
@@ -275,13 +385,23 @@ export function TerminalPanel({ files = [] }: Props) {
     const seg = processed.segments[0];
     if (seg) {
       const builtinResult = executeBuiltin(
-        seg.command, seg.args, shellEnv, shellHistory, shellJobs, files,
+        seg.command,
+        seg.args,
+        shellEnv,
+        shellHistory,
+        shellJobs,
+        files,
       );
       if (builtinResult !== null) {
         resetInput(cmd);
         setLines((prev) => [
           ...prev,
-          { text: `${shellEnv.buildPrompt()}${cmd}`, color: "blue", isCommand: true, rawCommand: cmd },
+          {
+            text: `${shellEnv.buildPrompt()}${cmd}`,
+            color: "blue",
+            isCommand: true,
+            rawCommand: cmd,
+          },
           ...builtinResult.output.map((l) => ({ text: l.text, color: l.color })),
           { text: "" },
         ]);
@@ -291,7 +411,6 @@ export function TerminalPanel({ files = [] }: Props) {
     }
 
     resetInput(cmd);
-
     const cmdStart = performance.now();
     setLines((prev) => [
       ...prev,
@@ -303,23 +422,39 @@ export function TerminalPanel({ files = [] }: Props) {
         const result = await wcInstance.run(cmd);
         const elapsed = Math.round(performance.now() - cmdStart);
         const newLines: TermLine[] = [];
-        if (result.stdout) newLines.push({ text: result.stdout, color: "green" });
+        if (result.stdout)
+          newLines.push({ text: result.stdout, color: "green" });
         if (result.stderr) newLines.push({ text: result.stderr, color: "red" });
-        newLines.push({ text: `Done (${elapsed}ms)`, color: result.exitCode === 0 ? "green" : "red" });
+        newLines.push({
+          text: `Done (${elapsed}ms)`,
+          color: result.exitCode === 0 ? "green" : "red",
+        });
         newLines.push({ text: "" });
         setLines((prev) => [...prev, ...newLines]);
         return;
-      } catch { /* fall through to executeCommand */ }
+      } catch {
+        /* fall through to executeCommand */
+      }
     }
 
     const ctx: CommandContext = {
       files,
-      onRunPipeline: (fileName) => {
-        setLines((prev) => [...prev, { text: `[CSL] Pipeline: ${fileName}`, color: "green" }]);
-      },
-      onAskAI: (prompt) => {
-        setLines((prev) => [...prev, { text: `[AI] ${prompt}`, color: "blue" }]);
-      },
+      onRunPipeline: onRunPipeline
+        ? onRunPipeline
+        : (fileName) => {
+            setLines((prev) => [
+              ...prev,
+              { text: `[CSL] Pipeline: ${fileName}`, color: "green" },
+            ]);
+          },
+      onAskAI: onAskAI
+        ? onAskAI
+        : (prompt) => {
+            setLines((prev) => [
+              ...prev,
+              { text: `[AI] ${prompt}`, color: "blue" },
+            ]);
+          },
     };
 
     const result = await executeCommand(cmd, ctx);
@@ -330,16 +465,15 @@ export function TerminalPanel({ files = [] }: Props) {
       { text: `Done (${elapsed}ms)`, color: "green" },
       { text: "" },
     ]);
-  }, [input, files, wcInstance]);
+  }, [input, files, wcInstance, onRunPipeline, onAskAI, resetInput]);
 
-  // IDENTITY_SEAL: PART-4 | role=command handler | inputs=input,files,wcInstance | outputs=terminal lines
+  // IDENTITY_SEAL: PART-5 | role=command handler | inputs=input,files,wcInstance | outputs=terminal lines
 
   // ============================================================
-  // PART 5 — Key Handler & Render
+  // PART 6 — Key Handler & Render
   // ============================================================
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Ctrl+L to clear terminal
     if (e.key === "l" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       setLines([]);
@@ -389,14 +523,18 @@ export function TerminalPanel({ files = [] }: Props) {
         setAutocompleteIdx(next);
         setInput(autocompleteOptions[next]);
       } else if (history.length > 0) {
-        const newIdx = historyIdx < 0 ? history.length - 1 : Math.max(0, historyIdx - 1);
+        const newIdx =
+          historyIdx < 0 ? history.length - 1 : Math.max(0, historyIdx - 1);
         setHistoryIdx(newIdx);
         setInput(history[newIdx]);
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       if (autocompleteOptions.length > 0) {
-        const next = Math.min(autocompleteOptions.length - 1, autocompleteIdx + 1);
+        const next = Math.min(
+          autocompleteOptions.length - 1,
+          autocompleteIdx + 1,
+        );
         setAutocompleteIdx(next);
         setInput(autocompleteOptions[next]);
       } else if (historyIdx >= 0) {
@@ -432,18 +570,15 @@ export function TerminalPanel({ files = [] }: Props) {
             </span>
           )}
           {wcBooting && (
-            <Loader2
-              size={10}
-              className="animate-spin text-blue-400"
-            />
+            <Loader2 size={10} className="animate-spin text-blue-400" />
           )}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={handleCopyOutput}
             className="p-0.5 hover:bg-white/5 rounded text-text-secondary hover:text-white"
-            title="\uCD9C\uB825 \uBCF5\uC0AC"
-            aria-label="\uCD9C\uB825 \uBCF5\uC0AC"
+            title="출력 복사"
+            aria-label="출력 복사"
           >
             <Copy size={11} />
           </button>
@@ -454,8 +589,8 @@ export function TerminalPanel({ files = [] }: Props) {
                 ? "text-yellow-400"
                 : "text-text-secondary hover:text-white"
             }`}
-            title={scrollLock ? "\uC790\uB3D9 \uC2A4\uD06C\uB864 \uCF1C\uAE30" : "\uC2A4\uD06C\uB864 \uC7A0\uAE08"}
-            aria-label={scrollLock ? "\uC790\uB3D9 \uC2A4\uD06C\uB864 \uCF1C\uAE30" : "\uC2A4\uD06C\uB864 \uC7A0\uAE08"}
+            title={scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금"}
+            aria-label={scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금"}
           >
             {scrollLock ? <Lock size={11} /> : <Unlock size={11} />}
           </button>
@@ -463,10 +598,7 @@ export function TerminalPanel({ files = [] }: Props) {
       </div>
 
       {/* Output area */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-2 font-mono text-xs"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 font-mono text-xs">
         {lines.map((line, i) => (
           <div
             key={i}
@@ -493,7 +625,7 @@ export function TerminalPanel({ files = [] }: Props) {
               borderRadius: line.isCommand ? 2 : undefined,
             }}
             className={line.isCommand ? "hover:bg-white/5" : ""}
-            title={line.isCommand ? "\uD074\uB9AD\uD558\uC5EC \uB2E4\uC2DC \uC2E4\uD589" : undefined}
+            title={line.isCommand ? "클릭하여 다시 실행" : undefined}
           >
             {parseAnsi(line.text).map((span, j) => (
               <span
@@ -556,15 +688,15 @@ export function TerminalPanel({ files = [] }: Props) {
           placeholder={
             wcBooting
               ? "booting\u2026"
-              : "command... (Tab: \uC790\uB3D9\uC644\uC131, Ctrl+L: \uC9C0\uC6B0\uAE30)"
+              : "command... (Tab: 자동완성, Ctrl+L: 지우기)"
           }
           disabled={wcBooting}
           autoFocus
-          aria-label="\uD130\uBBF8\uB110 \uBA85\uB839 \uC785\uB825"
+          aria-label="터미널 명령 입력"
         />
       </div>
     </div>
   );
 }
 
-// IDENTITY_SEAL: PART-5 | role=key handler+render | inputs=user events | outputs=JSX terminal UI
+// IDENTITY_SEAL: PART-6 | role=key handler+render | inputs=user events | outputs=JSX terminal UI
