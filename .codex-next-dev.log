@@ -1,0 +1,18 @@
+
+> eh-universe-web@1.0.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 6604, using available port 3001 instead.
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.219.102:3001
+✓ Ready in 405ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          6604
+- Dir:          C:\Users\sung4\OneDrive\바탕 화면\AI 소설\설정집\최종 정리본\EH프로젝트\eh-universe-web
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 6604 /F to stop it.
+[?25h

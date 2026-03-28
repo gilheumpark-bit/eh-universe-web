@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { netT } from "@/lib/network-translations";
@@ -99,6 +100,15 @@ function relativeTime(isoDate: string, lang: string): string {
 export function NetworkHomeClient() {
   const { lang } = useLang();
   const { user, signInWithGoogle } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Read initial filter state from URL
+  const initialBoard = (searchParams.get("board") || "all") as BoardFilter;
+  const initialTagsRaw = searchParams.get("tags") || "";
+  const initialTags = initialTagsRaw ? initialTagsRaw.split(",").filter(Boolean) : [];
+  const initialBookmarks = searchParams.get("bookmarks") === "1";
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<DashboardState>({
@@ -110,9 +120,24 @@ export function NetworkHomeClient() {
     allTags: [],
   });
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
-  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
-  const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(initialBookmarks);
+  const [boardFilter, setBoardFilter] = useState<BoardFilter>(initialBoard);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
+  const [showSamples, setShowSamples] = useState(false);
+
+  // Sync filter state to URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (boardFilter !== "all") params.set("board", boardFilter);
+    else params.delete("board");
+    if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+    else params.delete("tags");
+    if (showBookmarksOnly) params.set("bookmarks", "1");
+    else params.delete("bookmarks");
+    const qs = params.toString();
+    const target = qs ? `?${qs}` : "/network";
+    router.replace(target, { scroll: false });
+  }, [boardFilter, selectedTags, showBookmarksOnly, router, searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -371,31 +396,52 @@ export function NetworkHomeClient() {
                   <div key={index} className="premium-panel-soft min-h-[220px] animate-pulse p-6" />
                 ))
               : !loading && filteredPlanets.length === 0 && state.planets.length === 0
-                ? SAMPLE_PLANETS.map((sample) => (
-                  <div key={sample.id} className="premium-link-card relative p-6 opacity-75">
-                    <span className="absolute right-4 top-4 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-amber">
-                      {lang === "ko" ? "샘플" : "Sample"}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="site-kicker">{sample.genre}</span>
-                    </div>
-                    <h3 className="mt-4 text-xl font-semibold text-text-primary">{lang === "ko" ? sample.name.ko : sample.name.en}</h3>
-                    <p className="mt-3 text-sm leading-7 text-text-secondary">{lang === "ko" ? sample.summary.ko : sample.summary.en}</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {sample.tags.map((tag) => (
-                        <span key={tag} className="badge badge-blue">{tag}</span>
-                      ))}
-                    </div>
-                    <div className="mt-6 text-center">
+                ? (
+                  <>
+                    {/* Empty state */}
+                    <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
+                      <p className="text-lg font-semibold text-text-primary">
+                        {lang === "ko" ? "아직 행성이 없습니다." : "No planets yet."}
+                      </p>
+                      <p className="mt-2 text-sm text-text-secondary">
+                        {lang === "ko" ? "첫 번째 행성을 만들어보세요!" : "Create the first one!"}
+                      </p>
                       <Link
                         href="/network/new"
-                        className="inline-block rounded-lg bg-accent-amber/20 px-5 py-2.5 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
+                        className="mt-5 inline-block rounded-lg bg-accent-amber/20 px-6 py-3 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
                       >
-                        {lang === "ko" ? "실제 행성을 등록해보세요" : "Register your own planet"}
+                        {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => setShowSamples((prev) => !prev)}
+                        className="mt-4 text-xs text-text-tertiary hover:text-text-secondary transition-colors underline underline-offset-2"
+                      >
+                        {showSamples
+                          ? (lang === "ko" ? "샘플 숨기기" : "Hide samples")
+                          : (lang === "ko" ? "샘플 보기" : "Show samples")}
+                      </button>
                     </div>
-                  </div>
-                ))
+                    {/* Sample planets — only shown on explicit toggle */}
+                    {showSamples && SAMPLE_PLANETS.map((sample) => (
+                      <div key={sample.id} className="premium-link-card relative p-6 opacity-60">
+                        <span className="absolute right-4 top-4 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-amber">
+                          {lang === "ko" ? "샘플" : "Sample"}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="site-kicker">{sample.genre}</span>
+                        </div>
+                        <h3 className="mt-4 text-xl font-semibold text-text-primary">{lang === "ko" ? sample.name.ko : sample.name.en}</h3>
+                        <p className="mt-3 text-sm leading-7 text-text-secondary">{lang === "ko" ? sample.summary.ko : sample.summary.en}</p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {sample.tags.map((tag) => (
+                            <span key={tag} className="badge badge-blue">{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )
               : filteredPlanets.map((planet) => (
                   <div key={planet.id} className="premium-link-card p-6">
                     <Link href={`/network/planets/${planet.id}`} className="block">

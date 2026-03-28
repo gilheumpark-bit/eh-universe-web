@@ -167,9 +167,10 @@ export default function ArchiveClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const catParam = searchParams.get("cat") || "core";
+  const initialQuery = searchParams.get("q") || "";
   const [activeCategory, setActiveCategory] = useState(catParam);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const { lang } = useLang();
   const t = createT(lang === "ko" ? "KO" : lang === "jp" ? "JP" : lang === "cn" ? "CN" : "EN");
 
@@ -177,6 +178,16 @@ export default function ArchiveClient() {
     const cat = searchParams.get("cat") || "core";
     setTimeout(() => setActiveCategory(cat), 0);
   }, [searchParams]);
+
+  // Sync search query to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery.trim()) params.set("q", searchQuery.trim());
+    else params.delete("q");
+    const qs = params.toString();
+    const target = qs ? `/archive?${qs}` : "/archive";
+    router.replace(target, { scroll: false });
+  }, [searchQuery, router, searchParams]);
 
   const changeCategory = useCallback((id: string) => {
     setActiveCategory(id);

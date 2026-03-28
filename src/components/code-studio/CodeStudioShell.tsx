@@ -1324,6 +1324,16 @@ function CodeStudioShellInner() {
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-green" />Ready</span>
             {activeFile && <span className={fileIconColor(activeFile.name)}>{activeFile.language}</span>}
             <span className="flex items-center gap-1"><Shield className="h-2.5 w-2.5" />NOA</span>
+            <span className="border-l border-white/10 pl-3 flex items-center gap-1">
+              {getApiKey(getActiveProvider()) ? (
+                <><span className="h-2 w-2 rounded-full bg-accent-green" />AI Active</>
+              ) : (
+                <><span className="h-2 w-2 rounded-full bg-amber-400" /><span className="text-amber-400/80">AI Inactive — Set key in &#x2699;</span></>
+              )}
+            </span>
+            <span className="border-l border-white/10 pl-3 flex items-center gap-1">
+              <FolderOpen className="h-2.5 w-2.5" />Local Storage
+            </span>
           </div>
           <div className="flex items-center gap-3 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
             {activeFile && <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>}
