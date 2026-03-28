@@ -21,8 +21,10 @@ import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import type { NoaResult } from "@/lib/noa/types";
-import { searchCode, type SearchResult } from "@/lib/code-studio-search";
-import { findBugsStatic, type BugReport } from "@/lib/code-studio-bugfinder";
+import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@/lib/code-studio-search";
+import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugfinder";
+import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
+import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
 
 // Lazy-loaded panels
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -30,6 +32,7 @@ const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPal
 const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
 const GitPanel = dynamic(() => import("@/components/code-studio/GitPanel"), { ssr: false });
 const DeployPanel = dynamic(() => import("@/components/code-studio/DeployPanel"), { ssr: false });
+const MobileLayoutComp = dynamic(() => import("@/components/code-studio/MobileLayout"), { ssr: false });
 
 // ============================================================
 // PART 2 — 데모 파일 트리
@@ -357,7 +360,7 @@ function PipelinePanel({ stages }: { stages: PipelineStage[] }) {
 // PART 6B — Bug Panel (inline)
 // ============================================================
 
-function BugPanel({ bugs }: { bugs: BugReport[] }) {
+function BugPanel({ bugs, onRunAI }: { bugs: BugReport[]; onRunAI?: () => void }) {
   const severityColor: Record<string, string> = { critical: "text-accent-red", high: "text-accent-red", medium: "text-accent-amber", low: "text-accent-blue", info: "text-text-tertiary" };
   return (
     <div className="flex h-full flex-col">
@@ -365,6 +368,7 @@ function BugPanel({ bugs }: { bugs: BugReport[] }) {
         <Bug className="h-4 w-4 text-accent-red" />
         <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Bug Finder</span>
         <span className="ml-auto rounded-full bg-accent-red/20 px-2 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-accent-red">{bugs.length}</span>
+        {onRunAI && <button onClick={onRunAI} className="ml-1 rounded bg-accent-purple/20 px-2 py-0.5 font-[family-name:var(--font-mono)] text-[9px] text-accent-purple hover:bg-accent-purple/30">AI Scan</button>}
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {bugs.length === 0 && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">No bugs detected. Edit code to trigger analysis.</div>}
@@ -388,9 +392,11 @@ function BugPanel({ bugs }: { bugs: BugReport[] }) {
 // PART 6C — Search Panel (inline)
 // ============================================================
 
-function SearchPanel({ files, onFileOpen }: { files: FileNode[]; onFileOpen: (fileId: string) => void }) {
+function SearchPanel({ files, onFileOpen, onReplace }: { files: FileNode[]; onFileOpen: (fileId: string) => void; onReplace?: (newFiles: FileNode[]) => void }) {
   const [query, setQuery] = useState("");
+  const [replace, setReplace] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [showReplace, setShowReplace] = useState(false);
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) { setResults([]); return; }
@@ -398,17 +404,34 @@ function SearchPanel({ files, onFileOpen }: { files: FileNode[]; onFileOpen: (fi
     setResults(r);
   }, [query, files]);
 
+  const handleReplaceAll = useCallback(() => {
+    if (!query.trim() || !onReplace) return;
+    const newFiles = searchReplaceAll(query, replace, files);
+    onReplace(newFiles);
+    setResults([]);
+  }, [query, replace, files, onReplace]);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
         <Search className="h-4 w-4 text-accent-amber" />
         <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Search</span>
+        <button onClick={() => setShowReplace(!showReplace)} className="ml-auto font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary hover:text-text-primary">
+          {showReplace ? "Hide Replace" : "Replace"}
+        </button>
       </div>
-      <div className="px-3 py-2 border-b border-white/8">
+      <div className="px-3 py-2 border-b border-white/8 space-y-1.5">
         <input value={query} onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
           placeholder="Search in files..."
           className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-amber/30" />
+        {showReplace && (
+          <div className="flex gap-1">
+            <input value={replace} onChange={(e) => setReplace(e.target.value)} placeholder="Replace with..."
+              className="flex-1 rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green/30" />
+            <button onClick={handleReplaceAll} className="rounded bg-accent-green/20 px-2 py-1 font-[family-name:var(--font-mono)] text-[9px] text-accent-green hover:bg-accent-green/30">All</button>
+          </div>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {results.length === 0 && query && <div className="text-center py-4 text-text-tertiary text-[10px]">No results</div>}
@@ -420,6 +443,115 @@ function SearchPanel({ files, onFileOpen }: { files: FileNode[]; onFileOpen: (fi
           </button>
         ))}
         {results.length > 0 && <div className="text-center text-[10px] text-text-tertiary">{results.length} results</div>}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PART 6D — Autopilot Panel
+// ============================================================
+
+function AutopilotPanel({ activeFile, onApplyCode, onShowDiff }: {
+  activeFile: OpenFile | null;
+  onApplyCode: (code: string) => void;
+  onShowDiff: (orig: string, mod: string, name: string) => void;
+}) {
+  const [task, setTask] = useState("");
+  const [plan, setPlan] = useState<AutopilotPlan | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const handleRun = useCallback(async () => {
+    if (!task.trim() || running) return;
+    setRunning(true);
+    try {
+      const context = activeFile ? `File: ${activeFile.name}\n\`\`\`${activeFile.language}\n${activeFile.content.slice(0, 2000)}\n\`\`\`` : "No file open";
+      const result = await runAutopilot(task, context, (p) => setPlan({ ...p }));
+      setPlan(result);
+      // 마지막 스텝 출력을 Apply
+      const lastOutput = result.steps.filter(s => s.output).pop()?.output;
+      if (lastOutput && activeFile) {
+        onShowDiff(activeFile.content, lastOutput, activeFile.name);
+      }
+    } catch { /* */ }
+    setRunning(false);
+  }, [task, running, activeFile, onShowDiff]);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Play className="h-4 w-4 text-accent-amber" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Autopilot</span>
+      </div>
+      <div className="px-3 py-2 border-b border-white/8">
+        <textarea value={task} onChange={(e) => setTask(e.target.value)} rows={3} placeholder="Describe what you want to build..."
+          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none resize-none focus:border-accent-amber/30" />
+        <button onClick={handleRun} disabled={running || !task.trim()}
+          className="mt-2 w-full rounded bg-accent-amber/20 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-accent-amber hover:bg-accent-amber/30 disabled:opacity-30">
+          {running ? "Running..." : "Run Autopilot"}
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {!plan && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">Describe a task. Autopilot will plan and execute in multiple steps.</div>}
+        {plan?.steps.map((s) => (
+          <div key={s.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-2">
+            <div className="flex items-center gap-2">
+              {s.status === "done" ? <CheckCircle className="h-3 w-3 text-accent-green" /> : s.status === "running" ? <Loader2 className="h-3 w-3 text-accent-amber animate-spin" /> : <Activity className="h-3 w-3 text-text-tertiary" />}
+              <span className="font-[family-name:var(--font-mono)] text-[10px] text-text-primary">{s.description}</span>
+            </div>
+            {s.output && <pre className="mt-1 text-[9px] text-text-tertiary overflow-x-auto max-h-20 overflow-y-auto">{s.output.slice(0, 200)}</pre>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PART 6E — Agent Panel
+// ============================================================
+
+function AgentPanel({ activeFile }: { activeFile: OpenFile | null }) {
+  const [task, setTask] = useState("");
+  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [running, setRunning] = useState(false);
+
+  const roleColors: Record<string, string> = { architect: "text-accent-purple", developer: "text-accent-green", reviewer: "text-accent-amber", tester: "text-accent-blue", documenter: "text-text-secondary" };
+
+  const handleRun = useCallback(async () => {
+    if (!task.trim() || running) return;
+    setRunning(true);
+    setMessages([]);
+    const context = activeFile ? `File: ${activeFile.name}\n${activeFile.content.slice(0, 2000)}` : "";
+    try {
+      await runAgentPipeline(task, context, ["architect", "developer", "reviewer"], (msg) => setMessages((prev) => [...prev, msg]));
+    } catch { /* */ }
+    setRunning(false);
+  }, [task, running, activeFile]);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Shield className="h-4 w-4 text-accent-purple" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Agents</span>
+      </div>
+      <div className="px-3 py-2 border-b border-white/8">
+        <input value={task} onChange={(e) => setTask(e.target.value)} placeholder="Task for agents..."
+          onKeyDown={(e) => { if (e.key === "Enter") handleRun(); }}
+          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-purple/30" />
+        <button onClick={handleRun} disabled={running || !task.trim()}
+          className="mt-2 w-full rounded bg-accent-purple/20 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-accent-purple hover:bg-accent-purple/30 disabled:opacity-30">
+          {running ? "Agents working..." : "Run Agent Pipeline"}
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {messages.length === 0 && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">Architect → Developer → Reviewer pipeline. Enter a task to start.</div>}
+        {messages.map((m) => (
+          <div key={m.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-2">
+            <div className={`font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase ${roleColors[m.role] ?? "text-text-tertiary"}`}>{m.role}</div>
+            <pre className="mt-1 text-[10px] text-text-secondary whitespace-pre-wrap max-h-32 overflow-y-auto">{m.content}</pre>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -459,7 +591,7 @@ function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
 // PART 8 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | null;
+type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | null;
 
 export default function CodeStudioShell() {
   const [files, setFiles] = useState<FileNode[]>(DEMO_FILES);
@@ -475,6 +607,10 @@ export default function CodeStudioShell() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [autopilotPlan, setAutopilotPlan] = useState<AutopilotPlan | null>(null);
+  const [agentSession, setAgentSession] = useState<AgentSession | null>(null);
+  const [diffState, setDiffState] = useState<{ original: string; modified: string; fileName: string } | null>(null);
+  const [replaceText, setReplaceText] = useState("");
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
@@ -776,6 +912,7 @@ export default function CodeStudioShell() {
             </button>
             <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-colors ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-colors ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-colors ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
             <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
             <button onClick={() => setShowSettings(!showSettings)} className={`rounded p-1.5 transition-colors ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
           </div>
@@ -821,6 +958,19 @@ export default function CodeStudioShell() {
 
         {/* Editor + Right Panel */}
         <div className="flex flex-1 min-h-0">
+          {/* Diff Viewer Overlay */}
+          {diffState && (
+            <div className="absolute inset-0 z-20 bg-bg-primary">
+              <DiffViewer
+                original={diffState.original}
+                modified={diffState.modified}
+                language={activeFile?.language ?? "plaintext"}
+                fileName={diffState.fileName}
+                onAccept={(content) => { handleApplyCode(content); setDiffState(null); }}
+                onReject={() => setDiffState(null)}
+              />
+            </div>
+          )}
           {/* Editor */}
           <div className="flex-1 min-w-0">
             {activeFile ? (
@@ -860,8 +1010,14 @@ export default function CodeStudioShell() {
               {rightPanel === "pipeline" && <PipelinePanel stages={pipelineStages} />}
               {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f))} />}
               {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
-              {rightPanel === "bugs" && <BugPanel bugs={bugReports} />}
-              {rightPanel === "search" && <SearchPanel files={files} onFileOpen={(fid) => {
+              {rightPanel === "bugs" && <BugPanel bugs={bugReports} onRunAI={async () => {
+                if (!activeFile) return;
+                const aiBugs = await findBugs(activeFile.content, activeFile.language, activeFile.name);
+                setBugReports((prev) => [...prev, ...aiBugs]);
+              }} />}
+              {rightPanel === "autopilot" && <AutopilotPanel activeFile={activeFile} onApplyCode={handleApplyCode} onShowDiff={(orig, mod, name) => setDiffState({ original: orig, modified: mod, fileName: name })} />}
+              {rightPanel === "agents" && <AgentPanel activeFile={activeFile} />}
+              {rightPanel === "search" && <SearchPanel files={files} onReplace={(newFiles) => setFiles(newFiles)} onFileOpen={(fid) => {
                 const findFile = (nodes: FileNode[]): FileNode | null => { for (const n of nodes) { if (n.id === fid) return n; if (n.children) { const f = findFile(n.children); if (f) return f; } } return null; };
                 const node = findFile(files);
                 if (node && node.type === "file") { handleFileSelect(node); }
@@ -898,6 +1054,8 @@ export default function CodeStudioShell() {
                 case "toggle-deploy": setRightPanel((v) => v === "deploy" ? null : "deploy"); break;
                 case "toggle-search": setRightPanel((v) => v === "search" ? null : "search"); break;
                 case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
+                case "toggle-autopilot": setRightPanel((v) => v === "autopilot" ? null : "autopilot"); break;
+                case "toggle-agents": setRightPanel((v) => v === "agents" ? null : "agents"); break;
                 case "toggle-settings": setShowSettings((v) => !v); break;
               }
             }}
@@ -910,6 +1068,8 @@ export default function CodeStudioShell() {
               { id: "toggle-deploy", label: "Toggle Deploy", category: "View" },
               { id: "toggle-search", label: "Search in Files", shortcut: "Ctrl+Shift+F", category: "Edit" },
               { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
+              { id: "toggle-autopilot", label: "Autopilot (Multi-step AI)", category: "Tools" },
+              { id: "toggle-agents", label: "Agent Pipeline (Architect→Dev→Review)", category: "Tools" },
               { id: "toggle-settings", label: "Toggle Settings", category: "View" },
             ]}
           />
