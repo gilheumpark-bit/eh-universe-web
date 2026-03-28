@@ -226,6 +226,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.name}
             onChange={(event) => setPlanet((current) => ({ ...current, name: event.target.value }))}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -234,6 +235,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.code}
             onChange={(event) => setPlanet((current) => ({ ...current, code: event.target.value }))}
+            maxLength={50}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -242,6 +244,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.genre}
             onChange={(event) => setPlanet((current) => ({ ...current, genre: event.target.value }))}
+            maxLength={50}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -250,6 +253,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.civilizationLevel}
             onChange={(event) => setPlanet((current) => ({ ...current, civilizationLevel: event.target.value }))}
+            maxLength={50}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -261,8 +265,10 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <textarea
             value={planet.summary}
             onChange={(event) => setPlanet((current) => ({ ...current, summary: event.target.value }))}
+            maxLength={500}
             className="min-h-[160px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{planet.summary.length}/500</div>
         </label>
         <label className="block">
           <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "현재 상태" : "Current Status"}</div>
@@ -283,6 +289,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={tagInput}
             onChange={(event) => setTagInput(event.target.value)}
+            maxLength={200}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
             placeholder={lang === "ko" ? "쉼표로 구분" : "Comma-separated"}
           />
@@ -324,9 +331,11 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <textarea
             value={rulesInput}
             onChange={(event) => setRulesInput(event.target.value)}
+            maxLength={500}
             className="min-h-[120px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
             placeholder={lang === "ko" ? "한 줄에 하나씩 입력" : "One rule per line"}
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{rulesInput.length}/500</div>
         </label>
         <div className="md:col-span-2">
           <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "검색용 태그" : "Search Tags"}</div>
@@ -344,6 +353,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.featuredFaction}
             onChange={(event) => setPlanet((current) => ({ ...current, featuredFaction: event.target.value }))}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -352,6 +362,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={planet.featuredCharacter}
             onChange={(event) => setPlanet((current) => ({ ...current, featuredCharacter: event.target.value }))}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -397,9 +408,11 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <textarea
             value={planet.transcendenceCost}
             onChange={(event) => setPlanet((current) => ({ ...current, transcendenceCost: event.target.value }))}
+            maxLength={500}
             className="min-h-[100px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
             placeholder={lang === "ko" ? "선택한 대가에 대한 부연 설명" : "Additional notes on selected costs"}
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{planet.transcendenceCost.length}/500</div>
         </label>
       </div>
     ) : step === 3 ? (
@@ -459,6 +472,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={firstLog.title}
             onChange={(event) => setFirstLog((current) => ({ ...current, title: event.target.value }))}
+            maxLength={200}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -490,6 +504,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={firstLog.eventCategory}
             onChange={(event) => setFirstLog((current) => ({ ...current, eventCategory: event.target.value }))}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -498,6 +513,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <input
             value={firstLog.region}
             onChange={(event) => setFirstLog((current) => ({ ...current, region: event.target.value }))}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
           />
         </label>
@@ -559,8 +575,10 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           <textarea
             value={firstLog.content}
             onChange={(event) => setFirstLog((current) => ({ ...current, content: event.target.value }))}
+            maxLength={10000}
             className="min-h-[320px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{firstLog.content.length}/10000</div>
         </div>
       </div>
     );

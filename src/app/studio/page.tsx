@@ -119,7 +119,7 @@ export default function StudioPage() {
     if (urlTab && VALID_TABS.includes(urlTab as AppTab)) return urlTab as AppTab;
     return 'world';
   });
-  // Sync tab state → URL query params
+  // Sync tab state → URL query params (push for back/forward support)
   const setActiveTab = useCallback((tab: AppTab) => {
     setActiveTabRaw(tab);
     const params = new URLSearchParams(window.location.search);
@@ -128,8 +128,18 @@ export default function StudioPage() {
     params.delete('worldImport');
     params.delete('postImport');
     params.delete('setup');
-    studioRouter.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    studioRouter.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [studioRouter, pathname]);
+
+  // Restore tab on browser back/forward (popstate)
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && VALID_TABS.includes(urlTab as AppTab) && urlTab !== activeTab) {
+      setActiveTabRaw(urlTab as AppTab);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
     if (typeof window !== 'undefined') {
@@ -362,6 +372,8 @@ export default function StudioPage() {
   // ============================================================
   useEffect(() => {
     if (!hydrated) return;
+    // Mutual exclusion: skip if worldImport is also present (worldImport takes priority)
+    if (searchParams.get('worldImport')) return;
     const raw = searchParams.get('postImport');
     if (!raw) return;
     try {
@@ -412,9 +424,14 @@ export default function StudioPage() {
   }, [hydrated]);
 
   // ?setup=1 → API 키 모달 자동 오픈 (StudioChoiceScreen에서 "API 사용" 선택 시)
+  // Also marks onboarding as done to prevent modal overlap
   useEffect(() => {
     if (!hydrated) return;
     if (searchParams.get('setup') !== '1') return;
+    // Prevent onboarding + API key modal simultaneous display
+    if (typeof window !== 'undefined' && !localStorage.getItem('noa_onboarding_done')) {
+      localStorage.setItem('noa_onboarding_done', '1');
+    }
     setShowApiKeyModal(true);
     studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps

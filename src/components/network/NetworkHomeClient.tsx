@@ -103,10 +103,13 @@ export function NetworkHomeClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Read initial filter state from URL
-  const initialBoard = (searchParams.get("board") || "all") as BoardFilter;
+  // Read initial filter state from URL — validate against known types
+  const rawBoard = searchParams.get("board") || "all";
+  const initialBoard: BoardFilter = rawBoard === "all" || (BOARD_TYPES as readonly string[]).includes(rawBoard)
+    ? (rawBoard as BoardFilter)
+    : "all";
   const initialTagsRaw = searchParams.get("tags") || "";
-  const initialTags = initialTagsRaw ? initialTagsRaw.split(",").filter(Boolean) : [];
+  const initialTags = initialTagsRaw ? initialTagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
   const initialBookmarks = searchParams.get("bookmarks") === "1";
 
   const [loading, setLoading] = useState(true);
@@ -125,10 +128,13 @@ export function NetworkHomeClient() {
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
   const [showSamples, setShowSamples] = useState(false);
 
-  // Re-sync filter state from URL on browser back/forward
+  // Re-sync filter state from URL on browser back/forward — with validation
   useEffect(() => {
-    const board = (searchParams.get('board') || 'all') as BoardFilter;
-    const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
+    const rawB = searchParams.get('board') || 'all';
+    const board: BoardFilter = rawB === 'all' || (BOARD_TYPES as readonly string[]).includes(rawB)
+      ? (rawB as BoardFilter)
+      : 'all';
+    const tags = searchParams.get('tags')?.split(',').map(t => t.trim()).filter(Boolean) || [];
     const bookmarks = searchParams.get('bookmarks') === '1';
     setBoardFilter(board);
     setSelectedTags(tags);

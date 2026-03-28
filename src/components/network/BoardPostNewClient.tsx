@@ -179,6 +179,7 @@ export function BoardPostNewClient() {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                maxLength={200}
                 placeholder={L2(LABELS.titlePlaceholder, lang)}
                 className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-accent-amber/40"
               />
@@ -204,10 +205,12 @@ export function BoardPostNewClient() {
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
+                  maxLength={10000}
                   placeholder={L2(LABELS.contentPlaceholder, lang)}
                   className="min-h-[240px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none placeholder:text-text-tertiary focus:border-accent-amber/40"
                 />
               )}
+              <div className="mt-1 text-right text-[11px] text-text-tertiary">{content.length}/10000</div>
             </div>
 
             {/* Tag input */}

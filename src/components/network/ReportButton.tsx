@@ -66,12 +66,17 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
       });
       setSubmitted(true);
       setTimeout(() => { setOpen(false); setSubmitted(false); setDetail(""); setSubmitError(null); }, 2000);
-    } catch {
-      setSubmitError(lang === "ko" ? "신고 제출에 실패했습니다." : "Failed to submit report.");
+    } catch (caught) {
+      const msg = caught instanceof Error ? caught.message : '';
+      if (msg.includes('Duplicate report') || msg.includes('already reported')) {
+        setSubmitError(lang === "ko" ? "이미 동일한 신고가 접수되어 있습니다." : "You have already reported this item.");
+      } else {
+        setSubmitError(lang === "ko" ? "신고 제출에 실패했습니다." : "Failed to submit report.");
+      }
     } finally {
       setSubmitting(false);
     }
-  }, [detail, reason, submitting, targetId, targetType, user]);
+  }, [detail, lang, reason, submitting, targetId, targetType, user]);
 
   return (
     <>
@@ -104,8 +109,10 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
           <div
             className="w-full max-w-md rounded-2xl border border-white/8 bg-bg-primary p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
+            data-modal="report"
           >
             <h3 className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-red">
               {L2(LABELS.title, lang)}
@@ -135,10 +142,12 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
                   <textarea
                     className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-red/40 focus:outline-none"
                     rows={3}
+                    maxLength={1000}
                     placeholder={L2(LABELS.detailPlaceholder, lang)}
                     value={detail}
                     onChange={(e) => setDetail(e.target.value)}
                   />
+                  <div className="mt-1 text-right text-[11px] text-text-tertiary">{detail.length}/1000</div>
                 </div>
 
                 {submitError && (

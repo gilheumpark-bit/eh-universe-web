@@ -103,6 +103,7 @@ export function LogComposer({
             value={value.title}
             disabled={disabled}
             onChange={(event) => handleField("title", event.target.value)}
+            maxLength={200}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
             placeholder={lang === "ko" ? "관측 로그 제목을 입력하세요" : "Enter a title"}
           />
@@ -114,6 +115,7 @@ export function LogComposer({
             value={value.eventCategory}
             disabled={disabled}
             onChange={(event) => handleField("eventCategory", event.target.value)}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
             placeholder={lang === "ko" ? "예: 붕괴, 접촉, 회수" : "e.g. Collapse, Contact, Recovery"}
           />
@@ -125,6 +127,7 @@ export function LogComposer({
             value={value.region}
             disabled={disabled}
             onChange={(event) => handleField("region", event.target.value)}
+            maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
             placeholder={lang === "ko" ? "관측 지역을 입력하세요" : "Enter a region"}
           />
@@ -146,9 +149,11 @@ export function LogComposer({
             value={value.content}
             disabled={disabled}
             onChange={(event) => handleField("content", event.target.value)}
+            maxLength={10000}
             className="min-h-[260px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
             placeholder={lang === "ko" ? "관측 내용을 기록하세요" : "Write the observation"}
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{value.content.length}/10000</div>
         </label>
 
         <label className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3 text-sm text-text-secondary">

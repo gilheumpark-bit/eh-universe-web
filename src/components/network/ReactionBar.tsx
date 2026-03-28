@@ -82,12 +82,12 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
         });
       } catch {
         setError(lang === "ko" ? "반응 처리에 실패했습니다." : "Failed to toggle reaction.");
-        setTimeout(() => setError(null), 3000);
+        setTimeout(() => setError(null), 4000);
       } finally {
         setToggling(null);
       }
     },
-    [targetId, targetType, toggling, user],
+    [lang, targetId, targetType, toggling, user],
   );
 
   const countByType = (type: ReactionType) => reactions.filter((r) => r.reactionType === type).length;

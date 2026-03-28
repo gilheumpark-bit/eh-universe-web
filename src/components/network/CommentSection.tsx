@@ -195,10 +195,12 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
           <textarea
             className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none"
             rows={3}
+            maxLength={2000}
             placeholder={L2(LABELS.placeholder, lang)}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />
+          <div className="mt-1 text-right text-[11px] text-text-tertiary">{draft.length}/2000</div>
           <div className="flex items-center justify-between gap-3">
             {error ? <span className="text-xs text-accent-red">{error}</span> : <span />}
             <button
@@ -251,6 +253,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
                   <textarea
                     className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary focus:border-accent-purple/40 focus:outline-none"
                     rows={2}
+                    maxLength={2000}
                     value={editDraft}
                     onChange={(e) => setEditDraft(e.target.value)}
                   />

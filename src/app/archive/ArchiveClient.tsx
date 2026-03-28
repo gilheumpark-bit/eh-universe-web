@@ -2,7 +2,7 @@
 
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLang, L2 } from "@/lib/LangContext";
 import { createT } from "@/lib/i18n";
@@ -176,7 +176,7 @@ export default function ArchiveClient() {
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";
-    setTimeout(() => setActiveCategory(cat), 0);
+    setActiveCategory(cat);
   }, [searchParams]);
 
   // Re-sync search query from URL on browser back/forward
@@ -185,31 +185,37 @@ export default function ArchiveClient() {
     setSearchQuery(q);
   }, [searchParams]);
 
-  // Sync search query to URL
+  // Debounced URL sync for search query
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchQuery.trim()) params.set("q", searchQuery.trim());
-    else params.delete("q");
-    const qs = params.toString();
-    const target = qs ? `/archive?${qs}` : "/archive";
-    router.replace(target, { scroll: false });
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchQuery.trim()) params.set("q", searchQuery.trim());
+      else params.delete("q");
+      const qs = params.toString();
+      const target = qs ? `/archive?${qs}` : "/archive";
+      router.replace(target, { scroll: false });
+    }, 300);
+    return () => clearTimeout(searchTimerRef.current);
   }, [searchQuery, router, searchParams]);
 
   const changeCategory = useCallback((id: string) => {
     setActiveCategory(id);
     setSidebarOpen(false);
-    router.push(`/archive?cat=${id}`, { scroll: false });
+    router.replace(`/archive?cat=${id}`, { scroll: false });
   }, [router]);
 
   const currentCategory = categories.find((c) => c.id === activeCategory) ?? categories[0];
 
   // 검색: 전체 카테고리에서 제목 매칭
-  const searchResults = searchQuery.trim()
-    ? categories.flatMap(cat => cat.articles.filter(a => {
-        const q = searchQuery.toLowerCase();
-        return (a.title.ko?.toLowerCase().includes(q) || a.title.en?.toLowerCase().includes(q) || a.slug.includes(q));
-      }).map(a => ({ ...a, categoryId: cat.id, categoryLabel: cat.label })))
-    : null;
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+    return categories.flatMap(cat => cat.articles.filter(a =>
+      a.title.ko?.toLowerCase().includes(q) || a.title.en?.toLowerCase().includes(q) || a.slug.includes(q)
+    ).map(a => ({ ...a, categoryId: cat.id, categoryLabel: cat.label })));
+  }, [searchQuery]);
 
   return (
     <>

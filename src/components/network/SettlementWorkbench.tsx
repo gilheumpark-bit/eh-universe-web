@@ -236,6 +236,7 @@ export function SettlementWorkbench() {
               <input
                 value={archiveLevel}
                 onChange={(event) => setArchiveLevel(event.target.value)}
+                maxLength={100}
                 className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
               />
             </label>
@@ -245,8 +246,10 @@ export function SettlementWorkbench() {
               <textarea
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
+                maxLength={2000}
                 className="min-h-[180px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
               />
+              <div className="mt-1 text-right text-[11px] text-text-tertiary">{action.length}/2000</div>
             </label>
           </div>
 
