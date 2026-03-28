@@ -1,0 +1,268 @@
+"use client";
+
+// ============================================================
+// PART 1 — Imports & Types
+// ============================================================
+
+import { useState, useCallback, useRef } from "react";
+import { Database, Play, Clock, Table2, Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
+
+export interface DBConnection {
+  id: string;
+  name: string;
+  type: "sqlite" | "postgresql" | "mysql" | "mongodb";
+  connectionString: string;
+  connected: boolean;
+}
+
+export interface QueryResult {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  rowCount: number;
+  executionTime: number;
+  error?: string;
+}
+
+interface QueryHistoryEntry {
+  id: string;
+  query: string;
+  timestamp: number;
+  success: boolean;
+}
+
+interface DatabasePanelProps {
+  connections: DBConnection[];
+  onConnect: (conn: DBConnection) => Promise<boolean>;
+  onExecuteQuery: (connectionId: string, query: string) => Promise<QueryResult>;
+  tables?: string[];
+}
+
+// IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=DBConnection,QueryResult
+
+// ============================================================
+// PART 2 — Sidebar (Tables & History)
+// ============================================================
+
+function TableList({
+  tables,
+  onSelect,
+}: {
+  tables: string[];
+  onSelect: (table: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="border-b border-white/5">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300"
+      >
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        Tables ({tables.length})
+      </button>
+      {expanded && (
+        <div className="pb-1">
+          {tables.map((t) => (
+            <button
+              key={t}
+              onClick={() => onSelect(t)}
+              className="flex w-full items-center gap-1.5 px-3 py-1 text-xs text-gray-400 hover:bg-white/5 hover:text-white"
+            >
+              <Table2 size={12} className="text-blue-400" />
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryList({
+  history,
+  onSelect,
+}: {
+  history: QueryHistoryEntry[];
+  onSelect: (query: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300"
+      >
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        History ({history.length})
+      </button>
+      {expanded && (
+        <div className="max-h-40 overflow-y-auto pb-1">
+          {history.map((h) => (
+            <button
+              key={h.id}
+              onClick={() => onSelect(h.query)}
+              className={`flex w-full items-start gap-1.5 px-3 py-1 text-xs hover:bg-white/5 ${
+                h.success ? "text-gray-400" : "text-red-400"
+              }`}
+            >
+              <Clock size={10} className="mt-0.5 shrink-0" />
+              <span className="truncate">{h.query}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=Sidebar | inputs=tables,history | outputs=JSX
+
+// ============================================================
+// PART 3 — Results Table
+// ============================================================
+
+function ResultsTable({ result }: { result: QueryResult | null }) {
+  if (!result) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-gray-500">
+        Run a query to see results
+      </div>
+    );
+  }
+  if (result.error) {
+    return (
+      <div className="flex items-center gap-2 p-4 text-sm text-red-400">
+        <AlertTriangle size={14} />
+        {result.error}
+      </div>
+    );
+  }
+  return (
+    <div className="h-full overflow-auto">
+      <table className="w-full border-collapse text-xs">
+        <thead className="sticky top-0 bg-[#1e1e2e]">
+          <tr>
+            {result.columns.map((col) => (
+              <th key={col} className="border-b border-white/10 px-3 py-1.5 text-left font-medium text-gray-400">
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {result.rows.map((row, ri) => (
+            <tr key={ri} className="hover:bg-white/5">
+              {result.columns.map((col) => (
+                <td key={col} className="border-b border-white/5 px-3 py-1 text-gray-300">
+                  {String(row[col] ?? "NULL")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="border-t border-white/5 px-3 py-1 text-[10px] text-gray-500">
+        {result.rowCount} rows returned in {result.executionTime}ms
+      </div>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-3 | role=ResultsTable | inputs=QueryResult | outputs=JSX
+
+// ============================================================
+// PART 4 — Main Panel
+// ============================================================
+
+export default function DatabasePanel({
+  connections,
+  onConnect,
+  onExecuteQuery,
+  tables = [],
+}: DatabasePanelProps) {
+  const [activeConn, setActiveConn] = useState<string>(connections[0]?.id ?? "");
+  const [query, setQuery] = useState("SELECT * FROM ");
+  const [result, setResult] = useState<QueryResult | null>(null);
+  const [running, setRunning] = useState(false);
+  const [history, setHistory] = useState<QueryHistoryEntry[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const execute = useCallback(async () => {
+    if (!activeConn || !query.trim()) return;
+    setRunning(true);
+    try {
+      const res = await onExecuteQuery(activeConn, query);
+      setResult(res);
+      setHistory((h) => [
+        { id: `q-${Date.now()}`, query: query.trim(), timestamp: Date.now(), success: !res.error },
+        ...h.slice(0, 49),
+      ]);
+    } catch (err) {
+      setResult({ columns: [], rows: [], rowCount: 0, executionTime: 0, error: String(err) });
+    } finally {
+      setRunning(false);
+    }
+  }, [activeConn, query, onExecuteQuery]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      execute();
+    }
+  };
+
+  return (
+    <div className="flex h-full">
+      {/* Sidebar */}
+      <div className="w-48 shrink-0 border-r border-white/5 overflow-y-auto bg-[#16161e]">
+        <div className="border-b border-white/5 px-2 py-2">
+          <select
+            value={activeConn}
+            onChange={(e) => setActiveConn(e.target.value)}
+            className="w-full rounded bg-white/5 px-2 py-1 text-xs text-white border border-white/10 outline-none"
+          >
+            {connections.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <TableList tables={tables} onSelect={(t) => setQuery(`SELECT * FROM ${t} LIMIT 100;`)} />
+        <HistoryList history={history} onSelect={setQuery} />
+      </div>
+
+      {/* Main area */}
+      <div className="flex flex-1 flex-col">
+        {/* Query editor */}
+        <div className="border-b border-white/5 p-2">
+          <textarea
+            ref={textareaRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={4}
+            className="w-full resize-none rounded border border-white/10 bg-[#12121a] px-3 py-2 font-mono text-xs text-white outline-none focus:border-blue-500/50"
+            placeholder="Enter SQL query... (Ctrl+Enter to execute)"
+          />
+          <div className="mt-1 flex items-center justify-between">
+            <span className="text-[10px] text-gray-600">Ctrl+Enter to execute</span>
+            <button
+              onClick={execute}
+              disabled={running}
+              className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+            >
+              {running ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+              Execute
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="flex-1 overflow-hidden">
+          <ResultsTable result={result} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-4 | role=DatabasePanelUI | inputs=connections,onExecuteQuery | outputs=JSX
