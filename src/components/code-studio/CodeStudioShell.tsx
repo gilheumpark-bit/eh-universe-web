@@ -1306,7 +1306,10 @@ function CodeStudioShellInner() {
                 "ai-hub": () => <PI.AIHubComponent features={[]} onToggleFeature={() => {}} />,
                 "ai-workspace": () => <PI.AIWorkspaceComponent threads={[]} sharedMemory={[]} onSendMessage={async () => ""} onCreateThread={() => {}} onDeleteThread={() => {}} />,
                 "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
-                "progress": () => <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={pipelineScore ? ((pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail") : undefined} />,
+                "progress": () => {
+                  const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
+                  return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} />;
+                },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
                 "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={() => {}} />,
                 "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => setRightPanel(null)} />,
