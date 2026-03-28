@@ -66,7 +66,7 @@ const TabletLayoutComponent = dynamic(
 );
 const ComposerPanelComponent = dynamic(() => import("@/components/code-studio/ComposerPanel"), { ssr: false });
 const ReviewCenterComponent = dynamic(
-  () => import("@/components/code-studio/ReviewCenter").then((m) => ({ default: m.default || m.ReviewCenter })),
+  () => import("@/components/code-studio/ReviewCenter").then((m) => ({ default: m.ReviewCenter })),
   { ssr: false },
 );
 const PreviewPanelComponent = dynamic(() => import("@/components/code-studio/PreviewPanel"), { ssr: false });
