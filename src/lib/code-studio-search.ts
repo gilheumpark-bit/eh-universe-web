@@ -211,3 +211,83 @@ export function replaceAll(
 }
 
 // IDENTITY_SEAL: PART-5 | role=ReplaceAll | inputs=query,replacement,FileNode[],SearchOptions | outputs=FileNode[]
+
+// ============================================================
+// PART 6 — Web Code Search (AI-simulated)
+// ============================================================
+
+import { streamChat } from './ai-providers';
+
+/** Web code search result */
+export interface WebSearchResult {
+  title: string;
+  source: 'npm' | 'github' | 'stackoverflow' | 'docs';
+  url: string;
+  snippet: string;
+  relevance: number;
+  stars?: number;
+  license?: string;
+}
+
+const WEB_SEARCH_SYSTEM = `You are a code search engine. Given a query, return relevant results from npm, GitHub, StackOverflow, and documentation sites.
+Respond ONLY with a JSON array of results. Each result must have:
+- title: string (package/repo/question name)
+- source: "npm" | "github" | "stackoverflow" | "docs"
+- url: string (realistic URL)
+- snippet: string (brief code snippet or description, max 200 chars)
+- relevance: number (0.0 to 1.0)
+- stars: number (optional, for github/npm)
+- license: string (optional, e.g. "MIT", "Apache-2.0")
+
+Return 5-10 results sorted by relevance. No markdown, no explanation, just the JSON array.`;
+
+/**
+ * AI-simulated web code search.
+ * Uses streamChat to generate search results based on the AI's training data.
+ */
+export async function searchWeb(
+  query: string,
+  sources?: string[],
+  signal?: AbortSignal,
+): Promise<WebSearchResult[]> {
+  if (!query.trim()) return [];
+
+  const sourceFilter = sources?.length
+    ? `\nOnly return results from these sources: ${sources.join(', ')}.`
+    : '';
+
+  let raw = '';
+  try {
+    raw = await streamChat({
+      systemInstruction: WEB_SEARCH_SYSTEM + sourceFilter,
+      messages: [{ role: 'user', content: `Search: ${query}` }],
+      temperature: 0.3,
+      signal,
+      onChunk: () => { /* collect via return value */ },
+    });
+  } catch {
+    return [];
+  }
+
+  // JSON 배열 파싱
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+    const parsed = JSON.parse(jsonMatch[0]) as unknown[];
+    return parsed
+      .filter((item): item is WebSearchResult =>
+        typeof item === 'object' && item !== null &&
+        'title' in item && 'source' in item && 'url' in item &&
+        'snippet' in item && 'relevance' in item
+      )
+      .map(item => ({
+        ...item,
+        relevance: Math.max(0, Math.min(1, Number(item.relevance) || 0)),
+      }))
+      .sort((a, b) => b.relevance - a.relevance);
+  } catch {
+    return [];
+  }
+}
+
+// IDENTITY_SEAL: PART-6 | role=WebCodeSearch | inputs=query,sources,signal | outputs=WebSearchResult[]
