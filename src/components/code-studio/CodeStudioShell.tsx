@@ -4,7 +4,7 @@
 // PART 1 — Imports & State
 // ============================================================
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -13,6 +13,8 @@ import {
   MessageSquare, Shield, Activity, Send, Trash2, Edit3,
   AlertTriangle, Loader2,
   Search, GitBranch, Upload, Bug, Command, Home, Columns2,
+  Eye, List, Layout, Package, BarChart3, Users, Wand2,
+  type LucideIcon,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
@@ -35,75 +37,40 @@ import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
 
-// Lazy-loaded panels — external components
+// Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
+import { PANEL_REGISTRY, type RightPanel } from "@/lib/code-studio-panel-registry";
+import * as PI from "@/components/code-studio/PanelImports";
+
+// Non-panel dynamic imports (used directly, not right panels)
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
 const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
-const GitPanel = dynamic(() => import("@/components/code-studio/GitPanel"), { ssr: false });
-const DeployPanel = dynamic(() => import("@/components/code-studio/DeployPanel"), { ssr: false });
 
-// External panel components (replacing inline definitions)
-const ExternalSearchPanel = dynamic(
-  () => import("@/components/code-studio/SearchPanel").then((m) => ({ default: m.SearchPanel })),
+// Modal/dialog + ErrorBoundary imports
+import { ErrorBoundary } from "@/components/code-studio/ErrorBoundary";
+const ConfirmDialog = dynamic(
+  () => import("@/components/code-studio/ConfirmDialog").then((m) => ({ default: m.ConfirmDialog })),
   { ssr: false },
 );
-const ExternalAutopilotPanel = dynamic(
-  () => import("@/components/code-studio/AutopilotPanel").then((m) => ({ default: m.AutopilotPanel })),
+const ShortcutOverlay = dynamic(
+  () => import("@/components/code-studio/ShortcutOverlay"),
   { ssr: false },
 );
-const ExternalAgentPanel = dynamic(
-  () => import("@/components/code-studio/AgentPanel").then((m) => ({ default: m.AgentPanel })),
+const ErrorOverlay = dynamic(
+  () => import("@/components/code-studio/ErrorOverlay"),
   { ssr: false },
 );
-const StatusBarComponent = dynamic(
-  () => import("@/components/code-studio/StatusBar").then((m) => ({ default: m.StatusBar })),
-  { ssr: false },
-);
-const MobileLayoutComponent = dynamic(() => import("@/components/code-studio/MobileLayout"), { ssr: false });
-const TabletLayoutComponent = dynamic(
-  () => import("@/components/code-studio/TabletLayout").then((m) => ({ default: m.TabletLayout })),
-  { ssr: false },
-);
-const ComposerPanelComponent = dynamic(() => import("@/components/code-studio/ComposerPanel"), { ssr: false });
-const ReviewCenterComponent = dynamic(
-  () => import("@/components/code-studio/ReviewCenter").then((m) => ({ default: m.ReviewCenter })),
-  { ssr: false },
-);
-const PreviewPanelComponent = dynamic(() => import("@/components/code-studio/PreviewPanel"), { ssr: false });
-const OutlinePanelComponent = dynamic(
-  () => import("@/components/code-studio/OutlinePanel").then((m) => ({ default: m.OutlinePanel })),
-  { ssr: false },
-);
-const TemplateGalleryComponent = dynamic(
-  () => import("@/components/code-studio/TemplateGallery").then((m) => ({ default: m.TemplateGallery })),
-  { ssr: false },
-);
-const SettingsPanelComponent = dynamic(
-  () => import("@/components/code-studio/SettingsPanel").then((m) => ({ default: m.SettingsPanel })),
-  { ssr: false },
-);
-const PackagePanelComponent = dynamic(
-  () => import("@/components/code-studio/PackagePanel").then((m) => ({ default: m.PackagePanel })),
-  { ssr: false },
-);
-const EvaluationPanelComponent = dynamic(
-  () => import("@/components/code-studio/EvaluationPanel").then((m) => ({ default: m.EvaluationPanel })),
-  { ssr: false },
-);
-const QuickOpenComponent = dynamic(
-  () => import("@/components/code-studio/QuickOpen").then((m) => ({ default: m.QuickOpen })),
-  { ssr: false },
-);
-const CollabPanelComponent = dynamic(() => import("@/components/code-studio/CollabPanel"), { ssr: false });
-const CodeCreatorPanelComponent = dynamic(() => import("@/components/code-studio/CodeCreatorPanel"), { ssr: false });
-const EditorTabsComponent = dynamic(
-  () => import("@/components/code-studio/EditorTabs").then((m) => ({ default: m.EditorTabs })),
-  { ssr: false },
-);
-const ProblemsPanelComponent = dynamic(
-  () => import("@/components/code-studio/ProblemsPanel").then((m) => ({ default: m.ProblemsPanel })),
-  { ssr: false },
-);
+
+/** Map registry icon names → lucide-react components for the activity bar */
+const LUCIDE_MAP: Record<string, LucideIcon> = {
+  MessageSquare, Activity, GitBranch, Upload, Bug, Search, Play,
+  Shield, Edit3, AlertTriangle, Eye, List, Layout, Settings,
+  Package, BarChart3, Users, Wand2,
+};
+const PanelIcon = ({ name, className }: { name: string; className?: string }) => {
+  const Icon = LUCIDE_MAP[name];
+  return Icon ? <Icon className={className} /> : null;
+};
 
 // IDENTITY_SEAL: PART-1 | role=ImportsState | inputs=none | outputs=imports,dynamic-components
 
@@ -429,7 +396,7 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
 // PART 6 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | "packages" | "evaluation" | "collab" | "creator" | null;
+// RightPanel type imported from @/lib/code-studio-panel-registry
 
 function useIsTablet(): boolean {
   const [isTablet, setIsTablet] = useState(false);
@@ -465,6 +432,9 @@ function CodeStudioShellInner() {
   const [hasEverOpened, setHasEverOpened] = useState(false);
   const [showMultiKey, setShowMultiKey] = useState(false);
   const [showQuickOpen, setShowQuickOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [buildError, setBuildError] = useState<{ message: string; stack?: string; file?: string; line?: number } | null>(null);
   const [splitFileId, setSplitFileId] = useState<string | null>(null);
   const [dragTabIdx, setDragTabIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -536,6 +506,7 @@ function CodeStudioShellInner() {
       if (mod && e.key === "-") { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })); }
       if (mod && e.key === "`") { e.preventDefault(); setShowTerminal((v) => !v); }
       if (mod && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
+      if (e.key === "?" && !mod && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) { setShowShortcuts((v) => !v); }
       if (mod && e.key === "w") {
         e.preventDefault();
         if (activeFileId) {
@@ -837,7 +808,7 @@ function CodeStudioShellInner() {
 
   const editorPanel = (
     <div className="flex h-full flex-col">
-      <EditorTabsComponent
+      <PI.EditorTabsComponent
         openFiles={openFiles}
         activeFileId={activeFileId}
         onSelectFile={(id) => setActiveFileId(id)}
@@ -902,7 +873,7 @@ function CodeStudioShellInner() {
   const pipelinePanel = <PipelinePanelInline stages={pipelineStages} />;
 
   const statusBarEl = (
-    <StatusBarComponent
+    <PI.StatusBarComponent
       activeFile={activeFile}
       pipelineScore={pipelineScore}
       cursorLine={cursorPos.line}
@@ -914,7 +885,7 @@ function CodeStudioShellInner() {
   // ── Mobile Layout (<768px) ──
   if (isMobile) {
     return (
-      <MobileLayoutComponent
+      <PI.MobileLayoutComponent
         explorer={explorerPanel}
         editor={editorPanel}
         chat={chatPanel}
@@ -928,7 +899,7 @@ function CodeStudioShellInner() {
   // ── Tablet Layout (768–1023px) ──
   if (isTablet) {
     return (
-      <TabletLayoutComponent
+      <PI.TabletLayoutComponent
         sidebar={explorerPanel}
         editor={editorPanel}
         rightPanel={chatPanel}
@@ -992,7 +963,7 @@ function CodeStudioShellInner() {
           {/* Editor Tabs -- external component */}
           <div className="flex items-center border-b border-white/8 bg-bg-secondary">
             <div className="flex-1 min-w-0">
-              <EditorTabsComponent
+              <PI.EditorTabsComponent
                 openFiles={openFiles}
                 activeFileId={activeFileId}
                 onSelectFile={(id) => setActiveFileId(id)}
@@ -1012,19 +983,20 @@ function CodeStudioShellInner() {
                 <Columns2 className="h-4 w-4" />
               </button>
               <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`relative rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
-                <Bug className="h-4 w-4" />
-                {bugReports.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>}
-              </button>
-              <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "agents" ? null : "agents")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "agents" ? "text-accent-purple" : "text-text-tertiary"}`} title="Agent Pipeline"><Shield className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "composer" ? null : "composer")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "composer" ? "text-accent-blue" : "text-text-tertiary"}`} title="Multi-file Composer"><Edit3 className="h-4 w-4" /></button>
-              <button onClick={() => setRightPanel(rightPanel === "review" ? null : "review")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "review" ? "text-accent-green" : "text-text-tertiary"}`} title="Review Center"><AlertTriangle className="h-4 w-4" /></button>
+              {/* Registry-driven panel buttons (first 12 = original activity bar set) */}
+              {[...PANEL_REGISTRY].slice(0, 12).map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
+                  className={`relative rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === p.id ? p.color : "text-text-tertiary"}`}
+                  title={p.label + ("shortcut" in p ? ` (${(p as { shortcut: string }).shortcut})` : "")}
+                >
+                  <PanelIcon name={p.icon} className="h-4 w-4" />
+                  {p.id === "bugs" && bugReports.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
+                  )}
+                </button>
+              ))}
               <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
               <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
             </div>
@@ -1222,41 +1194,37 @@ function CodeStudioShellInner() {
               )}
             </div>
 
-            {/* Right Panel -- uses external components where possible */}
-            {rightPanel && (
-              <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
-                {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
-                {rightPanel === "pipeline" && (
-                  <PipelinePanelInline stages={pipelineStages} />
-                )}
-                {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => {
+            {/* Right Panel -- registry-driven render via panelPropsMap */}
+            {rightPanel && (() => {
+              const panelPropsMap: Record<string, () => React.ReactNode> = {
+                "chat": () => <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />,
+                "pipeline": () => <PipelinePanelInline stages={pipelineStages} />,
+                "git": () => <PI.GitPanelComponent files={files} openFiles={openFiles} onRestore={(fid: string, content: string) => {
                   setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
                   fsUpdateContent(fid, content);
-                }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />}
-                {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
-                {rightPanel === "bugs" && (
-                  <ProblemsPanelComponent findings={problemFindings} />
-                )}
-                {rightPanel === "autopilot" && (
-                  <ExternalAutopilotPanel
+                }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />,
+                "deploy": () => <PI.DeployPanelComponent files={files} language="EN" />,
+                "bugs": () => <PI.ProblemsPanelComponent findings={problemFindings} />,
+                "autopilot": () => (
+                  <PI.AutopilotPanelComponent
                     code={activeFile?.content ?? ""}
                     language={activeFile?.language ?? "plaintext"}
                     fileName={activeFile?.name ?? "untitled"}
                     onComplete={() => {}}
                     onClose={() => setRightPanel(null)}
                   />
-                )}
-                {rightPanel === "agents" && (
-                  <ExternalAgentPanel
+                ),
+                "agents": () => (
+                  <PI.AgentPanelComponent
                     code={activeFile?.content ?? ""}
                     language={activeFile?.language ?? "plaintext"}
                     fileName={activeFile?.name ?? "untitled"}
                   />
-                )}
-                {rightPanel === "search" && (
-                  <ExternalSearchPanel
+                ),
+                "search": () => (
+                  <PI.SearchPanelComponent
                     files={files}
-                    onOpenFile={(name) => {
+                    onOpenFile={(name: string) => {
                       const findByName = (nodes: FileNode[]): FileNode | null => {
                         for (const n of nodes) { if (n.name === name && n.type === "file") return n; if (n.children) { const f = findByName(n.children); if (f) return f; } } return null;
                       };
@@ -1265,29 +1233,28 @@ function CodeStudioShellInner() {
                     }}
                     onClose={() => setRightPanel(null)}
                   />
-                )}
-                {rightPanel === "composer" && (
-                  <ComposerPanelComponent
+                ),
+                "composer": () => (
+                  <PI.ComposerPanelComponent
                     files={files}
-                    onCompose={async (fileIds, instruction) => {
-                      // Map fileIds to FileChange format via existing AI compose logic
+                    onCompose={async (fileIds: string[], instruction: string) => {
                       return fileIds.map((fid) => {
                         const f = openFiles.find((of) => of.id === fid);
                         return { fileId: fid, fileName: f?.name ?? fid, original: f?.content ?? "", modified: f?.content ?? "", status: "pending" as const };
                       });
                     }}
-                    onApplyChanges={(changes) => {
+                    onApplyChanges={(changes: Array<{ fileId: string; modified: string }>) => {
                       for (const c of changes) {
                         setOpenFiles((prev) => prev.map((f) => f.id === c.fileId ? { ...f, content: c.modified, isDirty: true } : f));
                         fsUpdateContent(c.fileId, c.modified);
                       }
                       toast(`Applied ${changes.length} file(s)`, "success");
                     }}
-                    onPreviewDiff={(change) => setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName })}
+                    onPreviewDiff={(change: { original: string; modified: string; fileName: string }) => setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName })}
                   />
-                )}
-                {rightPanel === "review" && (
-                  <ReviewCenterComponent
+                ),
+                "review": () => (
+                  <PI.ReviewCenterComponent
                     pipelineResult={pipelineStages.length > 0 ? {
                       stages: pipelineStages.map((s) => ({
                         stage: s.name, status: s.status, score: s.score ?? 0,
@@ -1298,29 +1265,27 @@ function CodeStudioShellInner() {
                       timestamp: Date.now(),
                     } : null}
                   />
-                )}
-                {rightPanel === "preview" && <PreviewPanelComponent files={files} visible={rightPanel === "preview"} />}
-                {rightPanel === "outline" && (
-                  <OutlinePanelComponent
+                ),
+                "preview": () => <PI.PreviewPanelComponent files={files} visible={rightPanel === "preview"} />,
+                "outline": () => (
+                  <PI.OutlinePanelComponent
                     code={activeFile?.content ?? ""}
                     language={activeFile?.language ?? "plaintext"}
-                    onNavigate={(line) => {
+                    onNavigate={(line: number) => {
                       const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
                       editor?.revealLineInCenter?.(line);
                       editor?.setPosition?.({ lineNumber: line, column: 1 });
                     }}
                   />
-                )}
-                {rightPanel === "templates" && (
-                  <TemplateGalleryComponent onSelectTemplate={() => {}} onClose={() => setRightPanel(null)} />
-                )}
-                {rightPanel === "settings-panel" && <SettingsPanelComponent />}
-                {rightPanel === "packages" && <PackagePanelComponent files={files} />}
-                {rightPanel === "evaluation" && <EvaluationPanelComponent files={files} onClose={() => setRightPanel(null)} />}
-                {rightPanel === "collab" && <CollabPanelComponent onClose={() => setRightPanel(null)} />}
-                {rightPanel === "creator" && (
-                  <CodeCreatorPanelComponent
-                    onMerge={(createdFiles) => {
+                ),
+                "templates": () => <PI.TemplateGalleryComponent onSelectTemplate={() => {}} onClose={() => setRightPanel(null)} />,
+                "settings-panel": () => <PI.SettingsPanelComponent />,
+                "packages": () => <PI.PackagePanelComponent files={files} />,
+                "evaluation": () => <PI.EvaluationPanelComponent files={files} onClose={() => setRightPanel(null)} />,
+                "collab": () => <PI.CollabPanelComponent onClose={() => setRightPanel(null)} />,
+                "creator": () => (
+                  <PI.CodeCreatorPanelComponent
+                    onMerge={(createdFiles: Array<{ path: string; content: string }>) => {
                       for (const f of createdFiles) {
                         const node: FileNode = { id: `created-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.path.split("/").pop() ?? "file.ts", type: "file", content: f.content };
                         setFiles((prev) => [...prev, node]);
@@ -1331,9 +1296,34 @@ function CodeStudioShellInner() {
                     }}
                     onClose={() => setRightPanel(null)}
                   />
-                )}
-              </div>
-            )}
+                ),
+                // New panels (19) — stub props for panels not yet fully integrated
+                "terminal-panel": () => <PI.TerminalPanelComponent files={files} />,
+                "multi-terminal": () => <PI.MultiTerminalComponent />,
+                "database": () => <PI.DatabasePanelComponent connections={[]} onConnect={async () => false} onExecuteQuery={async () => ({ columns: [], rows: [], rowCount: 0, duration: 0, executionTime: 0 })} />,
+                "diff-editor": () => <PI.DiffEditorPanelComponent original="" modified="" />,
+                "git-graph": () => <PI.GitGraphComponent commits={[]} branches={[]} currentBranch="main" />,
+                "ai-hub": () => <PI.AIHubComponent features={[]} onToggleFeature={() => {}} />,
+                "ai-workspace": () => <PI.AIWorkspaceComponent threads={[]} sharedMemory={[]} onSendMessage={async () => ""} onCreateThread={() => {}} onDeleteThread={() => {}} />,
+                "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
+                "progress": () => <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={pipelineScore ? ((pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail") : undefined} />,
+                "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
+                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={() => {}} />,
+                "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => setRightPanel(null)} />,
+                "recent-files": () => <PI.RecentFilesComponent files={[]} onOpen={() => {}} onClear={() => {}} />,
+                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={[]} onSelect={() => {}} onClose={() => setRightPanel(null)} />,
+                "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => setRightPanel(null)} />,
+                "api-config": () => <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />,
+                "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => setRightPanel(null)} />,
+                "code-actions": () => <PI.QuickActionsComponent selectedText="" position={{ top: 0, left: 0 }} language={activeFile?.language ?? "plaintext"} onAction={() => {}} onClose={() => setRightPanel(null)} />,
+                "model-switcher": () => <PI.ModelSwitcherComponent />,
+              };
+              return (
+                <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
+                  {panelPropsMap[rightPanel]?.()}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Terminal */}
@@ -1350,66 +1340,39 @@ function CodeStudioShellInner() {
 
           {/* Quick Open (Ctrl+P) */}
           {showQuickOpen && (
-            <QuickOpenComponent
+            <PI.QuickOpenComponent
               files={files}
               onOpen={(node) => { handleFileSelect(node); setShowQuickOpen(false); }}
               onClose={() => setShowQuickOpen(false)}
             />
           )}
 
-          {/* Command Palette */}
+          {/* Command Palette — registry-driven commands */}
           {showCommandPalette && (
             <CommandPalette
               open={showCommandPalette}
               onClose={() => setShowCommandPalette(false)}
               onExecute={(cmdId) => {
                 setShowCommandPalette(false);
-                switch (cmdId) {
-                  case "new-file": setShowNewFile(true); break;
-                  case "toggle-terminal": setShowTerminal((v) => !v); break;
-                  case "toggle-chat": setRightPanel((v) => v === "chat" ? null : "chat"); break;
-                  case "toggle-pipeline": setRightPanel((v) => v === "pipeline" ? null : "pipeline"); break;
-                  case "toggle-git": setRightPanel((v) => v === "git" ? null : "git"); break;
-                  case "toggle-deploy": setRightPanel((v) => v === "deploy" ? null : "deploy"); break;
-                  case "toggle-search": setRightPanel((v) => v === "search" ? null : "search"); break;
-                  case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
-                  case "toggle-autopilot": setRightPanel((v) => v === "autopilot" ? null : "autopilot"); break;
-                  case "toggle-agents": setRightPanel((v) => v === "agents" ? null : "agents"); break;
-                  case "toggle-composer": setRightPanel((v) => v === "composer" ? null : "composer"); break;
-                  case "toggle-review": setRightPanel((v) => v === "review" ? null : "review"); break;
-                  case "toggle-preview": setRightPanel((v) => v === "preview" ? null : "preview"); break;
-                  case "toggle-outline": setRightPanel((v) => v === "outline" ? null : "outline"); break;
-                  case "toggle-templates": setRightPanel((v) => v === "templates" ? null : "templates"); break;
-                  case "toggle-settings-panel": setRightPanel((v) => v === "settings-panel" ? null : "settings-panel"); break;
-                  case "toggle-packages": setRightPanel((v) => v === "packages" ? null : "packages"); break;
-                  case "toggle-evaluation": setRightPanel((v) => v === "evaluation" ? null : "evaluation"); break;
-                  case "toggle-collab": setRightPanel((v) => v === "collab" ? null : "collab"); break;
-                  case "toggle-creator": setRightPanel((v) => v === "creator" ? null : "creator"); break;
-                  case "quick-open": setShowQuickOpen(true); break;
-                  case "toggle-settings": setShowSettings((v) => !v); break;
+                if (cmdId === "new-file") { setShowNewFile(true); return; }
+                if (cmdId === "toggle-terminal") { setShowTerminal((v) => !v); return; }
+                if (cmdId === "quick-open") { setShowQuickOpen(true); return; }
+                if (cmdId === "toggle-settings") { setShowSettings((v) => !v); return; }
+                // Registry-driven panel toggle
+                const panelId = cmdId.replace("toggle-", "");
+                if (PANEL_REGISTRY.some((p) => p.id === panelId)) {
+                  setRightPanel((v) => v === panelId ? null : panelId as RightPanel);
                 }
               }}
               commands={[
                 { id: "new-file", label: "New File", shortcut: "Ctrl+N", category: "File" },
                 { id: "toggle-terminal", label: "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
-                { id: "toggle-chat", label: "Toggle AI Chat", category: "View" },
-                { id: "toggle-pipeline", label: "Toggle Pipeline", category: "View" },
-                { id: "toggle-git", label: "Toggle Git", category: "View" },
-                { id: "toggle-deploy", label: "Toggle Deploy", category: "View" },
-                { id: "toggle-search", label: "Search in Files", shortcut: "Ctrl+Shift+F", category: "Edit" },
-                { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
-                { id: "toggle-autopilot", label: "Autopilot (Multi-step AI)", category: "Tools" },
-                { id: "toggle-agents", label: "Agent Pipeline (Architect>Dev>Review)", category: "Tools" },
-                { id: "toggle-composer", label: "Multi-file Composer", category: "Tools" },
-                { id: "toggle-review", label: "Review Center", category: "Tools" },
-                { id: "toggle-preview", label: "Live Preview", category: "View" },
-                { id: "toggle-outline", label: "Code Outline", category: "View" },
-                { id: "toggle-templates", label: "Template Gallery", category: "File" },
-                { id: "toggle-settings-panel", label: "Settings Panel", category: "View" },
-                { id: "toggle-packages", label: "Package Manager", category: "Tools" },
-                { id: "toggle-evaluation", label: "Project Evaluation", category: "Tools" },
-                { id: "toggle-collab", label: "Collaboration", category: "Tools" },
-                { id: "toggle-creator", label: "Code Creator (AI Generate Files)", category: "Tools" },
+                ...[...PANEL_REGISTRY].map((p) => ({
+                  id: `toggle-${p.id}`,
+                  label: p.label,
+                  shortcut: "shortcut" in p ? (p as { shortcut: string }).shortcut : undefined,
+                  category: p.category,
+                })),
                 { id: "quick-open", label: "Quick Open File", shortcut: "Ctrl+P", category: "File" },
                 { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
               ]}
@@ -1419,13 +1382,25 @@ function CodeStudioShellInner() {
       </div>
 
       {/* StatusBar -- external component */}
-      <StatusBarComponent
+      <PI.StatusBarComponent
         activeFile={activeFile}
         pipelineScore={pipelineScore}
         cursorLine={cursorPos.line}
         cursorColumn={cursorPos.col}
         fontSize={settings.fontSize}
       />
+
+      {/* Modal/Dialog overlays */}
+      {confirmState && (
+        <ConfirmDialog
+          title={confirmState.title}
+          message={confirmState.message}
+          onConfirm={() => { confirmState.onConfirm(); setConfirmState(null); }}
+          onCancel={() => setConfirmState(null)}
+        />
+      )}
+      <ShortcutOverlay open={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      <ErrorOverlay error={buildError} onDismiss={() => setBuildError(null)} />
     </div>
   );
 }
@@ -1493,9 +1468,11 @@ function PipelinePanelInline({ stages }: { stages: PipelineStage[] }) {
 
 export default function CodeStudioShell() {
   return (
-    <ToastProvider>
-      <CodeStudioShellInner />
-    </ToastProvider>
+    <ErrorBoundary fallbackMessage="Code Studio encountered an error">
+      <ToastProvider>
+        <CodeStudioShellInner />
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
