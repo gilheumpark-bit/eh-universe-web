@@ -12,18 +12,40 @@ import {
   type TranslationProgress,
   type TranslatedEpisode,
   type ChunkScoreDetail,
+  type TranslatorProfile,
   getDefaultConfig,
   chunkBySentences,
+  adaptiveChunkSize,
   buildTranslationSystemPrompt,
   buildScoringPrompt,
   buildRecreatePrompt,
   parseScoreResponse,
+  buildAutoBridge,
+  updateTranslatorProfile,
+  verifyGlossary,
+  verifyLength,
+  hasCriticalAxisFailure,
+  createConsistencyTracker,
+  updateConsistencyTracker,
 } from '@/engine/translation';
+
+/** 일괄 번역 에피소드 레벨 진행률 */
+export interface BatchProgress {
+  totalEpisodes: number;
+  completedEpisodes: number;
+  currentEpisode: number;
+  chunkProgress: TranslationProgress;
+}
 
 interface UseTranslationParams {
   onProgress?: (progress: TranslationProgress) => void;
+  onBatchProgress?: (progress: BatchProgress) => void;
   onChunkComplete?: (chunk: TranslationChunk) => void;
   onError?: (error: string) => void;
+  /** 번역 완료 시 호출 — TranslatedManuscriptEntry를 StoryConfig에 저장하는 용도 */
+  onSave?: (entry: TranslatedManuscriptEntry) => void;
+  /** 번역 프로필 업데이트 콜백 — 오류 패턴 학습 */
+  onProfileUpdate?: (profile: TranslatorProfile) => void;
 }
 
 interface UseTranslationReturn {
@@ -40,6 +62,7 @@ interface UseTranslationReturn {
   ) => Promise<TranslatedEpisode[]>;
 
   progress: TranslationProgress;
+  batchProgress: BatchProgress;
   isTranslating: boolean;
   abort: () => void;
 }
@@ -69,9 +92,34 @@ async function callAI(
   return result.trim();
 }
 
+/** MODE1/MODE2별 채점 JSON schema */
+const FIDELITY_SCORE_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    translationese: { type: 'number' as const },
+    fidelity: { type: 'number' as const },
+    naturalness: { type: 'number' as const },
+    consistency: { type: 'number' as const },
+  },
+  required: ['translationese', 'fidelity', 'naturalness', 'consistency'],
+};
+
+const EXPERIENCE_SCORE_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    immersion: { type: 'number' as const },
+    emotionResonance: { type: 'number' as const },
+    culturalFit: { type: 'number' as const },
+    consistency: { type: 'number' as const },
+    groundedness: { type: 'number' as const },
+    voiceInvisibility: { type: 'number' as const },
+  },
+  required: ['immersion', 'emotionResonance', 'culturalFit', 'consistency', 'groundedness', 'voiceInvisibility'],
+};
+
 /**
- * 채점: structured output 우선 시도 → 실패 시 스트리밍 폴백.
- * structured output은 JSON 파싱 안정성이 높음.
+ * 채점: /api/structured-generate (범용 JSON 생성) 우선 → 실패 시 스트리밍 폴백.
+ * gemini-structured는 task 화이트리스트에 translationScore가 없어 사용 불가.
  */
 async function scoreTranslation(
   sourceText: string,
@@ -80,18 +128,21 @@ async function scoreTranslation(
   signal?: AbortSignal
 ): Promise<ChunkScoreDetail> {
   const prompt = buildScoringPrompt(sourceText, translatedText, config);
+  const schema = config.mode === 'fidelity' ? FIDELITY_SCORE_SCHEMA : EXPERIENCE_SCORE_SCHEMA;
 
-  // 1차: structured output (서버 라우트 경유)
+  // 1차: structured-generate (범용 JSON 라우트 — provider 무관)
   try {
-    const resp = await fetch('/api/gemini-structured', {
+    const provider = getActiveProvider();
+    const apiKey = getApiKey(provider);
+    const resp = await fetch('/api/structured-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: signal ?? AbortSignal.timeout(30_000),
       body: JSON.stringify({
-        task: 'translationScore',
+        provider,
         prompt,
-        provider: 'gemini',
-        apiKey: getApiKey('gemini') || undefined,
+        schema,
+        apiKey: apiKey || undefined,
       }),
     });
     if (resp.ok) {
@@ -117,18 +168,49 @@ async function scoreTranslation(
 // PART 3 — Hook 구현
 // ============================================================
 
+/** TranslatedEpisode → TranslatedManuscriptEntry 변환 (저장용) */
+export function toManuscriptEntry(
+  result: TranslatedEpisode,
+  title: string = ''
+): TranslatedManuscriptEntry {
+  return {
+    episode: result.episode,
+    sourceLang: result.sourceLang,
+    targetLang: result.targetLang,
+    mode: result.mode,
+    translatedTitle: title,
+    translatedContent: result.translatedText,
+    charCount: result.translatedText.length,
+    avgScore: result.avgScore,
+    band: result.band,
+    glossarySnapshot: result.glossarySnapshot.map(g => ({
+      source: g.source, target: g.target, locked: g.locked,
+    })),
+    lastUpdate: result.timestamp,
+  };
+}
+
 export function useTranslation({
   onProgress,
+  onBatchProgress,
   onChunkComplete,
   onError,
+  onSave,
+  onProfileUpdate,
 }: UseTranslationParams = {}): UseTranslationReturn {
 
   const [progress, setProgress] = useState<TranslationProgress>({
     totalChunks: 0, completedChunks: 0, currentChunk: 0,
     recreateCount: 0, status: 'idle',
   });
+  const [batchProgress, setBatchProgress] = useState<BatchProgress>({
+    totalEpisodes: 0, completedEpisodes: 0, currentEpisode: 0,
+    chunkProgress: { totalChunks: 0, completedChunks: 0, currentChunk: 0, recreateCount: 0, status: 'idle' },
+  });
   const [isTranslating, setIsTranslating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const progressRef = useRef(progress); // 클로저에서 최신 progress 접근용
+  progressRef.current = progress;
 
   const updateProgress = useCallback((patch: Partial<TranslationProgress>) => {
     setProgress((prev: TranslationProgress) => {
@@ -158,11 +240,24 @@ export function useTranslation({
     translatedText = await callAI(systemPrompt, chunkText, signal);
     attempt = 1;
 
-    // 채점
+    // 채점 + 복합 pass 판정 (종합 점수 + 축별 임계값 + locked 용어 검증)
+    const checkPassed = (s: ChunkScoreDetail, text: string): boolean => {
+      // 종합 점수 미달 → 실패
+      if (s.overall < config.scoreThreshold) return false;
+      // 축별 critical failure → 실패
+      if (hasCriticalAxisFailure(s, config.mode)) return false;
+      // locked 용어 미존재 → 실패
+      if (config.glossary.length > 0) {
+        const gv = verifyGlossary(chunkText, text, config.glossary);
+        if (!gv.passed) return false;
+      }
+      return true;
+    };
+
     updateProgress({ status: 'scoring' });
     lastScore = await scoreTranslation(chunkText, translatedText, config, signal);
     score = lastScore.overall;
-    passed = score >= config.scoreThreshold;
+    passed = checkPassed(lastScore, translatedText);
 
     // 미달 → 재창조
     let recreateAttempt = 0;
@@ -179,7 +274,7 @@ export function useTranslation({
       updateProgress({ status: 'scoring' });
       lastScore = await scoreTranslation(chunkText, translatedText, config, signal);
       score = lastScore.overall;
-      passed = score >= config.scoreThreshold;
+      passed = checkPassed(lastScore, translatedText);
     }
 
     const chunk: TranslationChunk = {
@@ -201,15 +296,19 @@ export function useTranslation({
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // externalSignal → controller 연결 (리스너 누수 방지: named handler + finally에서 제거)
+    const onExternalAbort = () => controller.abort();
     if (externalSignal) {
-      externalSignal.addEventListener('abort', () => controller.abort());
+      externalSignal.addEventListener('abort', onExternalAbort);
     }
     const signal = controller.signal;
 
     try {
       setIsTranslating(true);
 
-      const sourceChunks = chunkBySentences(manuscript.content);
+      // 토큰 예산 기반 청크 크기 자동 조정 (CJK는 토큰 밀도가 높음)
+      const chunkSize = adaptiveChunkSize(manuscript.content);
+      const sourceChunks = chunkBySentences(manuscript.content, chunkSize);
       updateProgress({
         totalChunks: sourceChunks.length, completedChunks: 0,
         currentChunk: 0, recreateCount: 0, status: 'translating',
@@ -218,14 +317,28 @@ export function useTranslation({
       const systemPrompt = buildTranslationSystemPrompt(config);
 
       const chunks: TranslationChunk[] = [];
+      const tracker = createConsistencyTracker();
       for (let i = 0; i < sourceChunks.length; i++) {
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         const chunk = await translateChunk(sourceChunks[i], i, config, systemPrompt, signal);
         chunks.push(chunk);
+        // 청크간 용어 일관성 추적
+        updateConsistencyTracker(tracker, i, chunk.translatedText, config.glossary);
         updateProgress({ completedChunks: i + 1 });
       }
 
       const translatedText = chunks.map(c => c.translatedText).join('\n\n');
+
+      // 에피소드 레벨 길이 검증
+      const lengthCheck = verifyLength(
+        manuscript.content, translatedText, config.targetLang, config.mode,
+      );
+      if (!lengthCheck.passed) {
+        console.warn('[Translation] Length verification issues:', lengthCheck.issues);
+      }
+      if (tracker.inconsistencies.length > 0) {
+        console.warn('[Translation] Cross-chunk consistency issues:', tracker.inconsistencies);
+      }
       const avgScore = chunks.length > 0
         ? chunks.reduce((sum, c) => sum + c.score, 0) / chunks.length : 0;
 
@@ -244,6 +357,29 @@ export function useTranslation({
       };
 
       updateProgress({ status: 'done' });
+
+      // 번역 완료 → 저장 콜백 호출
+      if (onSave) {
+        onSave(toManuscriptEntry(result, manuscript.title));
+      }
+
+      // 번역 프로필 업데이트 — 오류 패턴 학습
+      if (onProfileUpdate && config.translatorProfile) {
+        const errors: string[] = [];
+        // 청크별 실패 패턴 수집
+        for (const c of chunks) {
+          if (!c.passed) errors.push('score_below_threshold');
+          if (c.attempt > 1) errors.push('required_recreation');
+        }
+        // 용어 일관성: 통과 비율
+        const termConsistency = chunks.length > 0
+          ? chunks.filter(c => c.passed).length / chunks.length : 1;
+        const updated = updateTranslatorProfile(
+          config.translatorProfile, result.avgScore, termConsistency, result.avgScore, errors,
+        );
+        onProfileUpdate(updated);
+      }
+
       return result;
 
     } catch (err) {
@@ -258,27 +394,53 @@ export function useTranslation({
     } finally {
       setIsTranslating(false);
       abortRef.current = null;
+      if (externalSignal) externalSignal.removeEventListener('abort', onExternalAbort);
     }
-  }, [translateChunk, updateProgress, onError]);
+  }, [translateChunk, updateProgress, onError, onSave, onProfileUpdate]);
 
-  // 일괄 번역
+  // 일괄 번역 — 에피소드 진행률 + 자동 컨텍스트 브릿지
   const translateBatch = useCallback(async (
     manuscripts: EpisodeManuscript[],
     configOverride?: Partial<TranslationConfig>,
     externalSignal?: AbortSignal
   ): Promise<TranslatedEpisode[]> => {
     const results: TranslatedEpisode[] = [];
-    for (const ms of manuscripts) {
+    const mode: TranslationMode = configOverride?.mode ?? 'fidelity';
+    const baseConfig: TranslationConfig = { ...getDefaultConfig(mode), ...configOverride };
+
+    const updateBatch = (patch: Partial<BatchProgress>) => {
+      setBatchProgress(prev => {
+        const next = { ...prev, ...patch };
+        onBatchProgress?.(next);
+        return next;
+      });
+    };
+
+    updateBatch({ totalEpisodes: manuscripts.length, completedEpisodes: 0, currentEpisode: 0 });
+
+    for (let i = 0; i < manuscripts.length; i++) {
       if (externalSignal?.aborted) break;
-      const result = await translateEpisode(ms, configOverride, externalSignal);
-      if (result) results.push(result);
+
+      updateBatch({ currentEpisode: i + 1, chunkProgress: progressRef.current });
+
+      // 자동 컨텍스트 브릿지: 이전 화 번역 결과에서 생성
+      const episodeConfig = { ...baseConfig };
+      if (results.length > 0) {
+        episodeConfig.contextBridge = buildAutoBridge(results[results.length - 1], baseConfig.glossary);
+      }
+
+      const result = await translateEpisode(manuscripts[i], episodeConfig, externalSignal);
+      if (result) {
+        results.push(result);
+        updateBatch({ completedEpisodes: i + 1 });
+      }
     }
     return results;
-  }, [translateEpisode]);
+  }, [translateEpisode, onBatchProgress]);
 
   const abort = useCallback(() => { abortRef.current?.abort(); }, []);
 
-  return { translateEpisode, translateBatch, progress, isTranslating, abort };
+  return { translateEpisode, translateBatch, progress, batchProgress, isTranslating, abort };
 }
 
 // IDENTITY_SEAL: PART-1 | role=ImportsTypes | inputs=none | outputs=UseTranslationReturn

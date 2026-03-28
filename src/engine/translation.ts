@@ -28,6 +28,26 @@ export interface GlossaryEntry {
  */
 export type ContractionLevel = 'none' | 'low' | 'normal' | 'high';
 
+/** 캐릭터 화체 프로필 (번역 시 레지스터 일관성용) */
+export interface TranslationCharacterRegister {
+  name: string;           // 캐릭터명
+  relation: string;       // stranger|formal|colleague|friend|intimate|hostile
+  age: string;            // teen|young_adult|adult|middle|elder
+  profession?: string;    // 직업/역할
+  profanity: string;      // none|mild|strong
+}
+
+/** 번역 오류 패턴 프로필 (EMA 학습용) */
+export interface TranslatorProfile {
+  id: string;
+  episodeCount: number;
+  avgScore: number;
+  termConsistencyRate: number;     // 용어 일관성 비율
+  toneAlignmentRate: number;       // 톤 정합성 비율
+  commonErrors: Record<string, number>; // 오류 종류별 누적 빈도
+  updatedAt: number;
+}
+
 /** 번역 설정 */
 export interface TranslationConfig {
   mode: TranslationMode;          // 사용자 선택: 원문 보존 vs 독자 경험
@@ -39,6 +59,12 @@ export interface TranslationConfig {
   contextBridge: string;          // 이전 화 요약 (문맥 연결용)
   // MODE2 세부 제어
   contractionLevel: ContractionLevel;  // 축약형 강도 (기본 'normal')
+  // 장르 프리셋 (번역 톤/문체 자동 조절)
+  genre?: string;                 // GENRE_PRESETS 키 (e.g. 'ROMANCE', 'WUXIA')
+  // 캐릭터 레지스터 (화체 일관성 검증)
+  characterRegisters?: TranslationCharacterRegister[];
+  // 번역 오류 패턴 학습 프로필
+  translatorProfile?: TranslatorProfile;
 }
 
 /** 3문장 청크 */
@@ -399,6 +425,24 @@ Output ONLY the recreated text, nothing else.`);
 ${glossaryLines.join('\n')}`);
   }
 
+  // 장르 프리셋 주입 (PART 13)
+  if (config.genre) {
+    const genreDirective = buildGenreTranslationDirective(config.genre, config.targetLang);
+    if (genreDirective) parts.push(genreDirective);
+  }
+
+  // 캐릭터 레지스터 주입 (PART 14)
+  if (config.characterRegisters && config.characterRegisters.length > 0) {
+    const registerDirective = buildCharacterRegisterDirective(config.characterRegisters, config.targetLang);
+    parts.push(registerDirective);
+  }
+
+  // 번역 오류 패턴 힌트 (PART 15)
+  if (config.translatorProfile) {
+    const profileHint = buildTranslatorProfileHint(config.translatorProfile);
+    if (profileHint) parts.push(profileHint);
+  }
+
   // 문맥 브릿지
   if (config.contextBridge.trim()) {
     parts.push(`[Context from previous chapter — for continuity only, do NOT translate this]
@@ -412,16 +456,55 @@ ${config.contextBridge}`);
 // PART 6 — 3문장 청킹
 // ============================================================
 
+/**
+ * 소설 텍스트를 문장 단위로 분리한 뒤 chunkSize개씩 묶는다.
+ *
+ * 분리 전략:
+ * 1. 빈 줄(단락 구분)을 최우선 분리 지점으로 사용
+ * 2. 단락 내부에서는 한국어 종결 어미 + 마침표/물음표/느낌표 패턴으로 분리
+ * 3. 대사 내부의 마침표("알겠다." 민아는...)에서 잘리지 않도록 보호
+ * 4. 줄임표(...) 뒤에서 오분리 방지
+ */
 export function chunkBySentences(text: string, chunkSize: number = 3): string[] {
-  const sentencePattern = /(?<=[.!?。]\s)|(?<=[다요죠까네음임됨함]\.\s)|(?<=\n\n)/g;
-  const sentences = text.split(sentencePattern).filter(s => s.trim().length > 0);
+  // 1단계: 빈 줄 기준으로 단락 분리
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
 
+  // 2단계: 단락 내에서 문장 분리
+  const allSentences: string[] = [];
+  for (const para of paragraphs) {
+    const sentences = splitSentences(para);
+    allSentences.push(...sentences);
+    // 단락 경계 마커: 빈 문자열로 표시 (나중에 줄바꿈 복원용)
+    allSentences.push('\n\n');
+  }
+  // 마지막 단락 경계 제거
+  if (allSentences.length > 0 && allSentences[allSentences.length - 1] === '\n\n') {
+    allSentences.pop();
+  }
+
+  // 3단계: chunkSize개씩 묶기
   const chunks: string[] = [];
-  for (let i = 0; i < sentences.length; i += chunkSize) {
-    const chunk = sentences.slice(i, i + chunkSize).join('');
-    if (chunk.trim().length > 0) {
-      chunks.push(chunk.trim());
+  let buffer: string[] = [];
+  let sentenceCount = 0;
+
+  for (const s of allSentences) {
+    if (s === '\n\n') {
+      // 단락 경계는 문장 수에 포함하지 않되, 버퍼에는 추가
+      if (buffer.length > 0) buffer.push('\n\n');
+      continue;
     }
+    buffer.push(s);
+    sentenceCount++;
+
+    if (sentenceCount >= chunkSize) {
+      chunks.push(buffer.join('').trim());
+      buffer = [];
+      sentenceCount = 0;
+    }
+  }
+  if (buffer.length > 0) {
+    const remaining = buffer.join('').trim();
+    if (remaining.length > 0) chunks.push(remaining);
   }
 
   if (chunks.length === 0 && text.trim().length > 0) {
@@ -429,6 +512,83 @@ export function chunkBySentences(text: string, chunkSize: number = 3): string[] 
   }
 
   return chunks;
+}
+
+// 따옴표 페어 매핑: 열림 → 닫힘
+const QUOTE_PAIRS: Record<string, string> = {
+  '\u201C': '\u201D', // " → "
+  '\u300C': '\u300D', // 「 → 」
+  '"': '"',           // 일반 큰따옴표 (열림/닫힘 동일)
+};
+const QUOTE_OPENERS = new Set(Object.keys(QUOTE_PAIRS));
+const QUOTE_CLOSERS = new Set(Object.values(QUOTE_PAIRS));
+
+/**
+ * 단락 내 문장 분리.
+ * - 따옴표 스택으로 중첩 대사 보호 (열림/닫힘 페어 매칭)
+ * - 줄임표(...)가 포함된 문장은 다음 종결까지 이어붙임
+ * - 영문 약어(U.S.A.) 오분리 방지: 단일 대문자 + . 패턴 스킵
+ */
+function splitSentences(paragraph: string): string[] {
+  const sentences: string[] = [];
+  let current = '';
+  const quoteStack: string[] = [];
+  let inEllipsis = false;
+
+  for (let i = 0; i < paragraph.length; i++) {
+    const ch = paragraph[i];
+    const next = paragraph[i + 1];
+    current += ch;
+
+    // 따옴표 스택 관리
+    if (QUOTE_OPENERS.has(ch)) {
+      // 일반 큰따옴표(")는 토글: 스택 top이 "이면 닫기, 아니면 열기
+      if (ch === '"') {
+        if (quoteStack.length > 0 && quoteStack[quoteStack.length - 1] === '"') {
+          quoteStack.pop();
+        } else {
+          quoteStack.push(ch);
+        }
+      } else {
+        quoteStack.push(ch);
+      }
+      continue;
+    }
+    if (QUOTE_CLOSERS.has(ch) && quoteStack.length > 0) {
+      const top = quoteStack[quoteStack.length - 1];
+      if (QUOTE_PAIRS[top] === ch) quoteStack.pop();
+      continue;
+    }
+
+    // 줄임표 감지: 연속 3개 이상의 마침표
+    if (ch === '.' && next === '.') { inEllipsis = true; continue; }
+    if (inEllipsis && ch === '.') continue; // 줄임표 내부
+    if (inEllipsis && ch !== '.') { inEllipsis = false; } // 줄임표 끝
+
+    // 대사(따옴표) 안에서는 분리하지 않음
+    if (quoteStack.length > 0) continue;
+
+    // 영문 약어 스킵: 대문자 1글자 + . (e.g. U.S.A.)
+    if (ch === '.' && i >= 1) {
+      const prev = paragraph[i - 1];
+      if (prev >= 'A' && prev <= 'Z' && next && next >= 'A' && next <= 'Z') continue;
+    }
+
+    // 문장 종결 감지: [.!?。] 뒤에 공백/줄바꿈/EOF
+    if ((ch === '.' || ch === '!' || ch === '?' || ch === '\u3002') &&
+        (next === undefined || next === ' ' || next === '\n' || next === '\t')) {
+      const trimmed = current.trim();
+      if (trimmed.length > 0) {
+        sentences.push(trimmed);
+        current = '';
+      }
+    }
+  }
+
+  const trimmed = current.trim();
+  if (trimmed.length > 0) sentences.push(trimmed);
+
+  return sentences;
 }
 
 // ============================================================
@@ -694,6 +854,495 @@ export function modeDescription(mode: TranslationMode, isKO: boolean): { title: 
     : { title: 'MODE 2 — Reader Experience', desc: 'Preserves emotional arc while allowing rhythm restructuring and cultural adaptation. Groundless additions and translator literary polish are blocked.' };
 }
 
+// ============================================================
+// PART 11 — 정적 검증 어댑터 (기존 엔진 연결)
+// ============================================================
+
+import { validateAITone, validateSentenceVariation } from '@/engine/validator';
+import { calculateEOSScore } from '@/engine/scoring';
+import { extractNamesFromText } from '@/engine/continuity-tracker';
+
+/** 번역 결과 정적 검증 — AI 채점 보완 (폴백 역할) */
+export interface StaticValidationResult {
+  aiToneScore: number;           // 번역투 정적 감지 (0-100, 낮을수록 좋음)
+  sentenceVariationIssues: number; // 문장 길이 단조로움 감지 (이슈 수)
+  emotionOvershoot: number;      // 감정 과잉 감지 (0-100)
+  extractedNames: string[];      // 자동 추출된 고유명사
+}
+
+/** CJK 문자 비율로 한국어 텍스트 여부 추정 */
+function isLikelyKorean(text: string): boolean {
+  const sample = text.slice(0, 500);
+  const koreanChars = (sample.match(/[가-힣]/g) || []).length;
+  return koreanChars / Math.max(1, sample.length) > 0.15;
+}
+
+/**
+ * 번역 텍스트에 대한 정적(비AI) 검증.
+ * AI 채점이 실패하거나 불안정할 때 폴백으로 사용.
+ *
+ * 언어 감지 분기:
+ * - 원문(sourceText)은 한국어로 가정 → 인명 추출 + 감정 점수 유효
+ * - 번역문(translatedText)은 영어일 수 있음 → validateAITone은 한국어만 유효, 영어면 스킵
+ * - sentenceVariation, emotionOvershoot은 언어 무관하게 작동
+ */
+export function staticValidate(
+  sourceText: string,
+  translatedText: string,
+  knownNames: Set<string> = new Set(),
+): StaticValidationResult {
+  const translatedIsKorean = isLikelyKorean(translatedText);
+
+  // 번역투 감지: 한국어 번역문에만 적용 (영어면 0)
+  const aiToneScore = translatedIsKorean ? validateAITone(translatedText).score : 0;
+
+  // 문장 길이 변동성: 언어 무관
+  const variationIssues = validateSentenceVariation(translatedText);
+
+  // 감정 과잉: 원문(KO) 기준으로 비교 — EOS는 한국어 감정 키워드 기반이라 원문에서만 정확
+  // 번역문이 영어면 EOS 비교가 무의미 → 원문 내부 감정 밀도만 참고값으로 제공
+  const sourceEOS = calculateEOSScore(sourceText);
+  const translatedEOS = translatedIsKorean ? calculateEOSScore(translatedText) : sourceEOS;
+  const emotionOvershoot = Math.max(0, translatedEOS - sourceEOS);
+
+  // 인명 추출: 원문(한국어)에서만 작동
+  const names = extractNamesFromText(sourceText, knownNames);
+
+  return {
+    aiToneScore,
+    sentenceVariationIssues: variationIssues.length,
+    emotionOvershoot,
+    extractedNames: Array.from(names),
+  };
+}
+
+// ============================================================
+// PART 12 — 컨텍스트 브릿지 자동 생성
+// ============================================================
+
+/**
+ * 이전 화 번역 결과에서 다음 화를 위한 컨텍스트 브릿지를 자동 생성.
+ * - 마지막 3문장 (장면 분위기/상태 유지)
+ * - 등장 인물명
+ * - 용어집 스냅샷
+ */
+export function buildAutoBridge(
+  prevResult: TranslatedEpisode | null | undefined,
+  glossary: GlossaryEntry[],
+): string {
+  if (!prevResult?.translatedText?.trim()) return '';
+
+  const lines: string[] = [];
+
+  // 마지막 3문장 추출
+  const sentences = splitSentences(prevResult.translatedText);
+  const tail = sentences.slice(-3);
+  if (tail.length > 0) {
+    lines.push(`[Last scene from Episode ${prevResult.episode}]`);
+    lines.push(tail.join(' '));
+  }
+
+  // 등장 인물: 용어집에서 인물 태그 + locked 항목(인물인 경우가 많음)
+  const characters = (glossary ?? []).filter(g =>
+    g.context?.includes('인물') || g.context?.includes('character') ||
+    g.context?.includes('이름') || g.context?.includes('name') ||
+    g.context?.includes('NAME')
+  );
+  // 태그된 인물이 없으면 locked 항목 중 2~4글자 한국어를 인물 후보로
+  const charEntries = characters.length > 0
+    ? characters
+    : (glossary ?? []).filter(g => g.locked && /^[가-힣]{2,4}$/.test(g.source));
+  if (charEntries.length > 0) {
+    lines.push(`[Active characters] ${charEntries.map(c => `${c.source}→${c.target}`).join(', ')}`);
+  }
+
+  // 번역 모드/밴드 (일관성 유지)
+  lines.push(`[Prev translation: MODE=${prevResult.mode}, band=${prevResult.band.toFixed(3)}]`);
+
+  return lines.join('\n');
+}
+
+// ============================================================
+// PART 13 — 장르 프리셋 번역 스타일 주입
+// ============================================================
+
+import { GENRE_PRESETS } from '@/engine/genre-presets';
+
+/**
+ * 장르 프리셋에서 번역 톤/문체 지시문을 생성.
+ * - pacing → 문장 리듬 가이드
+ * - tensionBase → 번역 강도 가이드
+ * - emotionFocus → 감정 표현 우선순위
+ * - rules → 장르별 번역 금지/권장 사항
+ */
+export function buildGenreTranslationDirective(
+  genre: string,
+  targetLang: TranslationTarget,
+): string {
+  const preset = GENRE_PRESETS[genre];
+  if (!preset) return '';
+
+  const lang = langName(targetLang);
+  const pacingGuide = PACING_TO_TRANSLATION[preset.pacing] ?? 'Maintain the source text pacing.';
+  const tensionGuide = preset.tensionBase >= 0.7
+    ? 'High-tension genre: use vivid sensory language, favor shorter punchy sentences in action scenes.'
+    : preset.tensionBase <= 0.4
+    ? 'Low-tension genre: allow softer, more reflective translation. Emotional beats can be gentle.'
+    : 'Medium-tension genre: balance between intensity and breathing room.';
+
+  return `[Genre Translation Style — ${genre}]
+Pacing: ${pacingGuide}
+Tension: ${tensionGuide}
+Emotional focus for ${lang} readers: ${preset.emotionFocus}
+Genre-specific rules:
+${preset.rules}
+Adapt these rules to translation: the translated text must feel like native ${lang} ${genre.toLowerCase()} fiction.`;
+}
+
+/** Pacing 값 → 번역 리듬 가이드 매핑 */
+const PACING_TO_TRANSLATION: Record<string, string> = {
+  slow_burn_with_spikes: 'Preserve slow, building rhythm. Sentences should breathe. Spike moments get abrupt, short sentences.',
+  fast_spikes: 'Keep rapid pacing. Short sentences, active verbs. Action sequences must feel fast even in translation.',
+  epic_waves: 'Wave-like rhythm: build slowly, crest intensely, trough for reflection. Mirror this in sentence length variation.',
+  steady_rise_with_reversals: 'Steady escalation with sharp turns. Each reversal moment needs maximum clarity and impact.',
+  slow_build_to_spike: 'Extended atmospheric buildup. Long, creeping sentences → sudden short impact. The contrast IS the genre.',
+  layered_accumulation: 'Layer upon layer of meaning. Each sentence adds another dimension. Maintain this density in translation.',
+};
+
+// ============================================================
+// PART 14 — 캐릭터 레지스터 번역 일관성
+// ============================================================
+
+/**
+ * 캐릭터별 화체 프로필 → 번역 시 대사 레지스터 가이드.
+ * social-register.ts의 5축을 번역 컨텍스트에 맞게 변환.
+ */
+export function buildCharacterRegisterDirective(
+  registers: TranslationCharacterRegister[],
+  targetLang: TranslationTarget,
+): string {
+  if (registers.length === 0) return '';
+
+  const lang = langName(targetLang);
+  const lines = registers.map(r => {
+    const parts: string[] = [`${r.name}:`];
+    parts.push(`speech=${REGISTER_TO_SPEECH[r.relation] ?? r.relation}`);
+    parts.push(`age=${r.age}`);
+    if (r.profession) parts.push(`role=${r.profession}`);
+    parts.push(`profanity=${r.profanity}`);
+    return `  ${parts.join(', ')}`;
+  });
+
+  return `[Character Speech Register — maintain consistency in ${lang}]
+Each character MUST maintain their speech register throughout the translation.
+Violations to watch: formal character using casual speech, teen using elder vocabulary, profanity mismatch.
+${lines.join('\n')}`;
+}
+
+/** 관계 거리 → 번역 대사 스타일 매핑 */
+const REGISTER_TO_SPEECH: Record<string, string> = {
+  stranger: 'distant/cautious',
+  formal: 'polite/measured',
+  colleague: 'professional/neutral',
+  friend: 'casual/warm',
+  intimate: 'familiar/unguarded',
+  hostile: 'cold/clipped',
+};
+
+// ============================================================
+// PART 15 — 번역 오류 패턴 학습 (EMA 프로필)
+// ============================================================
+
+const TRANSLATOR_EMA_ALPHA = 0.3;
+
+/** 번역 프로필에서 AI 프롬프트 힌트를 생성 — 반복 오류 자동 교정 */
+export function buildTranslatorProfileHint(profile: TranslatorProfile): string {
+  if (profile.episodeCount < 3) return ''; // 3화 미만 → 학습 데이터 부족
+
+  const hints: string[] = [];
+
+  // 상위 3개 반복 오류
+  const topErrors = Object.entries(profile.commonErrors)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([kind]) => kind);
+
+  if (topErrors.length > 0) {
+    hints.push(`[Translator Pattern Correction] Recurring errors in past translations: ${topErrors.join(', ')}. Actively avoid these patterns.`);
+  }
+
+  // 용어 일관성이 낮으면 경고
+  if (profile.termConsistencyRate < 0.85) {
+    hints.push('[Terminology Alert] Past translations showed terminology inconsistency. Double-check all glossary terms.');
+  }
+
+  // 톤 정합이 낮으면 경고
+  if (profile.toneAlignmentRate < 0.80) {
+    hints.push('[Tone Alignment Alert] Past translations had tone drift. Match the source text tone precisely.');
+  }
+
+  return hints.join('\n');
+}
+
+/** 번역 완료 후 프로필 업데이트 (EMA) */
+export function updateTranslatorProfile(
+  profile: TranslatorProfile,
+  score: number,
+  termConsistency: number,
+  toneAlignment: number,
+  errors: string[],
+): TranslatorProfile {
+  const p = { ...profile };
+  p.episodeCount += 1;
+  p.updatedAt = Date.now();
+
+  const isFirst = p.episodeCount === 1;
+  const alpha = TRANSLATOR_EMA_ALPHA;
+
+  p.avgScore = isFirst ? score : alpha * score + (1 - alpha) * p.avgScore;
+  p.termConsistencyRate = isFirst ? termConsistency : alpha * termConsistency + (1 - alpha) * p.termConsistencyRate;
+  p.toneAlignmentRate = isFirst ? toneAlignment : alpha * toneAlignment + (1 - alpha) * p.toneAlignmentRate;
+
+  // 오류 누적 (디케이 없음 — 반복 패턴 추적)
+  for (const err of errors) {
+    p.commonErrors[err] = (p.commonErrors[err] || 0) + 1;
+  }
+
+  return p;
+}
+
+/** 빈 번역 프로필 생성 */
+export function createEmptyTranslatorProfile(id: string = 'default'): TranslatorProfile {
+  return {
+    id,
+    episodeCount: 0,
+    avgScore: 0,
+    termConsistencyRate: 1,
+    toneAlignmentRate: 1,
+    commonErrors: {},
+    updatedAt: Date.now(),
+  };
+}
+
+// ============================================================
+// PART 16 — 토큰 예산 보정 (CJK 청크 크기 자동 조정)
+// ============================================================
+
+import { estimateTokens } from '@/lib/token-utils';
+
+/**
+ * 원문 토큰 수 기반으로 청크 크기 자동 결정.
+ * CJK 텍스트는 토큰 밀도가 높아 3문장이 이미 400+ 토큰일 수 있음.
+ * 번역 시 출력 예산(~2048 토큰)을 초과하지 않도록 청크 크기를 조절.
+ */
+export function adaptiveChunkSize(
+  text: string,
+  baseChunkSize: number = 3,
+  maxTokensPerChunk: number = 800,
+): number {
+  // 샘플: 처음 10문장의 평균 토큰 수 추정
+  const sampleSentences = splitSentences(text.slice(0, 3000));
+  if (sampleSentences.length === 0) return baseChunkSize;
+
+  const sampleTokens = sampleSentences.slice(0, 10).map(s => estimateTokens(s));
+  const avgTokensPerSentence = sampleTokens.reduce((a, b) => a + b, 0) / sampleTokens.length;
+
+  if (avgTokensPerSentence <= 0) return baseChunkSize;
+
+  // 청크당 최대 토큰을 넘지 않는 문장 수
+  const optimal = Math.max(1, Math.floor(maxTokensPerChunk / avgTokensPerSentence));
+  return Math.min(optimal, baseChunkSize);
+}
+
+// ============================================================
+// PART 17 — 번역 출력 검증 (용어집 실검증 + locked 강제)
+// ============================================================
+
+/** 용어집 검증 결과 */
+export interface GlossaryVerification {
+  passed: boolean;
+  missingLocked: GlossaryEntry[];    // locked인데 번역문에 없는 항목
+  missingOptional: GlossaryEntry[];  // 비locked인데 없는 항목 (경고용)
+  totalChecked: number;
+}
+
+/**
+ * 번역문에서 용어집 항목의 실제 존재 여부를 검증.
+ * - locked 항목: 반드시 존재해야 함 (미존재 = FAIL)
+ * - 비locked 항목: 원문에 해당 용어가 있으면 번역문에도 있어야 함 (경고)
+ */
+export function verifyGlossary(
+  sourceText: string,
+  translatedText: string,
+  glossary: GlossaryEntry[],
+): GlossaryVerification {
+  const missingLocked: GlossaryEntry[] = [];
+  const missingOptional: GlossaryEntry[] = [];
+  let totalChecked = 0;
+
+  for (const entry of glossary) {
+    // 원문에 해당 용어가 포함된 경우만 체크
+    if (!sourceText.includes(entry.source)) continue;
+    totalChecked++;
+
+    const targetExists = translatedText.includes(entry.target);
+    if (!targetExists) {
+      if (entry.locked) {
+        missingLocked.push(entry);
+      } else {
+        missingOptional.push(entry);
+      }
+    }
+  }
+
+  return {
+    passed: missingLocked.length === 0,
+    missingLocked,
+    missingOptional,
+    totalChecked,
+  };
+}
+
+// ============================================================
+// PART 18 — 길이 비율 & 문장 수 정합 검증
+// ============================================================
+
+/** 길이/문장 검증 결과 */
+export interface LengthVerification {
+  passed: boolean;
+  sourceLengthChars: number;
+  translatedLengthChars: number;
+  lengthRatio: number;              // 번역/원문 비율
+  expectedRatioMin: number;
+  expectedRatioMax: number;
+  sourceSentenceCount: number;
+  translatedSentenceCount: number;
+  sentenceCountDelta: number;       // 양수=번역이 더 많음, 음수=번역이 적음
+  issues: string[];
+}
+
+/** 언어쌍별 예상 길이 확장 비율 */
+const LENGTH_RATIO_RANGES: Record<TranslationTarget, { min: number; max: number }> = {
+  EN: { min: 1.10, max: 1.60 },  // KO→EN: 보통 1.2~1.4x
+  JP: { min: 0.85, max: 1.20 },  // KO→JP: 비슷하거나 약간 짧음
+  CN: { min: 0.80, max: 1.15 },  // KO→CN: 한자 압축으로 짧을 수 있음
+  KO: { min: 0.90, max: 1.10 },  // KO→KO: 거의 동일
+};
+
+/**
+ * 번역 길이 비율 + 문장 수 정합 검증.
+ * - 길이가 예상 범위를 벗어나면 콘텐츠 손실/과잉 의심
+ * - 문장 수 차이가 크면 병합/분할 과잉 의심
+ */
+export function verifyLength(
+  sourceText: string,
+  translatedText: string,
+  targetLang: TranslationTarget,
+  mode: TranslationMode,
+): LengthVerification {
+  const issues: string[] = [];
+  const range = LENGTH_RATIO_RANGES[targetLang];
+
+  const srcLen = sourceText.length;
+  const tgtLen = translatedText.length;
+  const ratio = srcLen > 0 ? tgtLen / srcLen : 1;
+
+  // 길이 비율 검증
+  if (ratio < range.min) {
+    issues.push(`length_too_short: ratio=${ratio.toFixed(2)} < expected_min=${range.min}`);
+  }
+  if (ratio > range.max) {
+    issues.push(`length_too_long: ratio=${ratio.toFixed(2)} > expected_max=${range.max}`);
+  }
+
+  // 문장 수 정합 (MODE1은 엄격, MODE2는 관대)
+  const srcSentences = countSentences(sourceText);
+  const tgtSentences = countSentences(translatedText);
+  const delta = tgtSentences - srcSentences;
+  const tolerance = mode === 'fidelity' ? 2 : Math.max(3, Math.ceil(srcSentences * 0.3));
+
+  if (Math.abs(delta) > tolerance) {
+    issues.push(`sentence_count_mismatch: source=${srcSentences}, translated=${tgtSentences}, delta=${delta}`);
+  }
+
+  return {
+    passed: issues.length === 0,
+    sourceLengthChars: srcLen,
+    translatedLengthChars: tgtLen,
+    lengthRatio: round3(ratio),
+    expectedRatioMin: range.min,
+    expectedRatioMax: range.max,
+    sourceSentenceCount: srcSentences,
+    translatedSentenceCount: tgtSentences,
+    sentenceCountDelta: delta,
+    issues,
+  };
+}
+
+/** 간이 문장 수 카운트 (마침표/느낌표/물음표 기반) */
+function countSentences(text: string): number {
+  const matches = text.match(/[.!?。！？]+[\s\n]|[.!?。！？]+$/g);
+  return matches ? matches.length : 1;
+}
+
+// ============================================================
+// PART 19 — 축별 임계값 + 청크간 일관성 추적
+// ============================================================
+
+/** 축별 critical failure 감지 */
+export function hasCriticalAxisFailure(score: ChunkScoreDetail, mode: TranslationMode): boolean {
+  if (mode === 'fidelity' && isFidelityScore(score)) {
+    // 번역투가 너무 높으면 무조건 실패
+    if (score.translationese > 0.60) return true;
+    // 충실도가 너무 낮으면 무조건 실패
+    if (score.fidelity < 0.40) return true;
+    return false;
+  }
+  if (mode === 'experience' && isExperienceScore(score)) {
+    // 무근거 보강이 심하면 무조건 실패
+    if (score.groundedness < 0.45) return true;
+    // 번역자 투명성이 너무 낮으면 무조건 실패
+    if (score.voiceInvisibility < 0.45) return true;
+    // 몰입도가 바닥이면 무조건 실패
+    if (score.immersion < 0.40) return true;
+    return false;
+  }
+  return false;
+}
+
+/** 청크간 용어 일관성 추적기 */
+export interface ChunkConsistencyTracker {
+  termUsage: Map<string, string>;  // glossary.source → 실제 사용된 target
+  inconsistencies: string[];
+}
+
+export function createConsistencyTracker(): ChunkConsistencyTracker {
+  return { termUsage: new Map(), inconsistencies: [] };
+}
+
+/**
+ * 청크 번역 완료 후 용어 일관성 추적 업데이트.
+ * 이전 청크에서 쓴 용어와 다르게 번역되면 경고.
+ */
+export function updateConsistencyTracker(
+  tracker: ChunkConsistencyTracker,
+  chunkIndex: number,
+  translatedText: string,
+  glossary: GlossaryEntry[],
+): void {
+  for (const entry of glossary) {
+    if (translatedText.includes(entry.target)) {
+      const prev = tracker.termUsage.get(entry.source);
+      if (prev && prev !== entry.target) {
+        tracker.inconsistencies.push(
+          `chunk[${chunkIndex}]: "${entry.source}" → "${entry.target}" (was "${prev}" in earlier chunk)`
+        );
+      }
+      tracker.termUsage.set(entry.source, entry.target);
+    }
+  }
+}
+
 // IDENTITY_SEAL: PART-1  | role=Types | inputs=none | outputs=TranslationMode,TranslationConfig,FidelityScoreDetail,ExperienceScoreDetail
 // IDENTITY_SEAL: PART-2  | role=BandUtils | inputs=band(number) | outputs=clamped(number),config
 // IDENTITY_SEAL: PART-3  | role=FidelityDirective | inputs=band | outputs=directive(string)
@@ -704,3 +1353,12 @@ export function modeDescription(mode: TranslationMode, isKO: boolean): { title: 
 // IDENTITY_SEAL: PART-8  | role=ScoreParsing | inputs=raw,mode | outputs=ChunkScoreDetail
 // IDENTITY_SEAL: PART-9  | role=RecreatePrompt | inputs=source,failed,score,attempt,mode | outputs=recreatePrompt(string)
 // IDENTITY_SEAL: PART-10 | role=Utilities | inputs=lang,band,mode | outputs=labels,constants,descriptions
+// IDENTITY_SEAL: PART-11 | role=StaticValidation | inputs=source,translated,knownNames | outputs=StaticValidationResult
+// IDENTITY_SEAL: PART-12 | role=AutoBridge | inputs=prevResult,glossary | outputs=contextBridge(string)
+// IDENTITY_SEAL: PART-13 | role=GenreTranslationStyle | inputs=genre,targetLang | outputs=genreDirective(string)
+// IDENTITY_SEAL: PART-14 | role=CharacterRegister | inputs=registers,targetLang | outputs=registerDirective(string)
+// IDENTITY_SEAL: PART-15 | role=TranslatorProfile | inputs=profile | outputs=profileHint(string),updatedProfile
+// IDENTITY_SEAL: PART-16 | role=AdaptiveChunking | inputs=text,baseSize,maxTokens | outputs=chunkSize(number)
+// IDENTITY_SEAL: PART-17 | role=GlossaryVerify | inputs=source,translated,glossary | outputs=GlossaryVerification
+// IDENTITY_SEAL: PART-18 | role=LengthVerify | inputs=source,translated,targetLang,mode | outputs=LengthVerification
+// IDENTITY_SEAL: PART-19 | role=AxisThreshold+ConsistencyTracker | inputs=score,mode,tracker,chunk | outputs=boolean,void

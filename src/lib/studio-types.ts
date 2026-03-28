@@ -254,14 +254,14 @@ export interface StoryConfig {
   useSubGenrePrompt?: boolean; // 서브장르 태그를 AI 프롬프트에 삽입할지 여부
   // EH Engine — Narrative Intensity (서사 강도)
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
-  // Translation Engine — 번역 설정
+  // Translation Engine — 번역 설정 (mirrors TranslationConfig from @/engine/translation, minus contextBridge)
   translationConfig?: {
-    mode: 'fidelity' | 'experience';  // MODE1: 원문 보존 / MODE2: 독자 경험
+    mode: 'fidelity' | 'experience';
     targetLang: 'EN' | 'JP' | 'CN' | 'KO';
-    band: number;                 // 0.480 ~ 0.520 (모드 내 미세 조정)
-    scoreThreshold: number;       // 기본 0.70
-    maxRecreate: number;          // 기본 2
-    contractionLevel: 'none' | 'low' | 'normal' | 'high';  // 축약형 강도
+    band: number;                     // 0.480 ~ 0.520
+    scoreThreshold: number;           // 기본 0.70
+    maxRecreate: number;              // 기본 2
+    contractionLevel: 'none' | 'low' | 'normal' | 'high';
     glossary: { source: string; target: string; context?: string; locked: boolean }[];
   };
   translatedManuscripts?: TranslatedManuscriptEntry[];
@@ -279,13 +279,15 @@ export interface EpisodeManuscript {
 // Translated manuscript entry (번역 원고)
 export interface TranslatedManuscriptEntry {
   episode: number;
+  sourceLang: AppLanguage;          // 원문 언어
   targetLang: 'EN' | 'JP' | 'CN' | 'KO';
   mode: 'fidelity' | 'experience';
   translatedTitle: string;
   translatedContent: string;
   charCount: number;
-  avgScore: number;           // 번역 품질 점수 (0~1)
-  band: number;               // 사용된 band 값 (0.480~0.520)
+  avgScore: number;                 // 번역 품질 점수 (0~1)
+  band: number;                     // 사용된 band 값 (0.480~0.520)
+  glossarySnapshot?: { source: string; target: string; locked: boolean }[];
   lastUpdate: number;
 }
 
