@@ -167,11 +167,11 @@ export default function WritingTabInline(props: Props) {
                           {currentSession.config.primaryEmotion && <span className="text-text-secondary">💓 {currentSession.config.primaryEmotion}</span>}
                         </div>
                         {/* Characters */}
-                        {currentSession.config.characters.length > 0 && (
+                        {(currentSession.config.characters ?? []).length > 0 && (
                           <div>
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.characters')}</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
-                              {currentSession.config.characters.map(c => (
+                              {(currentSession.config.characters ?? []).map(c => (
                                 <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                   <span className="font-bold text-text-primary">{c.name}</span>
                                   <span className="text-text-tertiary ml-1">({c.role})</span>
@@ -187,8 +187,8 @@ export default function WritingTabInline(props: Props) {
                             <span className="text-text-tertiary font-bold uppercase">{t('applied.relations')}</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
                               {currentSession.config.charRelations.map((r, i) => {
-                                const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
-                                const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
+                                const from = (currentSession.config.characters ?? []).find(c => c.id === r.from)?.name || '?';
+                                const to = (currentSession.config.characters ?? []).find(c => c.id === r.to)?.name || '?';
                                 return (
                                   <span key={i} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                     {from} ⇄ {to} <span className="text-accent-purple">[{r.type}]</span>
