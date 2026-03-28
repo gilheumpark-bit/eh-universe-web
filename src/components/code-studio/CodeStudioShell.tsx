@@ -11,6 +11,7 @@ import {
   FileText, FolderOpen, Folder, Terminal as TermIcon,
   MessageSquare, Shield, Activity, Send, Trash2, Edit3,
   AlertTriangle, CheckCircle, XCircle, Loader2,
+  Search, GitBranch, Upload, Bug, Command,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio-types";
@@ -20,8 +21,15 @@ import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import type { NoaResult } from "@/lib/noa/types";
+import { searchCode, type SearchResult } from "@/lib/code-studio-search";
+import { findBugsStatic, type BugReport } from "@/lib/code-studio-bugfinder";
 
+// Lazy-loaded panels
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
+const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
+const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
+const GitPanel = dynamic(() => import("@/components/code-studio/GitPanel"), { ssr: false });
+const DeployPanel = dynamic(() => import("@/components/code-studio/DeployPanel"), { ssr: false });
 
 // ============================================================
 // PART 2 — 데모 파일 트리
@@ -346,6 +354,78 @@ function PipelinePanel({ stages }: { stages: PipelineStage[] }) {
 }
 
 // ============================================================
+// PART 6B — Bug Panel (inline)
+// ============================================================
+
+function BugPanel({ bugs }: { bugs: BugReport[] }) {
+  const severityColor: Record<string, string> = { critical: "text-accent-red", high: "text-accent-red", medium: "text-accent-amber", low: "text-accent-blue", info: "text-text-tertiary" };
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Bug className="h-4 w-4 text-accent-red" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Bug Finder</span>
+        <span className="ml-auto rounded-full bg-accent-red/20 px-2 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-accent-red">{bugs.length}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {bugs.length === 0 && <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">No bugs detected. Edit code to trigger analysis.</div>}
+        {bugs.map((b) => (
+          <div key={b.id} className="rounded-lg border border-white/8 bg-white/[0.02] p-3">
+            <div className="flex items-center gap-2">
+              <span className={`font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase ${severityColor[b.severity] ?? "text-text-tertiary"}`}>{b.severity}</span>
+              <span className="text-[10px] text-text-tertiary">L{b.line}</span>
+              <span className="rounded bg-white/8 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">{b.category}</span>
+            </div>
+            <div className="mt-1 text-[11px] text-text-primary">{b.description}</div>
+            <div className="mt-1 text-[10px] text-accent-green">{b.suggestion}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PART 6C — Search Panel (inline)
+// ============================================================
+
+function SearchPanel({ files, onFileOpen }: { files: FileNode[]; onFileOpen: (fileId: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+
+  const handleSearch = useCallback(() => {
+    if (!query.trim()) { setResults([]); return; }
+    const r = searchCode(query, files, { maxResults: 50 });
+    setResults(r);
+  }, [query, files]);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Search className="h-4 w-4 text-accent-amber" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Search</span>
+      </div>
+      <div className="px-3 py-2 border-b border-white/8">
+        <input value={query} onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+          placeholder="Search in files..."
+          className="w-full rounded border border-white/8 bg-black/30 px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-amber/30" />
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {results.length === 0 && query && <div className="text-center py-4 text-text-tertiary text-[10px]">No results</div>}
+        {results.map((r, i) => (
+          <button key={i} onClick={() => onFileOpen(r.fileId)}
+            className="w-full text-left rounded px-2 py-1.5 hover:bg-white/[0.06] transition-colors">
+            <div className="font-[family-name:var(--font-mono)] text-[10px] text-accent-amber">{r.fileName}:{r.line}</div>
+            <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary truncate">{r.lineContent}</div>
+          </button>
+        ))}
+        {results.length > 0 && <div className="text-center text-[10px] text-text-tertiary">{results.length} results</div>}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // PART 7 — File Tree Helpers (CRUD)
 // ============================================================
 
@@ -379,7 +459,7 @@ function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
 // PART 8 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | null;
+type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | null;
 
 export default function CodeStudioShell() {
   const [files, setFiles] = useState<FileNode[]>(DEMO_FILES);
@@ -393,6 +473,8 @@ export default function CodeStudioShell() {
   const [showNewFile, setShowNewFile] = useState(false);
   const [newFileName, setNewFileName] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
@@ -420,6 +502,33 @@ export default function CodeStudioShell() {
     if (!loaded) return;
     saveSettings(settings);
   }, [settings, loaded]);
+
+  // Ctrl+Shift+P → 커맨드 팔레트
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
+        e.preventDefault();
+        setShowCommandPalette((v) => !v);
+      }
+      // Ctrl+Shift+F → 검색 패널
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        setRightPanel((v) => v === "search" ? null : "search");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // 버그 분석 (파일 변경 시)
+  useEffect(() => {
+    if (!activeFile?.isDirty) return;
+    const t = setTimeout(() => {
+      const bugs = findBugsStatic(activeFile.content, activeFile.language);
+      setBugReports(bugs);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [activeFile?.isDirty, activeFile?.content, activeFile?.language]);
 
   // xterm 초기화 + 명령 처리
   useEffect(() => {
@@ -660,7 +769,14 @@ export default function CodeStudioShell() {
             <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-colors ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-colors ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-colors ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
-            <button className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Run"><Play className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-colors ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`rounded p-1.5 transition-colors ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
+              <Bug className="h-4 w-4" />
+              {bugReports.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>}
+            </button>
+            <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-colors ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-colors ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
+            <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
             <button onClick={() => setShowSettings(!showSettings)} className={`rounded p-1.5 transition-colors ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
           </div>
         </div>
@@ -739,9 +855,17 @@ export default function CodeStudioShell() {
 
           {/* Right Panel */}
           {rightPanel && (
-            <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary">
+            <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden">
               {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
               {rightPanel === "pipeline" && <PipelinePanel stages={pipelineStages} />}
+              {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f))} />}
+              {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
+              {rightPanel === "bugs" && <BugPanel bugs={bugReports} />}
+              {rightPanel === "search" && <SearchPanel files={files} onFileOpen={(fid) => {
+                const findFile = (nodes: FileNode[]): FileNode | null => { for (const n of nodes) { if (n.id === fid) return n; if (n.children) { const f = findFile(n.children); if (f) return f; } } return null; };
+                const node = findFile(files);
+                if (node && node.type === "file") { handleFileSelect(node); }
+              }} />}
             </div>
           )}
         </div>
@@ -756,6 +880,39 @@ export default function CodeStudioShell() {
             </div>
             <div ref={termRef} className="h-[calc(100%-28px)]" />
           </div>
+        )}
+
+        {/* Command Palette */}
+        {showCommandPalette && (
+          <CommandPalette
+            open={showCommandPalette}
+            onClose={() => setShowCommandPalette(false)}
+            onExecute={(cmdId) => {
+              setShowCommandPalette(false);
+              switch (cmdId) {
+                case "new-file": setShowNewFile(true); break;
+                case "toggle-terminal": setShowTerminal((v) => !v); break;
+                case "toggle-chat": setRightPanel((v) => v === "chat" ? null : "chat"); break;
+                case "toggle-pipeline": setRightPanel((v) => v === "pipeline" ? null : "pipeline"); break;
+                case "toggle-git": setRightPanel((v) => v === "git" ? null : "git"); break;
+                case "toggle-deploy": setRightPanel((v) => v === "deploy" ? null : "deploy"); break;
+                case "toggle-search": setRightPanel((v) => v === "search" ? null : "search"); break;
+                case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
+                case "toggle-settings": setShowSettings((v) => !v); break;
+              }
+            }}
+            commands={[
+              { id: "new-file", label: "New File", shortcut: "Ctrl+N", category: "File" },
+              { id: "toggle-terminal", label: "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
+              { id: "toggle-chat", label: "Toggle AI Chat", category: "View" },
+              { id: "toggle-pipeline", label: "Toggle Pipeline", category: "View" },
+              { id: "toggle-git", label: "Toggle Git", category: "View" },
+              { id: "toggle-deploy", label: "Toggle Deploy", category: "View" },
+              { id: "toggle-search", label: "Search in Files", shortcut: "Ctrl+Shift+F", category: "Edit" },
+              { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
+              { id: "toggle-settings", label: "Toggle Settings", category: "View" },
+            ]}
+          />
         )}
 
         {/* Status Bar */}

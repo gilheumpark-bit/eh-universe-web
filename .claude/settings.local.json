@@ -129,7 +129,8 @@
       "Bash(grep -rn \"from ''''@/\\\\|from \"\"@/\" src/components/code-studio/ --include=\"*.tsx\")",
       "Bash(rm src/components/code-studio/ActivityBar.tsx src/components/code-studio/ChatPanel.tsx src/components/code-studio/CommandPalette.tsx src/components/code-studio/DiffViewer.tsx src/components/code-studio/IDEContext.tsx src/components/code-studio/PipelinePanel.tsx src/components/code-studio/QuickOpen.tsx src/components/code-studio/SettingsPanel.tsx src/components/code-studio/StatusBar.tsx src/components/code-studio/ToastManager.tsx src/components/code-studio/Toolbar.tsx src/components/code-studio/WelcomeHome.tsx)",
       "Bash(rm src/hooks/useCSLChat.ts src/hooks/useCSLAgent.ts src/hooks/useComposer.ts src/hooks/useFileSystem.ts src/hooks/useKeyboardShortcuts.ts)",
-      "Bash(rm src/lib/cs-ghost-text.ts src/lib/cs-ai-hover.ts src/lib/cs-autopilot.ts src/lib/cs-agent-orchestrator.ts src/lib/cs-fs-store.ts src/lib/cs-chat-history.ts src/lib/cs-file-icons.ts src/lib/cs-notifications.ts src/lib/cs-accessibility.ts src/lib/cs-i18n.ts src/lib/cs-code-search-engine.ts src/lib/cs-bug-finder.ts src/lib/cs-types.ts)"
+      "Bash(rm src/lib/cs-ghost-text.ts src/lib/cs-ai-hover.ts src/lib/cs-autopilot.ts src/lib/cs-agent-orchestrator.ts src/lib/cs-fs-store.ts src/lib/cs-chat-history.ts src/lib/cs-file-icons.ts src/lib/cs-notifications.ts src/lib/cs-accessibility.ts src/lib/cs-i18n.ts src/lib/cs-code-search-engine.ts src/lib/cs-bug-finder.ts src/lib/cs-types.ts)",
+      "Bash(xargs -I {} gh run view {} --log-failed)"
     ]
   }
 }
