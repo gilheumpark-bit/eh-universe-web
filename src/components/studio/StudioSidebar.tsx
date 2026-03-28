@@ -154,8 +154,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           : '-translate-x-full md:translate-x-0 md:w-0'
       }`}
     >
-      <div className="flex h-full flex-col overflow-hidden px-2 py-2 md:px-3 md:py-3">
-        <div className="premium-panel-soft flex h-full flex-col overflow-hidden border-white/8">
+      <div className="flex h-dvh flex-col px-2 py-2 md:px-3 md:py-3 overflow-hidden">
+        <div className="premium-panel-soft flex min-h-0 flex-1 flex-col overflow-y-auto border-white/8">
 
           {/* Collapse toggle */}
           <button
@@ -532,54 +532,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* ============================================================
               PART 3 — FOOTER: exports, auth, sync, language, settings
               ============================================================ */}
-          <div className="border-t border-white/8 px-4 py-2">
-            <details className="group">
-              <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
-                <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
-                  {language === 'KO' ? '내보내기 / 계정' : 'Export / Account'}
-                </span>
-                <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-            <div className="space-y-2 pt-2">
-            {/* Export buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> TXT
-              </button>
-              <button onClick={exportJSON} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> JSON
-              </button>
-              <button onClick={handleExportEPUB} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> EPUB
-              </button>
-              <button onClick={handleExportDOCX} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> DOCX
-              </button>
-              <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
-                <Download className="h-3.5 w-3.5" /> Backup
-              </button>
-              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '파일 가져오기' : 'Import file'}>
-                <Upload className="h-3.5 w-3.5" /> {t('export.import')}
-              </button>
-              {exportProjectJSON && (
-                <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
-                  <Download className="h-3.5 w-3.5" /> Config
-                </button>
-              )}
-              {exportAllEpisodesTXT && (
-                <button onClick={exportAllEpisodesTXT} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '전체 에피소드 텍스트' : 'All episodes as text'}>
-                  <Download className="h-3.5 w-3.5" /> All TXT
-                </button>
-              )}
-              {exportMarkdown && (
-                <button onClick={exportMarkdown} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '마크다운 내보내기' : 'Export as Markdown'}>
-                  <Download className="h-3.5 w-3.5" /> MD
-                </button>
-              )}
-              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
-            </div>
-
-            {/* Auth + Sync */}
+          <div className="border-t border-white/8 px-4 py-2 space-y-2">
+            {/* Auth + Sync — 항상 노출 */}
             <div className="rounded-xl border border-white/8 bg-black/20 p-3">
               {user ? (
                 <div className="flex items-center gap-2">
@@ -639,13 +593,6 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         : 'border-white/8 bg-white/[0.04] text-text-secondary hover:-translate-y-0.5 hover:border-[rgba(92,143,214,0.26)] hover:text-text-primary'
                     }`}
                   >
-                    {syncStatus === 'syncing' ? (
-                      <Cloud className="h-4 w-4 animate-spin" />
-                    ) : syncStatus === 'error' ? (
-                      <CloudOff className="h-4 w-4" />
-                    ) : (
-                      <Cloud className="h-4 w-4" />
-                    )}
                     {syncStatus === 'syncing'
                       ? t('sync.syncing')
                       : syncStatus === 'done'
@@ -670,6 +617,52 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   </div>
                 </>
               )}
+            </div>
+
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
+                <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+                  {language === 'KO' ? '내보내기' : 'Export'}
+                </span>
+                <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+            <div className="space-y-2 pt-2">
+            {/* Export buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
+                <Download className="h-3.5 w-3.5" /> TXT
+              </button>
+              <button onClick={exportJSON} disabled={!currentSessionId} className={exportButtonClass}>
+                <Download className="h-3.5 w-3.5" /> JSON
+              </button>
+              <button onClick={handleExportEPUB} disabled={!currentSessionId} className={exportButtonClass}>
+                <Download className="h-3.5 w-3.5" /> EPUB
+              </button>
+              <button onClick={handleExportDOCX} disabled={!currentSessionId} className={exportButtonClass}>
+                <Download className="h-3.5 w-3.5" /> DOCX
+              </button>
+              <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
+                <Download className="h-3.5 w-3.5" /> Backup
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '파일 가져오기' : 'Import file'}>
+                <Upload className="h-3.5 w-3.5" /> {t('export.import')}
+              </button>
+              {exportProjectJSON && (
+                <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
+                  <Download className="h-3.5 w-3.5" /> Config
+                </button>
+              )}
+              {exportAllEpisodesTXT && (
+                <button onClick={exportAllEpisodesTXT} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '전체 에피소드 텍스트' : 'All episodes as text'}>
+                  <Download className="h-3.5 w-3.5" /> All TXT
+                </button>
+              )}
+              {exportMarkdown && (
+                <button onClick={exportMarkdown} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '마크다운 내보내기' : 'Export as Markdown'}>
+                  <Download className="h-3.5 w-3.5" /> MD
+                </button>
+              )}
+              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
             </div>
 
             </div>{/* end space-y-2 */}
