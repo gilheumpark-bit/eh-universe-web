@@ -75,6 +75,12 @@ const OutlinePanelComponent = dynamic(
 );
 const TemplateGalleryComponent = dynamic(() => import("@/components/code-studio/TemplateGallery"), { ssr: false });
 const SettingsPanelComponent = dynamic(() => import("@/components/code-studio/SettingsPanel"), { ssr: false });
+const PackagePanelComponent = dynamic(() => import("@/components/code-studio/PackagePanel"), { ssr: false });
+const EvaluationPanelComponent = dynamic(() => import("@/components/code-studio/EvaluationPanel"), { ssr: false });
+const QuickOpenComponent = dynamic(
+  () => import("@/components/code-studio/QuickOpen").then((m) => ({ default: m.default || m.QuickOpen })),
+  { ssr: false },
+);
 const EditorTabsComponent = dynamic(
   () => import("@/components/code-studio/EditorTabs").then((m) => ({ default: m.EditorTabs })),
   { ssr: false },
@@ -408,7 +414,7 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
 // PART 6 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | null;
+type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | "packages" | "evaluation" | null;
 
 function useIsTablet(): boolean {
   const [isTablet, setIsTablet] = useState(false);
@@ -443,6 +449,7 @@ function CodeStudioShellInner() {
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [hasEverOpened, setHasEverOpened] = useState(false);
   const [showMultiKey, setShowMultiKey] = useState(false);
+  const [showQuickOpen, setShowQuickOpen] = useState(false);
   const [splitFileId, setSplitFileId] = useState<string | null>(null);
   const [dragTabIdx, setDragTabIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -498,6 +505,7 @@ function CodeStudioShellInner() {
     const handler = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.shiftKey && e.key === "P") { e.preventDefault(); setShowCommandPalette((v) => !v); }
+      if (mod && !e.shiftKey && e.key === "p") { e.preventDefault(); setShowQuickOpen((v) => !v); }
       if (mod && e.shiftKey && e.key === "F") { e.preventDefault(); setRightPanel((v) => v === "search" ? null : "search"); }
       if (mod && !e.shiftKey && e.key === "s") {
         e.preventDefault();
@@ -1290,6 +1298,8 @@ function CodeStudioShellInner() {
                   <TemplateGalleryComponent />
                 )}
                 {rightPanel === "settings-panel" && <SettingsPanelComponent />}
+                {rightPanel === "packages" && <PackagePanelComponent files={files} />}
+                {rightPanel === "evaluation" && <EvaluationPanelComponent files={files} onClose={() => setRightPanel(null)} />}
               </div>
             )}
           </div>
@@ -1304,6 +1314,15 @@ function CodeStudioShellInner() {
               </div>
               <div ref={termRef} className="h-[calc(100%-28px)]" />
             </div>
+          )}
+
+          {/* Quick Open (Ctrl+P) */}
+          {showQuickOpen && (
+            <QuickOpenComponent
+              files={files}
+              onOpen={(node) => { handleFileSelect(node); setShowQuickOpen(false); }}
+              onClose={() => setShowQuickOpen(false)}
+            />
           )}
 
           {/* Command Palette */}
@@ -1330,6 +1349,9 @@ function CodeStudioShellInner() {
                   case "toggle-outline": setRightPanel((v) => v === "outline" ? null : "outline"); break;
                   case "toggle-templates": setRightPanel((v) => v === "templates" ? null : "templates"); break;
                   case "toggle-settings-panel": setRightPanel((v) => v === "settings-panel" ? null : "settings-panel"); break;
+                  case "toggle-packages": setRightPanel((v) => v === "packages" ? null : "packages"); break;
+                  case "toggle-evaluation": setRightPanel((v) => v === "evaluation" ? null : "evaluation"); break;
+                  case "quick-open": setShowQuickOpen(true); break;
                   case "toggle-settings": setShowSettings((v) => !v); break;
                 }
               }}
@@ -1350,6 +1372,9 @@ function CodeStudioShellInner() {
                 { id: "toggle-outline", label: "Code Outline", category: "View" },
                 { id: "toggle-templates", label: "Template Gallery", category: "File" },
                 { id: "toggle-settings-panel", label: "Settings Panel", category: "View" },
+                { id: "toggle-packages", label: "Package Manager", category: "Tools" },
+                { id: "toggle-evaluation", label: "Project Evaluation", category: "Tools" },
+                { id: "quick-open", label: "Quick Open File", shortcut: "Ctrl+P", category: "File" },
                 { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
               ]}
             />
