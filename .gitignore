@@ -57,5 +57,9 @@ Desktop.ini
 # test coverage
 /coverage/
 
+# Test artifacts
+/playwright-report/
+/test-results/
+
 # Claude Code
 .claude/worktrees/

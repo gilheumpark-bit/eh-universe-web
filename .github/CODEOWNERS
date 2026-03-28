@@ -1,0 +1,9 @@
+# Default owner for all files
+* @sung4
+
+# Security-critical paths — require explicit review
+firestore.rules @sung4
+.github/workflows/ @sung4
+src/app/api/ @sung4
+src/lib/server-ai.ts @sung4
+src/lib/firebase.ts @sung4

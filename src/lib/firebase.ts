@@ -27,14 +27,15 @@ export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'de
 // PART 2 - FIREBASE CONFIG AND INITIALIZATION
 // ============================================================
 
-// Production Firebase config for project "NOA STUDIO" (gen-lang-client-0645063497).
+// Production Firebase config — read from NEXT_PUBLIC_FIREBASE_* env vars.
+// Falls back to project defaults when env vars are not set (e.g. local dev without .env.local).
 const productionConfig = {
-  apiKey: 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
-  authDomain: 'gen-lang-client-0645063497.firebaseapp.com',
-  projectId: 'gen-lang-client-0645063497',
-  storageBucket: 'gen-lang-client-0645063497.firebasestorage.app',
-  messagingSenderId: '262025911233',
-  appId: '1:262025911233:web:e49fe5b774538b808f2d40',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'gen-lang-client-0645063497.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gen-lang-client-0645063497',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'gen-lang-client-0645063497.firebasestorage.app',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '262025911233',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:262025911233:web:e49fe5b774538b808f2d40',
 };
 
 // Test environment config — same project but can be overridden via env vars.

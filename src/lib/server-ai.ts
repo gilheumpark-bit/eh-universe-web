@@ -15,6 +15,7 @@ export const SERVER_ENV_KEYS: Record<ServerProviderId, string | undefined> = {
 };
 
 const SERVER_PROVIDERS = Object.keys(SERVER_ENV_KEYS) as ServerProviderId[];
+const LOCAL_PROVIDERS: ReadonlySet<ServerProviderId> = new Set(['ollama', 'lmstudio']);
 
 export function isServerProviderId(value: unknown): value is ServerProviderId {
   return typeof value === 'string' && SERVER_PROVIDERS.includes(value as ServerProviderId);
@@ -24,6 +25,12 @@ export function resolveServerProviderKey(
   provider: ServerProviderId,
   clientKey?: unknown,
 ): string | undefined {
+  // Local providers: only use server-configured URLs to prevent SSRF.
+  // The frontend already routes local-provider traffic through /api/local-proxy,
+  // so client-supplied base URLs should never reach these server routes.
+  if (LOCAL_PROVIDERS.has(provider)) {
+    return SERVER_ENV_KEYS[provider];
+  }
   if (typeof clientKey === 'string' && clientKey.trim()) {
     return clientKey.trim();
   }

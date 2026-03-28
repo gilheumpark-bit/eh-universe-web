@@ -56,10 +56,10 @@ test.describe('NOA Studio — Core', () => {
     await page.goto('/studio');
     await ensureSession(page);
 
-    // 가이드 모드에서 최소 세계관/캐릭터/연출/사용설명서 탭이 보여야 함
-    for (const tab of ['세계관 스튜디오', '캐릭터 스튜디오', '연출 스튜디오']) {
+    // 가이드 모드에서 최소 세계관/캐릭터/연출 탭이 보여야 함 (KO/EN 양쪽 매칭)
+    for (const pattern of [/세계관 스튜디오|World Studio/, /캐릭터 스튜디오|Character Studio/, /연출 스튜디오|Direction Studio/]) {
       await expect(
-        page.locator('button', { hasText: new RegExp(tab) }).first()
+        page.locator('button:visible', { hasText: pattern }).first()
       ).toBeVisible({ timeout: 5000 });
     }
   });
@@ -107,13 +107,13 @@ test.describe('NOA Studio — Extended Flows', () => {
     await ensureSession(page);
     await switchToFreeMode(page);
 
-    const writingTab = page.locator('button', { hasText: /집필 스튜디오|Writing/ }).first();
+    const writingTab = page.locator('button:visible', { hasText: /집필 스튜디오|Writing Studio|Writing/ }).first();
     await expect(writingTab).toBeVisible({ timeout: 5000 });
     await writingTab.click();
 
     // 집필 모드 버튼 확인
     await expect(
-      page.locator('button', { hasText: /초안 생성|Draft|글쓰기|Write|3단계|AUTO/ }).first()
+      page.locator('button:visible', { hasText: /초안 생성|Draft|글쓰기|Write|3단계|AUTO/ }).first()
     ).toBeVisible({ timeout: 10000 });
   });
 
