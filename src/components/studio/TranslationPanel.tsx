@@ -39,6 +39,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     episode: i + 1,
     title: m.title,
     content: m.content,
+    charCount: m.charCount ?? m.content.length,
+    lastUpdate: m.lastUpdate ?? Date.now(),
   }));
 
   const handleTranslate = useCallback(async () => {
