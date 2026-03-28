@@ -1,10 +1,6 @@
 // ============================================================
 // PART 1 — Types & Constants
 // ============================================================
-// Terminal emulator for EH Universe Code Studio.
-// Provides persistent history, env variables, job control,
-// aliases, autocomplete, syntax highlighting, and builtins.
-// ============================================================
 
 import type { FileNode } from "@/lib/code-studio-types";
 import { tokenize, type Token } from "@/lib/code-studio-shell-parser";
@@ -512,13 +508,10 @@ function lsBuiltin(args: string[], files: FileNode[], env: EnvironmentManager): 
 
 function buildHelp(): TerminalLine[] {
   return [
-    ln("EH Universe Code Studio Terminal", "green"), ln(""),
-    ln("  Navigation:", "blue"),
-    ln("  cd, pwd, echo, export, unset, alias, history, env, which, clear", "yellow"), ln(""),
-    ln("  File Operations:", "blue"),
-    ln("  cat, ls, head, tail, wc, touch, mkdir, rm, cp, mv, grep, find, sort", "yellow"), ln(""),
-    ln("  Shortcuts:", "blue"),
-    ln("  Ctrl+L: Clear | Tab: Autocomplete | Up/Down: History", "blue"),
+    ln("EH Universe Code Studio Terminal", "green"),
+    ln("  Navigation: cd, pwd, echo, export, unset, alias, history, env, which, clear", "yellow"),
+    ln("  File Ops: cat, ls, head, tail, wc, touch, mkdir, rm, cp, mv, grep, find, sort", "yellow"),
+    ln("  Shortcuts: Ctrl+L: Clear | Tab: Autocomplete | Up/Down: History", "blue"),
   ];
 }
 
@@ -604,5 +597,4 @@ function flattenAllFiles(files: FileNode[], prefix: string): { name: string; pat
   }
   return result;
 }
-
 // IDENTITY_SEAL: PART-6 | role=file builtins+preprocessor+helpers | inputs=args,files,env | outputs=BuiltinResult,ProcessedCommand
