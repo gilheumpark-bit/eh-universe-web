@@ -119,7 +119,7 @@ export default function StudioPage() {
     if (urlTab && VALID_TABS.includes(urlTab as AppTab)) return urlTab as AppTab;
     return 'world';
   });
-  // Sync tab state → URL query params (push for back/forward support)
+  // Sync tab state → URL query params (replace to avoid history pollution)
   const setActiveTab = useCallback((tab: AppTab) => {
     setActiveTabRaw(tab);
     const params = new URLSearchParams(window.location.search);
@@ -128,17 +128,8 @@ export default function StudioPage() {
     params.delete('worldImport');
     params.delete('postImport');
     params.delete('setup');
-    studioRouter.push(`${pathname}?${params.toString()}`, { scroll: false });
+    studioRouter.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [studioRouter, pathname]);
-
-  // Restore tab on browser back/forward (popstate)
-  useEffect(() => {
-    const urlTab = searchParams.get('tab');
-    if (urlTab && VALID_TABS.includes(urlTab as AppTab) && urlTab !== activeTab) {
-      setActiveTabRaw(urlTab as AppTab);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
