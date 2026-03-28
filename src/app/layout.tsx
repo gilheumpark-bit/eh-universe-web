@@ -55,7 +55,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live; object-src 'none'; base-uri 'self';"
+          content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live https://cdn.jsdelivr.net; worker-src 'self' blob:; object-src 'none'; base-uri 'self';"
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
