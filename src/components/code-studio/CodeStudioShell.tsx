@@ -682,7 +682,7 @@ function CodeStudioShellInner() {
         if (activeFileId) {
           setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, isDirty: false } : f));
           saveFileTree(files);
-          toast("File saved", "success");
+          toast("Saved locally in this browser", "success");
         }
       }
       // Ctrl+= / Ctrl+- → 줌
@@ -918,6 +918,23 @@ function CodeStudioShellInner() {
     toast("Demo project loaded", "success");
   }, [toast]);
 
+  // Welcome → Blank Project (README only)
+  const handleBlankProject = useCallback(() => {
+    const blankFiles: FileNode[] = [
+      {
+        id: "root", name: "project", type: "folder",
+        children: [
+          { id: "readme", name: "README.md", type: "file", content: "# New Project\n\nDescribe your project here.\n" },
+        ],
+      },
+    ];
+    setFiles(blankFiles);
+    setOpenFiles([{ id: "readme", name: "README.md", content: "# New Project\n\nDescribe your project here.\n", language: "markdown" }]);
+    setActiveFileId("readme");
+    setHasEverOpened(true);
+    toast("Blank project created", "success");
+  }, [toast]);
+
   // Welcome → New File
   const handleWelcomeNewFile = useCallback(() => {
     setShowNewFile(true);
@@ -1122,7 +1139,7 @@ function CodeStudioShellInner() {
                   <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
                 </div>
               ) : !hasEverOpened ? (
-                <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} />
+                <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">

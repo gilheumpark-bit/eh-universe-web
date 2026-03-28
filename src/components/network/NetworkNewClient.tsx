@@ -29,10 +29,13 @@ export function NetworkNewClient() {
                 ? "회원은 행성 생성, 첫 로그 작성, 댓글과 반응을 사용할 수 있습니다."
                 : "Members can create planets, publish first logs, and interact with the network."}
             </p>
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col items-center gap-4">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
                 {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
               </button>
+              <a href="/network" className="text-sm text-text-tertiary hover:text-text-primary transition-colors">
+                ← {lang === "ko" ? "네트워크로 돌아가기" : "Back to Network"}
+              </a>
             </div>
           </section>
         </div>

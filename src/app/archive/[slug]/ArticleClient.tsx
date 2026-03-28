@@ -17,10 +17,15 @@ export default function ArticleClient({ slug }: { slug: string }) {
     getArticleTitle: (slug: string, lang: "ko" | "en") => string;
   } | null>(null);
 
+  const [loadFailed, setLoadFailed] = useState(false);
+
   useEffect(() => {
     import("@/lib/articles").then((mod) => {
       setArticleModule({ articles: mod.articles, getArticleTitle: mod.getArticleTitle });
-    }).catch(() => { /* dynamic import failure — page will show loading fallback */ });
+    }).catch(() => { setLoadFailed(true); });
+    // 10초 타임아웃
+    const t = setTimeout(() => { if (!articleModule) setLoadFailed(true); }, 10000);
+    return () => clearTimeout(t);
   }, []);
 
   // Loading state while articles chunk loads
@@ -30,9 +35,25 @@ export default function ArticleClient({ slug }: { slug: string }) {
         <Header />
         <main className="pt-24 flex min-h-screen items-center justify-center">
           <div className="text-center">
-            <div className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider animate-pulse">
-              Loading archive...
-            </div>
+            {loadFailed ? (
+              <>
+                <div className="text-accent-red text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider mb-4">
+                  Failed to load archive
+                </div>
+                <a href="/archive" className="text-sm text-accent-purple hover:text-text-primary transition-colors">
+                  ← Back to Archive
+                </a>
+              </>
+            ) : (
+              <>
+                <div className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider animate-pulse">
+                  Loading archive...
+                </div>
+                <a href="/archive" className="mt-4 block text-[10px] text-text-tertiary hover:text-text-primary transition-colors">
+                  ← Back to Archive
+                </a>
+              </>
+            )}
           </div>
         </main>
       </>
