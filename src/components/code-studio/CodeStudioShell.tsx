@@ -74,12 +74,24 @@ const OutlinePanelComponent = dynamic(
   () => import("@/components/code-studio/OutlinePanel").then((m) => ({ default: m.OutlinePanel })),
   { ssr: false },
 );
-const TemplateGalleryComponent = dynamic(() => import("@/components/code-studio/TemplateGallery"), { ssr: false });
-const SettingsPanelComponent = dynamic(() => import("@/components/code-studio/SettingsPanel"), { ssr: false });
-const PackagePanelComponent = dynamic(() => import("@/components/code-studio/PackagePanel"), { ssr: false });
-const EvaluationPanelComponent = dynamic(() => import("@/components/code-studio/EvaluationPanel"), { ssr: false });
+const TemplateGalleryComponent = dynamic(
+  () => import("@/components/code-studio/TemplateGallery").then((m) => ({ default: m.TemplateGallery })),
+  { ssr: false },
+);
+const SettingsPanelComponent = dynamic(
+  () => import("@/components/code-studio/SettingsPanel").then((m) => ({ default: m.SettingsPanel })),
+  { ssr: false },
+);
+const PackagePanelComponent = dynamic(
+  () => import("@/components/code-studio/PackagePanel").then((m) => ({ default: m.PackagePanel })),
+  { ssr: false },
+);
+const EvaluationPanelComponent = dynamic(
+  () => import("@/components/code-studio/EvaluationPanel").then((m) => ({ default: m.EvaluationPanel })),
+  { ssr: false },
+);
 const QuickOpenComponent = dynamic(
-  () => import("@/components/code-studio/QuickOpen").then((m) => ({ default: m.default || m.QuickOpen })),
+  () => import("@/components/code-studio/QuickOpen").then((m) => ({ default: m.QuickOpen })),
   { ssr: false },
 );
 const CollabPanelComponent = dynamic(() => import("@/components/code-studio/CollabPanel"), { ssr: false });
