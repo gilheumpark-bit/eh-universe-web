@@ -26,13 +26,16 @@ import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugf
 import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
 import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
 
+import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
+import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
+
 // Lazy-loaded panels
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
 const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
 const GitPanel = dynamic(() => import("@/components/code-studio/GitPanel"), { ssr: false });
 const DeployPanel = dynamic(() => import("@/components/code-studio/DeployPanel"), { ssr: false });
-const MobileLayoutComp = dynamic(() => import("@/components/code-studio/MobileLayout"), { ssr: false });
+// MobileLayout imported but rendered via CSS responsive, not component swap
 
 // ============================================================
 // PART 2 — 데모 파일 트리
@@ -593,7 +596,8 @@ function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
 
 type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | null;
 
-export default function CodeStudioShell() {
+function CodeStudioShellInner() {
+  const { toast } = useToast();
   const [files, setFiles] = useState<FileNode[]>(DEMO_FILES);
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
@@ -612,6 +616,7 @@ export default function CodeStudioShell() {
   const [diffState, setDiffState] = useState<{ original: string; modified: string; fileName: string } | null>(null);
   const [replaceText, setReplaceText] = useState("");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+  const [hasEverOpened, setHasEverOpened] = useState(false);
   // Split Editor state
   const [splitFileId, setSplitFileId] = useState<string | null>(null);
   // Tab Drag-and-Drop state
@@ -677,6 +682,7 @@ export default function CodeStudioShell() {
         if (activeFileId) {
           setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, isDirty: false } : f));
           saveFileTree(files);
+          toast("File saved", "success");
         }
       }
       // Ctrl+= / Ctrl+- → 줌
@@ -691,7 +697,7 @@ export default function CodeStudioShell() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [activeFileId, files]);
+  }, [activeFileId, files, toast]);
 
   // 버그 분석 (파일 변경 시)
   useEffect(() => {
@@ -855,6 +861,7 @@ export default function CodeStudioShell() {
       setOpenFiles((prev) => [...prev, { id: node.id, name: node.name, content: node.content ?? "", language: detectLanguage(node.name) }]);
     }
     setActiveFileId(node.id);
+    setHasEverOpened(true);
   }, [openFiles]);
 
   // 탭 닫기
@@ -884,17 +891,37 @@ export default function CodeStudioShell() {
     // 새 파일 바로 열기
     setOpenFiles((prev) => [...prev, { id, name: newFileName.trim(), content: "", language: detectLanguage(newFileName.trim()) }]);
     setActiveFileId(id);
-  }, [newFileName]);
+    setHasEverOpened(true);
+    toast("File created", "success");
+  }, [newFileName, toast]);
 
   const handleDelete = useCallback((id: string) => {
     setFiles((prev) => deleteFromTree(prev, id));
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
     if (activeFileId === id) setActiveFileId(null);
-  }, [activeFileId]);
+    toast("File deleted", "info");
+  }, [activeFileId, toast]);
 
   const handleRename = useCallback((id: string, name: string) => {
     setFiles((prev) => renameInTree(prev, id, name));
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
+  }, []);
+
+  // 데모 파일 열기 (Welcome → Open Demo)
+  const handleOpenDemo = useCallback(() => {
+    setFiles(DEMO_FILES);
+    // index.ts 자동 열기
+    const indexFile: FileNode = { id: "index-ts", name: "index.ts", type: "file", content: DEMO_FILES[0]?.children?.[0]?.children?.[0]?.content ?? "" };
+    setOpenFiles([{ id: indexFile.id, name: indexFile.name, content: indexFile.content ?? "", language: detectLanguage(indexFile.name) }]);
+    setActiveFileId(indexFile.id);
+    setHasEverOpened(true);
+    toast("Demo project loaded", "success");
+  }, [toast]);
+
+  // Welcome → New File
+  const handleWelcomeNewFile = useCallback(() => {
+    setShowNewFile(true);
+    setHasEverOpened(true);
   }, []);
 
   // AI 코드 적용
@@ -909,9 +936,11 @@ export default function CodeStudioShell() {
     const timer = setTimeout(() => {
       const result = runStaticPipeline(activeFile.content, activeFile.language);
       setPipelineStages(result.stages);
+      const passed = result.stages.filter((s) => s.status === "pass").length;
+      toast(`Pipeline: ${passed}/${result.stages.length} passed`, passed === result.stages.length ? "success" : "info");
     }, 1000);
     return () => clearTimeout(timer);
-  }, [activeFile?.isDirty, activeFile?.content]);
+  }, [activeFile?.isDirty, activeFile?.content, toast]);
 
   return (
     <div className="flex h-full w-full bg-bg-primary text-text-primary">
@@ -986,24 +1015,24 @@ export default function CodeStudioShell() {
                 else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
               }}
               disabled={openFiles.length === 0}
-              className={`rounded p-1.5 transition-colors ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
+              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
               title="Split Editor"
             >
               <Columns2 className="h-4 w-4" />
             </button>
-            <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-colors ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-colors ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-colors ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-colors ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`rounded p-1.5 transition-colors ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
+            <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "search" ? null : "search")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "search" ? "text-accent-amber" : "text-text-tertiary"}`} title="Search (Ctrl+Shift+F)"><Search className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "bugs" ? "text-accent-red" : "text-text-tertiary"}`} title="Bug Finder">
               <Bug className="h-4 w-4" />
               {bugReports.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>}
             </button>
-            <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-colors ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-colors ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
-            <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-colors ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
-            <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
-            <button onClick={() => setShowSettings(!showSettings)} className={`rounded p-1.5 transition-colors ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "git" ? null : "git")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "git" ? "text-accent-purple" : "text-text-tertiary"}`} title="Git"><GitBranch className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
+            <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
+            <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
+            <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
           </div>
         </div>
 
@@ -1088,6 +1117,12 @@ export default function CodeStudioShell() {
                     });
                   }}
                 />
+              ) : !loaded ? (
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
+                </div>
+              ) : !hasEverOpened ? (
+                <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} />
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
@@ -1236,6 +1271,18 @@ export default function CodeStudioShell() {
   );
 }
 
+// ============================================================
+// PART 9 — Export Wrapper (ToastProvider)
+// ============================================================
+
+export default function CodeStudioShell() {
+  return (
+    <ToastProvider>
+      <CodeStudioShellInner />
+    </ToastProvider>
+  );
+}
+
 // IDENTITY_SEAL: PART-1 | role=ImportsState | inputs=none | outputs=state,refs
 // IDENTITY_SEAL: PART-2 | role=DemoFiles | inputs=none | outputs=FileNode[]
 // IDENTITY_SEAL: PART-3 | role=ChatTypes | inputs=none | outputs=ChatMsg
@@ -1244,3 +1291,4 @@ export default function CodeStudioShell() {
 // IDENTITY_SEAL: PART-6 | role=PipelinePanel | inputs=stages | outputs=UI
 // IDENTITY_SEAL: PART-7 | role=TreeHelpers | inputs=tree,id | outputs=FileNode[]
 // IDENTITY_SEAL: PART-8 | role=MainShell | inputs=none | outputs=IDE layout
+// IDENTITY_SEAL: PART-9 | role=ExportWrapper | inputs=none | outputs=ToastProvider+Shell

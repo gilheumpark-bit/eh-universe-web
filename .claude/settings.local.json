@@ -132,7 +132,9 @@
       "Bash(rm src/lib/cs-ghost-text.ts src/lib/cs-ai-hover.ts src/lib/cs-autopilot.ts src/lib/cs-agent-orchestrator.ts src/lib/cs-fs-store.ts src/lib/cs-chat-history.ts src/lib/cs-file-icons.ts src/lib/cs-notifications.ts src/lib/cs-accessibility.ts src/lib/cs-i18n.ts src/lib/cs-code-search-engine.ts src/lib/cs-bug-finder.ts src/lib/cs-types.ts)",
       "Bash(xargs -I {} gh run view {} --log-failed)",
       "Bash(wc -l src/components/code-studio/CodeStudioShell.tsx src/lib/code-studio*.ts)",
-      "Bash(find /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/csl-ide-web -name *.css -o -name *.module.css)"
+      "Bash(find /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/csl-ide-web -name *.css -o -name *.module.css)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/**)"
     ]
   }
 }
