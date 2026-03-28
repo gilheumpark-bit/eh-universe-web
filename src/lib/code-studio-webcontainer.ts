@@ -75,7 +75,7 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
       try {
         const process = await container.spawn(cmd, args);
         let stdout = "";
-        let stderr = "";
+        const stderr = "";
 
         const stdoutReader = process.output.getReader();
         const decoder = new TextDecoder();

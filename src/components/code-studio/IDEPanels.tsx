@@ -431,7 +431,7 @@ export function QuickOpen({
 
   useEffect(() => {
     if (open) {
-      setQuery("");
+      queueMicrotask(() => setQuery(""));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -536,7 +536,7 @@ export function SymbolPalette({
 
   useEffect(() => {
     if (open) {
-      setQuery("");
+      queueMicrotask(() => setQuery(""));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -905,7 +905,7 @@ export function InputDialog({
 
   useEffect(() => {
     if (open) {
-      setValue("");
+      queueMicrotask(() => setValue(""));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
