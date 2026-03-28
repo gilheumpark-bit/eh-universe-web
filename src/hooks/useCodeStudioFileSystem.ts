@@ -15,7 +15,7 @@ import { saveFileTree, loadFileTree } from '@/lib/code-studio-store';
 
 interface UseCodeStudioFileSystemReturn {
   tree: FileNode[];
-  setTree: (tree: FileNode[]) => void;
+  setTree: (tree: FileNode[] | ((prev: FileNode[]) => FileNode[])) => void;
   createFile: (parentId: string | null, name: string, content?: string) => FileNode;
   createFolder: (parentId: string | null, name: string) => FileNode;
   deleteNode: (id: string) => void;
@@ -125,10 +125,10 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
     syncStackFlags();
   }, [syncStackFlags]);
 
-  const setTree = useCallback((newTree: FileNode[]) => {
+  const setTree = useCallback((newTreeOrUpdater: FileNode[] | ((prev: FileNode[]) => FileNode[])) => {
     setTreeState((prev) => {
       pushUndo(prev);
-      return newTree;
+      return typeof newTreeOrUpdater === 'function' ? newTreeOrUpdater(prev) : newTreeOrUpdater;
     });
   }, [pushUndo]);
 

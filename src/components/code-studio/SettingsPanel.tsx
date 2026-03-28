@@ -63,9 +63,9 @@ export function saveIDESettings(settings: IDESettings): void {
 type SettingsTab = "editor" | "ai" | "pipeline";
 
 interface Props {
-  settings: IDESettings;
-  onChange: (settings: IDESettings) => void;
-  onClose: () => void;
+  settings?: IDESettings;
+  onChange?: (settings: IDESettings) => void;
+  onClose?: () => void;
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -109,7 +109,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function SettingsPanel({ settings, onChange, onClose }: Props) {
+export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, onClose }: Props) {
+  const [internalSettings, setInternalSettings] = useState<IDESettings>(() => settingsProp ?? loadIDESettings());
+  const settings = settingsProp ?? internalSettings;
+  const onChange = onChangeProp ?? ((next: IDESettings) => { setInternalSettings(next); saveIDESettings(next); });
   const [tab, setTab] = useState<SettingsTab>("editor");
 
   const update = useCallback(<K extends keyof IDESettings>(key: K, value: IDESettings[K]) => {

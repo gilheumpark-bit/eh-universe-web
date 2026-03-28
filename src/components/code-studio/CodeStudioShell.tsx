@@ -840,8 +840,8 @@ function CodeStudioShellInner() {
       <EditorTabsComponent
         openFiles={openFiles}
         activeFileId={activeFileId}
-        onSelect={(id) => setActiveFileId(id)}
-        onClose={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }}
+        onSelectFile={(id) => setActiveFileId(id)}
+        onCloseFile={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }}
       />
       <div className="flex-1 min-h-0">
         {activeFile ? (
@@ -1299,7 +1299,7 @@ function CodeStudioShellInner() {
                     } : null}
                   />
                 )}
-                {rightPanel === "preview" && <PreviewPanelComponent />}
+                {rightPanel === "preview" && <PreviewPanelComponent files={files} visible={rightPanel === "preview"} />}
                 {rightPanel === "outline" && (
                   <OutlinePanelComponent
                     code={activeFile?.content ?? ""}
@@ -1312,7 +1312,7 @@ function CodeStudioShellInner() {
                   />
                 )}
                 {rightPanel === "templates" && (
-                  <TemplateGalleryComponent />
+                  <TemplateGalleryComponent onSelectTemplate={() => {}} onClose={() => setRightPanel(null)} />
                 )}
                 {rightPanel === "settings-panel" && <SettingsPanelComponent />}
                 {rightPanel === "packages" && <PackagePanelComponent files={files} />}

@@ -8,7 +8,7 @@
 // PART 1 — Shared Types
 // ============================================================
 
-export type TeamStatus = 'pass' | 'warn' | 'fail';
+export type TeamStatus = 'pending' | 'running' | 'pass' | 'warn' | 'fail';
 export type Severity = 'critical' | 'major' | 'minor' | 'info';
 
 export interface Finding {
