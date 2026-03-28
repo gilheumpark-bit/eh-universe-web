@@ -4,7 +4,7 @@
 // Translation Panel — 번역 엔진 UI
 // ============================================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Languages, Play, Square, ChevronDown, Check, AlertTriangle, Loader2 } from "lucide-react";
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from "@/lib/studio-types";
 import type { TranslationMode, TranslationTarget, TranslationProgress } from "@/engine/translation";
@@ -35,13 +35,16 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     },
   });
 
-  const manuscripts: EpisodeManuscript[] = (config.manuscripts ?? []).map((m, i) => ({
-    episode: i + 1,
-    title: m.title,
-    content: m.content,
-    charCount: m.charCount ?? m.content.length,
-    lastUpdate: m.lastUpdate ?? Date.now(),
-  }));
+  const manuscripts: EpisodeManuscript[] = useMemo(() =>
+    (config.manuscripts ?? []).map((m, i) => ({
+      episode: i + 1,
+      title: m.title,
+      content: m.content,
+      charCount: m.charCount ?? m.content.length,
+      lastUpdate: m.lastUpdate ?? 0,
+    })),
+    [config.manuscripts]
+  );
 
   const handleTranslate = useCallback(async () => {
     if (selectedEpisode === null) return;
