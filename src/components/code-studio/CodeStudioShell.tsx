@@ -63,6 +63,18 @@ const TabletLayoutComponent = dynamic(
   () => import("@/components/code-studio/TabletLayout").then((m) => ({ default: m.TabletLayout })),
   { ssr: false },
 );
+const ComposerPanelComponent = dynamic(() => import("@/components/code-studio/ComposerPanel"), { ssr: false });
+const ReviewCenterComponent = dynamic(
+  () => import("@/components/code-studio/ReviewCenter").then((m) => ({ default: m.default || m.ReviewCenter })),
+  { ssr: false },
+);
+const PreviewPanelComponent = dynamic(() => import("@/components/code-studio/PreviewPanel"), { ssr: false });
+const OutlinePanelComponent = dynamic(
+  () => import("@/components/code-studio/OutlinePanel").then((m) => ({ default: m.OutlinePanel })),
+  { ssr: false },
+);
+const TemplateGalleryComponent = dynamic(() => import("@/components/code-studio/TemplateGallery"), { ssr: false });
+const SettingsPanelComponent = dynamic(() => import("@/components/code-studio/SettingsPanel"), { ssr: false });
 const EditorTabsComponent = dynamic(
   () => import("@/components/code-studio/EditorTabs").then((m) => ({ default: m.EditorTabs })),
   { ssr: false },
@@ -396,7 +408,7 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
 // PART 6 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | null;
+type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | null;
 
 function useIsTablet(): boolean {
   const [isTablet, setIsTablet] = useState(false);
@@ -986,6 +998,8 @@ function CodeStudioShellInner() {
               <button onClick={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "deploy" ? "text-accent-green" : "text-text-tertiary"}`} title="Deploy"><Upload className="h-4 w-4" /></button>
               <button onClick={() => setRightPanel(rightPanel === "autopilot" ? null : "autopilot")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "autopilot" ? "text-accent-amber" : "text-text-tertiary"}`} title="Autopilot"><Play className="h-4 w-4" /></button>
               <button onClick={() => setRightPanel(rightPanel === "agents" ? null : "agents")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "agents" ? "text-accent-purple" : "text-text-tertiary"}`} title="Agent Pipeline"><Shield className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "composer" ? null : "composer")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "composer" ? "text-accent-blue" : "text-text-tertiary"}`} title="Multi-file Composer"><Edit3 className="h-4 w-4" /></button>
+              <button onClick={() => setRightPanel(rightPanel === "review" ? null : "review")} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === "review" ? "text-accent-green" : "text-text-tertiary"}`} title="Review Center"><AlertTriangle className="h-4 w-4" /></button>
               <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
               <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
             </div>
@@ -1227,6 +1241,55 @@ function CodeStudioShellInner() {
                     onClose={() => setRightPanel(null)}
                   />
                 )}
+                {rightPanel === "composer" && (
+                  <ComposerPanelComponent
+                    files={files}
+                    onCompose={async (fileIds, instruction) => {
+                      // Map fileIds to FileChange format via existing AI compose logic
+                      return fileIds.map((fid) => {
+                        const f = openFiles.find((of) => of.id === fid);
+                        return { fileId: fid, fileName: f?.name ?? fid, original: f?.content ?? "", modified: f?.content ?? "", status: "pending" as const };
+                      });
+                    }}
+                    onApplyChanges={(changes) => {
+                      for (const c of changes) {
+                        setOpenFiles((prev) => prev.map((f) => f.id === c.fileId ? { ...f, content: c.modified, isDirty: true } : f));
+                        setFiles((prev) => updateContentInTree(prev, c.fileId, c.modified));
+                      }
+                      toast(`Applied ${changes.length} file(s)`, "success");
+                    }}
+                    onPreviewDiff={(change) => setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName })}
+                  />
+                )}
+                {rightPanel === "review" && (
+                  <ReviewCenterComponent
+                    pipelineResult={pipelineStages.length > 0 ? {
+                      stages: pipelineStages.map((s) => ({
+                        stage: s.name, status: s.status, score: s.score ?? 0,
+                        findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
+                      })),
+                      overallScore: pipelineScore ?? 0,
+                      overallStatus: (pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail",
+                      timestamp: Date.now(),
+                    } : null}
+                  />
+                )}
+                {rightPanel === "preview" && <PreviewPanelComponent />}
+                {rightPanel === "outline" && (
+                  <OutlinePanelComponent
+                    code={activeFile?.content ?? ""}
+                    language={activeFile?.language ?? "plaintext"}
+                    onNavigate={(line) => {
+                      const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
+                      editor?.revealLineInCenter?.(line);
+                      editor?.setPosition?.({ lineNumber: line, column: 1 });
+                    }}
+                  />
+                )}
+                {rightPanel === "templates" && (
+                  <TemplateGalleryComponent />
+                )}
+                {rightPanel === "settings-panel" && <SettingsPanelComponent />}
               </div>
             )}
           </div>
@@ -1261,6 +1324,12 @@ function CodeStudioShellInner() {
                   case "toggle-bugs": setRightPanel((v) => v === "bugs" ? null : "bugs"); break;
                   case "toggle-autopilot": setRightPanel((v) => v === "autopilot" ? null : "autopilot"); break;
                   case "toggle-agents": setRightPanel((v) => v === "agents" ? null : "agents"); break;
+                  case "toggle-composer": setRightPanel((v) => v === "composer" ? null : "composer"); break;
+                  case "toggle-review": setRightPanel((v) => v === "review" ? null : "review"); break;
+                  case "toggle-preview": setRightPanel((v) => v === "preview" ? null : "preview"); break;
+                  case "toggle-outline": setRightPanel((v) => v === "outline" ? null : "outline"); break;
+                  case "toggle-templates": setRightPanel((v) => v === "templates" ? null : "templates"); break;
+                  case "toggle-settings-panel": setRightPanel((v) => v === "settings-panel" ? null : "settings-panel"); break;
                   case "toggle-settings": setShowSettings((v) => !v); break;
                 }
               }}
@@ -1275,7 +1344,13 @@ function CodeStudioShellInner() {
                 { id: "toggle-bugs", label: "Toggle Bug Finder", category: "Tools" },
                 { id: "toggle-autopilot", label: "Autopilot (Multi-step AI)", category: "Tools" },
                 { id: "toggle-agents", label: "Agent Pipeline (Architect>Dev>Review)", category: "Tools" },
-                { id: "toggle-settings", label: "Toggle Settings", category: "View" },
+                { id: "toggle-composer", label: "Multi-file Composer", category: "Tools" },
+                { id: "toggle-review", label: "Review Center", category: "Tools" },
+                { id: "toggle-preview", label: "Live Preview", category: "View" },
+                { id: "toggle-outline", label: "Code Outline", category: "View" },
+                { id: "toggle-templates", label: "Template Gallery", category: "File" },
+                { id: "toggle-settings-panel", label: "Settings Panel", category: "View" },
+                { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
               ]}
             />
           )}
