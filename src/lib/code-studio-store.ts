@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { FileNode, CodeStudioSettings } from './code-studio-types';
-import { DEFAULT_SETTINGS } from './code-studio-types';
+import { DEFAULT_SETTINGS, detectLanguage } from './code-studio-types';
 
 const DB_NAME = 'eh-code-studio';
 const DB_VERSION = 2;
@@ -287,7 +287,149 @@ export async function getRecentFiles(): Promise<{ fileId: string; fileName: stri
 
 // IDENTITY_SEAL: PART-7 | role=RecentFiles | inputs=fileId,fileName | outputs=RecentFileEntry[]
 
-// IDENTITY_SEAL: PART-1 | role=DBConnection | inputs=none | outputs=IDBDatabase
-// IDENTITY_SEAL: PART-2 | role=FilePersist | inputs=FileNode[] | outputs=void/FileNode[]
-// IDENTITY_SEAL: PART-3 | role=SettingsPersist | inputs=settings | outputs=void/settings
-// IDENTITY_SEAL: PART-4 | role=ChatPersist | inputs=session | outputs=void/sessions
+// ============================================================
+// PART 8 — Project Getters & Current Project
+// ============================================================
+
+let currentProjectId: string = 'default';
+
+export function getCurrentProjectId(): string {
+  return currentProjectId;
+}
+
+export function setCurrentProjectId(id: string): void {
+  currentProjectId = id;
+}
+
+export async function getProject(projectId: string): Promise<ProjectMetadata | null> {
+  try {
+    return (await dbGet<ProjectMetadata>(STORE_PROJECTS, projectId)) ?? null;
+  } catch { return null; }
+}
+
+export async function updateProjectMetadata(
+  projectId: string,
+  updates: Partial<Pick<ProjectMetadata, 'name' | 'description'>>,
+): Promise<void> {
+  try {
+    const existing = await dbGet<ProjectMetadata>(STORE_PROJECTS, projectId);
+    if (!existing) return;
+    await dbPut(STORE_PROJECTS, projectId, {
+      ...existing,
+      ...updates,
+      updatedAt: Date.now(),
+    });
+  } catch { /* */ }
+}
+
+// IDENTITY_SEAL: PART-8 | role=ProjectGetters | inputs=projectId | outputs=ProjectMetadata/currentProjectId
+
+// ============================================================
+// PART 9 — Tree Builder / Flattener
+// ============================================================
+
+export interface StoredFile {
+  id: string;
+  projectId: string;
+  parentId: string | null;
+  name: string;
+  type: 'file' | 'folder';
+  content: string;
+  language: string;
+  updatedAt: number;
+}
+
+export function buildFileTree(files: StoredFile[]): FileNode[] {
+  const nodeMap = new Map<string, FileNode>();
+
+  for (const f of files) {
+    nodeMap.set(f.id, {
+      id: f.id,
+      name: f.name,
+      type: f.type,
+      content: f.type === 'file' ? f.content : undefined,
+      children: f.type === 'folder' ? [] : undefined,
+    });
+  }
+
+  const roots: FileNode[] = [];
+  for (const f of files) {
+    const node = nodeMap.get(f.id);
+    if (!node) continue;
+    if (f.parentId && nodeMap.has(f.parentId)) {
+      nodeMap.get(f.parentId)!.children?.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
+
+export function flattenTree(
+  nodes: FileNode[],
+  projectId: string,
+  parentId: string | null = null,
+): StoredFile[] {
+  const result: StoredFile[] = [];
+
+  for (const node of nodes) {
+    result.push({
+      id: node.id,
+      projectId,
+      parentId,
+      name: node.name,
+      type: node.type,
+      content: node.content ?? '',
+      language: node.type === 'file' ? detectLanguage(node.name) : '',
+      updatedAt: Date.now(),
+    });
+
+    if (node.children) {
+      result.push(...flattenTree(node.children, projectId, node.id));
+    }
+  }
+
+  return result;
+}
+
+// IDENTITY_SEAL: PART-9 | role=TreeBuilder | inputs=StoredFile[]/FileNode[] | outputs=FileNode[]/StoredFile[]
+
+// ============================================================
+// PART 10 — Storage Usage
+// ============================================================
+
+export interface StorageUsage {
+  usedBytes: number;
+  quotaBytes: number;
+  percentUsed: number;
+  warning: boolean;
+}
+
+export async function getStorageUsage(): Promise<StorageUsage> {
+  if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      const used = estimate.usage ?? 0;
+      const quota = estimate.quota ?? 0;
+      const percent = quota > 0 ? (used / quota) * 100 : 0;
+      return {
+        usedBytes: used,
+        quotaBytes: quota,
+        percentUsed: Math.round(percent * 100) / 100,
+        warning: percent > 80,
+      };
+    } catch { /* fallback */ }
+  }
+  return { usedBytes: 0, quotaBytes: 0, percentUsed: 0, warning: false };
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const val = bytes / Math.pow(1024, i);
+  return `${val.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+// IDENTITY_SEAL: PART-10 | role=StorageUsage | inputs=none | outputs=StorageUsage/string
