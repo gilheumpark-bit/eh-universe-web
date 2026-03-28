@@ -10,6 +10,8 @@ export interface SearchOptions {
   caseSensitive?: boolean;
   wholeWord?: boolean;
   maxResults?: number;
+  fileExtension?: string;  // e.g. "ts", "tsx", "json"
+  searchFileNames?: boolean; // true = search file names, not content
 }
 
 /** A single search match */
@@ -111,8 +113,24 @@ export function searchCode(
   const pattern = buildPattern(query, options);
   if (!pattern) return [];
 
-  const flatFiles = flattenFiles(files);
+  const allFiles = flattenFiles(files);
+  // 파일 확장자 필터
+  const flatFiles = options.fileExtension
+    ? allFiles.filter(f => f.name.endsWith('.' + options.fileExtension))
+    : allFiles;
   const results: SearchResult[] = [];
+
+  // 파일명 검색 모드
+  if (options.searchFileNames) {
+    for (const file of flatFiles) {
+      if (results.length >= maxResults) break;
+      pattern.lastIndex = 0;
+      if (pattern.test(file.name)) {
+        results.push({ fileId: file.id, fileName: file.name, line: 0, column: 0, lineContent: file.name, matchLength: query.length });
+      }
+    }
+    return results;
+  }
 
   for (const file of flatFiles) {
     if (results.length >= maxResults) break;

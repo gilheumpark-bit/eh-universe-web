@@ -16,6 +16,26 @@ let lastContext = '';
 const DEBOUNCE_MS = 600;
 const MAX_CONTEXT_CHARS = 1500;
 
+// 완성 캐시 (같은 컨텍스트에 재요청 방지)
+const completionCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 50;
+
+// 수락률 추적
+let totalSuggestions = 0;
+let acceptedSuggestions = 0;
+
+export function getAcceptanceRate(): number {
+  return totalSuggestions > 0 ? acceptedSuggestions / totalSuggestions : 0;
+}
+
+export function trackAccepted(): void {
+  acceptedSuggestions++;
+}
+
+export function trackSuggested(): void {
+  totalSuggestions++;
+}
+
 const GHOST_SYSTEM = `You are a code completion engine. Output ONLY the code that should be inserted at the cursor position.
 Rules:
 - No explanations, no markdown, no backticks
@@ -45,10 +65,14 @@ export async function requestGhostCompletion(
   const before = codeBefore.slice(-MAX_CONTEXT_CHARS);
   const after = codeAfter.slice(0, 500);
 
-  // 디듀플리케이션
+  // 디듀플리케이션 + 캐시
   const contextKey = `${before}|${after}`;
   if (contextKey === lastContext) return '';
   lastContext = contextKey;
+
+  // 캐시 히트
+  const cached = completionCache.get(contextKey);
+  if (cached) { trackSuggested(); return cached; }
 
   const prompt = `Language: ${language}
 Code before cursor:
@@ -78,10 +102,22 @@ Complete the code at the cursor position:`;
   }
 
   // 클린업: 백틱/마크다운 제거
-  return result
+  const cleaned = result
     .replace(/^```\w*\n?/, '')
     .replace(/\n?```$/, '')
     .trim();
+
+  // 캐시 저장
+  if (cleaned) {
+    if (completionCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = completionCache.keys().next().value;
+      if (firstKey) completionCache.delete(firstKey);
+    }
+    completionCache.set(contextKey, cleaned);
+    trackSuggested();
+  }
+
+  return cleaned;
 }
 
 /**

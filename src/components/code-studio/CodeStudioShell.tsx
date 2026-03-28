@@ -14,7 +14,7 @@ import {
   Search, GitBranch, Upload, Bug, Command,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
-import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio-types";
+import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
 import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions, type StoredChatSession } from "@/lib/code-studio-store";
@@ -104,7 +104,7 @@ function FileTreeItem({
           {isFolder ? (
             open ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent-amber" /> : <Folder className="h-3.5 w-3.5 shrink-0 text-accent-amber" />
           ) : (
-            <FileText className="h-3.5 w-3.5 shrink-0 text-text-tertiary" />
+            <FileText className={`h-3.5 w-3.5 shrink-0 ${fileIconColor(node.name)}`} />
           )}
           {editing ? (
             <input
@@ -611,6 +611,7 @@ export default function CodeStudioShell() {
   const [agentSession, setAgentSession] = useState<AgentSession | null>(null);
   const [diffState, setDiffState] = useState<{ original: string; modified: string; fileName: string } | null>(null);
   const [replaceText, setReplaceText] = useState("");
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
@@ -639,22 +640,35 @@ export default function CodeStudioShell() {
     saveSettings(settings);
   }, [settings, loaded]);
 
-  // Ctrl+Shift+P → 커맨드 팔레트
+  // 키보드 단축키 (전역)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
-        e.preventDefault();
-        setShowCommandPalette((v) => !v);
-      }
+      const mod = e.ctrlKey || e.metaKey;
+      // Ctrl+Shift+P → 커맨드 팔레트
+      if (mod && e.shiftKey && e.key === "P") { e.preventDefault(); setShowCommandPalette((v) => !v); }
       // Ctrl+Shift+F → 검색 패널
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") {
+      if (mod && e.shiftKey && e.key === "F") { e.preventDefault(); setRightPanel((v) => v === "search" ? null : "search"); }
+      // Ctrl+S → 파일 저장 (dirty 해제 + IndexedDB 저장)
+      if (mod && !e.shiftKey && e.key === "s") {
         e.preventDefault();
-        setRightPanel((v) => v === "search" ? null : "search");
+        if (activeFileId) {
+          setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, isDirty: false } : f));
+          saveFileTree(files);
+        }
       }
+      // Ctrl+= / Ctrl+- → 줌
+      if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })); }
+      if (mod && e.key === "-") { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })); }
+      // Ctrl+` → 터미널 토글
+      if (mod && e.key === "`") { e.preventDefault(); setShowTerminal((v) => !v); }
+      // Ctrl+N → 새 파일
+      if (mod && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
+      // Ctrl+W → 탭 닫기
+      if (mod && e.key === "w") { e.preventDefault(); if (activeFileId) setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; }); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [activeFileId, files]);
 
   // 버그 분석 (파일 변경 시)
   useEffect(() => {
@@ -672,6 +686,8 @@ export default function CodeStudioShell() {
     let term: import("@xterm/xterm").Terminal | null = null;
     let mounted = true;
     let cmdBuffer = "";
+    const cmdHistory: string[] = [];
+    let historyIdx = -1;
 
     const processCommand = (cmd: string, t: import("@xterm/xterm").Terminal) => {
       const parts = cmd.trim().split(/\s+/);
@@ -765,6 +781,7 @@ export default function CodeStudioShell() {
         if (!term) return;
         if (data === "\r") {
           term.writeln("");
+          if (cmdBuffer.trim()) { cmdHistory.push(cmdBuffer); historyIdx = cmdHistory.length; }
           processCommand(cmdBuffer, term);
           cmdBuffer = "";
           term.write("\x1b[32m$ \x1b[0m");
@@ -774,10 +791,28 @@ export default function CodeStudioShell() {
             term.write("\b \b");
           }
         } else if (data === "\x03") {
-          // Ctrl+C
           cmdBuffer = "";
           term.writeln("^C");
           term.write("\x1b[32m$ \x1b[0m");
+        } else if (data === "\x1b[A") {
+          // Up arrow — 히스토리 이전
+          if (historyIdx > 0) {
+            historyIdx--;
+            const old = cmdBuffer;
+            cmdBuffer = cmdHistory[historyIdx];
+            term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer);
+          }
+        } else if (data === "\x1b[B") {
+          // Down arrow — 히스토리 다음
+          if (historyIdx < cmdHistory.length - 1) {
+            historyIdx++;
+            cmdBuffer = cmdHistory[historyIdx];
+            term.write("\r\x1b[K\x1b[32m$ \x1b[0m" + cmdBuffer);
+          } else {
+            historyIdx = cmdHistory.length;
+            cmdBuffer = "";
+            term.write("\r\x1b[K\x1b[32m$ \x1b[0m");
+          }
         } else if (data >= " ") {
           cmdBuffer += data;
           term.write(data);
@@ -887,6 +922,17 @@ export default function CodeStudioShell() {
 
       {/* Center — Editor + Terminal */}
       <div className="flex flex-1 flex-col min-w-0">
+        {/* Breadcrumb */}
+        {activeFile && (
+          <div className="flex items-center gap-1 border-b border-white/8 bg-bg-secondary px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+            <span className="text-accent-amber">project</span>
+            <ChevronRight className="h-2.5 w-2.5" />
+            <span>src</span>
+            <ChevronRight className="h-2.5 w-2.5" />
+            <span className={fileIconColor(activeFile.name)}>{activeFile.name}</span>
+          </div>
+        )}
+
         {/* Tab Bar */}
         <div className="flex items-center border-b border-white/8 bg-bg-secondary">
           <div className="flex flex-1 overflow-x-auto">
@@ -982,15 +1028,20 @@ export default function CodeStudioShell() {
                   minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
                   fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
                   lineNumbers: "on", renderLineHighlight: "line",
-                  bracketPairColorization: { enabled: true }, smoothScrolling: true,
+                  bracketPairColorization: { enabled: true },
+                  guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
+                  smoothScrolling: true,
                   cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                  stickyScroll: { enabled: true },
                 }}
                 onMount={(editor, monaco) => {
                   editorRef.current = editor;
-                  // Ghost Text: AI 인라인 완성 등록 (전 언어)
                   registerGhostTextProvider(monaco);
-                  // 에디터 해제 시 Ghost Text 취소
                   editor.onDidDispose(() => cancelGhostText());
+                  // 커서 위치 추적
+                  editor.onDidChangeCursorPosition((e) => {
+                    setCursorPos({ line: e.position.lineNumber, col: e.position.column });
+                  });
                 }}
               />
             ) : (
@@ -1079,16 +1130,19 @@ export default function CodeStudioShell() {
         <div className="flex items-center justify-between border-t border-white/8 bg-bg-secondary px-3 py-0.5">
           <div className="flex items-center gap-3 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-green" />Ready</span>
-            {activeFile && <span>{activeFile.language}</span>}
+            {activeFile && <span className={fileIconColor(activeFile.name)}>{activeFile.language}</span>}
             <span className="flex items-center gap-1"><Shield className="h-2.5 w-2.5" />NOA</span>
           </div>
           <div className="flex items-center gap-3 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+            {activeFile && <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>}
+            {activeFile && <span>{activeFile.content.split("\n").length} lines</span>}
             {pipelineStages.length > 0 && (
               <span className="flex items-center gap-1">
                 <Activity className="h-2.5 w-2.5" />
                 {pipelineStages.filter((s) => s.status === "pass").length}/{pipelineStages.length} pass
               </span>
             )}
+            {bugReports.length > 0 && <span className="text-accent-red">{bugReports.length} bugs</span>}
             <span>{openFiles.length} files</span>
           </div>
         </div>
