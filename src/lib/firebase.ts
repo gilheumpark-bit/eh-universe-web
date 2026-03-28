@@ -30,12 +30,12 @@ export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'de
 // Production Firebase config — read from NEXT_PUBLIC_FIREBASE_* env vars.
 // Falls back to project defaults when env vars are not set (e.g. local dev without .env.local).
 const productionConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDJJEidy9jsLh-5hh3_eAnqFhISp53epXM',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBVL9hNAfmCpBvjmujXaiWM3VESqAedRmE',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'eh-universe.firebaseapp.com',
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'eh-universe',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'eh-universe.firebasestorage.app',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '262025911233',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:262025911233:web:e49fe5b774538b808f2d40',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '169294097312',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:169294097312:web:5cd8874ef85719a5a392c5',
 };
 
 // Test environment config — same project but can be overridden via env vars.
