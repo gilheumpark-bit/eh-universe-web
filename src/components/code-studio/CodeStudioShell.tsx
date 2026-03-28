@@ -82,6 +82,8 @@ const QuickOpenComponent = dynamic(
   () => import("@/components/code-studio/QuickOpen").then((m) => ({ default: m.default || m.QuickOpen })),
   { ssr: false },
 );
+const CollabPanelComponent = dynamic(() => import("@/components/code-studio/CollabPanel"), { ssr: false });
+const CodeCreatorPanelComponent = dynamic(() => import("@/components/code-studio/CodeCreatorPanel"), { ssr: false });
 const EditorTabsComponent = dynamic(
   () => import("@/components/code-studio/EditorTabs").then((m) => ({ default: m.EditorTabs })),
   { ssr: false },
@@ -415,7 +417,7 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
 // PART 6 — Main Shell
 // ============================================================
 
-type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | "packages" | "evaluation" | null;
+type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | "composer" | "review" | "preview" | "outline" | "templates" | "settings-panel" | "packages" | "evaluation" | "collab" | "creator" | null;
 
 function useIsTablet(): boolean {
   const [isTablet, setIsTablet] = useState(false);
@@ -1303,6 +1305,21 @@ function CodeStudioShellInner() {
                 {rightPanel === "settings-panel" && <SettingsPanelComponent />}
                 {rightPanel === "packages" && <PackagePanelComponent files={files} />}
                 {rightPanel === "evaluation" && <EvaluationPanelComponent files={files} onClose={() => setRightPanel(null)} />}
+                {rightPanel === "collab" && <CollabPanelComponent onClose={() => setRightPanel(null)} />}
+                {rightPanel === "creator" && (
+                  <CodeCreatorPanelComponent
+                    onMerge={(createdFiles) => {
+                      for (const f of createdFiles) {
+                        const node: FileNode = { id: `created-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.path.split("/").pop() ?? "file.ts", type: "file", content: f.content };
+                        setFiles((prev) => [...prev, node]);
+                        setOpenFiles((prev) => [...prev, { id: node.id, name: node.name, content: f.content, language: detectLanguage(node.name) }]);
+                        setActiveFileId(node.id);
+                      }
+                      toast(`Created ${createdFiles.length} file(s)`, "success");
+                    }}
+                    onClose={() => setRightPanel(null)}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -1354,6 +1371,8 @@ function CodeStudioShellInner() {
                   case "toggle-settings-panel": setRightPanel((v) => v === "settings-panel" ? null : "settings-panel"); break;
                   case "toggle-packages": setRightPanel((v) => v === "packages" ? null : "packages"); break;
                   case "toggle-evaluation": setRightPanel((v) => v === "evaluation" ? null : "evaluation"); break;
+                  case "toggle-collab": setRightPanel((v) => v === "collab" ? null : "collab"); break;
+                  case "toggle-creator": setRightPanel((v) => v === "creator" ? null : "creator"); break;
                   case "quick-open": setShowQuickOpen(true); break;
                   case "toggle-settings": setShowSettings((v) => !v); break;
                 }
@@ -1377,6 +1396,8 @@ function CodeStudioShellInner() {
                 { id: "toggle-settings-panel", label: "Settings Panel", category: "View" },
                 { id: "toggle-packages", label: "Package Manager", category: "Tools" },
                 { id: "toggle-evaluation", label: "Project Evaluation", category: "Tools" },
+                { id: "toggle-collab", label: "Collaboration", category: "Tools" },
+                { id: "toggle-creator", label: "Code Creator (AI Generate Files)", category: "Tools" },
                 { id: "quick-open", label: "Quick Open File", shortcut: "Ctrl+P", category: "File" },
                 { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
               ]}
