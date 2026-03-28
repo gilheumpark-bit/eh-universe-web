@@ -573,8 +573,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     }
                     signInWithGoogle();
                   }}
-                  disabled={!authConfigured}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-disabled={!authConfigured}
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary ${!authConfigured ? 'opacity-35 cursor-not-allowed' : ''}`}
                 >
                   <Cloud className="h-4 w-4" /> {t('auth.googleLogin')}
                 </button>
