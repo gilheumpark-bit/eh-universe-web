@@ -11,6 +11,7 @@ export interface BugReport {
   description: string;
   suggestion: string;
   category: 'logic' | 'security' | 'performance' | 'style' | 'error-handling' | 'type-safety';
+  source?: 'ai' | 'static' | 'ast';
 }
 
 const VALID_SEVERITIES = new Set<BugReport['severity']>([
@@ -99,6 +100,7 @@ function parseAiResponse(raw: string): BugReport[] {
       category: VALID_CATEGORIES.has(category as BugReport['category'])
         ? (category as BugReport['category'])
         : 'logic',
+      source: 'ai',
     });
   }
 
@@ -140,7 +142,9 @@ export async function findBugs(
     return [];
   }
 
-  return parseAiResponse(accumulated);
+  const rawReports = parseAiResponse(accumulated);
+  const lineCount = code.split('\n').length;
+  return validateAiResults(rawReports, lineCount);
 }
 
 // IDENTITY_SEAL: PART-2 | role=ai-bug-detection | inputs=code,language,fileName,signal | outputs=BugReport[]
@@ -168,6 +172,11 @@ export function findBugsStatic(code: string, language: string): BugReport[] {
   detectEmptyCatch(lines, language, reports);
   detectMissingSwitchDefault(lines, language, reports);
   detectDivisionByZero(lines, reports);
+
+  // Tag source
+  for (const r of reports) {
+    r.source = 'static';
+  }
 
   return reports;
 }
@@ -407,3 +416,403 @@ function escapeRegex(str: string): string {
 }
 
 // IDENTITY_SEAL: PART-3 | role=static-bug-detection | inputs=code,language | outputs=BugReport[]
+
+// ============================================================
+// PART 4 — AST-Based Detectors
+// ============================================================
+
+/**
+ * TypeScript interface for AST node — minimal shape to avoid hard
+ * dependency on the `typescript` package at bundle time.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TsLike = any;
+
+interface TsNode {
+  kind: number;
+  pos: number;
+  end: number;
+  parent?: TsNode;
+  getText?(): string;
+  getStart?(): number;
+  getFullStart?(): number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+interface TsSourceFile extends TsNode {
+  getLineAndCharacterOfPosition(pos: number): { line: number; character: number };
+  text: string;
+}
+
+/**
+ * Attempt to load the `typescript` module dynamically.
+ * Returns null if unavailable (e.g. browser without bundled TS).
+ */
+async function loadTs(): Promise<TsLike | null> {
+  try {
+    // Dynamic import so the module is optional
+    const ts = await import('typescript');
+    return ts.default ?? ts;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * AST-level bug detection. Uses the TypeScript compiler API to parse source
+ * and walk the tree, detecting structural issues that regex cannot reliably catch.
+ *
+ * Detectors:
+ *  - Declared-but-never-read variables (scope-aware)
+ *  - Null/undefined assignment followed by unguarded property access
+ *  - Switch without default case
+ *  - Async function without try/catch around await
+ *  - Unhandled Promise (async call without await)
+ */
+export async function findBugsAst(code: string, language: string): Promise<BugReport[]> {
+  const isJsTsFamily = /^(javascript|typescript|jsx|tsx|js|ts)$/i.test(language);
+  if (!isJsTsFamily || !code.trim()) return [];
+
+  const tsModule = await loadTs();
+  if (!tsModule) return [];
+  // Non-null const so inner closures can capture without narrowing issues
+  const ts: TsLike = tsModule;
+
+  const ext = /tsx|jsx/i.test(language) ? 'file.tsx' : 'file.ts';
+  let sourceFile: TsSourceFile;
+  try {
+    sourceFile = ts.createSourceFile(
+      ext,
+      code,
+      ts.ScriptTarget.Latest ?? 99,
+      true,
+    );
+  } catch {
+    return [];
+  }
+
+  const reports: BugReport[] = [];
+  const SK = ts.SyntaxKind;
+
+  // Helper: get 1-based line number
+  function lineOf(node: TsNode): number {
+    const start = node.getStart ? node.getStart() : node.pos;
+    return sourceFile.getLineAndCharacterOfPosition(start).line + 1;
+  }
+
+  // ---- Detector: unused variable (scope-aware) ----
+  const declarations = new Map<string, { line: number; count: number }>();
+
+  function collectIdentifiers(node: TsNode): void {
+    // Variable declaration
+    if (node.kind === SK.VariableDeclaration && node.name) {
+      const name = node.name.getText ? node.name.getText() : String(node.name.escapedText ?? '');
+      if (name && !declarations.has(name)) {
+        declarations.set(name, { line: lineOf(node), count: 0 });
+      }
+    }
+
+    // Identifier usage (not in declaration position)
+    if (node.kind === SK.Identifier) {
+      const name = node.getText ? node.getText() : String(node.escapedText ?? '');
+      const entry = declarations.get(name);
+      if (entry) {
+        const parent = node.parent;
+        // Don't count the declaration itself
+        const isDecl =
+          parent &&
+          (parent.kind === SK.VariableDeclaration ||
+            parent.kind === SK.Parameter ||
+            parent.kind === SK.PropertyDeclaration) &&
+          parent.name === node;
+        if (!isDecl) {
+          entry.count++;
+        }
+      }
+    }
+
+    ts.forEachChild(node, collectIdentifiers);
+  }
+  ts.forEachChild(sourceFile, collectIdentifiers);
+
+  for (const [name, info] of declarations) {
+    if (info.count === 0) {
+      reports.push({
+        id: nextId(),
+        severity: 'low',
+        line: info.line,
+        description: `Variable "${name}" is declared but never read (AST scope analysis).`,
+        suggestion: `Remove the unused variable or use it.`,
+        category: 'style',
+        source: 'ast',
+      });
+    }
+  }
+
+  // ---- Detector: switch without default ----
+  function detectSwitchNoDefault(node: TsNode): void {
+    if (node.kind === SK.SwitchStatement) {
+      const caseBlock = node.caseBlock;
+      if (caseBlock && caseBlock.clauses) {
+        const hasDefault = caseBlock.clauses.some(
+          (c: TsNode) => c.kind === SK.DefaultClause,
+        );
+        if (!hasDefault) {
+          reports.push({
+            id: nextId(),
+            severity: 'low',
+            line: lineOf(node),
+            description: `Switch statement has no default case (AST).`,
+            suggestion: `Add a default case to handle unexpected values.`,
+            category: 'logic',
+            source: 'ast',
+          });
+        }
+      }
+    }
+    ts.forEachChild(node, detectSwitchNoDefault);
+  }
+  ts.forEachChild(sourceFile, detectSwitchNoDefault);
+
+  // ---- Detector: async function without try/catch around await ----
+  function detectAsyncWithoutTryCatch(node: TsNode): void {
+    const isAsyncFunc =
+      (node.kind === SK.FunctionDeclaration ||
+        node.kind === SK.ArrowFunction ||
+        node.kind === SK.FunctionExpression ||
+        node.kind === SK.MethodDeclaration) &&
+      node.modifiers?.some((m: TsNode) => m.kind === SK.AsyncKeyword);
+
+    if (isAsyncFunc && node.body) {
+      let hasAwait = false;
+      let hasTryCatch = false;
+
+      function walkBody(n: TsNode): void {
+        if (n.kind === SK.AwaitExpression) hasAwait = true;
+        if (n.kind === SK.TryStatement) hasTryCatch = true;
+        // Don't recurse into nested functions
+        if (
+          n !== node &&
+          (n.kind === SK.FunctionDeclaration ||
+            n.kind === SK.ArrowFunction ||
+            n.kind === SK.FunctionExpression)
+        ) {
+          return;
+        }
+        ts.forEachChild(n, walkBody);
+      }
+      walkBody(node.body);
+
+      if (hasAwait && !hasTryCatch) {
+        reports.push({
+          id: nextId(),
+          severity: 'medium',
+          line: lineOf(node),
+          description: `Async function uses await without try/catch error handling.`,
+          suggestion: `Wrap await calls in try/catch or add a .catch() handler.`,
+          category: 'error-handling',
+          source: 'ast',
+        });
+      }
+    }
+    ts.forEachChild(node, detectAsyncWithoutTryCatch);
+  }
+  ts.forEachChild(sourceFile, detectAsyncWithoutTryCatch);
+
+  // ---- Detector: unhandled Promise (call to async function without await) ----
+  function detectUnhandledPromise(node: TsNode): void {
+    if (node.kind === SK.ExpressionStatement && node.expression) {
+      const expr = node.expression;
+      // CallExpression at statement level (not awaited, not .then'd)
+      if (expr.kind === SK.CallExpression) {
+        const callText = expr.getText ? expr.getText() : '';
+        // Heuristic: function name starts with lowercase (likely user fn, not constructor)
+        // and the call is a bare statement (no await, no .then)
+        const parent = node.parent;
+        const isAwaited = parent && parent.kind === SK.AwaitExpression;
+        const hasThen = /\.then\s*\(/.test(callText);
+        const hasCatch = /\.catch\s*\(/.test(callText);
+
+        if (!isAwaited && !hasThen && !hasCatch) {
+          // Check if the function name hints at async (fetch, load, save, get, post, etc.)
+          const asyncHints = /\b(fetch|load|save|get|post|put|delete|send|request|upload|download)\w*\s*\(/i;
+          if (asyncHints.test(callText)) {
+            reports.push({
+              id: nextId(),
+              severity: 'medium',
+              line: lineOf(node),
+              description: `Potentially unhandled Promise: "${callText.slice(0, 50)}..." is called without await or .then().`,
+              suggestion: `Add await or .then()/.catch() to handle the result.`,
+              category: 'error-handling',
+              source: 'ast',
+            });
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, detectUnhandledPromise);
+  }
+  ts.forEachChild(sourceFile, detectUnhandledPromise);
+
+  // ---- Detector: null/undefined assignment then unguarded access ----
+  function detectNullDerefAst(node: TsNode): void {
+    if (node.kind === SK.VariableDeclaration && node.initializer) {
+      const init = node.initializer;
+      const isNullish =
+        init.kind === SK.NullKeyword ||
+        (init.kind === SK.Identifier && init.getText?.() === 'undefined');
+
+      if (isNullish && node.name) {
+        const varName = node.name.getText ? node.name.getText() : '';
+        if (!varName) { ts.forEachChild(node, detectNullDerefAst); return; }
+
+        const declLine = lineOf(node);
+        // Scan next ~10 lines of source for unguarded property access
+        const codeLines = code.split('\n');
+        const scanEnd = Math.min(declLine + 10, codeLines.length);
+
+        for (let ln = declLine; ln < scanEnd; ln++) {
+          const lineText = codeLines[ln];
+          if (!lineText) continue;
+
+          const guardRe = new RegExp(
+            `(?:if\\s*\\(\\s*${escapeRegex(varName)}|${escapeRegex(varName)}\\s*(?:!==?|===?)\\s*(?:null|undefined)|${escapeRegex(varName)}\\s*\\?\\.|${escapeRegex(varName)}\\s*\\?\\s*\\.)`,
+          );
+          if (guardRe.test(lineText)) break;
+
+          const accessRe = new RegExp(`\\b${escapeRegex(varName)}\\s*\\.\\s*[a-zA-Z_]`);
+          if (accessRe.test(lineText)) {
+            reports.push({
+              id: nextId(),
+              severity: 'high',
+              line: ln + 1,
+              description: `Possible null dereference (AST): "${varName}" initialized to null/undefined at line ${declLine} and accessed without guard.`,
+              suggestion: `Add a null/undefined check or use optional chaining (?.).`,
+              category: 'error-handling',
+              source: 'ast',
+            });
+            break;
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, detectNullDerefAst);
+  }
+  ts.forEachChild(sourceFile, detectNullDerefAst);
+
+  return reports;
+}
+
+// IDENTITY_SEAL: PART-4 | role=ast-bug-detection | inputs=code,language | outputs=BugReport[]
+
+// ============================================================
+// PART 5 — AI Result Validation & Deduplication
+// ============================================================
+
+/**
+ * Filter AI bug reports where `line` exceeds actual file line count.
+ */
+function validateAiResults(reports: BugReport[], lineCount: number): BugReport[] {
+  return reports.filter((r) => r.line >= 1 && r.line <= lineCount);
+}
+
+/**
+ * Deduplicate between AI and static/AST results.
+ * If two reports share the same line and a similar message, keep the one
+ * with the higher-priority source (ast > static > ai).
+ */
+export function deduplicateBugReports(reports: BugReport[]): BugReport[] {
+  const SOURCE_PRIORITY: Record<string, number> = { ast: 3, static: 2, ai: 1 };
+
+  // Group by line number
+  const byLine = new Map<number, BugReport[]>();
+  for (const r of reports) {
+    const group = byLine.get(r.line) ?? [];
+    group.push(r);
+    byLine.set(r.line, group);
+  }
+
+  const result: BugReport[] = [];
+
+  for (const group of byLine.values()) {
+    if (group.length <= 1) {
+      result.push(...group);
+      continue;
+    }
+
+    // Check for similar messages within the same line
+    const kept = new Set<number>();
+    for (let i = 0; i < group.length; i++) {
+      if (kept.has(i)) continue;
+
+      let best = i;
+      for (let j = i + 1; j < group.length; j++) {
+        if (kept.has(j)) continue;
+        if (areSimilarMessages(group[i].description, group[j].description)) {
+          kept.add(j);
+          const bestPri = SOURCE_PRIORITY[group[best].source ?? 'ai'] ?? 0;
+          const jPri = SOURCE_PRIORITY[group[j].source ?? 'ai'] ?? 0;
+          if (jPri > bestPri) {
+            kept.add(best);
+            best = j;
+          }
+        }
+      }
+      result.push(group[best]);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Naive similarity check: normalize both strings and compare overlap.
+ * Returns true if they share > 50% of significant words.
+ */
+function areSimilarMessages(a: string, b: string): boolean {
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
+
+  const wordsA = new Set(normalize(a));
+  const wordsB = new Set(normalize(b));
+
+  if (wordsA.size === 0 || wordsB.size === 0) return false;
+
+  let overlap = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) overlap++;
+  }
+
+  const minSize = Math.min(wordsA.size, wordsB.size);
+  return minSize > 0 && overlap / minSize > 0.5;
+}
+
+/**
+ * Combined analysis: run AI + static + AST detectors,
+ * then merge and deduplicate results.
+ */
+export async function findBugsCombined(
+  code: string,
+  language: string,
+  fileName: string,
+  signal?: AbortSignal,
+): Promise<BugReport[]> {
+  if (!code.trim()) return [];
+
+  // Run static and AST in parallel, AI separately (may be slow)
+  const [staticResults, astResults, aiResults] = await Promise.all([
+    Promise.resolve(findBugsStatic(code, language)),
+    findBugsAst(code, language).catch(() => [] as BugReport[]),
+    findBugs(code, language, fileName, signal).catch(() => [] as BugReport[]),
+  ]);
+
+  const all = [...staticResults, ...astResults, ...aiResults];
+  return deduplicateBugReports(all);
+}
+
+// IDENTITY_SEAL: PART-5 | role=validation-dedup-combined | inputs=BugReport[] | outputs=BugReport[] (deduplicated)

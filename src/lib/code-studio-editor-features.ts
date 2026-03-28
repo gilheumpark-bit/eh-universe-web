@@ -29,7 +29,7 @@ export function registerEditorFeatures(
 // IDENTITY_SEAL: PART-1 | role=public API | inputs=monaco,editor | outputs=void
 
 // ============================================================
-// PART 2 — Semantic Tokens
+// PART 2 — Semantic Tokens (with JSX tag recognition)
 // ============================================================
 
 const SEMANTIC_TOKEN_TYPES = [
@@ -40,6 +40,7 @@ const SEMANTIC_TOKEN_TYPES = [
   "enum",
   "namespace",
   "parameter",
+  "keyword",
 ] as const;
 
 const TOKEN_TYPE_MAP: Record<string, number> = {};
@@ -71,12 +72,21 @@ function registerSemanticTokens(monaco: typeof Monaco): void {
           { regex: /\benum\s+(\w+)/g, tokenType: "enum" },
           { regex: /\bnamespace\s+(\w+)/g, tokenType: "namespace" },
           { regex: /\b(const|let|var)\s+(\w+)/g, tokenType: "variable" },
+          // JSX: <Component → 'class', <div → 'keyword'
+          { regex: /<([A-Z]\w*)/g, tokenType: "class" },
+          { regex: /<(\/?)([a-z][\w-]*)/g, tokenType: "keyword" },
         ];
 
         for (const { regex, tokenType } of patterns) {
           let match: RegExpExecArray | null;
           while ((match = regex.exec(line)) !== null) {
-            const captureIndex = match.length > 2 ? 2 : 1;
+            // For JSX lowercase tags, the capture group is index 2
+            let captureIndex: number;
+            if (tokenType === "keyword" && match[2]) {
+              captureIndex = 2;
+            } else {
+              captureIndex = match.length > 2 ? 2 : 1;
+            }
             const name = match[captureIndex];
             if (!name) continue;
 
@@ -100,23 +110,32 @@ function registerSemanticTokens(monaco: typeof Monaco): void {
 
   monaco.languages.registerDocumentSemanticTokensProvider("typescript", provider);
   monaco.languages.registerDocumentSemanticTokensProvider("javascript", provider);
+  monaco.languages.registerDocumentSemanticTokensProvider("typescriptreact", provider);
+  monaco.languages.registerDocumentSemanticTokensProvider("javascriptreact", provider);
 }
 
-// IDENTITY_SEAL: PART-2 | role=semantic token coloring | inputs=monaco | outputs=provider registration
+// IDENTITY_SEAL: PART-2 | role=semantic token coloring + JSX tags | inputs=monaco | outputs=provider registration
 
 // ============================================================
-// PART 3 — Emmet Abbreviation Support
+// PART 3 — Emmet Abbreviation Support (with React shortcuts)
 // ============================================================
 
 const EMMET_EXPANSIONS: Record<string, string> = {
-  "!": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>",
+  "!": '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>',
   "div": "<div></div>",
   "span": "<span></span>",
   "ul>li": "<ul>\n  <li></li>\n</ul>",
   "ul>li*3": "<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>",
   "ol>li*3": "<ol>\n  <li></li>\n  <li></li>\n  <li></li>\n</ol>",
   "table>tr>td": "<table>\n  <tr>\n    <td></td>\n  </tr>\n</table>",
-  "nav>ul>li*4>a": "<nav>\n  <ul>\n    <li><a href=\"\"></a></li>\n    <li><a href=\"\"></a></li>\n    <li><a href=\"\"></a></li>\n    <li><a href=\"\"></a></li>\n  </ul>\n</nav>",
+  "nav>ul>li*4>a":
+    '<nav>\n  <ul>\n    <li><a href=""></a></li>\n    <li><a href=""></a></li>\n    <li><a href=""></a></li>\n    <li><a href=""></a></li>\n  </ul>\n</nav>',
+
+  // React shortcuts
+  "rfc": `import React from 'react';\n\ninterface Props {\n  \n}\n\nexport default function Component({ }: Props) {\n  return (\n    <div>\n      \n    </div>\n  );\n}`,
+  "us": "const [state, setState] = useState()",
+  "ue": "useEffect(() => {\n  \n}, [])",
+  "uc": "const ctx = useContext()",
 };
 
 function expandSimpleEmmet(abbr: string): string | null {
@@ -138,7 +157,6 @@ function registerEmmet(monaco: typeof Monaco): void {
   const provider: Monaco.languages.CompletionItemProvider = {
     triggerCharacters: [">", ".", "#", "*"],
     provideCompletionItems(model, position) {
-      const word = model.getWordUntilPosition(position);
       const lineContent = model.getLineContent(position.lineNumber);
       const textBefore = lineContent.substring(0, position.column - 1).trim();
 
@@ -172,12 +190,16 @@ function registerEmmet(monaco: typeof Monaco): void {
 
   monaco.languages.registerCompletionItemProvider("html", provider);
   monaco.languages.registerCompletionItemProvider("css", provider);
+  monaco.languages.registerCompletionItemProvider("typescript", provider);
+  monaco.languages.registerCompletionItemProvider("typescriptreact", provider);
+  monaco.languages.registerCompletionItemProvider("javascript", provider);
+  monaco.languages.registerCompletionItemProvider("javascriptreact", provider);
 }
 
-// IDENTITY_SEAL: PART-3 | role=emmet expansion | inputs=monaco | outputs=completion provider
+// IDENTITY_SEAL: PART-3 | role=emmet expansion + React shortcuts | inputs=monaco | outputs=completion provider
 
 // ============================================================
-// PART 4 — Prettier-style Formatter
+// PART 4 — Real Formatter (simpleFormat upgraded)
 // ============================================================
 
 function registerPrettierFormat(
@@ -189,13 +211,14 @@ function registerPrettierFormat(
     provideDocumentFormattingEdits(model) {
       const fullRange = model.getFullModelRange();
       const text = model.getValue();
+      const langId = model.getLanguageId();
 
-      const formatted = simpleFormat(text);
+      const formatted = simpleFormat(text, langId);
       return [{ range: fullRange, text: formatted }];
     },
   };
 
-  const languages = ["typescript", "javascript", "html", "css", "json"];
+  const languages = ["typescript", "javascript", "typescriptreact", "javascriptreact", "html", "css", "json"];
   for (const lang of languages) {
     monaco.languages.registerDocumentFormattingEditProvider(lang, formatProvider);
   }
@@ -210,15 +233,101 @@ function registerPrettierFormat(
   });
 }
 
-/** Minimal formatting: trim trailing whitespace, normalize indentation */
-function simpleFormat(text: string): string {
+/**
+ * Real formatter:
+ *  1. Detect indentation style (tab vs spaces, fix mixed)
+ *  2. Remove trailing whitespace
+ *  3. Collapse 3+ consecutive blank lines to 2
+ *  4. Fix opening brace placement (same line as function/if/for/class)
+ *  5. Ensure closing braces on their own line
+ *  6. Add missing semicolons for JS/TS (basic heuristic)
+ */
+function simpleFormat(text: string, language?: string): string {
   const lines = text.split("\n");
-  const result: string[] = [];
+  const isJsTs = !language || /^(typescript|javascript|typescriptreact|javascriptreact|js|ts|jsx|tsx)$/i.test(language);
+
+  // ---- Step 1: Detect indentation style ----
+  let tabCount = 0;
+  let spaceCount = 0;
+  let detectedSpaces = 2;
 
   for (const line of lines) {
-    result.push(line.replace(/\s+$/, ""));
+    if (line.startsWith("\t")) tabCount++;
+    const spaceMatch = line.match(/^( +)\S/);
+    if (spaceMatch) {
+      spaceCount++;
+      const len = spaceMatch[1].length;
+      if (len === 4) detectedSpaces = 4;
+    }
   }
 
+  const useTab = tabCount > spaceCount;
+  const indent = useTab ? "\t" : " ".repeat(detectedSpaces);
+
+  // ---- Step 2-6: Process lines ----
+  const result: string[] = [];
+  let consecutiveBlanks = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // 2. Remove trailing whitespace
+    line = line.replace(/\s+$/, "");
+
+    // 1. Normalize mixed indentation
+    const leadingMatch = line.match(/^(\s*)/);
+    if (leadingMatch && leadingMatch[1].length > 0) {
+      const leading = leadingMatch[1];
+      const hasMixed = leading.includes("\t") && leading.includes(" ");
+      if (hasMixed) {
+        // Convert tabs to spaces or vice versa
+        const expanded = leading.replace(/\t/g, " ".repeat(detectedSpaces));
+        const level = Math.round(expanded.length / (useTab ? detectedSpaces : detectedSpaces));
+        line = indent.repeat(level) + line.trimStart();
+      }
+    }
+
+    // 3. Collapse 3+ consecutive blank lines to 2
+    if (line === "") {
+      consecutiveBlanks++;
+      if (consecutiveBlanks > 2) continue;
+    } else {
+      consecutiveBlanks = 0;
+    }
+
+    // 4. Fix opening brace on next line → move to same line
+    //    Pattern: previous line ends with ) and current line is just {
+    if (
+      line.trim() === "{" &&
+      result.length > 0 &&
+      /[)]\s*$/.test(result[result.length - 1])
+    ) {
+      result[result.length - 1] = result[result.length - 1] + " {";
+      continue;
+    }
+
+    // 5. Ensure closing brace is on its own line
+    //    Pattern: something} or something }  where something is non-whitespace
+    if (isJsTs && line.trim().length > 1 && line.trim().endsWith("}") && !line.trim().startsWith("}")) {
+      const braceIdx = line.lastIndexOf("}");
+      const before = line.slice(0, braceIdx).trimEnd();
+      const leadWs = line.match(/^(\s*)/)?.[1] ?? "";
+      if (before && !/[{(,;:]$/.test(before) && !/^\s*\/\//.test(before)) {
+        result.push(before);
+        result.push(leadWs + "}");
+        continue;
+      }
+    }
+
+    // 6. Add missing semicolons for JS/TS
+    if (isJsTs) {
+      line = addMissingSemicolon(line);
+    }
+
+    result.push(line);
+  }
+
+  // Ensure single trailing newline
   while (result.length > 1 && result[result.length - 1] === "") {
     result.pop();
   }
@@ -227,7 +336,44 @@ function simpleFormat(text: string): string {
   return result.join("\n");
 }
 
-// IDENTITY_SEAL: PART-4 | role=document formatting | inputs=monaco,editor | outputs=format provider + shortcut
+/**
+ * Basic semicolon insertion heuristic.
+ * Adds ; to lines ending with ) or an identifier that are not followed by { or ,
+ * and are not comments, control flow, or other exempt patterns.
+ */
+function addMissingSemicolon(line: string): string {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length === 0) return line;
+
+  // Skip lines that already end with ; { } , : ( or are comments/decorators
+  if (/[;{},:(]$/.test(trimmed)) return line;
+  if (trimmed.endsWith("}")) return line;
+  if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("*")) return line;
+  if (trimmed.startsWith("@")) return line;
+
+  // Skip control flow keywords that don't need ;
+  if (/^(if|else|for|while|do|switch|try|catch|finally|class|interface|enum|type|namespace|module|declare)\b/.test(trimmed)) return line;
+  // Skip import/export that continue on next line
+  if (/^(import|export)\s/.test(trimmed) && !trimmed.includes("from")) return line;
+  // Skip function declarations
+  if (/^(function|async\s+function)\s/.test(trimmed)) return line;
+  // Skip lines ending with =>
+  if (trimmed.endsWith("=>")) return line;
+  // Skip JSX: lines ending with > or /> or opening tags
+  if (/[>]$/.test(trimmed)) return line;
+  // Skip template literals
+  if (trimmed.endsWith("`")) return line;
+
+  // Candidate: ends with ), identifier, string literal, number, or ]
+  if (/[)\]'"\d\w]$/.test(trimmed)) {
+    const leadingWs = line.match(/^(\s*)/)?.[1] ?? "";
+    return leadingWs + trimmed + ";";
+  }
+
+  return line;
+}
+
+// IDENTITY_SEAL: PART-4 | role=document formatting + real formatter | inputs=monaco,editor | outputs=format provider + shortcut
 
 // ============================================================
 // PART 5 — Cross-File Rename (Stub)
@@ -326,7 +472,7 @@ function registerGoToLine(editor: Monaco.editor.IStandaloneCodeEditor): void {
 // IDENTITY_SEAL: PART-6 | role=go-to-line shortcut | inputs=editor | outputs=keyboard action
 
 // ============================================================
-// PART 7 — Code Actions (Quick Fixes)
+// PART 7 — Code Actions (Expanded Quick Fixes)
 // ============================================================
 
 function registerCodeActions(monaco: typeof Monaco): void {
@@ -334,17 +480,19 @@ function registerCodeActions(monaco: typeof Monaco): void {
     provideCodeActions(model, range) {
       const actions: Monaco.languages.CodeAction[] = [];
       const lineContent = model.getLineContent(range.startLineNumber);
+      const trimmed = lineContent.trim();
+      const fullText = model.getValue();
 
-      // Missing semicolon
+      // ---- Missing semicolon ----
       if (
-        lineContent.trim().length > 0 &&
-        !lineContent.trim().endsWith(";") &&
-        !lineContent.trim().endsWith("{") &&
-        !lineContent.trim().endsWith("}") &&
-        !lineContent.trim().endsWith(",") &&
-        !lineContent.trim().startsWith("//") &&
-        !lineContent.trim().startsWith("*") &&
-        !lineContent.trim().startsWith("import")
+        trimmed.length > 0 &&
+        !trimmed.endsWith(";") &&
+        !trimmed.endsWith("{") &&
+        !trimmed.endsWith("}") &&
+        !trimmed.endsWith(",") &&
+        !trimmed.startsWith("//") &&
+        !trimmed.startsWith("*") &&
+        !trimmed.startsWith("import")
       ) {
         const trimmedEnd = lineContent.length;
         actions.push({
@@ -371,7 +519,7 @@ function registerCodeActions(monaco: typeof Monaco): void {
         });
       }
 
-      // Unused import detection (simple heuristic)
+      // ---- Unused import detection ----
       const importMatch = lineContent.match(
         /^import\s+(?:{\s*([\w,\s]+)\s*}|\*\s+as\s+(\w+)|(\w+))\s+from/,
       );
@@ -400,9 +548,12 @@ function registerCodeActions(monaco: typeof Monaco): void {
         });
       }
 
-      // Missing return type hint
-      const funcMatch = lineContent.match(/(?:function\s+\w+|=>\s*)\([^)]*\)\s*{/);
-      if (funcMatch) {
+      // ---- Add return type annotation ----
+      const funcMatch = lineContent.match(/(function\s+\w+\s*\([^)]*\))\s*\{/);
+      const arrowMatch = lineContent.match(/(\([^)]*\))\s*=>\s*\{/);
+      const funcTarget = funcMatch ?? arrowMatch;
+      if (funcTarget) {
+        const insertCol = lineContent.indexOf("{");
         actions.push({
           title: "Add return type annotation ': void'",
           kind: "quickfix",
@@ -413,11 +564,155 @@ function registerCodeActions(monaco: typeof Monaco): void {
                 textEdit: {
                   range: {
                     startLineNumber: range.startLineNumber,
-                    startColumn: lineContent.indexOf("{"),
+                    startColumn: insertCol + 1,
                     endLineNumber: range.startLineNumber,
-                    endColumn: lineContent.indexOf("{"),
+                    endColumn: insertCol + 1,
                   },
                   text: ": void ",
+                },
+                versionId: undefined,
+              },
+            ],
+          },
+          isPreferred: false,
+        });
+      }
+
+      // ---- Convert var to const/let ----
+      const varMatch = lineContent.match(/^(\s*)var\s+/);
+      if (varMatch) {
+        const leadWs = varMatch[1];
+        const varStart = leadWs.length + 1;
+        actions.push({
+          title: "Convert 'var' to 'const'",
+          kind: "quickfix",
+          edit: {
+            edits: [
+              {
+                resource: model.uri,
+                textEdit: {
+                  range: {
+                    startLineNumber: range.startLineNumber,
+                    startColumn: varStart,
+                    endLineNumber: range.startLineNumber,
+                    endColumn: varStart + 3,
+                  },
+                  text: "const",
+                },
+                versionId: undefined,
+              },
+            ],
+          },
+          isPreferred: false,
+        });
+        actions.push({
+          title: "Convert 'var' to 'let'",
+          kind: "quickfix",
+          edit: {
+            edits: [
+              {
+                resource: model.uri,
+                textEdit: {
+                  range: {
+                    startLineNumber: range.startLineNumber,
+                    startColumn: varStart,
+                    endLineNumber: range.startLineNumber,
+                    endColumn: varStart + 3,
+                  },
+                  text: "let",
+                },
+                versionId: undefined,
+              },
+            ],
+          },
+          isPreferred: false,
+        });
+      }
+
+      // ---- Extract variable: detect repeated expressions ----
+      const selectedText = model.getValueInRange(range).trim();
+      if (selectedText.length > 3 && !selectedText.includes("\n")) {
+        const escapedSel = escapeRegex(selectedText);
+        const re = new RegExp(escapedSel, "g");
+        const matches = fullText.match(re);
+        if (matches && matches.length >= 2) {
+          actions.push({
+            title: `Extract "${selectedText.slice(0, 30)}..." to variable`,
+            kind: "refactor.extract",
+            edit: {
+              edits: [
+                {
+                  resource: model.uri,
+                  textEdit: {
+                    range: {
+                      startLineNumber: range.startLineNumber,
+                      startColumn: 1,
+                      endLineNumber: range.startLineNumber,
+                      endColumn: 1,
+                    },
+                    text: `const extracted = ${selectedText};\n`,
+                  },
+                  versionId: undefined,
+                },
+              ],
+            },
+            isPreferred: false,
+          });
+        }
+      }
+
+      // ---- Add missing import (from error message pattern) ----
+      const cannotFindMatch = trimmed.match(/Cannot find name '(\w+)'/);
+      if (cannotFindMatch) {
+        const missingName = cannotFindMatch[1];
+        actions.push({
+          title: `Add import for '${missingName}'`,
+          kind: "quickfix",
+          edit: {
+            edits: [
+              {
+                resource: model.uri,
+                textEdit: {
+                  range: {
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: 1,
+                    endColumn: 1,
+                  },
+                  text: `import { ${missingName} } from './${missingName}';\n`,
+                },
+                versionId: undefined,
+              },
+            ],
+          },
+          isPreferred: false,
+        });
+      }
+
+      // ---- Wrap in try/catch ----
+      if (trimmed.length > 0 && !trimmed.startsWith("try") && !trimmed.startsWith("//")) {
+        const leadingWs = lineContent.match(/^(\s*)/)?.[1] ?? "";
+        const innerIndent = leadingWs + "  ";
+        actions.push({
+          title: "Wrap in try/catch",
+          kind: "refactor",
+          edit: {
+            edits: [
+              {
+                resource: model.uri,
+                textEdit: {
+                  range: {
+                    startLineNumber: range.startLineNumber,
+                    startColumn: 1,
+                    endLineNumber: range.endLineNumber,
+                    endColumn: model.getLineContent(range.endLineNumber).length + 1,
+                  },
+                  text:
+                    `${leadingWs}try {\n` +
+                    `${innerIndent}${trimmed}\n` +
+                    `${leadingWs}} catch (err) {\n` +
+                    `${innerIndent}console.error(err);\n` +
+                    `${leadingWs}}`,
                 },
                 versionId: undefined,
               },
@@ -433,6 +728,8 @@ function registerCodeActions(monaco: typeof Monaco): void {
 
   monaco.languages.registerCodeActionProvider("typescript", codeActionProvider);
   monaco.languages.registerCodeActionProvider("javascript", codeActionProvider);
+  monaco.languages.registerCodeActionProvider("typescriptreact", codeActionProvider);
+  monaco.languages.registerCodeActionProvider("javascriptreact", codeActionProvider);
 }
 
-// IDENTITY_SEAL: PART-7 | role=code action quick fixes | inputs=monaco | outputs=code action provider
+// IDENTITY_SEAL: PART-7 | role=code action quick fixes (expanded) | inputs=monaco | outputs=code action provider

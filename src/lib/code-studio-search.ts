@@ -22,11 +22,29 @@ export interface SearchResult {
   column: number;
   lineContent: string;
   matchLength: number;
+  contextBefore: string[];
+  contextAfter: string[];
+}
+
+/** Grouped search results by file */
+export interface FileSearchGroup {
+  filePath: string;
+  fileName: string;
+  matchCount: number;
+  results: SearchResult[];
+}
+
+/** Replace preview entry showing before/after for a single line */
+export interface ReplacePreviewEntry {
+  lineNumber: number;
+  before: string;
+  after: string;
 }
 
 const DEFAULT_MAX_RESULTS = 100;
+const CONTEXT_LINES = 3;
 
-// IDENTITY_SEAL: PART-1 | role=TypeDefinitions | inputs=none | outputs=SearchOptions,SearchResult
+// IDENTITY_SEAL: PART-1 | role=TypeDefinitions | inputs=none | outputs=SearchOptions,SearchResult,FileSearchGroup,ReplacePreviewEntry
 
 // ============================================================
 // PART 2 — Tree Flattening
@@ -93,7 +111,38 @@ function buildPattern(query: string, options: SearchOptions): RegExp | null {
 // IDENTITY_SEAL: PART-3 | role=PatternBuilder | inputs=query,SearchOptions | outputs=RegExp|null
 
 // ============================================================
-// PART 4 — Core Search
+// PART 4 — Context Line Extraction
+// ============================================================
+
+/**
+ * 매치 라인 주변의 컨텍스트 라인을 추출한다.
+ * lineIndex는 0-based.
+ */
+function extractContextLines(
+  lines: string[],
+  lineIndex: number,
+  count: number = CONTEXT_LINES,
+): { before: string[]; after: string[] } {
+  const startBefore = Math.max(0, lineIndex - count);
+  const endAfter = Math.min(lines.length - 1, lineIndex + count);
+
+  const before: string[] = [];
+  for (let i = startBefore; i < lineIndex; i++) {
+    before.push(lines[i]);
+  }
+
+  const after: string[] = [];
+  for (let i = lineIndex + 1; i <= endAfter; i++) {
+    after.push(lines[i]);
+  }
+
+  return { before, after };
+}
+
+// IDENTITY_SEAL: PART-4 | role=ContextLineExtraction | inputs=lines,lineIndex,count | outputs={before,after}
+
+// ============================================================
+// PART 5 — Core Search
 // ============================================================
 
 /**
@@ -126,7 +175,16 @@ export function searchCode(
       if (results.length >= maxResults) break;
       pattern.lastIndex = 0;
       if (pattern.test(file.name)) {
-        results.push({ fileId: file.id, fileName: file.name, line: 0, column: 0, lineContent: file.name, matchLength: query.length });
+        results.push({
+          fileId: file.id,
+          fileName: file.name,
+          line: 0,
+          column: 0,
+          lineContent: file.name,
+          matchLength: query.length,
+          contextBefore: [],
+          contextAfter: [],
+        });
       }
     }
     return results;
@@ -146,6 +204,7 @@ export function searchCode(
 
       let match: RegExpExecArray | null;
       while ((match = pattern.exec(line)) !== null) {
+        const ctx = extractContextLines(lines, i);
         results.push({
           fileId: file.id,
           fileName: file.name,
@@ -153,6 +212,8 @@ export function searchCode(
           column: match.index + 1,
           lineContent: line,
           matchLength: match[0].length,
+          contextBefore: ctx.before,
+          contextAfter: ctx.after,
         });
 
         if (results.length >= maxResults) break;
@@ -168,10 +229,97 @@ export function searchCode(
   return results;
 }
 
-// IDENTITY_SEAL: PART-4 | role=CoreSearch | inputs=query,FileNode[],SearchOptions | outputs=SearchResult[]
+// IDENTITY_SEAL: PART-5 | role=CoreSearch | inputs=query,FileNode[],SearchOptions | outputs=SearchResult[]
 
 // ============================================================
-// PART 5 — Replace All
+// PART 6 — File Grouping
+// ============================================================
+
+/**
+ * 검색 결과를 파일별로 그룹화한다.
+ * 매치 수가 많은 파일이 먼저 온다.
+ */
+export function groupResultsByFile(results: SearchResult[]): FileSearchGroup[] {
+  const map = new Map<string, FileSearchGroup>();
+
+  for (const r of results) {
+    let group = map.get(r.fileId);
+    if (!group) {
+      group = {
+        filePath: r.fileId,
+        fileName: r.fileName,
+        matchCount: 0,
+        results: [],
+      };
+      map.set(r.fileId, group);
+    }
+    group.matchCount++;
+    group.results.push(r);
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.matchCount - a.matchCount);
+}
+
+// IDENTITY_SEAL: PART-6 | role=FileGrouping | inputs=SearchResult[] | outputs=FileSearchGroup[]
+
+// ============================================================
+// PART 7 — Replace Preview
+// ============================================================
+
+/**
+ * 코드 문자열에서 find/replace를 수행했을 때
+ * 변경되는 각 라인의 before/after를 미리 보여준다.
+ *
+ * @param code      원본 코드
+ * @param find      찾을 문자열 또는 정규식 패턴
+ * @param replace   대체 문자열
+ * @param isRegex   true면 find를 정규식으로 처리
+ * @returns 변경이 일어나는 라인별 diff 배열
+ */
+export function previewReplace(
+  code: string,
+  find: string,
+  replace: string,
+  isRegex: boolean,
+): ReplacePreviewEntry[] {
+  if (!find) return [];
+
+  let pattern: RegExp;
+  try {
+    pattern = isRegex
+      ? new RegExp(find, 'g')
+      : new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+  } catch {
+    return [];
+  }
+
+  const lines = code.split('\n');
+  const entries: ReplacePreviewEntry[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const before = lines[i];
+    pattern.lastIndex = 0;
+
+    if (pattern.test(before)) {
+      pattern.lastIndex = 0;
+      const after = before.replace(pattern, replace);
+      if (after !== before) {
+        entries.push({
+          lineNumber: i + 1,
+          before,
+          after,
+        });
+      }
+    }
+  }
+
+  return entries;
+}
+
+// IDENTITY_SEAL: PART-7 | role=ReplacePreview | inputs=code,find,replace,isRegex | outputs=ReplacePreviewEntry[]
+
+// ============================================================
+// PART 8 — Replace All
 // ============================================================
 
 /**
@@ -210,10 +358,10 @@ export function replaceAll(
   return cloneAndReplace(files);
 }
 
-// IDENTITY_SEAL: PART-5 | role=ReplaceAll | inputs=query,replacement,FileNode[],SearchOptions | outputs=FileNode[]
+// IDENTITY_SEAL: PART-8 | role=ReplaceAll | inputs=query,replacement,FileNode[],SearchOptions | outputs=FileNode[]
 
 // ============================================================
-// PART 6 — Web Code Search (AI-simulated)
+// PART 9 — Web Code Search (AI-simulated)
 // ============================================================
 
 import { streamChat } from './ai-providers';
@@ -227,6 +375,8 @@ export interface WebSearchResult {
   relevance: number;
   stars?: number;
   license?: string;
+  isAIEstimate: boolean;
+  disclaimer: string;
 }
 
 const WEB_SEARCH_SYSTEM = `You are a code search engine. Given a query, return relevant results from npm, GitHub, StackOverflow, and documentation sites.
@@ -241,9 +391,13 @@ Respond ONLY with a JSON array of results. Each result must have:
 
 Return 5-10 results sorted by relevance. No markdown, no explanation, just the JSON array.`;
 
+const AI_ESTIMATE_DISCLAIMER = 'AI-estimated results — may not reflect actual web content';
+
 /**
  * AI-simulated web code search.
  * Uses streamChat to generate search results based on the AI's training data.
+ *
+ * 모든 결과에 isAIEstimate: true 플래그와 disclaimer가 자동 부착된다.
  */
 export async function searchWeb(
   query: string,
@@ -275,14 +429,21 @@ export async function searchWeb(
     if (!jsonMatch) return [];
     const parsed = JSON.parse(jsonMatch[0]) as unknown[];
     return parsed
-      .filter((item): item is WebSearchResult =>
+      .filter((item): item is Record<string, unknown> =>
         typeof item === 'object' && item !== null &&
         'title' in item && 'source' in item && 'url' in item &&
         'snippet' in item && 'relevance' in item
       )
       .map(item => ({
-        ...item,
+        title: String(item.title),
+        source: item.source as WebSearchResult['source'],
+        url: String(item.url),
+        snippet: String(item.snippet),
         relevance: Math.max(0, Math.min(1, Number(item.relevance) || 0)),
+        stars: typeof item.stars === 'number' ? item.stars : undefined,
+        license: typeof item.license === 'string' ? item.license : undefined,
+        isAIEstimate: true,
+        disclaimer: AI_ESTIMATE_DISCLAIMER,
       }))
       .sort((a, b) => b.relevance - a.relevance);
   } catch {
@@ -290,4 +451,4 @@ export async function searchWeb(
   }
 }
 
-// IDENTITY_SEAL: PART-6 | role=WebCodeSearch | inputs=query,sources,signal | outputs=WebSearchResult[]
+// IDENTITY_SEAL: PART-9 | role=WebCodeSearch | inputs=query,sources,signal | outputs=WebSearchResult[]

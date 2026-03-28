@@ -31,8 +31,6 @@ export interface PairComment {
   reasoning: string;
 }
 
-// IDENTITY_SEAL: PART-1 | role=shared types & internal helpers | inputs=none | outputs=types, callAI, parseJSON
-
 /** Internal: collect full streamed response into a string */
 async function callAI(
   systemInstruction: string,
@@ -59,16 +57,14 @@ async function callAI(
 
 /** Internal: extract the first JSON block from an AI response */
 function extractJSON(text: string): string {
-  // Try fenced code block first
   const fenced = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
   if (fenced) return fenced[1].trim();
-  // Try raw JSON array or object
   const raw = text.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
   if (raw) return raw[1].trim();
   return text.trim();
 }
 
-/** Safe JSON parse with fallback */
+/** Safe JSON parse with fallback (kept for backward compat in non-safeAICall paths) */
 function safeParseJSON<T>(text: string, fallback: T): T {
   try {
     return JSON.parse(extractJSON(text)) as T;
@@ -76,6 +72,135 @@ function safeParseJSON<T>(text: string, fallback: T): T {
     return fallback;
   }
 }
+
+// IDENTITY_SEAL: PART-1 | role=shared types & internal helpers | inputs=none | outputs=types, callAI, extractJSON, safeParseJSON
+
+// ============================================================
+// PART 1.5 — Resilient AI Call Wrapper (safeAICall)
+// ============================================================
+
+/**
+ * Schema validator: checks that every item in a value has the required fields
+ * with correct types. Accepts a map of fieldName -> expected typeof string.
+ */
+function validateSchema<T>(
+  value: T,
+  requiredFields: Record<string, string>,
+): boolean {
+  if (value === null || value === undefined) return false;
+  // For arrays, validate each element
+  if (Array.isArray(value)) {
+    return value.every((item) => validateSingleItem(item, requiredFields));
+  }
+  // For single objects
+  return validateSingleItem(value, requiredFields);
+}
+
+function validateSingleItem(
+  item: unknown,
+  requiredFields: Record<string, string>,
+): boolean {
+  if (item === null || item === undefined || typeof item !== 'object') return false;
+  const record = item as Record<string, unknown>;
+  for (const [field, expectedType] of Object.entries(requiredFields)) {
+    if (!(field in record)) return false;
+    if (typeof record[field] !== expectedType) return false;
+  }
+  return true;
+}
+
+/** Delay helper for exponential backoff */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface SafeAICallOptions<T> {
+  systemInstruction: string;
+  userMessage: string;
+  fallback: T;
+  signal?: AbortSignal;
+  temperature?: number;
+  /** Required field names -> typeof string (e.g. { line: 'number', message: 'string' }) */
+  schema?: Record<string, string>;
+  /** Post-parse filter for array results (e.g. remove invalid line numbers) */
+  postFilter?: (item: unknown) => boolean;
+}
+
+/**
+ * Resilient AI call wrapper with retry, JSON extraction, schema validation.
+ * - Retries up to 2 times with exponential backoff (1s, 2s)
+ * - extractJSON + JSON.parse with try/catch
+ * - Schema validation: checks required fields exist + correct types
+ * - On final failure: returns the provided fallback value (never throws except AbortError)
+ */
+async function safeAICall<T>(opts: SafeAICallOptions<T>): Promise<T> {
+  const maxRetries = 2;
+  const backoffMs = [1000, 2000];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const raw = await callAI(
+        opts.systemInstruction,
+        opts.userMessage,
+        opts.signal,
+        opts.temperature ?? 0.3,
+      );
+
+      if (!raw) {
+        if (attempt < maxRetries) {
+          console.warn(`[ai-features] empty response, retry ${attempt + 1}/${maxRetries}`);
+          await delay(backoffMs[attempt]);
+          continue;
+        }
+        return opts.fallback;
+      }
+
+      const jsonStr = extractJSON(raw);
+      let parsed: T;
+      try {
+        parsed = JSON.parse(jsonStr) as T;
+      } catch {
+        console.warn(`[ai-features] JSON parse failed on attempt ${attempt + 1}`, jsonStr.slice(0, 200));
+        if (attempt < maxRetries) {
+          await delay(backoffMs[attempt]);
+          continue;
+        }
+        return opts.fallback;
+      }
+
+      // Schema validation
+      if (opts.schema) {
+        if (!validateSchema(parsed, opts.schema)) {
+          console.warn(`[ai-features] schema validation failed on attempt ${attempt + 1}`);
+          if (attempt < maxRetries) {
+            await delay(backoffMs[attempt]);
+            continue;
+          }
+          return opts.fallback;
+        }
+      }
+
+      // Post-filter for arrays
+      if (opts.postFilter && Array.isArray(parsed)) {
+        return (parsed as unknown[]).filter(opts.postFilter) as unknown as T;
+      }
+
+      return parsed;
+    } catch (err) {
+      // AbortError always propagates immediately
+      if (err instanceof DOMException && err.name === 'AbortError') throw err;
+      console.warn(`[ai-features] safeAICall error on attempt ${attempt + 1}:`, err);
+      if (attempt < maxRetries) {
+        await delay(backoffMs[attempt]);
+        continue;
+      }
+    }
+  }
+
+  return opts.fallback;
+}
+
+// IDENTITY_SEAL: PART-1.5 | role=resilient AI call wrapper | inputs=prompt,schema,fallback | outputs=validated T or fallback
 
 // ============================================================
 // PART 2 — Hover Explanation, Auto-Import, Docstring, Lint
@@ -107,9 +232,13 @@ export async function findMissingImports(
   language: string,
   signal?: AbortSignal,
 ): Promise<ImportSuggestion[]> {
-  const system = `You are an import analyzer for ${language}. Analyze the code and find identifiers that are used but not imported or declared. Return a JSON array of objects with "module" (package/path) and "importStatement" (the full import line). Only include high-confidence suggestions. If none are missing, return an empty array []. Return ONLY the JSON array, no explanation.`;
-  const result = await callAI(system, code, signal);
-  return safeParseJSON<ImportSuggestion[]>(result, []);
+  return safeAICall<ImportSuggestion[]>({
+    systemInstruction: `You are an import analyzer for ${language}. Analyze the code and find identifiers that are used but not imported or declared. Return a JSON array of objects with "module" (package/path) and "importStatement" (the full import line). Only include high-confidence suggestions. If none are missing, return an empty array []. Return ONLY the JSON array, no explanation.`,
+    userMessage: code,
+    fallback: [],
+    signal,
+    schema: { module: 'string', importStatement: 'string' },
+  });
 }
 
 /**
@@ -134,15 +263,29 @@ export async function generateDocstring(
 /**
  * 4. AI Lint (code quality check)
  * Returns structured lint results with line numbers, messages, and optional fixes.
+ * @param totalLines optional — filters out results with line > totalLines
  */
 export async function lintCode(
   code: string,
   language: string,
   signal?: AbortSignal,
+  totalLines?: number,
 ): Promise<LintResult[]> {
-  const system = `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.`;
-  const result = await callAI(system, code, signal);
-  return safeParseJSON<LintResult[]>(result, []);
+  return safeAICall<LintResult[]>({
+    systemInstruction: `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.`,
+    userMessage: code,
+    fallback: [],
+    signal,
+    schema: { line: 'number', message: 'string', severity: 'string' },
+    postFilter: (item) => {
+      const r = item as Record<string, unknown>;
+      if (typeof r.line !== 'number' || r.line < 1) return false;
+      if (totalLines !== undefined && r.line > totalLines) return false;
+      const validSeverities = ['error', 'warning', 'info'];
+      if (!validSeverities.includes(r.severity as string)) return false;
+      return true;
+    },
+  });
 }
 
 // ============================================================
@@ -161,10 +304,13 @@ export async function suggestRename(
   language: string,
   signal?: AbortSignal,
 ): Promise<string[]> {
-  const system = `You are a naming expert for ${language}. Given code containing the identifier "${oldName}", suggest 3-5 better, more descriptive names. Follow ${language} naming conventions. Return a JSON array of strings. Return ONLY the JSON array.`;
-  const result = await callAI(system, code, signal);
-  const parsed = safeParseJSON<string[]>(result, []);
-  return parsed.filter((n) => typeof n === 'string' && n.length > 0);
+  const raw = await safeAICall<string[]>({
+    systemInstruction: `You are a naming expert for ${language}. Given code containing the identifier "${oldName}", suggest 3-5 better, more descriptive names. Follow ${language} naming conventions. Return a JSON array of strings. Return ONLY the JSON array.`,
+    userMessage: code,
+    fallback: [],
+    signal,
+  });
+  return raw.filter((n) => typeof n === 'string' && n.length > 0);
 }
 
 /**
@@ -177,10 +323,13 @@ export async function semanticSearchReplace(
   language: string,
   signal?: AbortSignal,
 ): Promise<{ find: string; replace: string }[]> {
-  const system = `You are a code transformation assistant for ${language}. The user describes a change they want. Generate an array of find/replace pairs to apply. Return a JSON array of {"find": string, "replace": string}. Use exact string matches from the code. Return ONLY the JSON array.`;
-  const userMsg = `Code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nRequested change: ${description}`;
-  const result = await callAI(system, userMsg, signal);
-  return safeParseJSON<{ find: string; replace: string }[]>(result, []);
+  return safeAICall<{ find: string; replace: string }[]>({
+    systemInstruction: `You are a code transformation assistant for ${language}. The user describes a change they want. Generate an array of find/replace pairs to apply. Return a JSON array of {"find": string, "replace": string}. Use exact string matches from the code. Return ONLY the JSON array.`,
+    userMessage: `Code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nRequested change: ${description}`,
+    fallback: [],
+    signal,
+    schema: { find: 'string', replace: 'string' },
+  });
 }
 
 /**
@@ -209,17 +358,20 @@ export async function getCodeActions(
   language: string,
   signal?: AbortSignal,
 ): Promise<CodeAction[]> {
-  const system = `You are a quick-fix assistant for ${language}. Given code and an error message, suggest 1-3 fixes. Return a JSON array of {"title": string, "edit": string}. "title" is a short description of the fix. "edit" is the corrected code snippet that replaces the problematic section. Return ONLY the JSON array.`;
-  const userMsg = `Error: ${errorMessage}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``;
-  const result = await callAI(system, userMsg, signal);
-  return safeParseJSON<CodeAction[]>(result, []);
+  return safeAICall<CodeAction[]>({
+    systemInstruction: `You are a quick-fix assistant for ${language}. Given code and an error message, suggest 1-3 fixes. Return a JSON array of {"title": string, "edit": string}. "title" is a short description of the fix. "edit" is the corrected code snippet that replaces the problematic section. Return ONLY the JSON array.`,
+    userMessage: `Error: ${errorMessage}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``,
+    fallback: [],
+    signal,
+    schema: { title: 'string', edit: 'string' },
+  });
 }
 
 // ============================================================
 // PART 4 — Pair Programming, Diff Stream, Tool Use, Model Router
 // ============================================================
 
-// IDENTITY_SEAL: PART-4 | role=collaboration & orchestration | inputs=code,context,tool | outputs=comments,diffs,toolResults,modelId
+// IDENTITY_SEAL: PART-4 | role=collaboration & orchestration | inputs=code,context,tool | outputs=comments,diffs,toolResults,modelId,cost
 
 /**
  * 9. Pair Programming (comment-based collaboration)
@@ -231,12 +383,13 @@ export async function pairProgramComment(
   language: string,
   signal?: AbortSignal,
 ): Promise<PairComment> {
-  const system = `You are a pair programmer reviewing ${language} code. Given the code and the developer's context/question, provide a constructive suggestion. Return a JSON object: {"suggestion": string, "reasoning": string}. "suggestion" is the actionable advice or code change. "reasoning" is a 1-2 sentence justification. Return ONLY the JSON object.`;
-  const userMsg = `Context: ${context}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``;
-  const result = await callAI(system, userMsg, signal, 0.4);
-  return safeParseJSON<PairComment>(result, {
-    suggestion: 'No suggestion available.',
-    reasoning: '',
+  return safeAICall<PairComment>({
+    systemInstruction: `You are a pair programmer reviewing ${language} code. Given the code and the developer's context/question, provide a constructive suggestion. Return a JSON object: {"suggestion": string, "reasoning": string}. "suggestion" is the actionable advice or code change. "reasoning" is a 1-2 sentence justification. Return ONLY the JSON object.`,
+    userMessage: `Context: ${context}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``,
+    fallback: { suggestion: 'No suggestion available.', reasoning: '' },
+    signal,
+    temperature: 0.4,
+    schema: { suggestion: 'string', reasoning: 'string' },
   });
 }
 
@@ -289,8 +442,44 @@ export async function executeToolCall(
 }
 
 /**
+ * Cost tier definitions per task type.
+ * Maps task type to desired costTier priority.
+ */
+const TASK_COST_MAP: Record<string, ('free' | 'cheap' | 'moderate' | 'expensive')[]> = {
+  completion: ['free', 'cheap', 'moderate', 'expensive'],
+  explanation: ['cheap', 'moderate', 'free', 'expensive'],
+  review: ['expensive', 'moderate', 'cheap', 'free'],
+  generation: ['expensive', 'moderate', 'cheap', 'free'],
+};
+
+/**
+ * Estimates relative cost tier label for a given task type and current provider.
+ * Returns 'free' | 'cheap' | 'moderate' | 'expensive'.
+ */
+export function estimateTaskCost(
+  task: 'completion' | 'review' | 'generation' | 'explanation',
+): 'free' | 'cheap' | 'moderate' | 'expensive' {
+  const provider = getActiveProvider();
+  const def = PROVIDERS[provider];
+  if (!def) return 'moderate';
+
+  const providerTier = def.capabilities.costTier;
+
+  // If the task prefers cheap models and the provider has a fast/small model,
+  // cost is effectively at most the provider's base tier
+  if (task === 'completion' || task === 'explanation') {
+    const hasFast = def.models.some((m) => /mini|flash|instant|nano|small|haiku/i.test(m));
+    if (hasFast && (providerTier === 'expensive' || providerTier === 'moderate')) {
+      return 'cheap';
+    }
+  }
+
+  return providerTier;
+}
+
+/**
  * 12. Model Router (select best model for task)
- * Selects the optimal model string based on task type and active provider.
+ * Selects the optimal model string based on task type, active provider, and cost awareness.
  */
 export function selectModel(
   task: 'completion' | 'review' | 'generation' | 'explanation',
@@ -301,18 +490,26 @@ export function selectModel(
 
   const models = def.models;
 
-  // Strategy: fast/cheap models for completion, best model for review/generation
-  const preferFast = task === 'completion' || task === 'explanation';
-
-  if (preferFast && models.length > 1) {
-    // Pick the smallest/fastest model (typically the last or one with "mini"/"flash"/"instant")
-    const fast = models.find(
-      (m) => /mini|flash|instant|nano|small|haiku/i.test(m),
-    );
-    return fast ?? models[0];
+  // Cost-aware routing: completion -> cheapest, explanation -> mid-tier, review/generation -> best
+  if (task === 'completion') {
+    // Prefer the smallest/cheapest model available
+    const cheapPatterns = /mini|flash|instant|nano|small|haiku/i;
+    const cheap = models.find((m) => cheapPatterns.test(m));
+    return cheap ?? models[models.length - 1] ?? def.defaultModel;
   }
 
-  // For review/generation, use the default (typically the most capable)
+  if (task === 'explanation') {
+    // Mid-tier: try to find something between default and cheapest
+    const cheapPatterns = /mini|flash|instant|nano|small|haiku/i;
+    const bestPatterns = /pro|large|gpt-4o(?!-mini)|sonnet|opus/i;
+    const mid = models.find((m) => !cheapPatterns.test(m) && !bestPatterns.test(m));
+    if (mid) return mid;
+    // Fall through: pick cheapest if no mid-tier, but prefer faster than default
+    const cheap = models.find((m) => cheapPatterns.test(m));
+    return cheap ?? def.defaultModel;
+  }
+
+  // review / generation -> best model (default)
   return def.defaultModel;
 }
 
@@ -333,7 +530,6 @@ export async function generateCommitMessage(
   const system = `You are a commit message generator. Given a git diff, write a concise conventional commit message (type: description). Use lowercase type (feat, fix, refactor, chore, docs, style, test, perf). The description should be under 72 characters and describe what changed and why. If multiple changes are present, focus on the most significant one. Output ONLY the commit message, nothing else.`;
   const result = await callAI(system, diff, signal);
   if (!result) return 'chore: update code';
-  // Ensure single line
   return result.split('\n')[0].trim();
 }
 
