@@ -273,6 +273,7 @@ export function getActiveProvider(): ProviderId {
 }
 
 export function setActiveProvider(id: ProviderId): void {
+  if (typeof window === "undefined") return;
   localStorage.setItem("noa_active_provider", id);
   localStorage.removeItem(LEGACY_PROVIDER_KEY);
 }
@@ -284,6 +285,7 @@ export function getApiKey(providerId: ProviderId): string {
 }
 
 export function setApiKey(providerId: ProviderId, key: string): void {
+  if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
   localStorage.setItem(def.storageKey, obfuscateKey(key));
   // Store key creation timestamp for age tracking
@@ -342,6 +344,7 @@ export function getPreferredModel(providerId: ProviderId): string {
 }
 
 export function setActiveModel(model: string): void {
+  if (typeof window === "undefined") return;
   // 커스텀 모델명도 그대로 저장 — BYOK/로컬 LLM에서 사용자 입력 모델 지원
   const provider = getActiveProvider();
   const trimmed = model.trim();
