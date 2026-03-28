@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
 import { Hash, FileText, X, Search } from "lucide-react";
 
 export interface SymbolEntry {
@@ -90,7 +90,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
   }, [query, symbols]);
 
   useEffect(() => {
-    setSelectedIndex(0);
+    startTransition(() => setSelectedIndex(0));
   }, [query]);
 
   const handleKeyDown = useCallback(

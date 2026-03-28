@@ -99,7 +99,9 @@ export function useCodeStudioKeyboard(
   const bindingsRef = useRef<Map<string, ShortcutBinding>>(new Map());
   const suppressedRef = useRef(false);
   const modalRef = useRef(modalOpen);
-  modalRef.current = modalOpen;
+  useEffect(() => {
+    modalRef.current = modalOpen;
+  }, [modalOpen]);
 
   // Initialize
   useEffect(() => {

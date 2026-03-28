@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useCallback, useEffect, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, useRef, useCallback, useEffect, type MouseEvent as ReactMouseEvent, useMemo } from "react";
 import { ZoomIn, ZoomOut, Maximize2, Download, Plus, Trash2, Move } from "lucide-react";
 
 export interface CanvasNode {
@@ -297,13 +297,25 @@ export default function CanvasPanel({
     setSelectedId(null);
   };
 
-  const rect = containerRef.current?.getBoundingClientRect();
-  const viewBox = {
+  const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setContainerSize({ w: width, h: height });
+    });
+    ro.observe(el);
+    const rect = el.getBoundingClientRect();
+    setContainerSize({ w: rect.width, h: rect.height });
+    return () => ro.disconnect();
+  }, []);
+  const viewBox = useMemo(() => ({
     x: -offset.x / zoom,
     y: -offset.y / zoom,
-    w: (rect?.width ?? 800),
-    h: (rect?.height ?? 600),
-  };
+    w: containerSize.w,
+    h: containerSize.h,
+  }), [offset.x, offset.y, zoom, containerSize]);
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#12121a]">

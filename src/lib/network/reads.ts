@@ -1,20 +1,14 @@
-import type { User } from "firebase/auth";
 import {
-  collection, deleteDoc, doc, documentId, getDoc, getDocs, increment,
-  limit, orderBy, query, setDoc, startAfter, updateDoc, writeBatch, where,
+  collection, deleteDoc, doc, documentId, getDoc, getDocs,
+  limit, orderBy, query, setDoc, startAfter, where,
   type QueryConstraint,
 } from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
 import {
   type BoardType, type BookmarkRecord, type CommentRecord,
-  type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
-  type CreatePostInput, type CreateSettlementInput,
-  type PlanetRecord, type PlanetStatus, type PostRecord,
-  type ReactionRecord, type ReactionType, type ReportReason,
-  type ReportRecord, type SettlementRecord, type UserRecord,
-  REPORT_TYPE_TO_BOARD_TYPE,
+  type PlanetRecord, type PostRecord,
+  type SettlementRecord,
 } from "@/lib/network-types";
-import { requireDb, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus } from "./helpers";
+import { requireDb, COLLECTIONS, nowIso } from "./helpers";
 
 // ============================================================
 // PART 4 — READ QUERIES

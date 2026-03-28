@@ -1,22 +1,16 @@
-import type { User } from "firebase/auth";
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, increment,
-  limit, orderBy, query, setDoc, updateDoc, writeBatch, where,
+  collection, doc, getDoc, getDocs, increment,
+  limit, orderBy, query, updateDoc, writeBatch, where,
   startAfter,
   type QueryConstraint,
   type DocumentSnapshot,
 } from "firebase/firestore";
-import { getDb, auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import {
-  type BoardType, type BookmarkRecord, type CommentRecord,
-  type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
-  type CreatePostInput, type CreateSettlementInput,
-  type PlanetRecord, type PlanetStatus, type PostRecord,
-  type ReactionRecord, type ReactionType, type ReportReason,
-  type ReportRecord, type SettlementRecord, type UserRecord,
-  REPORT_TYPE_TO_BOARD_TYPE,
+  type CommentRecord,
+  type ReactionRecord, type ReactionType,
 } from "@/lib/network-types";
-import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus } from "./helpers";
+import { requireDb, normalizeText, COLLECTIONS, nowIso } from "./helpers";
 
 // ============================================================
 // PART 1 — OWNERSHIP GUARD

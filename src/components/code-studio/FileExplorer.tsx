@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, startTransition } from "react";
 import {
   ChevronRight, ChevronDown, FileCode, Folder, FolderOpen,
   Plus, FoldVertical, GripVertical,
@@ -121,8 +121,10 @@ function TreeNode({
   // Collapse all when trigger fires
   const [prevCollapse, setPrevCollapse] = useState(collapseAllTrigger);
   if (prevCollapse !== collapseAllTrigger) {
-    setPrevCollapse(collapseAllTrigger);
-    if (collapseAllTrigger > 0) setExpanded(false);
+    startTransition(() => {
+      setPrevCollapse(collapseAllTrigger);
+      if (collapseAllTrigger > 0) setExpanded(false);
+    });
   }
 
   useEffect(() => {
