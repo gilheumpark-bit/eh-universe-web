@@ -1328,3 +1328,117 @@ main[class~="pt-14"] {
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* ============================================================
+   Code Studio — Animation System
+   ============================================================ */
+
+@keyframes cs-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cs-fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cs-slide-in-left {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-bounce-dots {
+  0%, 80%, 100% { opacity: 0.4; }
+  40% { opacity: 1; }
+}
+
+.cs-animate-fade-in { animation: cs-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-scale { animation: cs-fade-in-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-slide-left { animation: cs-slide-in-left 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-slide-right { animation: cs-slide-in-right 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.cs-delay-1 { animation-delay: 50ms; }
+.cs-delay-2 { animation-delay: 100ms; }
+.cs-delay-3 { animation-delay: 150ms; }
+.cs-delay-4 { animation-delay: 200ms; }
+
+/* Hover lift */
+.cs-hover-lift {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cs-hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cs-hover-lift:active { transform: translateY(0); }
+
+/* Streaming dots */
+.cs-streaming-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--color-text-secondary);
+  animation: cs-bounce-dots 1.4s infinite;
+}
+.cs-streaming-dot:nth-child(2) { animation-delay: 0.2s; }
+.cs-streaming-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Chat bubble entrance */
+.cs-chat-bubble { animation: cs-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Panel transitions */
+.cs-panel-enter { animation: cs-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ============================================================
+   Code Studio — Responsive (Mobile/Tablet)
+   ============================================================ */
+
+@media (max-width: 767px) {
+  /* 코드 스튜디오 모바일: 사이드바 숨김, 풀스크린 에디터 */
+  .cs-sidebar-mobile { display: none; }
+  .cs-editor-mobile { width: 100vw; }
+  .cs-right-panel-mobile { position: fixed; inset: 0; z-index: 40; }
+  
+  /* 터치 타겟 최소 44px */
+  .cs-touch-target { min-height: 44px; min-width: 44px; }
+  
+  /* 입력 줌 방지 */
+  .cs-input-mobile { font-size: 16px !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* 태블릿: 터치 타겟 강화 */
+  .cs-touch-target { min-height: 44px; min-width: 44px; }
+}
+
+/* 터치 디바이스 */
+@media (hover: none) and (pointer: coarse) {
+  .cs-touch-scrollbar::-webkit-scrollbar { width: 8px; }
+  .cs-touch-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(169, 169, 176, 0.4);
+    border-radius: 4px;
+  }
+}
+
+/* ============================================================
+   Code Studio — Resize Handle
+   ============================================================ */
+
+.cs-resize-handle {
+  width: 3px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+.cs-resize-handle:hover {
+  background: var(--color-accent-blue);
+}
+.cs-resize-handle:active {
+  background: var(--color-accent-blue);
+  box-shadow: 0 0 8px rgba(92, 143, 214, 0.3);
+}

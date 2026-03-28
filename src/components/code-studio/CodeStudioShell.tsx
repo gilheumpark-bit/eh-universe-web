@@ -262,11 +262,11 @@ Respond concisely. Use markdown code blocks for code.`;
           </div>
         )}
         {messages.map((m) => (
-          <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-lg px-3 py-2 text-[12px] leading-relaxed ${
+          <div key={m.id} className={`flex gap-2 cs-chat-bubble ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[12px] leading-relaxed ${
               m.role === "user"
-                ? "bg-accent-purple/15 text-text-primary"
-                : "bg-white/[0.04] text-text-secondary"
+                ? "bg-accent-purple/20 text-text-primary border border-accent-purple/10"
+                : "bg-white/[0.04] text-text-secondary border border-white/6"
             }`}>
               <pre className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-[11px]">{m.content || (isGenerating ? "..." : "")}</pre>
               {m.role === "assistant" && m.content.includes("```") && (
@@ -943,6 +943,9 @@ export default function CodeStudioShell() {
         </div>
       </div>
 
+      {/* Resize Handle */}
+      <div className="cs-resize-handle" />
+
       {/* Center — Editor + Terminal */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Breadcrumb */}
@@ -1138,7 +1141,7 @@ export default function CodeStudioShell() {
 
           {/* Right Panel */}
           {rightPanel && (
-            <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden">
+            <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
               {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
               {rightPanel === "pipeline" && <PipelinePanel stages={pipelineStages} />}
               {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f))} />}
