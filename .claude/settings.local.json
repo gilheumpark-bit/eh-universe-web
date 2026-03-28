@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "4"
+  },
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
@@ -84,7 +87,49 @@
       "Bash(/tmp/check_rates.txt:*)",
       "Read(//tmp/**)",
       "Bash(npx kill-port:*)",
-      "Bash(taskkill //F //FI \"WINDOWTITLE eq next*\")"
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq next*\")",
+      "Bash(grep -n \"aria-label\\\\|aria-describedby\\\\|role=\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/components/*.tsx)",
+      "Bash(grep -n \"#[0-9a-f]\\\\{3,6\\\\}\" \"/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/app/globals.css\")",
+      "Bash(gh run:*)",
+      "Bash(grep -r \"sk-\\\\|AIza\\\\|ghp_\\\\|AKIA\\\\|password.*=\" '/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(find '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web' -type f \\\\\\(-name *.test.ts -o -name *.spec.ts -o -name *firestore*test* \\\\\\))",
+      "Bash(grep -r \"semantic-release\\\\|release\\\\|version.*bump\" . --include=*.json --include=*.yml --include=*.yaml)",
+      "Bash(find '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web' -type f -name *.test.* -o -name *.spec.*)",
+      "Bash(find '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' -type f \\\\\\(-name *.test.* -o -name *.spec.* \\\\\\))",
+      "Bash(find '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web' -path */node_modules -prune -o -type f -name *firestore* -print)",
+      "mcp__scheduled-tasks__list_scheduled_tasks",
+      "Read(//c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/$HOME/.claude/**)",
+      "Read(//c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/$HOME/**)",
+      "Bash(git fetch:*)",
+      "Bash(npx firebase:*)",
+      "Bash(where firebase:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase login:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm root:*)",
+      "Read(//c/Users/sung4/AppData/Roaming/npm/**)",
+      "Bash(firebase login:ci --no-localhost)",
+      "Bash(CI=\"\" FIREBASE_CLI_INTERACTIVE=1 firebase login --no-localhost)",
+      "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\csl-ide-web' -maxdepth 2 -type f \\\\\\(-name README* -o -name *.md \\\\\\))",
+      "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src\\\\app\\\\api' -type f -name *.ts -o -name *.tsx)",
+      "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\csl-ide-web\\\\src\\\\app\\\\api' -type f -name *.ts)",
+      "Bash(grep -r \"login\\\\|signIn\\\\|signin\\\\|로그인\" '/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src' --include=*.tsx --include=*.ts -l)",
+      "Bash(CSL=\"C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\csl-ide-web\")",
+      "Bash(EH=\"C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\")",
+      "Bash(cp -r \"$CSL/src/lib/noa\" \"$EH/src/lib/noa\")",
+      "Bash(mkdir -p \"$EH/src/lib/code-pipeline\")",
+      "Bash(cp -r \"$CSL/src/lib/pipeline/\"* \"$EH/src/lib/code-pipeline/\")",
+      "Bash(for f:*)",
+      "Bash(do cp:*)",
+      "Bash(echo \"  copied $f\")",
+      "Bash(echo \"  skip $f\")",
+      "Bash(cp \"$CSL/src/lib/types.ts\" \"$EH/src/lib/cs-types.ts\")",
+      "Bash(grep -rn \"from ''''@/\\\\|from \"\"@/\" src/lib/noa/ --include=\"*.ts\")",
+      "Bash(grep -rn \"from ''''@/\\\\|from \"\"@/\" src/lib/code-pipeline/ --include=\"*.ts\")",
+      "Bash(grep -rn \"from ''''@/\\\\|from \"\"@/\" src/components/code-studio/ --include=\"*.tsx\")",
+      "Bash(rm src/components/code-studio/ActivityBar.tsx src/components/code-studio/ChatPanel.tsx src/components/code-studio/CommandPalette.tsx src/components/code-studio/DiffViewer.tsx src/components/code-studio/IDEContext.tsx src/components/code-studio/PipelinePanel.tsx src/components/code-studio/QuickOpen.tsx src/components/code-studio/SettingsPanel.tsx src/components/code-studio/StatusBar.tsx src/components/code-studio/ToastManager.tsx src/components/code-studio/Toolbar.tsx src/components/code-studio/WelcomeHome.tsx)",
+      "Bash(rm src/hooks/useCSLChat.ts src/hooks/useCSLAgent.ts src/hooks/useComposer.ts src/hooks/useFileSystem.ts src/hooks/useKeyboardShortcuts.ts)",
+      "Bash(rm src/lib/cs-ghost-text.ts src/lib/cs-ai-hover.ts src/lib/cs-autopilot.ts src/lib/cs-agent-orchestrator.ts src/lib/cs-fs-store.ts src/lib/cs-chat-history.ts src/lib/cs-file-icons.ts src/lib/cs-notifications.ts src/lib/cs-accessibility.ts src/lib/cs-i18n.ts src/lib/cs-code-search-engine.ts src/lib/cs-bug-finder.ts src/lib/cs-types.ts)"
     ]
   }
 }
