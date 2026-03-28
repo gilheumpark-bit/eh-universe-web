@@ -93,7 +93,7 @@ export function registerGhostTextProvider(
   language: string = '*',
 ): void {
   monaco.languages.registerInlineCompletionsProvider(language, {
-    provideInlineCompletions: async (model, position, _context, token) => {
+    provideInlineCompletions: async (model: import('monaco-editor').editor.ITextModel, position: import('monaco-editor').Position, _context: unknown, token: import('monaco-editor').CancellationToken) => {
       cancelGhostText();
 
       // API 키 없으면 스킵
@@ -137,8 +137,8 @@ export function registerGhostTextProvider(
         }, DEBOUNCE_MS);
       });
     },
-    freeInlineCompletions: () => {},
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any);
 }
 
 // IDENTITY_SEAL: role=GhostText | inputs=codeBefore,codeAfter,language | outputs=inline completion

@@ -21,7 +21,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const isKO = language === "KO";
   const [mode, setMode] = useState<TranslationMode>("fidelity");
   const [targetLang, setTargetLang] = useState<TranslationTarget>("EN");
-  const [band, setBand] = useState(BAND_META.default);
+  const [band, setBand] = useState<number>(BAND_META.default);
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
 
   const { translateEpisode, progress, isTranslating, abort } = useTranslation({
