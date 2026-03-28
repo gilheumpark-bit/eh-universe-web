@@ -209,7 +209,8 @@ const GENRE_DISPLAY: Record<string, Record<Lang, string>> = {
 function decodeWorldData(encoded: string | null): SharedWorldData | null {
   if (!encoded) return null;
   try {
-    const json = atob(encoded);
+    // UTF-8 safe base64 decoding
+    const json = decodeURIComponent(escape(atob(encoded)));
     const parsed = JSON.parse(json);
     if (!parsed.title || !parsed.genre) return null;
     return parsed as SharedWorldData;
@@ -241,7 +242,8 @@ function encodeWorldDataForStudio(data: SharedWorldData): string {
   if (data.tensionCurve) {
     config.sceneDirection = { tensionCurve: data.tensionCurve };
   }
-  return btoa(JSON.stringify(config));
+  // UTF-8 safe base64 encoding (한국어/일본어 등 멀티바이트 안전)
+  return btoa(unescape(encodeURIComponent(JSON.stringify(config))));
 }
 
 // IDENTITY_SEAL: PART-2 | role=Encode/Decode | inputs=base64 string | outputs=SharedWorldData
@@ -409,7 +411,7 @@ export default function WorldSharePage() {
   const handleStartWithWorld = () => {
     if (!worldData) return;
     const encoded = encodeWorldDataForStudio(worldData);
-    router.push(`/studio?import=${encoded}`);
+    router.push(`/studio?worldImport=${encoded}`);
   };
 
   // --- Loading state ---

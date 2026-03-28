@@ -419,7 +419,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               totalEpisodes: config.totalEpisodes,
               tensionCurve: config.sceneDirection?.tensionCurve,
             };
-            const encoded = btoa(JSON.stringify(worldPayload));
+            // UTF-8 safe base64 (한국어 제목/시놉시스 안전)
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(worldPayload))));
             const url = `${window.location.origin}/world/share?data=${encoded}`;
             navigator.clipboard.writeText(url).then(() => {
               setShareCopied(true);

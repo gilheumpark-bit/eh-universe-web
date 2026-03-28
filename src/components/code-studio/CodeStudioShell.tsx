@@ -590,6 +590,15 @@ function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
   });
 }
 
+/** 파일 트리에서 특정 파일의 content를 업데이트 */
+function updateContentInTree(tree: FileNode[], id: string, content: string): FileNode[] {
+  return tree.map((n) => {
+    if (n.id === id) return { ...n, content };
+    if (n.children) return { ...n, children: updateContentInTree(n.children, id, content) };
+    return n;
+  });
+}
+
 // ============================================================
 // PART 8 — Main Shell
 // ============================================================
@@ -693,7 +702,14 @@ function CodeStudioShellInner() {
       // Ctrl+N → 새 파일
       if (mod && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
       // Ctrl+W → 탭 닫기
-      if (mod && e.key === "w") { e.preventDefault(); if (activeFileId) setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; }); }
+      if (mod && e.key === "w") {
+        e.preventDefault();
+        if (activeFileId) {
+          const af = openFiles.find((f) => f.id === activeFileId);
+          if (af?.isDirty && !window.confirm("Unsaved changes will be lost. Close anyway?")) return;
+          setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; });
+        }
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -867,17 +883,23 @@ function CodeStudioShellInner() {
   // 탭 닫기
   const handleCloseTab = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const file = openFiles.find((f) => f.id === id);
+    if (file?.isDirty) {
+      if (!window.confirm("Unsaved changes will be lost. Close anyway?")) return;
+    }
     setOpenFiles((prev) => {
       const next = prev.filter((f) => f.id !== id);
       if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null);
       return next;
     });
-  }, [activeFileId]);
+  }, [activeFileId, openFiles]);
 
-  // 에디터 변경
+  // 에디터 변경 → openFiles + files 트리 양쪽 동기화
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (!activeFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: value, isDirty: true } : f));
+    // files 트리에도 반영 (IndexedDB 저장 대상)
+    setFiles((prev) => updateContentInTree(prev, activeFileId, value));
   }, [activeFileId]);
 
   // 파일 CRUD
