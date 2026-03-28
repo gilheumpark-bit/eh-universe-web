@@ -46,12 +46,13 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: strin
   const [exiting, setExiting] = useState(false);
   const [progress, setProgress] = useState(100);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   const Icon = iconMap[item.type];
   const colors = colorMap[item.type];
 
   useEffect(() => {
+    startRef.current = Date.now();
     // Slide-in
     const enterTimer = setTimeout(() => setEntering(false), 50);
     // Progress bar countdown

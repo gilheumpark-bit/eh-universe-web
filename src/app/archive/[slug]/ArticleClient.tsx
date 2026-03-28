@@ -40,18 +40,18 @@ export default function ArticleClient({ slug }: { slug: string }) {
                 <div className="text-accent-red text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider mb-4">
                   Failed to load archive
                 </div>
-                <a href="/archive" className="text-sm text-accent-purple hover:text-text-primary transition-colors">
+                <Link href="/archive" className="text-sm text-accent-purple hover:text-text-primary transition-colors">
                   ← Back to Archive
-                </a>
+                </Link>
               </>
             ) : (
               <>
                 <div className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider animate-pulse">
                   Loading archive...
                 </div>
-                <a href="/archive" className="mt-4 block text-[10px] text-text-tertiary hover:text-text-primary transition-colors">
+                <Link href="/archive" className="mt-4 block text-[10px] text-text-tertiary hover:text-text-primary transition-colors">
                   ← Back to Archive
-                </a>
+                </Link>
               </>
             )}
           </div>

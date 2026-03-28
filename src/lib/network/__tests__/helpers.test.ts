@@ -24,7 +24,7 @@ jest.mock('firebase/firestore', () => ({
   where: jest.fn(),
 }));
 jest.mock('firebase/auth', () => ({}));
-jest.mock('@/lib/firebase', () => ({ getDb: jest.fn() }));
+jest.mock('@/lib/firebase', () => ({ getDb: jest.fn(), collectionName: (name: string) => name }));
 
 import {
   stripHtml,
