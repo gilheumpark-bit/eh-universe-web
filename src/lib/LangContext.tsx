@@ -25,8 +25,7 @@ function applyLangToDOM(next: Lang): void {
   document.documentElement.lang = next === "jp" ? "ja" : next === "cn" ? "zh" : next;
 }
 
-function getInitialLang(): Lang {
-  if (typeof window === "undefined") return "ko";
+function detectLang(): Lang {
   const saved = localStorage.getItem("eh-lang");
   if (saved && VALID_LANGS.has(saved)) return saved as Lang;
   const browserLang = (navigator.language || "").toLowerCase();
@@ -37,9 +36,18 @@ function getInitialLang(): Lang {
 }
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(getInitialLang);
+  // Always start with 'ko' to match SSR — detect real language in useEffect
+  const [lang, setLang] = useState<Lang>("ko");
 
-  // Sync DOM lang attribute on mount and when lang changes
+  // Detect browser/saved language after hydration to avoid mismatch
+  useEffect(() => {
+    const detected = detectLang();
+    if (detected !== "ko") {
+      queueMicrotask(() => setLang(detected));
+    }
+  }, []);
+
+  // Sync DOM lang attribute when lang changes
   useEffect(() => {
     document.documentElement.lang = lang === "jp" ? "ja" : lang === "cn" ? "zh" : lang;
   }, [lang]);

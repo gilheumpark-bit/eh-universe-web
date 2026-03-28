@@ -85,7 +85,7 @@ describe('export-utils', () => {
 
     it('exports from manuscripts when available', () => {
       const session = makeSession();
-      (session.config as Record<string, unknown>).manuscripts = [
+      (session.config as unknown as Record<string, unknown>).manuscripts = [
         { episode: 1, title: 'EP1', content: 'First episode text.' },
         { episode: 2, title: 'EP2', content: 'Second episode text.' },
       ];

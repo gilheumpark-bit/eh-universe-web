@@ -539,8 +539,8 @@ describe('generateStoryStream', () => {
     mockStreamChat.mockResolvedValue('content');
 
     const history = [
-      { role: 'user' as const, content: 'Hello' },
-      { role: 'assistant' as const, content: 'Hi there' },
+      { id: 'h1', role: 'user' as const, content: 'Hello', timestamp: Date.now() },
+      { id: 'h2', role: 'assistant' as const, content: 'Hi there', timestamp: Date.now() },
     ];
 
     await generateStoryStream(baseConfig, 'draft', jest.fn(), { history });
@@ -556,9 +556,9 @@ describe('generateStoryStream', () => {
     mockStreamChat.mockResolvedValue('content');
 
     const history = [
-      { role: 'user' as const, content: 'Hello' },
-      { role: 'assistant' as const, content: '' },
-      { role: 'assistant' as const, content: 'Real reply' },
+      { id: 'h1', role: 'user' as const, content: 'Hello', timestamp: Date.now() },
+      { id: 'h2', role: 'assistant' as const, content: '', timestamp: Date.now() },
+      { id: 'h3', role: 'assistant' as const, content: 'Real reply', timestamp: Date.now() },
     ];
 
     await generateStoryStream(baseConfig, 'draft', jest.fn(), { history });

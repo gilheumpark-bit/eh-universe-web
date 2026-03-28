@@ -255,18 +255,21 @@ export async function POST(req: NextRequest) {
       result = await generateJsonGemini(apiKey, model, prompt, schema, fallback);
     } else if (provider === 'claude') {
       result = await generateJsonClaude(apiKey, model, prompt, schema, fallback);
+    } else if (provider === 'ollama' || provider === 'lmstudio') {
+      // SSRF 방지: 로컬 provider는 /api/local-proxy를 통해서만 접근 허용
+      return NextResponse.json(
+        { error: 'Local providers must use /api/local-proxy' },
+        { status: 400 },
+      );
     } else {
-      // OpenAI-compatible (openai/groq/mistral/ollama/lmstudio)
-      const isLocal = provider === 'ollama' || provider === 'lmstudio';
-      const baseUrl = isLocal ? apiKey : undefined;
+      // OpenAI-compatible (openai/groq/mistral)
       const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
       result = await generateJsonOpenAICompat(
         provider,
-        isLocal ? '' : apiKey,
+        apiKey,
         model,
         prompt + schemaHint,
         fallback,
-        baseUrl,
       );
     }
 

@@ -219,8 +219,11 @@ export async function POST(req: NextRequest) {
         break;
       case 'ollama':
       case 'lmstudio':
-        // 로컬 provider: apiKey는 base URL로 사용
-        stream = await streamOpenAICompat(provider, '', model, finalSystemInstruction, messages, temperature, apiKey);
+        // SSRF 방지: 로컬 provider는 /api/local-proxy를 통해서만 접근 허용
+        return NextResponse.json(
+          { error: 'Local providers must use /api/local-proxy' },
+          { status: 400 },
+        );
         break;
       case 'claude':
         stream = await streamClaude(apiKey, model, finalSystemInstruction, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);

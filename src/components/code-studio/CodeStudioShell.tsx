@@ -11,7 +11,7 @@ import {
   FileText, FolderOpen, Folder, Terminal as TermIcon,
   MessageSquare, Shield, Activity, Send, Trash2, Edit3,
   AlertTriangle, CheckCircle, XCircle, Loader2,
-  Search, GitBranch, Upload, Bug, Command,
+  Search, GitBranch, Upload, Bug, Command, Columns2,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
@@ -612,10 +612,33 @@ export default function CodeStudioShell() {
   const [diffState, setDiffState] = useState<{ original: string; modified: string; fileName: string } | null>(null);
   const [replaceText, setReplaceText] = useState("");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+  // Split Editor state
+  const [splitFileId, setSplitFileId] = useState<string | null>(null);
+  // Tab Drag-and-Drop state
+  const [dragTabIdx, setDragTabIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
+  const splitFile = splitFileId ? (openFiles.find((f) => f.id === splitFileId) ?? null) : null;
+
+  // Split editor change handler
+  const handleSplitEditorChange = useCallback((value: string | undefined) => {
+    if (!splitFileId || value === undefined) return;
+    setOpenFiles((prev) => prev.map((f) => f.id === splitFileId ? { ...f, content: value, isDirty: true } : f));
+  }, [splitFileId]);
+
+  // Tab reorder handler
+  const handleTabDrop = useCallback((fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setOpenFiles((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+  }, []);
 
   // IndexedDB에서 파일 트리 + 설정 로드 (최초 1회)
   useEffect(() => {
@@ -936,11 +959,17 @@ export default function CodeStudioShell() {
         {/* Tab Bar */}
         <div className="flex items-center border-b border-white/8 bg-bg-secondary">
           <div className="flex flex-1 overflow-x-auto">
-            {openFiles.map((f) => (
-              <button key={f.id} onClick={() => setActiveFileId(f.id)}
+            {openFiles.map((f, idx) => (
+              <button key={f.id}
+                draggable
+                onDragStart={() => setDragTabIdx(idx)}
+                onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
+                onDrop={() => { if (dragTabIdx !== null) { handleTabDrop(dragTabIdx, idx); } setDragTabIdx(null); setDragOverIdx(null); }}
+                onDragEnd={() => { setDragTabIdx(null); setDragOverIdx(null); }}
+                onClick={() => setActiveFileId(f.id)}
                 className={`group flex items-center gap-2 border-r border-white/8 px-3 py-1.5 text-[12px] font-[family-name:var(--font-mono)] transition-colors ${
                   f.id === activeFileId ? "bg-bg-primary text-text-primary border-t-2 border-t-accent-green" : "text-text-tertiary hover:bg-white/[0.04]"
-                }`}>
+                } ${dragTabIdx === idx ? "opacity-50" : ""} ${dragOverIdx === idx && dragTabIdx !== idx ? "border-l-2 border-l-accent-green" : ""}`}>
                 {f.isDirty && <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" />}
                 {f.name}
                 <span onClick={(e) => handleCloseTab(f.id, e)} className="ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10"><X className="h-3 w-3" /></span>
@@ -948,6 +977,17 @@ export default function CodeStudioShell() {
             ))}
           </div>
           <div className="flex items-center gap-1 px-2">
+            <button
+              onClick={() => {
+                if (splitFileId) { setSplitFileId(null); }
+                else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
+              }}
+              disabled={openFiles.length === 0}
+              className={`rounded p-1.5 transition-colors ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
+              title="Split Editor"
+            >
+              <Columns2 className="h-4 w-4" />
+            </button>
             <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-colors ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-colors ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-colors ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
@@ -1017,40 +1057,82 @@ export default function CodeStudioShell() {
               />
             </div>
           )}
-          {/* Editor */}
-          <div className="flex-1 min-w-0">
-            {activeFile ? (
-              <MonacoEditor
-                height="100%" language={activeFile.language} value={activeFile.content}
-                onChange={handleEditorChange} theme="vs-dark"
-                options={{
-                  fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
-                  minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
-                  fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-                  lineNumbers: "on", renderLineHighlight: "line",
-                  bracketPairColorization: { enabled: true },
-                  guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
-                  smoothScrolling: true,
-                  cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
-                  stickyScroll: { enabled: true },
-                }}
-                onMount={(editor, monaco) => {
-                  editorRef.current = editor;
-                  registerGhostTextProvider(monaco);
-                  editor.onDidDispose(() => cancelGhostText());
-                  // 커서 위치 추적
-                  editor.onDidChangeCursorPosition((e) => {
-                    setCursorPos({ line: e.position.lineNumber, col: e.position.column });
-                  });
-                }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center">
-                  <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
-                  <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
+          {/* Editor Area (supports split view) */}
+          <div className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
+            {/* Primary Editor */}
+            <div className={splitFileId ? "flex-1 min-w-0" : "h-full"}>
+              {activeFile ? (
+                <MonacoEditor
+                  height="100%" language={activeFile.language} value={activeFile.content}
+                  onChange={handleEditorChange} theme="vs-dark"
+                  options={{
+                    fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+                    minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
+                    fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                    lineNumbers: "on", renderLineHighlight: "line",
+                    bracketPairColorization: { enabled: true },
+                    guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
+                    smoothScrolling: true,
+                    cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                    stickyScroll: { enabled: true },
+                  }}
+                  onMount={(editor, monaco) => {
+                    editorRef.current = editor;
+                    registerGhostTextProvider(monaco);
+                    editor.onDidDispose(() => cancelGhostText());
+                    editor.onDidChangeCursorPosition((e) => {
+                      setCursorPos({ line: e.position.lineNumber, col: e.position.column });
+                    });
+                  }}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
+                    <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+
+            {/* Split Editor (right side) */}
+            {splitFileId && splitFile && (
+              <>
+                <div className="w-px bg-white/8" />
+                <div className="flex flex-1 min-w-0 flex-col">
+                  {/* Split tab header */}
+                  <div className="flex items-center gap-2 border-b border-white/8 bg-bg-secondary px-2 py-1">
+                    <Columns2 className="h-3 w-3 text-accent-green" />
+                    <select
+                      value={splitFileId}
+                      onChange={(e) => setSplitFileId(e.target.value)}
+                      className="flex-1 bg-transparent font-[family-name:var(--font-mono)] text-[11px] text-text-secondary outline-none"
+                    >
+                      {openFiles.map((f) => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                    <button onClick={() => setSplitFileId(null)} className="rounded p-0.5 text-text-tertiary hover:text-text-primary hover:bg-white/10" title="Close Split">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    <MonacoEditor
+                      height="100%" language={splitFile.language} value={splitFile.content}
+                      onChange={handleSplitEditorChange} theme="vs-dark"
+                      options={{
+                        fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+                        minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 },
+                        fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                        lineNumbers: "on", renderLineHighlight: "line",
+                        bracketPairColorization: { enabled: true },
+                        smoothScrolling: true,
+                        cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

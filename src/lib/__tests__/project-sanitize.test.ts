@@ -22,7 +22,7 @@ function makeSession(messages: Array<{ role: 'user' | 'assistant'; content: stri
   return {
     id: 's1',
     title: 'Session',
-    messages: messages.map((m, i) => ({ id: `m${i}`, ...m })),
+    messages: messages.map((m, i) => ({ id: `m${i}`, timestamp: Date.now(), ...m })),
     config: {
       genre: 'SF' as never,
       povCharacter: '',

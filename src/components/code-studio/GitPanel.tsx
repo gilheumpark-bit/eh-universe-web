@@ -8,6 +8,8 @@ import {
   RotateCcw,
   Check,
   FileText,
+  Plus,
+  ChevronDown,
 } from "lucide-react";
 import type { FileNode, OpenFile } from "@/lib/code-studio-types";
 
@@ -328,6 +330,13 @@ export default function GitPanel({
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [expandedHash, setExpandedHash] = useState<string | null>(null);
 
+  // Branch management
+  const [branches, setBranches] = useState<string[]>(["main"]);
+  const [currentBranch, setCurrentBranch] = useState("main");
+  const [branchCommits, setBranchCommits] = useState<Record<string, CommitEntry[]>>({ main: [] });
+  const [showNewBranch, setShowNewBranch] = useState(false);
+  const [newBranchName, setNewBranchName] = useState("");
+
   const dirtyFiles = useMemo(
     () => openFiles.filter((f) => f.isDirty),
     [openFiles]
@@ -340,6 +349,30 @@ export default function GitPanel({
     }
     return map;
   }, [files]);
+
+  // Branch: create new branch from current
+  const handleNewBranch = useCallback(() => {
+    const name = newBranchName.trim();
+    if (!name || branches.includes(name)) return;
+    setBranches((prev) => [...prev, name]);
+    // Copy current branch commit history to the new branch
+    setBranchCommits((prev) => ({ ...prev, [name]: [...(prev[currentBranch] ?? [])] }));
+    setCurrentBranch(name);
+    setCommits(branchCommits[currentBranch] ?? []);
+    setNewBranchName("");
+    setShowNewBranch(false);
+  }, [newBranchName, branches, currentBranch, branchCommits]);
+
+  // Branch: switch to existing branch
+  const handleSwitchBranch = useCallback((branch: string) => {
+    if (branch === currentBranch) return;
+    // Save current branch commits
+    setBranchCommits((prev) => ({ ...prev, [currentBranch]: commits }));
+    // Load target branch commits
+    setCurrentBranch(branch);
+    setCommits(branchCommits[branch] ?? []);
+    setExpandedHash(null);
+  }, [currentBranch, commits, branchCommits]);
 
   const handleCommit = useCallback(() => {
     if (dirtyFiles.length === 0) return;
@@ -364,10 +397,13 @@ export default function GitPanel({
 
     setCommits((prev) => {
       const next = [entry, ...prev];
-      return next.length > MAX_HISTORY ? next.slice(0, MAX_HISTORY) : next;
+      const trimmed = next.length > MAX_HISTORY ? next.slice(0, MAX_HISTORY) : next;
+      // Also persist to branchCommits
+      setBranchCommits((bc) => ({ ...bc, [currentBranch]: trimmed }));
+      return trimmed;
     });
     setActiveTab("history");
-  }, [dirtyFiles, flatFileMap]);
+  }, [dirtyFiles, flatFileMap, currentBranch]);
 
   const handleRestore = useCallback(
     (commit: CommitEntry) => {
@@ -402,6 +438,46 @@ export default function GitPanel({
 
   return (
     <div className="flex h-full flex-col bg-bg-secondary text-text-primary">
+      {/* Branch selector */}
+      <div className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5">
+        <GitBranch size={14} className="shrink-0 text-accent-green" />
+        <select
+          value={currentBranch}
+          onChange={(e) => handleSwitchBranch(e.target.value)}
+          className="flex-1 rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-[family-name:var(--font-mono)] text-xs text-text-primary outline-none"
+        >
+          {branches.map((b) => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
+        {showNewBranch ? (
+          <div className="flex items-center gap-1">
+            <input
+              value={newBranchName}
+              onChange={(e) => setNewBranchName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleNewBranch();
+                if (e.key === "Escape") { setShowNewBranch(false); setNewBranchName(""); }
+              }}
+              placeholder="branch-name"
+              className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none"
+              autoFocus
+            />
+            <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">
+              OK
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowNewBranch(true)}
+            className="rounded p-1 text-text-tertiary hover:bg-bg-primary/50 hover:text-text-primary"
+            title="New Branch"
+          >
+            <Plus size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Tab bar */}
       <div className="flex border-b border-border/30">
         {tabs.map((tab) => (

@@ -155,7 +155,7 @@ test.describe('NOA Studio — Extended Flows', () => {
     }
 
     const benignPatterns = [
-      'favicon', 'analytics', '404', 'hydrat', 'chunk', 'preload', 'prefetch',
+      'favicon', 'analytics', '404', 'chunk', 'preload', 'prefetch',
       'net::ERR_', 'Failed to load resource', 'Download the React DevTools',
       'Warning:', 'ERR_CONNECTION', 'NEXT_', 'webpack', 'Fast Refresh',
       'localhost', 'firebase', 'firestore', 'gtag', 'google',

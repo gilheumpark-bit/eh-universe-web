@@ -83,4 +83,13 @@ export function getDb(): Firestore | null {
   return db;
 }
 
+/**
+ * 컬렉션 이름에 테스트 프리픽스를 적용.
+ * test/development 환경에서는 "test_" 프리픽스를 붙여서
+ * 라이브 데이터와 분리.
+ */
+export function collectionName(name: string): string {
+  return isTestEnvironment ? `test_${name}` : name;
+}
+
 // IDENTITY_SEAL: PART-2 | role=firebase initialization | inputs=env-based config | outputs=firebase app, auth, db singletons

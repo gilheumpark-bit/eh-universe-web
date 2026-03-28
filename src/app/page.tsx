@@ -213,7 +213,8 @@ export default function Home() {
   // 클라이언트에서 스플래시 표시 여부 결정 (hydration mismatch 방지)
   useEffect(() => {
     if (!sessionStorage.getItem("eh-splash-seen")) {
-      setShowSplash(true);
+      // queueMicrotask로 cascading render 방지
+      queueMicrotask(() => setShowSplash(true));
     }
   }, []);
 

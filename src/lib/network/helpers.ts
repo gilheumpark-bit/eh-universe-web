@@ -19,15 +19,17 @@ import {
 // PART 1 - SHARED HELPERS
 // ============================================================
 
+import { collectionName } from '@/lib/firebase';
+
 export const COLLECTIONS = {
-  users: "users",
-  planets: "planets",
-  posts: "posts",
-  settlements: "settlements",
-  comments: "comments",
-  reactions: "reactions",
-  reports: "reports",
-} as const;
+  users: collectionName("users"),
+  planets: collectionName("planets"),
+  posts: collectionName("posts"),
+  settlements: collectionName("settlements"),
+  comments: collectionName("comments"),
+  reactions: collectionName("reactions"),
+  reports: collectionName("reports"),
+};
 
 export function requireDb() {
   const firestore = getDb();

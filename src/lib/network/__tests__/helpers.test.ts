@@ -395,15 +395,15 @@ describe('summarizeContent', () => {
 
 describe('sanitizePlanetStatus', () => {
   it('returns the status when provided', () => {
-    expect(sanitizePlanetStatus('active', 'archived')).toBe('active');
+    expect(sanitizePlanetStatus('maintain', 'collapse')).toBe('maintain');
   });
 
   it('returns fallback when null', () => {
-    expect(sanitizePlanetStatus(null, 'archived')).toBe('archived');
+    expect(sanitizePlanetStatus(null, 'collapse')).toBe('collapse');
   });
 
   it('returns fallback when undefined', () => {
-    expect(sanitizePlanetStatus(undefined, 'active')).toBe('active');
+    expect(sanitizePlanetStatus(undefined, 'maintain')).toBe('maintain');
   });
 });
 
