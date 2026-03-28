@@ -32,6 +32,7 @@ const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"),
 
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
+import { useIsMobile } from "@/components/code-studio/MobileLayout";
 
 // Lazy-loaded panels — external components
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -55,6 +56,11 @@ const ExternalAgentPanel = dynamic(
 );
 const StatusBarComponent = dynamic(
   () => import("@/components/code-studio/StatusBar").then((m) => ({ default: m.StatusBar })),
+  { ssr: false },
+);
+const MobileLayoutComponent = dynamic(() => import("@/components/code-studio/MobileLayout"), { ssr: false });
+const TabletLayoutComponent = dynamic(
+  () => import("@/components/code-studio/TabletLayout").then((m) => ({ default: m.TabletLayout })),
   { ssr: false },
 );
 const EditorTabsComponent = dynamic(
@@ -392,8 +398,22 @@ function updateContentInTree(tree: FileNode[], id: string, content: string): Fil
 
 type RightPanel = "chat" | "pipeline" | "git" | "deploy" | "bugs" | "search" | "autopilot" | "agents" | null;
 
+function useIsTablet(): boolean {
+  const [isTablet, setIsTablet] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => setIsTablet(e.matches);
+    handleChange(mql);
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, []);
+  return isTablet;
+}
+
 function CodeStudioShellInner() {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [files, setFiles] = useState<FileNode[]>(DEMO_FILES);
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
@@ -745,6 +765,143 @@ function CodeStudioShellInner() {
     team: b.category,
   }));
 
+  // ── Shared UI fragments for mobile/tablet layouts ──
+  const explorerPanel = (
+    <div className="flex h-full flex-col bg-bg-secondary">
+      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
+        <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Home">
+          <Home className="h-3.5 w-3.5" />
+        </Link>
+        <Files className="h-4 w-4 text-accent-green" />
+        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
+        <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {showNewFile && (
+        <div className="px-2 py-1 border-b border-white/8">
+          <input
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
+            placeholder="filename.ts"
+            className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green"
+            autoFocus
+          />
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto py-1">
+        {files.map((node) => (
+          <FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const editorPanel = (
+    <div className="flex h-full flex-col">
+      <EditorTabsComponent
+        openFiles={openFiles}
+        activeFileId={activeFileId}
+        onSelect={(id) => setActiveFileId(id)}
+        onClose={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }}
+      />
+      <div className="flex-1 min-h-0">
+        {activeFile ? (
+          <MonacoEditor
+            height="100%" language={activeFile.language} value={activeFile.content}
+            onChange={handleEditorChange} theme="vs-dark"
+            options={{
+              fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize,
+              wordWrap: isMobile ? "on" as const : settings.wordWrap,
+              minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 },
+              fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+              lineNumbers: isMobile ? "off" as const : "on" as const,
+              renderLineHighlight: "line" as const,
+              bracketPairColorization: { enabled: true },
+              smoothScrolling: true,
+              cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const,
+            }}
+            onMount={(editor, monaco) => {
+              editorRef.current = editor;
+              registerGhostTextProvider(monaco);
+              editor.onDidDispose(() => cancelGhostText());
+              editor.onDidChangeCursorPosition((e) => {
+                setCursorPos({ line: e.position.lineNumber, col: e.position.column });
+              });
+            }}
+          />
+        ) : !loaded ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
+          </div>
+        ) : !hasEverOpened ? (
+          <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center">
+              <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
+              <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const chatPanel = <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />;
+
+  // Ensure terminal mounts on mobile/tablet (xterm needs showTerminal=true for ref)
+  useEffect(() => {
+    if (isMobile || isTablet) setShowTerminal(true);
+  }, [isMobile, isTablet]);
+
+  const terminalPanel = (
+    <div className="h-full bg-[#0d0d0d]">
+      <div ref={termRef} className="h-full" />
+    </div>
+  );
+
+  const pipelinePanel = <PipelinePanelInline stages={pipelineStages} />;
+
+  const statusBarEl = (
+    <StatusBarComponent
+      activeFile={activeFile}
+      pipelineScore={pipelineScore}
+      cursorLine={cursorPos.line}
+      cursorColumn={cursorPos.col}
+      fontSize={settings.fontSize}
+    />
+  );
+
+  // ── Mobile Layout (<768px) ──
+  if (isMobile) {
+    return (
+      <MobileLayoutComponent
+        explorer={explorerPanel}
+        editor={editorPanel}
+        chat={chatPanel}
+        terminal={terminalPanel}
+        pipeline={pipelinePanel}
+        statusBar={statusBarEl}
+      />
+    );
+  }
+
+  // ── Tablet Layout (768–1023px) ──
+  if (isTablet) {
+    return (
+      <TabletLayoutComponent
+        sidebar={explorerPanel}
+        editor={editorPanel}
+        rightPanel={chatPanel}
+        terminal={terminalPanel}
+        statusBar={statusBarEl}
+      />
+    );
+  }
+
+  // ── Desktop Layout (>=1024px) — existing code below ──
   return (
     <div className="flex h-full w-full flex-col bg-bg-primary text-text-primary">
       <div className="flex flex-1 min-h-0">
