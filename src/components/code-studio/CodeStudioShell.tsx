@@ -16,8 +16,9 @@ import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-t
 import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
-import { saveFileTree, loadFileTree, saveSettings, loadSettings } from "@/lib/code-studio-store";
+import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions, type StoredChatSession } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
+import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import type { NoaResult } from "@/lib/noa/types";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -138,6 +139,34 @@ function AIChatPanel({
   const [noaBlocked, setNoaBlocked] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef("chat-" + Date.now());
+
+  // 채팅 히스토리 IndexedDB 복원
+  useEffect(() => {
+    (async () => {
+      const sessions = await listChatSessions();
+      if (sessions.length > 0) {
+        const latest = sessions[0];
+        sessionIdRef.current = latest.id;
+        setMessages(latest.messages.map((m) => ({ ...m, id: crypto.randomUUID() })));
+      }
+    })();
+  }, []);
+
+  // 메시지 변경 시 자동 저장 (디바운스)
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const t = setTimeout(() => {
+      saveChatSession({
+        id: sessionIdRef.current,
+        title: messages[0]?.content.slice(0, 50) || "Chat",
+        messages: messages.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+        createdAt: messages[0]?.timestamp || Date.now(),
+        updatedAt: Date.now(),
+      });
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -361,6 +390,9 @@ export default function CodeStudioShell() {
   const [settings, setSettings] = useState<CodeStudioSettings>(DEFAULT_SETTINGS);
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [showNewFile, setShowNewFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
@@ -389,11 +421,81 @@ export default function CodeStudioShell() {
     saveSettings(settings);
   }, [settings, loaded]);
 
-  // xterm 초기화
+  // xterm 초기화 + 명령 처리
   useEffect(() => {
     if (!showTerminal || !termRef.current) return;
     let term: import("@xterm/xterm").Terminal | null = null;
     let mounted = true;
+    let cmdBuffer = "";
+
+    const processCommand = (cmd: string, t: import("@xterm/xterm").Terminal) => {
+      const parts = cmd.trim().split(/\s+/);
+      const command = parts[0]?.toLowerCase();
+      const args = parts.slice(1);
+
+      switch (command) {
+        case "": break;
+        case "help":
+          t.writeln("  \x1b[36mAvailable commands:\x1b[0m");
+          t.writeln("  help       Show this message");
+          t.writeln("  ls         List files");
+          t.writeln("  cat <file> Show file content");
+          t.writeln("  echo <msg> Print message");
+          t.writeln("  clear      Clear terminal");
+          t.writeln("  date       Current date/time");
+          t.writeln("  whoami     Current user");
+          t.writeln("  pwd        Working directory");
+          t.writeln("  pipeline   Run code analysis");
+          break;
+        case "clear": t.clear(); break;
+        case "date": t.writeln("  " + new Date().toLocaleString()); break;
+        case "whoami": t.writeln("  \x1b[33meh-developer\x1b[0m"); break;
+        case "pwd": t.writeln("  /project/src"); break;
+        case "echo": t.writeln("  " + args.join(" ")); break;
+        case "ls": {
+          const flatFiles = (nodes: FileNode[]): string[] => {
+            const result: string[] = [];
+            for (const n of nodes) {
+              if (n.type === "folder") { result.push("\x1b[34m" + n.name + "/\x1b[0m"); if (n.children) result.push(...flatFiles(n.children).map(f => "  " + f)); }
+              else result.push(n.name);
+            }
+            return result;
+          };
+          flatFiles(files).forEach((f) => t.writeln("  " + f));
+          break;
+        }
+        case "cat": {
+          const findFile = (nodes: FileNode[], name: string): FileNode | null => {
+            for (const n of nodes) {
+              if (n.name === name && n.type === "file") return n;
+              if (n.children) { const found = findFile(n.children, name); if (found) return found; }
+            }
+            return null;
+          };
+          const file = findFile(files, args[0] ?? "");
+          if (file) { t.writeln(""); (file.content ?? "").split("\n").forEach((l) => t.writeln("  " + l)); }
+          else t.writeln("  \x1b[31mFile not found: " + (args[0] ?? "") + "\x1b[0m");
+          break;
+        }
+        case "pipeline": {
+          const af = openFiles.find((f) => f.id === activeFileId);
+          if (af) {
+            t.writeln("  \x1b[36mRunning pipeline on " + af.name + "...\x1b[0m");
+            const result = runStaticPipeline(af.content, af.language);
+            result.stages.forEach((s) => {
+              const icon = s.status === "pass" ? "\x1b[32m✓\x1b[0m" : s.status === "warn" ? "\x1b[33m⚠\x1b[0m" : "\x1b[31m✗\x1b[0m";
+              t.writeln(`  ${icon} ${s.name}: ${s.score}/100 — ${s.message}`);
+            });
+            t.writeln(`  \x1b[36mOverall: ${result.overallScore}/100 (${result.overallStatus})\x1b[0m`);
+          } else t.writeln("  \x1b[31mNo file open\x1b[0m");
+          break;
+        }
+        default:
+          t.writeln("  \x1b[31mCommand not found: " + command + "\x1b[0m");
+          t.writeln("  Type \x1b[36mhelp\x1b[0m for available commands");
+      }
+    };
+
     (async () => {
       const { Terminal } = await import("@xterm/xterm");
       const { FitAddon } = await import("@xterm/addon-fit");
@@ -408,19 +510,40 @@ export default function CodeStudioShell() {
       term.loadAddon(fit);
       term.open(termRef.current);
       fit.fit();
-      term.writeln("\x1b[32m$ EH Code Studio Terminal\x1b[0m");
-      term.writeln("Type commands here. WebContainer runtime coming soon.");
+      term.writeln("\x1b[32m╔══════════════════════════════════════╗\x1b[0m");
+      term.writeln("\x1b[32m║  EH Code Studio Terminal v1.0       ║\x1b[0m");
+      term.writeln("\x1b[32m╚══════════════════════════════════════╝\x1b[0m");
+      term.writeln("  Type \x1b[36mhelp\x1b[0m for commands");
       term.write("\x1b[32m$ \x1b[0m");
+
       term.onData((data) => {
-        if (data === "\r") { term?.writeln(""); term?.write("\x1b[32m$ \x1b[0m"); }
-        else if (data === "\x7f") { /* backspace — simplified */ }
-        else { term?.write(data); }
+        if (!term) return;
+        if (data === "\r") {
+          term.writeln("");
+          processCommand(cmdBuffer, term);
+          cmdBuffer = "";
+          term.write("\x1b[32m$ \x1b[0m");
+        } else if (data === "\x7f" || data === "\b") {
+          if (cmdBuffer.length > 0) {
+            cmdBuffer = cmdBuffer.slice(0, -1);
+            term.write("\b \b");
+          }
+        } else if (data === "\x03") {
+          // Ctrl+C
+          cmdBuffer = "";
+          term.writeln("^C");
+          term.write("\x1b[32m$ \x1b[0m");
+        } else if (data >= " ") {
+          cmdBuffer += data;
+          term.write(data);
+        }
       });
+
       const ro = new ResizeObserver(() => fit.fit());
-      ro.observe(termRef.current);
+      if (termRef.current) ro.observe(termRef.current);
     })();
     return () => { mounted = false; term?.dispose(); };
-  }, [showTerminal]);
+  }, [showTerminal, files, openFiles, activeFileId]);
 
   // 파일 선택
   const handleFileSelect = useCallback((node: FileNode) => {
@@ -449,12 +572,16 @@ export default function CodeStudioShell() {
 
   // 파일 CRUD
   const handleNewFile = useCallback(() => {
-    const name = prompt("New file name:");
-    if (!name?.trim()) return;
+    if (!newFileName.trim()) { setShowNewFile(true); return; }
     const id = `file-${Date.now()}`;
-    const newFile: FileNode = { id, name: name.trim(), type: "file", content: "" };
+    const newFile: FileNode = { id, name: newFileName.trim(), type: "file", content: "" };
     setFiles((prev) => addFileToTree(prev, "src", newFile));
-  }, []);
+    setNewFileName("");
+    setShowNewFile(false);
+    // 새 파일 바로 열기
+    setOpenFiles((prev) => [...prev, { id, name: newFileName.trim(), content: "", language: detectLanguage(newFileName.trim()) }]);
+    setActiveFileId(id);
+  }, [newFileName]);
 
   const handleDelete = useCallback((id: string) => {
     setFiles((prev) => deleteFromTree(prev, id));
@@ -473,20 +600,13 @@ export default function CodeStudioShell() {
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: code, isDirty: true } : f));
   }, [activeFileId]);
 
-  // 파이프라인 시뮬레이션 (파일 변경 시)
+  // 파이프라인 실제 정적 분석 (파일 변경 시 1초 디바운스)
   useEffect(() => {
     if (!activeFile?.isDirty) return;
     const timer = setTimeout(() => {
-      setPipelineStages([
-        { name: "Simulation", status: "pass", score: 92, message: "Runtime behavior OK" },
-        { name: "Generation", status: "pass", score: 88, message: "Structure valid" },
-        { name: "Validation", status: activeFile.content.includes("TODO") ? "warn" : "pass", score: activeFile.content.includes("TODO") ? 65 : 85, message: activeFile.content.includes("TODO") ? "TODO found" : "All checks pass" },
-        { name: "Asset Trace", status: "pass", score: 95, message: "Imports resolved" },
-        { name: "Stability", status: "pass", score: 90, message: "No memory leaks" },
-        { name: "Release IP", status: "pass", score: 100, message: "No license issues" },
-        { name: "Governance", status: "pass", score: 87, message: "Standards met" },
-      ]);
-    }, 800);
+      const result = runStaticPipeline(activeFile.content, activeFile.language);
+      setPipelineStages(result.stages);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [activeFile?.isDirty, activeFile?.content]);
 
@@ -497,10 +617,22 @@ export default function CodeStudioShell() {
         <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
           <Files className="h-4 w-4 text-accent-green" />
           <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
-          <button onClick={handleNewFile} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
+          <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File">
             <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
+        {showNewFile && (
+          <div className="px-2 py-1 border-b border-white/8">
+            <input
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
+              placeholder="filename.ts"
+              className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green"
+              autoFocus
+            />
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto py-1">
           {files.map((node) => (
             <FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />
@@ -529,9 +661,47 @@ export default function CodeStudioShell() {
             <button onClick={() => setRightPanel(rightPanel === "chat" ? null : "chat")} className={`rounded p-1.5 transition-colors ${rightPanel === "chat" ? "text-accent-purple" : "text-text-tertiary"}`} title="AI Chat"><MessageSquare className="h-4 w-4" /></button>
             <button onClick={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")} className={`rounded p-1.5 transition-colors ${rightPanel === "pipeline" ? "text-accent-blue" : "text-text-tertiary"}`} title="Pipeline"><Activity className="h-4 w-4" /></button>
             <button className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Run"><Play className="h-4 w-4" /></button>
-            <button className="rounded p-1.5 text-text-tertiary hover:text-text-secondary" title="Settings"><Settings className="h-4 w-4" /></button>
+            <button onClick={() => setShowSettings(!showSettings)} className={`rounded p-1.5 transition-colors ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
           </div>
         </div>
+
+        {/* Settings Panel (overlay) */}
+        {showSettings && (
+          <div className="border-b border-white/8 bg-bg-secondary px-4 py-3">
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Font Size</label>
+                <input type="number" min={10} max={24} value={settings.fontSize}
+                  onChange={(e) => setSettings((s) => ({ ...s, fontSize: parseInt(e.target.value) || 14 }))}
+                  className="w-14 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none" />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Tab Size</label>
+                <select value={settings.tabSize}
+                  onChange={(e) => setSettings((s) => ({ ...s, tabSize: parseInt(e.target.value) }))}
+                  className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none">
+                  <option value={2}>2</option><option value={4}>4</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Word Wrap</label>
+                <button
+                  onClick={() => setSettings((s) => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
+                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.wordWrap === "on" ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
+                  {settings.wordWrap}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Minimap</label>
+                <button
+                  onClick={() => setSettings((s) => ({ ...s, minimap: !s.minimap }))}
+                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.minimap ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
+                  {settings.minimap ? "ON" : "OFF"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Editor + Right Panel */}
         <div className="flex flex-1 min-h-0">
