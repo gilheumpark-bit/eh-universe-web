@@ -152,7 +152,7 @@ function AIChatPanel({
     try {
       const noaResult = await runNoa({ text });
       if (!noaResult.allowed) {
-        setNoaBlocked(`[NOA ${noaResult.tactical?.path ?? "BLOCK"}] ${noaResult.fastTrack?.verdict === "BLOCK" ? "Blocked by safety filter" : `Risk grade: ${noaResult.judgment?.grade ?? "unknown"}`}`);
+        setNoaBlocked(`[NOA ${noaResult.tactical?.selectedPath ?? "BLOCK"}] ${noaResult.fastTrack?.verdict === "BLOCK" ? "Blocked by safety filter" : `Risk grade: ${noaResult.judgment?.grade ?? "unknown"}`}`);
         return;
       }
     } catch {
@@ -210,7 +210,7 @@ Respond concisely. Use markdown code blocks for code.`;
       <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
         <MessageSquare className="h-4 w-4 text-accent-purple" />
         <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">AI Chat</span>
-        <Shield className="ml-auto h-3 w-3 text-accent-green" title="NOA Security Active" />
+        <Shield className="ml-auto h-3 w-3 text-accent-green" aria-label="NOA Security Active" />
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
