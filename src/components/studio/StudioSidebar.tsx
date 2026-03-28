@@ -282,15 +282,17 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   setStudioMode(next);
                   localStorage.setItem('noa_studio_mode', next);
                 }}
-                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
-                  studioMode === 'free' ? 'bg-[rgba(92,143,214,0.7)]' : 'bg-white/12'
+                className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                  studioMode === 'free' ? 'bg-accent-purple' : 'bg-white/15'
                 }`}
+                style={{ width: 44, height: 24, minWidth: 44, minHeight: 24 }}
                 aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}
               >
                 <span
-                  className={`pointer-events-none absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                    studioMode === 'free' ? 'translate-x-[18px]' : 'translate-x-0.5'
+                  className={`pointer-events-none absolute top-[2px] rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
                   }`}
+                  style={{ width: 20, height: 20 }}
                 />
               </button>
             </div>
