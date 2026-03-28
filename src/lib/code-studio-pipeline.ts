@@ -947,3 +947,128 @@ export function parseReviewResponse(raw: string, reviewerId: string): AIReviewRe
 }
 
 // IDENTITY_SEAL: PART-11 | role=MultiAIReview prompt builder & parser | inputs=AIReviewRequest,raw string | outputs=AIReviewResult
+
+// ============================================================
+// PART 12 — Full Pipeline (New 8-Team from pipeline-teams.ts)
+// ============================================================
+
+import {
+  runTeam1Simulation,
+  runTeam2Generation,
+  runTeam3Validation,
+  runTeam4SizeDensity,
+  runTeam5AssetTrace,
+  runTeam6Stability,
+  runTeam7ReleaseIP,
+  runTeam8Governance,
+  type TeamResult as FullTeamResult,
+} from './code-studio-pipeline-teams';
+
+export type { FullTeamResult };
+
+export interface FullPipelineCallbacks {
+  onTeamStart?: (stage: string) => void;
+  onTeamComplete?: (result: FullTeamResult) => void;
+  signal?: AbortSignal;
+}
+
+export interface FullPipelineResult {
+  id: string;
+  timestamp: number;
+  overallStatus: 'pass' | 'warn' | 'fail';
+  overallScore: number;
+  stages: FullTeamResult[];
+}
+
+type TeamFn = (code: string, language: string, fileName: string) => FullTeamResult;
+
+const FULL_TEAMS: { stage: string; run: TeamFn; blocking: boolean }[] = [
+  { stage: 'simulation',   run: runTeam1Simulation,   blocking: false },
+  { stage: 'generation',   run: runTeam2Generation,   blocking: false },
+  { stage: 'validation',   run: runTeam3Validation,   blocking: true  },
+  { stage: 'size-density',  run: runTeam4SizeDensity,  blocking: false },
+  { stage: 'asset-trace',   run: runTeam5AssetTrace,   blocking: false },
+  { stage: 'stability',     run: runTeam6Stability,    blocking: false },
+  { stage: 'release-ip',    run: runTeam7ReleaseIP,    blocking: true  },
+  { stage: 'governance',    run: runTeam8Governance,   blocking: false },
+];
+
+/**
+ * Run all 8 new teams: parallel for non-blocking, sequential for blocking.
+ * Supports abort via signal and progress callbacks.
+ */
+export async function runFullPipeline(
+  code: string,
+  language: string,
+  fileName: string,
+  callbacks?: FullPipelineCallbacks,
+): Promise<FullPipelineResult> {
+  const results: FullTeamResult[] = [];
+
+  const parallelTeams = FULL_TEAMS.filter((t) => !t.blocking);
+  const blockingTeams = FULL_TEAMS.filter((t) => t.blocking);
+
+  // Run non-blocking teams in parallel
+  if (!callbacks?.signal?.aborted) {
+    const promises = parallelTeams.map(async (team) => {
+      if (callbacks?.signal?.aborted) return null;
+      callbacks?.onTeamStart?.(team.stage);
+      try {
+        const result = team.run(code, language, fileName);
+        callbacks?.onTeamComplete?.(result);
+        return result;
+      } catch (err) {
+        const errorResult: FullTeamResult = {
+          stage: team.stage,
+          status: 'fail',
+          score: 0,
+          findings: [{ severity: 'critical', message: `오류: ${(err as Error).message}`, rule: 'TEAM_ERROR' }],
+        };
+        callbacks?.onTeamComplete?.(errorResult);
+        return errorResult;
+      }
+    });
+
+    const parallelResults = await Promise.all(promises);
+    for (const r of parallelResults) {
+      if (r) results.push(r);
+    }
+  }
+
+  // Run blocking teams sequentially
+  for (const team of blockingTeams) {
+    if (callbacks?.signal?.aborted) break;
+    callbacks?.onTeamStart?.(team.stage);
+    try {
+      const result = team.run(code, language, fileName);
+      results.push(result);
+      callbacks?.onTeamComplete?.(result);
+    } catch (err) {
+      const errorResult: FullTeamResult = {
+        stage: team.stage,
+        status: 'fail',
+        score: 0,
+        findings: [{ severity: 'critical', message: `오류: ${(err as Error).message}`, rule: 'TEAM_ERROR' }],
+      };
+      results.push(errorResult);
+      callbacks?.onTeamComplete?.(errorResult);
+    }
+  }
+
+  const avgScore = results.length > 0
+    ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
+    : 0;
+
+  const hasFail = results.some((r) => r.status === 'fail');
+  const hasWarn = results.some((r) => r.status === 'warn');
+
+  return {
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `pipe_${Date.now()}`,
+    timestamp: Date.now(),
+    overallStatus: hasFail ? 'fail' : hasWarn ? 'warn' : 'pass',
+    overallScore: avgScore,
+    stages: results,
+  };
+}
+
+// IDENTITY_SEAL: PART-12 | role=FullPipeline orchestrator | inputs=code,language,fileName,callbacks | outputs=FullPipelineResult
