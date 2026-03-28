@@ -49,9 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     if (!auth) {
+      console.error('[Auth] Firebase auth is null — not initialized');
       setError('Firebase가 초기화되지 않았습니다. 환경변수를 확인해주세요.');
       return;
     }
+    console.log('[Auth] signInWithGoogle called, auth:', !!auth);
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
@@ -65,9 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const msg = (err as { message?: string })?.message ?? '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
       setError(`로그인 실패: ${code || msg}`);
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Auth] signInWithGoogle error', err);
-      }
+      console.error('[Auth] signInWithGoogle error:', code, msg);
     }
   };
 
