@@ -26,6 +26,9 @@ import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@
 import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugfinder";
 import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
 import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
+import { isMultiKeyActive } from "@/lib/multi-key-bridge";
+
+const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"), { ssr: false });
 
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
@@ -627,6 +630,7 @@ function CodeStudioShellInner() {
   const [replaceText, setReplaceText] = useState("");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [hasEverOpened, setHasEverOpened] = useState(false);
+  const [showMultiKey, setShowMultiKey] = useState(false);
   // Split Editor state
   const [splitFileId, setSplitFileId] = useState<string | null>(null);
   // Tab Drag-and-Drop state
@@ -1161,6 +1165,28 @@ function CodeStudioShellInner() {
                   <span className="h-2 w-2 rounded-full bg-accent-green" title="API key set" />
                 )}
               </div>
+              {/* Multi-Key Manager Button */}
+              <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
+                <button
+                  onClick={() => setShowMultiKey(true)}
+                  className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] transition-colors ${
+                    isMultiKeyActive()
+                      ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
+                      : "border-white/8 text-text-tertiary hover:text-text-secondary"
+                  }`}
+                  title="Multi-Key Manager (7 slots)"
+                >
+                  {isMultiKeyActive() ? "⚡ Multi-Key" : "Multi-Key"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Multi-Key Panel Modal */}
+        {showMultiKey && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="w-[480px] max-h-[80vh] rounded-xl border border-white/10 bg-[#0d1117] shadow-2xl overflow-hidden">
+              <MultiKeyPanel language="ko" onClose={() => setShowMultiKey(false)} />
             </div>
           </div>
         )}
