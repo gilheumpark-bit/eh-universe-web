@@ -340,7 +340,7 @@ export default function Home() {
         onStudio={() => {
           setShowSplash(false);
           if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
-          setShowStudioChoice(true);
+          router.push("/studio");
         }}
         onCodeStudio={() => {
           setShowSplash(false);
@@ -421,7 +421,7 @@ export default function Home() {
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {categories.map((cat) => (
-                <Link key={cat.id} href={`/archive?category=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
+                <Link key={cat.id} href={`/archive?cat=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
                   <div>
                     <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
                     <h3 className="mt-1 font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:text-accent-amber">

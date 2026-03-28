@@ -125,6 +125,16 @@ export function NetworkHomeClient() {
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
   const [showSamples, setShowSamples] = useState(false);
 
+  // Re-sync filter state from URL on browser back/forward
+  useEffect(() => {
+    const board = (searchParams.get('board') || 'all') as BoardFilter;
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
+    const bookmarks = searchParams.get('bookmarks') === '1';
+    setBoardFilter(board);
+    setSelectedTags(tags);
+    setShowBookmarksOnly(bookmarks);
+  }, [searchParams]);
+
   // Sync filter state to URL query params
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -444,6 +454,21 @@ export function NetworkHomeClient() {
                       </div>
                     ))}
                   </>
+                )
+              : filteredPlanets.length === 0 && state.planets.length > 0
+                ? (
+                  <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
+                    <p className="text-sm text-text-tertiary">
+                      {lang === "ko" ? "필터 결과가 없습니다." : "No results match the current filters."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setBoardFilter("all"); setSelectedTags([]); setShowBookmarksOnly(false); }}
+                      className="mt-4 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
+                    >
+                      {lang === "ko" ? "필터 해제" : "Clear Filters"}
+                    </button>
+                  </div>
                 )
               : filteredPlanets.map((planet) => (
                   <div key={planet.id} className="premium-link-card p-6">

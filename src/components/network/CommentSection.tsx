@@ -71,7 +71,9 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
   const [editDraft, setEditDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const spamRef = useRef<SpamGuardState>({ timestamps: [], lastContent: "", lastContentAt: 0 });
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const loadComments = useCallback(async () => {
     try {
@@ -124,6 +126,10 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
 
       setComments((prev) => [record, ...prev]);
       setDraft("");
+      setSuccessMsg(lang === "ko" ? "댓글이 등록되었습니다" : "Comment posted");
+      setTimeout(() => setSuccessMsg(null), 2500);
+      // scroll to bottom after state update
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
       setError(lang === "ko" ? "등록에 실패했습니다." : "Failed to post comment.");
     } finally {
@@ -180,6 +186,10 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         {L2(LABELS.title, lang)} ({comments.length})
       </h3>
 
+      {successMsg && (
+        <p className="text-xs text-accent-green">{successMsg}</p>
+      )}
+
       {user ? (
         <div className="space-y-2">
           <textarea
@@ -220,7 +230,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         <p className="text-sm text-text-tertiary">{L2(LABELS.noComments, lang)}</p>
       ) : (
         <div className="space-y-3">
-          {sortedComments.map((comment) => (
+          {sortedComments.map((comment, idx) => (
             <div key={comment.id} className="premium-panel-soft p-4">
               <div className="flex items-center gap-2">
                 {comment.authorPhoto ? (
@@ -286,6 +296,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
               ) : null}
             </div>
           ))}
+          <div ref={bottomRef} />
         </div>
       )}
     </section>

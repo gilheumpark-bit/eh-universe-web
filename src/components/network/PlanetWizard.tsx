@@ -58,6 +58,7 @@ const TRANSCENDENCE_COST_OPTIONS: { value: string; ko: string; en: string }[] = 
 
 export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTags = [] }: PlanetWizardProps) {
   const [step, setStep] = useState(0);
+  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
@@ -592,23 +593,30 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
       </div>
 
       <div className="mt-8 grid gap-3 md:grid-cols-5">
-        {stepTitles.map((title, index) => (
-          <button
-            key={title}
-            type="button"
-            onClick={() => setStep(index)}
-            className={`rounded-2xl border px-4 py-3 text-left transition ${
-              index === step
-                ? "border-accent-amber/40 bg-accent-amber/10 text-text-primary"
-                : "border-white/8 bg-white/[0.02] text-text-secondary"
-            }`}
-          >
-            <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em]">
-              STEP {index + 1}
-            </div>
-            <div className="mt-2 text-sm">{title}</div>
-          </button>
-        ))}
+        {stepTitles.map((title, index) => {
+          const reachable = index <= maxVisitedStep + 1;
+          return (
+            <button
+              key={title}
+              type="button"
+              disabled={!reachable}
+              onClick={() => { if (reachable) setStep(index); }}
+              title={!reachable ? (lang === "ko" ? "이전 단계를 먼저 완료하세요" : "Complete previous steps first") : undefined}
+              className={`rounded-2xl border px-4 py-3 text-left transition ${
+                index === step
+                  ? "border-accent-amber/40 bg-accent-amber/10 text-text-primary"
+                  : reachable
+                    ? "border-white/8 bg-white/[0.02] text-text-secondary"
+                    : "border-white/5 bg-white/[0.01] text-text-tertiary opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em]">
+                STEP {index + 1}
+              </div>
+              <div className="mt-2 text-sm">{title}</div>
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-8">{stepPanel}</div>
@@ -627,7 +635,11 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           {step < 4 ? (
             <button
               type="button"
-              onClick={() => setStep((current) => Math.min(4, current + 1))}
+              onClick={() => {
+                const next = Math.min(4, step + 1);
+                setStep(next);
+                setMaxVisitedStep((prev) => Math.max(prev, next));
+              }}
               disabled={!canMoveNext || submitting}
               className="premium-button"
             >

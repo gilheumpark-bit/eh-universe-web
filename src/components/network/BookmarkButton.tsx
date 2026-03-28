@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
 import { addBookmark, isBookmarked, removeBookmark } from "@/lib/network-firestore";
@@ -32,6 +32,8 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errShake, setErrShake] = useState(false);
+  const [loginHint, setLoginHint] = useState<string | null>(null);
+  const loginHintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (!user) {
@@ -54,6 +56,12 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const handleToggle = useCallback(async () => {
     if (!user) {
       await signInWithGoogle();
+      // After login completes, user state updates asynchronously.
+      // Show a hint so the user knows to tap again.
+      const hint = lang === "ko" ? "로그인 완료! 다시 눌러주세요" : "Logged in! Tap again to bookmark";
+      setLoginHint(hint);
+      clearTimeout(loginHintTimer.current);
+      loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);
       return;
     }
     if (loading) return;
@@ -77,23 +85,28 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const label = saved ? L2(LABELS.bookmarked, lang) : L2(LABELS.bookmark, lang);
 
   return (
-    <button
-      type="button"
-      disabled={loading}
-      onClick={() => void handleToggle()}
-      title={label}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-        errShake ? "animate-[shake_0.3s_ease-in-out_2] border-accent-red/40" :
-        saved
-          ? "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
-          : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
-      } disabled:opacity-40`}
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 2.5a1.5 1.5 0 00-1.5 1.5v13.25l6.5-4.5 6.5 4.5V4A1.5 1.5 0 0015 2.5H5z" />
-      </svg>
-      {compact ? null : <span>{label}</span>}
-    </button>
+    <div className="inline-flex flex-col items-start gap-1">
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => void handleToggle()}
+        title={label}
+        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+          errShake ? "animate-[shake_0.3s_ease-in-out_2] border-accent-red/40" :
+          saved
+            ? "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
+            : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
+        } disabled:opacity-40`}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 2.5a1.5 1.5 0 00-1.5 1.5v13.25l6.5-4.5 6.5 4.5V4A1.5 1.5 0 0015 2.5H5z" />
+        </svg>
+        {compact ? null : <span>{label}</span>}
+      </button>
+      {loginHint && (
+        <span className="text-[10px] text-accent-green">{loginHint}</span>
+      )}
+    </div>
   );
 }
 

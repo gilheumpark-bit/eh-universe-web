@@ -14,7 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ReportsAdminPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [reports, setReports] = useState<ReportRecord[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "reviewed">("pending");
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,30 @@ export default function ReportsAdminPage() {
   if (!user) {
     return (
       <main className="min-h-screen bg-bg-primary text-text-primary flex items-center justify-center">
-        <p className="text-text-tertiary">로그인이 필요합니다.</p>
+        <div className="text-center space-y-5">
+          <p className="text-text-tertiary">로그인이 필요합니다.</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => void signInWithGoogle()}
+              className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
+            >
+              Google 로그인
+            </button>
+            <a
+              href="/network"
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
+            >
+              &larr; Network로 돌아가기
+            </a>
+            <a
+              href="/"
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
+            >
+              홈으로
+            </a>
+          </div>
+        </div>
       </main>
     );
   }

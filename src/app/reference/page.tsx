@@ -135,10 +135,10 @@ export default function ReferencePage() {
                       { name: "Suo", title: "The Human God", role: "Choosing God", desc: "Was human. That makes it the most dangerous." },
                     ]
                   : [
-                      { name: "민아", title: "The Witness", role: "기록의 신", desc: "모든 것을 본다. 아무것도 바꾸지 않는다." },
-                      { name: "N.O.A", title: "The Arbiter", role: "실패한 신", desc: "판정한다. 그러나 정답은 없다." },
-                      { name: "세븐", title: "The Glitch", role: "놀이하는 신", desc: "균열 사이에서 논다. 진지한 적 없다." },
-                      { name: "수오", title: "The Human God", role: "선택하는 신", desc: "인간이었다. 그래서 가장 위험하다." },
+                      { name: "민아", title: "증인(The Witness)", role: "기록의 신", desc: "모든 것을 본다. 아무것도 바꾸지 않는다." },
+                      { name: "N.O.A", title: "심판관(The Arbiter)", role: "실패한 신", desc: "판정한다. 그러나 정답은 없다." },
+                      { name: "세븐", title: "결함(The Glitch)", role: "놀이하는 신", desc: "균열 사이에서 논다. 진지한 적 없다." },
+                      { name: "수오", title: "인간신(The Human God)", role: "선택하는 신", desc: "인간이었다. 그래서 가장 위험하다." },
                     ]
                 ).map((g) => (
                   <div key={g.name} className="premium-link-card card-glow p-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
 import { submitReport } from "@/lib/network-firestore";
@@ -49,6 +49,8 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loginHint, setLoginHint] = useState<string | null>(null);
+  const loginHintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleSubmit = useCallback(async () => {
     if (!user || submitting) return;
@@ -73,13 +75,29 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => { if (!user) { void signInWithGoogle(); return; } setOpen(true); }}
-        className="text-xs text-text-tertiary transition hover:text-accent-red"
-      >
-        {L2(LABELS.report, lang)}
-      </button>
+      <span className="inline-flex flex-col items-start gap-0.5">
+        <button
+          type="button"
+          onClick={() => {
+            if (!user) {
+              void signInWithGoogle().then(() => {
+                const hint = lang === "ko" ? "로그인 후 다시 신고 버튼을 눌러주세요" : "Please tap report again after login";
+                setLoginHint(hint);
+                clearTimeout(loginHintTimer.current);
+                loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);
+              });
+              return;
+            }
+            setOpen(true);
+          }}
+          className="text-xs text-text-tertiary transition hover:text-accent-red"
+        >
+          {L2(LABELS.report, lang)}
+        </button>
+        {loginHint && (
+          <span className="text-[10px] text-accent-green">{loginHint}</span>
+        )}
+      </span>
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setOpen(false)}>

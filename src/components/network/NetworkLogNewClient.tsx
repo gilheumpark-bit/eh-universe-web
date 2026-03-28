@@ -22,6 +22,7 @@ export function NetworkLogNewClient() {
   const { lang } = useLang();
   const { user, signInWithGoogle } = useAuth();
   const [planets, setPlanets] = useState<PlanetRecord[]>([]);
+  const [loadingPlanets, setLoadingPlanets] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [value, setValue] = useState<LogComposerValue>({
@@ -42,6 +43,7 @@ export function NetworkLogNewClient() {
     let cancelled = false;
     const load = async () => {
       try {
+        setLoadingPlanets(true);
         const ownedPlanets = await listPlanetsByOwner(user.uid);
         if (!cancelled) {
           setPlanets(ownedPlanets);
@@ -53,6 +55,10 @@ export function NetworkLogNewClient() {
       } catch (caught) {
         if (!cancelled) {
           setError(caught instanceof Error ? caught.message : lang === "ko" ? "행성 목록을 불러오지 못했습니다." : "Failed to load planets.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPlanets(false);
         }
       }
     };
@@ -124,6 +130,19 @@ export function NetworkLogNewClient() {
                 {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
               </button>
             </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  if (loadingPlanets) {
+    return (
+      <main className="pt-14 pb-20">
+        <div className="site-shell py-10">
+          <section className="premium-panel p-8 flex flex-col items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
+            <p className="text-sm text-text-tertiary">{lang === "ko" ? "행성 목록을 불러오는 중..." : "Loading planets..."}</p>
           </section>
         </div>
       </main>

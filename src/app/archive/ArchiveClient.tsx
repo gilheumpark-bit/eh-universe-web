@@ -179,6 +179,12 @@ export default function ArchiveClient() {
     setTimeout(() => setActiveCategory(cat), 0);
   }, [searchParams]);
 
+  // Re-sync search query from URL on browser back/forward
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setSearchQuery(q);
+  }, [searchParams]);
+
   // Sync search query to URL
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
