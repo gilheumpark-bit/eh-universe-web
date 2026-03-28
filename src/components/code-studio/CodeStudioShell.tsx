@@ -641,6 +641,7 @@ function CodeStudioShellInner() {
   const handleSplitEditorChange = useCallback((value: string | undefined) => {
     if (!splitFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === splitFileId ? { ...f, content: value, isDirty: true } : f));
+    setFiles((prev) => updateContentInTree(prev, splitFileId, value));
   }, [splitFileId]);
 
   // Tab reorder handler
@@ -713,7 +714,7 @@ function CodeStudioShellInner() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [activeFileId, files, toast]);
+  }, [activeFileId, files, openFiles, toast]);
 
   // 버그 분석 (파일 변경 시)
   useEffect(() => {
@@ -907,7 +908,18 @@ function CodeStudioShellInner() {
     if (!newFileName.trim()) { setShowNewFile(true); return; }
     const id = `file-${Date.now()}`;
     const newFile: FileNode = { id, name: newFileName.trim(), type: "file", content: "" };
-    setFiles((prev) => addFileToTree(prev, "src", newFile));
+    // 첫 폴더에 추가 (src가 없으면 root 폴더, 폴더 자체가 없으면 루트에 직접)
+    setFiles((prev) => {
+      const findFirstFolder = (nodes: FileNode[]): string | null => {
+        for (const n of nodes) { if (n.type === "folder") return n.id; }
+        return null;
+      };
+      // src > 첫 폴더 > 루트 직접 추가 순
+      const targetId = findFirstFolder(prev.flatMap(n => n.children ?? [])) ?? findFirstFolder(prev);
+      if (targetId) return addFileToTree(prev, targetId, newFile);
+      // 폴더가 전혀 없으면 루트에 직접 추가
+      return [...prev, newFile];
+    });
     setNewFileName("");
     setShowNewFile(false);
     // 새 파일 바로 열기
@@ -963,10 +975,11 @@ function CodeStudioShellInner() {
     setHasEverOpened(true);
   }, []);
 
-  // AI 코드 적용
+  // AI 코드 적용 — 양쪽 동기화
   const handleApplyCode = useCallback((code: string) => {
     if (!activeFileId) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: code, isDirty: true } : f));
+    setFiles((prev) => updateContentInTree(prev, activeFileId, code));
   }, [activeFileId]);
 
   // 파이프라인 실제 정적 분석 (파일 변경 시 1초 디바운스)
@@ -1126,13 +1139,15 @@ function CodeStudioShellInner() {
               <div className="flex items-center gap-1">
                 <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Key</label>
                 <input
+                  key={getActiveProvider()} // provider 전환 시 input 리마운트
                   type="password"
                   placeholder="API Key"
                   defaultValue={getApiKey(getActiveProvider()) ? "••••••••" : ""}
                   onBlur={(e) => {
+                    const provider = getActiveProvider(); // 캡처 시점의 provider
                     const val = e.target.value.trim();
                     if (val && val !== "••••••••") {
-                      setApiKey(getActiveProvider(), val);
+                      setApiKey(provider, val);
                       toast("API key saved", "success");
                     }
                   }}
@@ -1251,7 +1266,10 @@ function CodeStudioShellInner() {
             <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
               {rightPanel === "chat" && <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />}
               {rightPanel === "pipeline" && <PipelinePanel stages={pipelineStages} />}
-              {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f))} />}
+              {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => {
+                setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
+                setFiles((prev) => updateContentInTree(prev, fid, content));
+              }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />}
               {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
               {rightPanel === "bugs" && <BugPanel bugs={bugReports} onRunAI={async () => {
                 if (!activeFile) return;
@@ -1260,7 +1278,17 @@ function CodeStudioShellInner() {
               }} />}
               {rightPanel === "autopilot" && <AutopilotPanel activeFile={activeFile} onApplyCode={handleApplyCode} onShowDiff={(orig, mod, name) => setDiffState({ original: orig, modified: mod, fileName: name })} />}
               {rightPanel === "agents" && <AgentPanel activeFile={activeFile} />}
-              {rightPanel === "search" && <SearchPanel files={files} onReplace={(newFiles) => setFiles(newFiles)} onFileOpen={(fid) => {
+              {rightPanel === "search" && <SearchPanel files={files} onReplace={(newFiles) => {
+                setFiles(newFiles);
+                // 열린 탭도 동기화 — replace된 내용 반영
+                const flatFind = (nodes: FileNode[], id: string): FileNode | null => {
+                  for (const n of nodes) { if (n.id === id) return n; if (n.children) { const f = flatFind(n.children, id); if (f) return f; } } return null;
+                };
+                setOpenFiles((prev) => prev.map((of) => {
+                  const updated = flatFind(newFiles, of.id);
+                  return updated?.content !== undefined ? { ...of, content: updated.content } : of;
+                }));
+              }} onFileOpen={(fid) => {
                 const findFile = (nodes: FileNode[]): FileNode | null => { for (const n of nodes) { if (n.id === fid) return n; if (n.children) { const f = findFile(n.children); if (f) return f; } } return null; };
                 const node = findFile(files);
                 if (node && node.type === "file") { handleFileSelect(node); }

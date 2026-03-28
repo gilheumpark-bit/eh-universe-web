@@ -21,6 +21,7 @@ interface GitPanelProps {
   files: FileNode[];
   openFiles: OpenFile[];
   onRestore: (fileId: string, content: string) => void;
+  onClearDirty?: () => void;
 }
 
 interface FileSnapshot {
@@ -324,6 +325,7 @@ export default function GitPanel({
   files,
   openFiles,
   onRestore,
+  onClearDirty,
 }: GitPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("changes");
   const [commits, setCommits] = useState<CommitEntry[]>([]);
@@ -403,7 +405,9 @@ export default function GitPanel({
       return trimmed;
     });
     setActiveTab("history");
-  }, [dirtyFiles, flatFileMap, currentBranch]);
+    // 커밋 후 dirty 상태 해제
+    onClearDirty?.();
+  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty]);
 
   const handleRestore = useCallback(
     (commit: CommitEntry) => {
