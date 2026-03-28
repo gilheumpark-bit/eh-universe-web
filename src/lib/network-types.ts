@@ -146,6 +146,7 @@ export interface SettlementRecord {
   action?: string;
   archiveLevel?: string;
   operatorId: string;
+  auditNote?: string;
   createdAt: string;
 }
 
@@ -270,6 +271,7 @@ export interface CreateSettlementInput {
   risk?: number | null;
   action?: string;
   archiveLevel?: string;
+  auditNote?: string;
 }
 
 export interface CreateBoardPostInput {

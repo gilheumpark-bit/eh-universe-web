@@ -34,7 +34,8 @@ export default function ReportsAdminPage() {
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
   const handleStatusChange = async (reportId: string, status: "pending" | "reviewed" | "dismissed") => {
-    await updateReportStatus(reportId, status);
+    if (!user) return;
+    await updateReportStatus(reportId, status, user.uid);
     setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
   };
 

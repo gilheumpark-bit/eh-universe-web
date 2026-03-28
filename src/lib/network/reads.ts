@@ -1,7 +1,7 @@
 import type { User } from "firebase/auth";
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, increment,
-  limit, orderBy, query, setDoc, updateDoc, writeBatch, where,
+  collection, deleteDoc, doc, documentId, getDoc, getDocs, increment,
+  limit, orderBy, query, setDoc, startAfter, updateDoc, writeBatch, where,
   type QueryConstraint,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
@@ -17,7 +17,7 @@ import {
 import { requireDb, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus } from "./helpers";
 
 // ============================================================
-// PART 4 - READ QUERIES
+// PART 4 — READ QUERIES
 // ============================================================
 
 export function sortByCreatedDesc<T extends { createdAt: string }>(records: T[]) {
@@ -77,6 +77,7 @@ export async function listLatestPosts(limitCount = 8, boardType?: BoardType) {
   return snapshot.docs.map((document) => document.data() as PostRecord);
 }
 
+// Note: no visibility filter — settlements are operational records
 export async function listLatestSettlements(limitCount = 6) {
   const database = requireDb();
   const snapshot = await getDocs(
@@ -85,7 +86,7 @@ export async function listLatestSettlements(limitCount = 6) {
   return snapshot.docs.map((document) => document.data() as SettlementRecord);
 }
 
-export async function listPlanetPosts(planetId: string, boardType?: BoardType) {
+export async function listPlanetPosts(planetId: string, boardType?: BoardType, limitCount = 120) {
   const database = requireDb();
 
   if (boardType) {
@@ -96,7 +97,7 @@ export async function listPlanetPosts(planetId: string, boardType?: BoardType) {
         where("planetId", "==", planetId),
         where("boardType", "==", boardType),
         orderBy("createdAt", "desc"),
-        limit(120),
+        limit(limitCount),
       ),
     );
     return snapshot.docs.map((document) => document.data() as PostRecord);
@@ -108,13 +109,13 @@ export async function listPlanetPosts(planetId: string, boardType?: BoardType) {
       collection(database, COLLECTIONS.posts),
       where("planetId", "==", planetId),
       orderBy("createdAt", "desc"),
-      limit(120),
+      limit(limitCount),
     ),
   );
   return snapshot.docs.map((document) => document.data() as PostRecord);
 }
 
-export async function listPlanetSettlements(planetId: string) {
+export async function listPlanetSettlements(planetId: string, limitCount = 120) {
   const database = requireDb();
   // Composite index: planetId + createdAt (firestore.indexes.json)
   const snapshot = await getDocs(
@@ -122,7 +123,7 @@ export async function listPlanetSettlements(planetId: string) {
       collection(database, COLLECTIONS.settlements),
       where("planetId", "==", planetId),
       orderBy("createdAt", "desc"),
-      limit(120),
+      limit(limitCount),
     ),
   );
   return snapshot.docs.map((document) => document.data() as SettlementRecord);
@@ -130,35 +131,77 @@ export async function listPlanetSettlements(planetId: string) {
 
 export async function listPlanetsByOwner(ownerId: string) {
   const database = requireDb();
+  // Server-side ordering eliminates need for client-side sortByCreatedDesc
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.planets), where("ownerId", "==", ownerId), limit(50)),
+    query(
+      collection(database, COLLECTIONS.planets),
+      where("ownerId", "==", ownerId),
+      orderBy("updatedAt", "desc"),
+      limit(50),
+    ),
   );
 
-  return sortByCreatedDesc(snapshot.docs.map((document) => document.data() as PlanetRecord));
+  return snapshot.docs.map((document) => document.data() as PlanetRecord);
 }
 
+/**
+ * Batch-fetch planets by IDs.
+ * Uses Firestore `in` queries (max 10 per clause) to eliminate N+1 reads.
+ */
 export async function getPlanetsByIds(planetIds: string[]) {
   const uniqueIds = Array.from(new Set(planetIds.filter(Boolean)));
-  const planets = await Promise.all(uniqueIds.map((planetId) => getPlanetById(planetId)));
+  if (uniqueIds.length === 0) return {} as Record<string, PlanetRecord>;
 
-  return planets.reduce<Record<string, PlanetRecord>>((accumulator, planet) => {
-    if (planet) {
+  const database = requireDb();
+
+  // Firestore `in` supports max 10 values per query
+  const chunks: string[][] = [];
+  for (let i = 0; i < uniqueIds.length; i += 10) {
+    chunks.push(uniqueIds.slice(i, i + 10));
+  }
+
+  const snapshots = await Promise.all(
+    chunks.map((chunk) =>
+      getDocs(
+        query(
+          collection(database, COLLECTIONS.planets),
+          where(documentId(), "in", chunk),
+        ),
+      ),
+    ),
+  );
+
+  return snapshots.reduce<Record<string, PlanetRecord>>((accumulator, snapshot) => {
+    for (const document of snapshot.docs) {
+      const planet = document.data() as PlanetRecord;
       accumulator[planet.id] = planet;
     }
     return accumulator;
   }, {});
 }
 
-export async function listCommentsForPost(postId: string) {
+export async function listCommentsForPost(
+  postId: string,
+  limitCount = 100,
+  cursor?: string,
+) {
   const database = requireDb();
   // Composite index: postId + createdAt (firestore.indexes.json)
+  const constraints: QueryConstraint[] = [
+    where("postId", "==", postId),
+    orderBy("createdAt", "desc"),
+    limit(limitCount),
+  ];
+
+  if (cursor) {
+    const cursorDoc = await getDoc(doc(database, COLLECTIONS.comments, cursor));
+    if (cursorDoc.exists()) {
+      constraints.push(startAfter(cursorDoc));
+    }
+  }
+
   const snapshot = await getDocs(
-    query(
-      collection(database, COLLECTIONS.comments),
-      where("postId", "==", postId),
-      orderBy("createdAt", "desc"),
-      limit(100),
-    ),
+    query(collection(database, COLLECTIONS.comments), ...constraints),
   );
   return snapshot.docs.map((document) => document.data() as CommentRecord);
 }
@@ -166,7 +209,12 @@ export async function listCommentsForPost(postId: string) {
 export async function getAllUniqueTags(limitCount = 50): Promise<string[]> {
   const database = requireDb();
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.planets), orderBy("updatedAt", "desc"), limit(limitCount)),
+    query(
+      collection(database, COLLECTIONS.planets),
+      where("visibility", "==", "public"),
+      orderBy("updatedAt", "desc"),
+      limit(limitCount),
+    ),
   );
 
   const tagSet = new Set<string>();
@@ -182,11 +230,11 @@ export async function getAllUniqueTags(limitCount = 50): Promise<string[]> {
   return Array.from(tagSet).sort();
 }
 
-// IDENTITY_SEAL: PART-4 | role=read queries | inputs=ids and filters | outputs=typed records and maps
+// IDENTITY_SEAL: PART-4 | role=read queries | inputs=ids, filters, cursors | outputs=typed records, maps, tag lists
 
 
 // ============================================================
-// PART 7 - BOOKMARK OPERATIONS
+// PART 7 — BOOKMARK OPERATIONS
 // ============================================================
 
 export function bookmarkRef(database: ReturnType<typeof requireDb>, userId: string, planetId: string) {
@@ -208,7 +256,11 @@ export async function removeBookmark(userId: string, planetId: string) {
 export async function listBookmarks(userId: string): Promise<BookmarkRecord[]> {
   const database = requireDb();
   const snapshot = await getDocs(
-    query(collection(database, COLLECTIONS.users, userId, "bookmarks"), limit(200)),
+    query(
+      collection(database, COLLECTIONS.users, userId, "bookmarks"),
+      orderBy("createdAt", "desc"),
+      limit(200),
+    ),
   );
   return snapshot.docs.map((document) => document.data() as BookmarkRecord);
 }
@@ -220,4 +272,3 @@ export async function isBookmarked(userId: string, planetId: string): Promise<bo
 }
 
 // IDENTITY_SEAL: PART-7 | role=bookmark CRUD | inputs=user and planet ids | outputs=bookmark state
-

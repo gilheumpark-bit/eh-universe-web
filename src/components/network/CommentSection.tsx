@@ -147,7 +147,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       try {
         setSubmitting(true);
         setError(null);
-        await updateComment(commentId, trimmed);
+        await updateComment(commentId, trimmed, user!.uid);
         setComments((prev) =>
           prev.map((c) => (c.id === commentId ? { ...c, content: trimmed, updatedAt: new Date().toISOString() } : c)),
         );
@@ -166,7 +166,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
     async (comment: CommentRecord) => {
       if (!window.confirm(L2(LABELS.confirmDelete, lang))) return;
       try {
-        await deleteComment(comment.id, comment.postId);
+        await deleteComment(comment.id, comment.postId, user!.uid);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       } catch {
         setError(lang === "ko" ? "삭제에 실패했습니다." : "Failed to delete comment.");

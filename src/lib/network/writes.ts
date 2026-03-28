@@ -143,6 +143,13 @@ export async function createPost(input: CreatePostInput) {
   const postsRef = collection(database, COLLECTIONS.posts);
   const postRef = doc(postsRef);
   const planetRef = doc(database, COLLECTIONS.planets, input.planetId);
+
+  // [C] 행성 존재 확인 — 존재하지 않는 행성에 포스트 쓰기 방지
+  const planetSnap = await getDoc(planetRef);
+  if (!planetSnap.exists()) {
+    throw new Error('Planet not found');
+  }
+
   const boardType = REPORT_TYPE_TO_BOARD_TYPE[input.reportType];
 
   const postRecord: PostRecord = {
@@ -187,6 +194,7 @@ export async function createPost(input: CreatePostInput) {
         logCount: increment(1),
         lastLogAt: timestamp,
       },
+      updatedBy: input.authorId,
       updatedAt: timestamp,
     },
     { merge: true },
@@ -215,6 +223,7 @@ export async function createSettlement(input: CreateSettlementInput) {
     action: normalizeOptionalText(input.action),
     archiveLevel: normalizeOptionalText(input.archiveLevel),
     operatorId: input.operatorId,
+    auditNote: normalizeOptionalText(input.auditNote),
     createdAt: timestamp,
   };
 
@@ -229,6 +238,7 @@ export async function createSettlement(input: CreateSettlementInput) {
         settlementCount: increment(1),
         lastSettlementAt: timestamp,
       },
+      updatedBy: input.operatorId,
       updatedAt: timestamp,
     },
     { merge: true },
@@ -250,15 +260,30 @@ export async function createSettlement(input: CreateSettlementInput) {
 
 export async function createBoardPost(input: CreateBoardPostInput) {
   assertOwnership(input.authorId);
+
+  // [C] 필수 필드 유효성 검사
+  if (!input.title?.trim()) {
+    throw new Error('Board post title is required');
+  }
+  if (!input.content?.trim()) {
+    throw new Error('Board post content is required');
+  }
+  if (!input.boardType) {
+    throw new Error('Board post boardType is required');
+  }
+
   const database = requireDb();
   const timestamp = nowIso();
   const postsRef = collection(database, COLLECTIONS.posts);
   const postRef = doc(postsRef);
 
+  // planetId는 PostRecord에서 string 필수 — ""는 standalone(행성 미연결) 게시물을 의미하는 sentinel 값
+  const isPlanetPost = Boolean(input.planetId);
+
   const postRecord: PostRecord = {
     id: postRef.id,
     authorId: input.authorId,
-    planetId: input.planetId ?? "",
+    planetId: input.planetId ?? "", // sentinel: "" = standalone board post (no planet)
     boardType: input.boardType,
     reportType: "observation",
     title: sanitizeTitle(input.title),
@@ -280,9 +305,29 @@ export async function createBoardPost(input: CreateBoardPostInput) {
     updatedAt: timestamp,
   };
 
-  await setDoc(postRef, postRecord);
-  return postRecord;
+  if (isPlanetPost) {
+    // 행성 연결 게시물 — batch로 포스트 저장 + 행성 logCount 증가
+    const planetRef = doc(database, COLLECTIONS.planets, input.planetId!);
+    const batch = writeBatch(database);
+    batch.set(postRef, postRecord);
+    batch.set(
+      planetRef,
+      {
+        stats: {
+          logCount: increment(1),
+          lastLogAt: timestamp,
+        },
+        updatedAt: timestamp,
+      },
+      { merge: true },
+    );
+    await batch.commit();
+  } else {
+    // standalone 게시물 — 단일 write
+    await setDoc(postRef, postRecord);
+  }
+
+  return { ...postRecord, isPlanetPost };
 }
 
 // IDENTITY_SEAL: PART-3 | role=create entities | inputs=planet/log/settlement create payloads | outputs=stored records
-
