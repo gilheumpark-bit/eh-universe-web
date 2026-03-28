@@ -16,6 +16,7 @@ import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-t
 import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
+import { saveFileTree, loadFileTree, saveSettings, loadSettings } from "@/lib/code-studio-store";
 import type { NoaResult } from "@/lib/noa/types";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -356,12 +357,36 @@ export default function CodeStudioShell() {
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [showTerminal, setShowTerminal] = useState(false);
   const [rightPanel, setRightPanel] = useState<RightPanel>("chat");
-  const [settings] = useState<CodeStudioSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<CodeStudioSettings>(DEFAULT_SETTINGS);
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
+
+  // IndexedDB에서 파일 트리 + 설정 로드 (최초 1회)
+  useEffect(() => {
+    (async () => {
+      const [savedTree, savedSettings] = await Promise.all([loadFileTree(), loadSettings()]);
+      if (savedTree && savedTree.length > 0) setFiles(savedTree);
+      if (savedSettings) setSettings(savedSettings);
+      setLoaded(true);
+    })();
+  }, []);
+
+  // 파일 트리 변경 → IndexedDB 자동 저장 (디바운스)
+  useEffect(() => {
+    if (!loaded) return;
+    const t = setTimeout(() => { saveFileTree(files); }, 1000);
+    return () => clearTimeout(t);
+  }, [files, loaded]);
+
+  // 설정 변경 → IndexedDB 자동 저장
+  useEffect(() => {
+    if (!loaded) return;
+    saveSettings(settings);
+  }, [settings, loaded]);
 
   // xterm 초기화
   useEffect(() => {

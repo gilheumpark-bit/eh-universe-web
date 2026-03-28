@@ -207,22 +207,22 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
 export default function Home() {
   const { lang } = useLang();
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("eh-splash-seen");
-    }
-    return false;
-  });
+  const [showSplash, setShowSplash] = useState(false); // SSR-safe: false 시작
   const [showStudioChoice, setShowStudioChoice] = useState(false);
 
-  // Auto-dismiss splash after 2.5s; mark as seen so it won't block again this session
+  // 클라이언트에서 스플래시 표시 여부 결정 (hydration mismatch 방지)
+  useEffect(() => {
+    if (!sessionStorage.getItem("eh-splash-seen")) {
+      setShowSplash(true);
+    }
+  }, []);
+
+  // Auto-dismiss splash after 2.5s
   useEffect(() => {
     if (!showSplash) return;
     const timer = setTimeout(() => {
       setShowSplash(false);
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("eh-splash-seen", "1");
-      }
+      sessionStorage.setItem("eh-splash-seen", "1");
     }, 2500);
     return () => clearTimeout(timer);
   }, [showSplash]);
