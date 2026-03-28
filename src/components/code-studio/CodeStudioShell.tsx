@@ -18,7 +18,7 @@ import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-t
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
 import { streamChat, getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
 import { runNoa } from "@/lib/noa";
-import { saveFileTree, loadFileTree, saveSettings, loadSettings, saveChatSession, listChatSessions } from "@/lib/code-studio-store";
+import { saveSettings, loadSettings, saveChatSession, listChatSessions } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import type { NoaResult } from "@/lib/noa/types";
@@ -33,6 +33,7 @@ const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"),
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
+import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
 
 // Lazy-loaded panels — external components
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -432,7 +433,7 @@ function CodeStudioShellInner() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  const [files, setFiles] = useState<FileNode[]>(DEMO_FILES);
+  const { tree: files, setTree: setFiles, createFile: fsCreateFile, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -463,7 +464,7 @@ function CodeStudioShellInner() {
   const handleSplitEditorChange = useCallback((value: string | undefined) => {
     if (!splitFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === splitFileId ? { ...f, content: value, isDirty: true } : f));
-    setFiles((prev) => updateContentInTree(prev, splitFileId, value));
+    fsUpdateContent(splitFileId, value);
   }, [splitFileId]);
 
   // Tab reorder handler
@@ -480,17 +481,17 @@ function CodeStudioShellInner() {
   // IndexedDB load (once)
   useEffect(() => {
     (async () => {
-      const [savedTree, savedSettings] = await Promise.all([loadFileTree(), loadSettings()]);
-      if (savedTree && savedTree.length > 0) setFiles(savedTree);
+      const [, savedSettings] = await Promise.all([fsLoad(), loadSettings()]);
       if (savedSettings) setSettings(savedSettings);
       setLoaded(true);
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-save file tree
   useEffect(() => {
     if (!loaded) return;
-    const t = setTimeout(() => { saveFileTree(files); }, 1000);
+    const t = setTimeout(() => { fsPersist(); }, 1000);
     return () => clearTimeout(t);
   }, [files, loaded]);
 
@@ -506,12 +507,14 @@ function CodeStudioShellInner() {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.shiftKey && e.key === "P") { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (mod && !e.shiftKey && e.key === "p") { e.preventDefault(); setShowQuickOpen((v) => !v); }
+      if (mod && e.key === "z" && !e.shiftKey && fsCanUndo) { e.preventDefault(); fsUndo(); }
+      if (mod && (e.key === "y" || (e.shiftKey && e.key === "z")) && fsCanRedo) { e.preventDefault(); fsRedo(); }
       if (mod && e.shiftKey && e.key === "F") { e.preventDefault(); setRightPanel((v) => v === "search" ? null : "search"); }
       if (mod && !e.shiftKey && e.key === "s") {
         e.preventDefault();
         if (activeFileId) {
           setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, isDirty: false } : f));
-          saveFileTree(files);
+          fsPersist();
           toast("Saved locally in this browser", "success");
         }
       }
@@ -690,7 +693,7 @@ function CodeStudioShellInner() {
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (!activeFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: value, isDirty: true } : f));
-    setFiles((prev) => updateContentInTree(prev, activeFileId, value));
+    fsUpdateContent(activeFileId, value);
   }, [activeFileId]);
 
   // File CRUD
@@ -716,14 +719,14 @@ function CodeStudioShellInner() {
   }, [newFileName, toast]);
 
   const handleDelete = useCallback((id: string) => {
-    setFiles((prev) => deleteFromTree(prev, id));
+    fsDeleteNode(id);
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
     if (activeFileId === id) setActiveFileId(null);
     toast("File deleted", "info");
   }, [activeFileId, toast]);
 
   const handleRename = useCallback((id: string, name: string) => {
-    setFiles((prev) => renameInTree(prev, id, name));
+    fsRenameNode(id, name);
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
   }, []);
 
@@ -757,8 +760,8 @@ function CodeStudioShellInner() {
   const handleApplyCode = useCallback((code: string) => {
     if (!activeFileId) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: code, isDirty: true } : f));
-    setFiles((prev) => updateContentInTree(prev, activeFileId, code));
-  }, [activeFileId]);
+    fsUpdateContent(activeFileId, code);
+  }, [activeFileId, fsUpdateContent]);
 
   // Pipeline analysis on file change
   useEffect(() => {
@@ -1214,7 +1217,7 @@ function CodeStudioShellInner() {
                 )}
                 {rightPanel === "git" && <GitPanel files={files} openFiles={openFiles} onRestore={(fid, content) => {
                   setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
-                  setFiles((prev) => updateContentInTree(prev, fid, content));
+                  fsUpdateContent(fid, content);
                 }} onClearDirty={() => setOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />}
                 {rightPanel === "deploy" && <DeployPanel files={files} language="EN" />}
                 {rightPanel === "bugs" && (
@@ -1262,7 +1265,7 @@ function CodeStudioShellInner() {
                     onApplyChanges={(changes) => {
                       for (const c of changes) {
                         setOpenFiles((prev) => prev.map((f) => f.id === c.fileId ? { ...f, content: c.modified, isDirty: true } : f));
-                        setFiles((prev) => updateContentInTree(prev, c.fileId, c.modified));
+                        fsUpdateContent(c.fileId, c.modified);
                       }
                       toast(`Applied ${changes.length} file(s)`, "success");
                     }}
