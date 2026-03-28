@@ -11,6 +11,7 @@ const navItems = [
   { href: "/network", label: "NETWORK" },
   { href: "/codex", label: "CODEX" },
   { href: "/studio", label: "STUDIO" },
+  { href: "/code-studio", label: "CODE" },
   { href: "/about", label: "ABOUT" },
 ];
 

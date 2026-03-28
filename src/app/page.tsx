@@ -116,14 +116,16 @@ function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => vo
   );
 }
 
-function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStudio: () => void }) {
+function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () => void; onStudio: () => void; onCodeStudio: () => void }) {
   const { lang } = useLang();
   const isKO = lang === "ko";
+
+  const cardBase = "group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-6 py-8 sm:px-8 sm:py-10 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]";
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
       <StarField />
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center gap-12">
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col items-center gap-12">
         <div className="text-center">
           <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
             EH UNIVERSE
@@ -133,19 +135,16 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
           </h1>
         </div>
 
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* UNIVERSE */}
-          <button
-            onClick={onUniverse}
-            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-amber/30 hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <button onClick={onUniverse} className={`${cardBase} hover:border-accent-amber/30`}>
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
               {L4(lang, { ko: "세계관 탐색", en: "Explore", jp: "世界観探索", cn: "探索世界观" })}
             </p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3">
               UNIVERSE
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
@@ -159,17 +158,14 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
           </button>
 
           {/* STUDIO */}
-          <button
-            onClick={onStudio}
-            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-purple/30 hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <button onClick={onStudio} className={`${cardBase} hover:border-accent-purple/30`}>
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
             </div>
             <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
               {L4(lang, { ko: "집필 시작", en: "Write", jp: "執筆開始", cn: "开始写作" })}
             </p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3">
               STUDIO
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
@@ -179,6 +175,27 @@ function SplashScreen({ onUniverse, onStudio }: { onUniverse: () => void; onStud
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
               {L4(lang, { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" })} →
+            </div>
+          </button>
+
+          {/* CODE STUDIO */}
+          <button onClick={onCodeStudio} className={`${cardBase} hover:border-accent-green/30`}>
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-green/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
+            </div>
+            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-green mb-4">
+              {L4(lang, { ko: "코드 편집", en: "Code", jp: "コード編集", cn: "代码编辑" })}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3">
+              CODE
+            </h2>
+            <p className="text-sm leading-7 text-text-secondary">
+              {isKO
+                ? "Monaco 에디터 기반 코드 작업 환경."
+                : "Monaco-based coding environment with AI."}
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-green transition-colors">
+              {L4(lang, { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" })} →
             </div>
           </button>
         </div>
@@ -318,6 +335,11 @@ export default function Home() {
           setShowSplash(false);
           if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
           setShowStudioChoice(true);
+        }}
+        onCodeStudio={() => {
+          setShowSplash(false);
+          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
+          router.push("/code-studio");
         }}
       />
     );
