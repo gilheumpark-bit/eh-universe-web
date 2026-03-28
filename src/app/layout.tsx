@@ -53,10 +53,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        <meta
-          httpEquiv="Content-Security-Policy"
-          content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live https://cdn.jsdelivr.net; worker-src 'self' blob:; object-src 'none'; base-uri 'self';"
-        />
+        {/* CSP는 next.config.ts headers()에서 관리 — meta 태그 중복 제거 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
