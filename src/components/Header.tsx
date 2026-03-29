@@ -34,6 +34,15 @@ export default function Header() {
     { href: "/tools/noa-tower", label: L4(lang, { ko: "노아 타워", en: "NOA TOWER", jp: "ノアタワー", cn: "诺亚塔" }) },
   ], [lang]);
 
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
   const toolMenuRef = useRef<HTMLDivElement>(null);
   const toolItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
@@ -113,10 +122,10 @@ export default function Header() {
                   href={item.href}
                   data-testid={`${item.label.toLowerCase()}-link`}
                   aria-current={isActive ? "page" : undefined}
-                  className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] transition-all duration-150 ${
+                  className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
                     isActive
-                      ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber"
-                      : "border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+                      ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
+                      : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
                   }`}
                 >
                   {item.label}
@@ -184,6 +193,7 @@ export default function Header() {
               className="rounded-full border border-white/8 bg-white/[0.03] p-2.5 text-text-secondary"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
+              aria-expanded={menuOpen}
             >
               <svg
                 width="20"
@@ -225,10 +235,10 @@ export default function Header() {
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
                 aria-current={isActive ? "page" : undefined}
-                className={`block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] transition-colors duration-150 ${
+                className={`block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] transition-colors duration-150 ${
                   isActive
-                    ? "bg-accent-amber/8 text-accent-amber"
-                    : "text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+                    ? "bg-accent-amber/8 text-accent-amber font-bold border-l-2 border-accent-amber"
+                    : "font-medium text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
                 }`}
               >
                 {item.label}
