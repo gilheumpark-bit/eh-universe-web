@@ -5,9 +5,11 @@
 // PART 1 — Types & Imports
 // ============================================================
 
+import { showAlert } from '@/lib/show-alert';
 import React, { useState, useRef, useCallback } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { ErrorToast, StreamingIndicator } from './UXHelpers';
@@ -33,12 +35,12 @@ interface AutoRefinerProps {
 // PART 2 — Analysis prompt
 // ============================================================
 
-function buildAnalysisPrompt(text: string, isKO: boolean, context?: string): string {
+function buildAnalysisPrompt(text: string, language: AppLanguage, context?: string): string {
   const paragraphs = text.split('\n\n').filter(p => p.trim());
   const numbered = paragraphs.map((p, i) => `[${i}] ${p.slice(0, 200)}`).join('\n');
 
-  if (isKO) {
-    return `당신은 상업 소설 편집자입니다. 아래 원고의 각 문단을 분석하고, 개선이 필요한 부분만 골라주세요.
+  const prompts: Record<AppLanguage, string> = {
+    KO: `당신은 상업 소설 편집자입니다. 아래 원고의 각 문단을 분석하고, 개선이 필요한 부분만 골라주세요.
 
 분석 기준 (우선순위):
 1. 밋밋한 묘사 → "살 붙이기" (감각/내면 부족)
@@ -57,10 +59,8 @@ function buildAnalysisPrompt(text: string, isKO: boolean, context?: string): str
 ${context ? `\n작품 정보: ${context}` : ''}
 
 원고:
-${numbered}`;
-  }
-
-  return `You are a commercial fiction editor. Analyze each paragraph and identify parts needing improvement.
+${numbered}`,
+    EN: `You are a commercial fiction editor. Analyze each paragraph and identify parts needing improvement.
 
 Criteria (priority):
 1. Flat description → "expand" (lacks sensory/inner detail)
@@ -79,58 +79,119 @@ Output format (JSON array only, no other text):
 ${context ? `\nWork info: ${context}` : ''}
 
 Manuscript:
-${numbered}`;
+${numbered}`,
+    JP: `あなたは商業小説の編集者です。以下の原稿の各段落を分析し、改善が必要な部分だけを選んでください。
+
+分析基準（優先順位）:
+1. 平坦な描写 → "expand"（感覚/内面の詳細不足）
+2. 過剰描写 → "compress"（冗長な修飾語の繰り返し）
+3. 緊張感不足 → "tension"（アクション/危機シーンが緩い）
+4. 不自然な台詞 → "dialogue"（キャラクターの声が区別できない）
+5. 転換不足 → "insert_after"（場面転換が唐突）
+6. ぎこちない文章 → "rewrite"（AIトーンまたは不自然な表現）
+
+出力形式（JSON配列のみ、他のテキストなし）:
+[{"p":段落番号,"issue":"問題の一行説明","action":"アクション名"}]
+
+- 問題のない段落はスキップ
+- 最大8つまで
+- actionは必ず: "rewrite" | "expand" | "compress" | "tension" | "dialogue" | "insert_after" のいずれか
+${context ? `\n作品情報: ${context}` : ''}
+
+原稿:
+${numbered}`,
+    CN: `你是一位商业小说编辑。分析以下稿件的每个段落，只选出需要改进的部分。
+
+分析标准（优先级）:
+1. 平淡描写 → "expand"（缺乏感官/内心细节）
+2. 过度描写 → "compress"（冗余修饰语重复）
+3. 紧张感不足 → "tension"（动作/危机场景松弛）
+4. 对话不自然 → "dialogue"（角色声音不鲜明）
+5. 缺少转场 → "insert_after"（场景切换突兀）
+6. 文笔生硬 → "rewrite"（AI腔调或表达笨拙）
+
+输出格式（仅JSON数组，无其他文本）:
+[{"p":段落号,"issue":"问题一行描述","action":"动作名"}]
+
+- 跳过没有问题的段落
+- 最多8条建议
+- action必须是: "rewrite" | "expand" | "compress" | "tension" | "dialogue" | "insert_after" 之一
+${context ? `\n作品信息: ${context}` : ''}
+
+稿件:
+${numbered}`,
+  };
+
+  return prompts[language];
 }
 
-function buildFixPrompt(original: string, action: string, before: string, after: string, isKO: boolean): string {
-  const instructions: Record<string, { ko: string; en: string }> = {
+function buildFixPrompt(original: string, action: string, before: string, after: string, language: AppLanguage): string {
+  const instructions: Record<string, Record<AppLanguage, string>> = {
     rewrite: {
-      ko: '같은 의미이지만 더 자연스럽고 매끄러운 문장으로 다시 써줘. AI 톤 제거.',
-      en: 'Rewrite with more natural, polished prose. Remove AI tone.',
+      KO: '같은 의미이지만 더 자연스럽고 매끄러운 문장으로 다시 써줘. AI 톤 제거.',
+      EN: 'Rewrite with more natural, polished prose. Remove AI tone.',
+      JP: '同じ意味でより自然で滑らかな文章に書き直してください。AIトーンを除去。',
+      CN: '用相同含义但更自然流畅的句子重写。去除AI腔调。',
     },
     expand: {
-      ko: '감각 묘사, 내면 독백, 환경 묘사를 추가해서 2배로 늘려줘. 원래 사건과 대사는 유지.',
-      en: 'Expand 2x with sensory details, inner monologue, environment. Keep events/dialogue.',
+      KO: '감각 묘사, 내면 독백, 환경 묘사를 추가해서 2배로 늘려줘. 원래 사건과 대사는 유지.',
+      EN: 'Expand 2x with sensory details, inner monologue, environment. Keep events/dialogue.',
+      JP: '感覚描写、内面の独白、環境描写を追加して2倍に拡張してください。元の事件と台詞は維持。',
+      CN: '添加感官描写、内心独白、环境描写，扩展为2倍。保留原有事件和对话。',
     },
     compress: {
-      ko: '핵심만 남기고 절반으로 압축. 불필요한 수식어, 반복 제거.',
-      en: 'Compress to half. Remove unnecessary modifiers and repetition.',
+      KO: '핵심만 남기고 절반으로 압축. 불필요한 수식어, 반복 제거.',
+      EN: 'Compress to half. Remove unnecessary modifiers and repetition.',
+      JP: '核心だけ残して半分に圧縮。不要な修飾語、繰り返しを除去。',
+      CN: '只留核心压缩到一半。删除不必要的修饰语和重复。',
     },
     tension: {
-      ko: '긴장감 높여줘. 짧은 문장, 급박한 호흡, 위기감. 원래 사건 유지.',
-      en: 'Increase tension. Short sentences, urgency, crisis. Keep events.',
+      KO: '긴장감 높여줘. 짧은 문장, 급박한 호흡, 위기감. 원래 사건 유지.',
+      EN: 'Increase tension. Short sentences, urgency, crisis. Keep events.',
+      JP: '緊張感を高めてください。短い文、切迫した呼吸、危機感。元の事件を維持。',
+      CN: '提高紧张感。短句、紧迫节奏、危机感。保留原有事件。',
     },
     dialogue: {
-      ko: '대사를 캐릭터 성격에 맞게 더 자연스럽고 개성있게. 지문도 다듬어줘.',
-      en: 'Polish dialogue to be more natural and characteristic. Improve tags too.',
+      KO: '대사를 캐릭터 성격에 맞게 더 자연스럽고 개성있게. 지문도 다듬어줘.',
+      EN: 'Polish dialogue to be more natural and characteristic. Improve tags too.',
+      JP: 'セリフをキャラクターの性格に合わせてより自然で個性的に。ト書きも整えてください。',
+      CN: '打磨对话使其更自然、更有个性。也润色对话标签。',
     },
     insert_after: {
-      ko: '이 문단 뒤에 이어지는 전환 장면을 200~400자로 새로 써줘.',
-      en: 'Write a 200-400 char transition scene to follow this paragraph.',
+      KO: '이 문단 뒤에 이어지는 전환 장면을 200~400자로 새로 써줘.',
+      EN: 'Write a 200-400 char transition scene to follow this paragraph.',
+      JP: 'この段落の後に続く転換シーンを200〜400字で新しく書いてください。',
+      CN: '在这段之后写一个200-400字的过渡场景。',
     },
   };
 
   const inst = instructions[action] ?? instructions.rewrite;
-  const prompt = isKO ? inst.ko : inst.en;
+  const prompt = inst[language];
+  const footer: Record<AppLanguage, string> = {
+    KO: '순수 소설 텍스트만 출력. 설명/코멘트/따옴표 없이.',
+    EN: 'Output pure fiction text only. No explanations/comments/quotes.',
+    JP: '純粋な小説テキストのみ出力。説明/コメント/引用符なし。',
+    CN: '仅输出纯小说文本。无解释/评论/引号。',
+  };
 
-  return `${prompt}\n\n[앞 문맥]\n${before}\n\n[대상 문단]\n${original}\n\n[뒤 문맥]\n${after}\n\n순수 소설 텍스트만 출력. 설명/코멘트/따옴표 없이.`;
+  return `${prompt}\n\n[앞 문맥]\n${before}\n\n[대상 문단]\n${original}\n\n[뒤 문맥]\n${after}\n\n${footer[language]}`;
 }
 
 // ============================================================
 // PART 3 — Component
 // ============================================================
 
-const ACTION_LABEL: Record<string, { ko: string; en: string; color: string }> = {
-  rewrite: { ko: '다시 쓰기', en: 'Rewrite', color: 'text-blue-400 bg-blue-600/10 border-blue-500/20' },
-  expand: { ko: '살 붙이기', en: 'Expand', color: 'text-green-400 bg-green-600/10 border-green-500/20' },
-  compress: { ko: '압축', en: 'Compress', color: 'text-orange-400 bg-orange-600/10 border-orange-500/20' },
-  tension: { ko: '긴장감', en: 'Tension', color: 'text-red-400 bg-red-600/10 border-red-500/20' },
-  dialogue: { ko: '대사', en: 'Dialogue', color: 'text-pink-400 bg-pink-600/10 border-pink-500/20' },
-  insert_after: { ko: '삽입', en: 'Insert', color: 'text-purple-400 bg-purple-600/10 border-purple-500/20' },
+const ACTION_LABEL: Record<string, { label: Record<AppLanguage, string>; color: string }> = {
+  rewrite: { label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' }, color: 'text-blue-400 bg-blue-600/10 border-blue-500/20' },
+  expand: { label: { KO: '살 붙이기', EN: 'Expand', JP: '拡張', CN: '扩展' }, color: 'text-green-400 bg-green-600/10 border-green-500/20' },
+  compress: { label: { KO: '압축', EN: 'Compress', JP: '圧縮', CN: '压缩' }, color: 'text-orange-400 bg-orange-600/10 border-orange-500/20' },
+  tension: { label: { KO: '긴장감', EN: 'Tension', JP: '緊張感', CN: '紧张感' }, color: 'text-red-400 bg-red-600/10 border-red-500/20' },
+  dialogue: { label: { KO: '대사', EN: 'Dialogue', JP: 'セリフ', CN: '台词' }, color: 'text-pink-400 bg-pink-600/10 border-pink-500/20' },
+  insert_after: { label: { KO: '삽입', EN: 'Insert', JP: '挿入', CN: '插入' }, color: 'text-purple-400 bg-purple-600/10 border-purple-500/20' },
 };
 
 const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, onApply }) => {
-  const isKO = language === 'KO';
+  const t = createT(language);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'ready' | 'fixing'>('idle');
   const [, setCurrentFixIdx] = useState(-1);
@@ -145,7 +206,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
   const startAnalysis = useCallback(async () => {
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      setRefinerError(new Error(isKO ? 'API 키가 설정되지 않았습니다. 설정(Settings) 탭에서 API 키를 입력해주세요.' : 'API key not set. Please enter your API key in the Settings tab.'));
+      setRefinerError(new Error(t('autoRefiner.apiKeyMissing')));
       return;
     }
 
@@ -156,15 +217,13 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const prompt = buildAnalysisPrompt(content, isKO, context);
+    const prompt = buildAnalysisPrompt(content, language, context);
     const messages: ChatMsg[] = [{ role: 'user', content: prompt }];
 
     let raw = '';
     try {
       await streamChat({
-        systemInstruction: isKO
-          ? '소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.'
-          : 'Fiction editor. Output JSON array only. No other text.',
+        systemInstruction: ({KO:'소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.',EN:'Fiction editor. Output JSON array only. No other text.',JP:'小説編集者。JSON配列のみ出力。他のテキスト禁止。',CN:'小说编辑。仅输出JSON数组。禁止其他文本。'}[language]),
         messages,
         temperature: 0.3,
         signal: controller.signal,
@@ -175,7 +234,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         setPhase('idle');
-        alert(isKO ? '분석 결과를 파싱할 수 없습니다.' : 'Could not parse analysis result.');
+        showAlert(t('autoRefiner.parseFailed'));
         return;
       }
 
@@ -196,7 +255,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       setSuggestions(sugs);
       setPhase(sugs.length > 0 ? 'ready' : 'idle');
       if (sugs.length === 0) {
-        alert(isKO ? '개선할 부분을 찾지 못했습니다. 원고 상태가 좋습니다!' : 'No improvements found. Your manuscript looks good!');
+        showAlert(t('autoRefiner.noImprovements'));
       }
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
@@ -205,7 +264,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     } finally {
       abortRef.current = null;
     }
-  }, [content, isKO, context]);
+  }, [content, language, context, t]);
 
   // Step 2: Fix suggestions one by one
   const fixSuggestion = useCallback(async (idx: number) => {
@@ -224,7 +283,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     const before = paragraphs.slice(Math.max(0, pIdx - 1), pIdx).join('\n\n');
     const after = paragraphs.slice(pIdx + 1, pIdx + 2).join('\n\n');
 
-    const prompt = buildFixPrompt(sug.original, sug.action, before, after, isKO);
+    const prompt = buildFixPrompt(sug.original, sug.action, before, after, language);
     const messages: ChatMsg[] = [{ role: 'user', content: prompt }];
 
     const controller = new AbortController();
@@ -233,9 +292,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     let result = '';
     try {
       await streamChat({
-        systemInstruction: isKO
-          ? '소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.'
-          : 'Fiction rewriter. Output pure fiction text only. No explanations.',
+        systemInstruction: ({KO:'소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.',EN:'Fiction rewriter. Output pure fiction text only. No explanations.',JP:'小説テキストリライター。純粋な小説テキストのみ出力。説明禁止。',CN:'小说文本改写器。仅输出纯小说文本。禁止解释。'}[language]),
         messages,
         temperature: 0.85,
         signal: controller.signal,
@@ -253,7 +310,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       setPhase('ready');
       abortRef.current = null;
     }
-  }, [suggestions, workingContent, isKO]);
+  }, [suggestions, workingContent, language]);
 
   // Apply a single fix (with undo support)
   const applySuggestion = useCallback((idx: number) => {
@@ -330,10 +387,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-purple" />
           <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
-            {isKO ? 'AUTO 30% — AI 자동 리파인' : 'AUTO 30% — AI Auto-Refine'}
+            {t('autoRefiner.header')}
           </span>
           {suggestions.length > 0 && (
-            <span className="text-[9px] text-zinc-500 font-[family-name:var(--font-mono)]">
+            <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
               {appliedCount}/{suggestions.length}
             </span>
           )}
@@ -341,38 +398,38 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         <div className="flex items-center gap-2">
           {phase === 'idle' && (
             <button onClick={startAnalysis} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity">
-              <Play className="w-3 h-3" /> {isKO ? '분석 시작' : 'Analyze'}
+              <Play className="w-3 h-3" /> {t('autoRefiner.analyzeStart')}
             </button>
           )}
           {phase === 'analyzing' && (
             <>
-              <StreamingIndicator charCount={streamingChars} isKO={isKO} />
+              <StreamingIndicator charCount={streamingChars} language={language} />
               <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-red-600/30 transition-colors">
-                <X className="w-3 h-3" /> {isKO ? '중단' : 'Stop'}
+                <X className="w-3 h-3" /> {t('autoRefiner.stop')}
               </button>
             </>
           )}
           {phase === 'ready' && pendingCount > 0 && (
             <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-blue-600/30 transition-colors">
-              <Play className="w-3 h-3" /> {isKO ? '전체 생성' : 'Generate All'}
+              <Play className="w-3 h-3" /> {t('autoRefiner.generateAll')}
             </button>
           )}
           {undoStack.length > 0 && (
-            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-700/30 border border-zinc-600/30 text-zinc-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-zinc-700/50 transition-colors" title={isKO ? '되돌리기' : 'Undo'}>
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-bg-tertiary/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-bg-tertiary/50 transition-colors" title={t('ui.undo')}>
               <Undo2 className="w-3 h-3" />
             </button>
           )}
           {appliedCount > 0 && (
             <button onClick={applyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-green-600/30 transition-colors">
-              <CheckCheck className="w-3 h-3" /> {isKO ? '원고 반영' : 'Apply to MS'}
+              <CheckCheck className="w-3 h-3" /> {t('autoRefiner.applyToMs')}
             </button>
           )}
           {phase !== 'idle' && (
-            <button onClick={cancel} className="p-1.5 text-zinc-600 hover:text-accent-red transition-colors">
+            <button onClick={cancel} aria-label="취소" className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-zinc-600 cursor-pointer" onClick={() => setExpanded(false)} /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-600 cursor-pointer" onClick={() => setExpanded(true)} />}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary cursor-pointer" onClick={() => setExpanded(false)} /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary cursor-pointer" onClick={() => setExpanded(true)} />}
         </div>
       </div>
 
@@ -384,26 +441,26 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
             return (
               <div key={sug.id} className={`border rounded-xl p-3 space-y-2 transition-all ${
                 sug.status === 'applied' ? 'border-green-500/20 bg-green-900/5' :
-                sug.status === 'skipped' ? 'border-zinc-800/30 bg-zinc-900/30 opacity-40' :
+                sug.status === 'skipped' ? 'border-border/30 bg-bg-secondary/30 opacity-40' :
                 sug.status === 'generating' ? 'border-blue-500/30 bg-blue-900/5' :
                 'border-border bg-bg-secondary/30'
               }`}>
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
-                      {isKO ? actionInfo.ko : actionInfo.en}
+                    <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
+                      {actionInfo.label[language]}
                     </span>
-                    <span className="text-[10px] text-zinc-400">{sug.issue}</span>
+                    <span className="text-[10px] text-text-secondary">{sug.issue}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     {sug.status === 'pending' && (
                       <>
-                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={isKO ? '생성' : 'Generate'}>
+                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={t('ui.generate')}>
                           <Play className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={isKO ? '건너뛰기' : 'Skip'}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -413,10 +470,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                     )}
                     {sug.status === 'ready' && (
                       <>
-                        <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={isKO ? '적용' : 'Apply'}>
+                        <button onClick={() => applySuggestion(idx)} className="p-1 rounded hover:bg-green-900/20 text-green-500/50 hover:text-green-400 transition-colors" title={t('ui.apply')}>
                           <Check className="w-3 h-3" />
                         </button>
-                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition-colors" title={isKO ? '건너뛰기' : 'Skip'}>
+                        <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
                           <SkipForward className="w-3 h-3" />
                         </button>
                       </>
@@ -428,12 +485,12 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                 </div>
 
                 {/* Original (truncated) */}
-                <p className="text-[10px] text-zinc-600 font-serif leading-relaxed line-clamp-2">{sug.original}</p>
+                <p className="text-[10px] text-text-tertiary font-serif leading-relaxed line-clamp-2">{sug.original}</p>
 
                 {/* Generated result */}
                 {sug.result && sug.status !== 'skipped' && (
                   <div className="border-t border-border pt-2">
-                    <p className="text-[11px] text-zinc-300 font-serif leading-relaxed whitespace-pre-wrap">
+                    <p className="text-[11px] text-text-secondary font-serif leading-relaxed whitespace-pre-wrap">
                       {sug.result}
                     </p>
                   </div>
@@ -447,16 +504,14 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       {/* Empty state */}
       {expanded && phase === 'idle' && suggestions.length === 0 && (
         <div className="px-4 pb-4 text-center">
-          <p className="text-[11px] text-zinc-600 italic">
-            {isKO
-              ? 'AI가 원고를 문단별로 분석하고, 약한 부분을 찾아 자동으로 리라이트합니다.'
-              : 'AI analyzes your manuscript paragraph by paragraph and auto-rewrites weak spots.'}
+          <p className="text-[11px] text-text-tertiary italic">
+            {t('autoRefiner.emptyState')}
           </p>
         </div>
       )}
       {/* Error toast */}
       {refinerError !== null && (
-        <ErrorToast error={refinerError} isKO={isKO} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
+        <ErrorToast error={refinerError} language={language} onDismiss={() => setRefinerError(null)} onRetry={() => { setRefinerError(null); startAnalysis(); }} />
       )}
     </div>
   );

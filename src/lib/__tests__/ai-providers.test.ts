@@ -1,8 +1,8 @@
-import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning } from '../ai-providers';
+import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
 
 describe('PROVIDERS', () => {
-  it('has 5 providers', () => {
-    expect(PROVIDER_LIST).toHaveLength(5);
+  it('has 7 providers (cloud + local)', () => {
+    expect(PROVIDER_LIST).toHaveLength(7);
   });
 
   it('each provider has required fields', () => {
@@ -53,5 +53,62 @@ describe('getModelWarning', () => {
   it('returns warning for preview models (EN)', () => {
     const warning = getModelWarning('gemini-3.1-pro-preview', 'en');
     expect(warning).toContain('preview');
+  });
+});
+
+describe('API key obfuscation', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('stores and retrieves keys correctly', () => {
+    setApiKey('gemini', 'AIzaSyTest123');
+    expect(getApiKey('gemini')).toBe('AIzaSyTest123');
+  });
+
+  it('does not store key in plaintext', () => {
+    setApiKey('openai', 'sk-test-abc');
+    const raw = localStorage.getItem('noa_openai_key');
+    expect(raw).not.toBe('sk-test-abc');
+    expect(raw).toMatch(/^noa:\d+:/); // obfuscation prefix (any version)
+  });
+
+  it('handles empty key', () => {
+    setApiKey('claude', '');
+    expect(getApiKey('claude')).toBe('');
+  });
+
+  it('reads legacy plaintext keys (backward compat)', () => {
+    localStorage.setItem('noa_api_key', 'AIzaPlaintext');
+    expect(getApiKey('gemini')).toBe('AIzaPlaintext');
+  });
+
+  it('handles unicode in key values', () => {
+    setApiKey('groq', 'gsk_테스트키');
+    expect(getApiKey('groq')).toBe('gsk_테스트키');
+  });
+});
+
+describe('v4 key hydration', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('getApiKeyAsync returns value for v3 format (set via setApiKey)', async () => {
+    setApiKey('gemini', 'AIzaSyAsyncTest456');
+    const result = await getApiKeyAsync('gemini');
+    expect(result).toBe('AIzaSyAsyncTest456');
+  });
+
+  it('getApiKeyAsync returns empty string for missing key', async () => {
+    const result = await getApiKeyAsync('openai');
+    expect(result).toBe('');
+  });
+
+  it('getApiKeyAsync result matches sync getApiKey for v3 keys', async () => {
+    setApiKey('claude', 'sk-ant-test-789');
+    const syncResult = getApiKey('claude');
+    const asyncResult = await getApiKeyAsync('claude');
+    expect(asyncResult).toBe(syncResult);
   });
 });

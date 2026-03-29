@@ -53,7 +53,7 @@ export function classifyInput(text: string): InputMode {
 // PART 2: OBSERVATION — 사용자 입력 분석
 // ============================================================
 
-const QUESTION_PATTERNS = [/\?/, /왜/, /어떻게/, /무엇/, /뭐야/, /why/i, /how/i, /what/i];
+const QUESTION_PATTERNS: RegExp[] = [/\?/, /왜/, /어떻게/, /무엇/, /뭐야/, /why/i, /how/i, /what/i];
 const HUMOR_MARKERS = ['ㅋㅋ', 'ㅎㅎ', 'lol', 'haha', '😂', '😅'];
 const CONNECTIVES = ['그래서', '하지만', '그리고', '또한', 'because', 'however', 'and'];
 const OBJECTION_MARKERS = ['아니', '근데', '그건 아닌데', 'but', 'however', 'i disagree'];
@@ -62,7 +62,7 @@ export function buildTurnSignal(text: string): TurnSignal {
   const lower = text.toLowerCase();
   return {
     length: text.length,
-    hasQuestion: QUESTION_PATTERNS.some(p => p.test ? p.test(lower) : lower.includes(p.toString())),
+    hasQuestion: QUESTION_PATTERNS.some(p => p.test(lower)),
     humorLevel: Math.min(1, HUMOR_MARKERS.filter(m => lower.includes(m)).length * 0.3),
     connectiveDensity: Math.min(1, CONNECTIVES.filter(c => lower.includes(c)).length / Math.max(1, text.length / 100)),
     objectionMarker: OBJECTION_MARKERS.some(p => lower.includes(p)),
@@ -115,10 +115,9 @@ function hysteresis(delta: number): number {
 export function updateScore(state: HFCPState, signal: TurnSignal): number {
   const delta = computeDelta(signal);
   const M = updateMomentum(state, delta);
-  const raw = state.score + (delta * M);
   const L = loadLeveling(state.score);
   const H = hysteresis(delta);
-  const newScore = clamp(raw * L * H, 50, 150);
+  const newScore = clamp(state.score + (delta * M * L * H), 50, 150);
   state.lastDelta = delta;
   state.score = newScore;
   state.turns += 1;
@@ -168,25 +167,30 @@ export function resolveNRG(state: HFCPState, inputText: string): NRGStrategy {
 // PART 6: VERDICT → PROMPT MODIFIER (AI 대화 톤 조절)
 // ============================================================
 
+import type { AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
+
 export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, isKO: boolean): string {
+  const language: AppLanguage = isKO ? 'KO' : 'EN';
+  const t = createT(language);
   const parts: string[] = [];
 
   // Verdict-based tone
   switch (verdict) {
     case 'engagement':
-      parts.push(isKO ? '[HFCP 모드: 적극 참여] 친근하고 적극적인 톤으로 답변하세요.' : '[HFCP Mode: Engagement] Respond warmly and proactively.');
+      parts.push(t('hfcpLabels.engagement'));
       break;
     case 'normal_free':
-      parts.push(isKO ? '[HFCP 모드: 자유 응답] 자연스러운 톤으로 답변하세요.' : '[HFCP Mode: Normal] Respond naturally.');
+      parts.push(t('hfcpLabels.normalFree'));
       break;
     case 'normal_analysis':
-      parts.push(isKO ? '[HFCP 모드: 분석] 구조적이고 논리적인 톤으로 답변하세요.' : '[HFCP Mode: Analysis] Respond with structure and logic.');
+      parts.push(t('hfcpLabels.normalAnalysis'));
       break;
     case 'limited':
-      parts.push(isKO ? '[HFCP 모드: 제한] 핵심만 간결하게 답변하세요.' : '[HFCP Mode: Limited] Respond concisely, essentials only.');
+      parts.push(t('hfcpLabels.limited'));
       break;
     case 'silent':
-      parts.push(isKO ? '[HFCP 모드: 침묵] 질문으로만 응답하세요. 직접적인 답변 금지.' : '[HFCP Mode: Silent] Respond with questions only. No direct answers.');
+      parts.push(t('hfcpLabels.silent'));
       break;
   }
 
@@ -194,16 +198,16 @@ export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, 
   if (nrg !== 'normal') {
     switch (nrg) {
       case 'light_variation':
-        parts.push(isKO ? '[NRG: 변형] 이전과 다른 구조로 답변하세요.' : '[NRG: Variation] Use different structure from previous answer.');
+        parts.push(t('hfcpLabels.nrgVariation'));
         break;
       case 'frame_shift':
-        parts.push(isKO ? '[NRG: 프레임 전환] 완전히 다른 관점에서 접근하세요.' : '[NRG: Frame Shift] Approach from a completely different angle.');
+        parts.push(t('hfcpLabels.nrgFrameShift'));
         break;
       case 'perspective_shift':
-        parts.push(isKO ? '[NRG: 시점 전환] 탐색적/비평적 시점으로 답변하세요.' : '[NRG: Perspective Shift] Use exploratory/critical perspective.');
+        parts.push(t('hfcpLabels.nrgPerspectiveShift'));
         break;
       case 'meta_ack':
-        parts.push(isKO ? '[NRG: 메타 인식] "이미 다뤘지만 다른 각도에서" 식으로 시작하세요.' : '[NRG: Meta-Ack] Acknowledge repetition and offer new angle.');
+        parts.push(t('hfcpLabels.nrgMetaAck'));
         break;
     }
   }

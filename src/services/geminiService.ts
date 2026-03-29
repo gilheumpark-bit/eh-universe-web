@@ -1,17 +1,17 @@
 // ============================================================
 // PART 0: IMPORTS & TYPES
 // Story streaming uses lib/ai-providers.ts (multi-provider).
-// This file handles: (1) story stream orchestration with engine
-//                     (2) Gemini-only structured output (characters)
+// This file handles:
+//   (1) story stream orchestration with engine
+//   (2) Gemini structured generation via server route
 // ============================================================
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { StoryConfig, Character, AppLanguage, Message } from "../lib/studio-types";
+import { StoryConfig, Character, Item, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getActiveProvider, ChatMsg } from "../lib/ai-providers";
-import { HISTORY_LIMITS } from "../lib/token-utils";
+import { streamChat, getApiKey, getActiveModel, getPreferredModel, ChatMsg } from "../lib/ai-providers";
+import { HISTORY_LIMITS, truncateMessages } from "../lib/token-utils";
 
 export interface GenerateOptions {
   previousContent?: string;
@@ -27,36 +27,96 @@ export interface GenerateResult {
   report: EngineReport;
 }
 
+function getStructuredModel(): string {
+  // 자동생성(캐릭터/세계관/연출/아이템)은 flash로 속도 우선
+  // 집필(스트리밍)은 사용자 선택 모델(pro) 유지
+  const userModel = getPreferredModel('gemini');
+  // 사용자가 명시적으로 pro를 선택했어도 structured는 flash 사용
+  if (userModel.includes('pro')) return 'gemini-2.5-flash';
+  return userModel;
+}
+
+// 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
+const structuredCache = new Map<string, { data: unknown; ts: number }>();
+const CACHE_TTL = 5 * 60 * 1000;
+
+async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
+  const MAX_RETRIES = 2;
+  const payload = JSON.stringify({
+    ...body,
+    provider: 'gemini',
+    model: getStructuredModel(),
+    apiKey: getApiKey('gemini') || undefined,
+  });
+
+  // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
+  const cacheable = body.task === 'worldDesign' || body.task === 'worldSim';
+  const cacheKey = cacheable ? payload : '';
+  if (cacheable) {
+    const cached = structuredCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
+  }
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch('/api/gemini-structured', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(60_000),
+      body: payload,
+    });
+
+    const data = await response.json().catch(() => null);
+    if (response.ok) {
+      if (cacheable && cacheKey) structuredCache.set(cacheKey, { data, ts: Date.now() });
+      return data as T;
+    }
+
+    const errorMessage = data && typeof data.error === 'string'
+      ? data.error
+      : `Structured Gemini error ${response.status}`;
+
+    // 500/502/503/504 → retry, 그 외(401/400 등) → 즉시 에러
+    const isRetryable = response.status >= 500 && response.status < 600;
+    if (!isRetryable || attempt === MAX_RETRIES) throw new Error(errorMessage);
+    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  }
+
+  throw new Error('Structured Gemini: max retries exceeded');
+}
+
 // ============================================================
 // PART 1: HISTORY BUILDER
 // ============================================================
 
 function buildChatMessages(
   history: Message[],
-  currentUserPrompt: string
+  currentUserPrompt: string,
+  systemInstruction: string
 ): ChatMsg[] {
-  const msgs: ChatMsg[] = [];
-  const recent = history.slice(-HISTORY_LIMITS.STORY_API);
+  const allMsgs: ChatMsg[] = [];
+  const capped = history.slice(-HISTORY_LIMITS.STORAGE);
 
-  for (const msg of recent) {
+  for (const msg of capped) {
     if (msg.role === 'assistant' && !msg.content) continue;
     let text = msg.content;
     if (msg.role === 'assistant') {
       text = text.replace(/```json\n[\s\S]*?\n```/g, '').trim();
       if (!text) continue;
     }
-    msgs.push({
+    allMsgs.push({
       role: msg.role === 'user' ? 'user' : 'assistant',
       content: text,
     });
   }
 
-  msgs.push({ role: 'user', content: currentUserPrompt });
-  return msgs;
+  const model = getActiveModel();
+  const { messages: trimmed } = truncateMessages(systemInstruction, allMsgs, model);
+  trimmed.push({ role: 'user', content: currentUserPrompt });
+  return trimmed;
 }
 
 // ============================================================
-// PART 2: MAIN STREAM — BYOK MULTI-PROVIDER
+// PART 2: MAIN STREAM — SERVER PROXY
 // ============================================================
 
 export const generateStoryStream = async (
@@ -69,15 +129,15 @@ export const generateStoryStream = async (
   const platform = options.platform ?? config.platform ?? PlatformType.MOBILE;
   const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.9');
 
-  const systemInstruction = buildSystemInstruction(config, language, platform);
+  const systemInstruction = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
   const userPrompt = buildUserPrompt(config, draft, {
     previousContent: options.previousContent,
     language,
   });
 
   const history = options.history ?? [];
-  const messages = history.filter(m => m.content).length > 0
-    ? buildChatMessages(history, userPrompt)
+  const messages = history.filter((message) => message.content).length > 0
+    ? buildChatMessages(history, userPrompt, systemInstruction)
     : [{ role: 'user' as const, content: userPrompt }];
 
   try {
@@ -101,68 +161,50 @@ export const generateStoryStream = async (
 };
 
 // ============================================================
-// PART 3: CHARACTER GENERATION (Gemini-specific, structured output)
+// PART 3: CHARACTER GENERATION
 // ============================================================
 
-export const generateCharacters = async (config: StoryConfig, language: AppLanguage = 'KO'): Promise<Character[]> => {
-  // Character generation uses structured JSON output — Gemini-only feature
-  // Falls back to active provider's key if gemini key not set
-  const provider = getActiveProvider();
-  const apiKey = provider === 'gemini'
-    ? getApiKey('gemini')
-    : (getApiKey('gemini') || getApiKey(provider));
+export const generateCharacters = async (
+  config: StoryConfig,
+  language: AppLanguage = 'KO',
+  count: number = 4,
+): Promise<Character[]> => {
+  const existingNames = (config.characters || []).map(c => c.name).filter(Boolean);
+  const results = await fetchStructuredGemini<unknown[]>({
+    task: 'characters',
+    config: {
+      genre: config.genre,
+      synopsis: config.synopsis,
+    },
+    language,
+    count,
+    existingNames,
+  });
 
-  if (!apiKey) throw new Error("API_KEY_INVALID");
+  if (!Array.isArray(results)) return [];
 
-  const ai = new GoogleGenAI({ apiKey });
-  const langNames: Record<string, string> = {
-    'KO': 'Korean', 'EN': 'English', 'JP': 'Japanese', 'CN': 'Chinese'
-  };
-
-  const prompt = `
-    Based on the genre [${config.genre}] and world setting [${config.synopsis}],
-    generate 4 multidimensional characters in JSON format.
-    IMPORTANT: All character names, roles, traits, and appearance descriptions MUST be written in ${langNames[language]}.
-    Each character must have a unique narrative role and high narrative potential (dna score 0-100).
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              role: { type: Type.STRING },
-              traits: { type: Type.STRING },
-              appearance: { type: Type.STRING },
-              dna: { type: Type.NUMBER }
-            },
-            required: ["name", "role", "traits", "appearance", "dna"]
-          }
-        }
-      }
+  return results
+    .filter((character): character is Omit<Character, 'id'> => {
+      return Boolean(
+        character
+        && typeof character === 'object'
+        && typeof (character as Character).name === 'string'
+      );
+    })
+    .map((character) => {
+      const VALID_ROLES = ['hero', 'villain', 'ally', 'extra'];
+      const rawRole = ((character as Character).role || 'extra').toLowerCase();
+      const normalizedRole = VALID_ROLES.includes(rawRole) ? rawRole : 'extra';
+      return {
+        ...character,
+        role: normalizedRole,
+        id: `c-${Date.now()}-${Math.random()}`,
+      };
     });
-
-    const results = JSON.parse(response.text || "[]");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return results.map((c: any) => ({
-      ...c,
-      id: `c-${Date.now()}-${Math.random()}`
-    }));
-  } catch (error) {
-    console.error("Character Engine Error:", error);
-    throw error;
-  }
 };
 
 // ============================================================
-// PART 4: AI WORLD DESIGN GENERATION
+// PART 4: WORLD DESIGN GENERATION
 // ============================================================
 
 export const generateWorldDesign = async (
@@ -170,125 +212,135 @@ export const generateWorldDesign = async (
   language: AppLanguage = 'KO',
   hints?: { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string }
 ): Promise<{
-  title: string; povCharacter: string; setting: string; primaryEmotion: string; synopsis: string;
+  title: string;
+  povCharacter: string;
+  setting: string;
+  primaryEmotion: string;
+  synopsis: string;
+  corePremise?: string;
+  powerStructure?: string;
+  currentConflict?: string;
+  worldHistory?: string;
+  socialSystem?: string;
+  economy?: string;
+  magicTechSystem?: string;
+  factionRelations?: string;
+  survivalEnvironment?: string;
+  culture?: string;
+  religion?: string;
+  education?: string;
+  lawOrder?: string;
+  taboo?: string;
+  dailyLife?: string;
+  travelComm?: string;
+  truthVsBeliefs?: string;
 }> => {
-  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
-  if (!apiKey) throw new Error("API_KEY_INVALID");
-  const ai = new GoogleGenAI({ apiKey });
-  const langName = language === 'KO' ? 'Korean' : 'English';
-
-  // 사용자가 입력한 힌트가 있으면 프롬프트에 반영
-  const hintParts: string[] = [];
-  if (hints?.title) hintParts.push(`Title hint: "${hints.title}"`);
-  if (hints?.povCharacter) hintParts.push(`Main character: "${hints.povCharacter}"`);
-  if (hints?.setting) hintParts.push(`Setting: "${hints.setting}"`);
-  if (hints?.primaryEmotion) hintParts.push(`Core emotion: "${hints.primaryEmotion}"`);
-  if (hints?.synopsis) hintParts.push(`Story synopsis: "${hints.synopsis}"`);
-
-  const hintBlock = hintParts.length > 0
-    ? `\n\nUSER-PROVIDED HINTS (incorporate these into your generation):\n${hintParts.join('\n')}`
-    : '';
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: `Generate a unique ${genre} story concept in ${langName}. Be creative and original.${hintBlock}`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            povCharacter: { type: Type.STRING },
-            setting: { type: Type.STRING },
-            primaryEmotion: { type: Type.STRING },
-            synopsis: { type: Type.STRING },
-          },
-          required: ["title", "povCharacter", "setting", "primaryEmotion", "synopsis"]
-        }
-      }
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("World Design Generation Error:", error);
-    throw error;
-  }
+  return fetchStructuredGemini({
+    task: 'worldDesign',
+    genre,
+    language,
+    hints,
+  });
 };
 
 // ============================================================
-// PART 5: AI WORLD SIMULATOR GENERATION
+// PART 4B: ITEM GENERATION
 // ============================================================
 
-export const generateWorldSim = async (synopsis: string, genre: string, language: AppLanguage = 'KO'): Promise<{
+export const generateItems = async (
+  config: StoryConfig,
+  language: AppLanguage = 'KO',
+  count: number = 3,
+): Promise<Item[]> => {
+  const existingNames = (config.items || []).map(i => i.name).filter(Boolean);
+  const results = await fetchStructuredGemini<unknown[]>({
+    task: 'items',
+    config: {
+      genre: config.genre,
+      synopsis: config.synopsis,
+    },
+    language,
+    count,
+    existingNames,
+  });
+
+  if (!Array.isArray(results)) return [];
+
+  const VALID_CATEGORIES = ['weapon', 'armor', 'accessory', 'consumable', 'material', 'quest', 'misc'];
+  const VALID_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+  // API가 예상 외 값을 반환할 경우 가장 가까운 유효 값으로 매핑
+  const CATEGORY_ALIAS: Record<string, string> = { artifact: 'accessory', key_item: 'quest' };
+  const normalizeCategory = (c: string) => VALID_CATEGORIES.includes(c) ? c : (CATEGORY_ALIAS[c] || 'misc');
+  const normalizeRarity = (r: string) => VALID_RARITIES.includes(r) ? r : 'common';
+
+  return results
+    .filter((item): item is Omit<Item, 'id'> => {
+      return Boolean(
+        item
+        && typeof item === 'object'
+        && typeof (item as Item).name === 'string'
+      );
+    })
+    .map((item) => ({
+      ...item,
+      category: normalizeCategory((item as Item).category || 'misc') as Item['category'],
+      rarity: normalizeRarity((item as Item).rarity || 'common') as Item['rarity'],
+      id: `item-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    }));
+};
+
+// ============================================================
+// PART 5: WORLD SIMULATOR GENERATION
+// ============================================================
+
+export const generateWorldSim = async (
+  synopsis: string,
+  genre: string,
+  language: AppLanguage = 'KO',
+  worldContext?: { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string }
+): Promise<{
   civilizations: { name: string; era: string; traits: string[] }[];
   relations: { from: string; to: string; type: string }[];
 }> => {
-  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
-  if (!apiKey) throw new Error("API_KEY_INVALID");
-  const ai = new GoogleGenAI({ apiKey });
-  const langName = language === 'KO' ? 'Korean' : 'English';
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: `Based on this ${genre} story synopsis, generate 3-4 civilizations/factions and their relationships in ${langName}.\n\nSynopsis: ${synopsis}`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            civilizations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, era: { type: Type.STRING }, traits: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["name", "era", "traits"] } },
-            relations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { from: { type: Type.STRING }, to: { type: Type.STRING }, type: { type: Type.STRING } }, required: ["from", "to", "type"] } },
-          },
-          required: ["civilizations", "relations"]
-        }
-      }
-    });
-    return JSON.parse(response.text || '{"civilizations":[],"relations":[]}');
-  } catch (error) {
-    console.error("World Sim Generation Error:", error);
-    throw error;
-  }
+  return fetchStructuredGemini({
+    task: 'worldSim',
+    synopsis,
+    genre,
+    language,
+    worldContext,
+  });
 };
 
 // ============================================================
-// PART 6: AI SCENE DIRECTION GENERATION
+// PART 6: SCENE DIRECTION GENERATION
 // ============================================================
 
-export const generateSceneDirection = async (synopsis: string, characters: string[], language: AppLanguage = 'KO'): Promise<{
-  hook: { position: string; type: string; desc: string };
-  tension: { type: string; desc: string };
-  cliffhanger: { type: string; desc: string };
-  emotionTarget: string;
-  dialogueTone: { character: string; tone: string };
-}> => {
-  const apiKey = getApiKey('gemini') || getApiKey(getActiveProvider());
-  if (!apiKey) throw new Error("API_KEY_INVALID");
-  const ai = new GoogleGenAI({ apiKey });
-  const langName = language === 'KO' ? 'Korean' : 'English';
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: `Based on this story, generate scene direction elements in ${langName}.\n\nSynopsis: ${synopsis}\nCharacters: ${characters.join(', ')}`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            hook: { type: Type.OBJECT, properties: { position: { type: Type.STRING }, type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["position", "type", "desc"] },
-            tension: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["type", "desc"] },
-            cliffhanger: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, desc: { type: Type.STRING } }, required: ["type", "desc"] },
-            emotionTarget: { type: Type.STRING },
-            dialogueTone: { type: Type.OBJECT, properties: { character: { type: Type.STRING }, tone: { type: Type.STRING } }, required: ["character", "tone"] },
-          },
-          required: ["hook", "tension", "cliffhanger", "emotionTarget", "dialogueTone"]
-        }
-      }
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Scene Direction Generation Error:", error);
-    throw error;
+export const generateSceneDirection = async (
+  synopsis: string,
+  characters: string[],
+  language: AppLanguage = 'KO',
+  tierContext?: {
+    charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[];
+    corePremise?: string;
+    powerStructure?: string;
+    currentConflict?: string;
   }
+): Promise<{
+  hooks: { position: string; hookType: string; desc: string }[];
+  goguma: { type: string; intensity: string; desc: string }[];
+  cliffhanger: { cliffType: string; desc: string };
+  emotionTargets: { emotion: string; intensity: number }[];
+  dialogueTones: { character: string; tone: string }[];
+  foreshadows?: { planted: string; payoff: string }[];
+  dopamineDevices?: { scale: string; device: string; desc: string }[];
+  pacings?: { section: string; percent: number; desc: string }[];
+  tensionCurve?: { position: number; level: number; label: string }[];
+}> => {
+  return fetchStructuredGemini({
+    task: 'sceneDirection',
+    synopsis,
+    characters,
+    language,
+    tierContext,
+  });
 };

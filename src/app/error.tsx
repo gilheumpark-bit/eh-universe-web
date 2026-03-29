@@ -1,0 +1,57 @@
+"use client";
+
+import { useEffect } from "react";
+import Header from "@/components/Header";
+import { useLang } from "@/lib/LangContext";
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const { lang } = useLang();
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error("[EH Universe] Runtime error:", error);
+    }
+  }, [error]);
+
+  return (
+    <>
+      <Header />
+      <main className="pt-14 flex-1 flex items-center justify-center">
+        <div className="text-center px-4 py-20">
+          <p
+            className="font-[family-name:var(--font-mono)] text-6xl font-bold tracking-tighter mb-4"
+            style={{ color: "var(--color-accent-red)" }}
+          >
+            ERROR
+          </p>
+          <p className="font-[family-name:var(--font-mono)] text-sm text-text-tertiary tracking-wider uppercase mb-2">
+            {T({ ko: "시스템 오작동", en: "SYSTEM MALFUNCTION", jp: "システム障害", cn: "系统故障" })}
+          </p>
+          <p className="text-text-secondary text-sm mb-8 max-w-md mx-auto">
+            {T({
+              ko: "예기치 않은 오류가 발생했습니다. Error Heart가 현재 타임라인에서 이상을 감지했습니다.",
+              en: "An unexpected error has occurred. The Error Heart detected an anomaly in the current timeline.",
+              jp: "予期しないエラーが発生しました。Error Heartが現在のタイムラインで異常を検知しました。",
+              cn: "发生意外错误。Error Heart在当前时间线中检测到异常。",
+            })}
+          </p>
+          <button
+            onClick={reset}
+            aria-label={T({ ko: "재시도", en: "Retry — reset the page after error", jp: "リトライ", cn: "重试" })}
+            className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+          >
+            {T({ ko: "재시도", en: "RETRY", jp: "リトライ", cn: "重试" })}
+          </button>
+        </div>
+      </main>
+    </>
+  );
+}

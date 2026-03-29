@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── TRACK DATA ─── */
 interface Track {
@@ -106,7 +107,9 @@ const TRACKS: Track[] = [
 /* ─── COMPONENT ─── */
 export default function SoundtrackPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
   const [playing, setPlaying] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [durations, setDurations] = useState<Record<string, number>>({});
@@ -172,30 +175,28 @@ export default function SoundtrackPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-4xl px-4 py-16">
-          <Link
-            href="/archive"
-            className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6"
-          >
-            ← ARCHIVE
-          </Link>
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <ToolNav
+            toolName={en ? "Soundtrack" : "사운드트랙"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/neka-sound', label: en ? 'NEKA Sound' : '네카 사운드' },
+              { href: '/tools/noa-tower', label: en ? 'NOA Tower' : 'NOA 타워' },
+            ]}
+          />
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
-            {en
-              ? "Audio Archive: CLASSIFIED | Interception: Bureau of Investigation"
-              : "음향 아카이브: 기밀 | 수신: 비밀조사국"}
+            {T({ ko: "음향 아카이브: 기밀 | 수신: 비밀조사국", en: "Audio Archive: CLASSIFIED | Interception: Bureau of Investigation" })}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-            <h1 className="font-[family-name:var(--font-mono)] text-2xl font-bold tracking-tight mb-2">
-              {en ? "EH Universe — Soundtrack" : "EH Universe — 사운드트랙"}
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
+            <h1 className="site-title text-2xl font-bold tracking-tight mb-2">
+              {T({ ko: "EH Universe — 사운드트랙", en: "EH Universe — Soundtrack", jp: "EH Universe — サウンドトラック", cn: "EH Universe — 原声带" })}
             </h1>
             <p className="text-text-tertiary text-sm mb-10 font-[family-name:var(--font-mono)]">
-              {en
-                ? "Intercepted audio fragments from across the galaxy"
-                : "은하 전역에서 수신된 음향 파편"}
+              {T({ ko: "은하 전역에서 수신된 음향 파편", en: "Intercepted audio fragments from across the galaxy" })}
             </p>
 
             <div className="space-y-6">
@@ -208,7 +209,7 @@ export default function SoundtrackPage() {
                 return (
                   <div
                     key={track.id}
-                    className="group rounded-lg border border-border overflow-hidden transition-all duration-300"
+                    className="premium-link-card group overflow-hidden rounded-[24px] transition-all duration-300"
                     style={{
                       background: isPlaying
                         ? `linear-gradient(135deg, ${track.theme}40 0%, var(--color-bg-secondary) 100%)`
@@ -220,7 +221,7 @@ export default function SoundtrackPage() {
                       className="px-4 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase font-[family-name:var(--font-mono)]"
                       style={{ background: track.theme, color: "#ffffff90" }}
                     >
-                      {track.category[lang]}
+                      {L2(track.category, lang)}
                     </div>
 
                     <div className="p-5">
@@ -228,6 +229,7 @@ export default function SoundtrackPage() {
                       <div className="flex items-start gap-4">
                         <button
                           onClick={() => toggle(track.id)}
+                          aria-label={isPlaying ? `Pause ${L2(track.title, lang)}` : `Play ${L2(track.title, lang)}`}
                           className="flex-shrink-0 w-12 h-12 rounded-full border border-border flex items-center justify-center hover:border-accent-purple transition-colors mt-0.5"
                           style={{
                             background: isPlaying ? track.theme : "transparent",
@@ -247,10 +249,10 @@ export default function SoundtrackPage() {
 
                         <div className="flex-1 min-w-0">
                           <h2 className="font-[family-name:var(--font-mono)] text-base font-bold tracking-tight leading-tight">
-                            {track.title[lang]}
+                            {L2(track.title, lang)}
                           </h2>
                           <p className="text-text-tertiary text-xs mt-1 font-[family-name:var(--font-mono)]">
-                            {track.subtitle[lang]}
+                            {L2(track.subtitle, lang)}
                           </p>
                         </div>
                       </div>
@@ -262,6 +264,11 @@ export default function SoundtrackPage() {
                         </span>
                         <div
                           className="flex-1 h-1 rounded-full bg-border cursor-pointer relative group/bar"
+                          role="progressbar"
+                          aria-label={`${L2(track.title, lang)} progress`}
+                          aria-valuenow={Math.round(prog * 100)}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
                           onClick={(e) => seek(track.id, e)}
                         >
                           <div
@@ -281,7 +288,7 @@ export default function SoundtrackPage() {
 
                       {/* Description */}
                       <p className="mt-3 text-xs text-text-secondary leading-relaxed">
-                        {track.desc[lang]}
+                        {L2(track.desc, lang)}
                       </p>
                     </div>
                   </div>

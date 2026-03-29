@@ -1,6 +1,7 @@
 {
   "name": "eh-universe-web",
-  "version": "0.1.0",
+  "version": "1.1.0",
+  "license": "CC-BY-NC-4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,15 +14,23 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@google/genai": "^1.46.0",
+    "@google/genai": "^1.47.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@sentry/nextjs": "^10.46.0",
+    "@vercel/analytics": "^2.0.1",
+    "@webcontainer/api": "^1.6.1",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "firebase": "^12.11.0",
     "lucide-react": "^0.577.0",
-    "next": "16.2.0",
+    "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
@@ -29,8 +38,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.0",
+    "eslint-config-next": "16.2.1",
     "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"

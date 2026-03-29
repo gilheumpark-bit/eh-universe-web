@@ -2,7 +2,8 @@
 
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── ZONE DATA ─── */
 const ZONES = [
@@ -105,7 +106,7 @@ const CALCS = [
 /* ─── SVG COMPONENTS ─── */
 function GalaxyMapSVG() {
   return (
-    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[600px] mx-auto" style={{ fontFamily: "var(--font-mono, monospace)" }}>
+    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Galaxy zone map showing concentric zones from BLACK core to RED warzone" className="w-full max-w-[600px] mx-auto" style={{ fontFamily: "var(--font-mono, monospace)" }}>
       <circle cx="250" cy="250" r="245" fill="none" stroke="#cc2222" strokeWidth="8" opacity="0.5"/>
       <circle cx="250" cy="250" r="245" fill="none" stroke="#cc2222" strokeWidth="1" opacity="0.3"/>
       <circle cx="250" cy="250" r="237" fill="#1a0f08" stroke="#cc6622" strokeWidth="0.5" opacity="0.4"/>
@@ -135,19 +136,26 @@ function GalaxyMapSVG() {
         <circle key={`e${i}`} cx={x} cy={y} r="1.5" fill="#cc6622" opacity="0.4"/>
       ))}
       {/* Labels */}
-      <text x="250" y="254" fill="#333355" fontSize="10" textAnchor="middle" opacity="0.5">BLACK</text>
-      <text x="250" y="120" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.6">GREEN</text>
-      <text x="385" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.5">BLUE</text>
-      <text x="430" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.5">YELLOW</text>
-      <text x="460" y="420" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.5">AMBER</text>
-      <text x="475" y="470" fill="#cc2222" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.7">RED</text>
+      <text x="250" y="254" fill="#333355" fontSize="10" textAnchor="middle" opacity="0.6">BLACK</text>
+      {/* Right labels */}
+      <text x="385" y="170" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.6">GREEN</text>
+      <text x="420" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.5">BLUE</text>
+      <text x="440" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.5">YELLOW</text>
+      <text x="460" y="400" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.5">AMBER</text>
+      <text x="475" y="460" fill="#cc2222" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.7">RED</text>
+      {/* Left labels (mirrored) */}
+      <text x="115" y="170" fill="#2a7a44" fontSize="9" textAnchor="middle" opacity="0.4">GREEN</text>
+      <text x="80" y="250" fill="#2980b9" fontSize="8" textAnchor="middle" opacity="0.35">BLUE</text>
+      <text x="60" y="330" fill="#c8a020" fontSize="8" textAnchor="middle" opacity="0.35">YELLOW</text>
+      <text x="40" y="400" fill="#cc6622" fontSize="7" textAnchor="middle" opacity="0.35">AMBER</text>
+      <text x="25" y="460" fill="#cc2222" fontSize="8" textAnchor="middle" opacity="0.5">RED</text>
     </svg>
   );
 }
 
 function WarzoneCalcSVG() {
   return (
-    <svg viewBox="0 0 400 400" className="w-full max-w-[350px] mx-auto" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: "var(--font-mono, monospace)" }}>
+    <svg viewBox="0 0 400 400" role="img" aria-label="Warzone diagram showing outer 3% ring of the galaxy" className="w-full max-w-[350px] mx-auto" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: "var(--font-mono, monospace)" }}>
       <circle cx="200" cy="200" r="195" fill="#1a1a22" stroke="#cc2222" strokeWidth="6" opacity="0.6"/>
       <circle cx="200" cy="200" r="183" fill="#14141e"/>
       <circle cx="200" cy="200" r="2" fill="#555566"/>
@@ -163,23 +171,28 @@ function WarzoneCalcSVG() {
 /* ─── MAIN ─── */
 export default function GalaxyMapPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
 
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-16">
-          <Link href="/archive" className="inline-block font-[family-name:var(--font-mono)] text-xs text-text-tertiary hover:text-accent-purple transition-colors tracking-wider uppercase mb-6">
-            ← ARCHIVE
-          </Link>
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <ToolNav
+            toolName={en ? "Galaxy Map" : "은하 지도"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/vessel', label: en ? 'Vessel' : '함선 비교' },
+              { href: '/tools/warp-gate', label: en ? 'Warp Gate' : '워프 게이트' },
+            ]}
+          />
 
-          <div className="doc-header rounded-t mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
             {en ? "Galaxy Zone & Gate Infrastructure | Bureau of Investigation" : "은하 구역 분류 & Gate 인프라 | 비밀조사국"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
 
             {/* ═══ SECTION 1: GALAXY ZONES ═══ */}
             <section className="mb-16">
@@ -224,7 +237,7 @@ export default function GalaxyMapPage() {
                 </table>
               </div>
 
-              <div className="mt-6 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
                 <strong className="text-text-secondary not-italic">GREEN → RED:</strong> {en ? "Civilization\u2193 NET\u2193 Gate\u2193 Solitude\u2191 War\u2191" : "문명\u2193 NET\u2193 Gate\u2193 고독\u2191 전쟁\u2191"}
                 <br /><br />
                 {en
@@ -244,21 +257,21 @@ export default function GalaxyMapPage() {
 
               <div className="space-y-4">
                 {TIERS.map((t) => (
-                  <div key={t.tier} className="rounded-md border border-border bg-bg-primary p-5" style={{ borderLeftWidth: 3, borderLeftColor: t.color }}>
+                  <div key={t.tier} className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: t.color }}>
                     <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: t.color }}>
                       {t.tier} / {t.zone}
                     </div>
                     <div className="font-bold text-base mb-2" style={{ color: t.color }}>
-                      {t.name[lang]}
+                      {L2(t.name, lang)}
                     </div>
                     <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-line mb-3">
-                      {t.desc[lang]}
+                      {L2(t.desc, lang)}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {t.specs.map((s, i) => (
                         <div key={i} className="border border-border rounded px-3 py-2 text-center bg-bg-secondary min-w-[80px]">
                           <div className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: t.color }}>{s.val}</div>
-                          <div className="text-[9px] text-text-tertiary tracking-wider mt-0.5">{s.label[lang]}</div>
+                          <div className="text-[9px] text-text-tertiary tracking-wider mt-0.5">{L2(s.label, lang)}</div>
                         </div>
                       ))}
                     </div>
@@ -266,7 +279,7 @@ export default function GalaxyMapPage() {
                 ))}
 
                 {/* RED - No Gate */}
-                <div className="rounded-md border border-border bg-bg-primary p-5" style={{ borderLeftWidth: 3, borderLeftColor: "#cc2222" }}>
+                <div className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: "#cc2222" }}>
                   <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: "#cc2222" }}>
                     RED ZONE
                   </div>
@@ -332,13 +345,13 @@ export default function GalaxyMapPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {CALCS.map((c, i) => (
                   <div key={i} className="flex justify-between items-center border border-border rounded px-4 py-3 bg-bg-primary">
-                    <span className="text-xs text-text-tertiary">{c.label[lang]}</span>
+                    <span className="text-xs text-text-tertiary">{L2(c.label, lang)}</span>
                     <span className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: c.color }}>{c.val}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
                 {en
                   ? "\"The warzone is 753 light-years wide. It contains 6,000 human systems. The Bureau fights this war alone.\""
                   : "\"전장은 753 광년 폭이다. 그 안에 6,000개의 인류 행성계가 있다. 비밀조사국이 이 전쟁을 혼자 치른다.\""}

@@ -4,47 +4,299 @@
 // PART 1 — 상태 및 상수 정의
 // ============================================================
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import type { StyleProfile } from "@/lib/studio-types";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
+import StylePreview from "./StylePreview";
 
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
 
-const PARAM_LABELS_KO: Record<string, string[]> = {
-  s1: ["단문 위주", "단문 선호", "균형", "장문 선호", "장문 위주"],
-  s2: ["극도로 건조", "건조·분석적", "균형", "감성적", "매우 감성적"],
-  s3: ["직접 서술", "직접 선호", "균형", "이미지 선호", "감각적 이미지"],
-  s4: ["전지적 관찰", "전지적 선호", "균형", "인물 밀착", "극밀착 내면"],
-  s5: ["구어체", "평이함", "중간", "전문적·정밀", "고도 전문"],
-};
-const PARAM_LABELS_EN: Record<string, string[]> = {
-  s1: ["Short only", "Short-leaning", "Balanced", "Long-leaning", "Long only"],
-  s2: ["Very dry", "Dry / Analytical", "Balanced", "Emotional", "Highly emotional"],
-  s3: ["Direct narration", "Direct-leaning", "Balanced", "Image-leaning", "Sensory imagery"],
-  s4: ["Omniscient", "Omni-leaning", "Balanced", "Close POV", "Deep interior"],
-  s5: ["Colloquial", "Plain", "Moderate", "Technical", "Highly technical"],
-};
-
-interface SliderDef {
+interface SliderDefI18n {
   id: string;
-  label: string;
-  left: string;
-  right: string;
+  ko: string;
+  en: string;
+  leftKO: string;
+  leftEN: string;
+  rightKO: string;
+  rightEN: string;
   defaultVal: number;
+  stepsKO: string[];
+  stepsEN: string[];
+  noteKO: string;
+  noteEN: string;
 }
 
-interface SliderDefI18n { id: string; ko: string; en: string; leftKO: string; leftEN: string; rightKO: string; rightEN: string; defaultVal: number; }
 const SLIDERS_I18N: SliderDefI18n[] = [
-  { id: "s1", ko: "문장 길이", en: "Sentence Length", leftKO: "단문 중심", leftEN: "Short", rightKO: "장문 중심", rightEN: "Long", defaultVal: 3 },
-  { id: "s2", ko: "감정 밀도", en: "Emotional Density", leftKO: "건조·객관적", leftEN: "Dry / Objective", rightKO: "감성·주관적", rightEN: "Emotional / Subjective", defaultVal: 2 },
-  { id: "s3", ko: "묘사 방식", en: "Description Style", leftKO: "직접 서술", leftEN: "Direct", rightKO: "감각적 이미지", rightEN: "Sensory Imagery", defaultVal: 3 },
-  { id: "s4", ko: "서술 시점", en: "POV Distance", leftKO: "전지적 신", leftEN: "Omniscient", rightKO: "인물 밀착", rightEN: "Close POV", defaultVal: 3 },
-  { id: "s5", ko: "어휘 수준", en: "Vocabulary Level", leftKO: "구어체·평이함", leftEN: "Colloquial", rightKO: "전문어·정밀함", rightEN: "Technical", defaultVal: 4 },
+  {
+    id: "s1",
+    ko: "문장 길이",
+    en: "Sentence Length",
+    leftKO: "속도 중심",
+    leftEN: "Faster pace",
+    rightKO: "여백 중심",
+    rightEN: "More spacious",
+    defaultVal: 3,
+    stepsKO: ["짧고 단단하게", "짧은 호흡", "균형", "긴 호흡", "길게 밀어붙이기"],
+    stepsEN: ["Tight and short", "Short breath", "Balanced", "Long breath", "Extended flow"],
+    noteKO: "호흡이 짧을수록 추진력이, 길수록 사유와 여운이 커집니다.",
+    noteEN: "Shorter sentences push momentum, while longer ones create reflection and aftertaste.",
+  },
+  {
+    id: "s2",
+    ko: "감정 밀도",
+    en: "Emotional Density",
+    leftKO: "객관·절제",
+    leftEN: "Restrained",
+    rightKO: "주관·정서",
+    rightEN: "Emotive",
+    defaultVal: 2,
+    stepsKO: ["감정 절제", "건조한 편", "균형", "정서 강조", "감정 밀도 높음"],
+    stepsEN: ["Restrained", "Dry-leaning", "Balanced", "Emotion-forward", "Emotion-rich"],
+    noteKO: "감정을 직접 드러낼지, 문장 아래에 눌러둘지 결정하는 축입니다.",
+    noteEN: "This controls whether emotion stays under the prose or rises visibly to the surface.",
+  },
+  {
+    id: "s3",
+    ko: "묘사 방식",
+    en: "Description Style",
+    leftKO: "직설 서술",
+    leftEN: "Direct",
+    rightKO: "감각 이미지",
+    rightEN: "Sensory",
+    defaultVal: 3,
+    stepsKO: ["사실 위주", "직설 묘사", "균형", "이미지 강조", "감각 몰입"],
+    stepsEN: ["Factual", "Direct", "Balanced", "Image-leaning", "Sensory immersion"],
+    noteKO: "정보 전달에 무게를 둘지, 장면의 촉감과 이미지에 무게를 둘지 조절합니다.",
+    noteEN: "Choose between efficient delivery and a stronger sensory, image-driven scene feel.",
+  },
+  {
+    id: "s4",
+    ko: "서술 시점",
+    en: "POV Distance",
+    leftKO: "거리감",
+    leftEN: "Distant",
+    rightKO: "밀착감",
+    rightEN: "Intimate",
+    defaultVal: 3,
+    stepsKO: ["멀리 조망", "관찰자 시점", "균형", "인물 밀착", "내면 침투"],
+    stepsEN: ["Panoramic", "Observer", "Balanced", "Close POV", "Deep interior"],
+    noteKO: "독자와 인물 사이 거리를 바꿔, 조망형 서술과 몰입형 서술 사이를 조정합니다.",
+    noteEN: "Adjusts how close readers stay to the character, from panoramic to immersive interiority.",
+  },
+  {
+    id: "s5",
+    ko: "어휘 수준",
+    en: "Vocabulary Level",
+    leftKO: "평이함",
+    leftEN: "Plain",
+    rightKO: "정밀함",
+    rightEN: "Precise",
+    defaultVal: 4,
+    stepsKO: ["편한 말맛", "담백한 어휘", "균형", "정교한 어휘", "전문적 질감"],
+    stepsEN: ["Plainspoken", "Clean", "Balanced", "Refined", "Specialized"],
+    noteKO: "문장의 격과 전문성을 얼마나 끌어올릴지 정합니다.",
+    noteEN: "This sets how elevated or specialized your vocabulary should feel.",
+  },
 ];
-// Compat alias used throughout
-const SLIDERS: SliderDef[] = SLIDERS_I18N.map(s => ({ id: s.id, label: s.ko, left: s.leftKO, right: s.rightKO, defaultVal: s.defaultVal }));
+
+const getSliderDescriptor = (slider: SliderDefI18n, value: number, en: boolean) => {
+  const labels = en ? slider.stepsEN : slider.stepsKO;
+  const safeIndex = Math.max(0, Math.min(labels.length - 1, value - 1));
+  return labels[safeIndex];
+};
+
+const getSliderTrackStyle = (value: number): React.CSSProperties => {
+  const progress = ((value - 1) / 4) * 100;
+  return {
+    background: `linear-gradient(90deg, var(--color-accent-amber) 0%, var(--color-accent-amber) ${progress}%, rgba(107, 114, 142, 0.34) ${progress}%, rgba(107, 114, 142, 0.34) 100%)`,
+  };
+};
+
+// ============================================================
+// PART 1-B — 레이더 차트 + 텍스트 분석 컴포넌트
+// ============================================================
+
+/** Benchmark author style profiles — slider values [s1..s5] mapped 1–5 */
+const AUTHOR_PROFILES: Record<string, { ko: string; en: string; values: [number, number, number, number, number] }> = {
+  "ted-chiang": { ko: "테드 창", en: "Ted Chiang", values: [3, 1, 3, 2, 5] },
+  "liu-cixin": { ko: "류츠신", en: "Liu Cixin", values: [4, 2, 4, 2, 5] },
+  "han-kang": { ko: "한강", en: "Han Kang", values: [4, 5, 5, 5, 4] },
+  "murakami": { ko: "무라카미 하루키", en: "Haruki Murakami", values: [4, 3, 4, 4, 3] },
+  "sanderson": { ko: "브랜든 샌더슨", en: "Brandon Sanderson", values: [2, 3, 3, 3, 3] },
+  "sing-shong": { ko: "싱숑", en: "Sing Shong", values: [1, 3, 3, 5, 2] },
+  "djuna": { ko: "듀나", en: "Djuna", values: [2, 1, 3, 2, 4] },
+  "leguin": { ko: "어슐러 르 귄", en: "Ursula K. Le Guin", values: [3, 3, 4, 3, 4] },
+};
+
+/** Pentagon radar chart — pure SVG, no deps */
+function RadarChart({ values, benchmarkValues, labels, size = 220 }: {
+  values: number[];
+  benchmarkValues?: number[];
+  labels: string[];
+  size?: number;
+}) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = size * 0.38;
+  const angleOffset = -Math.PI / 2;
+
+  const pointAt = (index: number, value: number): [number, number] => {
+    const angle = angleOffset + (2 * Math.PI * index) / 5;
+    const r = (value / 5) * maxR;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  };
+
+  const polygonPoints = (vals: number[]) =>
+    vals.map((v, i) => pointAt(i, v).join(",")).join(" ");
+
+  const gridLevels = [1, 2, 3, 4, 5];
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ display: "block", margin: "0 auto" }}>
+      {/* Grid lines */}
+      {gridLevels.map((level) => (
+        <polygon
+          key={level}
+          points={Array.from({ length: 5 }, (_, i) => pointAt(i, level).join(",")).join(" ")}
+          fill="none"
+          stroke="rgba(107,114,142,0.18)"
+          strokeWidth={level === 5 ? 1.2 : 0.6}
+        />
+      ))}
+      {/* Axis lines */}
+      {Array.from({ length: 5 }, (_, i) => {
+        const [ex, ey] = pointAt(i, 5);
+        return <line key={i} x1={cx} y1={cy} x2={ex} y2={ey} stroke="rgba(107,114,142,0.15)" strokeWidth={0.6} />;
+      })}
+      {/* Benchmark fill */}
+      {benchmarkValues && (
+        <polygon
+          points={polygonPoints(benchmarkValues)}
+          fill="rgba(99,180,255,0.15)"
+          stroke="rgba(99,180,255,0.7)"
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+        />
+      )}
+      {/* User fill */}
+      <polygon
+        points={polygonPoints(values)}
+        fill="rgba(245,166,35,0.2)"
+        stroke="var(--color-accent-amber, #f5a623)"
+        strokeWidth={2}
+      />
+      {/* User dots */}
+      {values.map((v, i) => {
+        const [px, py] = pointAt(i, v);
+        return <circle key={i} cx={px} cy={py} r={3.5} fill="var(--color-accent-amber, #f5a623)" />;
+      })}
+      {/* Benchmark dots */}
+      {benchmarkValues?.map((v, i) => {
+        const [px, py] = pointAt(i, v);
+        return <circle key={`b${i}`} cx={px} cy={py} r={2.5} fill="rgba(99,180,255,0.8)" />;
+      })}
+      {/* Labels */}
+      {labels.map((label, i) => {
+        const [lx, ly] = pointAt(i, 5.8);
+        return (
+          <text
+            key={i}
+            x={lx}
+            y={ly}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={10}
+            fill="var(--color-text-secondary, #999)"
+            fontFamily="inherit"
+          >
+            {label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+// IDENTITY_SEAL: PART-1B | role=RadarChart+AuthorProfiles | inputs=sliderVals,benchmarkKey | outputs=SVG
+
+/** Text analysis metrics computed from raw text */
+interface TextMetrics {
+  avgSentenceLen: number;
+  dialogueRatio: number;
+  vocabDiversity: number;
+  readingTimeSec: number;
+}
+
+function analyzeText(text: string): TextMetrics | null {
+  if (!text.trim()) return null;
+
+  const sentences = text.split(/[.!?。？！\n]+/).filter((s) => s.trim().length > 0);
+  const avgSentenceLen = sentences.length > 0
+    ? Math.round(sentences.reduce((sum, s) => sum + s.trim().length, 0) / sentences.length)
+    : 0;
+
+  // Dialogue: count chars inside quotes
+  const dialogueMatches = text.match(/["'""\u201C\u201D\u300C\u300D][^"'""\u201C\u201D\u300C\u300D]*["'""\u201C\u201D\u300C\u300D]/g);
+  const dialogueChars = dialogueMatches ? dialogueMatches.join("").length : 0;
+  const dialogueRatio = text.length > 0 ? Math.round((dialogueChars / text.length) * 100) : 0;
+
+  // Vocabulary diversity: unique / total (word-level, handles Korean via spaces)
+  const words = text.split(/\s+/).filter((w) => w.length > 0);
+  const unique = new Set(words.map((w) => w.toLowerCase()));
+  const vocabDiversity = words.length > 0 ? Math.round((unique.size / words.length) * 100) : 0;
+
+  // Reading time: ~200 words/min EN, ~500 chars/min KO (use char-based as universal fallback)
+  const charCount = text.replace(/\s/g, "").length;
+  const readingTimeSec = Math.max(1, Math.round((charCount / 500) * 60));
+
+  return { avgSentenceLen, dialogueRatio, vocabDiversity, readingTimeSec };
+}
+
+function TextAnalysisCards({ metrics, en }: { metrics: TextMetrics | null; en: boolean }) {
+  if (!metrics) return null;
+
+  const cards: { label: string; value: string }[] = [
+    {
+      label: en ? "Avg. Sentence" : "평균 문장 길이",
+      value: `${metrics.avgSentenceLen}${en ? " chars" : "자"}`,
+    },
+    {
+      label: en ? "Dialogue" : "대화 비율",
+      value: `${metrics.dialogueRatio}%`,
+    },
+    {
+      label: en ? "Vocab Diversity" : "어휘 다양성",
+      value: `${metrics.vocabDiversity}%`,
+    },
+    {
+      label: en ? "Reading Time" : "읽기 시간",
+      value: metrics.readingTimeSec < 60
+        ? `${metrics.readingTimeSec}${en ? "s" : "초"}`
+        : `${Math.floor(metrics.readingTimeSec / 60)}${en ? "m " : "분 "}${metrics.readingTimeSec % 60}${en ? "s" : "초"}`,
+    },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8 }}>
+      {cards.map((c) => (
+        <div
+          key={c.label}
+          style={{
+            background: "rgba(107,114,142,0.08)",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontSize: 12,
+          }}
+        >
+          <div style={{ color: "var(--color-text-tertiary, #888)", fontSize: 10, marginBottom: 2 }}>{c.label}</div>
+          <div style={{ fontWeight: 600, color: "var(--color-accent-amber, #f5a623)" }}>{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+// IDENTITY_SEAL: PART-1B-2 | role=TextAnalysis+MetricsCards | inputs=sourceText | outputs=TextMetrics
 
 interface CheckItem {
   title: string;
@@ -127,13 +379,16 @@ const DNA_CARDS: DnaCard[] = [
 // ============================================================
 
 interface Props {
+  language?: AppLanguage;
+  /** @deprecated Use language prop instead */
   isKO?: boolean;
   initialProfile?: StyleProfile;
   onProfileChange?: (profile: StyleProfile) => void;
 }
 
-export default function StyleStudioView({ isKO = true, initialProfile, onProfileChange }: Props) {
-  const en = !isKO;
+export default function StyleStudioView({ language: languageProp, isKO: isKOProp, initialProfile, onProfileChange }: Props) {
+  const language: AppLanguage = languageProp ?? (isKOProp === false ? 'EN' : 'KO');
+  const en = language === 'EN' || language === 'CN';
 
   const [tab, setTab] = useState(0);
   const [selectedCards, setSelectedCards] = useState<Set<number>>(
@@ -141,10 +396,12 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   );
   const [sliderVals, setSliderVals] = useState<Record<string, number>>(() => {
     if (initialProfile?.sliders && Object.keys(initialProfile.sliders).length > 0) {
-      return { ...Object.fromEntries(SLIDERS.map(s => [s.id, s.defaultVal])), ...initialProfile.sliders };
+      return { ...Object.fromEntries(SLIDERS_I18N.map((s) => [s.id, s.defaultVal])), ...initialProfile.sliders };
     }
     const init: Record<string, number> = {};
-    SLIDERS.forEach((s) => (init[s.id] = s.defaultVal));
+    SLIDERS_I18N.forEach((s) => {
+      init[s.id] = s.defaultVal;
+    });
     return init;
   });
   const [checkedSF, setCheckedSF] = useState<Set<number>>(
@@ -158,6 +415,29 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
   const [resultText, setResultText] = useState("");
   const [loading, setLoading] = useState(false);
   const [showStylePresetMenu, setShowStylePresetMenu] = useState(false);
+  const [benchmarkAuthor, setBenchmarkAuthor] = useState<string>("");
+  const [textMetrics, setTextMetrics] = useState<TextMetrics | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced text analysis (500ms)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setTextMetrics(analyzeText(sourceText));
+    }, 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [sourceText]);
+
+  // Radar chart data
+  const radarValues = useMemo(
+    () => SLIDERS_I18N.map((s) => sliderVals[s.id] ?? s.defaultVal),
+    [sliderVals]
+  );
+  const radarLabels = useMemo(
+    () => SLIDERS_I18N.map((s) => (en ? s.en.split(" ")[0] : s.ko)),
+    [en]
+  );
+  const benchmarkProfile = benchmarkAuthor ? AUTHOR_PROFILES[benchmarkAuthor] : undefined;
 
   // 10 style presets — each sets slider values + DNA card selection
   const STYLE_PRESETS: { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
@@ -179,26 +459,26 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
     setSliderVals(prev => ({ ...prev, ...preset.sliders }));
     setSelectedCards(new Set(preset.dna));
     setShowStylePresetMenu(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- STYLE_PRESETS is a constant array defined inline
   }, []);
 
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
 
-  // Sync profile changes to parent (stable ref to avoid infinite loops)
-  const onProfileChangeRef = useRef(onProfileChange);
-  onProfileChangeRef.current = onProfileChange;
-  const isInitialMount = useRef(true);
+  // Sync profile changes to parent — skip initial mount via flag
+  const didMount = useRef(false);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    if (!didMount.current) {
+      didMount.current = true;
       return;
     }
-    onProfileChangeRef.current?.({
+    onProfileChange?.({
       selectedDNA: Array.from(selectedCards),
       sliders: { ...sliderVals },
       checkedSF: Array.from(checkedSF),
       checkedWeb: Array.from(checkedWeb),
     });
+  // onProfileChange is intentionally excluded — parent re-creates it on each render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCards, sliderVals, checkedSF, checkedWeb]);
 
@@ -315,72 +595,77 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
     } finally {
       setLoading(false);
     }
-  }, [sourceText, activeStyles]);
+  }, [sourceText, activeStyles, en]);
 
   // ============================================================
   // PART 4 — 렌더: 헤더 + 탭 네비게이션
   // ============================================================
 
   const tabLabels = en
-    ? ["① DNA Diagnosis", "② Technique Checklist", "③ Sentence Lab", "④ My Profile"]
-    : ["① 문체 DNA 진단", "② 기법 체크리스트", "③ 문장 실험실", "④ 내 문체 프로필"];
+    ? ["① DNA Diagnosis", "② Technique Checklist", "③ Sentence Lab", "④ My Profile", "⑤ Preview & Compare"]
+    : ["① 문체 DNA 진단", "② 기법 체크리스트", "③ 문장 실험실", "④ 내 문체 프로필", "⑤ 프리뷰 비교"];
 
   return (
     <div>
       {/* Hero */}
       <div className="ss-header">
-        <div className="ss-header-bg">STYLE</div>
-        <div className="ss-header-label">
-          Writing Studio · {en ? "Style Development" : "문체 개발"}
+        <div className="ss-shell ss-header-shell">
+          <div className="ss-header-bg">STYLE</div>
+          <div className="ss-header-label">
+            Writing Studio · {en ? "Style Development" : "문체 개발"}
+          </div>
+          <h1 className="ss-header-title">
+            {en ? (
+              <>Define Your <span>Style</span></>
+            ) : (
+              <>나만의 <span>문체</span>를<br />정의하다</>
+            )}
+          </h1>
+          <p className="ss-header-desc">
+            {en
+              ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
+              : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
+          </p>
         </div>
-        <h1 className="ss-header-title">
-          {en ? (
-            <>Define Your <span>Style</span></>
-          ) : (
-            <>나만의 <span>문체</span>를<br />정의하다</>
-          )}
-        </h1>
-        <p className="ss-header-desc">
-          {en
-            ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
-            : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
-        </p>
       </div>
 
       {/* Style Preset Dropdown */}
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 16px 8px", position: "relative" }}>
-        <button onClick={() => setShowStylePresetMenu(v => !v)}
-          style={{ padding: "6px 14px", background: "var(--accent-purple, #7c3aed)", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}>
-          ⚡ {en ? "Preset" : "프리셋"}
-        </button>
-        {showStylePresetMenu && (
-          <div style={{ position: "absolute", top: "100%", right: 16, background: "var(--bg-secondary, #1a1a2e)", border: "1px solid var(--border, #333)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 50, minWidth: 200, maxHeight: 300, overflowY: "auto" }}>
-            {STYLE_PRESETS.map(p => (
-              <button key={p.key} onClick={() => applyStylePreset(p.key)}
-                style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", fontSize: 11, color: "var(--text-secondary, #aaa)", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(124,58,237,0.2)"; (e.target as HTMLButtonElement).style.color = "#fff"; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.color = "var(--text-secondary, #aaa)"; }}>
-                {en ? p.en : p.ko}
-              </button>
-            ))}
+      <div className="ss-toolbar">
+        <div className="ss-shell ss-toolbar-shell">
+          <div className="ss-toolbar-anchor">
+            <button className="ss-preset-trigger" onClick={() => setShowStylePresetMenu((v) => !v)}>
+              ⚡ {en ? "Preset" : "프리셋"}
+            </button>
+            {showStylePresetMenu && (
+              <div className="ss-preset-menu">
+                {STYLE_PRESETS.map((p) => (
+                  <button key={p.key} className="ss-preset-item" onClick={() => applyStylePreset(p.key)}>
+                    {en ? p.en : p.ko}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="ss-tabs">
-        {tabLabels.map((label, i) => (
-          <button
-            key={i}
-            className={`ss-tab ${tab === i ? "active" : ""}`}
-            onClick={() => setTab(i)}
-          >
-            {label}
-          </button>
-        ))}
+        <div className="ss-shell ss-tabs-shell">
+          {tabLabels.map((label, i) => (
+            <button
+              key={i}
+              className={`ss-tab ${tab === i ? "active" : ""}`}
+              onClick={() => setTab(i)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="ss-main">
+        <div className="ss-shell ss-main-shell">
         {/* ============================================================ */}
         {/* PART 5 — 패널 1: 문체 DNA 진단                              */}
         {/* ============================================================ */}
@@ -412,28 +697,114 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             <div className="ss-section-title">Step 02 — {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
 
             <div className="ss-slider-group">
-              {SLIDERS_I18N.map((s) => (
-                <div key={s.id} className="ss-slider-row">
-                  <div className="ss-slider-label">{en ? s.en : s.ko}</div>
-                  <div className="ss-slider-ends">
-                    <input
-                      type="range"
-                      min={1}
-                      max={5}
-                      value={sliderVals[s.id]}
-                      onChange={(e) => handleSlider(s.id, Number(e.target.value))}
-                      className="ss-range"
-                    />
-                    <div className="ss-slider-end-labels">
-                      <span>{en ? s.leftEN : s.leftKO}</span>
-                      <span>{en ? s.rightEN : s.rightKO}</span>
+              {SLIDERS_I18N.map((s) => {
+                const currentLabel = getSliderDescriptor(s, sliderVals[s.id], en);
+
+                return (
+                  <div key={s.id} className="ss-slider-row">
+                    <div className="ss-slider-topline" title={`${en ? s.en : s.ko}: ${currentLabel} — ${en ? s.noteEN : s.noteKO}`}>
+                      <div className="ss-slider-meta">
+                        <div className="ss-slider-label">{en ? s.en : s.ko}</div>
+                        <p className="ss-slider-note">{en ? s.noteEN : s.noteKO}</p>
+                      </div>
+                      <span className="ss-slider-current">{currentLabel}</span>
+                    </div>
+
+                    <div className="ss-slider-ends">
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        value={sliderVals[s.id]}
+                        onChange={(e) => handleSlider(s.id, Number(e.target.value))}
+                        className="ss-range"
+                        aria-valuetext={currentLabel}
+                        style={getSliderTrackStyle(sliderVals[s.id])}
+                      />
+                      <div className="ss-slider-end-labels">
+                        <span>{en ? s.leftEN : s.leftKO}</span>
+                        <strong>{currentLabel}</strong>
+                        <span>{en ? s.rightEN : s.rightKO}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <button className="ss-btn-primary" onClick={() => setTab(1)}>
+            {/* Radar Chart + Benchmark Comparison */}
+            <hr className="ss-divider" />
+            <div className="ss-section-title">
+              {en ? "Style Radar" : "문체 레이더"}
+            </div>
+            <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div style={{ flex: "0 0 auto" }}>
+                <RadarChart
+                  values={radarValues}
+                  benchmarkValues={benchmarkProfile?.values}
+                  labels={radarLabels}
+                  size={240}
+                />
+                {/* Legend */}
+                <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, fontSize: 11 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(245,166,35,0.5)", display: "inline-block" }} />
+                    {en ? "My Style" : "내 문체"}
+                  </span>
+                  {benchmarkProfile && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(99,180,255,0.5)", display: "inline-block" }} />
+                      {en ? benchmarkProfile.en : benchmarkProfile.ko}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ fontSize: 12, color: "var(--color-text-secondary, #999)", display: "block", marginBottom: 6 }}>
+                  {en ? "Compare with..." : "비교 작가 선택"}
+                </label>
+                <select
+                  value={benchmarkAuthor}
+                  onChange={(e) => setBenchmarkAuthor(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: 6,
+                    border: "1px solid rgba(107,114,142,0.25)",
+                    background: "rgba(107,114,142,0.06)",
+                    color: "inherit",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">{en ? "— None —" : "— 선택 안 함 —"}</option>
+                  {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (
+                    <option key={key} value={key}>{en ? prof.en : prof.ko}</option>
+                  ))}
+                </select>
+                {benchmarkProfile && (
+                  <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6, color: "var(--color-text-secondary, #999)" }}>
+                    {SLIDERS_I18N.map((s, i) => {
+                      const mine = radarValues[i];
+                      const theirs = benchmarkProfile.values[i];
+                      const diff = mine - theirs;
+                      const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "=";
+                      const clr = diff > 0 ? "#f5a623" : diff < 0 ? "#63b4ff" : "#888";
+                      return (
+                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{en ? s.en : s.ko}</span>
+                          <span style={{ color: clr, fontWeight: 600 }}>
+                            {mine} vs {theirs} <span style={{ fontSize: 10 }}>{arrow}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button className="ss-btn-primary" onClick={() => setTab(1)} style={{ marginTop: 20 }}>
               {en ? "Next: Technique Checklist →" : "다음: 기법 체크리스트 →"}
             </button>
           </div>
@@ -537,11 +908,13 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                     : "여기에 원문을 붙여넣으세요.\n\n예시: '그는 창밖을 바라보며 무언가를 생각했다. 오늘따라 하늘이 특별히 파랗게 느껴졌다.'"
                   }
                 />
+                {/* Real-time text analysis */}
+                <TextAnalysisCards metrics={textMetrics} en={en} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
-                  {resultText && <CopyButton text={resultText} isKO={!en} />}
+                  {resultText && <CopyButton text={resultText} language={language} />}
                 </div>
                 <div className="ss-result-box">
                   {resultText ? (
@@ -662,7 +1035,7 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
                   {SLIDERS_I18N.map((s) => (
                     <div key={s.id} className="ss-profile-item">
                       <span className="ss-profile-key">{en ? s.en : s.ko}</span>
-                      <span>{(en ? PARAM_LABELS_EN : PARAM_LABELS_KO)[s.id][sliderVals[s.id] - 1]}</span>
+                      <span>{getSliderDescriptor(s, sliderVals[s.id], en)}</span>
                     </div>
                   ))}
                 </div>
@@ -731,6 +1104,22 @@ export default function StyleStudioView({ isKO = true, initialProfile, onProfile
             </div>
           </div>
         )}
+
+        {/* ============================================================ */}
+        {/* PART 7 — 패널 5: 프리뷰 & 아키타입 비교                     */}
+        {/* ============================================================ */}
+        {tab === 4 && (
+          <StylePreview
+            profile={{
+              selectedDNA: Array.from(selectedCards),
+              sliders: { ...sliderVals },
+              checkedSF: Array.from(checkedSF),
+              checkedWeb: Array.from(checkedWeb),
+            }}
+            language={language}
+          />
+        )}
+        </div>
       </div>
     </div>
   );

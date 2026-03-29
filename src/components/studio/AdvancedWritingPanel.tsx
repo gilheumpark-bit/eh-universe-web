@@ -3,6 +3,7 @@
 // ============================================================
 import React, { useState } from 'react';
 import type { AppLanguage, StoryConfig, Character } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
 import {
   Target, Sliders, BookOpen, Lock, FileOutput,
   ChevronDown, ChevronUp, Check,
@@ -79,27 +80,27 @@ interface AdvancedWritingPanelProps {
 // PART 2 — SCENE GOAL OPTIONS
 // ============================================================
 
-const SCENE_GOALS: { key: string; ko: string; en: string }[] = [
-  { key: 'conflict', ko: '갈등 고조', en: 'Escalate conflict' },
-  { key: 'reveal', ko: '정보 공개', en: 'Reveal information' },
-  { key: 'emotion-turn', ko: '감정 반전', en: 'Emotional turn' },
-  { key: 'cliffhanger', ko: '클리프행어', en: 'Cliffhanger' },
-  { key: 'relationship', ko: '관계 변화', en: 'Relationship shift' },
-  { key: 'world-expand', ko: '세계관 확장', en: 'World expansion' },
-  { key: 'foreshadow', ko: '복선 심기', en: 'Plant foreshadow' },
-  { key: 'payoff', ko: '떡밥 회수', en: 'Payoff' },
-  { key: 'action', ko: '액션/전투', en: 'Action/Battle' },
-  { key: 'calm', ko: '일상/숨고르기', en: 'Calm/Breather' },
+const SCENE_GOALS: { key: string; tKey: string }[] = [
+  { key: 'conflict', tKey: 'advancedWritingExtra.goalConflict' },
+  { key: 'reveal', tKey: 'advancedWritingExtra.goalReveal' },
+  { key: 'emotion-turn', tKey: 'advancedWritingExtra.goalEmotionTurn' },
+  { key: 'cliffhanger', tKey: 'advancedWritingExtra.goalCliffhanger' },
+  { key: 'relationship', tKey: 'advancedWritingExtra.goalRelationship' },
+  { key: 'world-expand', tKey: 'advancedWritingExtra.goalWorldExpand' },
+  { key: 'foreshadow', tKey: 'advancedWritingExtra.goalForeshadow' },
+  { key: 'payoff', tKey: 'advancedWritingExtra.goalPayoff' },
+  { key: 'action', tKey: 'advancedWritingExtra.goalAction' },
+  { key: 'calm', tKey: 'advancedWritingExtra.goalCalm' },
 ];
 
-const OUTPUT_MODES: { key: AdvancedWritingSettings['outputMode']; ko: string; en: string }[] = [
-  { key: 'draft', ko: '초안 생성', en: 'Draft' },
-  { key: 'expand', ko: '장면 확장', en: 'Expand' },
-  { key: 'rewrite', ko: '리라이트', en: 'Rewrite' },
-  { key: 'dialogue-boost', ko: '대사 강화', en: 'Dialogue boost' },
-  { key: 'description-boost', ko: '묘사 강화', en: 'Description boost' },
-  { key: 'ending-hook', ko: '엔딩 훅 강화', en: 'Ending hook' },
-  { key: 'bridge', ko: '연결 문단', en: 'Bridge paragraph' },
+const OUTPUT_MODES: { key: AdvancedWritingSettings['outputMode']; tKey: string }[] = [
+  { key: 'draft', tKey: 'advancedWritingExtra.modeDraft' },
+  { key: 'expand', tKey: 'advancedWritingExtra.modeExpand' },
+  { key: 'rewrite', tKey: 'advancedWritingExtra.modeRewrite' },
+  { key: 'dialogue-boost', tKey: 'advancedWritingExtra.modeDialogueBoost' },
+  { key: 'description-boost', tKey: 'advancedWritingExtra.modeDescriptionBoost' },
+  { key: 'ending-hook', tKey: 'advancedWritingExtra.modeEndingHook' },
+  { key: 'bridge', tKey: 'advancedWritingExtra.modeBridge' },
 ];
 
 // ============================================================
@@ -132,8 +133,8 @@ const Section: React.FC<{
 // PART 4 — CONTEXT SUMMARY (좌측 설정 요약)
 // ============================================================
 
-const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ config, lang }) => {
-  const isKO = lang === 'ko';
+const ContextSummary: React.FC<{ config: StoryConfig; language: AppLanguage }> = ({ config, language }) => {
+  const t = createT(language);
   const chars = config.characters ?? [];
   const hasWorld = !!(config.setting || config.synopsis);
   const hasScene = !!(config.sceneDirection);
@@ -142,31 +143,31 @@ const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ 
   return (
     <div className="bg-bg-secondary/30 border border-border rounded-lg px-3 py-2 space-y-1.5">
       <span className="text-[9px] font-bold text-accent-purple uppercase tracking-wider">
-        {isKO ? '현재 반영된 설정' : 'Active Context'}
+        {t('advancedWriting.activeContext')}
       </span>
 
       <div className="flex flex-wrap gap-1">
         {hasWorld && (
-          <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[8px] text-emerald-400 font-bold">
-            🌍 {isKO ? '세계관' : 'World'}
+          <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] text-emerald-400 font-bold">
+            🌍 {t('advancedWriting.world')}
           </span>
         )}
         {hasScene && (
-          <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[8px] text-blue-400 font-bold">
-            🎬 {isKO ? '씬시트' : 'Scene'}
+          <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[10px] text-blue-400 font-bold">
+            🎬 {t('advancedWriting.scene')}
           </span>
         )}
         {chars.length > 0 && (
-          <span className="px-1.5 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[8px] text-purple-400 font-bold">
-            👥 {chars.length}{isKO ? '명' : ' chars'}
+          <span className="px-1.5 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] text-purple-400 font-bold">
+            👥 {chars.length}{t('advancedWriting.chars')}
           </span>
         )}
         {hasStyle && (
-          <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[8px] text-amber-400 font-bold">
-            ✍️ {isKO ? '문체' : 'Style'}
+          <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400 font-bold">
+            ✍️ {t('advancedWriting.style')}
           </span>
         )}
-        <span className="px-1.5 py-0.5 bg-zinc-500/10 border border-zinc-500/20 rounded text-[8px] text-text-tertiary font-bold">
+        <span className="px-1.5 py-0.5 bg-zinc-500/10 border border-zinc-500/20 rounded text-[10px] text-text-tertiary font-bold">
           {config.genre} · EP.{config.episode}
         </span>
       </div>
@@ -175,11 +176,11 @@ const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ 
       {chars.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {chars.slice(0, 6).map((c: Character) => (
-            <span key={c.id} className="text-[8px] text-text-tertiary">
+            <span key={c.id} className="text-[10px] text-text-tertiary">
               {c.name}({c.role?.slice(0, 4)})
             </span>
           ))}
-          {chars.length > 6 && <span className="text-[8px] text-text-tertiary">+{chars.length - 6}</span>}
+          {chars.length > 6 && <span className="text-[10px] text-text-tertiary">+{chars.length - 6}</span>}
         </div>
       )}
     </div>
@@ -193,8 +194,7 @@ const ContextSummary: React.FC<{ config: StoryConfig; lang: 'ko' | 'en' }> = ({ 
 const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
   language, config, settings, onSettingsChange,
 }) => {
-  const isKO = language === 'KO';
-  const lang = isKO ? 'ko' : 'en';
+  const t = createT(language);
   const s = settings;
 
   const update = <K extends keyof AdvancedWritingSettings>(
@@ -223,10 +223,10 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
   return (
     <div className="space-y-3">
       {/* Context summary */}
-      <ContextSummary config={config} lang={lang} />
+      <ContextSummary config={config} language={language} />
 
       {/* 1. 장면 목표 */}
-      <Section title={isKO ? '장면 목표' : 'Scene Goal'} icon={Target}>
+      <Section title={t('advancedWriting.sceneGoal')} icon={Target}>
         <div className="flex flex-wrap gap-1.5">
           {SCENE_GOALS.map(g => (
             <button
@@ -238,26 +238,26 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
                   : 'bg-bg-primary text-text-tertiary hover:text-text-primary border border-border'
               }`}
             >
-              {g[lang]}
+              {t(g.tKey)}
             </button>
           ))}
         </div>
       </Section>
 
       {/* 2. 서술 제약 */}
-      <Section title={isKO ? '서술 제약' : 'Narrative Constraints'} icon={Sliders}>
+      <Section title={t('advancedWriting.narrativeConstraints')} icon={Sliders}>
         {/* POV */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-tertiary w-14">{isKO ? '시점' : 'POV'}</span>
+          <span className="text-[9px] text-text-tertiary w-14">{t('advancedWriting.pov')}</span>
           <div className="flex gap-1">
             {([
-              { v: '1st' as const, ko: '1인칭', en: '1st' },
-              { v: '3rd-limited' as const, ko: '3인칭 제한', en: '3rd Lim.' },
-              { v: '3rd-omni' as const, ko: '전지적', en: 'Omni' },
+              { v: '1st' as const, tKey: 'advancedWritingExtra.pov1st' },
+              { v: '3rd-limited' as const, tKey: 'advancedWritingExtra.pov3rdLimited' },
+              { v: '3rd-omni' as const, tKey: 'advancedWritingExtra.pov3rdOmni' },
             ]).map(p => (
               <button key={p.v} onClick={() => updateConstraint('pov', p.v)}
                 className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.pov === p.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
-                {p[lang]}
+                {t(p.tKey)}
               </button>
             ))}
           </div>
@@ -265,7 +265,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
 
         {/* Dialogue ratio slider */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-tertiary w-14">{isKO ? '대사 비율' : 'Dialogue'}</span>
+          <span className="text-[9px] text-text-tertiary w-14">{t('advancedWriting.dialogue')}</span>
           <input type="range" min={10} max={90} value={s.constraints.dialogueRatio}
             onChange={e => updateConstraint('dialogueRatio', Number(e.target.value))}
             className="flex-1 h-1 accent-accent-purple" />
@@ -274,16 +274,16 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
 
         {/* Tempo */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-tertiary w-14">{isKO ? '템포' : 'Tempo'}</span>
+          <span className="text-[9px] text-text-tertiary w-14">{t('advancedWriting.tempo')}</span>
           <div className="flex gap-1">
             {([
-              { v: 'fast' as const, ko: '빠르게', en: 'Fast' },
-              { v: 'stable' as const, ko: '안정', en: 'Stable' },
-              { v: 'slow' as const, ko: '느리게', en: 'Slow' },
-            ]).map(t => (
-              <button key={t.v} onClick={() => updateConstraint('tempo', t.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.tempo === t.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
-                {t[lang]}
+              { v: 'fast' as const, tKey: 'advancedWritingExtra.tempoFast' },
+              { v: 'stable' as const, tKey: 'advancedWritingExtra.tempoStable' },
+              { v: 'slow' as const, tKey: 'advancedWritingExtra.tempoSlow' },
+            ]).map(ti => (
+              <button key={ti.v} onClick={() => updateConstraint('tempo', ti.v)}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.tempo === ti.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                {t(ti.tKey)}
               </button>
             ))}
           </div>
@@ -291,16 +291,16 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
 
         {/* Sentence length */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-tertiary w-14">{isKO ? '문장 길이' : 'Length'}</span>
+          <span className="text-[9px] text-text-tertiary w-14">{t('advancedWriting.sentenceLen')}</span>
           <div className="flex gap-1">
             {([
-              { v: 'short' as const, ko: '짧게', en: 'Short' },
-              { v: 'normal' as const, ko: '보통', en: 'Normal' },
-              { v: 'long' as const, ko: '길게', en: 'Long' },
-            ]).map(l => (
-              <button key={l.v} onClick={() => updateConstraint('sentenceLen', l.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.sentenceLen === l.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
-                {l[lang]}
+              { v: 'short' as const, tKey: 'advancedWritingExtra.sentenceShort' },
+              { v: 'normal' as const, tKey: 'advancedWritingExtra.sentenceNormal' },
+              { v: 'long' as const, tKey: 'advancedWritingExtra.sentenceLong' },
+            ]).map(sl => (
+              <button key={sl.v} onClick={() => updateConstraint('sentenceLen', sl.v)}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.sentenceLen === sl.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                {t(sl.tKey)}
               </button>
             ))}
           </div>
@@ -308,16 +308,16 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
 
         {/* Emotion exposure */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-text-tertiary w-14">{isKO ? '감정 노출' : 'Emotion'}</span>
+          <span className="text-[9px] text-text-tertiary w-14">{t('advancedWriting.emotion')}</span>
           <div className="flex gap-1">
             {([
-              { v: 'restrained' as const, ko: '절제', en: 'Restrained' },
-              { v: 'normal' as const, ko: '보통', en: 'Normal' },
-              { v: 'intense' as const, ko: '강함', en: 'Intense' },
-            ]).map(e => (
-              <button key={e.v} onClick={() => updateConstraint('emotionExposure', e.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.emotionExposure === e.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
-                {e[lang]}
+              { v: 'restrained' as const, tKey: 'advancedWritingExtra.emotionRestrained' },
+              { v: 'normal' as const, tKey: 'advancedWritingExtra.emotionNormal' },
+              { v: 'intense' as const, tKey: 'advancedWritingExtra.emotionIntense' },
+            ]).map(em => (
+              <button key={em.v} onClick={() => updateConstraint('emotionExposure', em.v)}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.emotionExposure === em.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                {t(em.tKey)}
               </button>
             ))}
           </div>
@@ -325,21 +325,21 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
       </Section>
 
       {/* 3. 참조 범위 */}
-      <Section title={isKO ? '참조 범위' : 'Reference Scope'} icon={BookOpen}>
+      <Section title={t('advancedWriting.referenceScope')} icon={BookOpen}>
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[9px] text-text-tertiary">{isKO ? '이전 회차' : 'Prev episodes'}</span>
+          <span className="text-[9px] text-text-tertiary">{t('advancedWriting.prevEpisodes')}</span>
           <input type="range" min={0} max={25} value={s.references.prevEpisodes}
             onChange={e => updateRef('prevEpisodes', Number(e.target.value))}
             className="flex-1 h-1 accent-accent-purple" />
-          <span className="text-[9px] text-text-tertiary w-8 text-right">{s.references.prevEpisodes}{isKO ? '화' : 'ep'}</span>
+          <span className="text-[9px] text-text-tertiary w-8 text-right">{s.references.prevEpisodes}{t('advancedWriting.ep')}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {([
-            { key: 'characterCards' as const, ko: '캐릭터 카드', en: 'Character cards' },
-            { key: 'worldSetting' as const, ko: '세계관 설정', en: 'World setting' },
-            { key: 'styleProfile' as const, ko: '문체 스튜디오', en: 'Style profile' },
-            { key: 'sceneSheet' as const, ko: '씬시트', en: 'Scene sheet' },
-            { key: 'platformPreset' as const, ko: '플랫폼 프리셋', en: 'Platform preset' },
+            { key: 'characterCards' as const, tKey: 'advancedWritingExtra.refCharacterCards' },
+            { key: 'worldSetting' as const, tKey: 'advancedWritingExtra.refWorldSetting' },
+            { key: 'styleProfile' as const, tKey: 'advancedWritingExtra.refStyleProfile' },
+            { key: 'sceneSheet' as const, tKey: 'advancedWritingExtra.refSceneSheet' },
+            { key: 'platformPreset' as const, tKey: 'advancedWritingExtra.refPlatformPreset' },
           ]).map(r => (
             <button key={r.key} onClick={() => updateRef(r.key, !s.references[r.key])}
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
@@ -348,35 +348,35 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
                   : 'bg-bg-primary text-text-tertiary border border-border'
               }`}>
               {s.references[r.key] && <Check className="w-2.5 h-2.5" />}
-              {r[lang]}
+              {t(r.tKey)}
             </button>
           ))}
         </div>
       </Section>
 
       {/* 4. 설정 잠금 */}
-      <Section title={isKO ? '설정 잠금' : 'Setting Locks'} icon={Lock} defaultOpen={false}>
+      <Section title={t('advancedWriting.settingLocks')} icon={Lock} defaultOpen={false}>
         <div className="flex flex-wrap gap-1.5">
           {([
-            { key: 'speechStyle' as const, ko: '말투 고정', en: 'Speech style' },
-            { key: 'worldRules' as const, ko: '세계관 규칙', en: 'World rules' },
-            { key: 'charRelations' as const, ko: '관계도 충돌 방지', en: 'Relation guard' },
-            { key: 'bannedWords' as const, ko: '금지어 적용', en: 'Banned words' },
-          ]).map(l => (
-            <button key={l.key} onClick={() => updateLock(l.key, !s.locks[l.key])}
+            { key: 'speechStyle' as const, tKey: 'advancedWritingExtra.lockSpeechStyle' },
+            { key: 'worldRules' as const, tKey: 'advancedWritingExtra.lockWorldRules' },
+            { key: 'charRelations' as const, tKey: 'advancedWritingExtra.lockCharRelations' },
+            { key: 'bannedWords' as const, tKey: 'advancedWritingExtra.lockBannedWords' },
+          ]).map(lk => (
+            <button key={lk.key} onClick={() => updateLock(lk.key, !s.locks[lk.key])}
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
-                s.locks[l.key]
+                s.locks[lk.key]
                   ? 'bg-red-500/15 text-red-400 border border-red-500/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
               }`}>
-              {s.locks[l.key] ? '🔒' : '🔓'} {l[lang]}
+              {s.locks[lk.key] ? '🔒' : '🔓'} {t(lk.tKey)}
             </button>
           ))}
         </div>
       </Section>
 
       {/* 5. 출력 방식 */}
-      <Section title={isKO ? '출력 방식' : 'Output Mode'} icon={FileOutput}>
+      <Section title={t('advancedWriting.outputMode')} icon={FileOutput}>
         <div className="flex flex-wrap gap-1.5">
           {OUTPUT_MODES.map(m => (
             <button key={m.key} onClick={() => update('outputMode', m.key)}
@@ -385,7 +385,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary border border-border hover:text-text-primary'
               }`}>
-              {m[lang]}
+              {t(m.tKey)}
             </button>
           ))}
         </div>
@@ -394,21 +394,21 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
       {/* 6. 포함/제외 */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <span className="text-[9px] text-emerald-400 font-bold">{isKO ? '반드시 포함' : 'Must include'}</span>
+          <span className="text-[9px] text-emerald-400 font-bold">{t('advancedWriting.mustInclude')}</span>
           <textarea
             value={s.includes}
             onChange={e => update('includes', e.target.value)}
-            placeholder={isKO ? '검은 반지 언급, 주인공 불안 징후...' : 'Black ring mention, protagonist anxiety...'}
+            placeholder={t('advancedWriting.includePlaceholder')}
             rows={2}
             className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-2 py-1.5 text-[10px] resize-none"
           />
         </div>
         <div>
-          <span className="text-[9px] text-red-400 font-bold">{isKO ? '제외' : 'Exclude'}</span>
+          <span className="text-[9px] text-red-400 font-bold">{t('advancedWriting.exclude')}</span>
           <textarea
             value={s.excludes}
             onChange={e => update('excludes', e.target.value)}
-            placeholder={isKO ? '설명형 독백, 과한 세계관 주입...' : 'Expository monologue, over-exposition...'}
+            placeholder={t('advancedWriting.excludePlaceholder')}
             rows={2}
             className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-2 py-1.5 text-[10px] resize-none"
           />

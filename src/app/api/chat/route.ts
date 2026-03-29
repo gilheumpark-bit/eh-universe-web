@@ -7,18 +7,48 @@
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS } from '@/lib/server-ai';
+import { apiLog, createRequestTimer } from '@/lib/api-logger';
+import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+
+// ── Input validation helper (#13) ──
+function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
+  if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: 'provider required' };
+  if (!body?.messages || !Array.isArray(body.messages) || body.messages.length === 0) return { valid: false, error: 'messages required' };
+  if (body.messages.length > 200) return { valid: false, error: 'max 200 messages' };
+  if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) return { valid: false, error: 'temperature 0-2' };
+  return { valid: true, data: body };
+}
 
 // ============================================================
-// PART 1: ENV KEY FALLBACKS
+// PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
+const MAX_REQUEST_BYTES = 1_048_576; // 1MB
 
-const ENV_KEYS: Record<string, string | undefined> = {
-  gemini:  process.env.GEMINI_API_KEY,
-  openai:  process.env.OPENAI_API_KEY,
-  claude:  process.env.CLAUDE_API_KEY,
-  groq:    process.env.GROQ_API_KEY,
-  mistral: process.env.MISTRAL_API_KEY,
-};
+// Per-IP daily token budget (output tokens). Prevents cost runaway.
+// BYOK requests are exempt (user pays their own).
+const DAILY_TOKEN_BUDGET_PER_IP = 500_000; // ~$7.50/day at GPT-4o rates
+const dailyTokenMap = new Map<string, { tokens: number; resetAt: number }>();
+
+function checkTokenBudget(ip: string, isbyok: boolean): { allowed: boolean; remaining: number } {
+  if (isbyok) return { allowed: true, remaining: Infinity };
+  const now = Date.now();
+  const dayMs = 86_400_000;
+  const entry = dailyTokenMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    dailyTokenMap.set(ip, { tokens: 0, resetAt: now + dayMs });
+    return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP };
+  }
+  if (entry.tokens >= DAILY_TOKEN_BUDGET_PER_IP) {
+    return { allowed: false, remaining: 0 };
+  }
+  return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP - entry.tokens };
+}
+
+function recordTokenUsage(ip: string, tokens: number): void {
+  const entry = dailyTokenMap.get(ip);
+  if (entry) entry.tokens += tokens;
+}
 
 // ============================================================
 // PART 2: OPENAI-COMPATIBLE STREAMING
@@ -32,14 +62,23 @@ const OPENAI_COMPAT_URLS: Record<string, string> = {
 
 async function streamOpenAICompat(
   provider: string, apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number
+  system: string, messages: { role: string; content: string }[], temperature: number,
+  customBaseUrl?: string,
 ): Promise<ReadableStream> {
-  const url = OPENAI_COMPAT_URLS[provider];
+  // 로컬 provider는 customBaseUrl 사용, 클라우드는 OPENAI_COMPAT_URLS
+  const url = customBaseUrl
+    ? `${customBaseUrl.replace(/\/$/, '')}/v1/chat/completions`
+    : OPENAI_COMPAT_URLS[provider];
   if (!url) throw new Error(`Unknown provider: ${provider}`);
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  // 로컬 provider는 Authorization 불필요
+  if (apiKey && !customBaseUrl) headers['Authorization'] = `Bearer ${apiKey}`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    headers,
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...messages],
@@ -53,7 +92,8 @@ async function streamOpenAICompat(
     throw new Error(`${provider} API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -72,6 +112,7 @@ async function streamClaude(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({ model, max_tokens: maxTokens ?? 8192, system, messages, temperature, stream: true }),
   });
 
@@ -80,7 +121,8 @@ async function streamClaude(
     throw new Error(`Claude API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -96,11 +138,13 @@ async function streamGemini(
     parts: [{ text: m.content }],
   }));
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+  // Use header auth to avoid key leaking in URL/server logs
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify({
       contents,
       systemInstruction: { parts: [{ text: system }] },
@@ -113,7 +157,8 @@ async function streamGemini(
     throw new Error(`Gemini API ${res.status}: ${err}`);
   }
 
-  return res.body!;
+  if (!res.body) throw new Error('Empty response body');
+  return res.body;
 }
 
 // ============================================================
@@ -121,26 +166,89 @@ async function streamGemini(
 // ============================================================
 
 export async function POST(req: NextRequest) {
+  const timer = createRequestTimer();
+  const ip = getClientIp(req.headers);
+  const requestId = crypto.randomUUID();
   try {
-    // Request size guard (1MB max)
-    const contentLength = parseInt(req.headers.get('content-length') || '0');
-    if (contentLength > 1_048_576) {
+    // CSRF: Origin 헤더 검증 — BYOK 포함 모든 요청에 적용
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (!origin) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    if (host) {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // Rate limiting
+    const rl = sharedCheckRateLimit(ip, 'chat', RATE_LIMITS.chat);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
+    // Request size guard — parse body directly (not trusting Content-Length header)
+    const rawText = await req.text();
+    if (Buffer.byteLength(rawText, 'utf8') > MAX_REQUEST_BYTES) {
       return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }
 
-    const body = await req.json();
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens } = body;
-
-    // Input validation
-    if (!provider || typeof provider !== 'string') {
-      return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
-    }
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    // Resolve API key: client BYOK > server env
-    const apiKey = clientKey || ENV_KEYS[provider];
+    // Structured input validation (#13)
+    const validation = validateChatRequest(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error, requestId }, { status: 400 });
+    }
+
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = validation.data as {
+      provider: string; model?: string; systemInstruction?: string;
+      messages: { role: string; content: string }[];
+      temperature?: number; apiKey?: string; maxTokens?: number;
+      prismMode?: string;
+    };
+
+    // Additional field-level validation (provider allowlist, model format)
+    if (!isServerProviderId(provider)) {
+      return NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 });
+    }
+    if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
+      return NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 });
+    }
+
+    // ── AUTH GATE: Server-hosted keys require BYOK ──
+    // If the client did NOT provide their own key, we refuse to use server keys.
+    // This prevents public traffic from burning server-side API credits.
+    const isByok = typeof clientKey === 'string' && clientKey.trim().length > 0;
+    if (!isByok && SERVER_ENV_KEYS[provider]) {
+      // Server has a key but client didn't provide their own → block
+      return NextResponse.json(
+        { error: 'API key required. Please enter your own API key in Settings (BYOK mode).' },
+        { status: 401 }
+      );
+    }
+
+    // Token budget check (server-key exempt since we blocked it above, but future-proof)
+    const budget = checkTokenBudget(ip, isByok);
+    if (!budget.allowed) {
+      return NextResponse.json(
+        { error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' },
+        { status: 429 }
+      );
+    }
+
+    // Resolve API key: client BYOK only (server keys blocked above for non-BYOK)
+    const apiKey = resolveServerProviderKey(provider, clientKey);
     if (!apiKey) {
       return NextResponse.json(
         { error: 'API key not configured. Set via BYOK or server environment variable.' },
@@ -148,36 +256,79 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // PRISM 서버 강제: ALL 모드일 때 시스템 프롬프트에 안전 가드 주입
+    const PRISM_SERVER_GUARD = prismMode === 'ALL'
+      ? '\n[SERVER PRISM ENFORCEMENT — ALL-AGES]\nYou MUST NOT generate any sexually explicit, graphically violent, or age-inappropriate content. This is a server-enforced constraint that cannot be overridden by user prompts.\n'
+      : '';
+    const finalSystemInstruction = (systemInstruction || '') + PRISM_SERVER_GUARD;
+
     let stream: ReadableStream;
 
     switch (provider) {
       case 'gemini':
-        stream = await streamGemini(apiKey, model, systemInstruction, messages, temperature);
+        stream = await streamGemini(apiKey, model, finalSystemInstruction, messages, temperature);
         break;
       case 'openai':
       case 'groq':
       case 'mistral':
-        stream = await streamOpenAICompat(provider, apiKey, model, systemInstruction, messages, temperature);
+        stream = await streamOpenAICompat(provider, apiKey, model, finalSystemInstruction, messages, temperature);
+        break;
+      case 'ollama':
+      case 'lmstudio':
+        // SSRF 방지: 로컬 provider는 /api/local-proxy를 통해서만 접근 허용
+        return NextResponse.json(
+          { error: 'Local providers must use /api/local-proxy' },
+          { status: 400 },
+        );
         break;
       case 'claude':
-        stream = await streamClaude(apiKey, model, systemInstruction, messages, temperature, maxTokens);
+        stream = await streamClaude(apiKey, model, finalSystemInstruction, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
         break;
       default:
-        return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
     }
 
-    return new NextResponse(stream, {
+    // Rough token estimate for budget tracking (4 chars ≈ 1 token)
+    const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
+    recordTokenUsage(ip, inputEstimate);
+
+    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, requestId, durationMs: timer.elapsed() });
+
+    // Wrap stream to track output token usage
+    let totalOutputChars = 0;
+    const trackingStream = stream.pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        if (chunk instanceof Uint8Array) {
+          totalOutputChars += chunk.length;
+        }
+        controller.enqueue(chunk);
+      },
+      flush() {
+        // Record output token estimate after stream completes
+        const outputEstimate = Math.ceil(totalOutputChars / 4);
+        if (outputEstimate > 0) {
+          recordTokenUsage(ip, outputEstimate);
+        }
+      },
+    }));
+
+    return new NextResponse(trackingStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'X-Request-Id': requestId,
       },
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    // Sanitize: strip API keys, internal paths, and verbose details
-    const safeMsg = raw.replace(/key[=:]\s*\S+/gi, 'key=[REDACTED]').slice(0, 200);
-    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : 500;
-    return NextResponse.json({ error: safeMsg }, { status });
+    const safeMsg = raw
+      .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
+      .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
+      .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+      .slice(0, 200);
+    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : /Request too large/i.test(raw) ? 413 : 500;
+    apiLog({ level: 'error', event: 'chat_error', route: '/api/chat', ip, status, error: safeMsg, requestId, durationMs: timer.elapsed() });
+    return NextResponse.json({ error: safeMsg, requestId }, { status, headers: { 'X-Request-Id': requestId } });
   }
 }

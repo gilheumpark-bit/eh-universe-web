@@ -1,7 +1,8 @@
 "use client";
 
 import Header from "@/components/Header";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2A } from "@/lib/LangContext";
+import { useState, useEffect } from "react";
 
 const sections = {
   ko: [
@@ -28,23 +29,46 @@ const sections = {
 
 export default function RulebookPage() {
   const { lang } = useLang();
-  const en = lang === "en";
-  const secs = sections[lang];
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+  const secs = L2A(sections, lang);
+  const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length > 0) {
+          setActiveId(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    secs.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [secs]);
 
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-56 shrink-0">
-              <div className="lg:sticky lg:top-20">
+              <div className="premium-panel-soft rounded-[24px] p-4 lg:sticky lg:top-24">
                 <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
-                  {en ? "Contents" : "목차"}
+                  {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
                 </h2>
-                <nav className="space-y-1">
+                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
                   {secs.map((s) => (
-                    <a key={s.id} href={`#${s.id}`} className="block py-1.5 px-3 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors font-[family-name:var(--font-mono)]">
+                    <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
+                      activeId === s.id
+                        ? "text-accent-amber bg-accent-amber/10 font-bold"
+                        : "text-text-secondary hover:text-text-primary hover:bg-white/[0.04]"
+                    }`}>
                       {s.title}
                     </a>
                   ))}
@@ -53,12 +77,12 @@ export default function RulebookPage() {
             </aside>
 
             <div className="flex-1 min-w-0">
-              <div className="doc-header rounded-t mb-0">
+              <div className="doc-header rounded-t-[24px] mb-0">
                 <span className="badge badge-classified mr-2">RESTRICTED</span>
-                {en ? "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" : "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국"}
+                {T({ ko: "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국", en: "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" })}
               </div>
-              <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-                <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
+              <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
+                <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
                 <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">A Narrative Engine That Prevents Story Collapse</p>
 
                 {secs.map((s) => (
@@ -70,8 +94,8 @@ export default function RulebookPage() {
 
                 <div className="mt-16 border-t border-border pt-6">
                   <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
-                    {en ? "This document is for Bureau of Investigation internal reference only." : "이 문서는 비밀조사국 내부 참조용이다."}<br />
-                    {en ? "Unauthorized disclosure will result in the personnel being processed as a typo." : "무단 유출 시 해당 인원은 오타로 처리된다."}
+                    {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}<br />
+                    {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
                   </p>
                 </div>
               </div>

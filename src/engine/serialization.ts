@@ -6,7 +6,7 @@ import { PlatformType, EpisodeState } from './types';
 
 /** 토큰 3,000개 ≈ 한글 6,000자 → 1토큰 ≈ 2글자 */
 const TOKEN_TO_CHAR_KO = 2.0;
-/** 한글 1자 ≈ UTF-8 3바이트 평균 (자모+공백 혼합) */
+/** 한글 1자 = UTF-8 3바이트이나, 공백·ASCII·숫자 혼합 시 평균 ~2.7 */
 const AVG_KOREAN_BYTES = 2.7;
 
 const BYTE_CONFIG: Record<PlatformType, { min: number; max: number }> = {

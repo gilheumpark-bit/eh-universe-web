@@ -1,9 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
-import { Character, StoryConfig, AppLanguage, CharRelationType } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
-import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2 } from 'lucide-react';
+import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
+import { TRANSLATIONS } from '@/lib/studio-translations';
+import { createT } from '@/lib/i18n';
+import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
+import { activeSupportsStructured } from '@/lib/ai-providers';
+import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
+import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
+import CharRelationGraph from './CharRelationGraph';
 
 const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
   lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
@@ -19,16 +24,33 @@ interface ResourceViewProps {
   language: AppLanguage;
   config: StoryConfig;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
+  onError?: (message: string) => void;
 }
 
 const ROLE_KEYS = ['hero', 'villain', 'ally', 'extra'] as const;
 
-const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig }) => {
+const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig, onError }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [expandedTiers, setExpandedTiers] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
+  // Fix #3: Inline toast for API error visibility when onError not provided
+  const [inlineToast, setInlineToast] = useState<string | null>(null);
+  // Fix #7: Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
+  // Fix #6: Character name validation
+  const [nameError, setNameError] = useState(false);
   const t = TRANSLATIONS[language].resource;
   const te = TRANSLATIONS[language].engine;
+
+  const showError = (msg: string) => {
+    if (onError) { onError(msg); }
+    else {
+      setInlineToast(msg);
+      setTimeout(() => setInlineToast(null), 5000);
+    }
+  };
 
   const roleLabels = ROLE_KEYS.map(key => ({
     value: key,
@@ -43,34 +65,48 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const [newChar, setNewChar] = useState<Partial<Character>>({
     name: '', role: 'hero', traits: '', appearance: '', dna: 50
   });
+  const [genCount, setGenCount] = useState(4);
 
   const filteredCharacters = useMemo(() => {
     if (activeCategory === 'all') return config.characters;
     return config.characters.filter(c => c.role === activeCategory);
   }, [config.characters, activeCategory]);
 
+  const canStructured = activeSupportsStructured();
+
   const handleAutoGenerate = async () => {
-    if (!config.synopsis) {
-      alert(({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language]);
+    if (!canStructured) {
+      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
+      showError(msg);
       return;
     }
-    
+    if (!config.synopsis) {
+      const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
+      showError(msg);
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      const generated = await generateCharacters(config, language); 
+      const generated = await generateCharacters(config, language, genCount);
       setConfig(prev => ({
         ...prev,
         characters: [...prev.characters, ...generated]
       }));
-    } catch (_error) {
-      alert("Error generating characters.");
+    } catch {
+      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
+      showError(msg);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const addCharacter = () => {
-    if (!newChar.name) return;
+    if (!newChar.name || !newChar.name.trim()) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
     const char: Character = {
       id: `c-manual-${Date.now()}`,
       name: newChar.name || '',
@@ -87,43 +123,75 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     setConfig({ ...config, characters: config.characters.filter(c => c.id !== id) });
   };
 
+  // Fix #7: Paginate large lists
+  const totalPages = Math.ceil(filteredCharacters.length / PAGE_SIZE);
+  const paginatedCharacters = filteredCharacters.length > PAGE_SIZE
+    ? filteredCharacters.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredCharacters;
+
+  // Reset page when filter changes
+  const prevCategory = React.useRef(activeCategory);
+  if (prevCategory.current !== activeCategory) {
+    prevCategory.current = activeCategory;
+    if (currentPage !== 1) setCurrentPage(1);
+  }
+
   return (
     <div className="max-w-[1400px] mx-auto w-full p-4 md:p-10 space-y-8 lg:space-y-12 animate-in fade-in duration-500">
-      
+      {/* Fix #3: Inline error toast */}
+      {inlineToast && (
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg bg-red-900/95 border border-red-600 text-red-100 text-sm flex items-center gap-2 max-w-md">
+          <span>{inlineToast}</span>
+          <button onClick={() => setInlineToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
+        </div>
+      )}
+
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-zinc-900/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="p-4 md:p-5 bg-blue-600/10 border border-blue-500/20 rounded-2xl md:rounded-3xl shrink-0">
             <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
           </div>
           <div className="min-w-0">
             <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase truncate">{t.title}</h2>
-            <p className="text-zinc-500 text-[8px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
+            <p className="text-text-tertiary text-[10px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
           </div>
         </div>
 
-        <button 
-          onClick={handleAutoGenerate}
-          disabled={isGenerating}
-          className="flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 disabled:opacity-50 group w-full md:w-auto"
-        >
-          {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {isGenerating ? "Synthesizing..." : t.autoGen}
-        </button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={genCount}
+            onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
+            className="w-14 bg-black border border-border rounded-xl px-2 py-3 md:py-4 text-center text-sm font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
+          />
+          <button
+            onClick={handleAutoGenerate}
+            disabled={isGenerating}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 disabled:opacity-50 group"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isGenerating ? "Synthesizing..." : t.autoGen}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 md:gap-10 items-start relative">
         
         {/* Left Side: Character Creator Panel */}
         <div className={`w-full lg:shrink-0 transition-all duration-500 ease-in-out ${isPanelOpen ? 'lg:w-80 opacity-100' : 'lg:w-0 opacity-0 lg:-translate-x-10'}`}>
-          <div className="bg-zinc-900/40 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+          <div className="bg-bg-secondary/40 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
                 <UserPlus className="w-4 h-4 text-blue-400" /> {t.creator}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsPanelOpen(false)}
-                className="lg:hidden p-2 text-zinc-500 hover:text-white"
+                aria-label="패널 닫기"
+                className="lg:hidden p-2 text-text-tertiary hover:text-white"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -131,24 +199,31 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
             
             <div className="space-y-5">
               <div className="space-y-2">
-                <span className="text-[9px] font-black text-zinc-700 uppercase ml-2">{t.name}</span>
+                <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.name}</span>
                 <div className="relative group">
-                   <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700 group-focus-within:text-blue-500 transition-colors" />
-                   <input 
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-zinc-800"
+                   <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
+                   <input
+                    className={`w-full bg-black/50 border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary ${nameError ? 'border-red-500' : 'border-border'}`}
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
+                    maxLength={50}
                     value={newChar.name}
-                    onChange={e => setNewChar({...newChar, name: e.target.value})}
+                    onChange={e => { setNewChar({...newChar, name: e.target.value}); if (nameError) setNameError(false); }}
                   />
                 </div>
+                {/* Fix #6: Name validation warning */}
+                {nameError && (
+                  <p className="text-[10px] text-red-400 font-bold ml-2">
+                    {language === 'KO' ? '이름을 입력해주세요' : 'Name is required'}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <span className="text-[9px] font-black text-zinc-700 uppercase ml-2">{t.role}</span>
+                <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.role}</span>
                 <div className="relative group">
-                  <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700 pointer-events-none" />
+                  <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                   <select
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer"
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer"
                     value={newChar.role}
                     onChange={e => setNewChar({...newChar, role: e.target.value})}
                   >
@@ -160,12 +235,13 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
               </div>
 
               <div className="space-y-2">
-                <span className="text-[9px] font-black text-zinc-700 uppercase ml-2">{t.traits}</span>
+                <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.traits}</span>
                 <div className="relative">
-                  <ScrollText className="absolute left-4 top-4 w-4 h-4 text-zinc-700" />
-                  <textarea 
-                    className="w-full bg-black/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
+                  <ScrollText className="absolute left-4 top-4 w-4 h-4 text-text-tertiary" />
+                  <textarea
+                    className="w-full bg-black/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
                     placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
+                    maxLength={500}
                     value={newChar.traits}
                     onChange={e => setNewChar({...newChar, traits: e.target.value})}
                   />
@@ -173,13 +249,13 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
               </div>
 
               <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-center text-[9px] font-black text-zinc-700 uppercase tracking-widest">
+                <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
                   <span>서사 잠재력</span>
                   <span className="text-blue-500">{newChar.dna} pts</span>
                 </div>
                 <input 
                   type="range" min="0" max="100"
-                  className="w-full accent-blue-600 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer"
+                  className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                   value={newChar.dna}
                   onChange={e => setNewChar({...newChar, dna: parseInt(e.target.value)})}
                 />
@@ -202,19 +278,21 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
              {!isPanelOpen && (
                <button 
                 onClick={() => setIsPanelOpen(true)}
-                className="hidden lg:flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black text-zinc-400 hover:text-white transition-all uppercase tracking-widest"
+                className="hidden lg:flex items-center gap-2 px-5 py-3 bg-bg-secondary border border-border rounded-xl text-[10px] font-black text-text-secondary hover:text-white transition-all uppercase tracking-widest"
                >
                  <UserPlus className="w-3.5 h-3.5 text-blue-500" /> {t.creator}
                </button>
              )}
              
-             <div className="flex-1 flex items-center gap-2 bg-zinc-950/50 p-1.5 rounded-2xl border border-zinc-900 overflow-x-auto custom-scrollbar">
+             <div className="flex-1 flex items-center gap-2 bg-bg-primary/50 p-1.5 rounded-2xl border border-border overflow-x-auto custom-scrollbar" role="tablist">
                {[{ value: 'all', label: 'All Characters' }, ...roleLabels].map(cat => (
                  <button
                   key={cat.value}
+                  role="tab"
+                  aria-selected={activeCategory === cat.value}
                   onClick={() => setActiveCategory(cat.value)}
                   className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                    activeCategory === cat.value ? 'bg-zinc-800 text-white shadow-lg ring-1 ring-white/10' : 'text-zinc-600 hover:text-zinc-400'
+                    activeCategory === cat.value ? 'bg-bg-tertiary text-white shadow-lg ring-1 ring-white/10' : 'text-text-tertiary hover:text-text-secondary'
                   }`}
                  >
                    {cat.label}
@@ -225,48 +303,67 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
           <div className="relative min-h-[400px]">
             {filteredCharacters.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-zinc-900 rounded-[3rem] text-zinc-800">
-                <div className="w-16 h-16 bg-zinc-900/50 rounded-full flex items-center justify-center mb-6">
-                  <Users className="w-8 h-8 opacity-20" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-[3rem] text-text-tertiary">
+                <div className="w-16 h-16 bg-bg-secondary/50 rounded-full flex items-center justify-center mb-6">
+                  <Users className="w-8 h-8 opacity-30" />
                 </div>
-                <span className="text-xs font-black tracking-[0.4em] uppercase">No Characters Found</span>
+                <span className="text-xs font-black tracking-[0.4em] uppercase mb-2">
+                  {language === 'KO' ? '캐릭터 없음' : language === 'JP' ? 'キャラクターなし' : language === 'CN' ? '没有角色' : 'No Characters Found'}
+                </span>
+                <p className="text-[11px] text-text-tertiary max-w-[280px] text-center">
+                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, AI 자동 생성 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、AI自動生成を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用AI自动生成按钮。' : 'Add manually from the left panel, or use the AI auto-generate button.'}
+                </p>
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${
                 isPanelOpen ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               }`}>
-                {filteredCharacters.map(char => (
-                  <div key={char.id} className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
+                {paginatedCharacters.map(char => (
+                  <div key={char.id} className="ds-card-lg md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
                     {/* Visual DNA Bar */}
                     <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 opacity-20 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
                     
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl flex items-center justify-center text-zinc-500 font-black border border-white/5 text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                        <div className="w-14 h-14 bg-gradient-to-br from-bg-tertiary to-bg-secondary rounded-2xl flex items-center justify-center text-text-tertiary font-black border border-white/5 text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
                           {char.name[0]}
                         </div>
                         <div className="min-w-0">
                           <div className="text-base font-black text-white truncate mb-0.5">{char.name}</div>
-                          <div className="flex items-center gap-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${
+                          <div className="flex items-center gap-1">
+                             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                char.role === 'hero' ? 'bg-blue-500' :
-                               char.role === 'villain' ? 'bg-red-500' : 'bg-zinc-600'
+                               char.role === 'villain' ? 'bg-red-500' :
+                               char.role === 'ally' ? 'bg-green-500' : 'bg-text-tertiary'
                              }`}></div>
-                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{getRoleLabel(char.role)}</span>
+                             <select
+                               value={char.role}
+                               onChange={e => setConfig((prev: StoryConfig) => ({
+                                 ...prev,
+                                 characters: prev.characters.map(c => c.id === char.id ? { ...c, role: e.target.value } : c)
+                               }))}
+                               className="bg-transparent text-[10px] font-black text-text-tertiary uppercase tracking-widest outline-none cursor-pointer hover:text-text-secondary transition-colors appearance-none pr-3"
+                               style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'8\' viewBox=\'0 0 8 8\'%3E%3Cpath fill=\'%236b7280\' d=\'M0 2l4 4 4-4z\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right center' }}
+                             >
+                               {ROLE_KEYS.map(r => (
+                                 <option key={r} value={r}>{te.roles[r]}</option>
+                               ))}
+                             </select>
                           </div>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => removeCharacter(char.id)} 
-                        className="p-2.5 text-zinc-700 hover:text-red-500 transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                      <button
+                        onClick={() => removeCharacter(char.id)}
+                        aria-label="삭제"
+                        className="p-2.5 text-text-tertiary hover:text-red-500 transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="bg-black/40 p-5 rounded-2xl mb-4 relative group/traits">
-                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-zinc-800 opacity-50" />
-                      <p className="text-[11px] text-zinc-400 font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
+                    <div className="ds-card mb-4 relative group/traits">
+                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-text-tertiary opacity-50" />
+                      <p className="text-[11px] text-text-secondary font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
                         {char.traits}
                       </p>
                     </div>
@@ -280,7 +377,8 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, personality: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🧠 성격 (예: 냉소적이지만 내면은 따뜻함)' : '🧠 Personality (e.g. cynical but warm inside)'}
-                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                        maxLength={200}
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechStyle || ''}
@@ -289,7 +387,8 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechStyle: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '🗣️ 억양/말투 (예: 반말, 짧은 문장, 냉담한 톤)' : '🗣️ Speech style (e.g. informal, short sentences, cold tone)'}
-                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800"
+                        maxLength={200}
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechExample || ''}
@@ -298,14 +397,368 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           characters: prev.characters.map(c => c.id === char.id ? { ...c, speechExample: e.target.value } : c)
                         }))}
                         placeholder={language === 'KO' ? '💬 대사 예시 (예: "...그래서 뭐 어쩌라고.")' : '💬 Example dialogue (e.g. "...so what do you want me to do.")'}
-                        className="w-full bg-black/30 border border-zinc-800/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-800 font-serif italic"
+                        maxLength={300}
+                        className="w-full bg-black/30 border border-border/50 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary font-serif italic"
                       />
                     </div>
+
+                    {/* 1단계 뼈대 — 3-tier framework */}
+                    <div className="space-y-2 mb-4 pt-3 border-t border-border/50">
+                      <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.tier1}</span>
+                      <input
+                        value={char.desire || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, desire: e.target.value } : c)
+                        }))}
+                        placeholder={t.desirePH}
+                        maxLength={200}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                      />
+                      <input
+                        value={char.deficiency || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, deficiency: e.target.value } : c)
+                        }))}
+                        placeholder={t.deficiencyPH}
+                        maxLength={200}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                      />
+                      <input
+                        value={char.conflict || ''}
+                        onChange={e => setConfig((prev: StoryConfig) => ({
+                          ...prev,
+                          characters: prev.characters.map(c => c.id === char.id ? { ...c, conflict: e.target.value } : c)
+                        }))}
+                        placeholder={t.conflictPH}
+                        maxLength={200}
+                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={char.values || ''}
+                          onChange={e => setConfig((prev: StoryConfig) => ({
+                            ...prev,
+                            characters: prev.characters.map(c => c.id === char.id ? { ...c, values: e.target.value } : c)
+                          }))}
+                          placeholder={t.valuesPH}
+                          maxLength={200}
+                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        />
+                        <input
+                          value={char.changeArc || ''}
+                          onChange={e => setConfig((prev: StoryConfig) => ({
+                            ...prev,
+                            characters: prev.characters.map(c => c.id === char.id ? { ...c, changeArc: e.target.value } : c)
+                          }))}
+                          placeholder={t.changeArcPH}
+                          maxLength={200}
+                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 2단계 작동 — collapsible */}
+                    <div className="mb-4 pt-2 border-t border-amber-500/10">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t2: !prev[char.id]?.t2 } }))}
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
+                      >
+                        {expandedTiers[char.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {t.tier2}
+                      </button>
+                      {expandedTiers[char.id]?.t2 && (
+                        <div className="space-y-2">
+                          <input
+                            value={char.strength || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, strength: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '💪 강점 (예: 뛰어난 관찰력)' : '💪 Strength (e.g. keen observation)'}
+                            maxLength={200}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.weakness || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, weakness: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🩹 약점 (예: 타인을 믿지 못함)' : '🩹 Weakness (e.g. inability to trust)'}
+                            maxLength={200}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <textarea
+                            value={char.backstory || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, backstory: e.target.value } : c)
+                            }))}
+                            rows={2}
+                            placeholder={language === 'KO' ? '📜 과거 — 현재를 만든 사건' : '📜 Backstory — the event that shaped them'}
+                            maxLength={1000}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary resize-none"
+                          />
+                          <input
+                            value={char.failureCost || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, failureCost: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '⚠️ 실패 대가 (예: 가족을 잃는다)' : '⚠️ Failure cost (e.g. loses family)'}
+                            maxLength={200}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.currentProblem || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, currentProblem: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🔥 현재 문제 (예: 조직의 배신자 색출)' : '🔥 Current problem (e.g. finding the traitor)'}
+                            maxLength={200}
+                            className="w-full bg-amber-500/5 border border-amber-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-amber-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3단계 디테일 — collapsible */}
+                    <div className="mb-4 pt-2 border-t border-emerald-500/10">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t3: !prev[char.id]?.t3 } }))}
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2"
+                      >
+                        {expandedTiers[char.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {language === 'KO' ? '3단계 — 디테일' : 'Tier 3 — Detail'}
+                      </button>
+                      {expandedTiers[char.id]?.t3 && (
+                        <div className="space-y-2">
+                          <input
+                            value={char.emotionStyle || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, emotionStyle: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '😶 감정 표현 방식 (예: 웃으면서 우는 타입)' : '😶 Emotion style (e.g. smiles while crying)'}
+                            maxLength={200}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.relationPattern || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, relationPattern: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🤝 인간관계 패턴 (예: 밀당, 의존형)' : '🤝 Relation pattern (e.g. push-pull, dependent)'}
+                            maxLength={200}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.symbol || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, symbol: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🔮 상징 요소 (예: 항상 끼고 있는 반지)' : '🔮 Symbol (e.g. a ring they always wear)'}
+                            maxLength={200}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.secret || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, secret: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '🤫 비밀 요소 (예: 과거에 사람을 죽인 적 있음)' : '🤫 Secret (e.g. once killed someone)'}
+                            maxLength={200}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                          <input
+                            value={char.externalPerception || ''}
+                            onChange={e => setConfig((prev: StoryConfig) => ({
+                              ...prev,
+                              characters: prev.characters.map(c => c.id === char.id ? { ...c, externalPerception: e.target.value } : c)
+                            }))}
+                            placeholder={language === 'KO' ? '👁️ 타인이 보는 인상 (예: 차갑고 무관심해 보임)' : '👁️ External perception (e.g. seems cold and indifferent)'}
+                            maxLength={200}
+                            className="w-full bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-3 py-2 text-[10px] outline-none focus:border-emerald-500 transition-colors placeholder:text-text-tertiary"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Social Profile (소셜 레지스터) — collapsible Advanced */}
+                    <div className="mb-4">
+                      <button
+                        onClick={() => {
+                          // Toggle social profile visibility via a data attribute trick
+                          const el = document.getElementById(`social-${char.id}`);
+                          if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                        }}
+                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-tertiary hover:text-text-secondary transition-colors mb-2"
+                      >
+                        <Users className="w-3 h-3" />
+                        {t.socialProfile ?? 'Social Profile'} ({t.socialAdvanced ?? 'Advanced'})
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      <div id={`social-${char.id}`} style={{ display: 'none' }} className="space-y-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-tertiary uppercase">{t.socialRelation ?? 'Relation'}</label>
+                            <select
+                              value={char.socialProfile?.relationDistance ?? 'colleague'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: e.target.value as SocialProfile['relationDistance'],
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(RELATION_LABELS[language] ?? RELATION_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-tertiary uppercase">{t.socialAge ?? 'Age'}</label>
+                            <select
+                              value={char.socialProfile?.ageRegister ?? 'adult'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: e.target.value as SocialProfile['ageRegister'],
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(AGE_LABELS[language] ?? AGE_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-tertiary uppercase">{t.socialProfession ?? 'Profession'}</label>
+                            <input
+                              value={char.socialProfile?.professionRegister ?? ''}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: e.target.value,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              placeholder={t.socialProfessionPH ?? 'Soldier, doctor...'}
+                              maxLength={100}
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-cyan-500 transition-colors placeholder:text-text-tertiary"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-tertiary uppercase">{t.socialExplicitness ?? 'Explicitness'}</label>
+                            <select
+                              value={char.socialProfile?.explicitness ?? 'none'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: e.target.value as SocialProfile['explicitness'],
+                                  profanityLevel: char.socialProfile?.profanityLevel ?? 'none',
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(EXPLICIT_LABELS[language] ?? EXPLICIT_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-tertiary uppercase">{t.socialProfanity ?? 'Profanity'}</label>
+                            <select
+                              value={char.socialProfile?.profanityLevel ?? 'none'}
+                              onChange={e => {
+                                const sp: SocialProfile = {
+                                  relationDistance: char.socialProfile?.relationDistance ?? 'colleague',
+                                  ageRegister: char.socialProfile?.ageRegister ?? 'adult',
+                                  explicitness: char.socialProfile?.explicitness ?? 'none',
+                                  profanityLevel: e.target.value as SocialProfile['profanityLevel'],
+                                  professionRegister: char.socialProfile?.professionRegister,
+                                };
+                                setConfig((prev: StoryConfig) => ({
+                                  ...prev,
+                                  characters: prev.characters.map(c => c.id === char.id ? { ...c, socialProfile: sp } : c),
+                                }));
+                              }}
+                              className="w-full bg-black border border-border rounded-lg px-2 py-1.5 text-[10px] outline-none cursor-pointer"
+                            >
+                              {Object.entries(PROFANITY_LABELS[language] ?? PROFANITY_LABELS.KO).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 한 줄 요약 공식 (자동 생성) */}
+                    {(char.desire || char.deficiency || char.conflict) && (
+                      <div className="mb-4 p-3 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
+                        <span className="text-[10px] font-black text-accent-purple/60 uppercase tracking-widest">{t.formulaLabel}</span>
+                        <p className="text-[10px] text-text-secondary mt-1 leading-relaxed">
+                          {language === 'KO'
+                            ? `${char.name}은(는) ${getRoleLabel(char.role)} 역할로, ${char.desire || '___'}을(를) 원하며, ${char.deficiency || '___'}이(가) 부족하고, ${char.conflict || '___'} 때문에 갈등하며, ${char.changeArc || '___'}(으)로 변한다.`
+                            : `${char.name} serves as ${getRoleLabel(char.role)}, wants ${char.desire || '___'}, lacks ${char.deficiency || '___'}, conflicts over ${char.conflict || '___'}, and transforms into ${char.changeArc || '___'}.`
+                          }
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 3-tier 검증 */}
+                    {(() => {
+                      const warnings = validateCharacter(char, language);
+                      const score = calcCompletionScore(warnings, 13);
+                      return (
+                        <div className="space-y-2 mb-3">
+                          <CompletionBar score={score} language={language} />
+                          <WarningBadge warnings={warnings} language={language} />
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
-                          <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">서사 잠재력</span>
+                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">서사 잠재력</span>
                        </div>
                        <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
                     </div>
@@ -313,10 +766,32 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 ))}
               </div>
             )}
+            {/* Fix #7: Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  {language === 'KO' ? '이전' : 'Prev'}
+                </button>
+                <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  {language === 'KO' ? '다음' : 'Next'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* ====== CHARACTER RELATIONSHIP MAP ====== */}
       {config.characters.length >= 2 && (
         <CharRelationMap language={language} config={config} setConfig={setConfig} />
@@ -334,6 +809,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
 function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
   const isKO = language === 'KO';
+  const tl = createT(language);
   const chars = config.characters;
   const relations = config.charRelations || [];
 
@@ -362,45 +838,33 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
     }));
   };
 
-  // SVG circular layout
-  const cx = 200, cy = 200, r = 140;
-  const nodePositions = chars.map((c, i) => {
-    const angle = (i / Math.max(chars.length, 1)) * Math.PI * 2 - Math.PI / 2;
-    return { id: c.id, name: c.name, role: c.role, x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-  });
-  const getPos = (id: string) => nodePositions.find(n => n.id === id);
-
-  const ROLE_COLORS: Record<string, string> = {
-    hero: '#3b82f6', villain: '#ef4444', ally: '#22c55e', extra: '#6b7280'
-  };
-
   return (
-    <div className="bg-zinc-900/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
+    <div className="bg-bg-secondary/20 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
       <div className="flex items-center gap-4">
         <div className="p-3 bg-pink-600/10 border border-pink-500/20 rounded-2xl">
           <Link2 className="w-6 h-6 text-pink-400" />
         </div>
         <div>
-          <h3 className="text-xl font-black tracking-tighter uppercase">{isKO ? '캐릭터 관계도' : 'Character Relations'}</h3>
-          <p className="text-zinc-500 text-[9px] font-bold tracking-widest uppercase">{isKO ? '인물 간 관계 시각화' : 'Visual relationship map'}</p>
+          <h3 className="text-xl font-black tracking-tighter uppercase">{tl('resourceExtra.charRelations')}</h3>
+          <p className="text-text-tertiary text-[9px] font-bold tracking-widest uppercase">{tl('resourceExtra.visualMap')}</p>
         </div>
       </div>
 
       {/* Add relation controls */}
       <div className="flex flex-wrap gap-2 items-end">
-        <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
-          <option value="">{isKO ? '캐릭터 A' : 'Character A'}</option>
+        <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none">
+          <option value="">{tl('resourceExtra.characterA')}</option>
           {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none">
-          <option value="">{isKO ? '캐릭터 B' : 'Character B'}</option>
+        <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none">
+          <option value="">{tl('resourceExtra.characterB')}</option>
           {chars.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="flex gap-1">
           {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
             <button key={rt} onClick={() => setSelType(rt)}
               className={`px-2 py-2 rounded-lg text-[9px] font-bold border transition-all ${
-                selType === rt ? 'text-white' : 'text-zinc-600 border-zinc-800 hover:border-zinc-600'
+                selType === rt ? 'text-white' : 'text-text-tertiary border-border hover:border-text-tertiary'
               }`}
               style={selType === rt ? { background: CHAR_REL_STYLES[rt].color, borderColor: CHAR_REL_STYLES[rt].color } : undefined}
             >
@@ -408,64 +872,22 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
             </button>
           ))}
         </div>
-        <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={isKO ? '관계 설명...' : 'Description...'}
-          className="flex-1 min-w-[120px] bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs outline-none" />
+        <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={tl('resourceExtra.description')}
+          maxLength={200}
+          className="flex-1 min-w-[120px] bg-black border border-border rounded-xl px-3 py-2 text-xs outline-none" />
         <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
-          {isKO ? '추가' : 'Add'}
+          {tl('resourceExtra.add')}
         </button>
       </div>
 
-      {/* SVG Relation Graph */}
-      <div className="flex justify-center">
-        <svg viewBox="0 0 400 400" className="w-full max-w-[500px]" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
-          {/* Relation lines */}
-          {relations.map((rel, i) => {
-            const from = getPos(rel.from);
-            const to = getPos(rel.to);
-            if (!from || !to) return null;
-            const style = CHAR_REL_STYLES[rel.type];
-            return (
-              <g key={i}>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={style.color} strokeWidth="2" opacity="0.6" />
-                <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 6} fill={style.color} fontSize="8" textAnchor="middle" fontWeight="bold">
-                  {isKO ? style.ko : style.en}
-                </text>
-                {rel.desc && (
-                  <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 + 5} fill={style.color} fontSize="6" textAnchor="middle" opacity="0.7">
-                    {rel.desc}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-          {/* Character nodes */}
-          {nodePositions.map(node => {
-            const roleColor = ROLE_COLORS[chars.find(c => c.id === node.id)?.role || 'extra'] || '#6b7280';
-            return (
-              <g key={node.id}>
-                <circle cx={node.x} cy={node.y} r="22" fill={roleColor} opacity="0.12" stroke={roleColor} strokeWidth="2" />
-                <text x={node.x} y={node.y - 2} fill="white" fontSize="11" textAnchor="middle" fontWeight="bold">
-                  {node.name.slice(0, 3)}
-                </text>
-                <text x={node.x} y={node.y + 10} fill={roleColor} fontSize="7" textAnchor="middle" opacity="0.8">
-                  {node.role}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
+      {/* Interactive Force-Directed Graph */}
+      <CharRelationGraph
+        characters={chars}
+        relations={relations}
+        language={language}
+      />
 
-      {/* Legend + list */}
-      <div className="flex flex-wrap gap-3 text-[9px]">
-        {(Object.keys(CHAR_REL_STYLES) as CharRelationType[]).map(rt => (
-          <span key={rt} className="flex items-center gap-1">
-            <span className="w-3 h-0.5 inline-block rounded" style={{ background: CHAR_REL_STYLES[rt].color }} />
-            {isKO ? CHAR_REL_STYLES[rt].ko : CHAR_REL_STYLES[rt].en}
-          </span>
-        ))}
-      </div>
-
+      {/* Relation list with delete */}
       {relations.length > 0 && (
         <div className="space-y-1.5">
           {relations.map((rel, i) => {
@@ -473,17 +895,17 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
             const toChar = chars.find(c => c.id === rel.to);
             const style = CHAR_REL_STYLES[rel.type];
             return (
-              <div key={i} className="flex items-center justify-between bg-black/30 border border-zinc-800/50 rounded-xl px-4 py-2 text-[10px]">
+              <div key={i} className="flex items-center justify-between bg-black/30 border border-border/50 rounded-xl px-4 py-2 text-[10px]">
                 <span>
                   <span className="font-bold text-white">{fromChar?.name}</span>
-                  <span className="text-zinc-600 mx-1.5">⇄</span>
+                  <span className="text-text-tertiary mx-1.5">⇄</span>
                   <span className="font-bold text-white">{toChar?.name}</span>
                   <span className="ml-2 font-bold" style={{ color: style.color }}>
                     [{isKO ? style.ko : style.en}]
                   </span>
-                  {rel.desc && <span className="ml-2 text-zinc-500 italic">{rel.desc}</span>}
+                  {rel.desc && <span className="ml-2 text-text-tertiary italic">{rel.desc}</span>}
                 </span>
-                <button onClick={() => removeRelation(i)} className="text-zinc-700 hover:text-red-500 transition-colors">✕</button>
+                <button onClick={() => removeRelation(i)} className="text-text-tertiary hover:text-red-500 transition-colors">✕</button>
               </div>
             );
           })}

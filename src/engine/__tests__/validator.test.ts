@@ -146,6 +146,20 @@ describe('validateGeneratedContent', () => {
     // No Korean AI tone fixes
     expect(fixes.filter(f => f.reason.includes('AI톤')).length).toBe(0);
   });
+
+  it('handles null/undefined text without crashing', () => {
+    const r1 = validateGeneratedContent(null as unknown as string, 'KO', 1);
+    expect(r1.fixes).toEqual([]);
+    expect(r1.issues).toEqual([]);
+
+    const r2 = validateGeneratedContent(undefined as unknown as string, 'EN', 1);
+    expect(r2.fixes).toEqual([]);
+    expect(r2.issues).toEqual([]);
+
+    const r3 = validateGeneratedContent('', 'KO', 1);
+    expect(r3.fixes).toEqual([]);
+    expect(r3.issues).toEqual([]);
+  });
 });
 
 // ============================================================

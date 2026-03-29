@@ -1,0 +1,10 @@
+{
+  "engine": "unity",
+  "parameter_namespace": "shader",
+  "parameters": {
+    "_BranchProbability": 0.25,
+    "_Curvature": 0.42,
+    "_Entropy": 32.0
+  },
+  "shader_name": "Shader Graph/OmniverseBranch"
+}

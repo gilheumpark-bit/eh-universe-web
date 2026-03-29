@@ -7,9 +7,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { createT } from '@/lib/i18n';
+import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
-import { HISTORY_LIMITS } from '@/lib/token-utils';
+import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
 import { classifyError } from './UXHelpers';
 
 interface TabMessage {
@@ -22,6 +23,7 @@ interface TabAssistantProps {
   tab: AppTab;
   language: AppLanguage;
   config: StoryConfig | null;
+  hostedProviders?: Partial<Record<string, boolean>>;
 }
 
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
@@ -324,11 +326,17 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
   if (config.title) parts.push(`제목: ${config.title}`);
   if (config.setting) parts.push(`배경: ${config.setting}`);
 
-  // 탭별 심화 컨텍스트
-  switch (tab) {
+  // 탭별 심화 컨텍스트 (critique는 AppTab 외부 모드이므로 string 비교)
+  switch (tab as string) {
     case 'world':
       if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 500)}`);
       if (config.setting) parts.push(`세부 배경: ${config.setting}`);
+      // 세계관 3-tier
+      if (config.corePremise) parts.push(`핵심 전제: ${config.corePremise}`);
+      if (config.powerStructure) parts.push(`권력 구조: ${config.powerStructure}`);
+      if (config.currentConflict) parts.push(`현재 갈등: ${config.currentConflict}`);
+      if (config.worldHistory) parts.push(`역사: ${config.worldHistory}`);
+      if (config.magicTechSystem) parts.push(`마법/기술 체계: ${config.magicTechSystem}`);
       if (config.worldSimData?.civs?.length) {
         parts.push(`등록된 문명: ${config.worldSimData.civs.map(c => `${c.name}(${c.era}, 특성: ${c.traits.join('·')})`).join(' / ')}`);
       }
@@ -367,6 +375,14 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
           if (c.speechStyle) details.push(`말투: ${c.speechStyle}`);
           if (c.speechExample) details.push(`대사 예시: "${c.speechExample}"`);
           if (c.appearance) details.push(`외모: ${c.appearance}`);
+          // 3-tier 뼈대
+          if (c.desire) details.push(`욕망: ${c.desire}`);
+          if (c.deficiency) details.push(`결핍: ${c.deficiency}`);
+          if (c.conflict) details.push(`갈등: ${c.conflict}`);
+          if (c.values) details.push(`가치관: ${c.values}`);
+          if (c.changeArc) details.push(`변화 방향: ${c.changeArc}`);
+          if (c.strength) details.push(`강점: ${c.strength}`);
+          if (c.weakness) details.push(`약점: ${c.weakness}`);
           parts.push(`[캐릭터] ${c.name}\n  ${details.join('\n  ')}`);
         });
       }
@@ -419,9 +435,13 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
 
 const STORAGE_PREFIX = 'noa_tab_chat_';
 
-const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) => {
+const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, hostedProviders = {} }) => {
   const ctx = TAB_CONTEXT[tab];
-  const isKO = language === 'KO';
+  const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
+  const tl = createT(language);
+
+  // Check AI access: local key OR hosted provider
+  const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()]);
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -452,9 +472,8 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     const text = input.trim();
     if (!text || isStreaming) return;
 
-    const apiKey = getApiKey(getActiveProvider());
-    if (!apiKey) {
-      const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: isKO ? '⚠️ API 키가 설정되지 않았습니다.\n\n설정(Settings) 탭 → API Key에서 키를 입력해주세요.' : '⚠️ API key not set.\n\nGo to Settings tab → API Key to enter your key.' };
+    if (!hasAiKey) {
+      const errMsg: TabMessage = { id: `te-${Date.now()}`, role: 'assistant', content: tl('tabAssistant.apiKeyMissing') };
       setMessages(prev => [...prev, errMsg]);
       return;
     }
@@ -470,12 +489,14 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const systemPrompt = (isKO ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
-    const chatHistory: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
+    const systemPrompt = (lk === 'ko' ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
+    const recentMsgs: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
-    chatHistory.push({ role: 'user', content: text });
+    const model = getActiveModel();
+    const { messages: trimmedHistory } = truncateMessages(systemPrompt, recentMsgs, model);
+    const chatHistory: ChatMsg[] = [...trimmedHistory, { role: 'user', content: text }];
 
     let fullContent = '';
     try {
@@ -493,7 +514,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') { /* cancelled */ }
       else {
-        const info = classifyError(err, isKO);
+        const info = classifyError(err, language);
         const detail = info.action ? `\n\n💡 ${info.action}` : '';
         setMessages(prev => prev.map(m =>
           m.id === aiMsgId ? { ...m, content: `⚠️ ${info.title}\n${info.message}${detail}` } : m
@@ -503,7 +524,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages, config, tab, language, isKO, ctx]);
+  }, [input, isStreaming, messages, config, tab, language, lk, ctx, tl, hasAiKey]);
 
   const handleCancel = () => {
     abortRef.current?.abort();
@@ -524,13 +545,13 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
         onClick={() => setCollapsed(!collapsed)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-secondary/80 transition-colors"
       >
-        <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
+        <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
           <Sparkles className="w-3.5 h-3.5" />
-          {isKO ? ctx.ko : ctx.en}
+          {ctx[lk]}
         </span>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
-            <span className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">{messages.length} msg</span>
+            <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)]">{messages.length} msg</span>
           )}
           {collapsed ? <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" />}
         </div>
@@ -542,18 +563,18 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
           <div className="max-h-60 sm:max-h-80 overflow-y-auto px-4 py-2 space-y-3 custom-scrollbar">
             {messages.length === 0 && (
               <div className="py-4 space-y-3">
-                <p className="text-[11px] text-text-tertiary italic text-center">
-                  {isKO ? `${ctx.ko}에게 무엇이든 물어보세요.` : `Ask the ${ctx.en} anything.`}
+                <p className="text-sm text-text-tertiary italic text-center">
+                  {tl('tabAssistant.askAnything').replace('{name}', ctx[lk])}
                 </p>
                 {TAB_PRESETS[tab] && (
                   <div className="flex flex-wrap gap-1.5 justify-center px-2">
                     {TAB_PRESETS[tab].map((preset, i) => (
                       <button
                         key={i}
-                        onClick={() => { setInput(isKO ? preset.ko : preset.en); }}
-                        className="px-2.5 py-1 bg-bg-tertiary/50 border border-border rounded-lg text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)] leading-tight"
+                        onClick={() => { setInput(preset[lk]); }}
+                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)] leading-tight"
                       >
-                        {isKO ? preset.ko : preset.en}
+                        {preset[lk]}
                       </button>
                     ))}
                   </div>
@@ -563,14 +584,14 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
-                  msg.role === 'user' ? 'bg-zinc-800' : 'bg-accent-purple/20'
+                  msg.role === 'user' ? 'bg-bg-tertiary' : 'bg-accent-purple/20'
                 }`}>
-                  {msg.role === 'user' ? <User className="w-3 h-3 text-zinc-500" /> : <Bot className="w-3 h-3 text-accent-purple" />}
+                  {msg.role === 'user' ? <User className="w-3 h-3 text-text-tertiary" /> : <Bot className="w-3 h-3 text-accent-purple" />}
                 </div>
-                <div className={`max-w-[90%] sm:max-w-[80%] px-3 py-2 rounded-xl text-[12px] leading-relaxed ${
+                <div className={`max-w-[90%] sm:max-w-[80%] px-3 py-2.5 rounded-xl text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-zinc-800/80 text-zinc-300'
-                    : 'bg-transparent text-zinc-300'
+                    ? 'bg-bg-tertiary/80 text-text-secondary'
+                    : 'bg-transparent text-text-secondary'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content || (isStreaming ? '...' : '')}</p>
                 </div>
@@ -583,25 +604,28 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config }) =>
           <div className="p-3 border-t border-border">
             <div className="flex items-end gap-2">
               {messages.length > 0 && (
-                <button onClick={clearChat} className="p-2 rounded-lg text-zinc-700 hover:text-accent-red hover:bg-zinc-800/50 transition-colors shrink-0" title={isKO ? '대화 초기화' : 'Clear chat'}>
+                <button onClick={clearChat} className="p-2 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-bg-tertiary/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={isKO ? '질문을 입력하세요...' : 'Ask a question...'}
-                className="flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2 text-[12px] text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-20 transition-colors"
+                onKeyDown={e => { if (e.nativeEvent.isComposing || e.keyCode === 229) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder={!hasAiKey
+                  ? tl('tabAssistant.apiKeyRequired')
+                  : tl('tabAssistant.askQuestion')}
+                maxLength={5000}
+                className={`flex-1 bg-bg-tertiary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-purple/30 max-h-24 transition-colors ${!hasAiKey ? 'opacity-60' : ''}`}
                 rows={1}
-                disabled={isStreaming}
+                disabled={isStreaming || !hasAiKey}
               />
               {isStreaming ? (
-                <button onClick={handleCancel} className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">
+                <button onClick={handleCancel} aria-label="중단" className="p-2 rounded-xl bg-accent-red text-white shrink-0 hover:opacity-80 transition-opacity">
                   <StopCircle className="w-4 h-4" />
                 </button>
               ) : (
-                <button onClick={handleSend} disabled={!input.trim()} className={`p-2 rounded-xl shrink-0 transition-colors ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}>
+                <button onClick={handleSend} disabled={!input.trim()} aria-label="전송" className={`p-2 rounded-xl shrink-0 transition-colors ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}>
                   <Send className="w-4 h-4" />
                 </button>
               )}

@@ -95,7 +95,7 @@ describe('loadProjectFile', () => {
   it('downloads and parses JSON', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => MOCK_PROJECT,
+      text: async () => JSON.stringify(MOCK_PROJECT),
     });
 
     const result = await loadProjectFile(MOCK_TOKEN, 'file-1');

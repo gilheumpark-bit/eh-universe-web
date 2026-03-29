@@ -1,0 +1,28 @@
+{
+  "name": "NOA Studio — EH Universe",
+  "short_name": "NOA Studio",
+  "description": "AI-powered narrative engine for the EH Universe",
+  "start_url": "/studio",
+  "display": "standalone",
+  "theme_color": "#7c3aed",
+  "background_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

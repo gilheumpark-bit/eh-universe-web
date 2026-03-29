@@ -1,5 +1,8 @@
 import { FixRecord, FixType, Severity, ValidationIssue } from './types';
 import { AppLanguage } from '../lib/studio-types';
+import { getLanguagePack } from './language-pack';
+
+const MAX_TEXT_LENGTH = 50_000; // ReDoS prevention: hard limit on input size
 
 // ============================================================
 // AI Tone Validator — Ported from ANS 9.3 Pass2AITone
@@ -17,6 +20,7 @@ const AI_TONE_REPLACE_100: Record<string, string> = {
 };
 
 export function validateAITone(text: string): { score: number; fixes: FixRecord[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   let detections = 0;
 
@@ -97,6 +101,8 @@ const TELL_PATTERNS: Array<{ pattern: RegExp; shows: string[] }> = [
 ];
 
 export function validateQuality(text: string): { showTellIssues: FixRecord[]; repetitionIssues: FixRecord[]; score: number } {
+  // ReDoS prevention
+  if (text.length > 50_000) text = text.slice(0, 50_000);
   const showTellIssues: FixRecord[] = [];
   const repetitionIssues: FixRecord[] = [];
 
@@ -161,30 +167,76 @@ const PUNCT_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래'];
 const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
 
-export function validateCausality(text: string, ruleLevel: number): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+// Check if a given position in text is inside dialogue quotes.
+// Supports 「」, "", '', "", '' quote pairs.
+function isInsideDialogue(text: string, position: number): boolean {
+  // Single-pass scanner: track open/close quotes up to position (O(n) instead of O(n*q))
+  const openChars = new Set(['「', '『', '\u201C', '\u2018', '"', "'"]);
+  const closeChars = new Set(['」', '』', '\u201D', '\u2019', '"', "'"]);
+  let depth = 0;
+  for (let i = 0; i < position && i < text.length; i++) {
+    const ch = text[i];
+    if (openChars.has(ch)) depth++;
+    else if (closeChars.has(ch) && depth > 0) depth--;
+  }
+  return depth > 0;
+}
+
+// Check if a word match is part of a longer compound word (surrounded by Korean chars).
+function isCompoundWord(text: string, position: number, wordLength: number): boolean {
+  const before = position > 0 ? text[position - 1] : '';
+  const after = position + wordLength < text.length ? text[position + wordLength] : '';
+  const koreanRange = /[\uAC00-\uD7AF]/;
+  // If EITHER before OR after is a Korean char, it's likely part of a compound word
+  const prevIsKorean = before !== '' && koreanRange.test(before);
+  const nextIsKorean = after !== '' && koreanRange.test(after);
+  return prevIsKorean || nextIsKorean;
+}
+
+export function validateCausality(text: string, ruleLevel: number, language?: AppLanguage): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   const issues: ValidationIssue[] = [];
 
   if (ruleLevel < 2) return { fixes, issues };
 
-  const allBanned = [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
+  // Use language pack banned words when language is provided, fall back to hardcoded lists
+  const pack = language ? getLanguagePack(language) : null;
+  const allBanned = pack
+    ? pack.bannedWords
+    : [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
 
-  for (const word of allBanned) {
-    const regex = new RegExp(word, 'gi');
-    const matches = text.match(regex);
-    if (matches) {
+  // Pre-compile regexes outside the loop to avoid recompilation per iteration
+  const compiledBanned = allBanned.map(word => ({
+    word,
+    regex: new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+  }));
+
+  for (const { word, regex } of compiledBanned) {
+    regex.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    let totalCount = 0;
+    let firstPosition = -1;
+    while ((m = regex.exec(text)) !== null) {
+      // Skip if inside dialogue quotes or part of a longer compound word
+      if (isInsideDialogue(text, m.index)) continue;
+      if (isCompoundWord(text, m.index, m[0].length)) continue;
+      totalCount++;
+      if (firstPosition === -1) firstPosition = m.index;
+    }
+    if (totalCount > 0) {
       fixes.push({
         fixType: FixType.CAUSALITY,
         original: word,
         fixed: '',
-        position: text.search(regex),
+        position: firstPosition,
         reason: `[EH v1.4] 인과율 금지어: "${word}" — 논리적 인과관계로 대체 필요`,
         severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
       });
       if (ruleLevel >= 3) {
         issues.push({
           category: 'eh_enforcer',
-          message: `인과율 위반: "${word}" ${matches.length}회 — 시스템 위반 가중치 +2`,
+          message: `인과율 위반: "${word}" ${totalCount}회 — 시스템 위반 가중치 +2`,
           severity: ruleLevel >= 4 ? Severity.ERROR : Severity.WARNING,
         });
       }
@@ -194,16 +246,8 @@ export function validateCausality(text: string, ruleLevel: number): { fixes: Fix
   return { fixes, issues };
 }
 
-// Simplified IP firewall — flag well-known franchise names
-const IP_PATTERNS = [
-  /해리\s?포터/g, /Harry\s?Potter/gi,
-  /스타\s?워즈/g, /Star\s?Wars/gi,
-  /반지의\s?제왕/g, /Lord\s?of\s?the\s?Rings/gi,
-  /나루토/g, /Naruto/gi,
-  /원피스/g, /One\s?Piece/gi,
-];
-
 export function validateStatic(text: string): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
   const issues: ValidationIssue[] = [];
 
@@ -233,18 +277,8 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
     }
   }
 
-  // IP/copyright scan
-  for (const pattern of IP_PATTERNS) {
-    const matches = text.match(pattern);
-    if (matches) {
-      issues.push({
-        category: 'ip_firewall',
-        message: `저작권 주의: "${matches[0]}" 감지`,
-        severity: Severity.ERROR,
-        suggestion: '고유 명칭으로 대체하세요',
-      });
-    }
-  }
+  // IP/copyright scan — delegated to validateTrademarkIP (single source of truth).
+  // Previously duplicated IP_PATTERNS here; now TRADEMARK_PATTERNS covers all cases.
 
   return { fixes, issues };
 }
@@ -254,6 +288,7 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
 // ============================================================
 
 export function applyFormattingRules(text: string): { formatted: string; changes: string[] } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const changes: string[] = [];
   let result = text;
 
@@ -271,10 +306,13 @@ export function applyFormattingRules(text: string): { formatted: string; changes
   result = result.replace(/(["」』])([^"\n,.])/g, '$1\n$2');
   if (result !== beforeDialogue) changes.push('대화문 줄 분리');
 
-  // 규칙 4: Em dash 삭제
+  // 규칙 4: Em dash — preserve inside dialogue quotes, remove elsewhere
   const beforeDash = result;
-  result = result.replace(/—/g, '');
-  if (result !== beforeDash) changes.push('Em dash(—) 삭제');
+  result = result.replace(/(["「『"][^"」』"]*["」』"])|—/g, (match, dialogue) => {
+    if (dialogue) return dialogue; // preserve em dashes inside quotes
+    return ''; // remove em dashes outside quotes
+  });
+  if (result !== beforeDash) changes.push('Em dash(—) 삭제 (대화문 내 유지)');
 
   // 규칙 6: 말줄임표 통일 — ... → …
   const beforeEllipsis = result;
@@ -321,11 +359,13 @@ export function validateFormattingIssues(text: string): ValidationIssue[] {
 const HUMAN_NOISE_PATTERNS = ['ㅋㅋ', 'ㅎㅎ', '뭐랄까', '그러니까', '아무튼', '진짜', '대박'];
 
 export function calculateCleanTaste(text: string): { aiTone: number; humanNoise: number; balance: number } {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const sentences = text.split(/[.!?。]+/).filter(s => s.trim()).length || 1;
 
   // AI Tone score
   let aiHits = 0;
-  for (const p of ['그러나 ', '반면에 ', '한편으로는 ', '따라서 ', '것이다.', '되었다.', '있었다.']) {
+  // '있었다.' removed: natural Korean past tense, not an AI tone marker
+  for (const p of ['그러나 ', '반면에 ', '한편으로는 ', '따라서 ', '것이다.', '되었다.']) {
     aiHits += (text.match(new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
   }
   const aiTone = Math.min(1, aiHits / (sentences * 0.5));
@@ -349,9 +389,19 @@ export function calculateCleanTaste(text: string): { aiTone: number; humanNoise:
 // Sentence Length Variation (같은 길이 3개 연속 금지)
 // ============================================================
 
+// Dialogue quote pairs used for filtering short dialogue from variation checks
+const _DIALOGUE_OPEN_CHARS = /[「『""'']/;
+
 export function validateSentenceVariation(text: string): ValidationIssue[] {
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const issues: ValidationIssue[] = [];
-  const sentences = text.split(/[.!?。]+/).filter(s => s.trim());
+  // Filter out sentences that are inside dialogue quotes OR shorter than 5 characters
+  const sentences = text.split(/[.!?。]+/).filter(s => {
+    const trimmed = s.trim();
+    if (trimmed.length < 5) return false; // Skip very short fragments like "응", "아차"
+    if (_DIALOGUE_OPEN_CHARS.test(trimmed[0])) return false; // Skip dialogue lines
+    return true;
+  });
   if (sentences.length < 4) return issues;
 
   let sameCount = 1;
@@ -411,6 +461,7 @@ export function validateGeneratedContent(
   language: AppLanguage,
   ruleLevel: number = 1
 ): { fixes: FixRecord[]; issues: ValidationIssue[] } {
+  if (!text) return { fixes: [], issues: [] };
   const allFixes: FixRecord[] = [];
   const allIssues: ValidationIssue[] = [];
 
@@ -429,9 +480,9 @@ export function validateGeneratedContent(
   allFixes.push(...staticResult.fixes);
   allIssues.push(...staticResult.issues);
 
-  // EH Engine v1.4 — Causality enforcer (Lv2+)
+  // EH Engine v1.4 — Causality enforcer (Lv2+) with language pack support
   if (ruleLevel >= 2) {
-    const causalityResult = validateCausality(text, ruleLevel);
+    const causalityResult = validateCausality(text, ruleLevel, language);
     allFixes.push(...causalityResult.fixes);
     allIssues.push(...causalityResult.issues);
   }
@@ -527,13 +578,72 @@ export interface TrademarkMatch {
   position: number;
 }
 
+// Pre-compiled combined regex for fast first-pass detection (O(n) instead of O(48n))
+const _TRADEMARK_COMBINED_RE = new RegExp(
+  TRADEMARK_PATTERNS.map(t => `(?:${t.pattern.source})`).join('|'),
+  'gi',
+);
+
+// Normalize text for trademark detection: remove zero-width chars, collapse whitespace
+function normalizeTrademark(t: string): string {
+  return t.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, '').replace(/\s+/g, '');
+}
+
+// Korean "word boundary" check: the character before/after the match should be
+// whitespace, punctuation, string boundary, or a non-Korean character.
+// This prevents "마리오네트" from matching the "마리오" pattern.
+const _KOREAN_CHAR_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
+
+// Common Korean particles/postpositions that can follow a trademark word
+// without making it part of a longer compound word.
+const _KOREAN_PARTICLES_RE = /^[을를이가은는의에와과도로으며면서까지부터만보다라]|^으로|^에서|^까지|^부터|^처럼|^마저|^조차/;
+
+function isKoreanWordBoundary(text: string, matchStart: number, matchEnd: number): boolean {
+  // Check character BEFORE the match
+  if (matchStart > 0) {
+    const before = text[matchStart - 1];
+    // If the preceding char is Korean, not a boundary
+    if (_KOREAN_CHAR_RE.test(before)) return false;
+  }
+  // Check character AFTER the match
+  if (matchEnd < text.length) {
+    const after = text[matchEnd];
+    // If the following char is Korean, check if it's a common particle/postposition.
+    // Particles after a trademark are normal in Korean (e.g. 포켓몬을, 스타벅스에).
+    // Only reject if the suffix does NOT start with a known particle.
+    if (_KOREAN_CHAR_RE.test(after)) {
+      const suffix = text.slice(matchEnd);
+      if (!_KOREAN_PARTICLES_RE.test(suffix)) return false;
+    }
+  }
+  return true;
+}
+
 export function detectTrademarks(text: string): TrademarkMatch[] {
+  if (!text) return [];
+  if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
+  // 2-Track: check both original and normalized (spaces/zero-width removed)
+  const normalized = normalizeTrademark(text);
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  const hasInOriginal = _TRADEMARK_COMBINED_RE.test(text);
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  const hasInNormalized = _TRADEMARK_COMBINED_RE.test(normalized);
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  if (!hasInOriginal && !hasInNormalized) return [];
+
   const matches: TrademarkMatch[] = [];
-  for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    let m: RegExpExecArray | null;
-    while ((m = regex.exec(text)) !== null) {
-      matches.push({ original: m[0], replacement, category, position: m.index });
+  // Scan both original and normalized text for trademark matches
+  for (const target of [text, normalized]) {
+    for (const { pattern, replacement, category } of TRADEMARK_PATTERNS) {
+      const regex = new RegExp(pattern.source, pattern.flags);
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(target)) !== null) {
+        // Avoid duplicates from normalized scan
+        if (target === normalized && matches.some(x => x.original === m![0])) continue;
+        // Korean word boundary check: skip if the match is a substring of a longer Korean word
+        if (!isKoreanWordBoundary(target, m.index, m.index + m[0].length)) continue;
+        matches.push({ original: m[0], replacement, category, position: m.index });
+      }
     }
   }
   return matches;

@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { showAlert } from '@/lib/show-alert';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
+import { createT } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -195,23 +199,26 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             >
               <span className="truncate px-1">{seg.label}</span>
               <span className="absolute bottom-0.5 right-1 text-[7px] opacity-60">{seg.width}%</span>
-              {/* Drag handle */}
+              {/* Drag handle — supports both mouse and touch */}
               {i < segments.length - 1 && (
-                <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-white/30 z-10"
-                  onMouseDown={(e) => {
+                <div className="absolute right-0 top-0 bottom-0 w-3 sm:w-1 cursor-col-resize hover:bg-white/30 z-10"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
                     const startX = e.clientX;
                     const barWidth = (e.target as HTMLElement).closest('.flex')?.getBoundingClientRect().width || 600;
-                    const handleMove = (me: MouseEvent) => {
-                      const delta = Math.round(((me.clientX - startX) / barWidth) * 100);
+                    const handleMove = (pe: PointerEvent) => {
+                      const delta = Math.round(((pe.clientX - startX) / barWidth) * 100);
                       if (Math.abs(delta) >= 1) updateWidth(i, delta);
                     };
                     const handleUp = () => {
-                      document.removeEventListener('mousemove', handleMove);
-                      document.removeEventListener('mouseup', handleUp);
+                      document.removeEventListener('pointermove', handleMove);
+                      document.removeEventListener('pointerup', handleUp);
                     };
-                    document.addEventListener('mousemove', handleMove);
-                    document.addEventListener('mouseup', handleUp);
+                    document.addEventListener('pointermove', handleMove);
+                    document.addEventListener('pointerup', handleUp);
                   }}
                 />
               )}
@@ -226,6 +233,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
           <div key={seg.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2" style={{ borderLeftWidth: 3, borderLeftColor: seg.color }}>
             <div className="flex justify-between items-center">
               <input value={seg.label} onChange={e => updateSegment(i, { label: e.target.value })}
+                maxLength={100}
                 className="bg-transparent font-bold text-xs outline-none flex-1" />
               <div className="flex items-center gap-1">
                 <input type="color" value={seg.color} onChange={e => updateSegment(i, { color: e.target.value })} className="w-5 h-5 rounded cursor-pointer border-0" />
@@ -236,10 +244,12 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             </div>
             <input value={seg.desc} onChange={e => updateSegment(i, { desc: e.target.value })}
               placeholder={lang === "ko" ? "설명..." : "Description..."}
+              maxLength={500}
               className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
             <div className="flex items-center gap-2">
               <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "비중" : "Weight"}:</span>
               <input type="range" min={5} max={80} value={seg.width}
+                aria-label={lang === "ko" ? `${seg.label} 비중` : `${seg.label} weight`}
                 onChange={e => {
                   const newW = parseInt(e.target.value);
                   const diff = newW - seg.width;
@@ -275,18 +285,116 @@ interface FullDirectionData {
   plotStructure: string;
 }
 
+interface TierContext {
+  charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[];
+  corePremise?: string;
+  powerStructure?: string;
+  currentConflict?: string;
+}
+
 interface SceneSheetProps {
   lang?: Lang;
+  language?: AppLanguage;
   synopsis?: string;
   characterNames?: string[];
+  tierContext?: TierContext;
   onDirectionUpdate?: (data: FullDirectionData) => void;
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: Partial<FullDirectionData>;
+  onSaveEpisodeSheet?: () => void;
 }
 
-export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDirectionUpdate, onSimRefUpdate, initialDirection }: SceneSheetProps) {
+// Scene direction presets (10 genres) — static, defined at module scope to avoid stale-closure deps
+const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, isKO: boolean) => { gogumas: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogue: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] } }[] = [
+  { key: "thriller", ko: "스릴러/서스펜스", en: "Thriller/Suspense", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "거짓 단서 투척" : "Red herring planted", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "반전 폭탄" : "Twist bomb", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "긴박한 상황 중간 진입" : "Enter mid-crisis" }, { id: `h-${ts}-2`, position: "ending", hookType: "question", desc: k ? "범인 실루엣 노출" : "Culprit silhouette revealed" }],
+    emotions: [{ id: `e-${ts}-1`, position: 10, emotion: k ? "불안" : "Anxiety", intensity: 50 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "공포" : "Fear", intensity: 90 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "건조한 단문" : "Dry, short", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 발견" : "Clue found", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "\"그 사람은 이미—\" (암전)" : "\"That person already—\" (blackout)", episode: 1 }],
+  }) },
+  { key: "romance", ko: "로맨스", en: "Romance", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "오해로 인한 감정 틀어짐" : "Misunderstanding causes rift", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "고백/화해" : "Confession/reconciliation", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "운명적 재회" : "Fateful reunion" }],
+    emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "설렘" : "Flutter", intensity: 60 }, { id: `e-${ts}-2`, position: 70, emotion: k ? "절절함" : "Longing", intensity: 85 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "여주" : "Heroine", tone: k ? "츤데레 반말" : "Tsundere informal", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "감정 인지 순간" : "Moment of realization", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "뒤돌아선 눈물" : "Tears turned away", episode: 1 }],
+  }) },
+  { key: "action", ko: "액션/전투", en: "Action/Battle", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "아군 배신" : "Ally betrayal", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "폭발 장면으로 시작" : "Open with explosion" }],
+    emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "분노" : "Rage", intensity: 80 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "승리감" : "Victory", intensity: 95 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "짧은 전투 대사" : "Short battle lines", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "각성/레벨업" : "Awakening/Level up", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "더 강한 적 등장" : "Stronger foe appears", episode: 1 }],
+  }) },
+  { key: "mystery", ko: "미스터리/추리", en: "Mystery", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "핵심 증거 은폐" : "Key evidence hidden", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "시체 발견" : "Body discovered" }],
+    emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "의심" : "Suspicion", intensity: 65 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "논리적 경어" : "Logical formal", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 연결" : "Clue connection", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "알리바이 붕괴" : "Alibi collapse", episode: 1 }],
+  }) },
+  { key: "fantasy", ko: "판타지/모험", en: "Fantasy/Adventure", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "예언의 이중 해석" : "Prophecy double meaning", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "진정한 힘 각성" : "True power awakening", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "고대 유적 발견" : "Ancient ruins found" }],
+    emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "경이" : "Wonder", intensity: 70 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "결의" : "Resolve", intensity: 85 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "멘토" : "Mentor", tone: k ? "격식 있는 경어" : "Formal speech", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "새 마법/스킬 습득" : "New spell/skill acquired", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "봉인 해제" : "Seal broken", episode: 1 }],
+  }) },
+  { key: "horror", ko: "공포/호러", en: "Horror", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "탈출구가 함정" : "Escape route is a trap", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "일상 속 미세한 이상" : "Subtle anomaly in daily life" }],
+    emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "불안" : "Dread", intensity: 60 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "공포" : "Terror", intensity: 95 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "생존자" : "Survivor", tone: k ? "떨리는 단문" : "Trembling short lines", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "진실에 한 발짝" : "One step closer to truth", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "뒤에 누군가 서 있다" : "Someone standing behind", episode: 1 }],
+  }) },
+  { key: "sf", ko: "SF/우주", en: "Sci-Fi/Space", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "AI 판단 오류" : "AI judgment error", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "미지 신호 수신" : "Unknown signal received" }],
+    emotions: [{ id: `e-${ts}-1`, position: 25, emotion: k ? "경외" : "Awe", intensity: 70 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "함장" : "Captain", tone: k ? "군사적 간결체" : "Military concise", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "기술 돌파" : "Tech breakthrough", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "행성 소멸 감지" : "Planet vanishing detected", episode: 1 }],
+  }) },
+  { key: "slice", ko: "일상/힐링", en: "Slice of Life", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "사소한 오해" : "Minor misunderstanding", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "새로운 이웃/전학생" : "New neighbor/transfer student" }],
+    emotions: [{ id: `e-${ts}-1`, position: 50, emotion: k ? "따뜻함" : "Warmth", intensity: 75 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "친구" : "Friend", tone: k ? "편한 반말" : "Casual informal", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "작은 성취감" : "Small accomplishment", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "예상 못한 편지" : "Unexpected letter", episode: 1 }],
+  }) },
+  { key: "wuxia", ko: "무협", en: "Wuxia/Martial Arts", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "사부의 비밀" : "Master's secret", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "무림 맹주 암살" : "Alliance leader assassinated" }],
+    emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "비장" : "Solemn resolve", intensity: 80 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "무협 고어체" : "Classical martial tone", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "비급 체득" : "Secret technique mastered", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "독에 당함" : "Poisoned", episode: 1 }],
+  }) },
+  { key: "dark", ko: "다크/디스토피아", en: "Dark/Dystopia", gen: (ts, k) => ({
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "체제의 거짓 폭로" : "System's lie exposed", episode: 1 }],
+    hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "reversal", desc: k ? "유토피아의 균열" : "Crack in utopia" }],
+    emotions: [{ id: `e-${ts}-1`, position: 60, emotion: k ? "절망" : "Despair", intensity: 85 }, { id: `e-${ts}-2`, position: 95, emotion: k ? "저항" : "Defiance", intensity: 90 }],
+    dialogue: [{ id: `d-${ts}-1`, character: k ? "반역자" : "Rebel", tone: k ? "냉소적 단문" : "Cynical short", notes: "" }],
+    dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "info", desc: k ? "진실 한 조각" : "A piece of truth", resolved: false }],
+    cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "체포 직전" : "Moments before arrest", episode: 1 }],
+  }) },
+];
+
+export default function SceneSheet({ lang: langProp, language: languageProp, synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
+  const lang: Lang = langProp ?? ((languageProp === 'KO' || languageProp === 'JP') ? 'ko' : 'en');
+  const tl = createT(languageProp ?? (lang === 'ko' ? 'KO' : 'EN'));
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');
+  const [showGrammarPanel, setShowGrammarPanel] = useState(false);
   const [gogumas, setGogumas] = useState<GogumaEntry[]>(initialDirection?.goguma || []);
   const [hooks, setHooks] = useState<HookEntry[]>(initialDirection?.hooks || []);
   const [emotions, setEmotions] = useState<EmotionPoint[]>(initialDirection?.emotions || []);
@@ -304,6 +412,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   const [transitions, setTransitions] = useState<TransitionEntry[]>(initialDirection?.transitions || []);
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes || '');
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure || '');
+
+  // Memoized sorted arrays for SVG polyline rendering (avoid re-sort on every render)
+  const sortedEmotions = useMemo(
+    () => [...emotions].sort((a, b) => a.position - b.position),
+    [emotions],
+  );
+  const sortedTensionPoints = useMemo(
+    () => [...tensionPoints].sort((a, b) => a.position - b.position),
+    [tensionPoints],
+  );
 
   // Sync to parent whenever data changes
   const onDirectionUpdateRef = useRef(onDirectionUpdate);
@@ -342,100 +460,23 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
     setCliffs(prev => [...prev, { id: `cl-${Date.now()}`, cliffType: "crisis-cut", desc: "", episode: 1 }]);
   };
 
-  // Auto-sync all direction data to parent
+  // Auto-sync all direction data to parent (debounced)
   useEffect(() => {
-    syncDirection();
+    const timer = setTimeout(() => {
+      syncDirection();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [syncDirection]);
-
-  // Scene direction presets (10 genres)
-  const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, isKO: boolean) => { gogumas: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogue: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] } }[] = [
-    { key: "thriller", ko: "스릴러/서스펜스", en: "Thriller/Suspense", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "거짓 단서 투척" : "Red herring planted", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "반전 폭탄" : "Twist bomb", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "긴박한 상황 중간 진입" : "Enter mid-crisis" }, { id: `h-${ts}-2`, position: "ending", hookType: "question", desc: k ? "범인 실루엣 노출" : "Culprit silhouette revealed" }],
-      emotions: [{ id: `e-${ts}-1`, position: 10, emotion: k ? "불안" : "Anxiety", intensity: 50 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "공포" : "Fear", intensity: 90 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "건조한 단문" : "Dry, short", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 발견" : "Clue found", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "\"그 사람은 이미—\" (암전)" : "\"That person already—\" (blackout)", episode: 1 }],
-    }) },
-    { key: "romance", ko: "로맨스", en: "Romance", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "오해로 인한 감정 틀어짐" : "Misunderstanding causes rift", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "고백/화해" : "Confession/reconciliation", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "운명적 재회" : "Fateful reunion" }],
-      emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "설렘" : "Flutter", intensity: 60 }, { id: `e-${ts}-2`, position: 70, emotion: k ? "절절함" : "Longing", intensity: 85 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "여주" : "Heroine", tone: k ? "츤데레 반말" : "Tsundere informal", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "감정 인지 순간" : "Moment of realization", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "뒤돌아선 눈물" : "Tears turned away", episode: 1 }],
-    }) },
-    { key: "action", ko: "액션/전투", en: "Action/Battle", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "아군 배신" : "Ally betrayal", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "폭발 장면으로 시작" : "Open with explosion" }],
-      emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "분노" : "Rage", intensity: 80 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "승리감" : "Victory", intensity: 95 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "짧은 전투 대사" : "Short battle lines", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "각성/레벨업" : "Awakening/Level up", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "더 강한 적 등장" : "Stronger foe appears", episode: 1 }],
-    }) },
-    { key: "mystery", ko: "미스터리/추리", en: "Mystery", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "핵심 증거 은폐" : "Key evidence hidden", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "시체 발견" : "Body discovered" }],
-      emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "의심" : "Suspicion", intensity: 65 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "탐정" : "Detective", tone: k ? "논리적 경어" : "Logical formal", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "단서 연결" : "Clue connection", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "알리바이 붕괴" : "Alibi collapse", episode: 1 }],
-    }) },
-    { key: "fantasy", ko: "판타지/모험", en: "Fantasy/Adventure", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "예언의 이중 해석" : "Prophecy double meaning", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "진정한 힘 각성" : "True power awakening", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "고대 유적 발견" : "Ancient ruins found" }],
-      emotions: [{ id: `e-${ts}-1`, position: 20, emotion: k ? "경이" : "Wonder", intensity: 70 }, { id: `e-${ts}-2`, position: 80, emotion: k ? "결의" : "Resolve", intensity: 85 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "멘토" : "Mentor", tone: k ? "격식 있는 경어" : "Formal speech", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "growth", desc: k ? "새 마법/스킬 습득" : "New spell/skill acquired", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "봉인 해제" : "Seal broken", episode: 1 }],
-    }) },
-    { key: "horror", ko: "공포/호러", en: "Horror", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "탈출구가 함정" : "Escape route is a trap", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "일상 속 미세한 이상" : "Subtle anomaly in daily life" }],
-      emotions: [{ id: `e-${ts}-1`, position: 30, emotion: k ? "불안" : "Dread", intensity: 60 }, { id: `e-${ts}-2`, position: 90, emotion: k ? "공포" : "Terror", intensity: 95 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "생존자" : "Survivor", tone: k ? "떨리는 단문" : "Trembling short lines", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "진실에 한 발짝" : "One step closer to truth", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "뒤에 누군가 서 있다" : "Someone standing behind", episode: 1 }],
-    }) },
-    { key: "sf", ko: "SF/우주", en: "Sci-Fi/Space", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "AI 판단 오류" : "AI judgment error", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "미지 신호 수신" : "Unknown signal received" }],
-      emotions: [{ id: `e-${ts}-1`, position: 25, emotion: k ? "경외" : "Awe", intensity: 70 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "함장" : "Captain", tone: k ? "군사적 간결체" : "Military concise", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "기술 돌파" : "Tech breakthrough", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "행성 소멸 감지" : "Planet vanishing detected", episode: 1 }],
-    }) },
-    { key: "slice", ko: "일상/힐링", en: "Slice of Life", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "small", desc: k ? "사소한 오해" : "Minor misunderstanding", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "question", desc: k ? "새로운 이웃/전학생" : "New neighbor/transfer student" }],
-      emotions: [{ id: `e-${ts}-1`, position: 50, emotion: k ? "따뜻함" : "Warmth", intensity: 75 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "친구" : "Friend", tone: k ? "편한 반말" : "Casual informal", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "micro", device: "info", desc: k ? "작은 성취감" : "Small accomplishment", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "info-before", desc: k ? "예상 못한 편지" : "Unexpected letter", episode: 1 }],
-    }) },
-    { key: "wuxia", ko: "무협", en: "Wuxia/Martial Arts", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "사부의 비밀" : "Master's secret", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "shock", desc: k ? "무림 맹주 암살" : "Alliance leader assassinated" }],
-      emotions: [{ id: `e-${ts}-1`, position: 40, emotion: k ? "비장" : "Solemn resolve", intensity: 80 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "주인공" : "Protagonist", tone: k ? "무협 고어체" : "Classical martial tone", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "macro", device: "growth", desc: k ? "비급 체득" : "Secret technique mastered", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "독에 당함" : "Poisoned", episode: 1 }],
-    }) },
-    { key: "dark", ko: "다크/디스토피아", en: "Dark/Dystopia", gen: (ts, k) => ({
-      gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "large", desc: k ? "체제의 거짓 폭로" : "System's lie exposed", episode: 1 }],
-      hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "reversal", desc: k ? "유토피아의 균열" : "Crack in utopia" }],
-      emotions: [{ id: `e-${ts}-1`, position: 60, emotion: k ? "절망" : "Despair", intensity: 85 }, { id: `e-${ts}-2`, position: 95, emotion: k ? "저항" : "Defiance", intensity: 90 }],
-      dialogue: [{ id: `d-${ts}-1`, character: k ? "반역자" : "Rebel", tone: k ? "냉소적 단문" : "Cynical short", notes: "" }],
-      dopamines: [{ id: `dp-${ts}-1`, scale: "medium", device: "info", desc: k ? "진실 한 조각" : "A piece of truth", resolved: false }],
-      cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "체포 직전" : "Moments before arrest", episode: 1 }],
-    }) },
-  ];
 
   const [showScenePresetMenu, setShowScenePresetMenu] = useState(false);
 
   const applyScenePreset = useCallback((presetKey: string) => {
     const preset = SCENE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
+    const confirmMsg = lang === "ko"
+      ? "현재 씬시트 데이터를 프리셋으로 덮어쓰시겠습니까?"
+      : "Overwrite current scene sheet data with this preset?";
+    if (!window.confirm(confirmMsg)) return;
     const ts = Date.now();
     const isKO = lang === "ko";
     const data = preset.gen(ts, isKO);
@@ -460,15 +501,62 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
   };
   const passCount = Object.values(validation).filter(Boolean).length;
 
+  // 3-tier 연동 검증
+  const tierWarnings: string[] = [];
+  if (tierContext) {
+    const hasCharData = tierContext.charProfiles?.some(c => c.desire || c.conflict);
+    if (!hasCharData) {
+      tierWarnings.push(lang === "ko" ? "캐릭터 뼈대(욕망/갈등)가 비어있어 연출이 서사와 연결되지 않습니다" : "Character skeleton (desire/conflict) is empty — direction won't connect to narrative");
+    }
+    if (!tierContext.corePremise) {
+      tierWarnings.push(lang === "ko" ? "세계관 핵심 전제가 없어 훅/클리프행어가 세계관과 무관합니다" : "No world premise — hooks/cliffs won't relate to the world");
+    }
+    if (!tierContext.currentConflict) {
+      tierWarnings.push(lang === "ko" ? "세계 갈등이 없어 긴장 장치가 맥락을 잃습니다" : "No world conflict — tension devices lose context");
+    }
+    // 대사 톤이 있는데 해당 캐릭터의 values가 없으면
+    if (tierContext.charProfiles?.length) {
+      for (const rule of dialogueRules) {
+        const profile = tierContext.charProfiles.find(c => c.name === rule.character);
+        if (profile && !profile.values) {
+          tierWarnings.push(lang === "ko" ? `${rule.character}의 가치관/금지선이 없어 대사 톤이 캐릭터와 분리됩니다` : `${rule.character} has no values — dialogue tone disconnected from character`);
+          break;
+        }
+      }
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="doc-header rounded-t mb-0 flex items-center justify-between">
-        <div>
-          <span className="badge badge-amber mr-2">SCENE</span>
-          {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+        <div className="flex items-center gap-3">
+          {/* 국가별 문법 팩 셀렉터 */}
+          <div className="flex items-center gap-0.5 p-0.5 bg-black/30 rounded-lg">
+            {GRAMMAR_REGIONS.map(r => (
+              <button key={r} onClick={() => setGrammarRegion(r)}
+                className={`px-2 py-1 rounded text-[11px] transition-all ${
+                  grammarRegion === r
+                    ? 'bg-accent-purple text-white shadow'
+                    : 'text-text-tertiary hover:text-text-primary'
+                }`}
+              >
+                {GRAMMAR_PACKS[r].flag}
+              </button>
+            ))}
+          </div>
+          <div>
+            <span className="badge badge-amber mr-2">SCENE</span>
+            {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+          </div>
         </div>
         <div className="flex gap-2 relative">
+          <button onClick={() => setShowGrammarPanel(v => !v)}
+            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+              showGrammarPanel ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary'
+            }`}>
+            {GRAMMAR_PACKS[grammarRegion].flag} {lang === "ko" ? "문법" : "Grammar"}
+          </button>
           <button onClick={() => setShowScenePresetMenu(v => !v)}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
             ⚡ {lang === "ko" ? "프리셋" : "Preset"}
@@ -484,23 +572,153 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             </div>
           )}
           <button onClick={async () => {
-            if (!synopsis) { alert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write synopsis first.'); return; }
+            const { activeSupportsStructured } = await import('@/lib/ai-providers');
+            if (!activeSupportsStructured()) { showAlert(lang === 'ko' ? '현재 프로바이더는 구조화 생성 미지원. Gemini를 사용하세요.' : 'Current provider does not support structured generation.'); return; }
+            if (!synopsis) { showAlert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
-              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN');
+              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
               const ts = Date.now();
-              if (result.hook) setHooks([{ id: `ai-h-${ts}`, position: (result.hook.position || 'opening') as "opening" | "middle" | "ending", hookType: result.hook.type || 'question', desc: result.hook.desc || '' }]);
-              if (result.tension) setGogumas([{ id: `ai-g-${ts}`, type: 'goguma', intensity: 'medium', desc: result.tension.desc || '', episode: 1 }]);
-              if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.type || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
-              if (result.emotionTarget) setEmotions([{ id: `ai-e-${ts}`, position: 50, emotion: result.emotionTarget, intensity: 80 }]);
-              if (result.dialogueTone) setDialogueRules([{ id: `ai-d-${ts}`, character: result.dialogueTone.character, tone: result.dialogueTone.tone, notes: '' }]);
-            } catch { alert(lang === "ko" ? 'AI 생성 실패. API 키를 확인하세요.' : 'AI failed. Check API key.'); }
+              // hooks
+              if (result.hooks?.length) setHooks(result.hooks.map((h, i) => ({ id: `ai-h-${ts}-${i}`, position: (h.position || 'opening') as "opening" | "middle" | "ending", hookType: h.hookType || 'question', desc: h.desc || '' })));
+              // goguma/cider
+              if (result.goguma?.length) setGogumas(result.goguma.map((g, i) => ({ id: `ai-g-${ts}-${i}`, type: (g.type === 'cider' ? 'cider' : 'goguma') as "goguma" | "cider", intensity: (g.intensity || 'medium') as "small" | "medium" | "large", desc: g.desc || '', episode: 1 })));
+              // cliffhanger
+              if (result.cliffhanger) setCliffs([{ id: `ai-c-${ts}`, cliffType: result.cliffhanger.cliffType || 'info-before', desc: result.cliffhanger.desc || '', episode: 1 }]);
+              // emotions
+              if (result.emotionTargets?.length) setEmotions(result.emotionTargets.map((e, i) => ({ id: `ai-e-${ts}-${i}`, position: Math.round((i / Math.max(result.emotionTargets.length - 1, 1)) * 100), emotion: e.emotion, intensity: e.intensity || 70 })));
+              // dialogue tones
+              if (result.dialogueTones?.length) setDialogueRules(result.dialogueTones.map((d, i) => ({ id: `ai-d-${ts}-${i}`, character: d.character, tone: d.tone, notes: '' })));
+              // foreshadows
+              if (result.foreshadows?.length) setForeshadows(result.foreshadows.map((f, i) => ({ id: `ai-f-${ts}-${i}`, planted: f.planted, payoff: f.payoff, episode: 1, resolved: false })));
+              // dopamine devices
+              if (result.dopamineDevices?.length) setDopamines(result.dopamineDevices.map((dp, i) => ({ id: `ai-dp-${ts}-${i}`, scale: (dp.scale || 'medium') as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: false })));
+              // pacing
+              if (result.pacings?.length) setPacings(result.pacings.map((p, i) => ({ id: `ai-p-${ts}-${i}`, section: p.section, percent: p.percent || 25, desc: p.desc })));
+              // tension curve
+              if (result.tensionCurve?.length) setTensionPoints(result.tensionCurve.map((t, i) => ({ id: `ai-t-${ts}-${i}`, position: t.position, level: t.level, label: t.label })));
+            } catch { showAlert(tl('sceneSheet.aiFailed')); }
           }}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-            🤖 {lang === "ko" ? "AI 생성" : "AI Generate"}
+            🤖 {tl('sceneSheet.aiGenerate')}
           </button>
         </div>
       </div>
+
+      {/* 국가별 문법 패널 */}
+      {showGrammarPanel && (() => {
+        const pack = GRAMMAR_PACKS[grammarRegion];
+        return (
+          <div className="border border-t-0 border-border bg-bg-secondary/50 p-4 sm:p-6 space-y-5 animate-in fade-in duration-300">
+            {/* 팩 헤더 */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black flex items-center gap-2">
+                  <span className="text-lg">{pack.flag}</span>
+                  {lang === 'ko' ? pack.label.ko : pack.label.en}
+                </h3>
+                <p className="text-[9px] text-text-tertiary font-bold tracking-wider uppercase mt-0.5">
+                  {lang === 'ko' ? pack.subtitle.ko : pack.subtitle.en}
+                </p>
+              </div>
+              <div className="text-[9px] text-text-tertiary">
+                {pack.episodeLength.min.toLocaleString()}~{pack.episodeLength.max.toLocaleString()} {pack.episodeLength.unit}/{tl('sceneSheet.episodeUnit')}
+              </div>
+            </div>
+
+            {/* 비트시트 타임라인 */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">
+                {tl('sceneSheet.beatSheet')} ({pack.beatSheet.length} beats)
+              </span>
+              <div className="relative">
+                <div className="h-2 bg-bg-primary rounded-full overflow-hidden flex">
+                  {pack.beatSheet.map((beat, i) => {
+                    const next = pack.beatSheet[i + 1]?.position ?? 100;
+                    const width = next - beat.position;
+                    const hue = (beat.position / 100) * 270;
+                    return (
+                      <div key={i} className="h-full relative group cursor-default"
+                        style={{ width: `${width}%`, backgroundColor: `hsl(${hue}, 60%, 30%)` }}>
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-primary border border-border text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
+                          <div className="font-bold text-text-primary">{beat.name}</div>
+                          <div className="text-text-tertiary">{beat.position}% — {beat.desc}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-1 text-[7px] text-text-tertiary">
+                  {pack.beatSheet.filter((_, i) => i % Math.ceil(pack.beatSheet.length / 5) === 0).map(b => (
+                    <span key={b.name}>{b.name}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 리듬 규칙 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
+                  {tl('sceneSheet.rhythmRules')}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rhythmRules.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-purple/5 border border-accent-purple/10 rounded-lg">
+                      <div className="text-[10px] font-bold text-accent-purple">{r.name}</div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 보상 패턴 */}
+              <div className="space-y-2">
+                <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                  {tl('sceneSheet.readerReward')}
+                </span>
+                <div className="space-y-1.5">
+                  {pack.rewardPatterns.map((r, i) => (
+                    <div key={i} className="p-2 bg-accent-green/5 border border-accent-green/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-accent-green">{r.name}</span>
+                        <span className="text-[10px] text-text-tertiary bg-bg-primary px-1.5 py-0.5 rounded">{r.interval}</span>
+                      </div>
+                      <div className="text-[9px] text-text-tertiary mt-0.5">{r.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 필수 / 금기 */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-green uppercase tracking-widest">
+                    {tl('sceneSheet.mustHave')}
+                  </span>
+                  {pack.mustHave.map((m, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-green">✓</span>
+                      <span className="text-text-secondary">{m}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-black text-accent-red uppercase tracking-widest">
+                    {tl('sceneSheet.taboo')}
+                  </span>
+                  {pack.taboo.map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                      <span className="text-accent-red">✕</span>
+                      <span className="text-text-secondary">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-5">
         {/* Tabs — grouped with collapsible sections */}
@@ -513,19 +731,21 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 <summary className={`flex items-center gap-1 cursor-pointer text-[10px] font-bold tracking-wider select-none py-1 ${
                   hasActive ? "text-accent-purple" : "text-text-tertiary hover:text-text-secondary"
                 }`}>
-                  <span className="text-[8px] group-open/tab:rotate-90 transition-transform">▶</span>
+                  <span className="text-[10px] group-open/tab:rotate-90 transition-transform">▶</span>
                   {groupLabel}
                 </summary>
-                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5">
+                <div className="flex flex-wrap gap-1 pl-3 pb-1 pt-0.5 overflow-x-auto overscroll-x-contain" role="tablist" style={{ WebkitOverflowScrolling: 'touch' }}>
                   {group.tabs.map(tabId => {
                     const tab = TAB_DEF.find(t => t.id === tabId);
                     if (!tab) return null;
                     return (
                       <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                        className={`px-2.5 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap ${
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        className={`px-2.5 py-2 sm:py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap min-h-[36px] sm:min-h-0 shrink-0 ${
                           activeTab === tab.id
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
-                            : "text-text-tertiary hover:text-text-secondary border border-transparent"
+                            : "text-text-tertiary hover:text-text-secondary border border-transparent active:bg-white/5"
                         }`}>
                         {tab.emoji} {lang === "ko" ? tab.ko : tab.en}
                       </button>
@@ -567,7 +787,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                       {g.type === "goguma" ? g.intensity : "RELEASE"}
                     </span>
                     <input value={g.desc} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, desc: e.target.value } : gg))}
-                      placeholder={lang === "ko" ? "설명..." : "Description..."} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
+                      placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
                     <input type="number" min={1} value={g.episode} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, episode: parseInt(e.target.value) || 1 } : gg))}
                       className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" />
                     <button onClick={() => setGogumas(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -603,6 +823,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 </div>
                 <input value={h.desc} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, desc: e.target.value } : hh))}
                   placeholder={lang === "ko" ? "훅 내용 (예: \"문이 열렸다. 죽었어야 할 사람이 서 있었다.\")" : "Hook content..."}
+                  maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none" />
               </div>
             ))}
@@ -618,10 +839,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {/* Emotion curve visualization */}
             {emotions.length > 0 && (
               <div className="relative h-24 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "감정 곡선 시각화" : "Emotion curve visualization"}>
                   {emotions.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-purple)" strokeWidth="0.5"
-                      points={emotions.sort((a, b) => a.position - b.position).map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
+                      points={sortedEmotions.map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
                   )}
                   {emotions.map(e => (
                     <circle key={e.id} cx={e.position} cy={50 - e.intensity / 2} r="1.5" fill="var(--color-accent-purple)" />
@@ -637,10 +858,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 </select>
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}:</span>
                 <input type="range" min={0} max={100} value={em.position}
+                  aria-label={lang === "ko" ? "감정 위치" : "Emotion position"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, position: parseInt(e.target.value) } : ee))}
                   className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Int"}:</span>
                 <input type="range" min={0} max={100} value={em.intensity}
+                  aria-label={lang === "ko" ? "감정 강도" : "Emotion intensity"}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, intensity: parseInt(e.target.value) } : ee))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-purple w-6 text-right">{em.intensity}</span>
@@ -660,13 +883,14 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
               <div key={dr.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
                 <div className="flex gap-2">
                   <input value={dr.character} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, character: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "캐릭터명" : "Character"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
+                    placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
                   <input value={dr.tone} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, tone: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "톤 (예: 냉소적, 다정함)" : "Tone (e.g. sarcastic, warm)"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
+                    placeholder={lang === "ko" ? "톤 (예: 냉소적, 다정함)" : "Tone (e.g. sarcastic, warm)"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
                   <button onClick={() => setDialogueRules(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red">✕</button>
                 </div>
                 <input value={dr.notes} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, notes: e.target.value } : d))}
                   placeholder={lang === "ko" ? "특이사항 (예: 긴장 시 짧게, 경어 사용)" : "Notes (e.g. short in tension, uses formal speech)"}
+                  maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
               </div>
             ))}
@@ -692,7 +916,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   {DOPAMINE_DEVICES.map(dd => <option key={dd.id} value={dd.id}>{lang === "ko" ? dd.ko : dd.en}</option>)}
                 </select>
                 <input value={dp.desc} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, desc: e.target.value } : d))}
-                  placeholder={lang === "ko" ? "설명..." : "Description..."} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
+                  placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <label className="flex items-center gap-1 text-[9px] text-text-tertiary cursor-pointer">
                   <input type="checkbox" checked={dp.resolved} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, resolved: e.target.checked } : d))} className="accent-accent-green" />
                   {lang === "ko" ? "회수" : "Resolved"}
@@ -717,7 +941,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                 </select>
                 <input value={cl.desc} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, desc: e.target.value } : c))}
                   placeholder={lang === "ko" ? "내용 (예: \"칼끝이 목에 닿았다. 그 순간—\")" : "Content..."}
-                  className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
+                  maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <input type="number" min={1} value={cl.episode} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, episode: parseInt(e.target.value) || 1 } : c))}
                   className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" title="EP" />
                 <button onClick={() => setCliffs(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -741,12 +965,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   <div className="flex-1">
                     <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🌱 심기" : "🌱 Plant"}</span>
                     <input value={fs.planted} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, planted: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                   <div className="flex-1">
                     <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🎯 회수" : "🎯 Payoff"}</span>
                     <input value={fs.payoff} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, payoff: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -776,12 +1000,14 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {pacings.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3 border border-border rounded px-3 py-2 bg-bg-primary">
                 <span className="text-[10px] font-bold w-16">{p.section}</span>
-                <input type="range" min={5} max={80} value={p.percent} onChange={e => {
+                <input type="range" min={5} max={80} value={p.percent}
+                  aria-label={lang === "ko" ? "페이싱 비중" : "Pacing weight"}
+                  onChange={e => {
                   setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, percent: parseInt(e.target.value) } : pp));
                 }} className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
                 <input value={p.desc} onChange={e => setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, desc: e.target.value } : pp))}
-                  placeholder={lang === "ko" ? "메모..." : "Note..."} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "메모..." : "Note..."} maxLength={500} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
               </div>
             ))}
           </div>
@@ -796,10 +1022,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             </button>
             {tensionPoints.length > 0 && (
               <div className="relative h-32 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "텐션 곡선 시각화" : "Tension curve visualization"}>
                   {tensionPoints.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
-                      points={tensionPoints.sort((a, b) => a.position - b.position).map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
+                      points={sortedTensionPoints.map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
                   )}
                   {tensionPoints.map(t => (
                     <circle key={t.id} cx={t.position} cy={50 - t.level / 2} r="2" fill="var(--color-accent-red)" />
@@ -810,12 +1036,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {tensionPoints.map((tp, i) => (
               <div key={tp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
-                <input type="range" min={0} max={100} value={tp.position} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.position}
+                  aria-label={lang === "ko" ? "텐션 위치" : "Tension position"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-purple" />
                 <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Lv"}</span>
-                <input type="range" min={0} max={100} value={tp.level} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
+                <input type="range" min={0} max={100} value={tp.level}
+                  aria-label={lang === "ko" ? "텐션 강도" : "Tension level"}
+                  onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
                 <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -835,9 +1065,9 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {canons.map((cn, i) => (
               <div key={cn.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={cn.character} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, character: e.target.value } : c))}
-                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
+                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
                 <input value={cn.rule} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, rule: e.target.value } : c))}
-                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -855,12 +1085,12 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             {transitions.map((tr, i) => (
               <div key={tr.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tr.fromScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, fromScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <span className="text-text-tertiary text-xs">→</span>
                 <input value={tr.toScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, toScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <input value={tr.method} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, method: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -870,15 +1100,16 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
         {/* ====== WRITER NOTES (작가 메모) ====== */}
         {activeTab === "notes" && (
           <div className="space-y-3">
-            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. AI 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
+            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. 자동 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
             <textarea
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}
+              maxLength={10000}
               className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-              placeholder={lang === "ko" ? "이번 화에서 꼭 넣고 싶은 장면, 대사, 분위기, 전개 방향 등을 자유롭게 적으세요...\n\n예시:\n- 주인공이 처음으로 울어야 함\n- 악역과의 재회 장면 필수\n- 비 오는 밤 배경\n- 마지막에 반드시 떡밥 회수" : "Write freely about scenes, dialogue, mood, direction you want...\n\nExample:\n- Protagonist must cry for first time\n- Reunion with antagonist required\n- Rainy night setting\n- Must resolve foreshadow at end"}
+              placeholder={tl('sceneSheet.writerNotesPlaceholder')}
             />
             <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-              {writerNotes.length.toLocaleString()}{lang === "ko" ? "자" : " chars"}
+              {writerNotes.length.toLocaleString()}{tl('sceneSheet.chars')}
             </div>
           </div>
         )}
@@ -891,10 +1122,10 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
         <div className="border border-border rounded-xl p-4 bg-bg-primary space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-              🗺️ {lang === "ko" ? "세계관 시뮬레이터 참고" : "World Simulator Reference"}
+              🗺️ {tl('sceneSheet.worldSimRef')}
             </span>
-            <span className="text-[8px] text-text-tertiary">
-              {lang === "ko" ? "체크한 항목이 연출에 반영됩니다" : "Checked items will be referenced in direction"}
+            <span className="text-[10px] text-text-tertiary">
+              {tl('sceneSheet.simRefDesc')}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -950,6 +1181,18 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
               </div>
             ))}
           </div>
+
+          {/* 3-tier 서사 연동 경고 */}
+          {tierWarnings.length > 0 && (
+            <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-1">
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider">
+                ⚠ {lang === "ko" ? "서사 연동 경고" : "Narrative Link Warning"}
+              </span>
+              {tierWarnings.map((w, i) => (
+                <p key={i} className="text-[9px] text-amber-300/70">{w}</p>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ============================================================ */}
@@ -989,7 +1232,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase">{card.label}</span>
                   <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
                 </div>
-                <div className="text-[8px] text-text-tertiary truncate">
+                <div className="text-[10px] text-text-tertiary truncate">
                   {card.detail || (lang === "ko" ? "미설정" : "Not set")}
                 </div>
               </button>
@@ -1053,7 +1296,7 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
                   </pre>
                   {parts.length > 0 && (
                     <button onClick={() => { navigator.clipboard.writeText(preview); }}
-                      className="absolute top-2 right-2 text-[8px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
+                      className="absolute top-2 right-2 text-[10px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
                       {lang === "ko" ? "복사" : "Copy"}
                     </button>
                   )}
@@ -1062,6 +1305,18 @@ export default function SceneSheet({ lang = "ko", synopsis, characterNames, onDi
             })()}
           </div>
         </div>
+
+        {/* Save current episode scene sheet button */}
+        {onSaveEpisodeSheet && (
+          <div className="mt-4 pt-3 border-t border-border">
+            <button
+              onClick={onSaveEpisodeSheet}
+              className="w-full px-4 py-2.5 text-xs font-bold bg-accent-purple/15 hover:bg-accent-purple/25 border border-accent-purple/30 rounded-lg text-accent-purple font-[family-name:var(--font-mono)] transition-colors"
+            >
+              📋 {lang === "ko" ? "현재 화 씬시트 저장" : "Save Current Episode Scene Sheet"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

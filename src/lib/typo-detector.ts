@@ -37,16 +37,21 @@ function detectDoubleChars(text: string): TypoMatch[] {
   return matches;
 }
 
-/** 한글 자모 분해 */
+/** 한글 자모 분해 — reserved for future advanced Hangul decomposition features */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isHangul(ch: string): boolean {
   const code = ch.charCodeAt(0);
   return code >= 0xAC00 && code <= 0xD7A3;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function decomposeHangul(ch: string): [number, number, number] | null {
   const code = ch.charCodeAt(0);
   if (code < 0xAC00 || code > 0xD7A3) return null;

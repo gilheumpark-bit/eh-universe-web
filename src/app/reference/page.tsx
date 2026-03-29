@@ -5,20 +5,22 @@ import { useLang } from "@/lib/LangContext";
 
 export default function ReferencePage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
+    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
 
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-4xl px-4 py-16">
-          <div className="doc-header rounded-t mb-0">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <div className="doc-header rounded-t-[24px] mb-0">
             <span className="badge badge-allow mr-2">PUBLIC</span>
-            {en ? "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" : "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국"}
+            {T({ ko: "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국", en: "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" })}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-8 sm:p-12">
-            <h1 className="font-[family-name:var(--font-mono)] text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
+          <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
+            <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
             <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
               A Narrative Engine That Prevents Story Collapse — {en ? "4-Page Summary" : "4-Page Summary"}
             </p>
@@ -83,7 +85,7 @@ export default function ReferencePage() {
                       { type: "Type 5", name: "육체형", pct: "24%", desc: "신체적 반응으로 판단하는 유형" },
                     ]
                 ).map((item) => (
-                  <div key={item.type} className="flex items-center gap-4 rounded border border-border bg-bg-primary p-4">
+                  <div key={item.type} className="premium-panel-soft flex items-center gap-4 rounded-[20px] p-4">
                     <span className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-purple w-16">{item.type}</span>
                     <span className="font-semibold text-text-primary text-sm w-20">{item.name}</span>
                     <span className="font-[family-name:var(--font-mono)] text-xs text-accent-amber w-10">{item.pct}</span>
@@ -133,13 +135,13 @@ export default function ReferencePage() {
                       { name: "Suo", title: "The Human God", role: "Choosing God", desc: "Was human. That makes it the most dangerous." },
                     ]
                   : [
-                      { name: "민아", title: "The Witness", role: "기록의 신", desc: "모든 것을 본다. 아무것도 바꾸지 않는다." },
-                      { name: "N.O.A", title: "The Arbiter", role: "실패한 신", desc: "판정한다. 그러나 정답은 없다." },
-                      { name: "세븐", title: "The Glitch", role: "놀이하는 신", desc: "균열 사이에서 논다. 진지한 적 없다." },
-                      { name: "수오", title: "The Human God", role: "선택하는 신", desc: "인간이었다. 그래서 가장 위험하다." },
+                      { name: "민아", title: "증인(The Witness)", role: "기록의 신", desc: "모든 것을 본다. 아무것도 바꾸지 않는다." },
+                      { name: "N.O.A", title: "심판관(The Arbiter)", role: "실패한 신", desc: "판정한다. 그러나 정답은 없다." },
+                      { name: "세븐", title: "결함(The Glitch)", role: "놀이하는 신", desc: "균열 사이에서 논다. 진지한 적 없다." },
+                      { name: "수오", title: "인간신(The Human God)", role: "선택하는 신", desc: "인간이었다. 그래서 가장 위험하다." },
                     ]
                 ).map((g) => (
-                  <div key={g.name} className="card-glow rounded border border-border bg-bg-primary p-5">
+                  <div key={g.name} className="premium-link-card card-glow p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-[family-name:var(--font-mono)] text-sm font-bold text-text-primary">{g.name}</span>
                       <span className="badge badge-classified">{g.title}</span>
@@ -153,8 +155,8 @@ export default function ReferencePage() {
 
             <div className="mt-16 border-t border-border pt-6">
               <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
-                {en ? "This document is for Bureau of Investigation internal reference only." : "이 문서는 비밀조사국 내부 참조용이다."}<br />
-                {en ? "Unauthorized disclosure will result in the personnel being processed as a typo." : "무단 유출 시 해당 인원은 오타로 처리된다."}
+                {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}<br />
+                {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
               </p>
             </div>
           </div>

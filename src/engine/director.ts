@@ -19,12 +19,17 @@ export interface DirectorReport {
 }
 
 const BLUR_WORDS = ['기적', '운명', '갑자기', '그냥', '원래'];
+const CAUSALITY_WORDS = ['때문에', '덕분에', '결과', '대가', '이유는', '원인', '하여', '탓에', '소모', '희생', '위해', '대신', '대가로', '치르'];
 const GAIN_WORDS = ['이득', '성공', '승리', '수익', '획득', '상승', '돌파'];
 const COST_WORDS = ['대가', '손실', '희생', '잃', '소실', '단축', '절단', '결손', '회수', '추방'];
 const AI_PHRASES = ['요약하자면', '결론적으로', '다음과 같습니다', '중요한 점은', '한편으로는'];
-const TYPO_PATTERNS = [/됬/g, /안됬/g, /했읍니다/g, /할려고/g, /있읍니다/g, /되서[^요]/g];
+const ESCAPE_WORDS = ['AI로서', '나는 AI', '챗봇', '인공지능으로서', '도움이 되었으면', '언어 모델', 'AI 입장에서'];
+const TYPO_PATTERNS = [/됬/, /안됬/, /했읍니다/, /할려고/, /있읍니다/, /되서[^요]/];
 const CONTEXT_MARKERS = ['결국', '하지만', '그럼에도', '마침내', '순간'];
-const ENDING_MONO = [/었다[.\s]/g, /했다[.\s]/g, /였다[.\s]/g, /었다$/gm, /했다$/gm, /였다$/gm];
+const CERTAINTY_MARKERS = ['확실히', '반드시', '항상', '절대', '100%', '완전히'];
+const NUANCE_MARKERS = ['아마도', '일 수 있', '가능성', '추정', '일부'];
+
+export type NarrativeIntensity = 'iron' | 'standard' | 'soft';
 
 // ============================================================
 // PART 2 — Individual Analyzers
@@ -36,15 +41,38 @@ function checkBlur(lines: string[]): { findings: DirectorFinding[]; count: numbe
   for (let i = 0; i < lines.length; i++) {
     for (const word of BLUR_WORDS) {
       if (lines[i].includes(word)) {
+        // 인과 맥락 검증: ±2줄 범위에 인과 키워드가 있으면 경고 해제
+        const windowStart = Math.max(0, i - 2);
+        const windowEnd = Math.min(lines.length, i + 3);
+        const window = lines.slice(windowStart, windowEnd).join(' ');
+        const hasCausality = CAUSALITY_WORDS.some(cw => window.includes(cw));
+        if (hasCausality) continue; // 인과 근거 있음 → 통과
+
         count++;
         findings.push({
           kind: 'BLUR',
           severity: 3,
-          message: `인과 흐림 '${word}' 감지`,
+          message: `인과 흐림 '${word}' 감지 (주변에 인과 근거 없음)`,
           lineNo: i + 1,
           excerpt: lines[i].trim().slice(0, 80),
         });
       }
+    }
+  }
+  return { findings, count };
+}
+
+function checkEscape(text: string): { findings: DirectorFinding[]; count: number } {
+  const findings: DirectorFinding[] = [];
+  let count = 0;
+  for (const phrase of ESCAPE_WORDS) {
+    if (text.includes(phrase)) {
+      count++;
+      findings.push({
+        kind: 'ESCAPE',
+        severity: 3,
+        message: `AI 역할 이탈 감지: '${phrase}'`,
+      });
     }
   }
   return { findings, count };
@@ -122,7 +150,6 @@ function checkTypo(lines: string[]): { findings: DirectorFinding[]; count: numbe
   let count = 0;
   for (let i = 0; i < lines.length; i++) {
     for (const pat of TYPO_PATTERNS) {
-      pat.lastIndex = 0;
       if (pat.test(lines[i])) {
         count++;
         findings.push({
@@ -143,6 +170,10 @@ function checkEndingMono(text: string): { findings: DirectorFinding[]; ratio: nu
   const sentences = text.split(/[.!?]\s/).filter(s => s.trim().length > 5);
   if (sentences.length === 0) return { findings, ratio: 0 };
 
+  // Korean-only check: skip for non-Korean dominant text
+  const koreanCharCount = (text.match(/[\uAC00-\uD7AF]/g) || []).length;
+  if (koreanCharCount < text.length * 0.3) return { findings, ratio: 0 };
+
   let monoCount = 0;
   for (const s of sentences) {
     const trimmed = s.trim();
@@ -158,6 +189,29 @@ function checkEndingMono(text: string): { findings: DirectorFinding[]; ratio: nu
     });
   }
   return { findings, ratio };
+}
+
+function checkHallucinationRisk(text: string): { findings: DirectorFinding[]; certaintyCount: number; nuanceCount: number } {
+  const findings: DirectorFinding[] = [];
+  let certaintyCount = 0;
+  let nuanceCount = 0;
+
+  for (const marker of CERTAINTY_MARKERS) {
+    certaintyCount += (text.split(marker).length - 1);
+  }
+  for (const marker of NUANCE_MARKERS) {
+    nuanceCount += (text.split(marker).length - 1);
+  }
+
+  if (certaintyCount > 2 && nuanceCount === 0) {
+    findings.push({
+      kind: 'hallucination_risk',
+      severity: 4,
+      message: `높은 확신 표현 ${certaintyCount}회, 뉘앙스 표현 0회 — 할루시네이션 위험`,
+    });
+  }
+
+  return { findings, certaintyCount, nuanceCount };
 }
 
 // ============================================================
@@ -290,7 +344,66 @@ function checkPlatformRules(text: string, publishPlatform?: PublishPlatform): Di
 }
 
 // ============================================================
-// PART 4 — Main Analyzer
+// PART 4 — NOA-PRISM v1.1 Shrinkage Check
+// ============================================================
+
+export function checkPrismShrinkage(
+  inputLength: number,
+  outputLength: number,
+  prismScale: number = 120
+): DirectorFinding | null {
+  if (prismScale >= 100 && outputLength < inputLength) {
+    const ratio = Math.round((outputLength / inputLength) * 100);
+    return {
+      kind: 'PRISM_SHRINKAGE',
+      severity: 4,
+      message: `원문 축소 감지: PRISM-${prismScale} 모드에서 출력(${outputLength.toLocaleString()}자)이 입력(${inputLength.toLocaleString()}자)보다 짧음 (${ratio}%)`,
+    };
+  }
+  return null;
+}
+
+// ============================================================
+// PART 5 — PRISM-MODE Violation Check
+// ============================================================
+
+const PRISM_EXPLICIT_KEYWORDS = [
+  // KO
+  '섹스', '성관계', '자위', '오르가즘', '사정', '성기',
+  // EN
+  'sex', 'intercourse', 'orgasm', 'ejaculation', 'genitals',
+  // JP
+  'セックス', '性行為', 'オーガズム',
+  // CN
+  '性交', '高潮', '射精',
+];
+
+/**
+ * Check if PRISM-MODE ALL is active and output contains explicit words.
+ * Returns a finding with severity 5 if violation detected.
+ */
+export function checkPrismModeViolation(
+  text: string,
+  prismMode?: string,
+): DirectorFinding | null {
+  if (!prismMode || prismMode !== 'ALL') return null;
+  if (!text || text.length < 10) return null;
+
+  const lower = text.toLowerCase();
+  for (const keyword of PRISM_EXPLICIT_KEYWORDS) {
+    if (lower.includes(keyword)) {
+      return {
+        kind: 'PRISM_MODE_VIOLATION',
+        severity: 5,
+        message: `PRISM-MODE ALL 위반: "${keyword}" 감지 — 전체이용가 콘텐츠에 부적합한 표현`,
+      };
+    }
+  }
+  return null;
+}
+
+// ============================================================
+// PART 6 — Main Analyzer
 // ============================================================
 
 export function analyzeManuscript(text: string, publishPlatform?: PublishPlatform): DirectorReport {
@@ -313,11 +426,17 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
   const aiTone = checkAITone(text);
   allFindings.push(...aiTone.findings);
 
+  const escape = checkEscape(text);
+  allFindings.push(...escape.findings);
+
   const typo = checkTypo(lines);
   allFindings.push(...typo.findings);
 
   const ending = checkEndingMono(text);
   allFindings.push(...ending.findings);
+
+  const hallucination = checkHallucinationRisk(text);
+  allFindings.push(...hallucination.findings);
 
   // Platform-specific checks
   const platformFindings = checkPlatformRules(text, publishPlatform);
@@ -340,20 +459,106 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
     gain_no_cost: gain.noCostCount,
     similar_context: similar.count,
     ai_tone: aiTone.count,
+    escape: escape.count,
     typo: typo.count,
     ending_mono: ending.ratio,
+    certainty: hallucination.certaintyCount,
+    nuance: hallucination.nuanceCount,
   };
 
   return { findings: allFindings, stats, score };
 }
 
 export function gradeFromScore(score: number): string {
-  if (score >= 95) return 'S+';
-  if (score >= 90) return 'S';
-  if (score >= 85) return 'A+';
-  if (score >= 80) return 'A';
-  if (score >= 75) return 'B+';
-  if (score >= 70) return 'B';
-  if (score >= 60) return 'C+';
+  if (score >= 95) return 'S++';
+  if (score >= 90) return 'S+';
+  if (score >= 85) return 'S';
+  if (score >= 80) return 'A+';
+  if (score >= 75) return 'A';
+  if (score >= 70) return 'B+';
+  if (score >= 65) return 'B';
+  if (score >= 55) return 'C+';
   return 'C';
+}
+
+// ============================================================
+// PART 7 — Quality Tag (레벨별 차등 태그)
+// ============================================================
+
+export interface QualityTag {
+  tag: '🟢' | '🟡' | '🔴';
+  label: string;
+  visibleFindings: DirectorFinding[];
+}
+
+export function calculateQualityTag(
+  report: DirectorReport,
+  intensity: NarrativeIntensity = 'standard',
+): QualityTag {
+  const { score, findings, stats } = report;
+
+  if (intensity === 'soft') {
+    // Soft: 태그 숨김, TYPO만 표시
+    return {
+      tag: '🟢',
+      label: 'CLEAR',
+      visibleFindings: findings.filter(f => f.kind === 'TYPO'),
+    };
+  }
+
+  if (intensity === 'iron') {
+    const hasHeavyBlur = (stats.blur ?? 0) >= 3;
+    const hasHeavyGainNoCost = (stats.gain_no_cost ?? 0) >= 2;
+
+    if (score < 60 || hasHeavyBlur || hasHeavyGainNoCost) {
+      return { tag: '🔴', label: 'ALERT', visibleFindings: findings };
+    }
+    if (score < 85) {
+      return { tag: '🟡', label: 'CAUTION', visibleFindings: findings };
+    }
+    return { tag: '🟢', label: 'CLEAR', visibleFindings: findings };
+  }
+
+  // Standard
+  if (score < 40) {
+    return { tag: '🔴', label: 'ALERT', visibleFindings: findings.filter(f => f.severity >= 3) };
+  }
+  if (score < 70) {
+    return { tag: '🟡', label: 'CAUTION', visibleFindings: findings.filter(f => f.severity >= 3) };
+  }
+  return { tag: '🟢', label: 'CLEAR', visibleFindings: findings.filter(f => f.severity >= 3) };
+}
+
+// IDENTITY_SEAL: PART-7 | role=레벨별 품질 태그 | inputs=DirectorReport,NarrativeIntensity | outputs=QualityTag
+
+// ============================================================
+// PART 8 — Adaptive Learner
+// ============================================================
+
+export interface AdaptiveThresholds {
+  [checkType: string]: number; // adjustment delta, starts at 0
+}
+
+export function adjustThreshold(
+  thresholds: AdaptiveThresholds,
+  checkType: string,
+  wasFalsePositive: boolean
+): AdaptiveThresholds {
+  const delta = wasFalsePositive ? 0.5 : -0.2;
+  return {
+    ...thresholds,
+    [checkType]: (thresholds[checkType] ?? 0) + delta,
+  };
+}
+
+// ============================================================
+// PART 9 — Session EMA (Exponential Moving Average)
+// ============================================================
+
+export function calculateSessionEMA(
+  previousEMA: number,
+  currentScore: number,
+  alpha: number = 0.3
+): number {
+  return alpha * currentScore + (1 - alpha) * previousEMA;
 }

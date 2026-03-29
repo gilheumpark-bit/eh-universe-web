@@ -48,6 +48,8 @@ export interface AspectResult {
   /** 이 레벨 독자 시점의 코멘트 */
   comment: { ko: string; en: string };
   severity: 'ok' | 'warn' | 'danger';
+  /** true if this aspect uses a placeholder heuristic (e.g. clicheUsage, foreshadowing) */
+  estimated?: boolean;
 }
 
 export interface GenreLevelReview {
@@ -237,6 +239,78 @@ export const GENRE_BENCHMARKS: Record<string, GenreBenchmark> = {
       narrativeVoice:      { min: 60, max: 85, unit: 'score' },
     },
   },
+  [Genre.ALT_HISTORY]: {
+    label: { ko: '대체역사', en: 'Alternate History' },
+    benchmarks: {
+      hook:                { min: 60, max: 80, unit: '%' },
+      pacing:              { min: 50, max: 75, unit: 'score' },
+      dialogueRatio:       { min: 35, max: 55, unit: '%' },
+      emotionDensity:      { min: 30, max: 55, unit: 'score' },
+      worldExposition:     { min: 35, max: 55, unit: '%' },
+      characterEntry:      { min: 1, max: 4, unit: '명/화' },
+      clicheUsage:         { min: 30, max: 60, unit: '%' },
+      foreshadowing:       { min: 40, max: 65, unit: 'score' },
+      structureIntegrity:  { min: 60, max: 85, unit: 'score' },
+      commercialViability: { min: 55, max: 85, unit: 'score' },
+      thematicDepth:       { min: 45, max: 70, unit: 'score' },
+      literaryDevice:      { min: 20, max: 45, unit: 'score' },
+      narrativeVoice:      { min: 55, max: 80, unit: 'score' },
+    },
+  },
+  [Genre.MODERN_FANTASY]: {
+    label: { ko: '현대판타지', en: 'Modern Fantasy' },
+    benchmarks: {
+      hook:                { min: 65, max: 85, unit: '%' },
+      pacing:              { min: 60, max: 80, unit: 'score' },
+      dialogueRatio:       { min: 40, max: 60, unit: '%' },
+      emotionDensity:      { min: 35, max: 60, unit: 'score' },
+      worldExposition:     { min: 20, max: 40, unit: '%' },
+      characterEntry:      { min: 1, max: 3, unit: '명/화' },
+      clicheUsage:         { min: 40, max: 70, unit: '%' },
+      foreshadowing:       { min: 30, max: 55, unit: 'score' },
+      structureIntegrity:  { min: 55, max: 80, unit: 'score' },
+      commercialViability: { min: 60, max: 90, unit: 'score' },
+      thematicDepth:       { min: 25, max: 50, unit: 'score' },
+      literaryDevice:      { min: 15, max: 35, unit: 'score' },
+      narrativeVoice:      { min: 55, max: 80, unit: 'score' },
+    },
+  },
+  [Genre.WUXIA]: {
+    label: { ko: '무협', en: 'Wuxia' },
+    benchmarks: {
+      hook:                { min: 60, max: 80, unit: '%' },
+      pacing:              { min: 55, max: 80, unit: 'score' },
+      dialogueRatio:       { min: 30, max: 50, unit: '%' },
+      emotionDensity:      { min: 35, max: 60, unit: 'score' },
+      worldExposition:     { min: 30, max: 50, unit: '%' },
+      characterEntry:      { min: 1, max: 3, unit: '명/화' },
+      clicheUsage:         { min: 40, max: 70, unit: '%' },
+      foreshadowing:       { min: 35, max: 60, unit: 'score' },
+      structureIntegrity:  { min: 55, max: 80, unit: 'score' },
+      commercialViability: { min: 55, max: 85, unit: 'score' },
+      thematicDepth:       { min: 35, max: 60, unit: 'score' },
+      literaryDevice:      { min: 25, max: 50, unit: 'score' },
+      narrativeVoice:      { min: 60, max: 85, unit: 'score' },
+    },
+  },
+  [Genre.LIGHT_NOVEL]: {
+    label: { ko: '라이트노벨', en: 'Light Novel' },
+    benchmarks: {
+      hook:                { min: 70, max: 90, unit: '%' },
+      pacing:              { min: 65, max: 85, unit: 'score' },
+      dialogueRatio:       { min: 50, max: 70, unit: '%' },
+      emotionDensity:      { min: 40, max: 65, unit: 'score' },
+      worldExposition:     { min: 10, max: 25, unit: '%' },
+      characterEntry:      { min: 1, max: 4, unit: '명/화' },
+      clicheUsage:         { min: 55, max: 85, unit: '%' },
+      foreshadowing:       { min: 20, max: 45, unit: 'score' },
+      structureIntegrity:  { min: 45, max: 70, unit: 'score' },
+      commercialViability: { min: 65, max: 95, unit: 'score' },
+      thematicDepth:       { min: 15, max: 35, unit: 'score' },
+      literaryDevice:      { min: 10, max: 30, unit: 'score' },
+      narrativeVoice:      { min: 50, max: 75, unit: 'score' },
+    },
+  },
 };
 
 // ============================================================
@@ -350,9 +424,13 @@ function metricsToAspectScores(m: TextMetrics): Partial<Record<ReviewAspectKey, 
   // characterEntry: 고유명사 수 (0~100 매핑: 5명 이상이면 100)
   scores.characterEntry = Math.min(100, m.uniqueNames.length * 20);
 
-  // clicheUsage, foreshadowing: 텍스트만으로 정밀 측정 어려움 → 중앙값 50으로 기본 설정
-  scores.clicheUsage = 50;
-  scores.foreshadowing = 50;
+  // clicheUsage: 클리셰 밀도 추정 (고유명사 적고 대화 비율 낮으면 서술 클리셰 가능성 높음)
+  const clicheBase = Math.max(0, 80 - m.uniqueNames.length * 10 - m.dialogueRatio * 0.3);
+  scores.clicheUsage = Math.round(Math.min(100, Math.max(0, clicheBase + m.ellipsisDensity * 5)));
+
+  // foreshadowing: 물음표 + 줄임표 밀도 기반 복선 추정
+  const foreshadowBase = (m.questionDensity + m.ellipsisDensity) * 30;
+  scores.foreshadowing = Math.round(Math.min(100, Math.max(0, foreshadowBase)));
 
   // structureIntegrity: 문단 수 대비 전체 길이 균형
   const avgParagraphLen = m.paragraphCount > 0 ? m.totalChars / m.paragraphCount : m.totalChars;
@@ -471,6 +549,7 @@ export function runGenreLevelReview(
     const severity = getSeverity(pos, value, bm.min, bm.max);
     const comment = generateComment(key, pos, level, value, bm.min, bm.max);
 
+    const ESTIMATED_KEYS: ReviewAspectKey[] = ['clicheUsage', 'foreshadowing'];
     aspects.push({
       key,
       label: ASPECT_LABELS[key],
@@ -480,6 +559,7 @@ export function runGenreLevelReview(
       position: pos,
       comment,
       severity,
+      ...(ESTIMATED_KEYS.includes(key) ? { estimated: true } : {}),
     });
 
     // 점수 산정: within=100, warn=60, danger=20

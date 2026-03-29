@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 
 interface AuthContextType {
@@ -15,15 +15,16 @@ interface AuthContextType {
   refreshAccessToken: () => Promise<string | null>;
 }
 
+// #22: Default values throw to surface missing AuthProvider early
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
-  signInWithGoogle: async () => {},
-  signOut: async () => {},
+  signInWithGoogle: async () => { throw new Error('AuthProvider not mounted'); },
+  signOut: async () => { throw new Error('AuthProvider not mounted'); },
   isConfigured: false,
   error: null,
   accessToken: null,
-  refreshAccessToken: async () => null,
+  refreshAccessToken: async () => { throw new Error('AuthProvider not mounted'); },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -33,11 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isConfigured = auth !== null;
 
+  // Mutex for token refresh — prevents concurrent refresh popups
+  const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
+
   useEffect(() => {
     if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
+      // Clear token when user logs out or session expires
       if (!u) setAccessToken(null);
     });
     return () => unsubscribe();
@@ -45,14 +50,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     if (!auth) {
+      console.error('[Auth] Firebase auth is null — not initialized');
       setError('Firebase가 초기화되지 않았습니다. 환경변수를 확인해주세요.');
       return;
     }
+    console.log('[Auth] signInWithGoogle called, auth:', !!auth);
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       provider.addScope('https://www.googleapis.com/auth/drive.file');
+      // #25: Mobile browsers often block popups — use redirect flow instead
+      const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return; // Redirect will reload the page; onAuthStateChanged handles the rest
+      }
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       setAccessToken(credential?.accessToken ?? null);
@@ -61,23 +74,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const msg = (err as { message?: string })?.message ?? '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
       setError(`로그인 실패: ${code || msg}`);
-      console.error('[Auth] signInWithGoogle error', err);
+      console.error('[Auth] signInWithGoogle error:', code, msg);
     }
   };
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     if (!auth) return null;
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.addScope('https://www.googleapis.com/auth/drive.file');
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential?.accessToken ?? null;
-      setAccessToken(token);
-      return token;
-    } catch {
-      return null;
+
+    // Mutex: if a refresh is already in progress, await the same promise
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
+
+    const authInstance = auth; // Narrow type — auth is non-null here (checked above)
+    const doRefresh = async (): Promise<string | null> => {
+      // Firebase OAuth에서 Drive 토큰 갱신은 재인증이 필요합니다.
+      // reauthenticateWithPopup을 먼저 시도하고, 실패 시 signInWithPopup으로 폴백합니다.
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/drive.file');
+
+        let credential: import('firebase/auth').OAuthCredential | null = null;
+        const currentUser = authInstance.currentUser;
+
+        if (currentUser) {
+          // 이미 로그인된 상태 → reauthenticate (팝업 최소화)
+          try {
+            const result = await reauthenticateWithPopup(currentUser, provider);
+            credential = GoogleAuthProvider.credentialFromResult(result);
+          } catch {
+            // reauthenticate 실패 → 전체 로그인으로 폴백
+            const result = await signInWithPopup(authInstance, provider);
+            credential = GoogleAuthProvider.credentialFromResult(result);
+          }
+        } else {
+          const result = await signInWithPopup(authInstance, provider);
+          credential = GoogleAuthProvider.credentialFromResult(result);
+        }
+
+        const token = credential?.accessToken ?? null;
+        setAccessToken(token);
+        return token;
+      } catch {
+        // 토큰 갱신 실패 — accessToken을 null로 설정하여 이후 Drive 호출이 자연스럽게 실패하도록
+        setAccessToken(null);
+        setError('Google Drive 토큰 갱신 실패: 재로그인이 필요합니다.');
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    };
+
+    refreshPromiseRef.current = doRefresh();
+    return refreshPromiseRef.current;
   }, []);
 
   const signOut = async () => {

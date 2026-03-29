@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── DATA ─── */
 interface Consonant {
@@ -78,7 +79,7 @@ interface Syllable {
 /* ─── COMPONENT ─── */
 export default function NekaSoundPage() {
   const { lang } = useLang();
-  const en = lang === "en";
+  const en = lang !== "ko";
 
   const [tab, setTab] = useState<"tts" | "sig">("tts");
   const [selectedCons, setSelectedCons] = useState<Consonant | null>(null);
@@ -89,7 +90,9 @@ export default function NekaSoundPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ttsCanvasRef = useRef<HTMLCanvasElement>(null);
   const vizFrameRef = useRef<number | null>(null);
+  const ttsVizFrameRef = useRef<number | null>(null);
 
   const getAudioCtx = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -132,7 +135,7 @@ export default function NekaSoundPage() {
         for (let i = 0; i < bufLen; i++) {
           const v = dataArr[i] / 128.0;
           const y = (v * h) / 2;
-          i === 0 ? ctx2!.moveTo(x, y) : ctx2!.lineTo(x, y);
+          if (i === 0) { ctx2!.moveTo(x, y); } else { ctx2!.lineTo(x, y); }
           x += sliceW;
         }
         ctx2!.stroke();
@@ -143,6 +146,60 @@ export default function NekaSoundPage() {
       if (vizFrameRef.current) cancelAnimationFrame(vizFrameRef.current);
     };
   }, [tab]);
+
+  /* ── TTS Tab Visualizer ── */
+  useEffect(() => {
+    if (tab !== "tts") {
+      if (ttsVizFrameRef.current) cancelAnimationFrame(ttsVizFrameRef.current);
+      return;
+    }
+    const canvas = ttsCanvasRef.current;
+    if (!canvas) return;
+    const ctx2 = canvas.getContext("2d");
+    if (!ctx2) return;
+    const analyser = analyserRef.current;
+    const bufLen = analyser ? analyser.frequencyBinCount : 512;
+    const dataArr = new Uint8Array(bufLen);
+
+    function draw() {
+      ttsVizFrameRef.current = requestAnimationFrame(draw);
+      const w = canvas!.offsetWidth;
+      const h = canvas!.offsetHeight;
+      canvas!.width = w;
+      canvas!.height = h;
+      ctx2!.fillStyle = "#0a0a0c";
+      ctx2!.fillRect(0, 0, w, h);
+      if (analyser) {
+        analyser.getByteTimeDomainData(dataArr);
+        ctx2!.lineWidth = 1.2;
+        ctx2!.strokeStyle = "#d4a017";
+        ctx2!.shadowBlur = 4;
+        ctx2!.shadowColor = "#d4a017";
+        ctx2!.beginPath();
+        const sliceW = w / bufLen;
+        let x = 0;
+        for (let i = 0; i < bufLen; i++) {
+          const v = dataArr[i] / 128.0;
+          const y = (v * h) / 2;
+          if (i === 0) { ctx2!.moveTo(x, y); } else { ctx2!.lineTo(x, y); }
+          x += sliceW;
+        }
+        ctx2!.stroke();
+      }
+    }
+    draw();
+    return () => {
+      if (ttsVizFrameRef.current) cancelAnimationFrame(ttsVizFrameRef.current);
+    };
+  }, [tab]);
+
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+    };
+  }, []);
 
   /* ── TTS Logic ── */
   const selectCons = (c: Consonant) => {
@@ -175,6 +232,50 @@ export default function NekaSoundPage() {
     speechSynthesis.cancel();
     speechSynthesis.speak(utt);
   };
+
+  /* ── Synthesize all syllables via Web Audio (signal-style) ── */
+  const [isSynthPlaying, setIsSynthPlaying] = useState(false);
+  const synthAll = useCallback(() => {
+    if (syllables.length === 0) return;
+    setIsSynthPlaying(true);
+    const ctx = getAudioCtx();
+    let offset = ctx.currentTime + 0.05;
+    const noteDur = 0.25;
+    const gap = 0.05;
+
+    for (const syl of syllables) {
+      if (syl.roman.trim() === "") { offset += 0.15; continue; }
+      // find matching consonant + vowel
+      const chars = syl.roman;
+      const matchedCons = CONSONANTS.find(c => c.ttsRoman && chars.startsWith(c.ttsRoman));
+      const vowPart = matchedCons ? chars.slice(matchedCons.ttsRoman.length) : chars;
+      const matchedVow = VOWELS.find(v => v.ttsRoman === vowPart);
+
+      const freq = matchedCons && matchedCons.freq > 0
+        ? matchedCons.freq + (matchedVow ? matchedVow.freq * 0.3 : 0)
+        : (matchedVow ? matchedVow.freq : 440);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = matchedCons?.sig === "byun" ? "sawtooth" : matchedCons?.sig === "chung" ? "square" : "sine";
+      osc.frequency.setValueAtTime(freq, offset);
+      if (matchedVow) {
+        osc.frequency.linearRampToValueAtTime(freq * 1.05, offset + noteDur * 0.5);
+        osc.frequency.linearRampToValueAtTime(freq, offset + noteDur);
+      }
+      osc.connect(gain);
+      gain.connect(analyserRef.current ?? ctx.destination);
+      gain.gain.setValueAtTime(0, offset);
+      gain.gain.linearRampToValueAtTime(0.18, offset + 0.02);
+      gain.gain.setValueAtTime(0.18, offset + noteDur - 0.04);
+      gain.gain.linearRampToValueAtTime(0, offset + noteDur);
+      osc.start(offset);
+      osc.stop(offset + noteDur);
+      offset += noteDur + gap;
+    }
+    const totalDur = (offset - ctx.currentTime) * 1000 + 100;
+    setTimeout(() => setIsSynthPlaying(false), totalDur);
+  }, [syllables, getAudioCtx]);
 
   /* ── Signal Sound ── */
   const playSigSound = (data: { sig?: SigType; freq: number; roman: string; id: string }, type: "cons" | "vow") => {
@@ -260,6 +361,8 @@ export default function NekaSoundPage() {
   const ConsCell = ({ c, onClick, isActive }: { c: Consonant; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
+      aria-label={`Consonant ${c.roman} (${c.id})`}
+      aria-pressed={isActive}
       className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10 shadow-[0_0_12px_rgba(212,160,23,0.2)]"
@@ -279,6 +382,8 @@ export default function NekaSoundPage() {
   const VowCell = ({ v, onClick, isActive }: { v: Vowel; onClick: () => void; isActive: boolean }) => (
     <button
       onClick={onClick}
+      aria-label={`Vowel ${v.roman} (${v.id})`}
+      aria-pressed={isActive}
       className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10"
@@ -295,17 +400,25 @@ export default function NekaSoundPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
-          {/* Doc Header */}
-          <div className="doc-header rounded-t mb-0">
+      <main className="pt-24">
+        <div className="site-shell py-16 md:py-20">
+          <ToolNav
+            toolName={en ? "NEKA Sound" : "네카 사운드"}
+            isKO={!en}
+            relatedTools={[
+              { href: '/tools/soundtrack', label: en ? 'Soundtrack' : '사운드트랙' },
+              { href: '/tools/noa-tower', label: en ? 'NOA Tower' : 'NOA 타워' },
+            ]}
+          />
+
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
             <span className="badge badge-blue mr-2">TOOL</span>
             {en
               ? "Document Level: PUBLIC — Level 0 — Interactive Interface"
               : "문서 등급: PUBLIC — Level 0 — 인터랙티브 인터페이스"}
           </div>
 
-          <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-6 sm:p-10">
+          <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             {/* Title */}
             <div className="text-center mb-10">
               <p className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.4em] text-text-tertiary uppercase mb-2">
@@ -320,9 +433,12 @@ export default function NekaSoundPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border mb-8 gap-0">
+            <div className="flex border-b border-border mb-8 gap-0" role="tablist" aria-label="Sound mode selection">
               <button
                 onClick={() => setTab("tts")}
+                aria-label={en ? "TTS Pronunciation tab" : "TTS 발음 탭"}
+                aria-selected={tab === "tts"}
+                role="tab"
                 className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "tts" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
@@ -331,6 +447,9 @@ export default function NekaSoundPage() {
               </button>
               <button
                 onClick={() => setTab("sig")}
+                aria-label={en ? "Signal Sound tab" : "신호음 탭"}
+                aria-selected={tab === "sig"}
+                role="tab"
                 className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "sig" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
@@ -419,11 +538,26 @@ export default function NekaSoundPage() {
                       )}
                     </div>
                     {/* Buttons */}
+                    {/* TTS Mini Visualizer */}
+                    <div className="border border-border border-t-2 border-t-[#d4a017] bg-bg-primary rounded overflow-hidden relative">
+                      <span className="absolute top-1 left-2.5 font-[family-name:var(--font-mono)] text-[7px] tracking-widest text-[#d4a017]/50">
+                        SYNTH OUTPUT
+                      </span>
+                      <canvas ref={ttsCanvasRef} className="block w-full h-14" />
+                    </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={speakAll} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
-                        ▶ {en ? "PLAY ALL" : "전체 재생"}
+                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
+                        ▶ {en ? "TTS SPEAK" : "TTS 발음"}
                       </button>
-                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
+                      <button
+                        onClick={synthAll}
+                        disabled={isSynthPlaying || syllables.length === 0}
+                        aria-label={en ? "Synthesize all syllables" : "음향 합성 재생"}
+                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-all rounded disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        ♫ {en ? "SYNTH PLAY" : "음향 합성"}
+                      </button>
+                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
                         SPACE
                       </button>
                       <button
@@ -431,12 +565,14 @@ export default function NekaSoundPage() {
                           if (selectedCons) setSelectedCons(null);
                           else setSyllables(prev => prev.slice(0, -1));
                         }}
+                        aria-label={en ? "Delete last syllable" : "마지막 음절 삭제"}
                         className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded"
                       >
                         ← DEL
                       </button>
                       <button
                         onClick={() => { setSyllables([]); setSelectedCons(null); }}
+                        aria-label={en ? "Clear all syllables" : "전체 삭제"}
                         className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-all rounded"
                       >
                         CLEAR
@@ -555,6 +691,7 @@ export default function NekaSoundPage() {
           <div className="mt-8 text-center">
             <Link
               href="/archive/neka-language"
+              aria-label={en ? "Back to Neka language article" : "네카 언어 문서로 돌아가기"}
               className="font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:underline tracking-wider"
             >
               ← {en ? "BACK TO NEKA LANGUAGE ARTICLE" : "네카 언어 문서로 돌아가기"}

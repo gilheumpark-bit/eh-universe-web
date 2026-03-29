@@ -1,463 +1,706 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Plus, Settings, Send,
-  Sparkles, Menu, Globe, UserCircle,
-  Zap, Ghost, X, PenTool, History, StopCircle,
-  Download, Upload, Edit3, Search, Maximize2, Minimize2, Printer, Keyboard, Sun, Moon,
-  FileType, Key
+  Send,
+  Sparkles, Menu,
+  X, StopCircle,
+  Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
+  Key
 } from 'lucide-react';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
-  Message, StoryConfig, Genre,
-  AppLanguage, AppTab, PlatformType,
+  StoryConfig, Genre,
+  AppLanguage, AppTab,
   ChatSession, Project
 } from '@/lib/studio-types';
 import { TRANSLATIONS, ENGINE_VERSION } from '@/lib/studio-constants';
+import { createT } from '@/lib/i18n';
+import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
-import { createHFCPState, processHFCPTurn, type HFCPState as HFCPStateType } from '@/engine/hfcp';
-import { EngineReport } from '@/engine/types';
-import ChatMessage from '@/components/studio/ChatMessage';
-import PlanningView from '@/components/studio/PlanningView';
-import ResourceView from '@/components/studio/ResourceView';
+import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
+// EngineReport type inferred from useStudioAI hook return
+// ChatMessage and WritingToolbar used in dynamic sub-components
+import CharacterTab from '@/components/studio/tabs/CharacterTab';
 import SettingsView from '@/components/studio/SettingsView';
-// RulebookView removed — available at /rulebook site-wide
 import EngineDashboard from '@/components/studio/EngineDashboard';
-import EngineStatusBar from '@/components/studio/EngineStatusBar';
+// EngineStatusBar used in dynamic sub-components
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
-import ManuscriptView from '@/components/studio/ManuscriptView';
-import { generateStoryStream } from '@/services/geminiService';
-import { exportEPUB, exportDOCX } from '@/lib/export-utils';
-import dynamic from 'next/dynamic';
-const WorldSimulator = dynamic(() => import('@/components/WorldSimulator'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading World Simulator...</div> });
-const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Scene Sheet...</div> });
-const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Style Studio...</div> });
-const VersionDiff = dynamic(() => import('@/components/studio/VersionDiff'), { ssr: false });
-const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: false });
-const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false });
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false });
-const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false });
-const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false });
-const ItemStudioView = dynamic(() => import('@/components/studio/ItemStudioView'), { ssr: false });
-const GenreReviewChat = dynamic(() => import('@/components/studio/GenreReviewChat'), { ssr: false });
-const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false });
-const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false });
-import Link from 'next/link';
-import { FileText, Map, Cloud, CloudOff } from 'lucide-react';
-import { loadProjects, saveProjects } from '@/lib/project-migration';
-import { syncAllProjects, saveApiKeysToDrive, loadApiKeysFromDrive } from '@/services/driveService';
-import { ConfirmModal, ErrorToast, useUnsavedWarning } from '@/components/studio/UXHelpers';
+import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
+import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
+import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
+import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
+import MobileTabBar from '@/components/studio/MobileTabBar';
+import MobileDrawer from '@/components/studio/MobileDrawer';
+// generateStoryStream, exportEPUB, exportDOCX → moved to useStudioAI / useStudioExport hooks
+import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { useStudioUX } from '@/hooks/useStudioUX';
+import { useStudioSync } from '@/hooks/useStudioSync';
+import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
+import { useStudioTheme } from '@/hooks/useStudioTheme';
+import { useStudioSession } from '@/hooks/useStudioSession';
+import { StudioConfigProvider, StudioUIProvider } from '@/contexts/StudioContext';
+import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
+import { useStudioAI } from '@/hooks/useStudioAI';
+import { useStudioExport } from '@/hooks/useStudioExport';
+import WorldTab from '@/components/studio/tabs/WorldTab';
+// WorldStudioView는 WorldTab 내부에서 import됨
+import StyleTab from '@/components/studio/tabs/StyleTab';
+// StyleStudioView는 StyleTab 내부에서 import됨
+const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), { ssr: false, loading: DynSkeleton });
+const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
+const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
+const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
+// ItemStudioView는 CharacterTab 내부에서 import됨
+const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
+const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
+const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
+const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
+const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
+const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
+const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
+import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
+import { setDriveEncryptionKey } from '@/services/driveService';
+import { ConfirmModal, useUnsavedWarning } from '@/components/studio/UXHelpers';
+import StudioToasts from '@/components/studio/StudioToasts';
+import { ShortcutsModal, MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
 import DirectorPanel from '@/components/studio/DirectorPanel';
-import { analyzeManuscript, type DirectorReport } from '@/engine/director';
-// BYOK provider info available via '@/lib/ai-providers'
+// analyzeManuscript + DirectorReport → moved to useStudioAI hook
+import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
+import StudioSidebar from '@/components/studio/StudioSidebar';
+import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
 
-const INITIAL_CONFIG: StoryConfig = {
-  genre: Genre.SYSTEM_HUNTER,
-  povCharacter: "",
-  setting: "",
-  primaryEmotion: "",
-  episode: 1,
-  title: "",
-  totalEpisodes: 25,
-  guardrails: { min: 3000, max: 5000 },
-  characters: [],
-  platform: PlatformType.MOBILE,
-};
+type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
+const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
 
 export default function StudioPage() {
   // ============================================================
-  // PROJECT-BASED STATE MANAGEMENT
+  // PROJECT-BASED STATE MANAGEMENT (extracted to hook)
   // ============================================================
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const currentProject = projects.find(p => p.id === currentProjectId) || null;
+  const { lang } = useLang();
+  const searchParams = useSearchParams();
+  const studioRouter = useRouter();
+  const pathname = usePathname();
+  const [worldImportBanner, setWorldImportBanner] = useState(false);
+  const [worldImportDone, setWorldImportDone] = useState<string | null>(null);
+  const [language, setLanguage] = useState<AppLanguage>(() => {
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    return map[lang] || 'KO';
+  });
 
-  // Sessions derived from current project
-  const sessions = currentProject?.sessions || [];
-  const setSessions = useCallback((updater: ChatSession[] | ((prev: ChatSession[]) => ChatSession[])) => {
-    setProjects(prev => prev.map(p => {
-      if (p.id !== currentProjectId) return p;
-      const newSessions = typeof updater === 'function' ? updater(p.sessions) : updater;
-      return { ...p, sessions: newSessions, lastUpdate: Date.now() };
-    }));
-  }, [currentProjectId]);
+  // Sync studio language when global lang changes (e.g. header toggle)
+  useEffect(() => {
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    setLanguage(map[lang] || 'KO');
+  }, [lang]);
 
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const pm = useProjectManager(language);
+  const {
+    projects, setProjects,
+    currentProjectId, setCurrentProjectId,
+    currentSessionId, setCurrentSessionId,
+    hydrated,
+    currentProject, sessions, currentSession,
+    setSessions,
+    createNewProject, deleteProject: doDeleteProject, renameProject, moveSessionToProject,
+    createNewSession: doCreateNewSession, deleteSession: doDeleteSession, clearAllSessions: doClearAllSessions,
+    updateCurrentSession, setConfig,
+    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
+  } = pm;
 
-  const [activeTab, setActiveTab] = useState<AppTab>('world');
+  // Fix #1: Restore tab from URL query params on mount
+  const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'rulebook', 'style', 'manuscript', 'docs', 'visual'];
+  const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {
+    if (typeof window === 'undefined') return 'world';
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab && VALID_TABS.includes(urlTab as AppTab)) return urlTab as AppTab;
+    return 'world';
+  });
+  // Sync tab state → URL query params (replace to avoid history pollution)
+  const setActiveTab = useCallback((tab: AppTab) => {
+    setActiveTabRaw(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    // Remove transient import params
+    params.delete('worldImport');
+    params.delete('postImport');
+    params.delete('setup');
+    studioRouter.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [studioRouter, pathname]);
+
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [language, setLanguage] = useState<AppLanguage>('KO');
+  const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('noa_studio_mode');
+      // 이전 버그로 'api'/'manual'이 저장된 경우 → 'free'로 복구
+      if (raw === 'guided' || raw === 'free') return raw;
+      if (raw) localStorage.setItem('noa_studio_mode', 'free');
+      return raw ? 'free' : 'guided';
+    }
+    return 'guided';
+  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Close sidebar on mobile after mount (SSR-safe: can't use window in useState)
+  useEffect(() => {
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  }, []);
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyVersion, setApiKeyVersion] = useState(0);
+  const [bannerDismissed, setBannerDismissed] = useState(() => typeof window !== 'undefined' && localStorage.getItem('noa_api_banner_dismissed') === '1');
   const [showDashboard, setShowDashboard] = useState(false);
-  const [lastReport, setLastReport] = useState<EngineReport | null>(null);
-  const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
+  const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
+
+  const [showQuickStartModal, setShowQuickStartModal] = useState(false);
+  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentSession = sessions.find(s => s.id === currentSessionId) || null;
-  const t = TRANSLATIONS[language] || TRANSLATIONS['KO'];
+  const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
+  const t = createT(language);
   const isKO = language === 'KO';
 
-  // UX feature states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [lightTheme, setLightTheme] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
-  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
+  // API 키 존재 여부 (렌더링용, hydrated 이후만 체크, apiKeyVersion으로 갱신 트리거)
+  const activeProviderId = getActiveProvider();
+  const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(activeProviderId);
+  const hasAiAccess = hydrated && (hasLocalApiKey || Boolean(hostedProviders[activeProviderId]));
+  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || Boolean(hostedProviders.gemini));
+  const showAiLock = aiCapabilitiesLoaded && !hasAiAccess;
+  const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
+  const apiBannerMessage = Boolean(hostedProviders[activeProviderId])
+    ? (isKO
+      ? '기본 AI가 준비되어 있어요. 바로 써보고, 원하면 개인 키를 추가하세요.'
+      : 'Base AI is ready. Start now, and add your own key anytime.')
+    : t('ui.apiKeyBanner');
+  const apiSetupLabel = Boolean(hostedProviders[activeProviderId])
+    ? (isKO ? '개인 키 추가' : 'Add Key')
+    : t('ui.apiKeySetUp');
+
+  // UX feature states — useStudioTheme 훅
+  const {
+    themeLevel, lightTheme, toggleTheme,
+    focusMode, setFocusMode,
+    showShortcuts, setShowShortcuts,
+    showSearch, setShowSearch,
+    searchQuery, setSearchQuery,
+  } = useStudioTheme();
+  // renamingSessionId, renameValue → useStudioSession에서 제공
   const [archiveFilter, setArchiveFilter] = useState<string>('ALL');
   const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
+  const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
-  // UX: unsaved changes warning
-  useUnsavedWarning(isGenerating);
-
-  // UX: error toast state
-  const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
-
-  // UX: confirm modal state
-  const [confirmState, setConfirmState] = useState<{
-    open: boolean; title: string; message: string;
-    confirmLabel?: string; cancelLabel?: string;
-    variant?: 'danger' | 'warning' | 'info';
-    onConfirm: () => void;
-  }>({ open: false, title: '', message: '', onConfirm: () => {} });
-
-  const showConfirm = useCallback((opts: Omit<typeof confirmState, 'open'>) => {
-    setConfirmState({ ...opts, open: true });
-  }, []);
-  const closeConfirm = useCallback(() => {
-    setConfirmState(prev => ({ ...prev, open: false }));
-  }, []);
-
-  // ============================================================
-  // AUTO-RESTORE API KEYS ON LOGIN
-  // ============================================================
+  // Drive 암호화 키 설정 (user UID 기반 AES-GCM)
   useEffect(() => {
-    if (!user || !accessToken) return;
-    const alreadyHasKey = localStorage.getItem('noa_api_key');
-    if (alreadyHasKey) return;
-    loadApiKeysFromDrive(accessToken).then(restored => {
-      if (restored) {
-        console.log('[Settings] API keys restored from Drive');
-        window.dispatchEvent(new Event('storage'));
+    if (user?.uid) setDriveEncryptionKey(user.uid);
+  }, [user?.uid]);
+
+  // UX: unsaved changes warning (moved after useStudioAI to avoid TDZ)
+  // see useUnsavedWarning call below useStudioAI
+
+  // UX 상태 (토스트/알림/확인 모달) — useStudioUX 훅으로 추출
+  const {
+    uxError, setUxError,
+    storageFull, setStorageFull,
+    exportDoneFormat,
+    lastSaveTime, saveFlash, triggerSave,
+    fallbackNotice, setFallbackNotice,
+    confirmState, showConfirm, closeConfirm,
+  } = useStudioUX();
+
+  // UX: alert() 대체 토스트 수신
+  const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
+
+  // 3.8 자율 시스템 상태
+  const [suggestions, setSuggestions] = useState<import('@/lib/studio-types').ProactiveSuggestion[]>([]);
+  const [pipelineResult, setPipelineResult] = useState<{ stages: import('@/lib/studio-types').PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { message, variant } = (e as CustomEvent).detail;
+      setAlertToast({ message, variant });
+      setTimeout(() => setAlertToast(null), 4000);
+    };
+    window.addEventListener('noa:alert', handler);
+    return () => window.removeEventListener('noa:alert', handler);
+  }, []);
+
+  // Batch operations event handlers
+  useEffect(() => {
+    const handleBatchDelete = (e: Event) => {
+      const { ids } = (e as CustomEvent).detail as { ids: string[] };
+      setSessions(prev => prev.filter(s => !ids.includes(s.id)));
+      if (currentSessionId && ids.includes(currentSessionId)) {
+        setCurrentSessionId(null);
       }
-    });
-  }, [user, accessToken]);
+    };
+    const handleBatchExport = (e: Event) => {
+      const { ids } = (e as CustomEvent).detail as { ids: string[] };
+      const selected = sessions.filter(s => ids.includes(s.id));
+      if (selected.length === 0) return;
+      const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-export-${selected.length}-episodes.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    window.addEventListener('noa:batch-delete', handleBatchDelete);
+    window.addEventListener('noa:batch-export', handleBatchExport);
+    return () => {
+      window.removeEventListener('noa:batch-delete', handleBatchDelete);
+      window.removeEventListener('noa:batch-export', handleBatchExport);
+    };
+  }, [sessions, currentSessionId, setSessions, setCurrentSessionId]);
 
-  // ============================================================
-  // SYNC STATE
-  // ============================================================
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  // Hydration-safe: sidebar width
+  useEffect(() => {
+    if (!hydrated) return;
+    setIsSidebarOpen(window.innerWidth >= 768);
+    // lightTheme은 useStudioTheme 내부에서 localStorage 로드
+  }, [hydrated]);
 
-  const handleSync = useCallback(async () => {
-    let token = accessToken;
-    if (!token) {
-      token = await refreshAccessToken();
-      if (!token) return;
-    }
-    setSyncStatus('syncing');
-    try {
-      const result = await syncAllProjects(token, projects);
-      setProjects(result.merged);
-      // Also sync API keys to Drive
-      saveApiKeysToDrive(token).catch(e => console.warn('[Sync] API keys save failed', e));
-      setLastSyncTime(Date.now());
-      setSyncStatus('done');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch (err: unknown) {
-      const msg = (err as Error)?.message || '';
-      // Auto-retry on 401 (expired token)
-      if (msg.includes('401')) {
-        console.warn('[Sync] Token expired, refreshing...');
-        const newToken = await refreshAccessToken();
-        if (newToken) {
-          try {
-            const retryResult = await syncAllProjects(newToken, projects);
-            setProjects(retryResult.merged);
-            saveApiKeysToDrive(newToken).catch(e => console.warn('[Sync] API keys save failed', e));
-            setLastSyncTime(Date.now());
-            setSyncStatus('done');
-            setTimeout(() => setSyncStatus('idle'), 3000);
-            return;
-          } catch (retryErr) {
-            console.error('[Sync] Retry failed', retryErr);
-          }
+  // Fix #9: Modal focus trap — moved below all state declarations (see below)
+
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+
+    const loadCapabilities = async () => {
+      try {
+        const response = await fetch('/api/ai-capabilities', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Capability check failed: ${response.status}`);
+
+        const data = await response.json() as { hosted?: Record<string, unknown> };
+        if (cancelled) return;
+
+        const nextHosted: HostedAiAvailability = {};
+        for (const providerId of PROVIDER_IDS) {
+          nextHosted[providerId] = Boolean(data.hosted?.[providerId]);
+        }
+        setHostedProviders(nextHosted);
+      } catch (error) {
+        console.warn('[AI] Capability check failed', error);
+        if (!cancelled) {
+          setHostedProviders({});
+        }
+      } finally {
+        if (!cancelled) {
+          setAiCapabilitiesLoaded(true);
         }
       }
-      console.error('[Sync]', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 5000);
-    }
-  }, [accessToken, refreshAccessToken, projects]);
-
-  // ============================================================
-  // PROJECT MANAGEMENT
-  // ============================================================
-  const createNewProject = useCallback(() => {
-    const names: Record<AppLanguage, string> = { KO: '새 작품', EN: 'New Project', JP: '新しい作品', CN: '新作品' };
-    const p: Project = {
-      id: `project-${Date.now()}`,
-      name: names[language],
-      description: '',
-      genre: Genre.SF,
-      createdAt: Date.now(),
-      lastUpdate: Date.now(),
-      sessions: [],
     };
-    setProjects(prev => [...prev, p]);
-    setCurrentProjectId(p.id);
-    setCurrentSessionId(null);
-  }, [language]);
 
+    void loadCapabilities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated]);
+
+  // ============================================================
+  // WORLD IMPORT FROM NETWORK
+  // ============================================================
+  useEffect(() => {
+    if (!hydrated) return;
+    const raw = searchParams.get('worldImport');
+    if (!raw) return;
+    // Fix #2: Prevent re-importing if the same data was already loaded
+    if (worldImportDone === raw) {
+      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
+      return;
+    }
+    try {
+      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      const genreGuess = (json.tags as string[] | undefined)?.find((tag: string) =>
+        Object.values(Genre).map(g => g.toLowerCase()).includes(tag.toLowerCase())
+      );
+      const importedConfig: Partial<StoryConfig> = {
+        title: json.name ?? '',
+        synopsis: json.summary ?? '',
+        corePremise: (json.coreRules as string[] | undefined)?.join('\n') ?? '',
+      };
+      if (genreGuess) {
+        const matched = Object.values(Genre).find(g => g.toLowerCase() === genreGuess.toLowerCase());
+        if (matched) importedConfig.genre = matched;
+      }
+      const importedSessionId = doCreateNewSession();
+      setProjects(prevProjects => prevProjects.map(project => {
+        if (!project.sessions.some(session => session.id === importedSessionId)) {
+          return project;
+        }
+
+        return {
+          ...project,
+          lastUpdate: Date.now(),
+          sessions: project.sessions.map(session =>
+            session.id === importedSessionId
+              ? {
+                  ...session,
+                  config: { ...session.config, ...importedConfig },
+                  lastUpdate: Date.now(),
+                }
+              : session,
+          ),
+        };
+      }));
+      setActiveTab('world');
+      setWorldImportBanner(true);
+      setWorldImportDone(raw);
+      setTimeout(() => setWorldImportBanner(false), 5000);
+      // Clear query param without full reload
+      studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
+    } catch {
+      // invalid payload — 사용자에게 알림
+      setAlertToast({ message: language === 'KO' ? '세계관 데이터를 불러오지 못했습니다. 링크가 손상됐을 수 있습니다.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
+      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // ============================================================
+  // POST IMPORT FROM NETWORK (Open in Studio)
+  // ============================================================
+  useEffect(() => {
+    if (!hydrated) return;
+    // Mutual exclusion: skip if worldImport is also present (worldImport takes priority)
+    if (searchParams.get('worldImport')) return;
+    const raw = searchParams.get('postImport');
+    if (!raw) return;
+    try {
+      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      const importedConfig: Partial<StoryConfig> = {
+        title: json.title ?? '',
+        synopsis: json.content?.slice(0, 500) ?? '',
+      };
+      if (json.planetName) {
+        importedConfig.setting = json.planetName;
+      }
+      const importedSessionId = doCreateNewSession();
+      setProjects(prevProjects => prevProjects.map(project => {
+        if (!project.sessions.some(session => session.id === importedSessionId)) {
+          return project;
+        }
+        return {
+          ...project,
+          lastUpdate: Date.now(),
+          sessions: project.sessions.map(session =>
+            session.id === importedSessionId
+              ? {
+                  ...session,
+                  config: { ...session.config, ...importedConfig },
+                  messages: [
+                    ...session.messages,
+                    {
+                      id: `import-${Date.now()}`,
+                      role: 'assistant' as const,
+                      content: json.content ?? '',
+                      timestamp: Date.now(),
+                    },
+                  ],
+                  lastUpdate: Date.now(),
+                }
+              : session,
+          ),
+        };
+      }));
+      setActiveTab('writing');
+      setWorldImportBanner(true);
+      setTimeout(() => setWorldImportBanner(false), 5000);
+      studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
+    } catch {
+      setAlertToast({ message: language === 'KO' ? '게시글 데이터를 불러오지 못했습니다.' : 'Failed to import post data.', variant: 'error' });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // ?setup=1 → API 키 모달 자동 오픈 (StudioChoiceScreen에서 "API 사용" 선택 시)
+  // Also marks onboarding as done to prevent modal overlap
+  useEffect(() => {
+    if (!hydrated) return;
+    if (searchParams.get('setup') !== '1') return;
+    // Prevent onboarding + API key modal simultaneous display
+    if (typeof window !== 'undefined' && !localStorage.getItem('noa_onboarding_done')) {
+      localStorage.setItem('noa_onboarding_done', '1');
+    }
+    setShowApiKeyModal(true);
+    studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // API 키 추가/삭제 감지 → 집필 모드(writingMode) 자동 전환
+  // NOTE: noa_studio_mode 키는 가이드/자유 모드('guided'/'free')용이므로
+  //       여기서 건드리지 않는다. 별도 키(noa_writing_access)에 저장한다.
+  useEffect(() => {
+    if (!aiCapabilitiesLoaded) return;
+    if (hasAiAccess) {
+      setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
+      localStorage.setItem('noa_writing_access', 'api');
+    } else {
+      setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
+      localStorage.setItem('noa_writing_access', 'manual');
+    }
+  }, [hasAiAccess, aiCapabilitiesLoaded]);
+
+  // confirmState, showConfirm, closeConfirm → useStudioUX에서 제공
+
+  // ============================================================
+  // SYNC STATE — useStudioSync 훅으로 추출
+  // ============================================================
+
+  const {
+    syncStatus, lastSyncTime,
+    showSyncReminder, setShowSyncReminder,
+    handleSync,
+  } = useStudioSync({ user, accessToken, refreshAccessToken, projects, setProjects, setUxError });
+
+  // ============================================================
+  // PROJECT MANAGEMENT (confirm-wrapped actions)
+  // ============================================================
   const deleteProject = useCallback((projectId: string) => {
     const projName = projects.find(p => p.id === projectId)?.name || '';
     showConfirm({
-      title: isKO ? '작품 삭제' : 'Delete Project',
-      message: isKO ? `'${projName}'을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.` : `Delete '${projName}'? This cannot be undone.`,
-      confirmLabel: isKO ? '삭제' : 'Delete',
-      cancelLabel: isKO ? '취소' : 'Cancel',
+      title: t('confirm.deleteProject'),
+      message: `'${projName}'${t('confirm.deleteProjectMsg')}`,
+      confirmLabel: t('confirm.delete'),
+      cancelLabel: t('confirm.cancel'),
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        setProjects(prev => prev.filter(p => p.id !== projectId));
-        if (currentProjectId === projectId) {
-          const remaining = projects.filter(p => p.id !== projectId);
-          setCurrentProjectId(remaining[0]?.id || null);
-          setCurrentSessionId(null);
-        }
-      },
+      onConfirm: () => { closeConfirm(); doDeleteProject(projectId); },
     });
-  }, [currentProjectId, projects, isKO, showConfirm, closeConfirm]);
-
-  const renameProject = useCallback((projectId: string, newName: string) => {
-    setProjects(prev => prev.map(p =>
-      p.id === projectId ? { ...p, name: newName, lastUpdate: Date.now() } : p
-    ));
-  }, []);
-
-  const moveSessionToProject = useCallback((sessionId: string, targetProjectId: string) => {
-    setProjects(prev => {
-      const sourceProject = prev.find(p => p.sessions.some(s => s.id === sessionId));
-      if (!sourceProject || sourceProject.id === targetProjectId) return prev;
-      const session = sourceProject.sessions.find(s => s.id === sessionId);
-      if (!session) return prev;
-      return prev.map(p => {
-        if (p.id === sourceProject.id) {
-          return { ...p, sessions: p.sessions.filter(s => s.id !== sessionId), lastUpdate: Date.now() };
-        }
-        if (p.id === targetProjectId) {
-          return { ...p, sessions: [session, ...p.sessions], lastUpdate: Date.now() };
-        }
-        return p;
-      });
-    });
-    if (currentSessionId === sessionId) {
-      setCurrentProjectId(targetProjectId);
-    }
-  }, [currentSessionId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
+  }, [projects, language, showConfirm, closeConfirm, doDeleteProject]);
 
   const [hfcpState] = useState<HFCPStateType>(() => createHFCPState());
-  const [writingMode, setWritingMode] = useState<'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'>('ai');
-  const [editDraft, setEditDraft] = useState('');
-  const [advancedSettings, setAdvancedSettings] = useState<import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings>({
-    sceneGoals: [], constraints: { pov: '3rd-limited', dialogueRatio: 40, tempo: 'stable', sentenceLen: 'normal', emotionExposure: 'normal' },
-    references: { prevEpisodes: 3, characterCards: true, worldSetting: true, styleProfile: false, sceneSheet: false, platformPreset: false },
-    locks: { speechStyle: false, worldRules: false, charRelations: false, bannedWords: false },
-    outputMode: 'draft', includes: '', excludes: '',
-  });
-  const [canvasContent, setCanvasContent] = useState('');
-  const [canvasPass, setCanvasPass] = useState(0);
-  const [promptDirective, setPromptDirective] = useState('');
+  // 집필 모드 상태 — useStudioWritingMode 훅으로 추출
+  const {
+    writingMode, setWritingMode,
+    editDraft, setEditDraft,
+    editDraftRef,
+    advancedSettings, setAdvancedSettings,
+    canvasContent, setCanvasContent,
+    canvasPass, setCanvasPass,
+    promptDirective, setPromptDirective,
+  } = useStudioWritingMode(currentSessionId, hydrated);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [saveFlash, setSaveFlash] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  // saveFlash, lastSaveTime, triggerSave → useStudioUX에서 제공
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
-  const triggerSave = useCallback(() => {
-    // Data is already auto-saved via localStorage, this is visual feedback
-    setSaveFlash(true);
-    setTimeout(() => setSaveFlash(false), 1500);
-  }, []); // 0=empty, 1=skeleton, 2=emotion, 3=sensory
+
+  // editDraft persist → useStudioWritingMode 내부로 이동
+
+  // Fix #9: Modal focus trap — save/restore active element on modal open/close
+  const prevFocusRef = useRef<Element | null>(null);
+  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
+  useEffect(() => {
+    if (anyModalOpen) {
+      prevFocusRef.current = document.activeElement;
+    } else if (prevFocusRef.current && prevFocusRef.current instanceof HTMLElement) {
+      prevFocusRef.current.focus();
+      prevFocusRef.current = null;
+    }
+  }, [anyModalOpen]);
 
   useEffect(() => {
-    setIsSidebarOpen(window.innerWidth >= 768);
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Hydration: localStorage → state (클라이언트 전용, 서버 렌더링 불일치 방지)
-  useEffect(() => {
-    const loaded = loadProjects();
-    if (loaded.length > 0) {
-      setProjects(loaded);
-      setCurrentProjectId(loaded[0].id);
-      setCurrentSessionId(loaded[0].sessions?.[0]?.id || null);
-    }
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    saveProjects(projects);
-  }, [projects, hydrated]);
+  // Hydration + auto-save handled by useProjectManager hook
 
   const messageCount = currentSession?.messages?.length ?? 0;
-  useEffect(() => {
-    if (activeTab === 'writing') {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // NOTE: scroll effect moved after useStudioAI (needs isGenerating)
+
+  // createNewSession, createDemoSession, rename → useStudioSession 훅
+  const {
+    createNewSession,
+    createDemoSession,
+    renamingSessionId, setRenamingSessionId,
+    renameValue, setRenameValue,
+  } = useStudioSession({
+    language, currentSession, editDraft,
+    doCreateNewSession, updateCurrentSession,
+    setActiveTab, setIsSidebarOpen, setWritingMode,
+    showConfirm, closeConfirm,
+  });
+
+  // createDemoSession → useStudioSession에서 제공
+
+  // Quick Start 후 첫 생성을 위한 pending prompt
+  const [pendingQuickStartPrompt, setPendingQuickStartPrompt] = useState<string | null>(null);
+
+  const handleQuickStart = async (genre: Genre, userPrompt: string) => {
+    if (showQuickStartLock) {
+      setShowApiKeyModal(true);
+      return;
     }
-  }, [messageCount, isGenerating, activeTab]);
-
-  const createNewSession = useCallback(() => {
-    const sessionTitles: Record<AppLanguage, string> = { KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说" };
-    const newSession: ChatSession = {
-      id: `session-${Date.now()}`,
-      title: sessionTitles[language],
-      messages: [],
-      config: { ...INITIAL_CONFIG },
-      lastUpdate: Date.now()
-    };
-
-    if (projects.length === 0) {
-      // Auto-create default project with the new session inside
-      const p: Project = {
-        id: 'project-default',
-        name: '미분류',
-        description: '',
-        genre: Genre.SF,
-        createdAt: Date.now(),
-        lastUpdate: Date.now(),
-        sessions: [newSession],
+    setIsQuickGenerating(true);
+    try {
+      const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
+      const qsConfig: StoryConfig = {
+        ...INITIAL_CONFIG,
+        title: world.title,
+        genre: genre,
+        synopsis: world.synopsis,
+        povCharacter: world.povCharacter,
+        setting: world.setting,
+        primaryEmotion: world.primaryEmotion,
+        corePremise: world.corePremise,
+        powerStructure: world.powerStructure,
+        currentConflict: world.currentConflict,
+        worldHistory: world.worldHistory || '',
+        socialSystem: world.socialSystem || '',
+        economy: world.economy || '',
+        magicTechSystem: world.magicTechSystem || '',
+        factionRelations: world.factionRelations || '',
+        survivalEnvironment: world.survivalEnvironment || '',
+        culture: world.culture || '',
+        religion: world.religion || '',
+        education: world.education || '',
+        lawOrder: world.lawOrder || '',
+        taboo: world.taboo || '',
+        dailyLife: world.dailyLife || '',
+        travelComm: world.travelComm || '',
+        truthVsBeliefs: world.truthVsBeliefs || '',
       };
-      setProjects([p]);
-      setCurrentProjectId(p.id);
-    } else {
-      setSessions(prev => [newSession, ...prev]);
+
+      const characters = await generateCharacters(qsConfig, language);
+      qsConfig.characters = characters;
+
+      // 프로젝트가 없으면 먼저 생성 → 반환된 id로 세션을 직접 연결
+      const targetProjectId = currentProjectId || createNewProject();
+
+      // 세션을 프로젝트에 직접 삽입 (setSessions 레이스 방지)
+      const newSessionId = `s-${Date.now()}`;
+      const newSession: ChatSession = {
+        id: newSessionId,
+        title: qsConfig.title,
+        config: qsConfig,
+        messages: [],
+        lastUpdate: Date.now(),
+      };
+      setProjects(prev => prev.map(p =>
+        p.id === targetProjectId
+          ? { ...p, sessions: [newSession, ...p.sessions], lastUpdate: Date.now() }
+          : p,
+      ));
+      setCurrentSessionId(newSessionId);
+      setActiveTab('writing');
+      setShowQuickStartModal(false);
+
+      // 3.8 — Auto Pipeline 상태 업데이트 (Quick Start 완료 시)
+      setPipelineResult({
+        stages: [
+          { stage: 'world_check', status: 'passed', duration: 0, warnings: [] },
+          { stage: 'character_sync', status: 'passed', duration: 0, warnings: [] },
+          { stage: 'direction_setup', status: 'skipped', duration: 0, warnings: [] },
+          { stage: 'generation', status: 'running', duration: 0, warnings: [] },
+        ],
+        finalStatus: 'running',
+      });
+
+      // stale closure 방지: pending state에 저장 → useEffect에서 실행
+      setPendingQuickStartPrompt(`${userPrompt}\n\n첫 장면을 써줘.`);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '';
+      if (/401|api key|not configured/i.test(errorMessage)) {
+        setShowApiKeyModal(true);
+      } else {
+        console.error("Quick Start Failed:", err);
+        setUxError({ error: err });
+      }
+    } finally {
+      setIsQuickGenerating(false);
     }
-    setCurrentSessionId(newSession.id);
-    setActiveTab('world');
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, [language, projects.length, setSessions]);
+  };
+
+  // P1-2: Quick Start 첫 생성 — 세션 확정 후 실행 (stale closure 제거)
+  useEffect(() => {
+    if (pendingQuickStartPrompt && currentSessionId && currentSession) {
+      doHandleSend(pendingQuickStartPrompt, '', () => {
+        // 3.8 — 파이프라인 완료 상태
+        setPipelineResult(prev => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map(s => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
+      });
+      setPendingQuickStartPrompt(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingQuickStartPrompt, currentSessionId, currentSession]);
+
+
+  const openQuickStart = useCallback(() => {
+    if (showQuickStartLock) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    setShowQuickStartModal(true);
+  }, [showQuickStartLock]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
+    // 수동 편집 중 탭 전환 시 미저장 경고 (같은 탭 재클릭 제외)
+    if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
+      showConfirm({
+        title: t('confirm.unsavedEdits'),
+        message: t('confirm.unsavedEditsMsg'),
+        variant: 'warning',
+        confirmLabel: t('confirm.switch'),
+        cancelLabel: t('confirm.keepEditing'),
+        onConfirm: () => {
+          closeConfirm();
+          setEditDraft('');
+          setActiveTab(tab);
+          if (window.innerWidth < 768) setIsSidebarOpen(false);
+        }
+      });
+      return;
+    }
     setActiveTab(tab);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is derived from language (already in deps)
+  }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm]);
 
   const deleteSession = (sessionIdToDelete: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);
     if (!sessionToDelete) return;
     showConfirm({
-      title: isKO ? '세션 삭제' : 'Delete Session',
-      message: isKO ? `'${sessionToDelete.title}'을(를) 삭제하시겠습니까?` : `Delete '${sessionToDelete.title}'?`,
-      confirmLabel: isKO ? '삭제' : 'Delete',
-      cancelLabel: isKO ? '취소' : 'Cancel',
+      title: t('confirm.deleteSession'),
+      message: `'${sessionToDelete.title}'${t('confirm.deleteSessionMsg')}`,
+      confirmLabel: t('confirm.delete'),
+      cancelLabel: t('confirm.cancel'),
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        const newSessions = sessions.filter(s => s.id !== sessionIdToDelete);
-        setSessions(newSessions);
-        if (currentSessionId === sessionIdToDelete) {
-          setCurrentSessionId(newSessions.length > 0 ? newSessions[0].id : null);
-          if (newSessions.length === 0) setActiveTab('world');
-        }
-      },
+      onConfirm: () => { closeConfirm(); doDeleteSession(sessionIdToDelete); if (sessions.length <= 1) setActiveTab('world'); },
     });
   };
 
   const clearAllSessions = () => {
     showConfirm({
-      title: isKO ? '전체 삭제' : 'Delete All',
-      message: isKO ? '모든 세션을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.' : 'Delete all sessions? This cannot be undone.',
-      confirmLabel: isKO ? '전체 삭제' : 'Delete All',
-      cancelLabel: isKO ? '취소' : 'Cancel',
+      title: t('confirm.deleteAll'),
+      message: t('confirm.deleteAllMsg'),
+      confirmLabel: t('confirm.deleteAllConfirm'),
+      cancelLabel: t('confirm.cancel'),
       variant: 'danger',
-      onConfirm: () => {
-        closeConfirm();
-        setSessions([]);
-        setCurrentSessionId(null);
-        setActiveTab('world');
-      },
+      onConfirm: () => { closeConfirm(); doClearAllSessions(); setActiveTab('world'); },
     });
   };
 
   // ============================================================
-  // EXPORT / IMPORT / RENAME / SEARCH / SHORTCUTS
+  // EXPORT / IMPORT / RENAME / SEARCH (extracted to hook)
   // ============================================================
-
-  // Export session as TXT
-  const exportTXT = useCallback(() => {
-    if (!currentSession) return;
-    const lines = currentSession.messages.map(m => {
-      const prefix = m.role === 'user' ? '[USER]' : '[NOW]';
-      return `${prefix}\n${m.content}\n`;
-    });
-    const header = `# ${currentSession.config.title || currentSession.title}\n# Genre: ${currentSession.config.genre} | Episode: ${currentSession.config.episode}\n# Exported: ${new Date().toISOString()}\n\n`;
-    const blob = new Blob([header + lines.join('\n---\n\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentSession.title || 'noa-story'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [currentSession]);
-
-  // Export session as JSON backup
-  const exportJSON = useCallback(() => {
-    if (!currentSession) return;
-    const blob = new Blob([JSON.stringify(currentSession, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentSession.title || 'noa-session'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [currentSession]);
-
-  // Export ALL sessions as JSON
-  const exportAllJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `noa-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [sessions]);
-
-  // Import JSON backup
-  const handleImportJSON = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string);
-        if (Array.isArray(data)) {
-          // Multiple sessions
-          setSessions(prev => [...data, ...prev]);
-          setCurrentSessionId(data[0]?.id || null);
-        } else if (data.id && data.messages) {
-          // Single session
-          setSessions(prev => [data, ...prev]);
-          setCurrentSessionId(data.id);
-        }
-        setActiveTab('writing');
-      } catch {
-        alert(isKO ? '유효하지 않은 JSON 파일입니다.' : 'Invalid JSON file.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  }, [isKO]);
+  const {
+    exportTXT, exportJSON, exportAllJSON, handleImportJSON,
+    handlePrint, handleExportEPUB, handleExportDOCX,
+    exportProjectJSON, exportAllEpisodesTXT, exportMarkdown,
+  } = useStudioExport({
+    currentSession, sessions, currentSessionId,
+    currentProjectId, projects, setProjects, setCurrentProjectId,
+    setSessions, setCurrentSessionId, setActiveTab,
+    isKO, language, writingMode, editDraft,
+  });
 
   // Rename session
   const startRename = (sessionId: string, currentTitle: string) => {
@@ -473,37 +716,22 @@ export default function StudioPage() {
     setRenameValue('');
   };
 
+  // Reorder sessions (drag-and-drop)
+  const handleReorderSessions = useCallback((fromIndex: number, toIndex: number) => {
+    setSessions(prev => {
+      const sorted = [...prev].sort((a, b) => a.lastUpdate - b.lastUpdate);
+      const [moved] = sorted.splice(fromIndex, 1);
+      sorted.splice(toIndex, 0, moved);
+      // Reassign lastUpdate to preserve new order
+      return sorted.map((s, i) => ({ ...s, lastUpdate: i + 1 }));
+    });
+  }, [setSessions]);
+
   // Search filter
   const filteredMessages = currentSession?.messages.filter(m =>
     !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
-
-  // Print
-  const handlePrint = useCallback(() => {
-    if (!currentSession) return;
-    const printContent = currentSession.messages.map(m => {
-      const prefix = m.role === 'user' ? '📝 ' : '🤖 ';
-      return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
-    }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
-    const w = window.open('', '_blank');
-    if (!w) return;
-    const escHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    w.document.write(`<html><head><title>${escHtml(currentSession.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(currentSession.title)}</h1><p style="color:#888;">${escHtml(currentSession.config.genre)} | EP.${currentSession.config.episode} | ${new Date().toLocaleDateString()}</p><hr>${printContent}</body></html>`);
-    w.document.close();
-    w.print();
-  }, [currentSession]);
-
-  // Export as EPUB
-  const handleExportEPUB = useCallback(() => {
-    if (!currentSession) return;
-    exportEPUB(currentSession);
-  }, [currentSession]);
-
-  // Export as DOCX
-  const handleExportDOCX = useCallback(() => {
-    if (!currentSession) return;
-    exportDOCX(currentSession);
-  }, [currentSession]);
+  const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
 
   // Switch message version
   const handleVersionSwitch = useCallback((messageId: string, versionIndex: number) => {
@@ -517,7 +745,7 @@ export default function StudioPage() {
       });
       return { ...s, messages: msgs };
     }));
-  }, [currentSessionId]);
+  }, [currentSessionId, setSessions]);
 
   // Apply single typo fix to a message
   const handleTypoFix = useCallback((messageId: string, index: number, original: string, suggestion: string) => {
@@ -530,220 +758,69 @@ export default function StudioPage() {
       });
       return { ...s, messages: msgs };
     }));
-  }, [currentSessionId]);
+  }, [currentSessionId, setSessions]);
 
-  // Keyboard shortcuts (F1~F9: tab switch, F11: focus, F12: shortcuts help)
+  // Keyboard shortcuts (extracted to hook)
+  // Global search palette state
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
+  useStudioKeyboard({
+    onTabChange: handleTabChange,
+    onToggleSearch: () => setShowSearch(prev => !prev),
+    onExportTXT: exportTXT,
+    onPrint: handlePrint,
+    onNewSession: createNewSession,
+    onToggleFocus: () => setFocusMode(prev => !prev),
+    onToggleShortcuts: () => setShowShortcuts(prev => !prev),
+    onSave: triggerSave,
+    onNewEpisode: () => {
+      if (!currentSession) return;
+      const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
+      setConfig({ ...currentSession.config, episode: nextEp });
+    },
+    onToggleAssistant: () => setRightPanelOpen(prev => !prev),
+    onEscape: () => {
+      // Close any open modal
+      if (showShortcuts) { setShowShortcuts(false); return; }
+      if (showApiKeyModal) { setShowApiKeyModal(false); return; }
+      if (confirmState.open) { closeConfirm(); return; }
+      if (saveSlotModalOpen) { setSaveSlotModalOpen(false); return; }
+      if (moveModal) { setMoveModal(null); return; }
+      if (showQuickStartModal) { setShowQuickStartModal(false); return; }
+      if (showGlobalSearch) { setShowGlobalSearch(false); setGlobalSearchQuery(''); return; }
+    },
+    onGlobalSearch: () => setShowGlobalSearch(prev => !prev),
+    disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
+  });
+
+  // ============================================================
+  // AI STREAMING (extracted to hook)
+  // ============================================================
+  const {
+    isGenerating, lastReport, directorReport, handleCancel,
+    handleSend: doHandleSend, handleRegenerate,
+  } = useStudioAI({
+    currentSession, currentSessionId, setSessions, updateCurrentSession,
+    hfcpState, promptDirective, language, canvasPass,
+    setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
+    advancedOutputMode: advancedSettings.outputMode,
+    onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
+  });
+
+  // UX: unsaved changes warning (must be after useStudioAI which provides isGenerating)
+  useUnsavedWarning(isGenerating || (writingMode === 'edit' && editDraft.trim().length > 0));
+
+  // Auto-scroll to bottom when generating (moved here — needs isGenerating from useStudioAI)
   useEffect(() => {
-    const tabByFKey: Record<string, AppTab> = {
-      F1: 'world', F2: 'critique', F3: 'characters', F4: 'rulebook',
-      F5: 'writing', F6: 'style', F7: 'manuscript', F8: 'history', F9: 'settings',
-    };
-    const handler = (e: KeyboardEvent) => {
-      const ctrl = e.ctrlKey || e.metaKey;
-      if (ctrl && e.key === 'f') { e.preventDefault(); setShowSearch(prev => !prev); }
-      if (ctrl && e.key === 'e') { e.preventDefault(); exportTXT(); }
-      if (ctrl && e.key === 'p') { e.preventDefault(); handlePrint(); }
-      if (ctrl && e.key === 'n') { e.preventDefault(); createNewSession(); }
-      if (e.key === 'F11') { e.preventDefault(); setFocusMode(prev => !prev); }
-      if (e.key === 'F12') { e.preventDefault(); setShowShortcuts(prev => !prev); }
-      if (ctrl && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
-      // F1~F9 tab switching
-      const targetTab = tabByFKey[e.key];
-      if (targetTab) { e.preventDefault(); handleTabChange(targetTab); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [exportTXT, handlePrint, createNewSession, handleTabChange]);
-
-  const updateCurrentSession = (updates: Partial<ChatSession>) => {
-    if (!currentSessionId) return;
-    setSessions(prev => prev.map(s =>
-      s.id === currentSessionId ? { ...s, ...updates, lastUpdate: Date.now() } : s
-    ));
-  };
-
-  const setConfig = (newConfig: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => {
-    if (typeof newConfig === 'function') {
-      updateCurrentSession({ config: newConfig(currentSession?.config || INITIAL_CONFIG) });
-    } else {
-      updateCurrentSession({ config: newConfig });
+    if (activeTab === 'writing') {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, [messageCount, isGenerating, activeTab]);
 
-  const handleCancel = () => {
-    abortControllerRef.current?.abort();
-    setIsGenerating(false);
-  };
-
-  const handleSend = async (customPrompt?: string) => {
-    const text = customPrompt || input;
-    if (!text.trim() || isGenerating || !currentSessionId) return;
-
-    // HFCP: classify input and get prompt modifier
-    const hfcpResult = processHFCPTurn(hfcpState, text);
-    const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
-    const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
-
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
-    const aiMsgId = `a-${Date.now()}`;
-    const initialAiMsg: Message = { id: aiMsgId, role: 'assistant', content: '', timestamp: Date.now() };
-    const existingMessages = currentSession?.messages || [];
-    const updatedMessages = [...existingMessages, userMsg, initialAiMsg];
-
-    updateCurrentSession({
-      messages: updatedMessages,
-      title: existingMessages.length === 0 ? text.substring(0, 15) : currentSession?.title
-    });
-    setInput('');
-    setIsGenerating(true);
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    let fullContent = '';
-    try {
-      // Inject genreSelections from worldSimData into simulatorRef for AI prompt
-      const configForAI = {
-        ...currentSession!.config,
-        simulatorRef: {
-          ...currentSession!.config.simulatorRef,
-          genreSelections: currentSession!.config.worldSimData?.genreSelections || currentSession!.config.simulatorRef?.genreSelections,
-        },
-      };
-      const result = await generateStoryStream(
-        configForAI, directivePrefix + hfcpPrefix + text,
-        (chunk) => {
-          fullContent += chunk;
-          setSessions(prev => prev.map(s => {
-            if (s.id === currentSessionId) {
-              const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m);
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        },
-        { language, signal: controller.signal, platform: currentSession!.config.platform, history: existingMessages }
-      );
-
-      // Trademark/IP filter — 상표 자동 치환
-      const { filterTrademarks } = await import('@/engine/validator');
-      const ipCheck = filterTrademarks(fullContent);
-      if (ipCheck.matches.length > 0) {
-        fullContent = ipCheck.filtered;
-        console.info(`[IP Filter] ${ipCheck.matches.length}건 치환: ${[...new Set(ipCheck.matches.map(m => m.original))].join(', ')}`);
-      }
-
-      setLastReport(result.report);
-      // NOD Director analysis
-      const dirClean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-      setDirectorReport(analyzeManuscript(dirClean, currentSession?.config?.publishPlatform));
-      setSessions(prev => prev.map(s => {
-        if (s.id === currentSessionId) {
-          const msgs = s.messages.map(m =>
-            m.id === aiMsgId
-              ? { ...m, content: fullContent, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } }
-              : m
-          );
-          return { ...s, messages: msgs };
-        }
-        return s;
-      }));
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
-      else {
-        console.error(error);
-        setUxError({ error, retry: () => handleSend(input) });
-      }
-    } finally {
-      // 3패스 캔버스 모드: 단계 완료 시 JSON 제거 후 자동 주입
-      if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
-        const clean = fullContent.replace(/```json[\s\S]*?```/g, '').trim();
-        if (clean) setCanvasContent(clean);
-        setWritingMode('canvas');
-      }
-      setIsGenerating(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const handleRegenerate = async (assistantMsgId: string) => {
-    if (isGenerating || !currentSessionId || !currentSession) return;
-    const msgIndex = currentSession.messages.findIndex(m => m.id === assistantMsgId);
-    if (msgIndex <= 0) return;
-    const userMsg = currentSession.messages[msgIndex - 1];
-    if (userMsg.role !== 'user') return;
-    const historyMessages = currentSession.messages.slice(0, msgIndex - 1);
-
-    // Save current content to versions before regenerating
-    const currentMsg = currentSession.messages[msgIndex];
-    const prevVersions = currentMsg.versions ?? [];
-    const savedVersions = currentMsg.content ? [...prevVersions, currentMsg.content] : prevVersions;
-
-    setSessions(prev => prev.map(s => {
-      if (s.id === currentSessionId) {
-        const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: '', meta: undefined, versions: savedVersions, currentVersionIndex: savedVersions.length } : m);
-        return { ...s, messages: msgs };
-      }
-      return s;
-    }));
-    setIsGenerating(true);
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    let fullContent = '';
-    try {
-      const configForChat = {
-        ...currentSession.config,
-        simulatorRef: {
-          ...currentSession.config.simulatorRef,
-          genreSelections: currentSession.config.worldSimData?.genreSelections || currentSession.config.simulatorRef?.genreSelections,
-        },
-      };
-      const result = await generateStoryStream(
-        configForChat, userMsg.content,
-        (chunk) => {
-          fullContent += chunk;
-          setSessions(prev => prev.map(s => {
-            if (s.id === currentSessionId) {
-              const msgs = s.messages.map(m => m.id === assistantMsgId ? { ...m, content: fullContent } : m);
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        },
-        { language, signal: controller.signal, platform: currentSession.config.platform, history: historyMessages }
-      );
-
-      // Trademark/IP filter
-      const { filterTrademarks } = await import('@/engine/validator');
-      const ipCheck = filterTrademarks(fullContent);
-      if (ipCheck.matches.length > 0) {
-        fullContent = ipCheck.filtered;
-      }
-
-      setLastReport(result.report);
-      setSessions(prev => prev.map(s => {
-        if (s.id === currentSessionId) {
-          const msgs = s.messages.map(m => {
-            if (m.id !== assistantMsgId) return m;
-            const updatedVersions = [...(m.versions ?? []), fullContent];
-            return { ...m, content: fullContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
-          });
-          return { ...s, messages: msgs };
-        }
-        return s;
-      }));
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
-      else {
-        console.error(error);
-        setUxError({ error, retry: () => handleRegenerate(assistantMsgId) });
-      }
-    } finally {
-      setIsGenerating(false);
-      abortControllerRef.current = null;
-    }
-  };
+  const handleSend = useCallback((customPrompt?: string) => {
+    doHandleSend(customPrompt, input, () => setInput(''));
+  }, [doHandleSend, input]);
 
   const handleNextEpisode = () => {
     if (!currentSession) return;
@@ -751,177 +828,149 @@ export default function StudioPage() {
     setConfig({ ...currentSession.config, episode: nextEp });
   };
 
+  // edit 모드에서는 전체 폭 활용, 그 외에는 max-w 제한
+  const writingColumnShell = writingMode === 'edit'
+    ? 'w-full px-4 md:px-6 lg:px-8'
+    : 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
+  const writingInputDockOffset = activeTab === 'writing' && !showDashboard
+    ? (writingMode === 'ai'
+        ? (rightPanelOpen ? 'lg:pr-80' : 'lg:pr-10')
+        : 'lg:pr-64')
+    : '';
+
+  const studioConfigValue = {
+    language, setLanguage, isKO,
+    currentSession, currentSessionId, currentProjectId,
+    config: currentSession?.config ?? null,
+    setConfig,
+    projects, hasAiAccess,
+    studioMode, setStudioMode,
+  };
+  const studioUIValue = {
+    activeTab, handleTabChange,
+    showConfirm, closeConfirm,
+    setUxError, triggerSave, saveFlash,
+  };
+
   return (
-    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${lightTheme ? 'bg-white text-gray-900' : 'bg-bg-primary text-text-primary'}`} style={{ fontFamily: 'var(--font-sans)' }}>
+    <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
+    <StudioConfigProvider value={studioConfigValue}>
+    <StudioUIProvider value={studioUIValue}>
+    <div
+      className="flex h-screen overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
+      data-testid="studio-content"
+      data-theme={(['', 'dim', 'light', 'max'] as const)[themeLevel] || ''}
+    >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
+      {/* Mobile bottom tab bar */}
+      <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
+
+      {/* Mobile drawer for right panel content */}
+      <MobileDrawer
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        title={language === 'KO' ? '참고 패널' : 'Reference Panel'}
+      >
+        {currentSession && (
+          <div className="space-y-3">
+            <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+              📂 {t('saveSlot.savedVersions')}
+            </div>
+            <div className="text-[10px] text-text-tertiary">
+              {(currentSession.config.savedSlots || []).length === 0
+                ? (language === 'KO' ? '저장된 슬롯이 없습니다.' : 'No saved slots.')
+                : `${(currentSession.config.savedSlots || []).length} ${language === 'KO' ? '개 저장됨' : 'saved'}`
+              }
+            </div>
+          </div>
+        )}
+      </MobileDrawer>
+
+      {/* Mobile-only: open right panel button */}
+      {currentSession && activeTab !== 'writing' && (
+        <button
+          onClick={() => setMobileDrawerOpen(true)}
+          className="fixed bottom-24 right-4 z-30 lg:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center bg-accent-purple text-white rounded-full shadow-lg shadow-accent-purple/30 active:scale-90 transition-transform"
+          aria-label={language === 'KO' ? '참고 패널 열기' : 'Open reference panel'}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+        </button>
+      )}
+
       {/* Sidebar */}
-      <aside className={`fixed md:relative inset-y-0 left-0 bg-bg-primary border-r border-border transition-transform md:transition-all duration-300 flex flex-col z-50 overflow-hidden ${focusMode ? '-translate-x-full md:translate-x-0 md:w-0' : isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0'}`}>
-        <div className="p-6">
-          <Link href="/" className="flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
-            <Zap className="w-6 h-6 text-accent-purple" />
-            <div>
-              <h1 className="text-lg font-black italic tracking-tighter font-[family-name:var(--font-mono)]">NOA STUDIO</h1>
-              <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-widest uppercase">← EH UNIVERSE</span>
-            </div>
-          </Link>
-          {/* Project Selector */}
-          <div className="mb-3 space-y-1">
-            {projects.length === 0 ? (
-              <button onClick={createNewProject} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary border border-dashed border-border rounded-xl text-[10px] font-bold text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-all font-[family-name:var(--font-mono)]">
-                <Plus className="w-3.5 h-3.5" /> {t.project?.newProject || 'New Project'}
-              </button>
-            ) : (
-              <>
-                <div className="flex items-center gap-1">
-                  <select
-                    value={currentProjectId || ''}
-                    onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-                    className="flex-1 bg-bg-secondary border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold font-[family-name:var(--font-mono)] outline-none text-text-primary truncate"
-                  >
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
-                    ))}
-                  </select>
-                  <button onClick={createNewProject} className="p-1.5 bg-bg-secondary border border-border rounded-lg text-text-tertiary hover:text-accent-purple transition-colors" title={t.project?.newProject || 'New Project'}>
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
-                {currentProject && (
-                  <div className="flex gap-1 text-[8px] font-[family-name:var(--font-mono)]">
-                    <button onClick={() => {
-                      const name = window.prompt(t.project?.renameProject || 'Rename', currentProject.name);
-                      if (name) renameProject(currentProject.id, name);
-                    }} className="text-text-tertiary hover:text-accent-purple">{t.project?.renameProject || 'Rename'}</button>
-                    {projects.length > 1 && (
-                      <button onClick={() => deleteProject(currentProject.id)} className="text-text-tertiary hover:text-accent-red">{t.project?.deleteProject || 'Delete'}</button>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+      <StudioSidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        focusMode={focusMode}
+        projects={projects}
+        createNewProject={createNewProject}
+        currentProjectId={currentProjectId}
+        setCurrentProjectId={setCurrentProjectId}
+        currentSessionId={currentSessionId}
+        setCurrentSessionId={setCurrentSessionId}
+        currentProject={currentProject}
+        sessions={sessions}
+        renameProject={renameProject}
+        deleteProject={deleteProject}
+        createNewSession={createNewSession}
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        studioMode={studioMode}
+        setStudioMode={setStudioMode}
+        exportTXT={exportTXT}
+        exportJSON={exportJSON}
+        handleImportJSON={handleImportJSON}
+        exportAllJSON={exportAllJSON}
+        handleExportEPUB={handleExportEPUB}
+        handleExportDOCX={handleExportDOCX}
+        exportProjectJSON={exportProjectJSON}
+        exportAllEpisodesTXT={exportAllEpisodesTXT}
+        exportMarkdown={exportMarkdown}
+        fileInputRef={fileInputRef}
+        user={user}
+        signInWithGoogle={signInWithGoogle}
+        signOut={signOut}
+        authConfigured={authConfigured}
+        handleSync={handleSync}
+        syncStatus={syncStatus}
+        lastSyncTime={lastSyncTime}
+        language={language}
+        setLanguage={setLanguage}
+        showConfirm={showConfirm}
+        closeConfirm={closeConfirm}
+        onReorderSessions={handleReorderSessions}
+      />
 
-          <button onClick={createNewSession} className="w-full flex items-center justify-center gap-2 py-3 bg-bg-secondary rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all mb-6 border border-border font-[family-name:var(--font-mono)]">
-            <Plus className="w-4 h-4" /> {t.sidebar.newProject}
-          </button>
-
-          <nav className="space-y-1">
-            {([
-              { tab: 'world' as AppTab, icon: Globe, label: t.sidebar.worldBible },
-              { tab: 'critique' as AppTab, icon: Map, label: t.sidebar.worldSimulator },
-              { tab: 'characters' as AppTab, icon: UserCircle, label: t.sidebar.characterStudio },
-              { tab: 'rulebook' as AppTab, icon: FileText, label: t.sidebar.rulebook },
-              { tab: 'writing' as AppTab, icon: PenTool, label: t.sidebar.writingMode },
-              { tab: 'style' as AppTab, icon: Edit3, label: t.sidebar.styleStudio },
-              { tab: 'manuscript' as AppTab, icon: FileText, label: isKO ? '원고 관리' : 'Manuscript' },
-              { tab: 'history' as AppTab, icon: History, label: t.sidebar.archives },
-            ]).map(({ tab, icon: Icon, label }) => (
-              <button key={tab} onClick={() => handleTabChange(tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${activeTab === tab ? 'bg-accent-purple/20 text-accent-purple shadow-lg' : 'text-text-tertiary hover:bg-bg-secondary'}`}>
-                <Icon className="w-4 h-4" /> {label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-auto p-6 border-t border-border space-y-3">
-          {/* Export / Import */}
-          <div className="flex gap-1.5">
-            <button onClick={exportTXT} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Download className="w-3 h-3" /> TXT
-            </button>
-            <button onClick={exportJSON} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Download className="w-3 h-3" /> JSON
-            </button>
-            <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <Upload className="w-3 h-3" /> {isKO ? '불러오기' : 'Import'}
-            </button>
-            <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
-          </div>
-          <div className="flex gap-1.5">
-            <button onClick={handleExportEPUB} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <FileText className="w-3 h-3" /> EPUB
-            </button>
-            <button onClick={handleExportDOCX} disabled={!currentSession} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-              <FileType className="w-3 h-3" /> DOCX
-            </button>
-          </div>
-          <button onClick={exportAllJSON} className="w-full py-1.5 bg-bg-secondary border border-border rounded-lg text-[8px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors">
-            {isKO ? '📦 전체 백업 (JSON)' : '📦 Full Backup (JSON)'}
-          </button>
-          {/* Auth */}
-          <div className="flex items-center gap-2 py-1">
-            {user ? (
-              <>
-                <div className="w-6 h-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-[9px] font-bold text-accent-purple overflow-hidden">
-                  {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || '?'}
-                </div>
-                <span className="text-[9px] text-text-secondary truncate flex-1">{user.displayName || user.email}</span>
-                <button onClick={() => showConfirm({
-                  title: isKO ? '로그아웃' : 'Logout',
-                  message: isKO ? '로그아웃하시겠습니까? 저장되지 않은 API 키가 초기화됩니다.' : 'Are you sure you want to logout? Unsaved API keys will be cleared.',
-                  variant: 'warning',
-                  onConfirm: signOut,
-                })} className="text-[8px] text-text-tertiary hover:text-accent-red font-bold">{isKO ? '로그아웃' : 'Logout'}</button>
-              </>
-            ) : (
-              <button onClick={() => {
-                if (!authConfigured) {
-                  alert(isKO ? 'Firebase 설정이 필요합니다.\n.env.local에 NEXT_PUBLIC_FIREBASE_* 환경변수를 설정해주세요.' : 'Firebase configuration required.\nSet NEXT_PUBLIC_FIREBASE_* in .env.local');
-                  return;
-                }
-                signInWithGoogle();
-              }} className="w-full py-2 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-text-primary font-[family-name:var(--font-mono)] transition-colors">
-                🔑 {isKO ? 'Google 로그인' : 'Sign in with Google'}
-              </button>
-            )}
-          </div>
-          {/* Drive Sync */}
-          {user && (
-            <button
-              onClick={handleSync}
-              disabled={syncStatus === 'syncing'}
-              className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all border ${
-                syncStatus === 'syncing' ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/30 animate-pulse'
-                : syncStatus === 'done' ? 'bg-accent-green/10 text-accent-green border-accent-green/30'
-                : syncStatus === 'error' ? 'bg-accent-red/10 text-accent-red border-accent-red/30'
-                : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
-              }`}
-            >
-              {syncStatus === 'syncing' ? <Cloud className="w-3 h-3 animate-spin" /> : syncStatus === 'error' ? <CloudOff className="w-3 h-3" /> : <Cloud className="w-3 h-3" />}
-              {syncStatus === 'syncing' ? (t.sync?.syncing || 'Syncing...')
-                : syncStatus === 'done' ? (t.sync?.syncDone || 'Synced!')
-                : syncStatus === 'error' ? (t.sync?.syncError || 'Error')
-                : (t.sync?.syncNow || 'Sync')}
-            </button>
-          )}
-          {lastSyncTime && (
-            <div className="text-[7px] text-text-tertiary font-[family-name:var(--font-mono)] text-center">
-              {t.sync?.lastSync || 'Last'}: {new Date(lastSyncTime).toLocaleTimeString()}
-            </div>
-          )}
-          <div className="flex gap-4">
-            {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
-              <button key={l} onClick={() => setLanguage(l)} className={`text-[10px] font-black font-[family-name:var(--font-mono)] ${language === l ? 'text-accent-purple' : 'text-text-tertiary'}`}>{l}</button>
-            ))}
-          </div>
-          <button onClick={() => handleTabChange('settings')} className={`flex items-center gap-2 text-xs font-bold transition-colors font-[family-name:var(--font-mono)] ${activeTab === 'settings' ? 'text-accent-purple' : 'text-text-tertiary hover:text-text-primary'}`}>
-            <Settings className="w-4 h-4" /> {t.sidebar.settings}
-          </button>
-        </div>
-      </aside>
+      {/* Sidebar open toggle (visible when sidebar is closed on desktop) */}
+      {!isSidebarOpen && !focusMode && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[60] items-center justify-center w-7 h-20 bg-bg-secondary border border-border border-l-0 rounded-r-xl text-text-tertiary hover:text-accent-purple hover:bg-bg-tertiary transition-all shadow-lg cursor-pointer"
+          title={language === 'KO' ? '사이드바 열기' : 'Open sidebar'}
+        >
+          <span className="text-xs font-bold">▶</span>
+        </button>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
+        {focusMode && (
+          <button onClick={() => setFocusMode(false)}
+            className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] opacity-30 hover:opacity-100"
+            title="F11">
+            <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
+          </button>
+        )}
         <header className={`h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
           <div className="flex items-center gap-2 md:gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors" aria-label="사이드바 토글" title={isKO ? '사이드바 토글' : 'Toggle sidebar'}>
               <Menu className="w-5 h-5 text-text-tertiary" />
             </button>
             <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
-              <span className="text-text-tertiary hidden sm:inline">{t.sidebar.activeProject}:</span>
-              <span className="text-text-primary truncate">{currentSession?.title || t.engine.noStory}</span>
-              {currentSessionId && <span className={`text-[8px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '자동 저장' : 'Auto-saved')}</span>}
+              <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
+              <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
+              {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>✓ {saveFlash ? t('ui.saved') : t('ui.autoSaved')}{lastSaveTime && !saveFlash ? ` · ${Math.max(1, Math.round((Date.now() - lastSaveTime) / 1000))}${isKO ? '초 전' : 's ago'}` : ''}</span>}
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -944,10 +993,14 @@ export default function StudioPage() {
             )}
             {/* Tool buttons */}
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '검색 (Ctrl+F)' : 'Search (Ctrl+F)'} aria-label={isKO ? '검색' : 'Search'}><Search className="w-4 h-4" /></button>
-              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '집중 모드 (F11)' : 'Focus Mode (F11)'} aria-label={isKO ? '집중 모드' : 'Focus mode'}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-              <button onClick={() => setLightTheme(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '테마 전환' : 'Toggle Theme'} aria-label={isKO ? '테마 전환' : 'Toggle theme'}>{lightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}</button>
-              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title="Ctrl+/" aria-label={isKO ? '단축키 도움말' : 'Keyboard shortcuts'}><Keyboard className="w-4 h-4" /></button>
+              <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
+              <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '전체 검색' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '전체 검색' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
+              <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+              <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple flex items-center gap-1" title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} aria-label={t('ui.toggleThemeLabel')}>
+                {themeLevel === 0 ? <Moon className="w-4 h-4" /> : themeLevel === 1 ? <Sun className="w-4 h-4 opacity-40" /> : themeLevel === 2 ? <Sun className="w-4 h-4 opacity-70" /> : <Sun className="w-4 h-4" />}
+                <span className="text-[9px] font-[family-name:var(--font-mono)] hidden md:inline">{isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['D','DM','L','MX'][themeLevel]}</span>
+              </button>
+              <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '키보드 단축키' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
             </div>
           </div>
         </header>
@@ -956,868 +1009,225 @@ export default function StudioPage() {
         {showSearch && (
           <div className="px-4 py-2 bg-bg-secondary border-b border-border flex items-center gap-2">
             <Search className="w-4 h-4 text-text-tertiary shrink-0" />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={isKO ? '메시지 검색...' : 'Search messages...'} autoFocus
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('ui.searchMessages')} autoFocus
               className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
-            <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
+            {searchMatchesEditDraft && (
+              <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-[family-name:var(--font-mono)] shrink-0">
+                {t('ui.foundInDraft')}
+              </button>
+            )}
+            <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} aria-label="검색 닫기" className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
           </div>
         )}
 
         {/* Shortcuts modal */}
-        {showShortcuts && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
-            <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center">
-                <h3 className="font-black text-sm">{isKO ? '키보드 단축키' : 'Keyboard Shortcuts'}</h3>
-                <button onClick={() => setShowShortcuts(false)}><X className="w-4 h-4 text-text-tertiary" /></button>
-              </div>
-              <div className="space-y-2 text-xs">
-                {[
-                  ['F1', isKO ? '세계관 설계' : 'World Design'],
-                  ['F2', isKO ? '세계관 시뮬레이터' : 'World Simulator'],
-                  ['F3', isKO ? '캐릭터 스튜디오' : 'Character Studio'],
-                  ['F4', isKO ? '룰북' : 'Rulebook'],
-                  ['F5', isKO ? '집필 스튜디오' : 'Writing Studio'],
-                  ['F6', isKO ? '문체 스튜디오' : 'Style Studio'],
-                  ['F7', isKO ? '원고 관리' : 'Manuscript'],
-                  ['F8', isKO ? '아카이브' : 'Archive'],
-                  ['F9', isKO ? '설정' : 'Settings'],
-                  ['F11', isKO ? '집중 모드' : 'Focus mode'],
-                  ['F12', isKO ? '단축키 도움말' : 'Shortcuts help'],
-                  ['Ctrl+N', isKO ? '새 세션' : 'New session'],
-                  ['Ctrl+F', isKO ? '검색' : 'Search'],
-                  ['Ctrl+E', isKO ? 'TXT 내보내기' : 'Export TXT'],
-                  ['Ctrl+P', isKO ? '인쇄' : 'Print'],
-                  ['Enter', isKO ? '메시지 전송' : 'Send message'],
-                  ['Shift+Enter', isKO ? '줄바꿈' : 'New line'],
-                ].map(([key, desc]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="px-2 py-0.5 bg-bg-secondary rounded text-text-tertiary font-[family-name:var(--font-mono)]">{key}</span>
-                    <span className="text-text-secondary">{desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {showShortcuts && <ShortcutsModal language={language} onClose={() => setShowShortcuts(false)} />}
+
+        {/* Global Search Palette (Ctrl+K) */}
+        {showGlobalSearch && (
+          <GlobalSearchPalette
+            query={globalSearchQuery}
+            setQuery={setGlobalSearchQuery}
+            sessions={sessions}
+            config={currentSession?.config ?? null}
+            language={language}
+            onSelect={(type, id) => {
+              setShowGlobalSearch(false);
+              setGlobalSearchQuery('');
+              if (type === 'character') handleTabChange('characters');
+              else if (type === 'episode') { if (id) setCurrentSessionId(id); handleTabChange('writing'); }
+              else if (type === 'world') handleTabChange('world');
+            }}
+            onClose={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}
+          />
         )}
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 flex overflow-hidden min-h-0">
+          <div className="flex-1 overflow-y-auto pb-20 md:pb-0 min-h-0">
             {/* API 키 미설정 안내 배너 */}
-            {hydrated && !localStorage.getItem('noa_api_key') && (
+            {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (
               <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
                 <Key className="w-4 h-4 shrink-0" />
-                <span className="flex-1">{isKO ? 'AI 기능을 사용하려면 API 키를 설정하세요.' : 'Set your API key to use AI features.'}</span>
-                <button onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
-                  {isKO ? '설정하기' : 'Set Up'}
+                <span className="flex-1">{apiBannerMessage}</span>
+                <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
+                  {apiSetupLabel}
+                </button>
+                <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
+                  ✕
                 </button>
               </div>
             )}
-            {!currentSessionId && !['settings', 'history', 'rulebook', 'critique', 'style'].includes(activeTab) ? (
+            {!currentSessionId && !['settings', 'history', 'rulebook', 'style', 'docs'].includes(activeTab) ? (
               <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
                 {/* Background gate image */}
                 <div className="absolute inset-0 z-0">
-                  <img src="/images/gate-infrastructure-visual.jpg" alt="" className="w-full h-full object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
+                  <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill priority={true} className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
                 </div>
                 {/* Noise overlay matching landing */}
                 <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-accent-purple/30 flex items-center justify-center mb-6 backdrop-blur-sm bg-bg-primary/30">
-                    <Ghost className="w-10 h-10 md:w-12 md:h-12 text-accent-purple/40" />
-                  </div>
-                  <h2 className="text-xl md:text-2xl font-black mb-2 tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">{t.engine.noActiveNarrative}</h2>
-                  <p className="text-text-tertiary text-sm mb-2">{t.engine.startPrompt}</p>
-                  <p className="text-text-tertiary/50 text-[10px] mb-8 max-w-sm font-[family-name:var(--font-mono)]">
-                    {isKO ? '세계관 설계 → 캐릭터 생성 → 연출 설정 → 집필 순서로 진행하세요' : 'World Design → Characters → Direction → Writing — follow the workflow'}
-                  </p>
-                  <button onClick={createNewSession} className="px-8 py-3 md:px-10 md:py-4 bg-accent-purple text-white rounded-2xl font-black text-xs uppercase tracking-widest font-[family-name:var(--font-mono)] hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-accent-purple/20">{t.sidebar.newProject}</button>
+                {/* Content — Onboarding or Quick Start */}
+                <div className="relative z-10 flex flex-col items-center w-full">
+                  <OnboardingGuide
+                    lang={language}
+                    onComplete={() => { window.dispatchEvent(new Event('storage')); }}
+                    onNavigate={(tab) => { createNewSession(tab as AppTab); }}
+                    onQuickStart={openQuickStart}
+                    onDemo={createDemoSession}
+                    showQuickStartLock={showQuickStartLock}
+                  />
                 </div>
               </div>
             ) : (
               <>
                 {activeTab === 'world' && currentSession && (
-                  <>
-                    <PlanningView language={language} config={currentSession.config} setConfig={setConfig} onStart={() => setActiveTab('writing')} />
-                    <div className="max-w-6xl mx-auto px-4 pb-4">
-                      <TabAssistant tab="world" language={language} config={currentSession.config} />
-                    </div>
-                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save Settings')}
-                      </button>
-                    </div>
-                  </>
-                )}
-                {activeTab === 'critique' && (
-                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <WorldSimulator lang={language === 'EN' ? 'en' : 'ko'}
-                      synopsis={currentSession?.config.synopsis}
-                      initialData={currentSession?.config.worldSimData}
-                      onSave={(data) => {
-                        if (!currentSessionId || !currentSession) return;
-                        updateCurrentSession({
-                          config: {
-                            ...currentSession.config,
-                            worldSimData: {
-                              civs: data.civs.map(c => ({ name: c.name, era: c.era, color: c.color, traits: c.traits })),
-                              relations: data.relations.map(r => {
-                                const from = data.civs.find(c => c.id === r.from)?.name || '';
-                                const to = data.civs.find(c => c.id === r.to)?.name || '';
-                                return { fromName: from, toName: to, type: r.type };
-                              }),
-                              transitions: data.transitions,
-                              selectedGenre: data.selectedGenre,
-                              selectedLevel: data.selectedLevel,
-                              genreSelections: data.genreSelections,
-                              ruleLevel: data.ruleLevel,
-                            },
-                          },
-                        });
-                      }}
-                    />
-                    <div className="mt-4">
-                      <TabAssistant tab="critique" language={language} config={currentSession?.config ?? null} />
-                    </div>
-                    <div className="flex justify-end mt-4">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
-                      </button>
-                    </div>
-                  </div>
+                  <SectionErrorBoundary sectionName="World">
+                  <WorldTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
+                    onStart={() => setActiveTab('writing')} onSave={triggerSave} saveFlash={saveFlash}
+                    updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId}
+                    hostedProviders={hostedProviders}
+                  />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'characters' && currentSession && (
-                  <>
-                    {/* 서브탭 토글: 캐릭터 / 아이템 */}
-                    <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
-                      <div className="flex gap-1 bg-bg-secondary rounded-xl p-1 w-fit">
-                        <button onClick={() => setCharSubTab('characters')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'characters' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
-                          👥 {isKO ? '캐릭터' : 'Characters'}
-                        </button>
-                        <button onClick={() => setCharSubTab('items')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'items' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}>
-                          ⚔️ {isKO ? '아이템 스튜디오' : 'Item Studio'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {charSubTab === 'characters' ? (
-                      <ResourceView language={language} config={currentSession.config} setConfig={setConfig} />
-                    ) : (
-                      <ItemStudioView language={language} config={currentSession.config} setConfig={setConfig} />
-                    )}
-
-                    <div className="max-w-[1400px] mx-auto px-4 pb-4">
-                      <TabAssistant tab="characters" language={language} config={currentSession.config} />
-                    </div>
-                    <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
-                      </button>
-                    </div>
-                  </>
+                  <SectionErrorBoundary sectionName="Characters">
+                  <CharacterTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
+                    charSubTab={charSubTab} setCharSubTab={setCharSubTab}
+                    triggerSave={triggerSave} saveFlash={saveFlash}
+                    setUxError={setUxError} showAiLock={showAiLock} hostedProviders={hostedProviders}
+                  />
+                  </SectionErrorBoundary>
                 )}
                 {activeTab === 'settings' && (
-                  <SettingsView language={language} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} />
+                  <SectionErrorBoundary sectionName="Settings">
+                  <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} />
+                  </SectionErrorBoundary>
                 )}
-                {/* critique tab rendered above */}
-                {activeTab === 'rulebook' && (
-                  <div className="max-w-5xl mx-auto py-8 px-4 md:py-12 md:px-6">
-                    <SceneSheet lang={language === 'EN' ? 'en' : 'ko'}
-                      synopsis={currentSession?.config.synopsis}
-                      characterNames={currentSession?.config.characters.map(c => c.name)}
-                      initialDirection={currentSession?.config.sceneDirection ? {
-                        goguma: currentSession.config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
-                        hooks: currentSession.config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
-                        emotions: currentSession.config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: e.position ?? i * 25, emotion: e.emotion, intensity: e.intensity })),
-                        dialogueRules: currentSession.config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
-                        dopamines: currentSession.config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
-                        cliffs: currentSession.config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: currentSession.config.sceneDirection.cliffhanger.cliffType, desc: currentSession.config.sceneDirection.cliffhanger.desc, episode: currentSession.config.sceneDirection.cliffhanger.episode || 1 }] : [],
-                        foreshadows: currentSession.config.sceneDirection.foreshadows?.map((f, i) => ({ id: `r-${i}`, planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
-                        pacings: currentSession.config.sceneDirection.pacings?.map((p, i) => ({ id: `r-${i}`, section: p.section, percent: p.percent, desc: p.desc })),
-                        tensionPoints: currentSession.config.sceneDirection.tensionCurve?.map((t, i) => ({ id: `r-${i}`, position: t.position, level: t.level, label: t.label })),
-                        canons: currentSession.config.sceneDirection.canonRules?.map((c, i) => ({ id: `r-${i}`, character: c.character, rule: c.rule })),
-                        transitions: currentSession.config.sceneDirection.sceneTransitions?.map((t, i) => ({ id: `r-${i}`, fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
-                        writerNotes: currentSession.config.sceneDirection.writerNotes,
-                        plotStructure: currentSession.config.sceneDirection.plotStructure,
-                      } : undefined}
-                      onDirectionUpdate={(data) => {
-                        if (!currentSessionId) return;
-                        updateCurrentSession({
-                          config: {
-                            ...(currentSession?.config || INITIAL_CONFIG),
-                            sceneDirection: {
-                              goguma: data.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc, episode: g.episode })),
-                              hooks: data.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
-                              emotionTargets: data.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity, position: e.position })),
-                              dialogueTones: data.dialogueRules.map(d => ({ character: d.character, tone: d.tone, notes: d.notes })),
-                              dopamineDevices: data.dopamines.map(dp => ({ scale: dp.scale, device: dp.device, desc: dp.desc, resolved: dp.resolved })),
-                              cliffhanger: data.cliffs.length > 0 ? { cliffType: data.cliffs[0].cliffType, desc: data.cliffs[0].desc, episode: data.cliffs[0].episode } : undefined,
-                              foreshadows: data.foreshadows.map(f => ({ planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
-                              pacings: data.pacings.map(p => ({ section: p.section, percent: p.percent, desc: p.desc })),
-                              tensionCurve: data.tensionPoints.map(t => ({ position: t.position, level: t.level, label: t.label })),
-                              canonRules: data.canons.map(c => ({ character: c.character, rule: c.rule })),
-                              sceneTransitions: data.transitions.map(t => ({ fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
-                              writerNotes: data.writerNotes,
-                              plotStructure: data.plotStructure,
-                            },
-                          },
-                        });
-                      }}
-                      onSimRefUpdate={(ref) => {
-                        if (!currentSessionId) return;
-                        updateCurrentSession({
-                          config: {
-                            ...(currentSession?.config || INITIAL_CONFIG),
-                            simulatorRef: { ...ref },
-                          },
-                        });
-                      }}
-                    />
-                    <div className="mt-4">
-                      <TabAssistant tab="rulebook" language={language} config={currentSession?.config ?? null} />
-                    </div>
-                    <div className="flex justify-end mt-4">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {activeTab === 'writing' && currentSession && (
-                  <div className={`max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
-                    {/* Continuity Tracker Graph — 맥락 추적 */}
-                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
-                      <ContinuityGraph language={language} config={currentSession.config} />
-                    )}
-
-                    {/* Applied Settings Summary — hide when empty */}
-                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
-                    <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
-                      <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-secondary transition-colors">
-                        <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-                          {isKO ? '📋 현재 적용 설정' : '📋 Applied Settings'}
-                        </span>
-                        <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
-                      </summary>
-                      <div className="px-4 pb-4 space-y-3 text-[10px] border-t border-border pt-3">
-                        {/* World */}
-                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="text-text-tertiary font-bold uppercase w-16">{isKO ? '장르' : 'Genre'}</span>
-                          <span className="text-accent-purple font-bold">{currentSession.config.genre}</span>
-                          <span className="text-text-tertiary">EP.{currentSession.config.episode}/{currentSession.config.totalEpisodes}</span>
-                          {currentSession.config.setting && <span className="text-text-secondary">📍 {currentSession.config.setting}</span>}
-                          {currentSession.config.primaryEmotion && <span className="text-text-secondary">💓 {currentSession.config.primaryEmotion}</span>}
-                        </div>
-                        {/* Characters */}
-                        {currentSession.config.characters.length > 0 && (
-                          <div>
-                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '캐릭터' : 'Characters'}</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {currentSession.config.characters.map(c => (
-                                <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
-                                  <span className="font-bold text-text-primary">{c.name}</span>
-                                  <span className="text-text-tertiary ml-1">({c.role})</span>
-                                  {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {/* Relations */}
-                        {currentSession.config.charRelations && currentSession.config.charRelations.length > 0 && (
-                          <div>
-                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '관계' : 'Relations'}</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {currentSession.config.charRelations.map((r, i) => {
-                                const from = currentSession.config.characters.find(c => c.id === r.from)?.name || '?';
-                                const to = currentSession.config.characters.find(c => c.id === r.to)?.name || '?';
-                                return (
-                                  <span key={i} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
-                                    {from} ⇄ {to} <span className="text-accent-purple">[{r.type}]</span>
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                        {/* Synopsis preview */}
-                        {currentSession.config.synopsis && (
-                          <div>
-                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '시놉시스' : 'Synopsis'}</span>
-                            <p className="text-text-secondary text-[9px] mt-0.5 line-clamp-2 italic">{currentSession.config.synopsis}</p>
-                          </div>
-                        )}
-                        {/* Scene Direction */}
-                        {currentSession.config.sceneDirection && (
-                          <div>
-                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '연출' : 'Direction'}</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {currentSession.config.sceneDirection.hooks && currentSession.config.sceneDirection.hooks.length > 0 && (
-                                <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold">
-                                  🪝 {isKO ? '훅' : 'Hook'} {currentSession.config.sceneDirection.hooks.length}
-                                </span>
-                              )}
-                              {currentSession.config.sceneDirection.goguma && currentSession.config.sceneDirection.goguma.length > 0 && (
-                                <span className="px-2 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[9px] font-bold">
-                                  🍠 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'goguma').length} / 🥤 {currentSession.config.sceneDirection.goguma.filter(g => g.type === 'cider').length}
-                                </span>
-                              )}
-                              {currentSession.config.sceneDirection.cliffhanger && (
-                                <span className="px-2 py-0.5 bg-accent-red/10 text-accent-red rounded text-[9px] font-bold">
-                                  🔚 {currentSession.config.sceneDirection.cliffhanger.cliffType}
-                                </span>
-                              )}
-                              {currentSession.config.sceneDirection.emotionTargets && currentSession.config.sceneDirection.emotionTargets.length > 0 && (
-                                <span className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
-                                  💓 {currentSession.config.sceneDirection.emotionTargets.map(e => e.emotion).join(', ')}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {/* Simulator Ref */}
-                        {currentSession.config.simulatorRef && Object.values(currentSession.config.simulatorRef).some(Boolean) && (
-                          <div>
-                            <span className="text-text-tertiary font-bold uppercase">{isKO ? '시뮬레이터' : 'Simulator'}</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {currentSession.config.simulatorRef.worldConsistency && <span className="px-1.5 py-0.5 bg-accent-green/10 text-accent-green rounded text-[8px] font-bold">✓ {isKO ? '일관성' : 'Consistency'}</span>}
-                              {currentSession.config.simulatorRef.civRelations && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {isKO ? '관계도' : 'Relations'}</span>}
-                              {currentSession.config.simulatorRef.timeline && <span className="px-1.5 py-0.5 bg-accent-amber/10 text-accent-amber rounded text-[8px] font-bold">✓ {isKO ? '타임라인' : 'Timeline'}</span>}
-                              {currentSession.config.simulatorRef.territoryMap && <span className="px-1.5 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold">✓ {isKO ? '지도' : 'Map'}</span>}
-                              {currentSession.config.simulatorRef.languageSystem && <span className="px-1.5 py-0.5 bg-accent-blue/10 text-accent-blue rounded text-[8px] font-bold">✓ {isKO ? '언어' : 'Language'}</span>}
-                              {currentSession.config.simulatorRef.genreLevel && <span className="px-1.5 py-0.5 bg-accent-red/10 text-accent-red rounded text-[8px] font-bold">✓ {isKO ? '장르Lv' : 'GenreLv'}</span>}
-                            </div>
-                          </div>
-                        )}
-                        {/* Quick nav */}
-                        <div className="flex gap-2 pt-1">
-                          <button onClick={() => setActiveTab('world')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
-                            {isKO ? '→ 세계관 수정' : '→ Edit World'}
-                          </button>
-                          <button onClick={() => setActiveTab('characters')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
-                            {isKO ? '→ 캐릭터 수정' : '→ Edit Characters'}
-                          </button>
-                          <button onClick={() => setActiveTab('rulebook')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">
-                            {isKO ? '→ 연출 수정' : '→ Edit Direction'}
-                          </button>
-                        </div>
-                      </div>
-                    </details>
-                    )}
-
-                    {/* AI / Edit sub-tabs + Directive — hide when empty AI mode */}
-                    {(currentSession.messages.length > 0 || writingMode !== 'ai') && (<>
-                    <div className="flex gap-1 items-center">
-                      <button onClick={() => setWritingMode('ai')}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🤖 {isKO ? '초안 생성' : 'Draft'}
-                      </button>
-                      <button onClick={() => {
-                        setWritingMode('edit');
-                        if (!editDraft && currentSession.messages.length > 0) {
-                          const allText = currentSession.messages
-                            .filter(m => m.role === 'assistant' && m.content)
-                            .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
-                            .join('\n\n---\n\n');
-                          setEditDraft(allText);
-                        }
-                      }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'edit' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        ✏️ {isKO ? '직접 편집' : 'Manual Edit'}
-                      </button>
-                      <button onClick={() => { setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🎨 {isKO ? '3단계 작성' : '3-Step Write'}
-                      </button>
-                      <button onClick={() => {
-                        setWritingMode('refine');
-                        if (!editDraft && currentSession.messages.length > 0) {
-                          const allText = currentSession.messages
-                            .filter(m => m.role === 'assistant' && m.content)
-                            .map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
-                            .join('\n\n---\n\n');
-                          setEditDraft(allText);
-                        }
-                      }}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        ⚡ {isKO ? 'AUTO 30%' : 'AUTO 30%'}
-                      </button>
-                      <button onClick={() => setWritingMode('advanced')}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
-                          writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'
-                        }`}>
-                        🎯 {isKO ? '정밀 집필' : 'Advanced'}
-                      </button>
-                      {writingMode === 'edit' && (
-                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] ml-2">
-                          {editDraft.length.toLocaleString()}{isKO ? '자' : ' chars'}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Prompt Directive — AI에 추가 지시 */}
-                    <div className="flex gap-2 items-center">
-                      <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">
-                        💡 {isKO ? '지침' : 'Directive'}
-                      </span>
-                      <input
-                        value={promptDirective}
-                        onChange={e => setPromptDirective(e.target.value)}
-                        placeholder={isKO ? '프롬프트 지침 (예: "문체를 하드보일드로", "대화 비율 50%", "1인칭 시점")' : 'Prompt directive (e.g. "hardboiled style", "50% dialogue", "1st person POV")'}
-                        className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
-                      />
-                      {promptDirective && (
-                        <button onClick={() => setPromptDirective('')} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
-                      )}
-                    </div>
-                    </>)}
-
-                    {writingMode === 'ai' && (
-                      <>
-                        <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
-                        {currentSession.messages.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center text-center space-y-4">
-                            <Sparkles className="w-14 h-14 text-accent-purple/20 mx-auto" />
-                            <p className="text-text-tertiary text-base font-medium">{t.engine.startPrompt}</p>
-                            <p className="text-text-tertiary/40 text-xs font-[family-name:var(--font-mono)] max-w-sm">
-                              {isKO ? '아래 입력창에 첫 장면을 묘사하세요' : 'Describe the first scene in the input below'}
-                            </p>
-                            <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-2xl">
-                              {(isKO ? [
-                                "주인공이 처음 등장하는 장면을 써줘",
-                                "긴박한 추격전으로 시작해줘",
-                                "일상 속 작은 이상 징후로 시작해줘",
-                                "두 캐릭터의 첫 만남을 써줘",
-                                "비밀이 드러나는 대화 장면을 써줘",
-                                "전투 직전의 긴장감 있는 장면을 써줘",
-                                "과거 회상으로 시작하는 장면을 써줘",
-                                "편지나 일지 형식으로 시작해줘",
-                                "절체절명의 위기 장면을 써줘",
-                                "고요한 풍경 묘사로 시작해줘",
-                              ] : [
-                                "Write the protagonist's first appearance",
-                                "Start with a tense chase scene",
-                                "Begin with a subtle anomaly in daily life",
-                                "Write the first meeting of two characters",
-                                "Write a dialogue scene revealing a secret",
-                                "Write a tense moment before battle",
-                                "Start with a flashback scene",
-                                "Begin in letter or journal format",
-                                "Write a life-or-death crisis scene",
-                                "Start with a quiet landscape description",
-                              ]).map((preset, i) => (
-                                <button key={i} onClick={() => handleSend(preset)}
-                                  className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)]">
-                                  {preset}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
-                            <div key={msg.id}>
-                              <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
-                              {msg.role === 'assistant' && msg.versions && msg.versions.length > 1 && (
-                                <div className="ml-11 md:ml-12">
-                                  <VersionDiff
-                                    versions={msg.versions}
-                                    currentIndex={msg.currentVersionIndex ?? msg.versions.length - 1}
-                                    language={language}
-                                    onSwitch={(idx) => handleVersionSwitch(msg.id, idx)}
-                                  />
-                                </div>
-                              )}
-                              {msg.role === 'assistant' && msg.content && (
-                                <div className="ml-11 md:ml-12">
-                                  <TypoPanel
-                                    text={msg.content}
-                                    language={language}
-                                    onApplyFix={(idx, orig, sug) => handleTypoFix(msg.id, idx, orig, sug)}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        )}
-                        <div ref={messagesEndRef} className="h-32" />
-                      </>
-                    )}
-
-                    {writingMode === 'edit' && (
-                      /* ====== INLINE REWRITE MODE ====== */
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] text-text-tertiary">
-                            {isKO ? '텍스트를 드래그 선택 → 리라이트/살붙이기/압축 등 AI 액션 실행. 직접 수정도 가능.' : 'Select text → run AI rewrite/expand/compress actions. Direct editing also available.'}
-                          </p>
-                          <div className="flex gap-2">
-                            <button onClick={() => {
-                              if (!editDraft.trim()) return;
-                              const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
-                              updateCurrentSession({ messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: isKO ? '[인라인 편집 완료]' : '[Inline Edit Complete]', timestamp: Date.now() }, editMsg] });
-                              setWritingMode('ai');
-                            }}
-                              className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-                              {isKO ? '💾 원고에 반영' : '💾 Apply to Manuscript'}
-                            </button>
-                          </div>
-                        </div>
-                        <InlineRewriter
-                          content={editDraft}
-                          language={language}
-                          context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined}
-                          onApply={(newContent) => setEditDraft(newContent)}
-                        />
-                      </div>
-                    )}
-
-                    {/* ====== AUTO 30% REFINE MODE ====== */}
-                    {writingMode === 'refine' && editDraft && (
-                      <div className="space-y-4">
-                        <AutoRefiner
-                          content={editDraft}
-                          language={language}
-                          context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''} | EP.${currentSession.config.episode}` : undefined}
-                          onApply={(newContent) => {
-                            setEditDraft(newContent);
-                            const editMsg: Message = { id: `refine-${Date.now()}`, role: 'assistant', content: newContent, timestamp: Date.now() };
-                            updateCurrentSession({ messages: [...currentSession.messages, { id: `u-refine-${Date.now()}`, role: 'user', content: isKO ? '[AUTO 30% 리파인 완료]' : '[AUTO 30% Refine Complete]', timestamp: Date.now() }, editMsg] });
-                            setWritingMode('ai');
-                          }}
-                        />
-                        <div className="text-[9px] text-zinc-600 font-[family-name:var(--font-mono)]">
-                          {isKO
-                            ? '※ 분석 시작 → AI가 문단별 약점 분석 → 개별/전체 생성 → 선택 적용 → 원고 반영'
-                            : '※ Analyze → AI finds weak paragraphs → Generate fixes → Selectively apply → Save to manuscript'}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ====== 3-PASS CANVAS MODE ====== */}
-                    {writingMode === 'canvas' && (
-                      <div className="space-y-4">
-                        {/* Pass progress */}
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] ${canvasPass >= 1 ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'bg-bg-secondary text-text-tertiary border border-border'}`}>
-                            🦴 {canvasPass >= 1 ? '✓' : '1'} {isKO ? '뼈대' : 'Skeleton'}
-                          </div>
-                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] ${canvasPass >= 2 ? 'bg-pink-600/20 text-pink-400 border border-pink-500/30' : 'bg-bg-secondary text-text-tertiary border border-border'}`}>
-                            💓 {canvasPass >= 2 ? '✓' : '2'} {isKO ? '감정' : 'Emotion'}
-                          </div>
-                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] ${canvasPass >= 3 ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' : 'bg-bg-secondary text-text-tertiary border border-border'}`}>
-                            👁 {canvasPass >= 3 ? '✓' : '3'} {isKO ? '묘사' : 'Sensory'}
-                          </div>
-                          <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                            {canvasContent.length.toLocaleString()}{isKO ? '자' : ' chars'}
-                          </span>
-                          {isGenerating && <span className="text-[9px] text-accent-purple animate-pulse font-[family-name:var(--font-mono)]">{isKO ? '생성 중...' : 'Generating...'}</span>}
-                        </div>
-
-                        {/* Custom prompt input */}
-                        <div className="flex gap-2">
-                          <input
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { handleSend(); } }}
-                            placeholder={isKO ? '💡 커스텀 지시 (예: "전투 장면 더 길게", "대사 톤 부드럽게", "클리프행어 바꿔줘")' : '💡 Custom instruction (e.g. "extend fight scene", "softer dialogue", "change cliffhanger")'}
-                            className="flex-1 bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-xs outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
-                            disabled={isGenerating}
-                          />
-                          <button onClick={() => { if (input.trim()) handleSend(); }} disabled={isGenerating || !input.trim()}
-                            className="px-4 py-2.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
-                            {isKO ? '전송' : 'Send'}
-                          </button>
-                        </div>
-
-                        {/* Canvas textarea */}
-                        <textarea
-                          value={canvasContent}
-                          onChange={e => setCanvasContent(e.target.value)}
-                          className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
-                          placeholder={isKO ? '3패스 캔버스 — 상단에서 커스텀 지시를 보내거나, 아래 단계 버튼을 순서대로 눌러 원고를 완성하세요.' : '3-Pass Canvas — Send custom instructions above, or click pass buttons below in order.'}
-                        />
-
-                        {/* Pass action buttons */}
-                        <div className="flex gap-2 flex-wrap items-center">
-                          <button disabled={isGenerating} onClick={() => {
-                            setCanvasPass(1);
-                            setWritingMode('ai');
-                            setTimeout(() => {
-                              handleSend(isKO
-                                ? '[1단계 — 뼈대] 씬시트/연출표를 기반으로 초안을 작성하세요. 사건과 대사만. 감정 묘사 없이 골격만. 약 1,000토큰(2,000자). 중요: JSON 코드블록, 분석 리포트, grade, metrics 등 절대 출력하지 마세요. 순수 소설 본문만 출력하세요.'
-                                : '[Pass 1 — Skeleton] Scene sheet based. Events and dialogue only. ~1,000 tokens. Story text only, no JSON.'
-                              );
-                            }, 100);
-                          }}
-                            className="px-4 py-2.5 bg-blue-600/10 border border-blue-500/30 rounded-lg text-[10px] font-bold text-blue-400 hover:bg-blue-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
-                            🦴 {isKO ? '1단계: 뼈대' : 'Pass 1: Skeleton'}
-                          </button>
-                          <button disabled={isGenerating || canvasPass < 1} onClick={() => {
-                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
-                            const draft = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                            if (!draft) { alert(isKO ? '1단계 결과가 없습니다.' : 'No Pass 1 result.'); return; }
-                            setCanvasContent(draft);
-                            setCanvasPass(2);
-                            setWritingMode('ai');
-                            setTimeout(() => {
-                              handleSend(isKO
-                                ? `[2단계 — 감정선] 아래 초안을 전체 다시 써주세요. 인물 내면, 감정 밀도, 문장 리듬 강화. 고구마/사이다 타이밍. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---초안---\n${draft.slice(0, 4000)}`
-                                : `[Pass 2 — Emotion] Rewrite fully with inner thoughts, emotional density, pacing. +1,000 tokens. Full output.\n\n---Draft---\n${draft.slice(0, 4000)}`
-                              );
-                            }, 100);
-                          }}
-                            className="px-4 py-2.5 bg-pink-600/10 border border-pink-500/30 rounded-lg text-[10px] font-bold text-pink-400 hover:bg-pink-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
-                            💓 {isKO ? '2단계: 감정' : 'Pass 2: Emotion'}
-                          </button>
-                          <button disabled={isGenerating || canvasPass < 2} onClick={() => {
-                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
-                            const ms = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                            if (!ms) { alert(isKO ? '2단계 결과가 없습니다.' : 'No Pass 2 result.'); return; }
-                            setCanvasContent(ms);
-                            setCanvasPass(3);
-                            setWritingMode('ai');
-                            setTimeout(() => {
-                              handleSend(isKO
-                                ? `[3단계 — 감각 묘사] 아래 원고를 전체 다시 써주세요. 물성/시각/청각/촉각 묘사 추가. 클리프행어 마무리. 약 1,000토큰 추가. JSON/리포트/grade/metrics 절대 출력 금지. 소설 본문만.\n\n---원고---\n${ms.slice(0, 5000)}`
-                                : `[Pass 3 — Sensory] Rewrite with physical/visual/auditory descriptions. Cliffhanger. +1,000 tokens. Full output.\n\n---Manuscript---\n${ms.slice(0, 5000)}`
-                              );
-                            }, 100);
-                          }}
-                            className="px-4 py-2.5 bg-amber-600/10 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-400 hover:bg-amber-600/20 transition-all font-[family-name:var(--font-mono)] disabled:opacity-30">
-                            👁 {isKO ? '3단계: 묘사' : 'Pass 3: Sensory'}
-                          </button>
-                          <span className="text-border mx-1">|</span>
-                          <button onClick={() => {
-                            const lastAI = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).pop();
-                            const text = lastAI?.content.replace(/```json[\s\S]*?```/g, '').trim() || '';
-                            if (text) { setCanvasContent(text); setWritingMode('canvas'); }
-                          }}
-                            className="px-3 py-2.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)]">
-                            📋 {isKO ? '캔버스에 가져오기' : 'Pull to Canvas'}
-                          </button>
-                          <button disabled={!canvasContent} onClick={() => {
-                            const editMsg: Message = { id: `canvas-${Date.now()}`, role: 'assistant', content: canvasContent, timestamp: Date.now() };
-                            updateCurrentSession({ messages: [...(currentSession?.messages || []), { id: `u-canvas-${Date.now()}`, role: 'user', content: isKO ? `[3패스 완성 — ${canvasContent.length}자]` : `[3-Pass Complete — ${canvasContent.length} chars]`, timestamp: Date.now() }, editMsg] });
-                            setWritingMode('ai');
-                          }}
-                            className="px-3 py-2.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30">
-                            💾 {isKO ? '원고 저장' : 'Save'}
-                          </button>
-                        </div>
-                        <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                          {isKO ? '※ 각 단계 클릭 → AI 채팅에서 결과 확인 → 📋 캔버스로 가져와서 편집 → 다음 단계' : '※ Click pass → Check result in AI chat → 📋 Pull to canvas for editing → Next pass'}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* ====== ADVANCED WRITING MODE ====== */}
-                    {writingMode === 'advanced' && currentSession && (
-                      <div className="space-y-4">
-                        <AdvancedWritingPanel
-                          language={language}
-                          config={currentSession.config}
-                          settings={advancedSettings}
-                          onSettingsChange={setAdvancedSettings}
-                        />
-                        <div className="flex gap-2 items-center">
-                          <input
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { handleSend(); } }}
-                            placeholder={isKO ? '🎯 정밀 지시 (설정된 제약 조건이 자동 반영됩니다)' : '🎯 Precise instruction (configured constraints auto-applied)'}
-                            className="flex-1 bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors font-[family-name:var(--font-mono)] placeholder-text-tertiary"
-                            disabled={isGenerating}
-                          />
-                          <button onClick={() => { if (input.trim()) handleSend(); }} disabled={isGenerating || !input.trim()}
-                            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">
-                            {isKO ? '정밀 생성' : 'Generate'}
-                          </button>
-                        </div>
-                        <p className="text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                          {isKO
-                            ? '※ 장면 목표·서술 제약·참조 범위·고정 규칙이 프롬프트에 자동 결합됩니다. "고급 집필 = 작가가 더 세밀하게 제어하는 모드"'
-                            : '※ Scene goals, narrative constraints, references, and locks are auto-combined into the prompt.'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {activeTab === 'style' && currentSession && (
-                  <>
-                    <StyleStudioView
-                      isKO={isKO}
-                      initialProfile={currentSession.config.styleProfile}
-                      onProfileChange={(profile) => {
-                        updateCurrentSession({
-                          config: { ...currentSession.config, styleProfile: profile },
-                        });
-                      }}
-                    />
-                    <div className="max-w-6xl mx-auto px-4 pb-4">
-                      <TabAssistant tab="style" language={language} config={currentSession.config} />
-                    </div>
-                    <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-                      <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-                        💾 {saveFlash ? (isKO ? '저장 완료!' : 'Saved!') : (isKO ? '설정 저장' : 'Save')}
-                      </button>
-                    </div>
-                  </>
-                )}
-                {activeTab === 'manuscript' && currentSession && (
-                  <ManuscriptView
+                {/* world studio (design/simulator/analysis) rendered above */}
+                {activeTab === 'rulebook' && currentSession && (
+                  <SectionErrorBoundary sectionName="Rulebook">
+                  <RulebookTab
                     language={language}
                     config={currentSession.config}
-                    setConfig={setConfig}
+                    updateCurrentSession={updateCurrentSession}
+                    triggerSave={triggerSave}
+                    saveFlash={saveFlash}
+                    currentSessionId={currentSessionId}
+                    showAiLock={showAiLock}
+                    hostedProviders={hostedProviders}
+                  />
+                  </SectionErrorBoundary>
+                )}
+                {activeTab === 'writing' && currentSession && (
+                  <SectionErrorBoundary sectionName="Writing" fallbackHeight={400}>
+                  <WritingTabInline
+                    language={language} currentSession={currentSession} currentSessionId={currentSessionId}
+                    updateCurrentSession={updateCurrentSession} setConfig={setConfig}
+                    writingMode={writingMode} setWritingMode={setWritingMode}
+                    editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
+                    canvasContent={canvasContent} setCanvasContent={setCanvasContent}
+                    canvasPass={canvasPass} setCanvasPass={setCanvasPass}
+                    promptDirective={promptDirective} setPromptDirective={setPromptDirective}
+                    isGenerating={isGenerating} lastReport={lastReport}
+                    handleSend={doHandleSend} handleCancel={handleCancel}
+                    handleRegenerate={handleRegenerate} handleVersionSwitch={handleVersionSwitch}
+                    handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef}
+                    searchQuery={searchQuery} filteredMessages={filteredMessages}
+                    hasApiKey={hasAiAccess} setShowApiKeyModal={setShowApiKeyModal}
+                    setActiveTab={setActiveTab}
+                    advancedSettings={advancedSettings} setAdvancedSettings={setAdvancedSettings}
+                    advancedOutputMode={advancedSettings.outputMode} setAdvancedOutputMode={(m: string) => setAdvancedSettings({ ...advancedSettings, outputMode: m as typeof advancedSettings.outputMode })}
+                    showDashboard={showDashboard}
+                    rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
+                    directorReport={directorReport} hfcpState={hfcpState}
+                    handleNextEpisode={handleNextEpisode}
+                    showAiLock={showAiLock} hostedProviders={hostedProviders}
+                    saveFlash={saveFlash} triggerSave={triggerSave}
+                    writingColumnShell={writingColumnShell}
+                    input={input} setInput={setInput}
+                  />
+                  </SectionErrorBoundary>
+                )}
+                {activeTab === 'style' && currentSession && (
+                  <SectionErrorBoundary sectionName="Style">
+                  <StyleTab
+                    language={language} config={currentSession.config}
+                    updateCurrentSession={updateCurrentSession}
+                    triggerSave={triggerSave} saveFlash={saveFlash}
+                    showAiLock={showAiLock} hostedProviders={hostedProviders}
                     messages={currentSession.messages}
                   />
+                  </SectionErrorBoundary>
                 )}
-                {activeTab === 'history' && (() => {
-                  const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
-                    ? projects.flatMap(p => p.sessions.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })))
-                    : sessions.map(s => ({ ...s, _projectName: currentProject?.name, _projectId: currentProjectId ?? undefined }));
-
-                  const genres = Array.from(new Set(allSessions.map(s => s.config.genre)));
-                  const hasWorldData = allSessions.some(s => s.config.worldSimData?.civs?.length);
-
-                  const categories = [
-                    { key: 'ALL', label: isKO ? '전체' : 'All' },
-                    ...genres.map(g => ({ key: g, label: g })),
-                    ...(hasWorldData ? [{ key: 'WORLD', label: isKO ? '세계관' : 'World' }] : []),
-                  ];
-
-                  const filtered = allSessions.filter(s => {
-                    if (archiveFilter === 'ALL') return true;
-                    if (archiveFilter === 'WORLD') return (s.config.worldSimData?.civs?.length ?? 0) > 0;
-                    return s.config.genre === archiveFilter;
-                  }).sort((a, b) => b.lastUpdate - a.lastUpdate);
-
-                  return (
-                    <div className="p-4 md:p-10">
-                      {/* Archive Header: scope toggle + category filter */}
-                      <div className="mb-6 space-y-3">
-                        {projects.length > 1 && (
-                          <div className="flex gap-1.5">
-                            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
-                              {isKO ? '현재 프로젝트' : 'Current Project'}
-                            </button>
-                            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
-                              {isKO ? '전체 프로젝트' : 'All Projects'}
-                            </button>
-                          </div>
-                        )}
-                        <div className="flex gap-1.5 flex-wrap">
-                          {categories.map(cat => (
-                            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
-                              {cat.label}
-                              <span className="ml-1 text-[8px] opacity-50">
-                                {cat.key === 'ALL' ? allSessions.length : cat.key === 'WORLD' ? allSessions.filter(s => (s.config.worldSimData?.civs?.length ?? 0) > 0).length : allSessions.filter(s => s.config.genre === cat.key).length}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Session Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                        {filtered.length === 0 ? (
-                          <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-[family-name:var(--font-mono)]">{t.engine.noArchive}</div>
-                        ) : (
-                          filtered.map(s => (
-                            <div
-                              key={s.id}
-                              onClick={() => {
-                                if (s._projectId && s._projectId !== currentProjectId) setCurrentProjectId(s._projectId);
-                                setCurrentSessionId(s.id);
-                                setActiveTab('writing');
-                              }}
-                              className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
-                            >
-                              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
-                                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
-                                {projects.length > 1 && (
-                                  <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    const others = projects.filter(p => p.id !== (s._projectId || currentProjectId));
-                                    if (others.length === 1) {
-                                      moveSessionToProject(s.id, others[0].id);
-                                    } else if (others.length > 1) {
-                                      const choice = window.prompt(
-                                        (t.project?.moveSession || 'Move to') + ':\n' + others.map((p, i) => `${i + 1}. ${p.name}`).join('\n'),
-                                        '1'
-                                      );
-                                      const idx = parseInt(choice || '', 10) - 1;
-                                      if (idx >= 0 && idx < others.length) moveSessionToProject(s.id, others[idx].id);
-                                    }
-                                  }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t.project?.moveSession || 'Move Session'}><Upload className="w-3 h-3" /></button>
-                                )}
-                                <button onClick={(e) => { e.stopPropagation(); handlePrint(); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
-                                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
-                              </div>
-                              {renamingSessionId === s.id ? (
-                                <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingSessionId(null); }}
-                                  onBlur={confirmRename} onClick={e => e.stopPropagation()}
-                                  className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none" />
-                              ) : (
-                                <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
-                              )}
-                              <div className="flex flex-wrap gap-1.5 mt-1">
-                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
-                                <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
-                                {s.messages.length > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-zinc-800/80 rounded text-[8px] font-bold text-zinc-600 font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
-                                )}
-                                {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
-                                    {isKO ? '세계관' : 'WORLD'} · {s.config.worldSimData!.civs!.length}
-                                  </span>
-                                )}
-                                {archiveScope === 'all' && s._projectName && (
-                                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
-                                )}
-                              </div>
-                              <div className="mt-2 text-[8px] text-zinc-600 font-[family-name:var(--font-mono)]">
-                                {new Date(s.lastUpdate).toLocaleDateString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Genre×Level Reviewer Chat */}
-                      {currentSession && (
-                        <div className="mt-8">
-                          <GenreReviewChat
-                            language={language}
-                            config={currentSession.config}
-                            manuscriptText={currentSession.messages.filter(m => m.role === 'assistant').map(m => m.content).join('\n\n')}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                {activeTab === 'manuscript' && currentSession && (
+                  <SectionErrorBoundary sectionName="Manuscript">
+                  <ManuscriptTab
+                    language={language} config={currentSession.config} setConfig={setConfig}
+                    messages={currentSession.messages}
+                    onEditInStudio={(content) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
+                  />
+                  </SectionErrorBoundary>
+                )}
+                {activeTab === 'history' && (
+                  <SectionErrorBoundary sectionName="History">
+                  <HistoryTab
+                    language={language}
+                    archiveScope={archiveScope}
+                    setArchiveScope={setArchiveScope}
+                    archiveFilter={archiveFilter}
+                    setArchiveFilter={setArchiveFilter}
+                    projects={projects}
+                    sessions={sessions}
+                    currentProject={currentProject}
+                    currentProjectId={currentProjectId}
+                    setCurrentProjectId={setCurrentProjectId}
+                    currentSessionId={currentSessionId}
+                    setCurrentSessionId={setCurrentSessionId}
+                    setActiveTab={setActiveTab}
+                    startRename={startRename}
+                    renamingSessionId={renamingSessionId}
+                    setRenamingSessionId={setRenamingSessionId}
+                    renameValue={renameValue}
+                    setRenameValue={setRenameValue}
+                    confirmRename={confirmRename}
+                    moveSessionToProject={moveSessionToProject}
+                    handlePrint={handlePrint}
+                    deleteSession={deleteSession}
+                    currentSession={currentSession}
+                  />
+                  </SectionErrorBoundary>
+                )}
+                {activeTab === 'docs' && (
+                  <SectionErrorBoundary sectionName="Docs">
+                  <StudioDocsView lang={language} />
+                  </SectionErrorBoundary>
+                )}
+                {activeTab === 'visual' && currentSession && (
+                  <SectionErrorBoundary sectionName="Visual">
+                  <VisualTab config={currentSession.config} setConfig={setConfig} currentSession={currentSession} language={language} />
+                  </SectionErrorBoundary>
+                )}
               </>
             )}
           </div>
 
-          {showDashboard && activeTab === 'writing' && currentSession && (
+          {showDashboard && activeTab === 'writing' && currentSession && !showAiLock && (
             <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
           )}
 
+          {/* 수동 모드 설정 참조 패널 → EditReferencePanel로 통합됨 (edit 모드 내부에 배치) */}
+
           {/* Right Panel — Save Slots (all tabs except writing) */}
-          {activeTab !== 'writing' && activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && currentSession && (
-            <aside className="hidden lg:flex w-64 shrink-0 flex-col border-l border-border bg-bg-primary overflow-y-auto">
+          {activeTab !== 'history' && activeTab !== 'settings' && activeTab !== 'manuscript' && !(activeTab === 'writing' && writingMode === 'ai' && !showDashboard) && currentSession && (
+            <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-64' : 'w-8'}`}>
+              <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)]">
+                {rightPanelOpen ? '▶' : '◀'}
+              </button>
+              {!rightPanelOpen ? null : (
               <div className="p-4 space-y-3">
                 <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
-                  📂 {isKO ? '저장 목록' : 'Saved Versions'}
+                  📂 {t('saveSlot.savedVersions')}
                 </div>
 
                 {/* Save current */}
@@ -1826,7 +1236,7 @@ export default function StudioPage() {
                   setSaveSlotModalOpen(true);
                 }}
                   className="w-full py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity active:scale-95">
-                  💾 {isKO ? '현재 설정 저장' : 'Save Current'}
+                  💾 {t('saveSlot.saveCurrent')}
                 </button>
 
                 {/* Saved slots list */}
@@ -1838,15 +1248,17 @@ export default function StudioPage() {
                       <div key={slot.id} className="flex items-center gap-2 px-2 py-2 bg-bg-secondary/50 border border-border rounded-lg group hover:border-accent-purple/30 transition-colors">
                         <div className="flex-1 min-w-0">
                           <div className="text-[10px] font-bold text-text-primary truncate">{slot.name}</div>
-                          <div className="text-[8px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
+                          <div className="text-[10px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
                         </div>
                         <button onClick={() => {
-                          if (!confirm(isKO ? `"${slot.name}"을 불러오시겠습니까? 현재 설정이 덮어씌워집니다.` : `Load "${slot.name}"? Current settings will be overwritten.`)) return;
-                          updateCurrentSession({ config: { ...currentSession.config, ...slot.data } });
+                          if (!confirm(`"${slot.name}"${t('confirm.loadSlotMsg')}`)) return;
+                          // INITIAL_CONFIG를 베이스로 슬롯 데이터로 완전 교체 (부분 덮어쓰기 방지)
+                          // savedSlots/manuscripts는 현재 세션 것을 유지
+                          updateCurrentSession({ config: { ...INITIAL_CONFIG, ...slot.data, savedSlots: currentSession.config.savedSlots, manuscripts: currentSession.config.manuscripts } });
                           triggerSave();
                         }}
-                          className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[8px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
-                          {isKO ? '불러오기' : 'Load'}
+                          className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
+                          {t('saveSlot.load')}
                         </button>
                         <button onClick={() => {
                           updateCurrentSession({
@@ -1862,8 +1274,8 @@ export default function StudioPage() {
                       </div>
                     ))}
                   {(currentSession.config.savedSlots || []).filter(s => s.tab === activeTab || s.tab === 'all').length === 0 && (
-                    <p className="text-[9px] text-text-tertiary italic text-center py-4">
-                      {isKO ? '저장된 버전이 없습니다' : 'No saved versions'}
+                    <p className="text-[11px] text-text-tertiary italic text-center py-4">
+                      {t('saveSlot.noSavedVersions')}
                     </p>
                   )}
                 </div>
@@ -1871,12 +1283,12 @@ export default function StudioPage() {
                 {/* All slots across tabs */}
                 {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length > 0 && (
                   <details className="group">
-                    <summary className="text-[9px] text-text-tertiary cursor-pointer hover:text-text-secondary">
-                      {isKO ? '다른 탭 저장' : 'Other tabs'} ({(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length})
+                    <summary className="text-[11px] text-text-tertiary cursor-pointer hover:text-text-secondary">
+                      {t('saveSlot.otherTabs')} ({(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).length})
                     </summary>
                     <div className="mt-1 space-y-1">
                       {(currentSession.config.savedSlots || []).filter(s => s.tab !== activeTab).map(slot => (
-                        <div key={slot.id} className="text-[8px] text-text-tertiary px-2 py-1 bg-bg-primary rounded">
+                        <div key={slot.id} className="text-[10px] text-text-tertiary px-2 py-1 bg-bg-primary rounded">
                           [{slot.tab}] {slot.name}
                         </div>
                       ))}
@@ -1884,6 +1296,7 @@ export default function StudioPage() {
                   </details>
                 )}
               </div>
+              )}
             </aside>
           )}
 
@@ -1897,19 +1310,38 @@ export default function StudioPage() {
 
               {rightPanelOpen && (
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  {/* 대화 히스토리 (최신 제외한 이전 메시지) */}
+                  {currentSession.messages.length > 2 && (
+                    <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">
+                      <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)] mb-2">
+                        💬 {language === 'KO' ? '대화 히스토리' : 'Chat History'} ({currentSession.messages.length - 2})
+                      </div>
+                      <div className="space-y-2">
+                        {currentSession.messages.slice(0, -2).map(msg => (
+                          <div key={msg.id} className={`text-[10px] leading-relaxed px-2 py-1.5 rounded-lg ${
+                            msg.role === 'user' ? 'bg-bg-tertiary/50 text-zinc-400' : 'text-zinc-500'
+                          }`}>
+                            <span className="font-bold text-[9px] uppercase">{msg.role === 'user' ? '🧑' : '🤖'}</span>{' '}
+                            {msg.content.slice(0, 120)}{msg.content.length > 120 ? '...' : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* 도우미 섹션 */}
                   <div className="p-4 space-y-3 border-b border-border min-w-0">
                     <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
-                      {isKO ? '집필 참고' : 'Reference'}
+                      {t('panel.reference')}
                     </div>
 
                     {/* ① 브릿지 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📎 {isKO ? '이전 화' : 'Bridge'}</summary>
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📎 {t('panel.bridge')}</summary>
                       {(() => {
                         const prev = currentSession.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
                         const txt = prev?.content.replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '').replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique)"[\s\S]*?\n\s*\}/g, '').trim() || '';
-                        return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed break-words overflow-hidden">{txt ? txt.slice(-250) : (isKO ? '없음' : 'None')}</p>;
+                        return <p className="mt-1.5 text-[11px] text-text-tertiary pl-4 italic leading-relaxed break-words overflow-hidden">{txt ? txt.slice(-250) : t('panel.none')}</p>;
                       })()}
                     </details>
 
@@ -1919,16 +1351,16 @@ export default function StudioPage() {
                         currentSession.config.sceneDirection
                           ? 'text-text-tertiary hover:text-text-secondary'
                           : 'text-amber-400 hover:text-amber-300'
-                      }`}>🎬 {isKO ? '씬시트' : 'Scene'} {!currentSession.config.sceneDirection && <span className="text-[9px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{isKO ? '미설정' : 'Not set'}</span>}</summary>
+                      }`}>🎬 {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[11px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
                       <div className="mt-1.5 pl-4 space-y-1 min-w-0">
                         {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400 break-words">🪝 {h.desc}</div>)}
                         {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '🍠' : '🥤'} {g.desc}</div>)}
                         {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400 break-words">🔚 {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                         {!currentSession.config.sceneDirection && (
                           <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
-                            <p className="text-[10px] text-amber-300">{isKO ? '씬시트 없이 집필하면 AI 품질이 떨어집니다' : 'Writing without scene direction reduces AI quality'}</p>
+                            <p className="text-[10px] text-amber-300">{t('panel.sceneWarning')}</p>
                             <button onClick={() => setActiveTab('rulebook')} className="text-[10px] text-accent-purple hover:underline font-bold">
-                              → {isKO ? '연출 스튜디오에서 설정하기' : 'Set up in Direction Studio'}
+                              → {t('panel.setupDirection')}
                             </button>
                           </div>
                         )}
@@ -1937,7 +1369,7 @@ export default function StudioPage() {
 
                     {/* ②-B 에피소드 씬시트 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📋 {isKO ? '에피소드 씬시트' : 'Episode Scenes'} ({(currentSession.config.episodeSceneSheets ?? []).length})</summary>
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📋 {t('panel.episodeScenes')} ({(currentSession.config.episodeSceneSheets ?? []).length})</summary>
                       <div className="mt-1.5 pl-2 min-w-0">
                         <EpisodeScenePanel
                           lang={language}
@@ -1962,29 +1394,47 @@ export default function StudioPage() {
 
                     {/* ③ 캐릭터 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">👤 {isKO ? '캐릭터' : 'Chars'} ({currentSession.config.characters.length})</summary>
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">👤 {t('panel.chars')} ({currentSession.config.characters.length})</summary>
                       <div className="mt-1.5 pl-4 space-y-1.5 min-w-0">
                         {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
                           <div key={c.id} className="text-[10px] break-words">
                             <span className="font-bold text-text-primary">{c.name}</span> <span className="text-text-tertiary">({c.role})</span>
                             {c.speechStyle && <span className="text-accent-blue ml-1">🗣️{c.speechStyle}</span>}
                           </div>
-                        )) : <p className="text-[10px] text-text-tertiary italic">{isKO ? '없음' : 'None'}</p>}
+                        )) : <p className="text-[10px] text-text-tertiary italic">{t('panel.none')}</p>}
                       </div>
                     </details>
 
                     {/* ④ 서식 */}
                     <details className="group">
-                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📐 {isKO ? '서식' : 'Format'}</summary>
+                      <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">📐 {t('panel.format')}</summary>
                       <div className="mt-1.5 pl-4 grid grid-cols-2 gap-1">
-                        {(isKO ? ['괄호제거','소제목없음','대화줄분리','—금지','삭제금지','…통일','대화보호'] : ['No()','No head','Dlg split','No—','No del','…','Keep dlg']).map((r, i) => (
-                          <div key={i} className="text-[9px] text-text-tertiary"><span className="text-accent-green">✓</span> {r}</div>
+                        {(tObj.panel?.formatRulesKO as string[] || []).map((r: string, i: number) => (
+                          <div key={i} className="text-[11px] text-text-tertiary"><span className="text-accent-green">✓</span> {r}</div>
                         ))}
                       </div>
                     </details>
 
-                    {/* ⑤ NOD 감독 */}
+                    {/* ⑤ 감독 피드백 */}
                     <DirectorPanel report={directorReport} language={language} />
+
+                    {/* ⑤-b 선제 경고 (3.8 Proactive Suggestions) */}
+                    {suggestions.length > 0 && (
+                      <SuggestionPanel
+                        suggestions={suggestions}
+                        onDismiss={(id) => setSuggestions(prev => prev.map(s => s.id === id ? { ...s, dismissed: true, dismissCount: s.dismissCount + 1 } : s))}
+                        language={language}
+                      />
+                    )}
+
+                    {/* ⑤-c 파이프라인 진행 (3.8 Auto-Pipeline) */}
+                    {pipelineResult && (
+                      <PipelineProgress
+                        stages={pipelineResult.stages}
+                        finalStatus={pipelineResult.finalStatus}
+                        language={language}
+                      />
+                    )}
 
                     {/* ⑥ 대화 온도 */}
                     <div className="flex items-center gap-2 pt-1">
@@ -1995,14 +1445,13 @@ export default function StudioPage() {
                         hfcpState.verdict === 'normal_analysis' ? 'text-accent-amber' :
                         hfcpState.verdict === 'limited' ? 'text-accent-red' : 'text-text-tertiary'
                       }`}>
-                        {isKO ? ({
-                          engagement: '적극 참여',
-                          normal_free: '자유 대화',
-                          normal_analysis: '분석 모드',
-                          limited: '절제 모드',
-                          silent: '침묵',
-                        } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict
-                        : hfcpState.verdict.replace('_', ' ')}
+                        {({
+                          engagement: t('hfcp.engagement'),
+                          normal_free: t('hfcp.normalFree'),
+                          normal_analysis: t('hfcp.normalAnalysis'),
+                          limited: t('hfcp.limited'),
+                          silent: t('hfcp.silent'),
+                        } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
                       </span>
                       <span className="text-[10px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
                     </div>
@@ -2011,7 +1460,7 @@ export default function StudioPage() {
                   {/* AI 대화 섹션 */}
                   <div className="p-4 space-y-3">
                     <div className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
-                      💬 {isKO ? 'AI 대화' : 'AI Chat'}
+                      💬 {t('panel.aiChat')}
                     </div>
                     <div className="space-y-3 max-h-[40vh] overflow-y-auto">
                       {currentSession.messages.filter(m => {
@@ -2021,7 +1470,7 @@ export default function StudioPage() {
                         }
                         return false;
                       }).length === 0 ? (
-                        <p className="text-[11px] text-text-tertiary italic text-center py-4">{isKO ? 'AI와 대화하려면 아래 입력창에 질문하세요' : 'Ask questions in the input below'}</p>
+                        <p className="text-[11px] text-text-tertiary italic text-center py-4">{t('panel.askQuestions')}</p>
                       ) : (
                         currentSession.messages.filter(m => {
                           if (m.role === 'user' && m.meta?.hfcpMode === 'chat') return true;
@@ -2039,22 +1488,31 @@ export default function StudioPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* NOW AI 채팅 */}
+                  <div className="p-4 border-t border-border">
+                    <TabAssistant tab="writing" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
+                  </div>
                 </div>
               )}
             </aside>
           )}
         </div>
 
-        {/* Writing Input */}
-        {activeTab === 'writing' && currentSessionId && (
-          <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
-            <div className="max-w-6xl mx-auto relative px-0">
+        {/* Writing Input — 수동 모드(미사용)일 때 숨김 */}
+        {activeTab === 'writing' && currentSessionId && !showAiLock && (
+          <div className={`pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0 transition-[padding] duration-300 ${writingInputDockOffset}`}>
+            <div className={`${writingColumnShell} relative`}>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-                <button onClick={() => handleSend(t.engine.nextChapterPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.nextChapter}
+                <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                  title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                  {t('engine.nextChapter')}{showAiLock && ' 🔒'}
                 </button>
-                <button onClick={() => handleSend(t.engine.plotTwistPrompt)} className="px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  {t.engine.plotTwist}
+                <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }}
+                  className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                  title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                  {t('engine.plotTwist')}{showAiLock && ' 🔒'}
                 </button>
                 {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
                   <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
@@ -2062,23 +1520,26 @@ export default function StudioPage() {
                   </button>
                 )}
                 <span className="text-border">|</span>
-                <button onClick={() => { setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
-                  className="px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  🎨 {isKO ? '캔버스 실행' : 'Open Canvas'}
-                </button>
+                  <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
+                    className={`px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
+                    title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
+                    {showAiLock ? '🔒' : '🎨'} {t('writingMode.openCanvas')}
+                  </button>
               </div>
               <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder={t.writing.inputPlaceholder}
-                  className="flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed"
+                  placeholder={showAiLock
+                    ? t('writingMode.apiKeyPlaceholder')
+                    : t('writing.inputPlaceholder')}
+                  className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${showAiLock ? 'cursor-not-allowed opacity-60' : ''}`}
                   rows={1}
-                  disabled={isGenerating}
+                  disabled={isGenerating || showAiLock}
                 />
                 {input.length > 0 && (
-                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
+                  <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
                     {input.length}
                   </span>
                 )}
@@ -2097,8 +1558,21 @@ export default function StudioPage() {
         )}
       </main>
 
+      <QuickStartModal 
+        language={language}
+        isOpen={showQuickStartModal}
+        onClose={() => setShowQuickStartModal(false)}
+        onStart={handleQuickStart}
+        isGenerating={isQuickGenerating}
+      />
+
       {showApiKeyModal && (
-        <ApiKeyModal language={language} onClose={() => setShowApiKeyModal(false)} onSave={() => {}} />
+        <ApiKeyModal
+          language={language}
+          hostedProviders={hostedProviders}
+          onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
+          onSave={() => setApiKeyVersion(v => v + 1)}
+        />
       )}
 
       {/* UX: Confirm Modal */}
@@ -2113,99 +1587,41 @@ export default function StudioPage() {
         onCancel={closeConfirm}
       />
 
+      {/* Move Session Modal */}
+      {moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
+
       {/* Save Slot Name Modal */}
-      {saveSlotModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSaveSlotModalOpen(false)}>
-          <div className="bg-bg-primary border border-border rounded-2xl p-6 w-[360px] space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-bold text-text-primary">{isKO ? '저장 이름 입력' : 'Enter Save Name'}</h3>
-            <input
-              autoFocus
-              type="text"
-              value={saveSlotName}
-              onChange={e => setSaveSlotName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && saveSlotName.trim()) {
-                  const slot: import('@/lib/studio-types').SavedSlot = {
-                    id: `slot-${Date.now()}`,
-                    name: saveSlotName.trim(),
-                    tab: activeTab,
-                    timestamp: Date.now(),
-                    data: {
-                      genre: currentSession?.config.genre,
-                      title: currentSession?.config.title,
-                      povCharacter: currentSession?.config.povCharacter,
-                      setting: currentSession?.config.setting,
-                      primaryEmotion: currentSession?.config.primaryEmotion,
-                      synopsis: currentSession?.config.synopsis,
-                      characters: currentSession?.config.characters,
-                      charRelations: currentSession?.config.charRelations,
-                      sceneDirection: currentSession?.config.sceneDirection,
-                      worldSimData: currentSession?.config.worldSimData,
-                      simulatorRef: currentSession?.config.simulatorRef,
-                    },
-                  };
-                  updateCurrentSession({
-                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
-                  });
-                  triggerSave();
-                  setSaveSlotModalOpen(false);
-                }
-                if (e.key === 'Escape') setSaveSlotModalOpen(false);
-              }}
-              placeholder={isKO ? '예: 초기 설정 백업' : 'e.g. Initial setup backup'}
-              className="w-full px-3 py-2 bg-bg-secondary border border-border rounded-lg text-sm text-text-primary placeholder-zinc-500 focus:outline-none focus:border-accent-purple"
-            />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setSaveSlotModalOpen(false)} className="px-4 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors">
-                {isKO ? '취소' : 'Cancel'}
-              </button>
-              <button
-                disabled={!saveSlotName.trim()}
-                onClick={() => {
-                  if (!saveSlotName.trim()) return;
-                  const slot: import('@/lib/studio-types').SavedSlot = {
-                    id: `slot-${Date.now()}`,
-                    name: saveSlotName.trim(),
-                    tab: activeTab,
-                    timestamp: Date.now(),
-                    data: {
-                      genre: currentSession?.config.genre,
-                      title: currentSession?.config.title,
-                      povCharacter: currentSession?.config.povCharacter,
-                      setting: currentSession?.config.setting,
-                      primaryEmotion: currentSession?.config.primaryEmotion,
-                      synopsis: currentSession?.config.synopsis,
-                      characters: currentSession?.config.characters,
-                      charRelations: currentSession?.config.charRelations,
-                      sceneDirection: currentSession?.config.sceneDirection,
-                      worldSimData: currentSession?.config.worldSimData,
-                      simulatorRef: currentSession?.config.simulatorRef,
-                    },
-                  };
-                  updateCurrentSession({
-                    config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] },
-                  });
-                  triggerSave();
-                  setSaveSlotModalOpen(false);
-                }}
-                className="px-4 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isKO ? '저장' : 'Save'}
-              </button>
-            </div>
-          </div>
+      {saveSlotModalOpen && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
+        onSave={(slot) => {
+          updateCurrentSession({ config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] } });
+          triggerSave();
+        }}
+        onClose={() => setSaveSlotModalOpen(false)} />}
+
+      {/* UX: All toasts */}
+      <StudioToasts
+        language={language} isKO={isKO}
+        showSyncReminder={showSyncReminder} setShowSyncReminder={setShowSyncReminder}
+        user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
+        storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
+        fallbackNotice={fallbackNotice} setFallbackNotice={setFallbackNotice}
+        exportDoneFormat={exportDoneFormat}
+        worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
+        uxError={uxError} setUxError={setUxError}
+      />
+      {alertToast && (
+        <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
+          alertToast.variant === 'error' ? 'bg-red-900/95 border border-red-600 text-red-100'
+          : alertToast.variant === 'info' ? 'bg-blue-900/95 border border-blue-600 text-blue-100'
+          : 'bg-amber-900/95 border border-amber-600 text-amber-100'
+        }`}>
+          <span>{alertToast.variant === 'error' ? '❌' : alertToast.variant === 'info' ? 'ℹ️' : '⚠️'} {alertToast.message}</span>
+          <button onClick={() => setAlertToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
         </div>
       )}
-
-      {/* UX: Error Toast */}
-      {uxError && (
-        <ErrorToast
-          error={uxError.error}
-          isKO={isKO}
-          onDismiss={() => setUxError(null)}
-          onRetry={uxError.retry ? () => { setUxError(null); uxError.retry?.(); } : undefined}
-        />
-      )}
     </div>
+    </StudioUIProvider>
+    </StudioConfigProvider>
+    </ErrorBoundary>
   );
 }

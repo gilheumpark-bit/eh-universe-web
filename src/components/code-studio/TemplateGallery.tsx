@@ -1,0 +1,150 @@
+"use client";
+
+// ============================================================
+// PART 1 — Imports & Types
+// ============================================================
+
+import { useState, useMemo, useRef, useEffect } from "react";
+import { X, Search, Sparkles, Loader2, Layout, Globe, Server, Terminal, Code2 } from "lucide-react";
+
+interface AppTemplate {
+  id: string; name: string; framework: string; description: string;
+  files: { name: string; content: string }[];
+}
+
+interface Props {
+  onSelectTemplate: (template: AppTemplate) => void;
+  onClose: () => void;
+}
+
+function getFrameworkIcon(framework: string) {
+  switch (framework) {
+    case "React": return <Layout size={18} />;
+    case "Next.js": return <Globe size={18} />;
+    case "Express": return <Server size={18} />;
+    case "Node.js": return <Terminal size={18} />;
+    default: return <Code2 size={18} />;
+  }
+}
+
+const TEMPLATES: AppTemplate[] = [
+  { id: "react-basic", name: "React 기본", framework: "React", description: "React + TypeScript 기본 프로젝트", files: [{ name: "src/App.tsx", content: "export default function App() { return <div>Hello</div>; }" }] },
+  { id: "nextjs-basic", name: "Next.js 기본", framework: "Next.js", description: "Next.js 14 App Router 프로젝트", files: [{ name: "app/page.tsx", content: "export default function Home() { return <main>Hello</main>; }" }] },
+  { id: "express-api", name: "Express API", framework: "Express", description: "Express + TypeScript REST API", files: [{ name: "src/index.ts", content: "import express from 'express';\nconst app = express();\napp.listen(3000);" }] },
+  { id: "react-todo", name: "React Todo", framework: "React", description: "할일 관리 앱 (React + Tailwind)", files: [{ name: "src/App.tsx", content: "export default function App() { return <div>Todo App</div>; }" }] },
+  { id: "nextjs-blog", name: "Next.js 블로그", framework: "Next.js", description: "마크다운 기반 블로그 (MDX)", files: [{ name: "app/page.tsx", content: "export default function Home() { return <main>Blog</main>; }" }] },
+  { id: "node-cli", name: "Node CLI", framework: "Node.js", description: "Node.js CLI 도구 템플릿", files: [{ name: "src/cli.ts", content: "#!/usr/bin/env node\nconsole.log('hello');" }] },
+  { id: "html-landing", name: "HTML 랜딩", framework: "HTML", description: "심플 HTML 랜딩 페이지", files: [{ name: "index.html", content: "<!DOCTYPE html><html><body><h1>Hello</h1></body></html>" }] },
+  { id: "react-dashboard", name: "React 대시보드", framework: "React", description: "관리자 대시보드 (차트 + 테이블)", files: [{ name: "src/App.tsx", content: "export default function App() { return <div>Dashboard</div>; }" }] },
+];
+
+const FRAMEWORK_FILTERS = ["전체", "React", "Next.js", "Express", "Node.js", "HTML"];
+
+// IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=AppTemplate,Props
+
+// ============================================================
+// PART 2 — Component
+// ============================================================
+
+export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFramework, setActiveFramework] = useState("전체");
+  const [showAiPrompt, setShowAiPrompt] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const aiInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { if (showAiPrompt) aiInputRef.current?.focus(); else searchRef.current?.focus(); }, [showAiPrompt]);
+
+  const filtered = useMemo(() => TEMPLATES.filter((t) => {
+    const matchFw = activeFramework === "전체" || t.framework === activeFramework;
+    const matchSearch = !searchQuery.trim() || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchFw && matchSearch;
+  }), [activeFramework, searchQuery]);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim() || isGenerating) return;
+    setIsGenerating(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    const generated: AppTemplate = {
+      id: `ai-${Date.now()}`, name: `AI: ${aiPrompt.slice(0, 30)}`, framework: "React",
+      description: aiPrompt, files: [{ name: "src/App.tsx", content: `// AI Generated: ${aiPrompt}\nexport default function App() { return <div>Generated</div>; }` }],
+    };
+    onSelectTemplate(generated); onClose();
+    setIsGenerating(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && showAiPrompt) handleAiGenerate(); }}>
+      <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[680px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
+          <h2 className="text-sm font-semibold text-white">새 프로젝트 만들기</h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-white/10 transition-colors"><X size={14} className="text-white/40" /></button>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-white/8">
+          <Search size={14} className="text-white/30 shrink-0" />
+          <input ref={searchRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="템플릿 검색..."
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
+          <button onClick={() => setShowAiPrompt(!showAiPrompt)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-purple-500/20 text-purple-400" : "bg-white/5 text-white/40 hover:text-purple-400"}`}>
+            <Sparkles size={12} /> AI로 생성
+          </button>
+        </div>
+        {showAiPrompt && (
+          <div className="px-4 py-3 border-b border-white/8 bg-purple-500/5">
+            <p className="text-xs text-white/40 mb-2">만들고 싶은 앱을 설명하세요</p>
+            <textarea ref={aiInputRef} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="예: Todo 앱을 React + Tailwind로 만들어줘"
+              className="w-full h-20 p-2 rounded-lg bg-[#0a0e17] border border-white/10 text-sm text-white placeholder:text-white/30 outline-none resize-none" disabled={isGenerating} />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[10px] text-white/30">{isGenerating ? "생성 중..." : "Ctrl+Enter로 생성"}</span>
+              <button onClick={handleAiGenerate} disabled={!aiPrompt.trim() || isGenerating}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white disabled:opacity-40 hover:bg-purple-700">
+                {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                {isGenerating ? "생성 중..." : "생성하기"}
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-white/8 overflow-x-auto">
+          {FRAMEWORK_FILTERS.map((fw) => (
+            <button key={fw} onClick={() => setActiveFramework(fw)}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${activeFramework === fw ? "bg-purple-500/15 text-purple-400 font-medium" : "text-white/40 hover:bg-white/5"}`}>{fw}</button>
+          ))}
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-white/30">
+              <Search size={24} className="mb-2 opacity-40" /><p className="text-xs">일치하는 템플릿이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map((template) => (
+                <button key={template.id} onClick={() => { onSelectTemplate(template); onClose(); }}
+                  className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-purple-500 hover:bg-purple-500/5 transition-all text-left">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/40 group-hover:text-purple-400 transition-colors">
+                      {getFrameworkIcon(template.framework)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-white truncate">{template.name}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-white/40">{template.framework}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{template.description}</p>
+                  <span className="text-[10px] text-white/20">{template.files.length}개 파일</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=Component | inputs=Props | outputs=JSX

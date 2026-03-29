@@ -1,17 +1,20 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu } from 'lucide-react';
+import rehypeSanitize from 'rehype-sanitize';
+import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 
 interface ChatMessageProps {
   message: Message;
   language?: AppLanguage;
   onRegenerate?: (messageId: string) => void;
+  onAutoFix?: (messageId: string) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onRegenerate }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onRegenerate, onAutoFix }) => {
   const isUser = message.role === 'user';
+  const [showDetail, setShowDetail] = React.useState(false);
 
   // Try structured EngineReport first, fall back to JSON regex extraction
   const report = message.meta?.engineReport ?? null;
@@ -65,9 +68,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
   return (
     <div className={`flex w-full gap-3 md:gap-4 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-lg ${
-        isUser ? 'bg-zinc-800 border-zinc-700' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
+        isUser ? 'bg-bg-tertiary border-border' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
       }`}>
-        {isUser ? <User className="w-4 h-4 text-zinc-500" /> : <Bot className="w-4 h-4 text-white" />}
+        {isUser ? <User className="w-4 h-4 text-text-tertiary" /> : <Bot className="w-4 h-4 text-white" />}
       </div>
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
@@ -76,22 +79,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             NOW — Narrative Origin Writer
           </span>
         )}
-        <div className={`transition-all ${
+        <div className={`overflow-hidden transition-all ${
           isUser
-            ? 'bg-zinc-900/80 border border-zinc-800 px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-zinc-300'
+            ? 'bg-bg-secondary/80 border border-border px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-text-secondary'
             : 'bg-transparent text-zinc-200'
         }`}>
           {isUser ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{mainContent}</p>
           ) : (
-            <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-p:font-serif prose-p:text-zinc-300 prose-p:leading-[1.8]">
+            <div className="prose prose-sm sm:prose-base prose-invert max-w-none break-words prose-p:font-serif prose-p:text-text-secondary prose-p:leading-[1.8]">
               <ReactMarkdown
                 skipHtml
+                rehypePlugins={[rehypeSanitize]}
                 disallowedElements={['script', 'iframe', 'object', 'embed', 'form']}
                 components={{
                   p: (props) => <p className="mb-6 last:mb-0" {...props} />,
                   h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,
-                  hr: () => <div className="my-10 h-px bg-zinc-900"></div>
+                  hr: () => <div className="my-10 h-px bg-border"></div>,
+                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-bg-primary/70 p-4 text-xs text-text-secondary" {...props} />,
+                  code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
                 }}
               >
                 {mainContent}
@@ -112,7 +118,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
               }`}>
                 <Zap className="w-2.5 h-2.5" /> EOS {report.eosScore}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-900/50 border border-zinc-800/50 rounded-lg text-[9px] font-black text-zinc-500">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-bg-secondary/50 border border-border/50 rounded-lg text-[9px] font-black text-text-tertiary">
                 <Activity className="w-2.5 h-2.5" /> {report.actPosition.act}{language === 'KO' ? '막' : ''}
               </span>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black border ${
@@ -125,10 +131,93 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             </div>
           )}
 
+          {/* Detailed Engine Validation Report */}
+          {!isUser && report && (
+            <div className="mt-3">
+              <button onClick={() => setShowDetail(!showDetail)} className="flex items-center gap-1 text-[9px] text-text-tertiary hover:text-text-secondary transition-colors font-[family-name:var(--font-mono)] uppercase tracking-wider">
+                <ChevronDown className={`w-3 h-3 transition-transform ${showDetail ? 'rotate-180' : ''}`} />
+                {language === 'KO' ? '검증 상세' : 'Validation Detail'}
+              </button>
+              {showDetail && (
+                <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-[family-name:var(--font-mono)] animate-in fade-in duration-300">
+                  <div className="flex justify-between text-text-tertiary">
+                    <span>AI {language === 'KO' ? '톤' : 'Tone'}</span>
+                    <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-text-tertiary">
+                    <span>{language === 'KO' ? '텐션 타겟' : 'Tension Target'}</span>
+                    <span>{report.tensionTarget}% → {report.metrics.tension}%</span>
+                  </div>
+                  {report.fixes.length > 0 && (
+                    <div className="border-t border-border/50 pt-2 space-y-1">
+                      <span className="text-amber-500/80">{report.fixes.length}{language === 'KO' ? '건 수정 제안' : ' fix suggestions'}</span>
+                      {report.fixes.slice(0, 3).map((f, i) => (
+                        <div key={i} className="text-text-tertiary truncate">
+                          {f.reason || `${f.original} → ${f.fixed}`}
+                        </div>
+                      ))}
+                      {report.fixes.length > 3 && <div className="text-text-tertiary">+{report.fixes.length - 3}{language === 'KO' ? '건 더' : ' more'}</div>}
+                    </div>
+                  )}
+                  {report.issues.length > 0 && (
+                    <div className="border-t border-border/50 pt-2 space-y-1">
+                      <span className="text-red-500/80">{report.issues.length}{language === 'KO' ? '건 이슈' : ' issues'}</span>
+                      {report.issues.slice(0, 2).map((iss, i) => (
+                        <div key={i} className="text-text-tertiary truncate">{iss.message}</div>
+                      ))}
+                    </div>
+                  )}
+                  {report.fixes.length > 0 && onAutoFix && (
+                    <button onClick={() => onAutoFix(message.id)} className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-accent-purple text-[10px] font-bold uppercase tracking-wider hover:bg-accent-purple/20 transition-colors">
+                      <Wrench className="w-3 h-3" /> {language === 'KO' ? '자동 수정 적용' : 'Apply Auto-Fix'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quality Tag (서사 강도 기반 품질 배지) */}
+          {!isUser && message.meta?.qualityTag && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowDetail(d => !d)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  message.meta.qualityTag === '🔴' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  : message.meta.qualityTag === '🟡' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                }`}
+              >
+                {message.meta.qualityTag} {message.meta.qualityLabel}
+                {(message.meta.qualityFindings?.length ?? 0) > 0 && (
+                  <span className="text-[8px] opacity-70">({message.meta.qualityFindings?.length})</span>
+                )}
+              </button>
+              {showDetail && message.meta.qualityFindings && message.meta.qualityFindings.length > 0 && (
+                <div className="mt-2 space-y-1 pl-2 border-l-2 border-border">
+                  {message.meta.qualityFindings.map((f, i) => (
+                    <div key={i} className="text-[10px] text-text-tertiary">
+                      <span className={f.severity >= 4 ? 'text-red-400' : f.severity >= 3 ? 'text-amber-400' : 'text-text-tertiary'}>
+                        [{f.kind}]
+                      </span>{' '}
+                      {f.message}
+                      {f.lineNo && <span className="text-text-tertiary ml-1">(L{f.lineNo})</span>}
+                    </div>
+                  ))}
+                  {message.meta.qualityTag === '🔴' && (
+                    <p className="text-[10px] text-red-400/80 font-bold mt-2">
+                      {language === 'KO' ? '⚠ 재작성을 권장합니다.' : '⚠ Rewrite recommended.'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Analysis Report (from structured report OR JSON fallback) */}
           {!isUser && (displayGrade || displayMetrics) && (
-            <div className="mt-8 p-4 md:p-6 bg-zinc-900/50 border border-zinc-800 rounded-2xl space-y-4 animate-in fade-in duration-500">
-              <div className="flex justify-between items-center text-[9px] font-black text-zinc-600 uppercase tracking-widest">
+            <div className="mt-8 p-4 md:p-6 bg-bg-secondary/50 border border-border rounded-2xl space-y-4 animate-in fade-in duration-500">
+              <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
                 <div className="flex items-center gap-2"><Activity className="w-3 h-3 text-blue-500" /> Engine Report</div>
                 {displayGrade && <div className="text-blue-500">{displayGrade} Grade</div>}
               </div>
@@ -136,8 +225,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                 <div className="grid grid-cols-3 gap-4">
                   {Object.entries(displayMetrics as Record<string, number>).map(([k, v]) => (
                     <div key={k} className="space-y-1">
-                      <div className="flex justify-between text-[7px] font-black text-zinc-700 uppercase"><span>{k}</span><span>{v}%</span></div>
-                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="flex justify-between text-[7px] font-black text-text-tertiary uppercase"><span>{k}</span><span>{v}%</span></div>
+                      <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
                         <div className="h-full bg-blue-600" style={{ width: `${v}%` }} />
                       </div>
                     </div>
@@ -145,7 +234,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
                 </div>
               )}
               {displayCritique && (
-                <p className="text-[11px] text-zinc-500 italic leading-relaxed border-t border-zinc-800/50 pt-3">
+                <p className="text-[11px] text-text-tertiary italic leading-relaxed border-t border-border/50 pt-3">
                   &quot;{displayCritique}&quot;
                 </p>
               )}
@@ -157,14 +246,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
             <button
               onClick={() => navigator.clipboard.writeText(message.content)}
-              className="p-1.5 hover:bg-zinc-900 rounded-lg text-zinc-700 hover:text-zinc-400 transition-all"
+              aria-label="복사"
+              className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-secondary transition-all"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             {onRegenerate && (
               <button
                 onClick={() => onRegenerate(message.id)}
-                className="p-1.5 hover:bg-zinc-900 rounded-lg text-zinc-700 hover:text-zinc-400 transition-all"
+                className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-secondary transition-all"
                 title={language === 'KO' ? '재생성' : 'Regenerate'}
               >
                 <RotateCcw className="w-3.5 h-3.5" />

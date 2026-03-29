@@ -6,6 +6,9 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { AlertTriangle, X, Copy, Check } from 'lucide-react';
+import type { AppLanguage } from '@/lib/studio-types';
+import { createT, L4 } from '@/lib/i18n';
+import { classifyAsStudioError, getErrorMessage } from '@/lib/errors';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -37,7 +40,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className={`flex items-start gap-3 p-3 rounded-lg mb-4 ${colors[variant]}`}>
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
@@ -62,71 +65,96 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 // PART 2 — Error Toast (replaces vague error messages)
 // ============================================================
 
-export type ErrorType = 'network' | 'api_key' | 'rate_limit' | 'parse' | 'timeout' | 'unknown';
+export type ErrorType = 'network' | 'api_key' | 'rate_limit' | 'parse' | 'timeout' | 'server' | 'not_found' | 'unknown';
 
 interface ErrorInfo {
-  type: ErrorType;
+  type?: ErrorType;
   title: string;
   message: string;
   action?: string;
+  retryable?: boolean;
 }
 
-function classifyError(err: unknown, isKO: boolean): ErrorInfo {
+function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
+  const t = createT(language);
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
 
   if (lower.includes('api_key') || lower.includes('401') || lower.includes('unauthorized')) {
     return {
       type: 'api_key',
-      title: isKO ? 'API 키 오류' : 'API Key Error',
-      message: isKO ? 'API 키가 없거나 만료되었습니다.' : 'API key is missing or expired.',
-      action: isKO ? '설정 탭에서 API 키를 확인하세요' : 'Check your API key in Settings tab',
+      title: t('uxHelpers.apiKeyErrorTitle'),
+      message: t('uxHelpers.apiKeyErrorMsg'),
+      action: t('uxHelpers.apiKeyErrorAction'),
     };
   }
   if (lower.includes('429') || lower.includes('rate')) {
     return {
       type: 'rate_limit',
-      title: isKO ? '요청 한도 초과' : 'Rate Limit',
-      message: isKO ? 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' : 'API rate limit exceeded. Please wait and try again.',
+      title: t('uxHelpers.rateLimitTitle'),
+      message: t('uxHelpers.rateLimitMsg'),
+    };
+  }
+  if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('504') || lower.includes('internal server')) {
+    return {
+      type: 'server',
+      title: L4(language, { ko: '서버 오류', en: 'Server Error', jp: 'サーバーエラー', cn: '服务器错误' }),
+      message: L4(language, { ko: 'AI 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.', en: 'AI server is temporarily unavailable. Please try again shortly.', jp: 'AIサーバーが一時的に応答していません。しばらくしてから再試行してください。', cn: 'AI服务器暂时无法响应，请稍后重试。' }),
+    };
+  }
+  if (lower.includes('404') || lower.includes('not found')) {
+    return {
+      type: 'not_found',
+      title: L4(language, { ko: '요청 경로 오류', en: 'Not Found', jp: 'リクエストパスエラー', cn: '请求路径错误' }),
+      message: L4(language, { ko: '요청한 API 경로를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.', en: 'API endpoint not found. Please refresh and try again.', jp: 'リクエストしたAPIパスが見つかりません。ページを更新してから再試行してください。', cn: '找不到请求的API路径，请刷新页面后重试。' }),
     };
   }
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
     return {
       type: 'network',
-      title: isKO ? '네트워크 오류' : 'Network Error',
-      message: isKO ? '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.' : 'Cannot connect to server. Check your internet connection.',
+      title: t('uxHelpers.networkErrorTitle'),
+      message: t('uxHelpers.networkErrorMsg'),
     };
   }
   if (lower.includes('timeout') || lower.includes('timed out')) {
     return {
       type: 'timeout',
-      title: isKO ? '시간 초과' : 'Timeout',
-      message: isKO ? '응답 시간이 초과되었습니다. 다시 시도해주세요.' : 'Response timed out. Please try again.',
+      title: t('uxHelpers.timeoutTitle'),
+      message: t('uxHelpers.timeoutMsg'),
     };
   }
   if (lower.includes('json') || lower.includes('parse') || lower.includes('unexpected token')) {
     return {
       type: 'parse',
-      title: isKO ? '응답 파싱 오류' : 'Parse Error',
-      message: isKO ? 'AI 응답을 처리할 수 없습니다. 다시 시도해주세요.' : 'Cannot parse AI response. Please try again.',
+      title: t('uxHelpers.parseErrorTitle'),
+      message: t('uxHelpers.parseErrorMsg'),
     };
   }
   return {
     type: 'unknown',
-    title: isKO ? '오류 발생' : 'Error',
-    message: msg.slice(0, 200) || (isKO ? '알 수 없는 오류가 발생했습니다.' : 'An unknown error occurred.'),
+    title: t('uxHelpers.unknownErrorTitle'),
+    message: msg.slice(0, 200) || t('uxHelpers.unknownErrorMsg'),
   };
 }
 
 interface ErrorToastProps {
   error: unknown;
-  isKO: boolean;
+  language: AppLanguage;
   onDismiss: () => void;
   onRetry?: () => void;
 }
 
-export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, onRetry }) => {
-  const info = classifyError(error, isKO);
+export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismiss, onRetry }) => {
+  const t = createT(language);
+  // StudioError 체계 우선, 폴백으로 기존 classifyError
+  let info: ErrorInfo;
+  const studioErr = classifyAsStudioError(error);
+  const msg = getErrorMessage(studioErr.code, language);
+  if (msg.title !== studioErr.code) {
+    info = { title: msg.title, message: msg.message, action: msg.action, retryable: studioErr.retryable };
+  } else {
+    info = classifyError(error, language);
+  }
 
   useEffect(() => {
     const timer = setTimeout(onDismiss, 8000);
@@ -144,13 +172,13 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, 
               <p className="text-[10px] text-amber-400/70 mt-2 font-mono">{info.action}</p>
             )}
           </div>
-          <button onClick={onDismiss} className="p-1 text-red-500/50 hover:text-red-400 transition-colors">
+          <button onClick={onDismiss} aria-label="닫기" className="p-1 text-red-500/50 hover:text-red-400 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
-        {onRetry && (
+        {onRetry && (info.retryable !== false) && (
           <button onClick={onRetry} className="mt-3 w-full px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-300 hover:bg-red-500/30 transition-colors">
-            {isKO ? '다시 시도' : 'Retry'}
+            {info.action || t('uxHelpers.retry')}
           </button>
         )}
       </div>
@@ -164,11 +192,12 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, isKO, onDismiss, 
 
 interface CopyButtonProps {
   text: string;
-  isKO: boolean;
+  language: AppLanguage;
   className?: string;
 }
 
-export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = '' }) => {
+export const CopyButton: React.FC<CopyButtonProps> = ({ text, language, className = '' }) => {
+  const t = createT(language);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -192,9 +221,9 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = 
   return (
     <button
       onClick={handleCopy}
-      className={`p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors ${className}`}
-      title={isKO ? '복사' : 'Copy'}
-      aria-label={isKO ? '복사' : 'Copy'}
+      className={`p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 transition-colors ${className}`}
+      title={t('uxHelpers.copy')}
+      aria-label={L4(language, { ko: '복사', en: 'Copy', jp: 'コピー', cn: '复制' })}
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
@@ -207,17 +236,20 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, isKO, className = 
 
 interface StreamingIndicatorProps {
   charCount: number;
-  isKO: boolean;
+  language: AppLanguage;
 }
 
-export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({ charCount, isKO }) => (
-  <span className="inline-flex items-center gap-1.5 text-[10px] text-accent-purple font-mono">
-    <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-pulse" />
-    {charCount > 0
-      ? `${charCount.toLocaleString()}${isKO ? '자 생성 중...' : ' chars generating...'}`
-      : (isKO ? '생성 중...' : 'Generating...')}
-  </span>
-);
+export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({ charCount, language }) => {
+  const t = createT(language);
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[10px] text-accent-purple font-mono">
+      <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-pulse" />
+      {charCount > 0
+        ? `${charCount.toLocaleString()}${t('uxHelpers.charsGenerating')}`
+        : t('uxHelpers.generating')}
+    </span>
+  );
+};
 
 // ============================================================
 // PART 5 — useUnsavedWarning hook
