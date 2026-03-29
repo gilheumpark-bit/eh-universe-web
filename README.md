@@ -68,7 +68,7 @@ npm run test:e2e     # Playwright E2E
 
 ## Code Studio (검증형 IDE)
 
-- **Panel Registry**: 46개 패널 (8개 필수 기본 노출 + Advanced 토글)
+- **Panel Registry**: 37개 패널 (8개 필수 기본 노출 + Advanced 토글)
 - **Verification Loop**: Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) 3회 검증
 - **Composer State Machine**: idle → generating → verifying → review → staged → applied
 - **Staging/Rollback**: 사람 승인 후 반영, 되돌리기 가능

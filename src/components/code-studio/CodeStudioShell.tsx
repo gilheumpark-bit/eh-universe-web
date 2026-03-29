@@ -760,11 +760,20 @@ function CodeStudioShellInner() {
   }, [newFileName, toast, tcs]);
 
   const handleDelete = useCallback((id: string) => {
-    fsDeleteNode(id);
-    setOpenFiles((prev) => prev.filter((f) => f.id !== id));
-    if (activeFileId === id) setActiveFileId(null);
-    toast(tcs.fileDeleted, "info");
-  }, [activeFileId, toast, tcs]);
+    const node = files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.id === id);
+    const name = node?.name ?? id;
+    setConfirmState({
+      title: lang === "ko" ? "파일 삭제" : "Delete File",
+      message: lang === "ko" ? `"${name}"을(를) 삭제하시겠습니까? 되돌릴 수 없습니다.` : `Delete "${name}"? This cannot be undone.`,
+      onConfirm: () => {
+        fsDeleteNode(id);
+        setOpenFiles((prev) => prev.filter((f) => f.id !== id));
+        if (activeFileId === id) setActiveFileId(null);
+        toast(tcs.fileDeleted, "info");
+        setConfirmState(null);
+      },
+    });
+  }, [activeFileId, toast, tcs, files, lang]);
 
   const handleRename = useCallback((id: string, name: string) => {
     fsRenameNode(id, name);
