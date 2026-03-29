@@ -39,7 +39,6 @@ function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
 
 function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () => void; onStudio: () => void; onCodeStudio: () => void }) {
   const { lang } = useLang();
-  const isKO = lang === "ko";
 
   const cardBase = "group relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(14,18,27,0.95),rgba(7,9,13,0.8))] backdrop-blur-xl px-6 py-8 sm:px-8 sm:py-10 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] active:scale-[0.98]";
 
@@ -70,9 +69,7 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
               UNIVERSE
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
-              {isKO
-                ? "아카이브, 네트워크, 세계관 문서를 탐색합니다."
-                : "Browse the archive, network, and worldbuilding docs."}
+              {L4(lang, { ko: "아카이브, 네트워크, 세계관 문서를 탐색합니다.", en: "Browse the archive, network, and worldbuilding docs.", jp: "アーカイブ、ネットワーク、世界観文書を探索します。", cn: "探索档案库、网络和世界观文档。" })}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
               {L4(lang, { ko: "탐색 시작", en: "Enter", jp: "探索開始", cn: "开始探索" })} →
@@ -92,9 +89,7 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
               STUDIO
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
-              {isKO
-                ? "세계관 설계 작업실로 진입합니다."
-                : "Enter the world design and writing workspace."}
+              {L4(lang, { ko: "세계관 설계 작업실로 진입합니다.", en: "Enter the world design and writing workspace.", jp: "世界観設計ワークスペースに入ります。", cn: "进入世界观设计工作室。" })}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
               {L4(lang, { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" })} →
@@ -115,9 +110,7 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
               <span className="rounded-full bg-accent-green/20 text-accent-green text-[9px] px-2 py-0.5 font-bold animate-pulse">NEW</span>
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
-              {isKO
-                ? "Monaco 에디터 기반 코드 작업 환경."
-                : "Monaco-based coding environment with AI."}
+              {L4(lang, { ko: "Monaco 에디터 기반 코드 작업 환경.", en: "Monaco-based coding environment with AI.", jp: "Monacoエディタベースのコーディング環境。", cn: "基于Monaco编辑器的编码环境。" })}
             </p>
             <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-green transition-colors">
               {L4(lang, { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" })} →
@@ -168,8 +161,8 @@ export default function Home() {
       href: "/archive",
       badge: "AR",
       color: "amber" as const,
-      title: T({ ko: "설정집 아카이브", en: "Lore Archive", jp: "設定集アーカイブ", cn: "设定集存档" }),
-      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 53개 기밀 보고서.", en: "6 categories, 109 lore docs + 53 classified reports." }),
+      title: T({ ko: "설정집 아카이브", en: "Lore Archive", jp: "設定集アーカイブ", cn: "设定集档案库" }),
+      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 53개 기밀 보고서.", en: "6 categories, 109 lore docs + 53 classified reports.", jp: "6カテゴリ、109の設定文書＋53の機密報告書。", cn: "6个分类，109篇设定文档 + 53份机密报告。" }),
       meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", jp: "世界観文書を探索", cn: "浏览世界观文档" }),
     },
     {
@@ -177,7 +170,7 @@ export default function Home() {
       badge: "RP",
       color: "purple" as const,
       title: T({ ko: "기밀 보고서", en: "Classified Reports", jp: "機密報告書", cn: "机密报告" }),
-      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 53 classified documents." }),
+      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 53 classified documents.", jp: "人物ファイル、事件報告、技術仕様、制度規定 — 53の機密文書。", cn: "人物档案、事件报告、技术规格、制度规定 — 53份机密文件。" }),
       meta: T({ ko: "보고서 열기", en: "Open reports", jp: "報告書を開く", cn: "打开报告" }),
     },
     {
@@ -185,31 +178,31 @@ export default function Home() {
       badge: "NW",
       color: "blue" as const,
       title: T({ ko: "작가 네트워크", en: "Writer Network", jp: "作家ネットワーク", cn: "作家网络" }),
-      desc: T({ ko: "세계관을 기반으로 연결된 작가들의 행성 시스템. 로그와 게시글을 탐색합니다.", en: "A planet-based network of writers connected through shared worldbuilding. Browse logs and posts." }),
+      desc: T({ ko: "세계관을 기반으로 연결된 작가들의 행성 시스템. 로그와 게시글을 탐색합니다.", en: "A planet-based network of writers connected through shared worldbuilding. Browse logs and posts.", jp: "世界観を基盤に繋がった作家たちの惑星システム。ログと投稿を探索します。", cn: "基于世界观连接的作家行星系统。浏览日志和帖子。" }),
       meta: T({ ko: "네트워크 진입", en: "Enter network", jp: "ネットワークへ", cn: "进入网络" }),
     },
     {
       href: "/codex",
       badge: "CX",
       color: "green" as const,
-      title: T({ ko: "코덱스", en: "Codex", jp: "コデックス", cn: "法典" }),
-      desc: T({ ko: "세계관의 핵심 법칙, 용어, 구조를 빠르게 참조합니다.", en: "Quick reference for the core laws, terms, and structures of the universe." }),
-      meta: T({ ko: "코덱스 열기", en: "Open codex", jp: "コデックスを開く", cn: "打开法典" }),
+      title: T({ ko: "코덱스", en: "Codex", jp: "コデックス", cn: "知识库" }),
+      desc: T({ ko: "세계관의 핵심 법칙, 용어, 구조를 빠르게 참조합니다.", en: "Quick reference for the core laws, terms, and structures of the universe.", jp: "世界観の核心法則、用語、構造を素早く参照します。", cn: "快速查阅世界观的核心法则、术语和结构。" }),
+      meta: T({ ko: "코덱스 열기", en: "Open codex", jp: "コデックスを開く", cn: "打开知识库" }),
     },
     {
       href: "/rulebook",
       badge: "RB",
       color: "purple" as const,
-      title: T({ ko: "룰북 v1.0", en: "Rulebook v1.0", jp: "ルールブック v1.0", cn: "规则书 v1.0" }),
-      desc: T({ ko: "서사 엔진의 구조와 원리. 이 세계관이 어떻게 작동하는지 문서로 확인합니다.", en: "The structure and principles of the narrative engine. How this universe works, documented." }),
-      meta: T({ ko: "룰북 읽기", en: "Read rulebook", jp: "ルールブックを読む", cn: "阅读规则书" }),
+      title: T({ ko: "룰북 v1.0", en: "Rulebook v1.0", jp: "ルールブック v1.0", cn: "设定手册 v1.0" }),
+      desc: T({ ko: "서사 엔진의 구조와 원리. 이 세계관이 어떻게 작동하는지 문서로 확인합니다.", en: "The structure and principles of the narrative engine. How this universe works, documented.", jp: "ナラティブエンジンの構造と原理。この世界観がどう機能するかを文書で確認します。", cn: "叙事引擎的结构与原理。通过文档了解这个世界观如何运作。" }),
+      meta: T({ ko: "룰북 읽기", en: "Read rulebook", jp: "ルールブックを読む", cn: "阅读设定手册" }),
     },
     {
       href: "/reference",
       badge: "RF",
       color: "amber" as const,
       title: T({ ko: "EH Open Reference", en: "EH Open Reference", jp: "EH オープンリファレンス", cn: "EH 开放参考" }),
-      desc: T({ ko: "프로젝트 전체를 빠르게 훑는 4페이지 요약본.", en: "A fast 4-page summary of the whole EH Universe project." }),
+      desc: T({ ko: "프로젝트 전체를 빠르게 훑는 4페이지 요약본.", en: "A fast 4-page summary of the whole EH Universe project.", jp: "プロジェクト全体を素早く概観する4ページの要約。", cn: "快速浏览整个EH Universe项目的4页概要。" }),
       meta: T({ ko: "레퍼런스 보기", en: "Read reference", jp: "リファレンスを読む", cn: "阅读参考" }),
     },
     {
@@ -217,7 +210,7 @@ export default function Home() {
       badge: "GH",
       color: "blue" as const,
       title: "GitHub",
-      desc: T({ ko: "오픈소스 진행 상황과 코드베이스를 확인합니다.", en: "See the open-source code and current progress." }),
+      desc: T({ ko: "오픈소스 진행 상황과 코드베이스를 확인합니다.", en: "See the open-source code and current progress.", jp: "オープンソースの進行状況とコードベースを確認します。", cn: "查看开源进展和代码库。" }),
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
     },
   ];
@@ -290,11 +283,11 @@ export default function Home() {
                   {T({ ko: "은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색합니다.", en: "Explore the history, factions, technology, and geography of 200,000 planetary systems under the Galactic Central Council.", jp: "銀河中央評議会が管轄する20万惑星系の歴史、勢力、技術、地理をアーカイブで探索します。", cn: "探索银河中央议会管辖的20万星系的历史、派系、技术和地理档案。" })}
                 </p>
                 <p className="mt-5 font-[family-name:var(--font-mono)] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
-                  {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", jp: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", cn: "存档 · 网络 · 法典 · 规则书 · 参考" })}
+                  {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", jp: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", cn: "档案库 · 网络 · 知识库 · 设定手册 · 参考" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link href="/archive" className="premium-button">
-                    {T({ ko: "아카이브 탐색", en: "Browse Archive", jp: "アーカイブを探索", cn: "浏览存档" })}
+                    {T({ ko: "아카이브 탐색", en: "Browse Archive", jp: "アーカイブを探索", cn: "浏览档案库" })}
                   </Link>
                   <Link href="/network" className="premium-button secondary">
                     {T({ ko: "네트워크 진입", en: "Enter Network", jp: "ネットワークへ", cn: "进入网络" })}
@@ -327,7 +320,7 @@ export default function Home() {
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="site-kicker">
-                  {T({ ko: "아카이브 카테고리", en: "Archive Categories", jp: "アーカイブカテゴリ", cn: "存档类别" })}
+                  {T({ ko: "아카이브 카테고리", en: "Archive Categories", jp: "アーカイブカテゴリ", cn: "档案库类别" })}
                 </p>
                 <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
                   {T({ ko: "6개 분류, 109개 문서", en: "6 categories, 109 documents", jp: "6カテゴリ、109文書", cn: "6个分类，109个文档" })}

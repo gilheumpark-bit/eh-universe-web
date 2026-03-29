@@ -47,6 +47,8 @@ import type { ComposerMode } from "@/lib/code-studio-composer-state";
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
 import { PANEL_REGISTRY, GROUP_LABELS, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio-panel-registry";
 import { useLang } from "@/lib/LangContext";
+import { TRANSLATIONS } from "@/lib/studio-translations";
+import type { AppLanguage } from "@/lib/studio-types";
 import * as PI from "@/components/code-studio/PanelImports";
 
 // Non-panel dynamic imports (used directly, not right panels)
@@ -244,6 +246,7 @@ function useIsTablet(): boolean {
 function CodeStudioShellInner() {
   const { toast } = useToast();
   const { lang } = useLang();
+  const tcs = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const { tree: files, setTree: setFiles, createFile: fsCreateFile, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
@@ -295,7 +298,7 @@ function CodeStudioShellInner() {
     if (!paneFile) {
       return (
         <div className="h-full flex items-center justify-center text-text-tertiary text-xs">
-          Select a file to edit
+          {tcs.selectFile}
         </div>
       );
     }
@@ -398,11 +401,11 @@ function CodeStudioShellInner() {
         );
       }
     } catch {
-      toast("Verification failed", "error");
+      toast(tcs.verificationFailed, "error");
     } finally {
       setIsVerifying(false);
     }
-  }, [activeFile, isVerifying, files, toast]);
+  }, [activeFile, isVerifying, files, toast, tcs]);
 
   // Staging flow — accept/reject staged code, rollback
   const handleApplyStagedCode = useCallback(() => {
@@ -464,7 +467,7 @@ function CodeStudioShellInner() {
         if (activeFileId) {
           setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, isDirty: false } : f));
           fsPersist();
-          toast("Saved locally in this browser", "success");
+          toast(tcs.savedLocally, "success");
         }
       }
       if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })); }
@@ -676,15 +679,15 @@ function CodeStudioShellInner() {
     setOpenFiles((prev) => [...prev, { id, name: newFileName.trim(), content: "", language: detectLanguage(newFileName.trim()) }]);
     setActiveFileId(id);
     setHasEverOpened(true);
-    toast("File created", "success");
-  }, [newFileName, toast]);
+    toast(tcs.fileCreated, "success");
+  }, [newFileName, toast, tcs]);
 
   const handleDelete = useCallback((id: string) => {
     fsDeleteNode(id);
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
     if (activeFileId === id) setActiveFileId(null);
-    toast("File deleted", "info");
-  }, [activeFileId, toast]);
+    toast(tcs.fileDeleted, "info");
+  }, [activeFileId, toast, tcs]);
 
   const handleRename = useCallback((id: string, name: string) => {
     fsRenameNode(id, name);
@@ -697,8 +700,8 @@ function CodeStudioShellInner() {
     setOpenFiles([{ id: indexFile.id, name: indexFile.name, content: indexFile.content ?? "", language: detectLanguage(indexFile.name) }]);
     setActiveFileId(indexFile.id);
     setHasEverOpened(true);
-    toast("Demo project loaded", "success");
-  }, [toast]);
+    toast(tcs.demoLoaded, "success");
+  }, [toast, tcs]);
 
   const handleBlankProject = useCallback(() => {
     const blankFiles: FileNode[] = [
@@ -710,8 +713,8 @@ function CodeStudioShellInner() {
     setOpenFiles([{ id: "readme", name: "README.md", content: "# New Project\n\nDescribe your project here.\n", language: "markdown" }]);
     setActiveFileId("readme");
     setHasEverOpened(true);
-    toast("Blank project created", "success");
-  }, [toast]);
+    toast(tcs.blankCreated, "success");
+  }, [toast, tcs]);
 
   const handleWelcomeNewFile = useCallback(() => {
     setShowNewFile(true);
@@ -844,7 +847,7 @@ function CodeStudioShellInner() {
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
-              <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file</p>
+              <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p>
             </div>
           </div>
         )}
@@ -1175,7 +1178,7 @@ function CodeStudioShellInner() {
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
                       <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
-                      <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
+                      <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p>
                     </div>
                   </div>
                 )
@@ -1415,7 +1418,7 @@ function CodeStudioShellInner() {
             <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
               {/* Bottom panel tab bar */}
               <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
-                <button onClick={() => setShowTerminal(v => !v)} title="브라우저 콘솔 — 시뮬레이션 환경입니다" className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Console</button>
+                <button onClick={() => setShowTerminal(v => !v)} title={tcs.consoleTooltip} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console}</button>
                 <button onClick={() => setShowProblems(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
                 <button onClick={() => setShowPipelineBottom(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
                 <button onClick={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>

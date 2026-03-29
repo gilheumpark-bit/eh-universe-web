@@ -6,6 +6,9 @@
 
 import { useEffect, useState } from "react";
 import { Code2, Play, Upload, Cpu, MessageSquare, Shield, Layers } from "lucide-react";
+import { useLang } from "@/lib/LangContext";
+import { TRANSLATIONS } from "@/lib/studio-translations";
+import type { AppLanguage } from "@/lib/studio-types";
 
 interface WelcomeScreenProps {
   onNewFile: () => void;
@@ -91,6 +94,8 @@ function FeatureBadge({ icon, label, delay }: { icon: React.ReactNode; label: st
 // ============================================================
 
 export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject }: WelcomeScreenProps) {
+  const { lang } = useLang();
+  const t = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
   const [titleVisible, setTitleVisible] = useState(false);
   const [subtitleVisible, setSubtitleVisible] = useState(false);
   const [shortcutsVisible, setShortcutsVisible] = useState(false);
@@ -122,7 +127,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
             {/* Title glow */}
             <div className="absolute left-1/2 top-1/2 h-20 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-3xl" style={{ background: "#2f9b83" }} />
             <h1 className="relative text-3xl font-bold tracking-tight text-text-primary" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
-              Code Studio
+              {t.title}
             </h1>
           </div>
           <p
@@ -130,7 +135,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               subtitleVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
             }`}
           >
-            AI-Powered Development Environment
+            {t.subtitle}
           </p>
         </div>
 
@@ -138,8 +143,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
         <div className="flex flex-wrap items-center justify-center gap-5">
           <CTACard
             icon={<Code2 className="h-6 w-6 text-accent-green" />}
-            title="New File"
-            description="Start coding from scratch"
+            title={t.newFile}
+            description={t.newFileDesc}
             accentClass="bg-accent-green/10"
             glowColor="#2f9b83"
             onClick={onNewFile}
@@ -147,8 +152,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           />
           <CTACard
             icon={<Play className="h-6 w-6 text-accent-purple" />}
-            title="Open Demo"
-            description="Explore with sample project"
+            title={t.openDemo}
+            description={t.openDemoDesc}
             accentClass="bg-accent-purple/10"
             glowColor="#8d7bc3"
             onClick={onOpenDemo}
@@ -157,8 +162,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {onBlankProject && (
             <CTACard
               icon={<Layers className="h-6 w-6 text-accent-amber" />}
-              title="Blank Project"
-              description="Empty project with README"
+              title={t.blankProject}
+              description={t.blankProjectDesc}
               accentClass="bg-accent-amber/10"
               glowColor="#d4a259"
               onClick={onBlankProject}
@@ -167,8 +172,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           )}
           <CTACard
             icon={<Upload className="h-6 w-6 text-accent-blue" />}
-            title="Import"
-            description="Load existing files"
+            title={t.importFiles}
+            description={t.importDesc}
             accentClass="bg-accent-blue/10"
             glowColor="#5c8fd6"
             onClick={onImportProject ?? onNewFile}
