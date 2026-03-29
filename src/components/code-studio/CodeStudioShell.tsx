@@ -34,6 +34,7 @@ import { setupMonaco } from "@/lib/code-studio-monaco-setup";
 import { parseErrors, type ParsedError } from "@/lib/code-studio-error-parser";
 import { registerCrossFileProviders } from "@/lib/code-studio-cross-file";
 import { isMultiKeyActive } from "@/lib/multi-key-bridge";
+import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio-ai-features";
 
 const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"), { ssr: false });
 
@@ -42,6 +43,8 @@ import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
 import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
+import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
+import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
@@ -311,6 +314,35 @@ function CodeStudioShellInner() {
   const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
+
+  // Panel state hook — manages state for stub panels (Recent Files, Symbol Palette, Canvas, AI Hub, AI Workspace, Database, Merge Conflicts, Code Actions)
+  const panels = useCodeStudioPanels({
+    files,
+    activeFileContent: activeFile?.content ?? null,
+    activeFileName: activeFile?.name ?? null,
+    activeFileLanguage: activeFile?.language ?? null,
+  });
+
+  // Keyboard bindings registration (for KeybindingsPanel discovery)
+  const keyboard = useCodeStudioKeyboard({
+    modalOpen: !!confirmState || showCommandPalette || showShortcuts,
+    bindings: [
+      { keys: "ctrl+shift+p", handler: () => setShowCommandPalette(v => !v), description: "Command Palette" },
+      { keys: "ctrl+p", handler: () => setShowQuickOpen(v => !v), description: "Quick Open" },
+      { keys: "ctrl+s", handler: () => {
+        if (activeFileId) {
+          setOpenFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, isDirty: false } : f));
+          fsPersist();
+          toast(tcs.savedLocally, "success");
+        }
+      }, description: "Save File" },
+      { keys: "ctrl+shift+f", handler: () => setRightPanel(v => v === "search" ? null : "search"), description: "Search in Files" },
+      { keys: "ctrl+`", handler: () => setShowTerminal(v => !v), description: "Toggle Terminal" },
+      { keys: "ctrl+n", handler: () => setShowNewFile(true), description: "New File" },
+      { keys: "ctrl+=", handler: () => setSettings(s => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })), description: "Zoom In" },
+      { keys: "ctrl+-", handler: () => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })), description: "Zoom Out" },
+    ],
+  });
 
   // EditorGroup per-pane editor renderer
   const renderEditorPane = useCallback((pane: EditorPane, isFocused: boolean) => {
@@ -682,7 +714,8 @@ function CodeStudioShellInner() {
     }
     setActiveFileId(node.id);
     setHasEverOpened(true);
-  }, [openFiles]);
+    panels.trackFileOpen(node.id, node.name);
+  }, [openFiles, panels.trackFileOpen]);
 
   // Close tab
   const handleCloseTab = useCallback((id: string) => {
@@ -1426,21 +1459,22 @@ function CodeStudioShellInner() {
                     onClose={() => setRightPanel(null)}
                   />
                 ),
-                // New panels (19) — stub props for panels not yet fully integrated
+                // Panels — connected via useCodeStudioPanels hook
                 "terminal-panel": () => <PI.TerminalPanelComponent files={files} />,
                 "multi-terminal": () => <PI.MultiTerminalComponent />,
-                "database": () => <PI.DatabasePanelComponent connections={[]} onConnect={async () => false} onExecuteQuery={async () => ({ columns: [], rows: [], rowCount: 0, duration: 0, executionTime: 0 })} />,
+                "database": () => <PI.DatabasePanelComponent connections={panels.dbConnections} onConnect={panels.handleDbConnect} onExecuteQuery={panels.handleDbQuery} tables={panels.dbTables} />,
                 "diff-editor": () => <PI.DiffEditorPanelComponent original="" modified="" />,
                 "git-graph": () => <PI.GitGraphComponent commits={[]} branches={[]} currentBranch="main" />,
-                "ai-hub": () => <PI.AIHubComponent features={[]} onToggleFeature={() => {}} />,
-                "ai-workspace": () => <PI.AIWorkspaceComponent threads={[]} sharedMemory={[]} onSendMessage={async () => ""} onCreateThread={() => {}} onDeleteThread={() => {}} />,
-                "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
+                "ai-hub": () => <PI.AIHubComponent features={panels.aiFeatures} onToggleFeature={panels.toggleAiFeature} onConfigureProvider={() => setRightPanel("api-config")} />,
+                "ai-workspace": () => <PI.AIWorkspaceComponent threads={panels.wsThreads} sharedMemory={panels.wsSharedMemory} onSendMessage={panels.sendWsMessage} onCreateThread={panels.createWsThread} onDeleteThread={panels.deleteWsThread} />,
+                "canvas": () => { panels.initCanvas(); return <PI.CanvasPanelComponent nodes={panels.canvasNodes} connections={panels.canvasConnections} onNodesChange={panels.setCanvasNodes} onConnectionsChange={panels.setCanvasConnections} />; },
                 "progress": () => {
                   const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
                   return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} verificationResult={verificationResult} currentVerifyRound={currentVerifyRound} />;
                 },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
-                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={(_conflictId: string, _resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
+                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={panels.mergeConflictsWithResolutions} onResolve={(conflictId: string, resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
+                  panels.resolveConflict(conflictId, resolution, content);
                   if (activeFileId && content) {
                     fsUpdateContent(activeFileId, content);
                     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content, isDirty: true } : f));
@@ -1448,11 +1482,11 @@ function CodeStudioShellInner() {
                   toast("Conflict resolved", "success");
                 }} />,
                 "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => setRightPanel(null)} />,
-                "recent-files": () => <PI.RecentFilesComponent files={[]} onOpen={(fileId: string) => {
+                "recent-files": () => <PI.RecentFilesComponent files={panels.recentFiles} onOpen={(fileId: string) => {
                   const found = findFileNodeByName(files, fileId);
                   if (found) handleFileSelect(found);
-                }} onClear={() => { toast("Recent files cleared", "info"); }} />,
-                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={[]} onSelect={(symbol) => {
+                }} onClear={() => { panels.clearRecentFiles(); toast("Recent files cleared", "info"); }} />,
+                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={panels.symbols} onSelect={(symbol) => {
                   if (symbol?.line) {
                     const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
                     editor?.revealLineInCenter?.(symbol.line);
@@ -1462,9 +1496,22 @@ function CodeStudioShellInner() {
                 "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => setRightPanel(null)} />,
                 "api-config": () => <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />,
                 "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => setRightPanel(null)} />,
-                "code-actions": () => <PI.QuickActionsComponent selectedText="" position={{ top: 0, left: 0 }} language={activeFile?.language ?? "plaintext"} onAction={(actionId: string) => {
+                "code-actions": () => <PI.QuickActionsComponent selectedText={panels.editorSelection.text} position={{ top: panels.editorSelection.top, left: panels.editorSelection.left }} language={activeFile?.language ?? "plaintext"} onAction={async (actionId: string, contextPrompt?: string) => {
                   setRightPanel("chat");
-                  toast(`Action: ${actionId}`, "info");
+                  toast(`Running: ${actionId}`, "info");
+                  // Trigger actual AI feature based on action
+                  if (activeFile && contextPrompt) {
+                    try {
+                      let result = '';
+                      if (actionId === 'explain') result = await explainCode(activeFile.content, activeFile.language);
+                      else if (actionId === 'bugs') {
+                        const lints = await lintCode(activeFile.content, activeFile.language);
+                        result = lints.map(l => `Line ${l.line}: ${l.message}`).join('\n');
+                      }
+                      else if (actionId === 'document') result = await generateDocstring(activeFile.content, activeFile.language);
+                      if (result) toast(result.slice(0, 100) + '...', 'info');
+                    } catch { /* AI call failed — already switched to chat panel */ }
+                  }
                 }} onClose={() => setRightPanel(null)} />,
                 "model-switcher": () => <PI.ModelSwitcherComponent />,
                 "audit": () => <PI.AuditPanelComponent

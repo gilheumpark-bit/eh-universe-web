@@ -64,10 +64,10 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true },
   { id: "templates",      label: "Template Gallery",     labelKo: "템플릿 갤러리",     icon: "Layout",          group: "editing",      category: "File",  color: "text-accent-purple",  status: "stable" },
   { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
-  { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber",   status: "stub" },
-  { id: "symbol-palette", label: "Symbol Palette",       labelKo: "심볼 팔레트",       icon: "Hash",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stub" },
-  { id: "recent-files",   label: "Recent Files",         labelKo: "최근 파일",         icon: "Clock",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stub" },
-  { id: "code-actions",   label: "Code Actions",         labelKo: "코드 액션",         icon: "Zap",             group: "editing",      category: "Tools", color: "text-accent-green",   status: "stub" },
+  { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
+  { id: "symbol-palette", label: "Symbol Palette",       labelKo: "심볼 팔레트",       icon: "Hash",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable" },
+  { id: "recent-files",   label: "Recent Files",         labelKo: "최근 파일",         icon: "Clock",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable" },
+  { id: "code-actions",   label: "Code Actions",         labelKo: "코드 액션",         icon: "Zap",             group: "editing",      category: "Tools", color: "text-accent-green",   status: "stable" },
   { id: "terminal-panel", label: "Terminal",             labelKo: "터미널",            icon: "Terminal",        group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
   { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
 
@@ -76,8 +76,8 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "autopilot",      label: "Autopilot",            labelKo: "오토파일럿",        icon: "Play",            group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
   { id: "agents",         label: "Agent Pipeline",       labelKo: "에이전트 파이프라인", icon: "Shield",          group: "ai",           category: "Tools", color: "text-accent-purple",  status: "beta" },
   { id: "creator",        label: "Code Creator",         labelKo: "코드 크리에이터",    icon: "Wand2",           group: "ai",           category: "Tools", color: "text-accent-amber",   status: "beta" },
-  { id: "ai-hub",         label: "AI Hub",               labelKo: "AI 허브",          icon: "Brain",           group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stub" },
-  { id: "ai-workspace",   label: "AI Workspace",         labelKo: "AI 워크스페이스",    icon: "BrainCircuit",    group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stub" },
+  { id: "ai-hub",         label: "AI Hub",               labelKo: "AI 허브",          icon: "Brain",           group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
+  { id: "ai-workspace",   label: "AI Workspace",         labelKo: "AI 워크스페이스",    icon: "BrainCircuit",    group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "model-switcher", label: "Model Switcher",       labelKo: "모델 전환",         icon: "Cpu",             group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
 
   // ── verification (검증) ────────────────────────────────────
@@ -87,7 +87,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "evaluation",     label: "Project Evaluation",   labelKo: "프로젝트 평가",     icon: "BarChart3",       group: "verification", category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "progress",       label: "Progress Dashboard",   labelKo: "진행 대시보드",     icon: "TrendingUp",      group: "verification", category: "View",  color: "text-accent-green",   status: "stable" },
   { id: "network-inspector", label: "Network Inspector", labelKo: "네트워크 검사기",    icon: "Network",         group: "verification", category: "Tools", color: "text-accent-amber",   status: "stable" },
-  { id: "merge-conflict", label: "Merge Conflicts",      labelKo: "머지 충돌",         icon: "GitMerge",        group: "verification", category: "Tools", color: "text-accent-red",     status: "stub" },
+  { id: "merge-conflict", label: "Merge Conflicts",      labelKo: "머지 충돌",         icon: "GitMerge",        group: "verification", category: "Tools", color: "text-accent-red",     status: "stable" },
 
   // ── git (Git & 배포) ──────────────────────────────────────
   { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
@@ -96,7 +96,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "packages",       label: "Package Manager",      labelKo: "패키지 관리",       icon: "Package",         group: "git",          category: "Tools", color: "text-accent-green",   status: "stable" },
 
   // ── tools (도구) ──────────────────────────────────────────
-  { id: "database",       label: "Database",             labelKo: "데이터베이스",       icon: "Database",        group: "tools",        category: "Tools", color: "text-accent-blue",    status: "stub" },
+  { id: "database",       label: "Database",             labelKo: "데이터베이스",       icon: "Database",        group: "tools",        category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "collab",         label: "Collaboration",        labelKo: "협업",              icon: "Users",           group: "tools",        category: "Tools", color: "text-accent-purple",  status: "beta" },
   { id: "onboarding",     label: "Onboarding Guide",     labelKo: "온보딩 가이드",     icon: "GraduationCap",   group: "tools",        category: "View",  color: "text-accent-blue",    status: "stable" },
   { id: "project-switcher", label: "Projects",           labelKo: "프로젝트 전환",     icon: "FolderKanban",    group: "tools",        category: "File",  color: "text-accent-purple",  status: "stable" },
