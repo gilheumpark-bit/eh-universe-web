@@ -21,6 +21,7 @@ import {
   type GitStatus,
 } from "@/lib/code-studio-git";
 import { generateCommitMessage } from "@/lib/code-studio-ai-features";
+import { useLang } from "@/lib/LangContext";
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -171,6 +172,8 @@ function ChangesTab({
   onCommit,
   fileTree,
 }: ChangesTabProps) {
+  const { lang: cLang } = useLang();
+  const ko = cLang === "ko";
   const flatFiles = useMemo(() => flattenFiles(fileTree), [fileTree]);
 
   const selectedSnapshot = useMemo(() => {
@@ -191,7 +194,7 @@ function ChangesTab({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <Check size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">No pending changes</span>
+        <span className="text-sm">{ko ? "변경 사항 없음" : "No pending changes"}</span>
       </div>
     );
   }
@@ -255,11 +258,12 @@ function HistoryTab({
   onToggleExpand,
   onRestore,
 }: HistoryTabProps) {
+  const { lang: hLang } = useLang();
   if (commits.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <History size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">No commit history</span>
+        <span className="text-sm">{hLang === "ko" ? "커밋 기록 없음" : "No commit history"}</span>
       </div>
     );
   }
@@ -336,6 +340,8 @@ export default function GitPanel({
   onRestore,
   onClearDirty,
 }: GitPanelProps) {
+  const { lang } = useLang();
+  const ko = lang === "ko";
   const [activeTab, setActiveTab] = useState<TabId>("changes");
   const [commits, setCommits] = useState<CommitEntry[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);

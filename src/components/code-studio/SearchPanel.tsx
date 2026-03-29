@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState, useMemo, useCallback, useRef, useDeferredValue } from "react";
+import { useLang } from "@/lib/LangContext";
 import {
   Search, X, FileCode, ChevronDown, ChevronRight,
   Replace, History, Filter,
@@ -161,6 +162,8 @@ interface Props {
 }
 
 export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onReplaceAll }: Props) {
+  const { lang } = useLang();
+  const ko = lang === "ko";
   const [query, setQuery] = useState("");
   const [replaceText, setReplaceText] = useState("");
   const [showReplace, setShowReplace] = useState(false);
@@ -358,7 +361,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
         {query.length < 2 ? (
           <p className="text-center text-text-tertiary py-8">Type at least 2 characters</p>
         ) : results.length === 0 ? (
-          <p className="text-center text-text-tertiary py-8">No matching results</p>
+          <p className="text-center text-text-tertiary py-8">{ko ? "일치하는 결과 없음" : "No matching results"}</p>
         ) : (
           Array.from(grouped).map(([filePath, items]) => (
             <FileGroup

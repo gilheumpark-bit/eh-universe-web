@@ -10,6 +10,7 @@ import {
   Trash2, Plus, Check, Zap,
 } from "lucide-react";
 import { useCodeStudioChat, type ChatMessage as HookChatMessage } from "@/hooks/useCodeStudioChat";
+import { useLang } from "@/lib/LangContext";
 
 interface ChatMessage {
   id: string;
@@ -108,6 +109,8 @@ export function ChatPanel({
   allFileNames,
   onApplyCode,
 }: Props) {
+  const { lang } = useLang();
+  const ko = lang === "ko";
   const chat = useCodeStudioChat({
     systemInstruction: `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.`,
     onMentionResolve: (mention) => {
@@ -206,7 +209,7 @@ export function ChatPanel({
             <Plus size={12} /> New Chat
           </button>
           {chatSessions.length === 0 ? (
-            <div className="px-3 py-4 text-center text-xs text-text-tertiary">No history</div>
+            <div className="px-3 py-4 text-center text-xs text-text-tertiary">{ko ? "기록 없음" : "No history"}</div>
           ) : (
             chatSessions.map((session) => (
               <div key={session.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-bg-tertiary group">

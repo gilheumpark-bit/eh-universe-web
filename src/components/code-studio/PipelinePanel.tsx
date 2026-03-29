@@ -12,6 +12,7 @@ import {
   Play, Square,
 } from "lucide-react";
 import type { TeamResult, Finding } from "@/lib/code-studio-pipeline-teams";
+import { useLang } from "@/lib/LangContext";
 import { generateReport } from "@/lib/code-studio-pipeline-utils";
 
 interface PipelineResultData {
@@ -70,6 +71,8 @@ function StatusBadge({ status }: { status: string }) {
 // ============================================================
 
 export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimestamp }: Props) {
+  const { lang } = useLang();
+  const ko = lang === "ko";
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
   const handleCopyReport = useCallback(() => {
@@ -95,7 +98,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Shield size={32} className="text-text-tertiary opacity-30" />
-        <p className="text-xs text-text-tertiary">No pipeline results yet</p>
+        <p className="text-xs text-text-tertiary">{ko ? "파이프라인 결과 없음" : "No pipeline results yet"}</p>
         {onRun && (
           <button onClick={onRun} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-purple-500 text-white hover:opacity-90 transition-opacity">
             <Play size={12} /> Run Pipeline
@@ -113,7 +116,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Loader2 size={32} className="animate-spin text-purple-400" />
-        <p className="text-xs text-text-tertiary">Pipeline running...</p>
+        <p className="text-xs text-text-tertiary">{ko ? "파이프라인 실행 중..." : "Pipeline running..."}</p>
         {onAbort && (
           <button onClick={onAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-yellow-400 hover:bg-bg-tertiary">
             <Square size={12} /> Abort

@@ -10,6 +10,7 @@ import {
   SplitSquareHorizontal, SplitSquareVertical, FileCode,
 } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio-types";
+import { useLang } from "@/lib/LangContext";
 
 export type SplitDirection = "horizontal" | "vertical" | "quad";
 
@@ -241,6 +242,7 @@ export function EditorGroup({
     maximizedPaneId: null,
   }));
 
+  const { lang } = useLang();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; paneId: string; fileId: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -447,7 +449,7 @@ export function EditorGroup({
     if (pane.files.length === 0) {
       return (
         <div className="flex-1 flex items-center justify-center text-text-tertiary text-xs">
-          <FileCode size={16} className="mr-2 opacity-40" /> No files open
+          <FileCode size={16} className="mr-2 opacity-40" /> {lang === "ko" ? "열린 파일 없음" : "No files open"}
         </div>
       );
     }
