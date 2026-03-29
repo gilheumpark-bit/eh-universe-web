@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Share2, Languages } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import { Share2, Languages, Film, PenLine } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
@@ -7,6 +8,11 @@ import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
 import ShareToNetwork from '@/components/studio/ShareToNetwork';
 import TranslationPanel from '@/components/studio/TranslationPanel';
+import { parseManuscript, generateVoiceMappings } from '@/engine/scene-parser';
+import type { ParsedScene } from '@/engine/scene-parser';
+
+const ScenePlayer = dynamic(() => import('@/components/studio/ScenePlayer'), { ssr: false });
+const SceneTimeline = dynamic(() => import('@/components/studio/SceneTimeline'), { ssr: false });
 
 interface ManuscriptTabProps {
   language: AppLanguage;
@@ -26,6 +32,24 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const [showDashboard, setShowDashboard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
+  const [sceneMode, setSceneMode] = useState<'off' | 'play' | 'edit'>('off');
+  const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
+
+  // 현재 선택된 에피소드 원고에서 장면 파싱
+  const handleSceneMode = useCallback((mode: 'play' | 'edit') => {
+    const manuscripts = config.manuscripts ?? [];
+    const latestMs = manuscripts[manuscripts.length - 1];
+    if (!latestMs?.content) return;
+
+    const result = parseManuscript(latestMs.content, config.characters ?? []);
+    setParsedScenes(result.scenes);
+    setSceneMode(mode);
+  }, [config.manuscripts, config.characters]);
+
+  const voiceMappings = useMemo(
+    () => generateVoiceMappings(config.characters ?? []),
+    [config.characters],
+  );
 
   return (
     <>
@@ -46,6 +70,18 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
           <Share2 className="w-3 h-3" /> {language === 'KO' ? '네트워크 공유' : 'Share'}
         </button>
+        <button onClick={() => handleSceneMode('play')}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+            sceneMode === 'play' ? 'bg-accent-amber text-white border-accent-amber' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+          }`}>
+          <Film className="w-3 h-3" /> {language === 'KO' ? '시청' : 'Preview'}
+        </button>
+        <button onClick={() => handleSceneMode('edit')}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+            sceneMode === 'edit' ? 'bg-accent-blue text-white border-accent-blue' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+          }`}>
+          <PenLine className="w-3 h-3" /> {language === 'KO' ? '편집' : 'Timeline'}
+        </button>
       </div>
       {showShare && (
         <ShareToNetwork
@@ -65,7 +101,38 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       {showTranslation && (
         <TranslationPanel language={language} config={config} setConfig={setConfig} />
       )}
-      {!showTranslation && (
+      {sceneMode === 'play' && parsedScenes.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <ScenePlayer
+            scenes={parsedScenes}
+            voiceMappings={voiceMappings}
+            language={language}
+            onClose={() => setSceneMode('off')}
+            showMetrics
+          />
+        </div>
+      )}
+      {sceneMode === 'edit' && parsedScenes.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-4" style={{ height: 'calc(100vh - 200px)' }}>
+          <SceneTimeline
+            scenes={parsedScenes}
+            language={language}
+            onScenesChange={setParsedScenes}
+            onPlayFrom={(si, bi) => { setSceneMode('play'); }}
+            onExportText={(text) => {
+              setConfig((prev) => {
+                const manuscripts = [...(prev.manuscripts ?? [])];
+                if (manuscripts.length > 0) {
+                  manuscripts[manuscripts.length - 1] = { ...manuscripts[manuscripts.length - 1], content: text, charCount: text.length, lastUpdate: Date.now() };
+                }
+                return { ...prev, manuscripts };
+              });
+              setSceneMode('off');
+            }}
+          />
+        </div>
+      )}
+      {sceneMode === 'off' && !showTranslation && (
         <ManuscriptView
           language={language}
           config={config}
