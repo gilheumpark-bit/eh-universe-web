@@ -26,6 +26,7 @@ import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@
 import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugfinder";
 import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
 import { runStressReport, type StressReport } from "@/lib/code-studio-stress-test";
+import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio-verification-loop";
 import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
 import { registerEditorFeatures } from "@/lib/code-studio-editor-features";
 import { setupMonaco } from "@/lib/code-studio-monaco-setup";
@@ -270,6 +271,10 @@ function CodeStudioShellInner() {
   const [parsedErrors, setParsedErrors] = useState<ParsedError[]>([]);
   const [stressReport, setStressReport] = useState<StressReport | null>(null);
   const [isStressTesting, setIsStressTesting] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [currentVerifyRound, setCurrentVerifyRound] = useState(0);
+  const [stagedCode, setStagedCode] = useState<string | null>(null);
+  const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
   const splitFile = splitFileId ? (openFiles.find((f) => f.id === splitFileId) ?? null) : null;
@@ -307,57 +312,79 @@ function CodeStudioShellInner() {
     }
   }, [activeFile, isStressTesting, toast]);
 
-  // Full Verification — Pipeline + Bug Scan + Stress Test 통합
+  // Full Verification — Verification Loop Engine (Pipeline → Auto-fix → Re-verify)
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationScore, setVerificationScore] = useState<number | null>(null);
   const handleRunVerification = useCallback(async () => {
     if (!activeFile || isVerifying) return;
     setIsVerifying(true);
+    setCurrentVerifyRound(0);
+    setVerificationResult(null);
     setRightPanel("progress");
-    toast("Verification started — Pipeline → Bug Scan → Stress Test", "info");
 
     try {
-      // Step 1: Pipeline (동기, 즉시)
-      const pipeResult = runStaticPipeline(activeFile.content, activeFile.language);
-      setPipelineStages(pipeResult.stages);
-      const pScore = Math.round(pipeResult.stages.reduce((s, st) => s + (st.score ?? 0), 0) / Math.max(pipeResult.stages.length, 1));
-
-      // Step 2: Bug Scan (동기)
-      const bugs = findBugsStatic(activeFile.content, activeFile.language);
-      setBugReports(bugs);
-      const criticalBugs = bugs.filter(b => b.severity === "critical" || b.severity === "high").length;
-
-      // Step 3: Stress Test (비동기, AI)
-      let sScore = 0;
-      let sGrade: "A" | "B" | "C" | "D" | "F" = "F";
-      try {
-        const stress = await runStressReport(activeFile.content, activeFile.name);
-        setStressReport(stress);
-        sScore = stress.overallScore;
-        sGrade = stress.grade;
-      } catch {
-        // Stress failed — score 0, continue
-      }
-
-      // Combined score: Pipeline 50% + Stress 30% + Bug penalty 20%
-      const bugPenalty = Math.max(0, 100 - criticalBugs * 25);
-      const combined = Math.round(pScore * 0.5 + sScore * 0.3 + bugPenalty * 0.2);
-      setVerificationScore(combined);
-
-      // Hard gate: critical bugs or stress F = fail regardless of score
-      const hardFail = criticalBugs > 0 || sGrade === "F";
-      const finalGrade = hardFail ? "FAIL" : combined >= 77 ? "PASS" : "WARN";
-
-      toast(
-        `Verification: ${finalGrade} (${combined}/100) — Pipeline ${pScore} | Stress ${sScore} | Bugs ${bugs.length}`,
-        finalGrade === "PASS" ? "success" : finalGrade === "WARN" ? "info" : "error"
+      const result = await runVerificationLoop(
+        activeFile.content,
+        activeFile.language,
+        activeFile.name,
+        files,
+        { enableStress: false },
+        (iteration) => {
+          setCurrentVerifyRound(iteration.round);
+          setVerificationScore(iteration.combinedScore);
+          // Sync pipeline stages from iteration data
+          setPipelineStages((prev) => prev.map((s, i) => ({
+            ...s,
+            status: i === 0 ? iteration.pipelineStatus : s.status,
+          })));
+        },
       );
+
+      setVerificationResult(result);
+      setVerificationScore(result.finalScore);
+
+      // If fixes were applied, stage the result instead of auto-applying
+      if (result.totalFixesApplied > 0 && result.finalCode !== result.originalCode) {
+        setStagedCode(result.finalCode);
+        toast(
+          `Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.totalFixesApplied} fixes staged`,
+          result.finalStatus === "pass" ? "success" : "info",
+        );
+      } else {
+        toast(
+          `Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.stopReason}`,
+          result.finalStatus === "pass" ? "success" : result.finalStatus === "warn" ? "info" : "error",
+        );
+      }
     } catch {
       toast("Verification failed", "error");
     } finally {
       setIsVerifying(false);
     }
-  }, [activeFile, isVerifying, toast]);
+  }, [activeFile, isVerifying, files, toast]);
+
+  // Staging flow — accept/reject staged code, rollback
+  const handleApplyStagedCode = useCallback(() => {
+    if (!stagedCode || !activeFileId) return;
+    setPreApplySnapshot(activeFile?.content ?? null);
+    fsUpdateContent(activeFileId, stagedCode);
+    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: stagedCode, isDirty: true } : f));
+    toast("Staged fixes applied", "success");
+    setStagedCode(null);
+  }, [stagedCode, activeFileId, activeFile, fsUpdateContent, toast]);
+
+  const handleRejectStaged = useCallback(() => {
+    setStagedCode(null);
+    toast("Staged fixes rejected", "info");
+  }, [toast]);
+
+  const handleRollback = useCallback(() => {
+    if (!preApplySnapshot || !activeFileId) return;
+    fsUpdateContent(activeFileId, preApplySnapshot);
+    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: preApplySnapshot, isDirty: true } : f));
+    setPreApplySnapshot(null);
+    toast("Rolled back to pre-verification state", "info");
+  }, [preApplySnapshot, activeFileId, fsUpdateContent, toast]);
 
   // IndexedDB load (once)
   useEffect(() => {
@@ -1185,19 +1212,24 @@ function CodeStudioShellInner() {
                     onPreviewDiff={(change: { original: string; modified: string; fileName: string }) => setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName })}
                   />
                 ),
-                "review": () => (
-                  <PI.ReviewCenterComponent
-                    pipelineResult={pipelineStages.length > 0 ? {
-                      stages: pipelineStages.map((s) => ({
-                        stage: s.name, status: s.status, score: s.score ?? 0,
-                        findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
-                      })),
-                      overallScore: pipelineScore ?? 0,
-                      overallStatus: (pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail",
-                      timestamp: Date.now(),
-                    } : null}
-                  />
-                ),
+                "review": () => {
+                  // If verification ran, use its final score/status; otherwise fall back to pipeline-only
+                  const effectiveScore = verificationResult?.finalScore ?? pipelineScore ?? 0;
+                  const effectiveStatus = verificationResult?.finalStatus ?? ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail";
+                  return (
+                    <PI.ReviewCenterComponent
+                      pipelineResult={pipelineStages.length > 0 ? {
+                        stages: pipelineStages.map((s) => ({
+                          stage: s.name, status: s.status, score: s.score ?? 0,
+                          findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
+                        })),
+                        overallScore: effectiveScore,
+                        overallStatus: effectiveStatus,
+                        timestamp: Date.now(),
+                      } : null}
+                    />
+                  );
+                },
                 "preview": () => <PI.PreviewPanelComponent files={files} visible={rightPanel === "preview"} />,
                 "outline": () => (
                   <PI.OutlinePanelComponent
@@ -1240,7 +1272,7 @@ function CodeStudioShellInner() {
                 "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
                 "progress": () => {
                   const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
-                  return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} />;
+                  return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} verificationResult={verificationResult} currentVerifyRound={currentVerifyRound} />;
                 },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
                 "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={() => {}} />,
@@ -1260,6 +1292,38 @@ function CodeStudioShellInner() {
               );
             })()}
           </div>
+
+          {/* Staging Banner — shows when verification fixes are staged */}
+          {stagedCode && (
+            <div className="border-t border-accent-amber/30 bg-accent-amber/5 px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-accent-amber" />
+                <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-amber">
+                  {verificationResult?.totalFixesApplied ?? 0} fixes staged — Review before applying
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={handleApplyStagedCode} className="rounded border border-accent-green/30 bg-accent-green/10 px-3 py-1 text-[11px] text-accent-green hover:bg-accent-green/20">
+                  Accept &amp; Apply
+                </button>
+                <button onClick={handleRejectStaged} className="rounded border border-accent-red/30 bg-accent-red/10 px-3 py-1 text-[11px] text-accent-red hover:bg-accent-red/20">
+                  Reject
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Rollback Banner — shows after fixes were applied */}
+          {preApplySnapshot && !stagedCode && (
+            <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between">
+              <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-purple">
+                Verification fixes applied — Rollback available
+              </span>
+              <button onClick={handleRollback} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">
+                Rollback
+              </button>
+            </div>
+          )}
 
           {/* Terminal */}
           {showTerminal && (

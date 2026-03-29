@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { TeamResult } from "@/lib/code-studio-pipeline-teams";
 import type { StressReport } from "@/lib/code-studio-stress-test";
+import type { VerificationResult } from "@/lib/code-studio-verification-loop";
 
 interface TeamProgress {
   name: string;
@@ -38,6 +39,8 @@ interface Props {
   verificationScore?: number;
   onRunVerification?: () => void;
   isVerifying?: boolean;
+  verificationResult?: VerificationResult | null;
+  currentVerifyRound?: number;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=TeamProgress,Props
@@ -165,7 +168,7 @@ function ScoreBar({ score, grade }: { score: number; grade: string }) {
 // PART 4 — Main Component
 // ============================================================
 
-export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClose, stressReport, onRunStress, isStressTesting, verificationScore, onRunVerification, isVerifying }: Props) {
+export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClose, stressReport, onRunStress, isStressTesting, verificationScore, onRunVerification, isVerifying, verificationResult, currentVerifyRound }: Props) {
   const timeAgo = useTimeAgo();
   const [sessionStats, setSessionStats] = useState(() => loadSessionStats());
   const [recentActions, setRecentActions] = useState<RecentAction[]>(() => loadRecentActions());
@@ -392,6 +395,34 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
               <div className="text-[9px] text-[#8b949e]">
                 {verificationScore >= 77 ? "✅ PASS — Safe to deploy" : verificationScore >= 60 ? "⚠️ WARN — Review before deploy" : "❌ FAIL — Critical issues found"}
               </div>
+            </div>
+          )}
+
+          {/* Verification Loop Details */}
+          {isVerifying && currentVerifyRound != null && currentVerifyRound > 0 && (
+            <div className="flex items-center gap-2 py-1">
+              <Loader2 size={10} className="animate-spin text-[#d2a8ff]" />
+              <span className="text-[10px] text-[#8b949e]">Round {currentVerifyRound}/3 — auto-fixing...</span>
+            </div>
+          )}
+
+          {verificationResult && (
+            <div className="space-y-1 mt-1">
+              <div className="flex items-center justify-between text-[10px] text-[#8b949e]">
+                <span>Rounds: {verificationResult.iterations.length}</span>
+                <span>Fixes: {verificationResult.totalFixesApplied}</span>
+                <span>Stop: {verificationResult.stopReason}</span>
+              </div>
+              {verificationResult.scoreDelta !== 0 && (
+                <div className="text-[9px] text-[#8b949e]">
+                  Score delta: {verificationResult.scoreDelta > 0 ? "+" : ""}{verificationResult.scoreDelta}
+                </div>
+              )}
+              {verificationResult.hardGateFailures.length > 0 && (
+                <div className="flex items-center gap-1 text-[9px] text-red-400">
+                  <AlertTriangle size={9} /> Hard gate: {verificationResult.hardGateFailures.join(", ")}
+                </div>
+              )}
             </div>
           )}
 
