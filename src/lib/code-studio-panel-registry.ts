@@ -1,6 +1,24 @@
 // ============================================================
-// PART 1 — Panel Definition Interface & Registry
+// PART 1 — Panel Definition Interface & Types
 // ============================================================
+
+/**
+ * Functional grouping for panels.
+ * Used by the command palette for grouped display and filtering.
+ */
+export type PanelGroup = "editing" | "ai" | "verification" | "git" | "tools" | "settings";
+
+/**
+ * Human-readable labels for each PanelGroup (EN + KO).
+ */
+export const GROUP_LABELS: Record<PanelGroup, { en: string; ko: string }> = {
+  editing:      { en: "Editing",      ko: "편집" },
+  ai:           { en: "AI",           ko: "AI" },
+  verification: { en: "Verification", ko: "검증" },
+  git:          { en: "Git & Deploy", ko: "Git & 배포" },
+  tools:        { en: "Tools",        ko: "도구" },
+  settings:     { en: "Settings",     ko: "설정" },
+};
 
 /**
  * Metadata definition for a Code Studio panel.
@@ -9,11 +27,15 @@
 export interface PanelDef {
   /** Unique key — matches RightPanel type */
   id: string;
-  /** Display name shown in UI */
+  /** Display name shown in UI (English, kept as fallback) */
   label: string;
+  /** Korean display name */
+  labelKo: string;
   /** lucide-react icon name */
   icon: string;
-  /** Grouping category for command palette / menus */
+  /** Functional grouping for command palette sections */
+  group: PanelGroup;
+  /** Grouping category for command palette / menus (backward compat) */
   category: "View" | "Tools" | "File" | "Edit";
   /** Keyboard shortcut display string (optional) */
   shortcut?: string;
@@ -21,53 +43,61 @@ export interface PanelDef {
   color: string;
 }
 
-// IDENTITY_SEAL: PART-1 | role=TypeDef | inputs=none | outputs=PanelDef
+// IDENTITY_SEAL: PART-1 | role=TypeDef | inputs=none | outputs=PanelDef,PanelGroup,GROUP_LABELS
 
 // ============================================================
 // PART 2 — Panel Registry Array
 // ============================================================
 
-export const PANEL_REGISTRY = [
-  // ── Existing 18 panels ──────────────────────────────────────
-  { id: "chat",           label: "AI Chat",              icon: "MessageSquare",   category: "View",  color: "text-accent-purple" },
-  { id: "pipeline",       label: "Pipeline",             icon: "Activity",        category: "View",  color: "text-accent-blue" },
-  { id: "git",            label: "Git",                  icon: "GitBranch",       category: "View",  color: "text-accent-purple" },
-  { id: "deploy",         label: "Deploy",               icon: "Upload",          category: "View",  color: "text-accent-green" },
-  { id: "bugs",           label: "Bug Finder",           icon: "Bug",             category: "Tools", color: "text-accent-red" },
-  { id: "search",         label: "Search in Files",      icon: "Search",          category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber" },
-  { id: "autopilot",      label: "Autopilot",            icon: "Play",            category: "Tools", color: "text-accent-amber" },
-  { id: "agents",         label: "Agent Pipeline",       icon: "Shield",          category: "Tools", color: "text-accent-purple" },
-  { id: "composer",       label: "Multi-file Composer",  icon: "Edit3",           category: "Tools", color: "text-accent-blue" },
-  { id: "review",         label: "Review Center",        icon: "AlertTriangle",   category: "Tools", color: "text-accent-green" },
-  { id: "preview",        label: "Live Preview",         icon: "Eye",             category: "View",  color: "text-accent-green" },
-  { id: "outline",        label: "Code Outline",         icon: "List",            category: "View",  color: "text-accent-blue" },
-  { id: "templates",      label: "Template Gallery",     icon: "Layout",          category: "File",  color: "text-accent-purple" },
-  { id: "settings-panel", label: "Settings Panel",       icon: "Settings",        category: "View",  color: "text-accent-amber" },
-  { id: "packages",       label: "Package Manager",      icon: "Package",         category: "Tools", color: "text-accent-green" },
-  { id: "evaluation",     label: "Project Evaluation",   icon: "BarChart3",       category: "Tools", color: "text-accent-blue" },
-  { id: "collab",         label: "Collaboration",        icon: "Users",           category: "Tools", color: "text-accent-purple" },
-  { id: "creator",        label: "Code Creator",         icon: "Wand2",           category: "Tools", color: "text-accent-amber" },
+export const PANEL_REGISTRY: readonly PanelDef[] = [
+  // ── editing (편집) ─────────────────────────────────────────
+  { id: "chat",           label: "AI Chat",              labelKo: "AI 채팅",         icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple" },
+  { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber" },
+  { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue" },
+  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green" },
+  { id: "templates",      label: "Template Gallery",     labelKo: "템플릿 갤러리",     icon: "Layout",          group: "editing",      category: "File",  color: "text-accent-purple" },
+  { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber" },
+  { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber" },
+  { id: "symbol-palette", label: "Symbol Palette",       labelKo: "심볼 팔레트",       icon: "Hash",            group: "editing",      category: "View",  color: "text-accent-blue" },
+  { id: "recent-files",   label: "Recent Files",         labelKo: "최근 파일",         icon: "Clock",           group: "editing",      category: "File",  color: "text-accent-amber" },
+  { id: "code-actions",   label: "Code Actions",         labelKo: "코드 액션",         icon: "Zap",             group: "editing",      category: "Tools", color: "text-accent-green" },
+  { id: "terminal-panel", label: "Terminal",             labelKo: "터미널",            icon: "Terminal",        group: "editing",      category: "View",  color: "text-accent-green" },
+  { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green" },
 
-  // ── New 19 panels ───────────────────────────────────────────
-  { id: "terminal-panel",    label: "Terminal",           icon: "Terminal",        category: "View",  color: "text-accent-green" },
-  { id: "multi-terminal",    label: "Multi Terminal",     icon: "Layers",          category: "View",  color: "text-accent-green" },
-  { id: "database",          label: "Database",           icon: "Database",        category: "Tools", color: "text-accent-blue" },
-  { id: "diff-editor",       label: "Diff Editor",        icon: "GitCompare",      category: "View",  color: "text-accent-amber" },
-  { id: "git-graph",         label: "Git Graph",          icon: "GitFork",         category: "View",  color: "text-accent-purple" },
-  { id: "ai-hub",            label: "AI Hub",             icon: "Brain",           category: "Tools", color: "text-accent-purple" },
-  { id: "ai-workspace",      label: "AI Workspace",       icon: "BrainCircuit",    category: "Tools", color: "text-accent-blue" },
-  { id: "canvas",            label: "Canvas",             icon: "PenTool",         category: "View",  color: "text-accent-amber" },
-  { id: "progress",          label: "Progress Dashboard", icon: "TrendingUp",      category: "View",  color: "text-accent-green" },
-  { id: "onboarding",        label: "Onboarding Guide",   icon: "GraduationCap",   category: "View",  color: "text-accent-blue" },
-  { id: "merge-conflict",    label: "Merge Conflicts",    icon: "GitMerge",        category: "Tools", color: "text-accent-red" },
-  { id: "project-switcher",  label: "Projects",           icon: "FolderKanban",    category: "File",  color: "text-accent-purple" },
-  { id: "recent-files",      label: "Recent Files",       icon: "Clock",           category: "File",  color: "text-accent-amber" },
-  { id: "symbol-palette",    label: "Symbol Palette",     icon: "Hash",            category: "View",  color: "text-accent-blue" },
-  { id: "keybindings",       label: "Keybindings",        icon: "Keyboard",        category: "View",  color: "text-accent-amber" },
-  { id: "api-config",        label: "API Configuration",  icon: "Key",             category: "View",  color: "text-accent-red" },
-  { id: "network-inspector", label: "Network Inspector",  icon: "Network",         category: "Tools", color: "text-accent-amber" },
-  { id: "code-actions",      label: "Code Actions",       icon: "Zap",             category: "Tools", color: "text-accent-green" },
-  { id: "model-switcher",    label: "Model Switcher",     icon: "Cpu",             category: "Tools", color: "text-accent-purple" },
+  // ── ai (AI) ────────────────────────────────────────────────
+  { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue" },
+  { id: "autopilot",      label: "Autopilot",            labelKo: "오토파일럿",        icon: "Play",            group: "ai",           category: "Tools", color: "text-accent-amber" },
+  { id: "agents",         label: "Agent Pipeline",       labelKo: "에이전트 파이프라인", icon: "Shield",          group: "ai",           category: "Tools", color: "text-accent-purple" },
+  { id: "creator",        label: "Code Creator",         labelKo: "코드 크리에이터",    icon: "Wand2",           group: "ai",           category: "Tools", color: "text-accent-amber" },
+  { id: "ai-hub",         label: "AI Hub",               labelKo: "AI 허브",          icon: "Brain",           group: "ai",           category: "Tools", color: "text-accent-purple" },
+  { id: "ai-workspace",   label: "AI Workspace",         labelKo: "AI 워크스페이스",    icon: "BrainCircuit",    group: "ai",           category: "Tools", color: "text-accent-blue" },
+  { id: "model-switcher", label: "Model Switcher",       labelKo: "모델 전환",         icon: "Cpu",             group: "ai",           category: "Tools", color: "text-accent-purple" },
+
+  // ── verification (검증) ────────────────────────────────────
+  { id: "pipeline",       label: "Pipeline",             labelKo: "파이프라인",        icon: "Activity",        group: "verification", category: "View",  color: "text-accent-blue" },
+  { id: "bugs",           label: "Bug Finder",           labelKo: "버그 파인더",       icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red" },
+  { id: "review",         label: "Review Center",        labelKo: "리뷰 센터",         icon: "AlertTriangle",   group: "verification", category: "Tools", color: "text-accent-green" },
+  { id: "evaluation",     label: "Project Evaluation",   labelKo: "프로젝트 평가",     icon: "BarChart3",       group: "verification", category: "Tools", color: "text-accent-blue" },
+  { id: "progress",       label: "Progress Dashboard",   labelKo: "진행 대시보드",     icon: "TrendingUp",      group: "verification", category: "View",  color: "text-accent-green" },
+  { id: "network-inspector", label: "Network Inspector", labelKo: "네트워크 검사기",    icon: "Network",         group: "verification", category: "Tools", color: "text-accent-amber" },
+  { id: "merge-conflict", label: "Merge Conflicts",      labelKo: "머지 충돌",         icon: "GitMerge",        group: "verification", category: "Tools", color: "text-accent-red" },
+
+  // ── git (Git & 배포) ──────────────────────────────────────
+  { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple" },
+  { id: "deploy",         label: "Deploy",               labelKo: "배포",              icon: "Upload",          group: "git",          category: "View",  color: "text-accent-green" },
+  { id: "git-graph",      label: "Git Graph",            labelKo: "Git 그래프",        icon: "GitFork",         group: "git",          category: "View",  color: "text-accent-purple" },
+  { id: "packages",       label: "Package Manager",      labelKo: "패키지 관리",       icon: "Package",         group: "git",          category: "Tools", color: "text-accent-green" },
+
+  // ── tools (도구) ──────────────────────────────────────────
+  { id: "database",       label: "Database",             labelKo: "데이터베이스",       icon: "Database",        group: "tools",        category: "Tools", color: "text-accent-blue" },
+  { id: "collab",         label: "Collaboration",        labelKo: "협업",              icon: "Users",           group: "tools",        category: "Tools", color: "text-accent-purple" },
+  { id: "onboarding",     label: "Onboarding Guide",     labelKo: "온보딩 가이드",     icon: "GraduationCap",   group: "tools",        category: "View",  color: "text-accent-blue" },
+  { id: "project-switcher", label: "Projects",           labelKo: "프로젝트 전환",     icon: "FolderKanban",    group: "tools",        category: "File",  color: "text-accent-purple" },
+  { id: "keybindings",    label: "Keybindings",          labelKo: "단축키 설정",       icon: "Keyboard",        group: "tools",        category: "View",  color: "text-accent-amber" },
+
+  // ── settings (설정) ───────────────────────────────────────
+  { id: "settings-panel", label: "Settings Panel",       labelKo: "설정 패널",         icon: "Settings",        group: "settings",     category: "View",  color: "text-accent-amber" },
+  { id: "api-config",     label: "API Configuration",    labelKo: "API 설정",          icon: "Key",             group: "settings",     category: "View",  color: "text-accent-red" },
 ] as const;
 
 // IDENTITY_SEAL: PART-2 | role=Registry | inputs=PanelDef | outputs=PANEL_REGISTRY
@@ -83,4 +113,17 @@ export type RightPanel = (typeof PANEL_REGISTRY)[number]["id"] | null;
 export const getPanelDef = (id: string): PanelDef | undefined =>
   PANEL_REGISTRY.find((p) => p.id === id);
 
-// IDENTITY_SEAL: PART-3 | role=Helpers | inputs=PANEL_REGISTRY | outputs=RightPanel,getPanelDef
+/**
+ * Get the localized label for a panel definition.
+ * Falls back to English label when lang !== "ko".
+ */
+export const getPanelLabel = (p: PanelDef, lang: string): string =>
+  lang === "ko" ? p.labelKo : p.label;
+
+/**
+ * Get the localized label for a PanelGroup.
+ */
+export const getGroupLabel = (group: PanelGroup, lang: string): string =>
+  lang === "ko" ? GROUP_LABELS[group].ko : GROUP_LABELS[group].en;
+
+// IDENTITY_SEAL: PART-3 | role=Helpers | inputs=PANEL_REGISTRY | outputs=RightPanel,getPanelDef,getPanelLabel,getGroupLabel

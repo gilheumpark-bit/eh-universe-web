@@ -45,7 +45,8 @@ import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
 import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
-import { PANEL_REGISTRY, type RightPanel } from "@/lib/code-studio-panel-registry";
+import { PANEL_REGISTRY, GROUP_LABELS, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio-panel-registry";
+import { useLang } from "@/lib/LangContext";
 import * as PI from "@/components/code-studio/PanelImports";
 
 // Non-panel dynamic imports (used directly, not right panels)
@@ -242,6 +243,7 @@ function useIsTablet(): boolean {
 
 function CodeStudioShellInner() {
   const { toast } = useToast();
+  const { lang } = useLang();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const { tree: files, setTree: setFiles, createFile: fsCreateFile, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
@@ -943,18 +945,20 @@ function CodeStudioShellInner() {
         <div className="w-12 shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1">
           {/* Top items */}
           {([
-            { id: "files" as const, icon: Files, label: "Explorer", shortcut: "Ctrl+Shift+E" },
-            { id: "search" as const, icon: Search, label: "Search", shortcut: "Ctrl+Shift+F" },
-            { id: "git" as const, icon: GitBranch, label: "Git", shortcut: undefined },
-            { id: "bugs" as const, icon: Bug, label: "Problems", shortcut: undefined },
-            { id: "pipeline" as const, icon: Activity, label: "Pipeline", shortcut: undefined },
-            { id: "chat" as const, icon: MessageSquare, label: "AI Chat", shortcut: undefined },
-          ]).map((item) => (
+            { id: "files" as const, icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
+            { id: "search" as const, icon: Search, label: "Search", labelKo: "파일 검색", shortcut: "Ctrl+Shift+F" },
+            { id: "git" as const, icon: GitBranch, label: "Git", labelKo: "Git", shortcut: undefined },
+            { id: "bugs" as const, icon: Bug, label: "Problems", labelKo: "버그 파인더", shortcut: undefined },
+            { id: "pipeline" as const, icon: Activity, label: "Pipeline", labelKo: "파이프라인", shortcut: undefined },
+            { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
+          ]).map((item) => {
+            const displayLabel = lang === "ko" ? item.labelKo : item.label;
+            return (
             <button
               key={item.id}
               onClick={() => setRightPanel(rightPanel === item.id ? null : item.id as RightPanel)}
               className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"
-              title={`${item.label}${item.shortcut ? ` (${item.shortcut})` : ""}`}
+              title={`${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`}
             >
               {/* Active indicator — animated left border */}
               <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
@@ -967,7 +971,7 @@ function CodeStudioShellInner() {
                 <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
               )}
             </button>
-          ))}
+          ); })}
 
           {/* Spacer */}
           <div className="flex-1" />
@@ -1443,18 +1447,25 @@ function CodeStudioShellInner() {
                 }
               }}
               commands={[
-                { id: "new-file", label: "New File", shortcut: "Ctrl+N", category: "File" },
-                { id: "toggle-terminal", label: "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
-                ...[...PANEL_REGISTRY].map((p) => ({
-                  id: `toggle-${p.id}`,
-                  label: p.label,
-                  shortcut: "shortcut" in p ? (p as { shortcut: string }).shortcut : undefined,
-                  category: p.category,
-                })),
-                { id: "quick-open", label: "Quick Open File", shortcut: "Ctrl+P", category: "File" },
-                { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
-                { id: "run-stress-test", label: "Run Stress Test (AI-Predicted)", category: "Tools" },
-                { id: "run-verification", label: "Run Full Verification (Pipeline + Bugs + Stress)", category: "Tools" },
+                { id: "new-file", label: lang === "ko" ? "새 파일" : "New File", shortcut: "Ctrl+N", category: "File" },
+                { id: "toggle-terminal", label: lang === "ko" ? "터미널 토글" : "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
+                ...Object.entries(
+                  PANEL_REGISTRY.reduce<Record<string, readonly PanelDef[]>>((acc, p) => {
+                    const g = p.group;
+                    return { ...acc, [g]: [...(acc[g] ?? []), p] };
+                  }, {})
+                ).flatMap(([group, panels]) =>
+                  panels.map((p) => ({
+                    id: `toggle-${p.id}`,
+                    label: getPanelLabel(p, lang),
+                    shortcut: p.shortcut,
+                    category: getGroupLabel(group as PanelGroup, lang),
+                  }))
+                ),
+                { id: "quick-open", label: lang === "ko" ? "빠른 파일 열기" : "Quick Open File", shortcut: "Ctrl+P", category: "File" },
+                { id: "toggle-settings", label: lang === "ko" ? "인라인 설정 토글" : "Toggle Inline Settings", category: "View" },
+                { id: "run-stress-test", label: lang === "ko" ? "스트레스 테스트 실행" : "Run Stress Test (AI-Predicted)", category: "Tools" },
+                { id: "run-verification", label: lang === "ko" ? "통합 검증 실행" : "Run Full Verification (Pipeline + Bugs + Stress)", category: "Tools" },
               ]}
             />
           )}

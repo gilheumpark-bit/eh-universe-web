@@ -6,7 +6,11 @@
 import {
   PANEL_REGISTRY,
   getPanelDef,
+  getPanelLabel,
+  getGroupLabel,
+  GROUP_LABELS,
   type PanelDef,
+  type PanelGroup,
   type RightPanel,
 } from '../code-studio-panel-registry';
 
@@ -29,7 +33,8 @@ describe('PANEL_REGISTRY', () => {
   // PART 2 — Required Fields Validation
   // ============================================================
 
-  test('every panel has all required fields (id, label, icon, category, color)', () => {
+  test('every panel has all required fields (id, label, labelKo, icon, group, category, color)', () => {
+    const validGroups = new Set<PanelGroup>(['editing', 'ai', 'verification', 'git', 'tools', 'settings']);
     for (const panel of PANEL_REGISTRY) {
       expect(typeof panel.id).toBe('string');
       expect(panel.id.length).toBeGreaterThan(0);
@@ -37,8 +42,14 @@ describe('PANEL_REGISTRY', () => {
       expect(typeof panel.label).toBe('string');
       expect(panel.label.length).toBeGreaterThan(0);
 
+      expect(typeof panel.labelKo).toBe('string');
+      expect(panel.labelKo.length).toBeGreaterThan(0);
+
       expect(typeof panel.icon).toBe('string');
       expect(panel.icon.length).toBeGreaterThan(0);
+
+      expect(typeof panel.group).toBe('string');
+      expect(validGroups.has(panel.group)).toBe(true);
 
       expect(typeof panel.category).toBe('string');
       expect(panel.category.length).toBeGreaterThan(0);
@@ -147,5 +158,49 @@ describe('known panel spot checks', () => {
     const def = getPanelDef('search');
     expect(def).toBeDefined();
     expect((def as PanelDef & { shortcut?: string }).shortcut).toBe('Ctrl+Shift+F');
+  });
+});
+
+// ============================================================
+// PART 7 — i18n Helpers & GROUP_LABELS
+// ============================================================
+
+describe('GROUP_LABELS', () => {
+  test('has entries for all valid groups', () => {
+    const groups: PanelGroup[] = ['editing', 'ai', 'verification', 'git', 'tools', 'settings'];
+    for (const g of groups) {
+      expect(GROUP_LABELS[g]).toBeDefined();
+      expect(GROUP_LABELS[g].en.length).toBeGreaterThan(0);
+      expect(GROUP_LABELS[g].ko.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('every group in registry has a matching GROUP_LABELS entry', () => {
+    const usedGroups = new Set(PANEL_REGISTRY.map((p) => p.group));
+    for (const g of usedGroups) {
+      expect(GROUP_LABELS[g]).toBeDefined();
+    }
+  });
+});
+
+describe('getPanelLabel', () => {
+  test('returns Korean label for ko', () => {
+    const def = getPanelDef('chat')!;
+    expect(getPanelLabel(def, 'ko')).toBe('AI 채팅');
+  });
+
+  test('returns English label for en', () => {
+    const def = getPanelDef('chat')!;
+    expect(getPanelLabel(def, 'en')).toBe('AI Chat');
+  });
+});
+
+describe('getGroupLabel', () => {
+  test('returns Korean label for ko', () => {
+    expect(getGroupLabel('editing', 'ko')).toBe('편집');
+  });
+
+  test('returns English label for en', () => {
+    expect(getGroupLabel('editing', 'en')).toBe('Editing');
   });
 });
