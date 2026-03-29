@@ -166,17 +166,88 @@ export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string
 // PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
 
-// 3-layer key protection:
-// Layer 1: XOR with origin+UA mask (synchronous, for UI thread)
-// Layer 2: Random salt per key (stored alongside) — prevents identical ciphertext across keys
-// Layer 3: Web Crypto AES-GCM (async, for background operations — future)
-// XSS에서 메모리 접근은 방어 불가하나, localStorage 직접 읽기는 난독화로 지연.
+// 4-layer key protection:
+// Layer 1 (v1): Base64 only (legacy, read-only)
+// Layer 2 (v2): XOR with origin+UA mask (legacy, read-only)
+// Layer 3 (v3): Salt + XOR (legacy, read-only — synchronous fallback for write)
+// Layer 4 (v4): AES-GCM via Web Crypto (async, preferred write path)
+// XSS에서 메모리 접근은 방어 불가하나, localStorage 직접 읽기는 AES-GCM으로 실질적 방어.
+const _ENCRYPTION_PREFIX_V4 = 'noa:4:';
 const _OBFUSCATION_PREFIX_V3 = 'noa:3:';
 const _OBFUSCATION_PREFIX = 'noa:2:';
 const _LEGACY_PREFIX = 'noa:1:';
 const _SALT_LENGTH = 16;
+const _IV_LENGTH = 12; // AES-GCM recommended IV size
 
-// Derive a stable XOR mask from domain + user-agent (not cryptographic, but unique per browser)
+// ── Web Crypto AES-GCM helpers (v4) ──
+
+let _cachedKey: CryptoKey | null = null;
+
+function _isSubtleCryptoAvailable(): boolean {
+  return (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.subtle !== 'undefined' &&
+    typeof crypto.subtle.deriveKey === 'function'
+  );
+}
+
+async function _deriveAesKey(): Promise<CryptoKey> {
+  if (_cachedKey) return _cachedKey;
+  const encoder = new TextEncoder();
+  const salt = encoder.encode(
+    (typeof window !== 'undefined' ? window.location.origin : 'noa-server') +
+    (typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 50) : ''),
+  );
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode('eh-universe-key-v2'),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  _cachedKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+  return _cachedKey;
+}
+
+async function _encryptAesGcm(plain: string): Promise<string> {
+  const key = await _deriveAesKey();
+  const iv = crypto.getRandomValues(new Uint8Array(_IV_LENGTH));
+  const encoded = new TextEncoder().encode(plain);
+  const cipherBuf = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encoded,
+  );
+  // Format: IV (12 bytes) + ciphertext
+  const combined = new Uint8Array(iv.length + cipherBuf.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(cipherBuf), iv.length);
+  return _ENCRYPTION_PREFIX_V4 + btoa(String.fromCharCode(...combined));
+}
+
+async function _decryptAesGcm(stored: string): Promise<string> {
+  const key = await _deriveAesKey();
+  const raw = atob(stored.slice(_ENCRYPTION_PREFIX_V4.length));
+  const allBytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) allBytes[i] = raw.charCodeAt(i);
+  const iv = allBytes.slice(0, _IV_LENGTH);
+  const ciphertext = allBytes.slice(_IV_LENGTH);
+  const plainBuf = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext,
+  );
+  return new TextDecoder().decode(plainBuf);
+}
+
+// ── Legacy XOR helpers (v2/v3 — read-only + sync fallback for write) ──
+
 function _xorMask(): number[] {
   const seed = typeof window !== 'undefined'
     ? `${window.location.origin}:${navigator.userAgent.slice(0, 32)}`
@@ -190,23 +261,21 @@ function _generateSalt(): Uint8Array {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     return crypto.getRandomValues(new Uint8Array(_SALT_LENGTH));
   }
-  // Fallback: non-cryptographic random (server-side / old environments)
   const salt = new Uint8Array(_SALT_LENGTH);
   for (let i = 0; i < _SALT_LENGTH; i++) salt[i] = Math.floor(Math.random() * 256);
   return salt;
 }
 
-function obfuscateKey(plain: string): string {
+/** Synchronous v3 fallback (Salt + XOR) — used when SubtleCrypto unavailable */
+function _obfuscateKeySync(plain: string): string {
   if (!plain) return '';
   try {
     const baseMask = _xorMask();
     const salt = _generateSalt();
-    // Combine base mask with salt for per-key uniqueness
     const combinedMask = baseMask.map((b, i) => b ^ salt[i % salt.length]);
     const bytes = new TextEncoder().encode(plain);
     const xored = new Uint8Array(bytes.length);
     for (let i = 0; i < bytes.length; i++) xored[i] = bytes[i] ^ combinedMask[i % combinedMask.length];
-    // Prepend salt to ciphertext so deobfuscation can recover it
     const combined = new Uint8Array(salt.length + xored.length);
     combined.set(salt, 0);
     combined.set(xored, salt.length);
@@ -216,7 +285,43 @@ function obfuscateKey(plain: string): string {
   }
 }
 
-function deobfuscateKey(stored: string): string {
+// ── Unified encrypt/decrypt (async, with sync fallback) ──
+
+/** Encrypt: AES-GCM preferred, v3 XOR fallback */
+async function encryptKey(plain: string): Promise<string> {
+  if (!plain) return '';
+  if (_isSubtleCryptoAvailable()) {
+    try {
+      return await _encryptAesGcm(plain);
+    } catch {
+      // SubtleCrypto failed (e.g. insecure context) — fall back to v3
+    }
+  }
+  return _obfuscateKeySync(plain);
+}
+
+/** Synchronous encrypt fallback — for callers that cannot await */
+function obfuscateKey(plain: string): string {
+  return _obfuscateKeySync(plain);
+}
+
+/** Decrypt: detects version prefix and dispatches accordingly */
+async function decryptKey(stored: string): Promise<string> {
+  if (!stored) return '';
+  // v4: AES-GCM
+  if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
+    try {
+      return await _decryptAesGcm(stored);
+    } catch {
+      return '';
+    }
+  }
+  // Delegate to synchronous path for v1/v2/v3/plaintext
+  return deobfuscateKeySync(stored);
+}
+
+/** Synchronous decrypt for legacy formats (v1/v2/v3/plaintext) */
+function deobfuscateKeySync(stored: string): string {
   if (!stored) return '';
   // v3: Salt + XOR + Base64
   if (stored.startsWith(_OBFUSCATION_PREFIX_V3)) {
@@ -235,7 +340,7 @@ function deobfuscateKey(stored: string): string {
       return '';
     }
   }
-  // v2: XOR + Base64 (backward compat)
+  // v2: XOR + Base64
   if (stored.startsWith(_OBFUSCATION_PREFIX)) {
     try {
       const mask = _xorMask();
@@ -247,7 +352,7 @@ function deobfuscateKey(stored: string): string {
       return '';
     }
   }
-  // v1 backward compat: Base64 only
+  // v1: Base64 only
   if (stored.startsWith(_LEGACY_PREFIX)) {
     try {
       return decodeURIComponent(escape(atob(stored.slice(_LEGACY_PREFIX.length))));
@@ -255,8 +360,13 @@ function deobfuscateKey(stored: string): string {
       return '';
     }
   }
-  // Plaintext backward compat
+  // Plaintext
   return stored;
+}
+
+/** Legacy sync alias — kept for backward compat with any external callers */
+function deobfuscateKey(stored: string): string {
+  return deobfuscateKeySync(stored);
 }
 
 export function getActiveProvider(): ProviderId {
@@ -278,18 +388,68 @@ export function setActiveProvider(id: ProviderId): void {
   localStorage.removeItem(LEGACY_PROVIDER_KEY);
 }
 
+/**
+ * Synchronous key retrieval — reads all formats (v1/v2/v3/v4/plaintext).
+ * v4 AES-GCM keys are decoded via cached CryptoKey when available;
+ * if the key hasn't been cached yet, falls back to '' (use getApiKeyAsync).
+ */
 export function getApiKey(providerId: ProviderId): string {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
-  return deobfuscateKey(localStorage.getItem(def.storageKey) || "");
+  const stored = localStorage.getItem(def.storageKey) || "";
+  // v4 cannot be decoded synchronously — return cached plaintext or ''
+  if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
+    return _v4PlainCache.get(def.storageKey) ?? '';
+  }
+  return deobfuscateKey(stored);
 }
 
+/**
+ * Async key retrieval — supports all versions including v4 AES-GCM.
+ * Populates the sync cache so subsequent getApiKey() calls succeed.
+ */
+export async function getApiKeyAsync(providerId: ProviderId): Promise<string> {
+  if (typeof window === "undefined") return "";
+  const def = PROVIDERS[providerId];
+  const stored = localStorage.getItem(def.storageKey) || "";
+  const plain = await decryptKey(stored);
+  // Cache plaintext for sync getApiKey() access
+  if (plain && stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
+    _v4PlainCache.set(def.storageKey, plain);
+  }
+  return plain;
+}
+
+/** In-memory plaintext cache for v4 keys (populated by async operations) */
+const _v4PlainCache = new Map<string, string>();
+
+/**
+ * Synchronous setApiKey — writes v3 XOR format (all sync callers can read).
+ * Existing behavior preserved; 27+ callers depend on this being sync.
+ */
 export function setApiKey(providerId: ProviderId, key: string): void {
   if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
   localStorage.setItem(def.storageKey, obfuscateKey(key));
-  // Store key creation timestamp for age tracking
   localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
+  // Clear v4 cache since we wrote v3
+  _v4PlainCache.delete(def.storageKey);
+}
+
+/**
+ * Async setApiKey — writes v4 AES-GCM (preferred for new code paths).
+ * Falls back to v3 if SubtleCrypto is unavailable.
+ */
+export async function setApiKeyAsync(providerId: ProviderId, key: string): Promise<void> {
+  if (typeof window === "undefined") return;
+  const def = PROVIDERS[providerId];
+  const encrypted = await encryptKey(key);
+  localStorage.setItem(def.storageKey, encrypted);
+  localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
+  // Populate sync cache if v4 was used
+  if (encrypted.startsWith(_ENCRYPTION_PREFIX_V4)) {
+    _v4PlainCache.set(def.storageKey, key);
+  }
 }
 
 /**
