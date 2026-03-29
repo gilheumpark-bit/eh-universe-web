@@ -563,3 +563,64 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 충돌 시 안전성 > 정확성 > 검증 가능성 > 성능 > 간결성 순으로 우선한다.
 미검증 코드와 저확신 주장은 단정하지 않으며, 필요한 경우 [확인 필요], [미검증 API], [추정] 마커를 사용한다.
 ```
+
+---
+
+# EH Universe Web — Project Rules
+
+## 3앱 구조
+
+- Universe (아카이브 + 네트워크 + 코덱스)
+- Studio (소설 스튜디오)
+- Code Studio (검증형 코드 스튜디오)
+
+초기 화면 스플래시 → 3분기 선택
+
+## 코드 스튜디오 아키텍처
+
+- **Panel Registry**: 37개 패널을 `code-studio-panel-registry.ts` + `PanelImports.ts`로 관리
+- 새 패널 추가 = 레지스트리 1줄 + PanelImports 1줄 + panelPropsMap 1항목
+- 하드코딩 패널 금지 — 반드시 레지스트리 경유
+
+## Verification-First 원칙
+
+- 생성 후 검증은 필수, 선택이 아님
+- Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) = 통합 점수
+- Hard Gate: critical bugs > 0 OR stress F → 점수 무관 FAIL
+- 3회 검증 루프: no-progress/no-fixes 시 조기 종료
+- Safe fix allowlist만 자동 적용 (함수 시그니처/비즈니스 로직 변경 금지)
+
+## Composer State Machine
+
+허용 전이만 가능 — canTransition() guard 필수
+
+```
+idle → generating → verifying → review → staged → applied → idle
+error → idle | generating
+```
+
+## Staging/Rollback
+
+- fixes는 즉시 적용 금지 → staged 상태로 전환
+- 사람이 Accept/Reject
+- Apply 후 Rollback 가능 (preApplySnapshot)
+
+## 테스트 정책
+
+- 핵심 로직 변경 시 테스트 추가 필수
+- coverage thresholds: branches 50, functions/lines/statements 60
+- CI critical path: verification, composer-state, panel-registry, rate-limit, safe-fix
+
+## 미연결 금지 원칙
+
+- 새 컴포넌트/lib 생성 시 반드시 Shell 또는 소비자와 연결
+- "나중에 연결" 금지 — 생성과 연결은 같은 커밋에서
+- 미연결 스캔: import되지 않는 export가 있으면 이유를 명시
+
+## 번역 정책
+
+- 4개국어: KO, EN, JP, CN
+- 중앙 사전: studio-translations.ts (leaf count 동일해야 함)
+- 인라인 콘텐츠: { ko, en, jp?, cn? } — jp/cn optional
+- fallback 체인: jp/cn → en → ko
+- CN "연출" = 演出 (导演 아님)
