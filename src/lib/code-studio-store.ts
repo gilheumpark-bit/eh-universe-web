@@ -61,11 +61,11 @@ async function dbPut(store: string, key: string, value: unknown): Promise<void> 
 // ============================================================
 
 export async function saveFileTree(tree: FileNode[]): Promise<void> {
-  try { await dbPut(STORE_FILES, 'tree', tree); } catch { /* quota or unavailable */ }
+  try { await dbPut(STORE_FILES, 'tree', tree); } catch (e) { console.error('[CodeStudio:Storage] File tree write failed:', e); }
 }
 
 export async function loadFileTree(): Promise<FileNode[] | null> {
-  try { return (await dbGet<FileNode[]>(STORE_FILES, 'tree')) ?? null; } catch { return null; }
+  try { return (await dbGet<FileNode[]>(STORE_FILES, 'tree')) ?? null; } catch (e) { console.error('[CodeStudio:Storage] File tree read failed:', e); return null; }
 }
 
 // ============================================================
@@ -73,11 +73,11 @@ export async function loadFileTree(): Promise<FileNode[] | null> {
 // ============================================================
 
 export async function saveSettings(settings: CodeStudioSettings): Promise<void> {
-  try { await dbPut(STORE_SETTINGS, 'config', settings); } catch { /* */ }
+  try { await dbPut(STORE_SETTINGS, 'config', settings); } catch (e) { console.error('[CodeStudio:Storage] Settings write failed:', e); }
 }
 
 export async function loadSettings(): Promise<CodeStudioSettings> {
-  try { return (await dbGet<CodeStudioSettings>(STORE_SETTINGS, 'config')) ?? DEFAULT_SETTINGS; } catch { return DEFAULT_SETTINGS; }
+  try { return (await dbGet<CodeStudioSettings>(STORE_SETTINGS, 'config')) ?? DEFAULT_SETTINGS; } catch (e) { console.error('[CodeStudio:Storage] Settings read failed:', e); return DEFAULT_SETTINGS; }
 }
 
 // ============================================================
@@ -93,11 +93,11 @@ export interface StoredChatSession {
 }
 
 export async function saveChatSession(session: StoredChatSession): Promise<void> {
-  try { await dbPut(STORE_CHAT, session.id, session); } catch { /* */ }
+  try { await dbPut(STORE_CHAT, session.id, session); } catch (e) { console.error('[CodeStudio:Storage] Chat session write failed:', e); }
 }
 
 export async function loadChatSession(id: string): Promise<StoredChatSession | null> {
-  try { return (await dbGet<StoredChatSession>(STORE_CHAT, id)) ?? null; } catch { return null; }
+  try { return (await dbGet<StoredChatSession>(STORE_CHAT, id)) ?? null; } catch (e) { console.error('[CodeStudio:Storage] Chat session read failed:', e); return null; }
 }
 
 export async function listChatSessions(): Promise<StoredChatSession[]> {
@@ -109,7 +109,7 @@ export async function listChatSessions(): Promise<StoredChatSession[]> {
       req.onsuccess = () => resolve((req.result as StoredChatSession[]).sort((a, b) => b.updatedAt - a.updatedAt));
       req.onerror = () => reject(req.error);
     });
-  } catch { return []; }
+  } catch (e) { console.error('[CodeStudio:Storage] Chat sessions list failed:', e); return []; }
 }
 
 // ============================================================
@@ -140,13 +140,13 @@ export async function saveFileVersion(fileId: string, content: string): Promise<
       ? versions.slice(versions.length - MAX_VERSIONS_PER_FILE)
       : versions;
     await dbPut(STORE_VERSIONS, fileId, trimmed);
-  } catch { /* quota or unavailable */ }
+  } catch (e) { console.error('[CodeStudio:Storage] Version write failed:', e); }
 }
 
 export async function getFileVersions(fileId: string): Promise<FileVersion[]> {
   try {
     return (await dbGet<FileVersion[]>(STORE_VERSIONS, fileId)) ?? [];
-  } catch { return []; }
+  } catch (e) { console.error('[CodeStudio:Storage] Version read failed:', e); return []; }
 }
 
 export async function restoreFileVersion(fileId: string, versionId: string): Promise<string | null> {
@@ -154,7 +154,7 @@ export async function restoreFileVersion(fileId: string, versionId: string): Pro
     const versions = await getFileVersions(fileId);
     const target = versions.find(v => v.id === versionId);
     return target?.content ?? null;
-  } catch { return null; }
+  } catch (e) { console.error('[CodeStudio:Storage] Version restore failed:', e); return null; }
 }
 
 // IDENTITY_SEAL: PART-5 | role=VersionHistory | inputs=fileId,content | outputs=FileVersion[]/string
@@ -196,7 +196,7 @@ export async function listProjects(): Promise<ProjectMetadata[]> {
   try {
     const all = await dbGetAll<ProjectMetadata>(STORE_PROJECTS);
     return all.sort((a, b) => b.updatedAt - a.updatedAt);
-  } catch { return []; }
+  } catch (e) { console.error('[CodeStudio:Storage] Projects list failed:', e); return []; }
 }
 
 export async function createProject(name: string): Promise<ProjectMetadata> {
@@ -218,7 +218,7 @@ export async function deleteProject(id: string): Promise<void> {
   try {
     await dbDelete(STORE_PROJECTS, id);
     await dbDelete(STORE_FILES, `tree-${id}`);
-  } catch { /* */ }
+  } catch (e) { console.error('[CodeStudio:Storage] Project delete failed:', e); }
 }
 
 export async function switchProject(id: string): Promise<FileNode[] | null> {
@@ -228,7 +228,7 @@ export async function switchProject(id: string): Promise<FileNode[] | null> {
     // 프로젝트별 파일 트리 로드
     const tree = await dbGet<FileNode[]>(STORE_FILES, `tree-${id}`);
     return tree ?? [];
-  } catch { return null; }
+  } catch (e) { console.error('[CodeStudio:Storage] Project switch failed:', e); return null; }
 }
 
 export async function saveProjectFileTree(projectId: string, tree: FileNode[]): Promise<void> {
@@ -241,7 +241,7 @@ export async function saveProjectFileTree(projectId: string, tree: FileNode[]): 
       project.fileCount = countFiles(tree);
       await dbPut(STORE_PROJECTS, projectId, project);
     }
-  } catch { /* */ }
+  } catch (e) { console.error('[CodeStudio:Storage] Project file tree write failed:', e); }
 }
 
 function countFiles(nodes: FileNode[]): number {
@@ -276,13 +276,13 @@ export async function trackRecentFile(fileId: string, fileName: string): Promise
     filtered.unshift({ fileId, fileName, timestamp: Date.now() });
     const trimmed = filtered.slice(0, MAX_RECENT_FILES);
     await dbPut(STORE_RECENT, RECENT_KEY, trimmed);
-  } catch { /* */ }
+  } catch (e) { console.error('[CodeStudio:Storage] Recent file write failed:', e); }
 }
 
 export async function getRecentFiles(): Promise<{ fileId: string; fileName: string; timestamp: number }[]> {
   try {
     return (await dbGet<RecentFileEntry[]>(STORE_RECENT, RECENT_KEY)) ?? [];
-  } catch { return []; }
+  } catch (e) { console.error('[CodeStudio:Storage] Recent files read failed:', e); return []; }
 }
 
 // IDENTITY_SEAL: PART-7 | role=RecentFiles | inputs=fileId,fileName | outputs=RecentFileEntry[]
@@ -291,20 +291,23 @@ export async function getRecentFiles(): Promise<{ fileId: string; fileName: stri
 // PART 8 — Project Getters & Current Project
 // ============================================================
 
-let currentProjectId: string = 'default';
+const PROJECT_ID_KEY = 'codeStudio:currentProjectId';
 
-export function getCurrentProjectId(): string {
-  return currentProjectId;
+export function getCurrentProjectId(): string | null {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem(PROJECT_ID_KEY) ?? 'default';
 }
 
-export function setCurrentProjectId(id: string): void {
-  currentProjectId = id;
+export function setCurrentProjectId(id: string | null): void {
+  if (typeof window === 'undefined') return;
+  if (id) sessionStorage.setItem(PROJECT_ID_KEY, id);
+  else sessionStorage.removeItem(PROJECT_ID_KEY);
 }
 
 export async function getProject(projectId: string): Promise<ProjectMetadata | null> {
   try {
     return (await dbGet<ProjectMetadata>(STORE_PROJECTS, projectId)) ?? null;
-  } catch { return null; }
+  } catch (e) { console.error('[CodeStudio:Storage] Project read failed:', e); return null; }
 }
 
 export async function updateProjectMetadata(
@@ -319,7 +322,7 @@ export async function updateProjectMetadata(
       ...updates,
       updatedAt: Date.now(),
     });
-  } catch { /* */ }
+  } catch (e) { console.error('[CodeStudio:Storage] Project metadata update failed:', e); }
 }
 
 // IDENTITY_SEAL: PART-8 | role=ProjectGetters | inputs=projectId | outputs=ProjectMetadata/currentProjectId
@@ -419,7 +422,7 @@ export async function getStorageUsage(): Promise<StorageUsage> {
         percentUsed: Math.round(percent * 100) / 100,
         warning: percent > 80,
       };
-    } catch { /* fallback */ }
+    } catch (e) { console.error('[CodeStudio:Storage] Storage estimate failed:', e); }
   }
   return { usedBytes: 0, quotaBytes: 0, percentUsed: 0, warning: false };
 }

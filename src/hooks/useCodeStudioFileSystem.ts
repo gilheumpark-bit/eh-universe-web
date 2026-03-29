@@ -119,7 +119,7 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
   }, []);
 
   const pushUndo = useCallback((current: FileNode[]) => {
-    undoStack.current.push(JSON.parse(JSON.stringify(current)));
+    undoStack.current.push(structuredClone(current));
     if (undoStack.current.length > MAX_UNDO) undoStack.current.shift();
     redoStack.current = [];
     syncStackFlags();
@@ -207,7 +207,7 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
   const undo = useCallback(() => {
     if (undoStack.current.length === 0) return;
     setTreeState((prev) => {
-      redoStack.current.push(JSON.parse(JSON.stringify(prev)));
+      redoStack.current.push(structuredClone(prev));
       const restored = undoStack.current.pop()!;
       syncStackFlags();
       return restored;
@@ -217,7 +217,7 @@ export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeSt
   const redo = useCallback(() => {
     if (redoStack.current.length === 0) return;
     setTreeState((prev) => {
-      undoStack.current.push(JSON.parse(JSON.stringify(prev)));
+      undoStack.current.push(structuredClone(prev));
       const restored = redoStack.current.pop()!;
       syncStackFlags();
       return restored;
