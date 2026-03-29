@@ -1200,6 +1200,16 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       lockWorldRules: "세계관 규칙",
       lockCharRelations: "관계도 충돌 방지",
       lockBannedWords: "금지어 적용"
+    },
+    codeStudio: {
+      title: "코드 스튜디오",
+      aiChat: "AI 채팅",
+      pipeline: "파이프라인",
+      terminal: "터미널",
+      search: "검색",
+      settings: "설정",
+      problems: "문제",
+      deploy: "배포"
     }
   },
   EN: {
@@ -2399,6 +2409,16 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       lockWorldRules: "World rules",
       lockCharRelations: "Relation guard",
       lockBannedWords: "Banned words"
+    },
+    codeStudio: {
+      title: "Code Studio",
+      aiChat: "AI Chat",
+      pipeline: "Pipeline",
+      terminal: "Terminal",
+      search: "Search",
+      settings: "Settings",
+      problems: "Problems",
+      deploy: "Deploy"
     }
   },
   JP: {
@@ -3393,7 +3413,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       systemPressureBody: "- 詳細な背景描写：EH -0.10~-0.50 real-time deduction\n- Choices narrowed to 2: EH -10.00\n- Only 1 optimal path remains: EH -20.00 (freedom depleted)",
       dequalificationBody: "EH = 0 → システムクラッシュ → System Crash\nCharacter loses protagonist status, forced to 'observer' or 'recording device'.",
       dualLogBody: "公開ログ（読者）：主人公が人間性を保持しているように見せる偽データ\nAdmin Log (internal): real EH deductions, lost emotions, honest WS display",
-      ehRuleHeader: "EH ENGINE v1.4 — Rule Intensity",
+      ehRuleHeader: "EH ENGINE v1.4 — ルール強度",
       applied: "適用済み",
       tensionRhythm: "テンション/リリースリズム",
       goguma: "テンション",
@@ -3598,6 +3618,16 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       lockWorldRules: "世界観ルール",
       lockCharRelations: "関係図の衝突防止",
       lockBannedWords: "禁止語適用"
+    },
+    codeStudio: {
+      title: "コードスタジオ",
+      aiChat: "AIチャット",
+      pipeline: "パイプライン",
+      terminal: "ターミナル",
+      search: "検索",
+      settings: "設定",
+      problems: "問題",
+      deploy: "デプロイ"
     }
   },
   CN: {
@@ -3612,7 +3642,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       worldStudio: "世界观工作室",
       worldAnalysis: "世界观分析",
       characterStudio: "角色工作室",
-      rulebook: "导演工作室",
+      rulebook: "演出工作室",
       production: "制作",
       writingMode: "写作工作室",
       styleStudio: "文体工作室",
@@ -3799,8 +3829,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       manuscript: "稿件管理",
       apiKeyBanner: "请设置API密钥以使用AI功能。",
       apiKeySetUp: "设置",
-      workflowGuide: "世界观设计 → 角色创建 → 导演设置 → 写作 按顺序进行",
-      noApiKeyGuide: "💡 无需API密钥也可进行世界观·角色·导演设计和手动编辑",
+      workflowGuide: "世界观设计 → 角色创建 → 演出设置 → 写作 按顺序进行",
+      noApiKeyGuide: "💡 无需API密钥也可进行世界观·角色·演出设计和手动编辑",
       saveSetting: "保存设置",
       characters: "角色",
       itemStudio: "物品工作室",
@@ -3819,7 +3849,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       toggleThemeLabel: "切换主题",
       firstStoryPrompt: "准备好写你的第一个故事了吗？",
       setupManually: "✍️ 手动设置",
-      workflowOverview: "世界观设计 → 角色 → 导演 → AI写作 → EPUB导出",
+      workflowOverview: "世界观设计 → 角色 → 演出 → AI写作 → EPUB导出",
     },
     shortcuts: {
       worldDesign: "世界观设计",
@@ -3891,7 +3921,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       characters: "角色",
       relations: "关系",
       synopsis: "大纲",
-      direction: "导演",
+      direction: "演出",
       hook: "钩子",
       simulator: "模拟器",
       consistency: "一致性",
@@ -3902,7 +3932,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       genreLv: "类型Lv",
       editWorld: "→ 编辑世界观",
       editCharacters: "→ 编辑角色",
-      editDirection: "→ 编辑导演",
+      editDirection: "→ 编辑演出",
     },
     archive: {
       all: "全部",
@@ -3928,7 +3958,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       scene: "场景表",
       notSet: "未设置",
       sceneWarning: "没有场景表写作会降低AI质量",
-      setupDirection: "在导演工作室中设置",
+      setupDirection: "在演出工作室中设置",
       episodeScenes: "章节场景表",
       chars: "角色",
       format: "格式",
@@ -4592,7 +4622,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       systemPressureBody: "- 详细背景描写：EH -0.10~-0.50 real-time deduction\n- Choices narrowed to 2: EH -10.00\n- Only 1 optimal path remains: EH -20.00 (freedom depleted)",
       dequalificationBody: "EH = 0 → 系统崩溃 → System Crash\nCharacter loses protagonist status, forced to 'observer' or 'recording device'.",
       dualLogBody: "公开日志（读者用）：显示主角保留人性的伪数据\nAdmin Log (internal): real EH deductions, lost emotions, honest WS display",
-      ehRuleHeader: "EH ENGINE v1.4 — Rule Intensity",
+      ehRuleHeader: "EH ENGINE v1.4 — 规则强度",
       applied: "已应用",
       tensionRhythm: "张力/释放节奏",
       goguma: "张力",
@@ -4735,7 +4765,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       world: "世界",
       characters: "角色",
       writing: "写作",
-      rulebook: "导演",
+      rulebook: "演出",
       more: "更多",
       style: "文体",
       manuscript: "稿件",
@@ -4797,6 +4827,16 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       lockWorldRules: "世界观规则",
       lockCharRelations: "关系冲突防护",
       lockBannedWords: "禁用词应用"
+    },
+    codeStudio: {
+      title: "代码工作室",
+      aiChat: "AI对话",
+      pipeline: "流水线",
+      terminal: "终端",
+      search: "搜索",
+      settings: "设置",
+      problems: "问题",
+      deploy: "部署"
     }
   }
 };

@@ -63,7 +63,7 @@ export function useStudioSession({
     }
 
     showConfirm({
-      title: isKO ? '새로운 소설 시작' : 'Start New Story',
+      title: isKO ? '새로운 소설 시작' : 'Start New Novel',
       message: isKO ? '현재 작업이 초기화됩니다. 진행하시겠습니까?' : 'Current work will be reset. Do you want to continue?',
       confirmLabel: isKO ? '진행' : 'Continue',
       cancelLabel: t('confirm.cancel'),
