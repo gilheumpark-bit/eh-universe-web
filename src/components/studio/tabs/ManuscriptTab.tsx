@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine } from 'lucide-react';
+import { Share2, Languages, Film, PenLine, Headphones } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
@@ -32,11 +32,11 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const [showDashboard, setShowDashboard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
-  const [sceneMode, setSceneMode] = useState<'off' | 'play' | 'edit'>('off');
+  const [sceneMode, setSceneMode] = useState<'off' | 'radio' | 'visual' | 'edit'>('off');
   const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
 
   // 현재 선택된 에피소드 원고에서 장면 파싱
-  const handleSceneMode = useCallback((mode: 'play' | 'edit') => {
+  const handleSceneMode = useCallback((mode: 'radio' | 'visual' | 'edit') => {
     const manuscripts = config.manuscripts ?? [];
     const latestMs = manuscripts[manuscripts.length - 1];
     if (!latestMs?.content) return;
@@ -70,17 +70,23 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
           <Share2 className="w-3 h-3" /> {language === 'KO' ? '네트워크 공유' : 'Share'}
         </button>
-        <button onClick={() => handleSceneMode('play')}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
-            sceneMode === 'play' ? 'bg-accent-amber text-white border-accent-amber' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
-          }`}>
-          <Film className="w-3 h-3" /> {language === 'KO' ? '시청' : 'Preview'}
-        </button>
         <button onClick={() => handleSceneMode('edit')}
           className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
             sceneMode === 'edit' ? 'bg-accent-blue text-white border-accent-blue' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
-          <PenLine className="w-3 h-3" /> {language === 'KO' ? '편집' : 'Timeline'}
+          <PenLine className="w-3 h-3" /> {language === 'KO' ? '① 편집' : '① Edit'}
+        </button>
+        <button onClick={() => handleSceneMode('radio')}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+            sceneMode === 'radio' ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+          }`}>
+          <Headphones className="w-3 h-3" /> {language === 'KO' ? '② 라디오' : '② Radio'}
+        </button>
+        <button onClick={() => handleSceneMode('visual')}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+            sceneMode === 'visual' ? 'bg-accent-amber text-white border-accent-amber' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+          }`}>
+          <Film className="w-3 h-3" /> {language === 'KO' ? '③ 비주얼 노벨' : '③ Visual Novel'}
         </button>
       </div>
       {showShare && (
@@ -101,12 +107,25 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       {showTranslation && (
         <TranslationPanel language={language} config={config} setConfig={setConfig} />
       )}
-      {sceneMode === 'play' && parsedScenes.length > 0 && (
+      {sceneMode === 'radio' && parsedScenes.length > 0 && (
         <div className="fixed inset-0 z-50 bg-black">
           <ScenePlayer
             scenes={parsedScenes}
             voiceMappings={voiceMappings}
             language={language}
+            mode="radio"
+            onClose={() => setSceneMode('off')}
+            autoPlay
+          />
+        </div>
+      )}
+      {sceneMode === 'visual' && parsedScenes.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <ScenePlayer
+            scenes={parsedScenes}
+            voiceMappings={voiceMappings}
+            language={language}
+            mode="visual"
             onClose={() => setSceneMode('off')}
             showMetrics
           />

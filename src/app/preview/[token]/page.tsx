@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Loader2, Lock, Clock, AlertTriangle, MessageSquare, Send } from "lucide-react";
+import { Loader2, Lock, Clock, AlertTriangle, MessageSquare, Send, Headphones, Film } from "lucide-react";
 import { loadSharedScene, verifyPassword, saveFeedback, loadFeedbacks } from "@/lib/scene-share";
 import type { SharedSceneData, SceneFeedback } from "@/lib/scene-share";
 import { generateVoiceMappings } from "@/engine/scene-parser";
@@ -253,6 +253,7 @@ export default function PreviewPage() {
 
   // 재생
   const { data } = state;
+  const [previewMode, setPreviewMode] = useState<'select' | 'radio' | 'visual'>('select');
   const voiceMappings: VoiceMapping[] = data.voiceMappings.length > 0
     ? data.voiceMappings
     : generateVoiceMappings([]);
@@ -261,14 +262,47 @@ export default function PreviewPage() {
     ? new Map(Object.entries(data.backgroundUrls))
     : undefined;
 
+  // 모드 선택 화면
+  if (previewMode === 'select') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-xl font-[family-name:var(--font-display)] font-bold text-text-primary">{data.title}</h1>
+          {data.authorName && <p className="text-sm text-text-secondary">by {data.authorName}</p>}
+        </div>
+        <p className="text-sm text-text-tertiary">감상 방식을 선택하세요</p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setPreviewMode('radio')}
+            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-purple/10 border border-border/30 hover:border-accent-purple/40 rounded-2xl transition-all group"
+          >
+            <Headphones className="h-10 w-10 text-accent-purple group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-[family-name:var(--font-mono)] text-text-primary">🎧 라디오 드라마</span>
+            <span className="text-[10px] text-text-tertiary">눈을 감고 들어보세요</span>
+          </button>
+          <button
+            onClick={() => setPreviewMode('visual')}
+            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-amber/10 border border-border/30 hover:border-accent-amber/40 rounded-2xl transition-all group"
+          >
+            <Film className="h-10 w-10 text-accent-amber group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-[family-name:var(--font-mono)] text-text-primary">🎬 비주얼 노벨</span>
+            <span className="text-[10px] text-text-tertiary">그 세계에 들어가세요</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen bg-black">
       <ScenePlayer
         scenes={data.scenes}
         voiceMappings={voiceMappings}
         language="KO"
+        mode={previewMode}
         showMetrics={false}
         backgroundUrls={bgUrls}
+        onClose={() => setPreviewMode('select')}
       />
 
       <FeedbackPanel token={token} feedbackEnabled={data.feedbackEnabled} />

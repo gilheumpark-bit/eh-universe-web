@@ -1,35 +1,44 @@
 "use client";
 
 // ============================================================
-// ScenePlayer — 비주얼 노벨 시청 모드
+// ScenePlayer — 3단계 프리뷰 시스템
 // ============================================================
-// 파싱된 장면을 비주얼 노벨 형태로 재생.
-// 배경 + 캐릭터 + 대사창 + 연출 이펙트 + TTS 음성.
+// Step 1: 편집 모드 → SceneTimeline (별도 컴포넌트)
+// Step 2: 라디오 드라마 → 어둠 + 음성 + 환경음 + 효과음 (상상)
+// Step 3: 비주얼 노벨 → 캐릭터 + 배경 + 음성 + 연출 (존재)
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
   Maximize2, Minimize2, BarChart3, X, ChevronLeft, ChevronRight,
+  Headphones, Film,
 } from "lucide-react";
 import type {
   ParsedScene, SceneBeat, VoiceMapping, ParticleType,
   TTSController, Emotion,
 } from "@/engine/scene-parser";
 import { createTTSController, adjustVoiceForEmotion } from "@/engine/scene-parser";
+import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
+import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
 
 // ============================================================
 // PART 1 — Props & State Types
 // ============================================================
 
+/** 프리뷰 모드: radio(라디오 드라마) | visual(비주얼 노벨) */
+export type PreviewMode = 'radio' | 'visual';
+
 interface ScenePlayerProps {
   scenes: ParsedScene[];
   voiceMappings: VoiceMapping[];
   language: AppLanguage;
+  mode?: PreviewMode;           // 기본: 'visual'
   onClose?: () => void;
   showMetrics?: boolean;        // 텐션/EOS 오버레이
   autoPlay?: boolean;
   backgroundUrls?: Map<string, string>; // sceneId → image URL
+  characterImages?: Map<string, Map<string, string>>; // name → emotion → url
 }
 
 interface PlaybackState {
@@ -307,11 +316,14 @@ export default function ScenePlayer({
   scenes,
   voiceMappings,
   language,
+  mode = 'visual',
   onClose,
   showMetrics = false,
   autoPlay = false,
   backgroundUrls,
+  characterImages,
 }: ScenePlayerProps) {
+  const isRadio = mode === 'radio';
   const [state, setState] = useState<PlaybackState>({
     sceneIndex: 0,
     beatIndex: 0,
@@ -327,11 +339,28 @@ export default function ScenePlayer({
   const autoPlayRef = useRef<ReturnType<typeof setTimeout>>();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // TTS 초기화
+  const audioRef = useRef<AudioEngine | null>(null);
+
+  // TTS + Audio 초기화
   useEffect(() => {
     ttsRef.current = createTTSController();
-    return () => { ttsRef.current?.stop(); };
+    audioRef.current = createAudioEngine();
+    return () => { ttsRef.current?.stop(); audioRef.current?.dispose(); };
   }, []);
+
+  // 장면 전환 시 환경음 변경
+  useEffect(() => {
+    if (!currentScene || !audioRef.current) return;
+    const ambient = detectAmbient(currentScene.mood, currentScene.timeOfDay);
+    audioRef.current.playAmbient(ambient, isRadio ? 0.25 : 0.1);
+  }, [currentScene, isRadio]);
+
+  // 비트 전환 시 효과음
+  useEffect(() => {
+    if (!currentBeat || !audioRef.current) return;
+    const sfxList = detectSFX(currentBeat.text);
+    for (const sfx of sfxList) audioRef.current.playSFX(sfx);
+  }, [currentBeat]);
 
   const currentScene = scenes[state.sceneIndex];
   const currentBeat = currentScene?.beats[state.beatIndex];
@@ -440,25 +469,57 @@ export default function ScenePlayer({
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden select-none" style={{ background: bgGradient }}>
-      {/* 배경 이미지 */}
-      {bgUrl && (
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-          style={{ backgroundImage: `url(${bgUrl})`, filter: getMoodFilter(currentScene.mood), opacity: 0.6 }}
-        />
+      {/* ── 라디오 모드: 어둠 + 최소 비주얼 ── */}
+      {isRadio && (
+        <>
+          <div className="absolute inset-0 bg-black" />
+          {/* 중앙 파동 이펙트 */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className={`rounded-full border border-accent-purple/20 ${state.isPlaying && !state.isPaused ? 'animate-ping' : ''}`} style={{ width: 120, height: 120 }} />
+            <div className="absolute rounded-full border border-accent-purple/10" style={{ width: 200, height: 200 }} />
+            <Headphones className="absolute h-8 w-8 text-accent-purple/40" />
+          </div>
+          {/* 라디오 모드에서도 비트 텍스트 페이드인 */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-16">
+            <p className={`text-center leading-loose transition-opacity duration-1000 max-w-xl ${
+              currentBeat.type === 'dialogue' ? 'text-lg text-text-primary font-medium' :
+              currentBeat.type === 'thought' ? 'text-base text-accent-purple/80 italic' :
+              currentBeat.type === 'description' ? 'text-sm text-text-tertiary' :
+              'text-base text-text-secondary'
+            }`} style={{ opacity: 0.8 }}>
+              {currentBeat.speaker && currentBeat.type === 'dialogue' && (
+                <span className="block text-xs text-accent-green/60 font-[family-name:var(--font-mono)] mb-2">{currentBeat.speaker}</span>
+              )}
+              {currentBeat.text}
+            </p>
+          </div>
+        </>
       )}
 
-      {/* 파티클 */}
-      <ParticleLayer type={particles} />
+      {/* ── 비주얼 노벨 모드: 풀 비주얼 ── */}
+      {!isRadio && (
+        <>
+          {/* 배경 이미지 */}
+          {bgUrl && (
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+              style={{ backgroundImage: `url(${bgUrl})`, filter: getMoodFilter(currentScene.mood), opacity: 0.6 }}
+            />
+          )}
 
-      {/* 비네팅 */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%)" }} />
+          {/* 파티클 */}
+          <ParticleLayer type={particles} />
+        </>
+      )}
+
+      {/* 비네팅 (양쪽 모드) */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: isRadio ? "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.8) 100%)" : "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%)" }} />
 
       {/* 장면 타이틀 (전환 시) */}
       <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-[family-name:var(--font-mono)] text-text-tertiary bg-bg-primary/40 backdrop-blur-sm rounded px-2 py-0.5">
-            {currentScene.title} {currentScene.timeOfDay ? `· ${currentScene.timeOfDay}` : ""}
+          <span className={`text-[10px] font-[family-name:var(--font-mono)] bg-bg-primary/40 backdrop-blur-sm rounded px-2 py-0.5 ${isRadio ? 'text-accent-purple' : 'text-text-tertiary'}`}>
+            {isRadio ? '🎧' : '🎬'} {currentScene.title} {currentScene.timeOfDay ? `· ${currentScene.timeOfDay}` : ""}
           </span>
           <span className="text-[9px] text-text-tertiary">
             {currentGlobalBeat}/{totalBeats}
@@ -508,13 +569,29 @@ export default function ScenePlayer({
         </button>
       </div>
 
-      {/* 캐릭터 표시 */}
-      {currentBeat.speaker && (
-        <CharacterDisplay name={currentBeat.speaker} emotion={currentBeat.emotion} side="left" />
+      {/* 캐릭터 표시 (비주얼 모드만) */}
+      {!isRadio && currentBeat.speaker && (
+        <>
+          {/* 캐릭터 이미지 (있으면) */}
+          {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
+            <div className="absolute bottom-32 left-8 transition-all duration-500">
+              <img
+                src={characterImages.get(currentBeat.speaker)!.get(getDominantEmotion(currentBeat.emotion))!}
+                alt={currentBeat.speaker}
+                className="h-64 object-contain drop-shadow-2xl"
+              />
+              <div className="text-center mt-1 bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
+                <span className="text-xs font-[family-name:var(--font-mono)] text-accent-purple">{currentBeat.speaker}</span>
+              </div>
+            </div>
+          ) : (
+            <CharacterDisplay name={currentBeat.speaker} emotion={currentBeat.emotion} side="left" />
+          )}
+        </>
       )}
 
-      {/* 대사창 */}
-      <DialogueBox
+      {/* 대사창 (비주얼 모드), 라디오는 중앙 텍스트로 대체 */}
+      {!isRadio && <DialogueBox
         beat={currentBeat}
         speed={state.speed}
         onNext={goNext}
@@ -522,7 +599,20 @@ export default function ScenePlayer({
         canPrev={canPrev}
         showMetrics={state.showOverlay}
         tension={currentScene.tension}
-      />
+      />}
+
+      {/* 라디오 모드 하단: 간단한 다음 버튼 */}
+      {isRadio && (
+        <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4">
+          <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="이전">
+            <ChevronLeft className="h-5 w-5 text-text-secondary" />
+          </button>
+          <button onClick={goNext} className="px-6 py-2 bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple rounded-full text-sm font-[family-name:var(--font-mono)] transition-colors">
+            다음
+          </button>
+          <button onClick={goPrev} disabled={!canPrev} className="sr-only" />
+        </div>
+      )}
 
       {/* 진행률 바 */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-bg-primary/30">
