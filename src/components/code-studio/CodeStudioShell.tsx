@@ -40,6 +40,8 @@ import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
+import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
+import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
 import { PANEL_REGISTRY, type RightPanel } from "@/lib/code-studio-panel-registry";
@@ -275,6 +277,9 @@ function CodeStudioShellInner() {
   const [stressReport, setStressReport] = useState<StressReport | null>(null);
   const [isStressTesting, setIsStressTesting] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+
+  // Composer state machine
+  const composer = useCodeStudioComposer();
   const [currentVerifyRound, setCurrentVerifyRound] = useState(0);
   const [stagedCode, setStagedCode] = useState<string | null>(null);
   const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
@@ -1240,20 +1245,30 @@ function CodeStudioShellInner() {
                 "composer": () => (
                   <PI.ComposerPanelComponent
                     files={files}
+                    composerMode={composer.mode}
                     onCompose={async (fileIds: string[], instruction: string) => {
-                      return fileIds.map((fid) => {
+                      composer.transitionMode('generating');
+                      const result = fileIds.map((fid) => {
                         const f = openFiles.find((of) => of.id === fid);
                         return { fileId: fid, fileName: f?.name ?? fid, original: f?.content ?? "", modified: f?.content ?? "", status: "pending" as const };
                       });
+                      composer.transitionMode('verifying');
+                      return result;
                     }}
                     onApplyChanges={(changes: Array<{ fileId: string; modified: string }>) => {
+                      composer.transitionMode('staged');
                       for (const c of changes) {
                         setOpenFiles((prev) => prev.map((f) => f.id === c.fileId ? { ...f, content: c.modified, isDirty: true } : f));
                         fsUpdateContent(c.fileId, c.modified);
                       }
+                      composer.transitionMode('applied');
+                      composer.transitionMode('idle');
                       toast(`Applied ${changes.length} file(s)`, "success");
                     }}
-                    onPreviewDiff={(change: { original: string; modified: string; fileName: string }) => setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName })}
+                    onPreviewDiff={(change: { original: string; modified: string; fileName: string }) => {
+                      composer.transitionMode('review');
+                      setDiffState({ original: change.original, modified: change.modified, fileName: change.fileName });
+                    }}
                   />
                 ),
                 "review": () => {

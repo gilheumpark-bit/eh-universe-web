@@ -8,6 +8,7 @@ import { useState, useCallback } from "react";
 import { FileText, Send, Check, X, ChevronDown, ChevronRight, Loader2, Eye, RefreshCw } from "lucide-react";
 import type { FileNode } from "@/lib/code-studio-types";
 import { fileIconColor } from "@/lib/code-studio-types";
+import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 export interface FileChange {
   fileId: string;
@@ -19,6 +20,8 @@ export interface FileChange {
 
 interface ComposerPanelProps {
   files: FileNode[];
+  /** Current state-machine mode (optional for backward compat) */
+  composerMode?: ComposerMode;
   onCompose: (fileIds: string[], instruction: string) => Promise<FileChange[]>;
   onApplyChanges: (changes: FileChange[]) => void;
   onPreviewDiff?: (change: FileChange) => void;
@@ -152,6 +155,7 @@ function ChangeCard({
 
 export default function ComposerPanel({
   files,
+  composerMode,
   onCompose,
   onApplyChanges,
   onPreviewDiff,
@@ -160,6 +164,9 @@ export default function ComposerPanel({
   const [instruction, setInstruction] = useState("");
   const [changes, setChanges] = useState<FileChange[]>([]);
   const [composing, setComposing] = useState(false);
+
+  // Derive disabled state from state machine when available
+  const isGenerating = composerMode ? composerMode === 'generating' : composing;
 
   const allFiles = flattenFiles(files);
 

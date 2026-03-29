@@ -1,12 +1,18 @@
 // ============================================================
-// Code Studio — Composer Hook
-// Multi-file edit session, AI instruction, preview changes,
-// apply/reject per file.
+// PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { streamChat } from '@/lib/ai-providers';
 import type { FileNode } from '@/lib/code-studio-types';
+import {
+  type ComposerMode,
+  canTransition,
+  createModeTransition,
+} from '@/lib/code-studio-composer-state';
+
+export type { ComposerMode } from '@/lib/code-studio-composer-state';
+export { canTransition, createModeTransition } from '@/lib/code-studio-composer-state';
 
 export interface ComposerChange {
   fileId: string;
@@ -17,9 +23,19 @@ export interface ComposerChange {
 }
 
 interface UseCodeStudioComposerReturn {
-  changes: ComposerChange[];
+  /** Current state-machine mode */
+  mode: ComposerMode;
+  /** Guarded transition — returns false on invalid transition */
+  transitionMode: (next: ComposerMode) => boolean;
+  /** Backward-compat: true when mode is 'generating' */
   composing: boolean;
-  compose: (fileIds: string[], instruction: string, getContent: (id: string) => string | null, getFileName: (id: string) => string) => Promise<void>;
+  changes: ComposerChange[];
+  compose: (
+    fileIds: string[],
+    instruction: string,
+    getContent: (id: string) => string | null,
+    getFileName: (id: string) => string,
+  ) => Promise<void>;
   accept: (fileId: string) => void;
   reject: (fileId: string) => void;
   acceptAll: () => void;
@@ -29,10 +45,25 @@ interface UseCodeStudioComposerReturn {
   reset: () => void;
 }
 
+// IDENTITY_SEAL: PART-1 | role=types-and-imports | inputs=none | outputs=interfaces
+
+// ============================================================
+// PART 2 — Hook Implementation
+// ============================================================
+
 export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
+  const [mode, setMode] = useState<ComposerMode>('idle');
   const [changes, setChanges] = useState<ComposerChange[]>([]);
-  const [composing, setComposing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Guarded transition derived from current mode
+  const transitionMode = useMemo(
+    () => createModeTransition(mode, setMode),
+    [mode],
+  );
+
+  // Backward-compat derived state
+  const composing = mode === 'generating';
 
   const compose = useCallback(async (
     fileIds: string[],
@@ -40,8 +71,12 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
     getContent: (id: string) => string | null,
     getFileName: (id: string) => string,
   ) => {
-    if (composing) return;
-    setComposing(true);
+    // Guard: only idle → generating is valid
+    if (!canTransition(mode, 'generating')) {
+      console.warn(`[Composer] Cannot start composing from mode "${mode}"`);
+      return;
+    }
+    setMode('generating');
     setChanges([]);
 
     const controller = new AbortController();
@@ -86,15 +121,27 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
 
         setChanges([...results]);
       }
+
+      // generating → verifying (auto-transition after successful generation)
+      setMode('verifying');
     } catch (err) {
-      if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        // Non-abort error - keep whatever changes we have so far
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // User-initiated abort — back to idle
+        setMode('idle');
+      } else {
+        // Non-abort error → error state
+        setMode('error');
       }
     } finally {
-      setComposing(false);
       abortRef.current = null;
     }
-  }, [composing]);
+  }, [mode]);
+
+  // IDENTITY_SEAL: PART-2 | role=compose-flow | inputs=fileIds,instruction | outputs=changes,mode
+
+  // ============================================================
+  // PART 3 — Change Accept/Reject & Utilities
+  // ============================================================
 
   const updateStatus = useCallback((fileId: string, status: 'accepted' | 'rejected') => {
     setChanges((prev) => prev.map((c) => (c.fileId === fileId ? { ...c, status } : c)));
@@ -123,12 +170,14 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
     abortRef.current?.abort();
     abortRef.current = null;
     setChanges([]);
-    setComposing(false);
+    setMode('idle');
   }, []);
 
   return {
-    changes,
+    mode,
+    transitionMode,
     composing,
+    changes,
     compose,
     accept,
     reject,
@@ -139,3 +188,5 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
     reset,
   };
 }
+
+// IDENTITY_SEAL: PART-3 | role=change-management | inputs=changes | outputs=accepted/rejected

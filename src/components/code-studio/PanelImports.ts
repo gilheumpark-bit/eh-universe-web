@@ -286,3 +286,127 @@ export const QuickOpenComponent = dynamic(
 );
 
 // IDENTITY_SEAL: PART-3 | role=SharedUtilImports | inputs=none | outputs=utility-dynamic-components
+
+// ============================================================
+// PART 4 — Internal Utility Components (18 components)
+// ============================================================
+//
+// Components used internally by panels or available for future
+// panel integration. Lazy-loaded to keep Shell bundle lean.
+//
+
+// ── file-explorer (named) ───────────────────────────────────
+export const FileExplorerComponent = dynamic(
+  () => import("@/components/code-studio/FileExplorer").then((m) => ({ default: m.FileExplorer })),
+  { ssr: false },
+);
+
+// ── context-menu (named) ────────────────────────────────────
+export const ContextMenuComponent = dynamic(
+  () => import("@/components/code-studio/ContextMenu").then((m) => ({ default: m.ContextMenu })),
+  { ssr: false },
+);
+
+// ── input-dialog (named) ────────────────────────────────────
+export const InputDialogComponent = dynamic(
+  () => import("@/components/code-studio/InputDialog").then((m) => ({ default: m.InputDialog })),
+  { ssr: false },
+);
+
+// ── resize-handle (named) ───────────────────────────────────
+export const ResizeHandleComponent = dynamic(
+  () => import("@/components/code-studio/ResizeHandle").then((m) => ({ default: m.ResizeHandle })),
+  { ssr: false },
+);
+
+// ── editor-group (named) ────────────────────────────────────
+export const EditorGroupComponent = dynamic(
+  () => import("@/components/code-studio/EditorGroup").then((m) => ({ default: m.EditorGroup })),
+  { ssr: false },
+);
+
+// ── split-terminal (named) ──────────────────────────────────
+export const SplitTerminalComponent = dynamic(
+  () => import("@/components/code-studio/SplitTerminal").then((m) => ({ default: m.SplitTerminal })),
+  { ssr: false },
+);
+
+// ── agent-diff-preview (default) ────────────────────────────
+export const AgentDiffPreviewComponent = dynamic(
+  () => import("@/components/code-studio/AgentDiffPreview"),
+  { ssr: false },
+);
+
+// ── code-block-actions (default) ────────────────────────────
+export const CodeBlockActionsComponent = dynamic(
+  () => import("@/components/code-studio/CodeBlockActions"),
+  { ssr: false },
+);
+
+// ── model-selector (default) ────────────────────────────────
+export const ModelSelectorComponent = dynamic(
+  () => import("@/components/code-studio/ModelSelector"),
+  { ssr: false },
+);
+
+// ── inline-edit-widget (named) ──────────────────────────────
+export const InlineEditWidgetComponent = dynamic(
+  () => import("@/components/code-studio/InlineEditWidget").then((m) => ({ default: m.InlineEditWidget })),
+  { ssr: false },
+);
+
+// ── mention-popup (default) ─────────────────────────────────
+export const MentionPopupComponent = dynamic(
+  () => import("@/components/code-studio/MentionPopup"),
+  { ssr: false },
+);
+
+// ── language-switch (named) ─────────────────────────────────
+export const LanguageSwitchComponent = dynamic(
+  () => import("@/components/code-studio/LanguageSwitch").then((m) => ({ default: m.LanguageSwitch })),
+  { ssr: false },
+);
+
+// ── project-spec-form (named) ───────────────────────────────
+export const ProjectSpecFormComponent = dynamic(
+  () => import("@/components/code-studio/ProjectSpecForm").then((m) => ({ default: m.ProjectSpecForm })),
+  { ssr: false },
+);
+
+// ── welcome-tab (default) ───────────────────────────────────
+export const WelcomeTabComponent = dynamic(
+  () => import("@/components/code-studio/WelcomeTab"),
+  { ssr: false },
+);
+
+// ── activity-bar (named) ────────────────────────────────────
+export const ActivityBarComponent = dynamic(
+  () => import("@/components/code-studio/ActivityBar").then((m) => ({ default: m.ActivityBar })),
+  { ssr: false },
+);
+
+// ── progress-bar (default) ──────────────────────────────────
+export const ProgressBarComponent = dynamic(
+  () => import("@/components/code-studio/ProgressBar"),
+  { ssr: false },
+);
+
+// ── tooltip (default) ───────────────────────────────────────
+export const TooltipComponent = dynamic(
+  () => import("@/components/code-studio/Tooltip"),
+  { ssr: false },
+);
+
+// ── skeleton-loader (default) ───────────────────────────────
+export const SkeletonLoaderComponent = dynamic(
+  () => import("@/components/code-studio/SkeletonLoader"),
+  { ssr: false },
+);
+
+// ── toolbar-menu (named) ────────────────────────────────────
+export const ToolbarMenuComponent = dynamic(
+  () => import("@/components/code-studio/ToolbarMenu").then((m) => ({ default: m.ToolbarMenu })),
+  { ssr: false },
+);
+
+// IDENTITY_SEAL: PART-4 | role=InternalUtilImports | inputs=none | outputs=19-utility-components
