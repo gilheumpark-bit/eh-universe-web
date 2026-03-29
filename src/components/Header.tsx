@@ -113,7 +113,7 @@ export default function Header() {
                   href={item.href}
                   data-testid={`${item.label.toLowerCase()}-link`}
                   aria-current={isActive ? "page" : undefined}
-                  className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] transition-all duration-150 ${
+                  className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] transition-all duration-150 ${
                     isActive
                       ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber"
                       : "border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
@@ -129,7 +129,7 @@ export default function Header() {
                 aria-expanded={toolsOpen}
                 aria-haspopup="menu"
                 aria-label="Tools menu"
-                className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+                className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
               >
                 {L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}
               </button>
@@ -144,7 +144,7 @@ export default function Header() {
                         role="menuitem"
                         tabIndex={toolsFocusIdx === idx ? 0 : -1}
                         onClick={closeToolsMenu}
-                        className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-[0.14em] text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
+                        className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-[0.04em] text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
                       >
                         {ti.label}
                       </Link>
@@ -158,7 +158,7 @@ export default function Header() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub repository (opens in new tab)"
-              className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] text-text-tertiary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+              className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-tertiary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
             >
               {L4(lang, { ko: "깃허브", en: "GITHUB", jp: "ギットハブ", cn: "代码库" })}
             </a>
@@ -210,6 +210,8 @@ export default function Header() {
 
       {/* Mobile menu */}
       <div
+        aria-hidden={!menuOpen}
+        {...(!menuOpen ? { inert: "" as unknown as boolean } : {})}
         className={`site-shell md:hidden transition-all duration-200 ease-out overflow-hidden ${
           menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
         }`}
@@ -223,7 +225,7 @@ export default function Header() {
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
                 aria-current={isActive ? "page" : undefined}
-                className={`block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.18em] transition-colors duration-150 ${
+                className={`block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] transition-colors duration-150 ${
                   isActive
                     ? "bg-accent-amber/8 text-accent-amber"
                     : "text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
@@ -233,13 +235,13 @@ export default function Header() {
               </Link>
             );
           })}
-          <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-text-tertiary uppercase">{L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}</div>
+          <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.06em] text-text-tertiary uppercase">{L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}</div>
           {toolItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMenuOpen(false)}
-              className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.16em] text-text-tertiary transition-colors duration-150 hover:bg-white/[0.04] hover:text-text-primary"
+              className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] text-text-tertiary transition-colors duration-150 hover:bg-white/[0.04] hover:text-text-primary"
             >
               {item.label}
             </Link>

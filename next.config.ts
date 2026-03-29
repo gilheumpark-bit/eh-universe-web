@@ -37,8 +37,6 @@ const nextConfig: NextConfig = {
     return [
       { source: '/tools', destination: '/', permanent: false },
       { source: '/games/:path*', destination: '/', permanent: false },
-      { source: '/rulebook', destination: '/codex', permanent: true },
-      { source: '/reference', destination: '/codex', permanent: true },
     ];
   },
   async headers() {
