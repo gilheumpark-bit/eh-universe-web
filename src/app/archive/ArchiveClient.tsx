@@ -225,11 +225,11 @@ export default function ArchiveClient() {
         </button>
 
         <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-[24px] border border-white/8 bg-[rgba(15,20,28,0.92)] p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">Archive</h2>
+          <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">{t('archivePage.archiveLabel', 'Archive')}</h2>
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder={lang === "ko" ? "🔍 문서 검색..." : "🔍 Search..."}
+            placeholder={lang === "ko" ? "🔍 문서 검색..." : lang === "jp" ? "🔍 文書検索..." : lang === "cn" ? "🔍 搜索文档..." : "🔍 Search..."}
             className="w-full mb-3 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)]"
           />
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
@@ -289,7 +289,7 @@ export default function ArchiveClient() {
                 {searchResults ? (
                   <>
                     <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase mb-2">
-                      🔍 {searchResults.length} {lang === "ko" ? "건 검색됨" : "results"} — &quot;{searchQuery}&quot;
+                      🔍 {searchResults.length} {lang === "ko" ? "건 검색됨" : lang === "jp" ? "件の結果" : lang === "cn" ? "条结果" : "results"} — &quot;{searchQuery}&quot;
                     </p>
                     {searchResults.map((article) => (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
@@ -302,7 +302,7 @@ export default function ArchiveClient() {
                       </Link>
                     ))}
                     {searchResults.length === 0 && (
-                      <p className="text-center text-text-tertiary text-sm py-8">{lang === "ko" ? "검색 결과가 없습니다." : "No results found."}</p>
+                      <p className="text-center text-text-tertiary text-sm py-8">{lang === "ko" ? "검색 결과가 없습니다." : lang === "jp" ? "検索結果がありません。" : lang === "cn" ? "未找到搜索结果。" : "No results found."}</p>
                     )}
                   </>
                 ) : null}
@@ -322,11 +322,13 @@ export default function ArchiveClient() {
                 })}
               </div>
 
-              <div className="mt-8 eh-log">
-                [ARCHIVE_STATUS: PHASE 1 — MVP]<br />
-                [LOADED: {currentCategory.articles.length} articles]<br />
-                [NOTE: {t('archivePage.phase2Note')}]
-              </div>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-8 eh-log">
+                  [ARCHIVE_STATUS: PHASE 1 — MVP]<br />
+                  [LOADED: {currentCategory.articles.length} articles]<br />
+                  [NOTE: {t('archivePage.phase2Note')}]
+                </div>
+              )}
             </div>
           </div>
         </div>

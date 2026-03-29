@@ -37,6 +37,7 @@ const nextConfig: NextConfig = {
     return [
       { source: '/tools', destination: '/', permanent: false },
       { source: '/games/:path*', destination: '/', permanent: false },
+      { source: '/code', destination: '/code-studio', permanent: true },
     ];
   },
   async headers() {

@@ -362,13 +362,15 @@ export default function ReportsClient() {
               </div>
 
               {/* Footer log */}
-              <div className="mt-8 eh-log">
-                [REPORTS_STATUS: ACTIVE]
-                <br />
-                [LOADED: {REPORTS.length} classified reports]
-                <br />
-                [ACCESS_LEVEL: RESTRICTED — some documents require clearance]
-              </div>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-8 eh-log">
+                  [REPORTS_STATUS: ACTIVE]
+                  <br />
+                  [LOADED: {REPORTS.length} classified reports]
+                  <br />
+                  [ACCESS_LEVEL: RESTRICTED — some documents require clearance]
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -52,12 +52,12 @@ const STORAGE_KEY = 'ehsu_multi_key_config';
 
 const DEFAULT_MODELS: Record<ProviderId, string> = {
   gemini: 'gemini-2.5-pro',
-  openai: 'gpt-4o',
-  claude: 'claude-sonnet-4-20250514',
+  openai: 'gpt-5.4',
+  claude: 'claude-sonnet-4-6',
   groq: 'llama-3.3-70b-versatile',
   mistral: 'mistral-medium-3-latest',
   ollama: 'llama3.1',
-  lmstudio: 'local-model',
+  lmstudio: 'openai/gpt-oss-20b',
 };
 
 // 토큰당 대략적 비용 (USD, 출력 기준)

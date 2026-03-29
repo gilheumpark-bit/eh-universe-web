@@ -150,7 +150,7 @@ export default function Home() {
     lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
 
   const universeStats = [
-    { value: "162", label: T({ ko: "문서 + 보고서", en: "Docs + reports", jp: "文書+報告書", cn: "文档+报告" }) },
+    { value: "173", label: T({ ko: "문서 + 보고서", en: "Docs + reports", jp: "文書+報告書", cn: "文档+报告" }) },
     { value: "6", label: T({ ko: "세계관 카테고리", en: "Lore categories", jp: "世界観カテゴリ", cn: "世界观类别" }) },
     { value: "200K+", label: T({ ko: "관할 행성계", en: "Planetary systems", jp: "管轄惑星系", cn: "管辖星系" }) },
     { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", jp: "オープンライセンス", cn: "开放许可" }) },
@@ -162,7 +162,7 @@ export default function Home() {
       badge: "AR",
       color: "amber" as const,
       title: T({ ko: "설정집 아카이브", en: "Lore Archive", jp: "設定集アーカイブ", cn: "设定集档案库" }),
-      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 53개 기밀 보고서.", en: "6 categories, 109 lore docs + 53 classified reports.", jp: "6カテゴリ、109の設定文書＋53の機密報告書。", cn: "6个分类，109篇设定文档 + 53份机密报告。" }),
+      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 64개 기밀 보고서.", en: "6 categories, 109 lore docs + 64 classified reports.", jp: "6カテゴリ、109の設定文書＋64の機密報告書。", cn: "6个分类，109篇设定文档 + 64份机密报告。" }),
       meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", jp: "世界観文書を探索", cn: "浏览世界观文档" }),
     },
     {
@@ -170,7 +170,7 @@ export default function Home() {
       badge: "RP",
       color: "purple" as const,
       title: T({ ko: "기밀 보고서", en: "Classified Reports", jp: "機密報告書", cn: "机密报告" }),
-      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 53 classified documents.", jp: "人物ファイル、事件報告、技術仕様、制度規定 — 53の機密文書。", cn: "人物档案、事件报告、技术规格、制度规定 — 53份机密文件。" }),
+      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 64 classified documents.", jp: "人物ファイル、事件報告、技術仕様、制度規定 — 64の機密文書。", cn: "人物档案、事件报告、技术规格、制度规定 — 64份机密文件。" }),
       meta: T({ ko: "보고서 열기", en: "Open reports", jp: "報告書を開く", cn: "打开报告" }),
     },
     {

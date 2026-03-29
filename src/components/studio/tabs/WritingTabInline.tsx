@@ -225,7 +225,7 @@ export default function WritingTabInline(props: Props) {
                                   🔚 {currentSession.config.sceneDirection.cliffhanger.cliffType}
                                 </span>
                               )}
-                              {currentSession.config.sceneDirection.emotionTargets && currentSession.config.sceneDirection.emotionTargets.length > 0 && (
+                              {currentSession.config.sceneDirection?.emotionTargets && currentSession.config.sceneDirection.emotionTargets.length > 0 && (
                                 <span className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[11px]">
                                   💓 {currentSession.config.sceneDirection.emotionTargets.map(e => e.emotion).join(', ')}
                                 </span>

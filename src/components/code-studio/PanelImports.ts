@@ -343,21 +343,9 @@ export const CodeBlockActionsComponent = dynamic(
   { ssr: false },
 );
 
-// ── model-selector (default) ────────────────────────────────
-export const ModelSelectorComponent = dynamic(
-  () => import("@/components/code-studio/ModelSelector"),
-  { ssr: false },
-);
-
 // ── inline-edit-widget (named) ──────────────────────────────
 export const InlineEditWidgetComponent = dynamic(
   () => import("@/components/code-studio/InlineEditWidget").then((m) => ({ default: m.InlineEditWidget })),
-  { ssr: false },
-);
-
-// ── mention-popup (default) ─────────────────────────────────
-export const MentionPopupComponent = dynamic(
-  () => import("@/components/code-studio/MentionPopup"),
   { ssr: false },
 );
 
@@ -385,28 +373,4 @@ export const ActivityBarComponent = dynamic(
   { ssr: false },
 );
 
-// ── progress-bar (default) ──────────────────────────────────
-export const ProgressBarComponent = dynamic(
-  () => import("@/components/code-studio/ProgressBar"),
-  { ssr: false },
-);
-
-// ── tooltip (default) ───────────────────────────────────────
-export const TooltipComponent = dynamic(
-  () => import("@/components/code-studio/Tooltip"),
-  { ssr: false },
-);
-
-// ── skeleton-loader (default) ───────────────────────────────
-export const SkeletonLoaderComponent = dynamic(
-  () => import("@/components/code-studio/SkeletonLoader"),
-  { ssr: false },
-);
-
-// ── toolbar-menu (named) ────────────────────────────────────
-export const ToolbarMenuComponent = dynamic(
-  () => import("@/components/code-studio/ToolbarMenu").then((m) => ({ default: m.ToolbarMenu })),
-  { ssr: false },
-);
-
-// IDENTITY_SEAL: PART-4 | role=InternalUtilImports | inputs=none | outputs=19-utility-components
+// IDENTITY_SEAL: PART-4 | role=InternalUtilImports | inputs=none | outputs=13-utility-components

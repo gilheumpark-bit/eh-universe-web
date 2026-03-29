@@ -21,9 +21,18 @@ interface State {
   error: Error | null;
 }
 
-/** Functional fallback UI — uses useLang() for i18n */
+/** Read lang from localStorage directly — avoids useLang() hook which can crash if LangContext is broken */
+function getSafeLang(): 'ko' | 'en' | 'jp' | 'cn' {
+  try {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('eh-lang') : null;
+    if (stored === 'en' || stored === 'jp' || stored === 'cn') return stored;
+    return 'ko';
+  } catch { return 'ko'; }
+}
+
+/** Functional fallback UI — reads lang directly from storage to prevent crash loops */
 function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
-  const { lang } = useLang();
+  const lang = getSafeLang();
 
   return (
     <div className="flex flex-col items-center justify-center gap-5 p-12 min-h-[50vh]" role="alert">

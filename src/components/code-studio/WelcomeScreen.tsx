@@ -5,9 +5,10 @@
 // ============================================================
 
 import { useEffect, useState } from "react";
-import { Code2, Play, Upload, Cpu, MessageSquare, Shield, Layers } from "lucide-react";
+import { Code2, Play, FolderOpen, ChevronDown } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
+import { listProjects } from "@/lib/code-studio-store";
 import type { AppLanguage } from "@/lib/studio-types";
 
 interface WelcomeScreenProps {
@@ -15,194 +16,148 @@ interface WelcomeScreenProps {
   onOpenDemo: () => void;
   onBlankProject?: () => void;
   onImportProject?: () => void;
+  onResumeProject?: () => void;
 }
 
-// ============================================================
-// PART 2 — CTA Card Component
-// ============================================================
-
-interface CTACardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  accentClass: string;
-  glowColor: string;
-  onClick: () => void;
-  delay: number;
-}
-
-function CTACard({ icon, title, description, accentClass, glowColor, onClick, delay }: CTACardProps) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-
-  return (
-    <button
-      onClick={onClick}
-      className={`group relative flex flex-col items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-8 py-7 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/[0.12] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${
-        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {/* Glow behind icon */}
-      <div
-        className="absolute top-6 h-12 w-12 rounded-full opacity-20 blur-xl transition-opacity duration-300 group-hover:opacity-40"
-        style={{ background: glowColor }}
-      />
-      <div className={`relative z-10 rounded-xl border border-white/[0.08] p-3 ${accentClass}`}>
-        {icon}
-      </div>
-      <div className="text-center">
-        <div className="font-[family-name:var(--font-mono)] text-sm font-semibold text-text-primary">
-          {title}
-        </div>
-        <div className="mt-1 font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary">
-          {description}
-        </div>
-      </div>
-    </button>
-  );
-}
+// IDENTITY_SEAL: PART-1 | role=Imports | inputs=none | outputs=types
 
 // ============================================================
-// PART 3 — Feature Badge
+// PART 2 — Main WelcomeScreen (simplified 2-CTA + collapsible extras)
 // ============================================================
 
-function FeatureBadge({ icon, label, delay }: { icon: React.ReactNode; label: string; delay: number }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-
-  return (
-    <div
-      className={`flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-4 py-2 backdrop-blur-sm transition-all duration-500 ${
-        visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-      }`}
-    >
-      {icon}
-      <span className="font-[family-name:var(--font-mono)] text-[11px] text-text-secondary">{label}</span>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 4 — Main WelcomeScreen
-// ============================================================
-
-export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject, onResumeProject }: WelcomeScreenProps) {
   const { lang } = useLang();
   const t = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
-  const [titleVisible, setTitleVisible] = useState(false);
-  const [subtitleVisible, setSubtitleVisible] = useState(false);
-  const [shortcutsVisible, setShortcutsVisible] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [hasProjects, setHasProjects] = useState(false);
+  const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setTitleVisible(true), 100);
-    const t2 = setTimeout(() => setSubtitleVisible(true), 300);
-    const t3 = setTimeout(() => setShortcutsVisible(true), 900);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t1 = setTimeout(() => setVisible(true), 100);
+    return () => clearTimeout(t1);
   }, []);
+
+  useEffect(() => {
+    listProjects().then((projects) => setHasProjects(projects.length > 0)).catch(() => {});
+  }, []);
+
+  // Primary CTA: Resume (returning user) or Open Demo (new user)
+  const primaryLabel = hasProjects
+    ? (t as Record<string, string>).resumeProject ?? "Resume Last Project"
+    : t.openDemo;
+  const primaryDesc = hasProjects
+    ? (t as Record<string, string>).resumeProjectDesc ?? "Continue where you left off"
+    : t.openDemoDesc;
+  const primaryAction = hasProjects ? (onResumeProject ?? onOpenDemo) : onOpenDemo;
+  const primaryIcon = hasProjects
+    ? <FolderOpen className="h-6 w-6 text-accent-amber" />
+    : <Play className="h-6 w-6 text-accent-purple" />;
+  const primaryAccent = hasProjects ? "bg-accent-amber/10" : "bg-accent-purple/10";
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-      {/* Background: radial gradient layers */}
+      {/* Background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.07]" style={{ background: "radial-gradient(circle, #2f9b83 0%, transparent 70%)" }} />
-        <div className="absolute left-1/4 top-2/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05]" style={{ background: "radial-gradient(circle, #8d7bc3 0%, transparent 70%)" }} />
-        <div className="absolute right-1/4 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" style={{ background: "radial-gradient(circle, #5c8fd6 0%, transparent 70%)" }} />
+        <div className="absolute left-1/4 top-2/3 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" style={{ background: "radial-gradient(circle, #8d7bc3 0%, transparent 70%)" }} />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-10 px-6 py-12">
-        {/* Title with glow */}
+      <div
+        className={`relative z-10 flex flex-col items-center gap-8 px-6 py-12 transition-all duration-700 ${
+          visible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+        }`}
+      >
+        {/* Title */}
         <div className="text-center">
-          <div
-            className={`relative transition-all duration-700 ${
-              titleVisible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
-            }`}
-          >
-            {/* Title glow */}
-            <div className="absolute left-1/2 top-1/2 h-20 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-3xl" style={{ background: "#2f9b83" }} />
-            <h1 className="relative text-3xl font-bold tracking-tight text-text-primary" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
-              {t.title}
-            </h1>
-          </div>
-          <p
-            className={`mt-3 font-[family-name:var(--font-mono)] text-sm text-text-tertiary transition-all duration-500 ${
-              subtitleVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-            }`}
-          >
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
+            {t.title}
+          </h1>
+          <p className="mt-3 font-[family-name:var(--font-mono)] text-sm text-text-tertiary">
             {t.subtitle}
           </p>
         </div>
 
-        {/* CTA Cards */}
-        <div className="flex flex-wrap items-center justify-center gap-5">
-          <CTACard
-            icon={<Code2 className="h-6 w-6 text-accent-green" />}
-            title={t.newFile}
-            description={t.newFileDesc}
-            accentClass="bg-accent-green/10"
-            glowColor="#2f9b83"
+        {/* 2 Main CTAs */}
+        <div className="flex flex-col items-center gap-4">
+          {/* Primary CTA */}
+          <button
+            onClick={primaryAction}
+            className="group relative flex w-full max-w-md items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-8 py-5 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/[0.15] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          >
+            <div className={`rounded-xl border border-white/[0.08] p-3 ${primaryAccent}`}>
+              {primaryIcon}
+            </div>
+            <div className="text-left">
+              <div className="font-[family-name:var(--font-mono)] text-base font-semibold text-text-primary">
+                {primaryLabel}
+              </div>
+              <div className="mt-0.5 font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary">
+                {primaryDesc}
+              </div>
+            </div>
+          </button>
+
+          {/* Secondary CTA */}
+          <button
             onClick={onNewFile}
-            delay={400}
-          />
-          <CTACard
-            icon={<Play className="h-6 w-6 text-accent-purple" />}
-            title={t.openDemo}
-            description={t.openDemoDesc}
-            accentClass="bg-accent-purple/10"
-            glowColor="#8d7bc3"
-            onClick={onOpenDemo}
-            delay={500}
-          />
-          {onBlankProject && (
-            <CTACard
-              icon={<Layers className="h-6 w-6 text-accent-amber" />}
-              title={t.blankProject}
-              description={t.blankProjectDesc}
-              accentClass="bg-accent-amber/10"
-              glowColor="#d4a259"
-              onClick={onBlankProject}
-              delay={550}
-            />
+            className="group flex w-full max-w-xs items-center justify-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] px-6 py-3.5 backdrop-blur-md transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          >
+            <Code2 className="h-5 w-5 text-accent-green" />
+            <div className="text-left">
+              <div className="font-[family-name:var(--font-mono)] text-sm font-semibold text-text-primary">{t.newFile}</div>
+              <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">{t.newFileDesc}</div>
+            </div>
+          </button>
+        </div>
+
+        {/* Collapsible extras */}
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={() => setShowExtras(!showExtras)}
+            className="flex items-center gap-1 font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary/60 transition-colors hover:text-text-tertiary"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
+            {showExtras
+              ? (lang === "ko" ? "접기" : "Less")
+              : (lang === "ko" ? "더 보기" : "More options")}
+          </button>
+
+          {showExtras && (
+            <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* Tertiary links */}
+              <div className="flex items-center gap-4 font-[family-name:var(--font-mono)] text-[11px]">
+                {onBlankProject && (
+                  <button onClick={onBlankProject} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                    {t.blankProject}
+                  </button>
+                )}
+                {onBlankProject && <span className="text-white/10">|</span>}
+                <button onClick={onImportProject ?? onNewFile} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                  {t.importFiles}
+                </button>
+                {hasProjects && (
+                  <>
+                    <span className="text-white/10">|</span>
+                    <button onClick={onOpenDemo} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                      {t.openDemo}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Keyboard shortcuts */}
+              <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary/50">
+                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+N</span>
+                <span className="mx-1.5">New File</span>
+                <span className="mx-2 text-white/10">|</span>
+                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+Shift+P</span>
+                <span className="mx-1.5">Commands</span>
+                <span className="mx-2 text-white/10">|</span>
+                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+`</span>
+                <span className="mx-1.5">Terminal</span>
+              </div>
+            </div>
           )}
-          <CTACard
-            icon={<Upload className="h-6 w-6 text-accent-blue" />}
-            title={t.importFiles}
-            description={t.importDesc}
-            accentClass="bg-accent-blue/10"
-            glowColor="#5c8fd6"
-            onClick={onImportProject ?? onNewFile}
-            delay={600}
-          />
-        </div>
-
-        {/* Feature highlights */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <FeatureBadge icon={<Cpu className="h-3.5 w-3.5 text-accent-green" />} label="Monaco Editor" delay={700} />
-          <FeatureBadge icon={<MessageSquare className="h-3.5 w-3.5 text-accent-purple" />} label="AI Assistant" delay={760} />
-          <FeatureBadge icon={<Layers className="h-3.5 w-3.5 text-accent-blue" />} label="8-Team Pipeline" delay={820} />
-          <FeatureBadge icon={<Shield className="h-3.5 w-3.5 text-accent-amber" />} label="NOA Security" delay={880} />
-        </div>
-
-        {/* Keyboard shortcuts */}
-        <div
-          className={`font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary/60 transition-all duration-500 ${
-            shortcutsVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-          }`}
-        >
-          <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+N</span>
-          <span className="mx-1.5">New File</span>
-          <span className="mx-2 text-white/10">|</span>
-          <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+Shift+P</span>
-          <span className="mx-1.5">Commands</span>
-          <span className="mx-2 text-white/10">|</span>
-          <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+`</span>
-          <span className="mx-1.5">Terminal</span>
         </div>
       </div>
     </div>
@@ -210,6 +165,4 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
 }
 
 // IDENTITY_SEAL: PART-1 | role=Imports | inputs=none | outputs=types
-// IDENTITY_SEAL: PART-2 | role=CTACard | inputs=props | outputs=card UI
-// IDENTITY_SEAL: PART-3 | role=FeatureBadge | inputs=icon,label | outputs=badge UI
-// IDENTITY_SEAL: PART-4 | role=WelcomeScreen | inputs=callbacks | outputs=onboarding UI
+// IDENTITY_SEAL: PART-2 | role=WelcomeScreen | inputs=callbacks,hasProjects | outputs=2-CTA onboarding UI

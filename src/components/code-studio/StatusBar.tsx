@@ -11,6 +11,7 @@ import {
   XCircle,
   Cpu,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio-types";
 
@@ -22,6 +23,10 @@ interface StatusBarProps {
   fontSize?: number;
   gitBranch?: string;
   onSwitchProvider?: () => void;
+  isDirty?: boolean;
+  verificationScore?: number | null;
+  isGenerating?: boolean;
+  lang?: string;
 }
 
 export type { StatusBarProps };
@@ -67,6 +72,10 @@ export function StatusBar({
   fontSize,
   gitBranch,
   onSwitchProvider,
+  isDirty,
+  verificationScore,
+  isGenerating,
+  lang,
 }: StatusBarProps) {
   const branch = gitBranch ?? "main";
 
@@ -109,6 +118,43 @@ export function StatusBar({
             {getScoreIcon(pipelineScore)}
             {pipelineScore}/100
           </span>
+        )}
+
+        {SEPARATOR}
+
+        {/* Save indicator */}
+        <div className="flex items-center gap-1">
+          <span className={`w-1.5 h-1.5 rounded-full ${isDirty ? 'bg-amber-400 animate-pulse' : 'bg-green-400'}`} />
+          <span className="text-[10px]">
+            {isDirty
+              ? (lang === 'ko' ? '미저장' : 'Unsaved')
+              : (lang === 'ko' ? '저장됨' : 'Saved')}
+          </span>
+        </div>
+
+        {/* Verification score badge */}
+        {verificationScore != null && (
+          <>
+            {SEPARATOR}
+            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+              verificationScore >= 77 ? 'bg-green-500/15 text-green-300' :
+              verificationScore >= 60 ? 'bg-amber-500/15 text-amber-300' :
+              'bg-red-500/15 text-red-300'
+            }`}>
+              {verificationScore}/100
+            </div>
+          </>
+        )}
+
+        {/* AI generating indicator */}
+        {isGenerating && (
+          <>
+            {SEPARATOR}
+            <div className="flex items-center gap-1 text-[10px] text-purple-300">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>AI</span>
+            </div>
+          </>
         )}
       </div>
 

@@ -486,7 +486,7 @@ export function selectModel(
 ): string {
   const provider = getActiveProvider();
   const def = PROVIDERS[provider];
-  if (!def) return 'gpt-4o';
+  if (!def) return 'gpt-5.4';
 
   const models = def.models;
 
@@ -501,7 +501,7 @@ export function selectModel(
   if (task === 'explanation') {
     // Mid-tier: try to find something between default and cheapest
     const cheapPatterns = /mini|flash|instant|nano|small|haiku/i;
-    const bestPatterns = /pro|large|gpt-4o(?!-mini)|sonnet|opus/i;
+    const bestPatterns = /pro|large|gpt-5\.\d(?!-mini)|sonnet|opus/i;
     const mid = models.find((m) => !cheapPatterns.test(m) && !bestPatterns.test(m));
     if (mid) return mid;
     // Fall through: pick cheapest if no mid-tier, but prefer faster than default

@@ -98,16 +98,19 @@ export default function CommandPalette({
     });
   }, []);
 
-  // -- Reset state when opened --
+  // -- Reset state when opened (groups default collapsed) --
   useEffect(() => {
     if (open) {
       setQuery("");
       setActiveIndex(0);
+      // Default all groups collapsed — users expand what they need
+      const allCats = new Set(commands.map((c) => c.category ?? "General"));
+      setCollapsedGroups(allCats);
       // Small delay so the DOM is mounted before focus
       const t = setTimeout(() => inputRef.current?.focus(), 16);
       return () => clearTimeout(t);
     }
-  }, [open]);
+  }, [open, commands]);
 
   // -- Filtered & grouped commands --
   const filtered = useMemo(() => {

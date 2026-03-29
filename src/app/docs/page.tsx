@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 
 const sectionsKo = [
   { id: "getting-started", title: "1. \uc2dc\uc791\ud558\uae30", content:
-`\uc811\uc18d: https://eh-universe-web.vercel.app
+`\uc811\uc18d: https://ehuniverse.com
 BYOK(Bring Your Own Key): Gemini, OpenAI, Claude, Groq, Mistral \uc9c0\uc6d0
 \ud504\ub85c\uc81d\ud2b8 \uc0dd\uc131: \uc81c\ubaa9\uc744 \uc785\ub825\ud558\uba74 AI\uac00 \ucd08\uae30 \uc124\uc815\uc744 \uc81c\uc548\ud569\ub2c8\ub2e4.
 
@@ -150,7 +150,7 @@ WCAG AA \uc811\uadfc\uc131: \ud0a4\ubcf4\ub4dc \ub124\ube44\uac8c\uc774\uc158, \
 
 const sectionsEn = [
   { id: "getting-started", title: "1. Getting Started", content:
-`Access: https://eh-universe-web.vercel.app
+`Access: https://ehuniverse.com
 BYOK (Bring Your Own Key): Gemini, OpenAI, Claude, Groq, Mistral supported
 Project creation: Enter a title and AI suggests initial settings.
 

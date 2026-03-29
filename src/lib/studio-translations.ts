@@ -1072,6 +1072,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       nrgMetaAck: "[NRG: 메타 인식] \"이미 다뤘지만 다른 각도에서\" 식으로 시작하세요."
     },
     archivePage: {
+      archiveLabel: "아카이브",
       tools: "도구",
       nekaSoundInterface: "네카 음향 인터페이스",
       soundtrack: "사운드트랙",
@@ -1219,6 +1220,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       blankProjectDesc: "README가 포함된 빈 프로젝트",
       importFiles: "가져오기",
       importDesc: "기존 파일 불러오기",
+      resumeProject: "마지막 프로젝트 재개",
+      resumeProjectDesc: "이전 작업 이어서 계속",
       loading: "코드 스튜디오 로딩 중...",
       selectFile: "편집할 파일을 선택하세요",
       demoLoaded: "데모 프로젝트 로드됨",
@@ -2301,6 +2304,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       nrgMetaAck: "[NRG: Meta-Ack] Acknowledge repetition and offer new angle."
     },
     archivePage: {
+      archiveLabel: "Archive",
       tools: "Tools",
       nekaSoundInterface: "Neka Sound Interface",
       soundtrack: "Soundtrack",
@@ -2448,6 +2452,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       blankProjectDesc: "Empty project with README",
       importFiles: "Import",
       importDesc: "Load existing files",
+      resumeProject: "Resume Last Project",
+      resumeProjectDesc: "Continue where you left off",
       loading: "Loading Code Studio...",
       selectFile: "Select a file to edit",
       demoLoaded: "Demo project loaded",
@@ -3530,6 +3536,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       nrgMetaAck: "[NRG：メタ承認] 繰り返しを認めて新しい角度を提案する。"
     },
     archivePage: {
+      archiveLabel: "アーカイブ",
       tools: "ツール",
       nekaSoundInterface: "ネカサウンドインターフェース",
       soundtrack: "サウンドトラック",
@@ -3677,6 +3684,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       blankProjectDesc: "READMEを含む空のプロジェクト",
       importFiles: "インポート",
       importDesc: "既存のファイルを読み込む",
+      resumeProject: "前回のプロジェクトを再開",
+      resumeProjectDesc: "前回の作業を続ける",
       loading: "コードスタジオを読み込み中...",
       selectFile: "編集するファイルを選択",
       demoLoaded: "デモプロジェクトを読み込みました",
@@ -4759,6 +4768,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       nrgMetaAck: "[NRG：元确认] 承认重复并提供新角度。"
     },
     archivePage: {
+      archiveLabel: "档案库",
       tools: "工具",
       nekaSoundInterface: "内卡声音界面",
       soundtrack: "原声音乐",
@@ -4906,6 +4916,8 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       blankProjectDesc: "包含README的空项目",
       importFiles: "导入",
       importDesc: "加载已有文件",
+      resumeProject: "恢复上次项目",
+      resumeProjectDesc: "继续之前的工作",
       loading: "正在加载代码工作室...",
       selectFile: "选择要编辑的文件",
       demoLoaded: "演示项目已加载",

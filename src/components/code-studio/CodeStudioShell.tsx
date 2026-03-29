@@ -20,7 +20,7 @@ import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-t
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
 import { getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
-import { saveSettings, loadSettings } from "@/lib/code-studio-store";
+import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@/lib/code-studio-search";
@@ -45,7 +45,8 @@ import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
 import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
-import { PANEL_REGISTRY, GROUP_LABELS, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio-panel-registry";
+import { PANEL_REGISTRY, GROUP_LABELS, getPanelLabel, getGroupLabel, getVisiblePanels, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio-panel-registry";
+import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import type { AppLanguage } from "@/lib/studio-types";
@@ -284,6 +285,25 @@ function CodeStudioShellInner() {
   const [isStressTesting, setIsStressTesting] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
 
+  // Advanced panels toggle (default: show only essential 8)
+  const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
+  const visiblePanels = getVisiblePanels(showAdvancedPanels);
+
+  // Session restore (IndexedDB-based)
+  const handleSessionRestore = useCallback((snapshot: SessionSnapshot) => {
+    if (snapshot.activePanel) setRightPanel(snapshot.activePanel as RightPanel);
+    if (snapshot.sidebarWidth) setSidebarWidth(snapshot.sidebarWidth);
+    if (snapshot.openFiles?.length) setHasEverOpened(true);
+  }, []);
+  useSessionRestore({
+    projectId: null,
+    openFiles: openFiles.map(f => f.name),
+    activeFile: activeFileId,
+    activePanel: rightPanel,
+    sidebarWidth,
+    onRestore: handleSessionRestore,
+  });
+
   // Composer state machine
   const composer = useCodeStudioComposer();
   const [currentVerifyRound, setCurrentVerifyRound] = useState(0);
@@ -452,6 +472,30 @@ function CodeStudioShellInner() {
     if (!loaded) return;
     saveSettings(settings);
   }, [settings, loaded]);
+
+  // Session state persistence — save UI layout to sessionStorage
+  useEffect(() => {
+    if (!loaded) return;
+    const uiState = { rightPanel, showTerminal, showProblems, showPipelineBottom, sidebarWidth };
+    sessionStorage.setItem('codeStudio:uiState', JSON.stringify(uiState));
+  }, [loaded, rightPanel, showTerminal, showProblems, showPipelineBottom, sidebarWidth]);
+
+  // Restore session UI state on mount
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      const saved = sessionStorage.getItem('codeStudio:uiState');
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.rightPanel) setRightPanel(state.rightPanel);
+        if (state.showTerminal !== undefined) setShowTerminal(state.showTerminal);
+        if (state.showProblems !== undefined) setShowProblems(state.showProblems);
+        if (state.showPipelineBottom !== undefined) setShowPipelineBottom(state.showPipelineBottom);
+        if (state.sidebarWidth) setSidebarWidth(state.sidebarWidth);
+      }
+    } catch { /* corrupt data — skip */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -716,6 +760,30 @@ function CodeStudioShellInner() {
     toast(tcs.blankCreated, "success");
   }, [toast, tcs]);
 
+  const handleResumeProject = useCallback(async () => {
+    try {
+      const projects = await listProjects();
+      if (projects.length === 0) { handleOpenDemo(); return; }
+      const lastProject = projects[0];
+      const tree = await switchProject(lastProject.id);
+      if (tree && tree.length > 0) {
+        setFiles(tree);
+        // Open first file in tree
+        const firstFile = tree.flatMap(function findFiles(n: FileNode): FileNode[] {
+          return n.type === "file" ? [n] : (n.children ?? []).flatMap(findFiles);
+        })[0];
+        if (firstFile) {
+          setOpenFiles([{ id: firstFile.id, name: firstFile.name, content: firstFile.content ?? "", language: detectLanguage(firstFile.name) }]);
+          setActiveFileId(firstFile.id);
+        }
+        setHasEverOpened(true);
+        toast(lang === "ko" ? "프로젝트 복원됨" : "Project resumed", "success");
+      } else {
+        handleOpenDemo();
+      }
+    } catch { handleOpenDemo(); }
+  }, [handleOpenDemo, toast, lang]);
+
   const handleWelcomeNewFile = useCallback(() => {
     setShowNewFile(true);
     setHasEverOpened(true);
@@ -842,7 +910,7 @@ function CodeStudioShellInner() {
             <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
           </div>
         ) : !hasEverOpened ? (
-          <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
+          <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -896,6 +964,10 @@ function CodeStudioShellInner() {
       cursorLine={cursorPos.line}
       cursorColumn={cursorPos.col}
       fontSize={settings.fontSize}
+      isDirty={openFiles.some((f) => f.isDirty)}
+      verificationScore={pipelineScore}
+      isGenerating={composer.mode === "generating"}
+      lang={lang}
     />
   );
 
@@ -944,16 +1016,18 @@ function CodeStudioShellInner() {
         Skip to Editor
       </a>
       <div className="flex flex-1 min-h-0">
-        {/* Pattern 1: Activity Bar — left icon column */}
+        {/* Pattern 1: Activity Bar — 8 core panels only; all others via Command Palette */}
         <div className="w-12 shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1">
-          {/* Top items */}
+          {/* Top items — core workflow panels (stable/beta, no stubs) */}
           {([
             { id: "files" as const, icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
+            { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
+            { id: "pipeline" as const, icon: Activity, label: "Pipeline", labelKo: "파이프라인", shortcut: undefined },
             { id: "search" as const, icon: Search, label: "Search", labelKo: "파일 검색", shortcut: "Ctrl+Shift+F" },
             { id: "git" as const, icon: GitBranch, label: "Git", labelKo: "Git", shortcut: undefined },
-            { id: "bugs" as const, icon: Bug, label: "Problems", labelKo: "버그 파인더", shortcut: undefined },
-            { id: "pipeline" as const, icon: Activity, label: "Pipeline", labelKo: "파이프라인", shortcut: undefined },
-            { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
+            { id: "review" as const, icon: AlertTriangle, label: "Review", labelKo: "리뷰 센터", shortcut: undefined },
+            { id: "composer" as const, icon: Edit3, label: "Composer", labelKo: "멀티파일 작성기", shortcut: undefined },
+            { id: "preview" as const, icon: Eye, label: "Preview", labelKo: "실시간 프리뷰", shortcut: undefined },
           ]).map((item) => {
             const displayLabel = lang === "ko" ? item.labelKo : item.label;
             return (
@@ -970,16 +1044,37 @@ function CodeStudioShellInner() {
               <item.icon className={`h-[18px] w-[18px] transition-colors ${
                 rightPanel === item.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
               }`} />
-              {item.id === "bugs" && bugReports.length > 0 && (
+              {item.id === "pipeline" && bugReports.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
               )}
             </button>
           ); })}
 
+          {/* Advanced panels toggle */}
+          {showAdvancedPanels && visiblePanels
+            .filter(p => !["chat","search","outline","preview","composer","pipeline","bugs","git"].includes(p.id))
+            .map(p => {
+              const Icon = LUCIDE_MAP[p.icon];
+              const lbl = lang === "ko" ? p.labelKo : p.label;
+              return (
+                <button key={p.id} onClick={() => setRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
+                  className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"
+                  title={lbl}>
+                  <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
+                  {Icon ? <Icon className={`h-[18px] w-[18px] transition-colors ${rightPanel === p.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"}`} /> : <span className="text-[10px] text-text-tertiary">{p.label.substring(0,2)}</span>}
+                </button>
+              );
+            })}
+
           {/* Spacer */}
           <div className="flex-1" />
 
           {/* Bottom items */}
+          <button onClick={() => setShowAdvancedPanels(v => !v)}
+            className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
+            title={showAdvancedPanels ? "Hide advanced panels" : "Show all panels"}>
+            <ChevronRight className={`h-[18px] w-[18px] text-text-tertiary transition-transform ${showAdvancedPanels ? "rotate-90" : ""}`} />
+          </button>
           <button onClick={() => setShowSettings(s => !s)} className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]" title="Settings">
             <Settings className={`h-[18px] w-[18px] ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} />
           </button>
@@ -1173,7 +1268,7 @@ function CodeStudioShellInner() {
                     <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
                   </div>
                 ) : !hasEverOpened ? (
-                  <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} />
+                  <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
@@ -1487,7 +1582,7 @@ function CodeStudioShellInner() {
                 ).flatMap(([group, panels]) =>
                   panels.map((p) => ({
                     id: `toggle-${p.id}`,
-                    label: getPanelLabel(p, lang),
+                    label: `${getPanelLabel(p, lang)}${p.status === 'stub' ? ' (Preview)' : p.status === 'beta' ? ' (Beta)' : ''}`,
                     shortcut: p.shortcut,
                     category: getGroupLabel(group as PanelGroup, lang),
                   }))
@@ -1509,6 +1604,10 @@ function CodeStudioShellInner() {
         cursorLine={cursorPos.line}
         cursorColumn={cursorPos.col}
         fontSize={settings.fontSize}
+        isDirty={openFiles.some((f) => f.isDirty)}
+        verificationScore={pipelineScore}
+        isGenerating={composer.mode === "generating"}
+        lang={lang}
       />
 
       {/* Modal/Dialog overlays */}

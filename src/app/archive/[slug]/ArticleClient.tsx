@@ -38,19 +38,19 @@ export default function ArticleClient({ slug }: { slug: string }) {
             {loadFailed ? (
               <>
                 <div className="text-accent-red text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider mb-4">
-                  Failed to load archive
+                  {T({ ko: "아카이브 로드 실패", en: "Failed to load archive", jp: "アーカイブの読み込みに失敗", cn: "档案库加载失败" })}
                 </div>
                 <Link href="/archive" className="text-sm text-accent-purple hover:text-text-primary transition-colors">
-                  ← Back to Archive
+                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", jp: "アーカイブに戻る", cn: "返回档案库" })}
                 </Link>
               </>
             ) : (
               <>
                 <div className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] uppercase tracking-wider animate-pulse">
-                  Loading archive...
+                  {T({ ko: "아카이브 로딩 중...", en: "Loading archive...", jp: "アーカイブ読み込み中...", cn: "档案库加载中..." })}
                 </div>
                 <Link href="/archive" className="mt-4 block text-[10px] text-text-tertiary hover:text-text-primary transition-colors">
-                  ← Back to Archive
+                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", jp: "アーカイブに戻る", cn: "返回档案库" })}
                 </Link>
               </>
             )}

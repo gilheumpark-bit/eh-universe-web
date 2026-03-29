@@ -46,6 +46,8 @@ export interface PanelDef {
   color: string;
   /** Implementation maturity: stable (real logic), beta (partial), stub (noop) */
   status: PanelStatus;
+  /** true = shown by default; false/undefined = hidden behind "Advanced" toggle */
+  isEssential?: boolean;
 }
 
 // IDENTITY_SEAL: PART-1 | role=TypeDef | inputs=none | outputs=PanelDef,PanelGroup,GROUP_LABELS
@@ -56,10 +58,10 @@ export interface PanelDef {
 
 export const PANEL_REGISTRY: readonly PanelDef[] = [
   // ── editing (편집) ─────────────────────────────────────────
-  { id: "chat",           label: "AI Chat",              labelKo: "AI 채팅",         icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable" },
-  { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable" },
-  { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable" },
-  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
+  { id: "chat",           label: "AI Chat",              labelKo: "AI 채팅",         icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
+  { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true },
+  { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true },
+  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true },
   { id: "templates",      label: "Template Gallery",     labelKo: "템플릿 갤러리",     icon: "Layout",          group: "editing",      category: "File",  color: "text-accent-purple",  status: "stable" },
   { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
   { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber",   status: "stub" },
@@ -70,7 +72,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
 
   // ── ai (AI) ────────────────────────────────────────────────
-  { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable" },
+  { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable", isEssential: true },
   { id: "autopilot",      label: "Autopilot",            labelKo: "오토파일럿",        icon: "Play",            group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
   { id: "agents",         label: "Agent Pipeline",       labelKo: "에이전트 파이프라인", icon: "Shield",          group: "ai",           category: "Tools", color: "text-accent-purple",  status: "beta" },
   { id: "creator",        label: "Code Creator",         labelKo: "코드 크리에이터",    icon: "Wand2",           group: "ai",           category: "Tools", color: "text-accent-amber",   status: "beta" },
@@ -79,8 +81,8 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "model-switcher", label: "Model Switcher",       labelKo: "모델 전환",         icon: "Cpu",             group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
 
   // ── verification (검증) ────────────────────────────────────
-  { id: "pipeline",       label: "Pipeline",             labelKo: "파이프라인",        icon: "Activity",        group: "verification", category: "View",  color: "text-accent-blue",    status: "stable" },
-  { id: "bugs",           label: "Bug Finder",           labelKo: "버그 파인더",       icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red",     status: "stable" },
+  { id: "pipeline",       label: "Pipeline",             labelKo: "파이프라인",        icon: "Activity",        group: "verification", category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true },
+  { id: "bugs",           label: "Bug Finder",           labelKo: "버그 파인더",       icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red",     status: "stable", isEssential: true },
   { id: "review",         label: "Review Center",        labelKo: "리뷰 센터",         icon: "AlertTriangle",   group: "verification", category: "Tools", color: "text-accent-green",   status: "stable" },
   { id: "evaluation",     label: "Project Evaluation",   labelKo: "프로젝트 평가",     icon: "BarChart3",       group: "verification", category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "progress",       label: "Progress Dashboard",   labelKo: "진행 대시보드",     icon: "TrendingUp",      group: "verification", category: "View",  color: "text-accent-green",   status: "stable" },
@@ -88,7 +90,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "merge-conflict", label: "Merge Conflicts",      labelKo: "머지 충돌",         icon: "GitMerge",        group: "verification", category: "Tools", color: "text-accent-red",     status: "stub" },
 
   // ── git (Git & 배포) ──────────────────────────────────────
-  { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable" },
+  { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
   { id: "deploy",         label: "Deploy",               labelKo: "배포",              icon: "Upload",          group: "git",          category: "View",  color: "text-accent-green",   status: "stable" },
   { id: "git-graph",      label: "Git Graph",            labelKo: "Git 그래프",        icon: "GitFork",         group: "git",          category: "View",  color: "text-accent-purple",  status: "stable" },
   { id: "packages",       label: "Package Manager",      labelKo: "패키지 관리",       icon: "Package",         group: "git",          category: "Tools", color: "text-accent-green",   status: "stable" },
@@ -131,4 +133,14 @@ export const getPanelLabel = (p: PanelDef, lang: string): string =>
 export const getGroupLabel = (group: PanelGroup, lang: string): string =>
   lang === "ko" ? GROUP_LABELS[group].ko : GROUP_LABELS[group].en;
 
-// IDENTITY_SEAL: PART-3 | role=Helpers | inputs=PANEL_REGISTRY | outputs=RightPanel,getPanelDef,getPanelLabel,getGroupLabel
+/**
+ * Get only essential panels (default view — reduces decision fatigue).
+ * Returns all panels when showAll is true.
+ */
+export const getVisiblePanels = (showAll: boolean): readonly PanelDef[] =>
+  showAll ? PANEL_REGISTRY : PANEL_REGISTRY.filter((p) => p.isEssential);
+
+/** Count of essential panels */
+export const ESSENTIAL_PANEL_COUNT = PANEL_REGISTRY.filter((p) => p.isEssential).length;
+
+// IDENTITY_SEAL: PART-3 | role=Helpers | inputs=PANEL_REGISTRY | outputs=RightPanel,getPanelDef,getPanelLabel,getGroupLabel,getVisiblePanels

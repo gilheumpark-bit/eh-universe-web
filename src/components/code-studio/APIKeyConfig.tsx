@@ -49,10 +49,11 @@ const ROLE_ICONS: Record<SlotRole, React.ReactNode> = {
 const ALL_ROLES: SlotRole[] = ["coder", "reviewer", "tester", "security", "architect", "debugger", "documenter", "custom"];
 
 const PROVIDERS = [
-  { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.0-flash", "gemini-1.5-pro"] },
-  { id: "openai", name: "OpenAI", color: "#10a37f", placeholder: "sk-...", models: ["gpt-4o", "gpt-4o-mini"] },
-  { id: "anthropic", name: "Claude", color: "#d4a373", placeholder: "sk-ant-...", models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"] },
-  { id: "groq", name: "Groq", color: "#f55036", placeholder: "gsk_...", models: ["llama-3.3-70b-versatile"] },
+  { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"] },
+  { id: "openai", name: "OpenAI", color: "#10a37f", placeholder: "sk-...", models: ["gpt-5.4", "gpt-5.4-mini", "gpt-4.1"] },
+  { id: "anthropic", name: "Claude", color: "#d4a373", placeholder: "sk-ant-...", models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"] },
+  { id: "groq", name: "Groq", color: "#f55036", placeholder: "gsk_...", models: ["llama-3.3-70b-versatile", "qwen-qwq-32b"] },
+  { id: "lmstudio", name: "LM Studio", color: "#2d5d8d", placeholder: "http://192.168.219.102:1234", models: ["openai/gpt-oss-20b", "qwen/qwen3-30b-a3b-2507", "qwen/qwen3-14b"] },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=APIKeySlot,SlotRole,Props
