@@ -16,6 +16,7 @@
   "dependencies": {
     "@google/genai": "^1.46.0",
     "@monaco-editor/react": "^4.7.0",
+    "@sentry/nextjs": "^10.46.0",
     "@vercel/analytics": "^2.0.1",
     "@webcontainer/api": "^1.6.1",
     "@xterm/addon-fit": "^0.11.0",
