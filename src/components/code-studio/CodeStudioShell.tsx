@@ -34,6 +34,7 @@ import { setupMonaco } from "@/lib/code-studio-monaco-setup";
 import { parseErrors, type ParsedError } from "@/lib/code-studio-error-parser";
 import { registerCrossFileProviders } from "@/lib/code-studio-cross-file";
 import { isMultiKeyActive } from "@/lib/multi-key-bridge";
+import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio-ai-features";
 
 const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"), { ssr: false });
 
@@ -43,6 +44,7 @@ import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
 import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
 import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
+import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
@@ -319,6 +321,27 @@ function CodeStudioShellInner() {
     activeFileContent: activeFile?.content ?? null,
     activeFileName: activeFile?.name ?? null,
     activeFileLanguage: activeFile?.language ?? null,
+  });
+
+  // Keyboard bindings registration (for KeybindingsPanel discovery)
+  const keyboard = useCodeStudioKeyboard({
+    modalOpen: !!confirmState || showCommandPalette || showShortcuts,
+    bindings: [
+      { keys: "ctrl+shift+p", handler: () => setShowCommandPalette(v => !v), description: "Command Palette" },
+      { keys: "ctrl+p", handler: () => setShowQuickOpen(v => !v), description: "Quick Open" },
+      { keys: "ctrl+s", handler: () => {
+        if (activeFileId) {
+          setOpenFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, isDirty: false } : f));
+          fsPersist();
+          toast(tcs.savedLocally, "success");
+        }
+      }, description: "Save File" },
+      { keys: "ctrl+shift+f", handler: () => setRightPanel(v => v === "search" ? null : "search"), description: "Search in Files" },
+      { keys: "ctrl+`", handler: () => setShowTerminal(v => !v), description: "Toggle Terminal" },
+      { keys: "ctrl+n", handler: () => setShowNewFile(true), description: "New File" },
+      { keys: "ctrl+=", handler: () => setSettings(s => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })), description: "Zoom In" },
+      { keys: "ctrl+-", handler: () => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })), description: "Zoom Out" },
+    ],
   });
 
   // EditorGroup per-pane editor renderer
@@ -1473,9 +1496,22 @@ function CodeStudioShellInner() {
                 "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => setRightPanel(null)} />,
                 "api-config": () => <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />,
                 "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => setRightPanel(null)} />,
-                "code-actions": () => <PI.QuickActionsComponent selectedText={panels.editorSelection.text} position={{ top: panels.editorSelection.top, left: panels.editorSelection.left }} language={activeFile?.language ?? "plaintext"} onAction={(actionId: string) => {
+                "code-actions": () => <PI.QuickActionsComponent selectedText={panels.editorSelection.text} position={{ top: panels.editorSelection.top, left: panels.editorSelection.left }} language={activeFile?.language ?? "plaintext"} onAction={async (actionId: string, contextPrompt?: string) => {
                   setRightPanel("chat");
-                  toast(`Action: ${actionId}`, "info");
+                  toast(`Running: ${actionId}`, "info");
+                  // Trigger actual AI feature based on action
+                  if (activeFile && contextPrompt) {
+                    try {
+                      let result = '';
+                      if (actionId === 'explain') result = await explainCode(activeFile.content, activeFile.language);
+                      else if (actionId === 'bugs') {
+                        const lints = await lintCode(activeFile.content, activeFile.language);
+                        result = lints.map(l => `Line ${l.line}: ${l.message}`).join('\n');
+                      }
+                      else if (actionId === 'document') result = await generateDocstring(activeFile.content, activeFile.language);
+                      if (result) toast(result.slice(0, 100) + '...', 'info');
+                    } catch { /* AI call failed — already switched to chat panel */ }
+                  }
                 }} onClose={() => setRightPanel(null)} />,
                 "model-switcher": () => <PI.ModelSwitcherComponent />,
               };

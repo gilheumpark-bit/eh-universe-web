@@ -9,6 +9,13 @@ import {
   Users, Copy, LogIn, LogOut, Send, MessageSquare,
   Plus, Link, ChevronDown, ChevronRight, Circle,
 } from "lucide-react";
+import {
+  createCollaborationManager,
+  restoreSession,
+  clearSession,
+  type CollabUser as ManagerCollabUser,
+  type CollaborationManager,
+} from "@/lib/code-studio-collaboration";
 
 interface CollabUser {
   id: string;
@@ -63,25 +70,101 @@ export default function CollabPanel({ onClose }: Props) {
   const [showChat, setShowChat] = useState(true);
   const [showUsers, setShowUsers] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const managerRef = useRef<CollaborationManager | null>(null);
+
+  /** Wire CollaborationManager event listeners onto React state. */
+  const attachListeners = useCallback((mgr: CollaborationManager) => {
+    mgr.onUserJoin((user: ManagerCollabUser) => {
+      setRemoteUsers((prev) =>
+        prev.some((u) => u.id === user.id)
+          ? prev
+          : [...prev, {
+              id: user.id,
+              name: user.name,
+              color: user.color,
+              cursor: user.cursor
+                ? { file: user.cursor.file ?? "", line: user.cursor.line ?? 0, column: user.cursor.column ?? 0 }
+                : undefined,
+            }],
+      );
+    });
+    mgr.onUserLeave((userId: string) => {
+      setRemoteUsers((prev) => prev.filter((u) => u.id !== userId));
+    });
+    mgr.onChatReceived((userId: string, message: string) => {
+      setChatMessages((prev) => [...prev, {
+        id: crypto.randomUUID(),
+        userId,
+        userName: "Peer",
+        color: "#888",
+        message,
+        timestamp: Date.now(),
+      }]);
+    });
+    mgr.onCursorUpdate((userId: string, cursor) => {
+      if (!cursor) return;
+      setRemoteUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? { ...u, cursor: { file: cursor.file, line: cursor.line, column: cursor.column } }
+            : u,
+        ),
+      );
+    });
+  }, []);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+
+  /* Auto-restore a previous session on mount */
+  useEffect(() => {
+    const saved = restoreSession();
+    if (saved) {
+      setRoomId(saved.roomId);
+      setUserName(saved.userName);
+      const mgr = createCollaborationManager(saved.roomId, saved.userName);
+      managerRef.current = mgr;
+      mgr.join();
+      setConnected(true);
+      attachListeners(mgr);
+    }
+    return () => {
+      managerRef.current?.leave();
+      managerRef.current = null;
+    };
+  }, [attachListeners]);
 
   const createRoom = useCallback(() => {
     const id = crypto.randomUUID().slice(0, 8);
     setRoomId(id);
     setConnected(true);
-    setRemoteUsers([{ id: generateUserId(), name: "AI-Assistant", color: "#a78bfa", cursor: { file: "index.ts", line: 12, column: 5 } }]);
-  }, []);
+    setRemoteUsers([]);
+    const mgr = createCollaborationManager(id, userName);
+    managerRef.current = mgr;
+    mgr.join();
+    attachListeners(mgr);
+  }, [userName, attachListeners]);
 
   const joinRoom = useCallback(() => {
     if (!roomInput.trim()) return;
-    setRoomId(roomInput.trim());
+    const id = roomInput.trim();
+    setRoomId(id);
     setConnected(true);
     setRoomInput("");
-  }, [roomInput]);
+    setRemoteUsers([]);
+    const mgr = createCollaborationManager(id, userName);
+    managerRef.current = mgr;
+    mgr.join();
+    attachListeners(mgr);
+  }, [roomInput, userName, attachListeners]);
 
   const leaveRoom = useCallback(() => {
-    setConnected(false); setRoomId(""); setRemoteUsers([]); setChatMessages([]);
+    managerRef.current?.leave();
+    managerRef.current = null;
+    clearSession();
+    setConnected(false);
+    setRoomId("");
+    setRemoteUsers([]);
+    setChatMessages([]);
   }, []);
 
   const copyShareUrl = useCallback(() => {
@@ -95,6 +178,7 @@ export default function CollabPanel({ onClose }: Props) {
       id: crypto.randomUUID(), userId: localUser.id, userName: localUser.name,
       color: localUser.color, message: chatInput.trim(), timestamp: Date.now(),
     }]);
+    managerRef.current?.broadcastChat(chatInput.trim());
     setChatInput("");
   }, [chatInput, localUser]);
 

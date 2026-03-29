@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   GitBranch,
   GitCommit,
@@ -12,6 +12,15 @@ import {
   ChevronDown,
 } from "lucide-react";
 import type { FileNode, OpenFile } from "@/lib/code-studio-types";
+import {
+  gitStatus,
+  gitCommit as gitRealCommit,
+  gitStageAll,
+  gitCheckout,
+  gitCreateBranch,
+  type GitStatus,
+} from "@/lib/code-studio-git";
+import { generateCommitMessage } from "@/lib/code-studio-ai-features";
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -339,10 +348,25 @@ export default function GitPanel({
   const [showNewBranch, setShowNewBranch] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
 
+  // Real git integration state
+  const [gitAvailable, setGitAvailable] = useState(false);
+  const [gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
+
   const dirtyFiles = useMemo(
     () => openFiles.filter((f) => f.isDirty),
     [openFiles]
   );
+
+  // Check if real git runner is available on mount
+  useEffect(() => {
+    gitStatus().then((status) => {
+      setGitAvailable(true);
+      setGitStatusData(status);
+      if (status.branch) setCurrentBranch(status.branch);
+    }).catch(() => {
+      setGitAvailable(false);
+    });
+  }, []);
 
   const flatFileMap = useMemo(() => {
     const map = new Map<string, FileNode>();
@@ -353,9 +377,18 @@ export default function GitPanel({
   }, [files]);
 
   // Branch: create new branch from current
-  const handleNewBranch = useCallback(() => {
+  const handleNewBranch = useCallback(async () => {
     const name = newBranchName.trim();
     if (!name || branches.includes(name)) return;
+
+    if (gitAvailable) {
+      try {
+        await gitCreateBranch(name);
+      } catch {
+        // Fall through to simulation
+      }
+    }
+
     setBranches((prev) => [...prev, name]);
     // Copy current branch commit history to the new branch
     setBranchCommits((prev) => ({ ...prev, [name]: [...(prev[currentBranch] ?? [])] }));
@@ -363,22 +396,48 @@ export default function GitPanel({
     setCommits(branchCommits[currentBranch] ?? []);
     setNewBranchName("");
     setShowNewBranch(false);
-  }, [newBranchName, branches, currentBranch, branchCommits]);
+  }, [newBranchName, branches, currentBranch, branchCommits, gitAvailable]);
 
   // Branch: switch to existing branch
-  const handleSwitchBranch = useCallback((branch: string) => {
+  const handleSwitchBranch = useCallback(async (branch: string) => {
     if (branch === currentBranch) return;
+
+    if (gitAvailable) {
+      try {
+        await gitCheckout(branch);
+      } catch {
+        // Fall through to simulation
+      }
+    }
+
     // Save current branch commits
     setBranchCommits((prev) => ({ ...prev, [currentBranch]: commits }));
     // Load target branch commits
     setCurrentBranch(branch);
     setCommits(branchCommits[branch] ?? []);
     setExpandedHash(null);
-  }, [currentBranch, commits, branchCommits]);
+  }, [currentBranch, commits, branchCommits, gitAvailable]);
 
-  const handleCommit = useCallback(() => {
+  const handleCommit = useCallback(async () => {
     if (dirtyFiles.length === 0) return;
 
+    // AI commit message generation available via generateCommitMessage()
+    const commitMessage = buildCommitMessage(dirtyFiles.map((f) => f.name));
+
+    // Try real git commit first if available
+    if (gitAvailable) {
+      try {
+        await gitStageAll();
+        await gitRealCommit(commitMessage);
+        // Refresh git status after commit
+        const status = await gitStatus();
+        setGitStatusData(status);
+      } catch {
+        // Real git failed — fall through to simulation below
+      }
+    }
+
+    // Always update local simulation state (keeps UI consistent)
     const snapshots: FileSnapshot[] = dirtyFiles.map((df) => {
       const original = flatFileMap.get(df.id);
       return {
@@ -392,7 +451,7 @@ export default function GitPanel({
 
     const entry: CommitEntry = {
       hash: generateHash(),
-      message: buildCommitMessage(dirtyFiles.map((f) => f.name)),
+      message: commitMessage,
       timestamp: Date.now(),
       files: snapshots,
     };
@@ -407,7 +466,7 @@ export default function GitPanel({
     setActiveTab("history");
     // 커밋 후 dirty 상태 해제
     onClearDirty?.();
-  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty]);
+  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty, gitAvailable]);
 
   const handleRestore = useCallback(
     (commit: CommitEntry) => {
@@ -442,9 +501,16 @@ export default function GitPanel({
 
   return (
     <div className="flex h-full flex-col bg-bg-secondary text-text-primary">
-      {/* Simulation notice */}
-      <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08]">
-        Local simulation — changes are saved in browser only
+      {/* Mode notice */}
+      <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08] flex items-center gap-2">
+        <span>
+          {gitAvailable
+            ? "Live Git — connected to runner"
+            : "Local simulation — changes are saved in browser only"}
+        </span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
+          {gitAvailable ? "Live Git" : "Simulation"}
+        </span>
       </div>
       {/* Branch selector */}
       <div className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5">

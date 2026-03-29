@@ -9,6 +9,7 @@ import {
   Send, Sparkles, Shield, Square, AtSign, History,
   Trash2, Plus, Check, Zap,
 } from "lucide-react";
+import { useCodeStudioChat, type ChatMessage as HookChatMessage } from "@/hooks/useCodeStudioChat";
 
 interface ChatMessage {
   id: string;
@@ -107,9 +108,15 @@ export function ChatPanel({
   allFileNames,
   onApplyCode,
 }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const chat = useCodeStudioChat({
+    systemInstruction: `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.`,
+    onMentionResolve: (mention) => {
+      const found = allFileNames?.find(f => f.includes(mention));
+      return found ? `[File: ${found}]` : null;
+    },
+  });
+
   const [input, setInput] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
@@ -121,7 +128,7 @@ export function ChatPanel({
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [chat.messages]);
 
   const toggleHistory = useCallback(() => {
     if (showHistory) { setShowHistory(false); return; }
@@ -146,31 +153,11 @@ export function ChatPanel({
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || isGenerating) return;
+    if (!text || chat.isStreaming) return;
     setInput("");
     setShowMentions(false);
-
-    const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      role: "user",
-      content: text,
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsGenerating(true);
-
-    // Simulate AI response — real integration uses streamChat
-    const assistantMsg: ChatMessage = {
-      id: `msg-${Date.now() + 1}`,
-      role: "assistant",
-      content: `Analyzing your request regarding "${activeFileName ?? 'code'}"...\n\nI'll process: ${text.slice(0, 100)}`,
-      timestamp: Date.now(),
-    };
-    setTimeout(() => {
-      setMessages((prev) => [...prev, assistantMsg]);
-      setIsGenerating(false);
-    }, 500);
-  }, [input, isGenerating, activeFileName]);
+    await chat.sendMessage(text);
+  }, [input, chat]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -213,7 +200,7 @@ export function ChatPanel({
       {showHistory && (
         <div className="border-b border-[#30363d] bg-[#010409] max-h-[200px] overflow-y-auto">
           <button
-            onClick={() => { setShowHistory(false); setMessages([]); setInput(""); }}
+            onClick={() => { setShowHistory(false); chat.clearHistory(); setInput(""); }}
             className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-blue-400 hover:bg-[#21262d] border-b border-[#30363d]"
           >
             <Plus size={12} /> New Chat
@@ -250,7 +237,7 @@ export function ChatPanel({
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3" aria-live="polite">
-        {messages.length === 0 && !isGenerating && (
+        {chat.messages.length === 0 && !chat.isStreaming && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
             <Sparkles size={24} className="text-purple-400 opacity-60" />
             <p className="text-xs text-[#8b949e] leading-relaxed max-w-[240px]">Ask about your code, request reviews, or generate implementations.</p>
@@ -264,7 +251,7 @@ export function ChatPanel({
             </div>
           </div>
         )}
-        {messages.map((msg) => {
+        {chat.messages.map((msg) => {
           const codeBlocks = msg.role === "assistant" ? extractCodeBlocks(msg.content) : [];
           return (
             <div key={msg.id} className="text-xs leading-relaxed">
@@ -291,7 +278,7 @@ export function ChatPanel({
             </div>
           );
         })}
-        {isGenerating && (
+        {chat.isStreaming && (
           <div className="flex items-center gap-2 text-xs text-[#8b949e]">
             <Zap size={12} className="animate-pulse text-yellow-400" /> Generating...
           </div>
@@ -320,8 +307,8 @@ export function ChatPanel({
             placeholder="Ask about your code..." aria-label="Chat input"
             className="flex-1 bg-transparent text-xs outline-none text-[#e6edf3] placeholder:text-[#8b949e]"
           />
-          {isGenerating ? (
-            <button onClick={() => setIsGenerating(false)} className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
+          {chat.isStreaming ? (
+            <button onClick={() => chat.abort()} className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
           ) : (
             <button onClick={handleSend} disabled={!input.trim()} className="text-blue-400 hover:text-white disabled:opacity-30 transition-colors"><Send size={14} /></button>
           )}

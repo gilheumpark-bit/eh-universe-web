@@ -19,6 +19,7 @@ import type { AIFeature } from "@/components/code-studio/AIHub";
 import type { WorkspaceThread, WorkspaceMessage } from "@/components/code-studio/AIWorkspace";
 import type { DBConnection, QueryResult } from "@/components/code-studio/DatabasePanel";
 import type { ConflictBlock } from "@/components/code-studio/MergeConflictEditor";
+import { estimateTaskCost, explainCode, lintCode, generateCommitMessage } from "@/lib/code-studio-ai-features";
 
 /** Recent file entry for the RecentFiles panel */
 export interface RecentFileEntry {

@@ -4,14 +4,14 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Bot, Play, Pause, Square, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronRight, FileCode, Pencil, Search,
   Terminal, GitBranch, Zap,
 } from "lucide-react";
 import type { AgentRole, AgentSession } from "@/lib/code-studio-agents";
-import { createAgentSession, runAgentPipeline } from "@/lib/code-studio-agents";
+import { useCodeStudioAgent } from "@/hooks/useCodeStudioAgent";
 
 type AgentMode = "idle" | "planning" | "executing" | "paused" | "complete" | "error";
 
@@ -126,17 +126,51 @@ const AGENT_ROLES: Array<{ role: AgentRole; label: string; color: string }> = [
 // ============================================================
 
 export function AgentPanel({ code, language, fileName }: Props) {
+  const agent = useCodeStudioAgent();
+
   const [mode, setMode] = useState<AgentMode>("idle");
   const [input, setInput] = useState("");
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [session, setSession] = useState<AgentSession | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
-  const [activeAgentIdx, setActiveAgentIdx] = useState(0);
-  const [confidences, setConfidences] = useState<Record<AgentRole, number>>({
-    architect: 0, developer: 0, reviewer: 0, tester: 0, documenter: 0,
-  });
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Sync mode with agent.running
+  useEffect(() => {
+    if (agent.running && mode === "idle") setMode("executing");
+    if (!agent.running && mode === "executing") setMode(agent.session ? "complete" : "idle");
+  }, [agent.running, agent.session, mode]);
+
+  // Derive steps from agent.messages
+  useEffect(() => {
+    if (agent.messages.length > 0) {
+      setSteps(agent.messages.map((m, i) => ({
+        id: `step-${i}`,
+        action: "think" as const,
+        label: `${m.role}: ${m.content.slice(0, 80)}...`,
+        status: "done" as const,
+        output: m.content,
+        durationMs: 0,
+      })));
+    }
+  }, [agent.messages]);
+
+  // Derive confidences from agent.messages
+  const confidences = useMemo<Record<AgentRole, number>>(() => {
+    const base: Record<AgentRole, number> = { architect: 0, developer: 0, reviewer: 0, tester: 0, documenter: 0 };
+    for (const m of agent.messages) {
+      base[m.role] = m.confidence;
+    }
+    return base;
+  }, [agent.messages]);
+
+  // Derive activeAgentIdx from agent.progress
+  const activeAgentIdx = useMemo(() => {
+    if (!agent.progress.currentRole) return 0;
+    const idx = AGENT_ROLES.findIndex((a) => a.role === agent.progress.currentRole);
+    return idx >= 0 ? idx : 0;
+  }, [agent.progress.currentRole]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -151,55 +185,29 @@ export function AgentPanel({ code, language, fileName }: Props) {
   }, []);
 
   const handleRun = useCallback(async () => {
-    const text = input.trim();
-    if (!text) return;
-    setInput("");
-    setMode("planning");
+    if (!input.trim() || agent.running) return;
+    setMode("executing");
     setSteps([]);
     setSummary(null);
-
-    const codeContext = code ? `\nCode (${language}, ${fileName}):\n${code.slice(0, 2000)}` : "";
-    const newSession = createAgentSession(text);
-    setSession(newSession);
-
-    const planStep: AgentStep = { id: "step-plan", action: "plan", label: "Planning approach...", status: "running" };
-    setSteps([planStep]);
-
-    const roles: AgentRole[] = ["architect", "developer", "reviewer", "tester", "documenter"];
-
     try {
-      setMode("executing");
-      const result = await runAgentPipeline(
-        text,
-        codeContext,
-        roles,
-        (msg) => {
-          setConfidences((prev) => ({ ...prev, [msg.role]: msg.confidence }));
-          const idx = AGENT_ROLES.findIndex((a) => a.role === msg.role);
-          if (idx >= 0) setActiveAgentIdx(idx);
-          setSteps((prev) => [...prev, {
-            id: `step-${msg.role}-${Date.now()}`, action: "think", label: `${msg.role} complete`, status: "done",
-            output: msg.content.slice(0, 500),
-          }]);
-        },
-      );
-
-      setSteps((prev) => prev.map((s) => s.status === "running" ? { ...s, status: "done" } : s));
-      setSummary(result.summary ? `Done: ${result.summary.totalAgentsRun} agents, confidence ${Math.round(result.summary.finalConfidence * 100)}%` : "Agent pipeline complete.");
+      const ctx = `File: ${fileName}\nLanguage: ${language}\n\n${code}`;
+      const result = await agent.run(input.trim(), ctx);
+      setSession(result);
+      setSummary(`Pipeline complete — ${result.messages.length} messages, avg confidence: ${(agent.averageConfidence * 100).toFixed(0)}%`);
       setMode("complete");
     } catch {
       setMode("error");
-      setSummary("Agent pipeline failed.");
+      setSummary("Agent pipeline failed");
     }
-  }, [input, code, language, fileName]);
+  }, [input, agent, fileName, language, code]);
 
   const handleReset = useCallback(() => {
+    agent.reset();
     setMode("idle");
     setSteps([]);
     setSummary(null);
     setSession(null);
-    setConfidences({ architect: 0, developer: 0, reviewer: 0, tester: 0, documenter: 0 });
-  }, []);
+  }, [agent]);
 
   return (
     <div className="flex flex-col h-full bg-[#0d1117]">
@@ -211,7 +219,7 @@ export function AgentPanel({ code, language, fileName }: Props) {
         </span>
         <div className="flex items-center gap-1">
           {mode === "executing" && (
-            <button onClick={() => setMode("paused")} className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
+            <button onClick={() => { agent.abort(); setMode("paused"); }} className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
           )}
           {(mode === "complete" || mode === "error") && (
             <button onClick={handleReset} className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-[#8b949e]" /></button>
@@ -273,9 +281,9 @@ export function AgentPanel({ code, language, fileName }: Props) {
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRun()}
             placeholder="Describe a task for the agents..."
             className="flex-1 bg-transparent text-xs outline-none text-[#e6edf3] placeholder:text-[#8b949e]"
-            disabled={mode === "executing" || mode === "planning"}
+            disabled={agent.running}
           />
-          <button onClick={handleRun} disabled={!input.trim() || mode === "executing"}
+          <button onClick={handleRun} disabled={!input.trim() || agent.running}
             className="text-green-400 hover:text-white disabled:opacity-30 transition-colors">
             <Play size={14} />
           </button>
