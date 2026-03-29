@@ -298,7 +298,6 @@ function DialogueBox({
             <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-[family-name:var(--font-mono)] transition-colors" aria-label="다음">
               다음 ▶
             </button>
-            <button onClick={onPrev} disabled={!canPrev} className="sr-only" />
           </div>
         </div>
       </div>
@@ -341,6 +340,17 @@ export default function ScenePlayer({
 
   const audioRef = useRef<AudioEngine | null>(null);
 
+  // P0#1 fix: 선언을 useEffect 위로 이동 (TDZ 방지)
+  const currentScene = scenes[state.sceneIndex];
+  const currentBeat = currentScene?.beats[state.beatIndex];
+
+  const totalBeats = useMemo(() => scenes.reduce((s, sc) => s + sc.beats.length, 0), [scenes]);
+  const currentGlobalBeat = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < state.sceneIndex; i++) count += scenes[i].beats.length;
+    return count + state.beatIndex + 1;
+  }, [scenes, state.sceneIndex, state.beatIndex]);
+
   // TTS + Audio 초기화
   useEffect(() => {
     ttsRef.current = createTTSController();
@@ -362,16 +372,7 @@ export default function ScenePlayer({
     for (const sfx of sfxList) audioRef.current.playSFX(sfx);
   }, [currentBeat]);
 
-  const currentScene = scenes[state.sceneIndex];
-  const currentBeat = currentScene?.beats[state.beatIndex];
-
-  const totalBeats = useMemo(() => scenes.reduce((s, sc) => s + sc.beats.length, 0), [scenes]);
-  const currentGlobalBeat = useMemo(() => {
-    let count = 0;
-    for (let i = 0; i < state.sceneIndex; i++) count += scenes[i].beats.length;
-    return count + state.beatIndex + 1;
-  }, [scenes, state.sceneIndex, state.beatIndex]);
-
+  // P0#3 fix: voice null 가드 추가
   // TTS 재생
   useEffect(() => {
     if (!currentBeat || !state.voiceEnabled || !ttsRef.current) return;
@@ -380,11 +381,11 @@ export default function ScenePlayer({
     const voice = voiceMappings.find((v) => v.characterName === (currentBeat.speaker ?? "__narrator__"))
       ?? voiceMappings.find((v) => v.characterName === "__narrator__");
 
-    if (voice) {
-      ttsRef.current.speak(currentBeat.text, voice, currentBeat.emotion).catch(() => {});
-    }
+    if (!voice) return; // P0#3: voice가 없으면 무시
+    ttsRef.current.speak(currentBeat.text, voice, currentBeat.emotion).catch(() => {});
   }, [currentBeat, state.voiceEnabled, state.isPaused, voiceMappings]);
 
+  // P0#2 + P1#10 fix: currentBeat + goNext 의존성 추가
   // 자동 재생
   useEffect(() => {
     if (!state.isPlaying || state.isPaused || !currentBeat) return;
@@ -392,8 +393,7 @@ export default function ScenePlayer({
     const duration = (currentBeat.text.length / 8) * 1000 / state.speed + 1500;
     autoPlayRef.current = setTimeout(() => goNext(), duration);
     return () => clearTimeout(autoPlayRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isPlaying, state.isPaused, state.sceneIndex, state.beatIndex, state.speed]);
+  }, [state.isPlaying, state.isPaused, state.sceneIndex, state.beatIndex, state.speed, currentBeat, goNext]);
 
   const goNext = useCallback(() => {
     ttsRef.current?.stop();
@@ -576,7 +576,7 @@ export default function ScenePlayer({
           {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
             <div className="absolute bottom-32 left-8 transition-all duration-500">
               <img
-                src={characterImages.get(currentBeat.speaker)!.get(getDominantEmotion(currentBeat.emotion))!}
+                src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
                 alt={currentBeat.speaker}
                 className="h-64 object-contain drop-shadow-2xl"
               />
@@ -610,7 +610,6 @@ export default function ScenePlayer({
           <button onClick={goNext} className="px-6 py-2 bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple rounded-full text-sm font-[family-name:var(--font-mono)] transition-colors">
             다음
           </button>
-          <button onClick={goPrev} disabled={!canPrev} className="sr-only" />
         </div>
       )}
 

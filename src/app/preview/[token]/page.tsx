@@ -50,7 +50,7 @@ function FeedbackPanel({
 
   useEffect(() => {
     if (!feedbackEnabled) return;
-    loadFeedbacks(token).then(setFeedbacks).catch(() => {});
+    loadFeedbacks(token).then(setFeedbacks).catch(() => { /* P3#15: Firestore 미연결 시 무시 — 피드백 기능만 비활성 */ });
   }, [token, feedbackEnabled]);
 
   const handleSend = useCallback(async () => {
@@ -254,9 +254,20 @@ export default function PreviewPage() {
   // 재생
   const { data } = state;
   const [previewMode, setPreviewMode] = useState<'select' | 'radio' | 'visual'>('select');
+  // P2#11 fix: 공유 데이터에서 캐릭터 이름 추출하여 음성 매핑 복원
   const voiceMappings: VoiceMapping[] = data.voiceMappings.length > 0
     ? data.voiceMappings
-    : generateVoiceMappings([]);
+    : generateVoiceMappings(
+        data.scenes
+          .flatMap((s) => s.beats)
+          .filter((b) => b.speaker)
+          .reduce<{ name: string; traits: string; appearance: string; role: string; dna: number; id: string }[]>((acc, b) => {
+            if (b.speaker && !acc.some((c) => c.name === b.speaker)) {
+              acc.push({ id: b.speaker, name: b.speaker, traits: '', appearance: '', role: '', dna: 0 });
+            }
+            return acc;
+          }, []),
+      );
 
   const bgUrls = data.backgroundUrls
     ? new Map(Object.entries(data.backgroundUrls))

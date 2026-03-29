@@ -308,13 +308,18 @@ function SceneLane({
 // PART 6 — 원고 역동기화
 // ============================================================
 
+// P2#12 fix: 비트 타입 전환 시 빈 줄 추가하여 원고 가독성 보존
 function scenesToText(scenes: ParsedScene[]): string {
   const parts: string[] = [];
 
   for (let si = 0; si < scenes.length; si++) {
     if (si > 0) parts.push("\n\n***\n\n");
 
+    let prevType: string | null = null;
     for (const beat of scenes[si].beats) {
+      // 타입 전환 시 빈 줄 삽입 (묘사→대사, 서술→행동 등)
+      if (prevType && prevType !== beat.type) parts.push("");
+
       switch (beat.type) {
         case "dialogue":
           parts.push(beat.speaker ? `${beat.speaker}: "${beat.text}"` : `"${beat.text}"`);
@@ -325,6 +330,7 @@ function scenesToText(scenes: ParsedScene[]): string {
         default:
           parts.push(beat.text);
       }
+      prevType = beat.type;
     }
   }
 
@@ -380,22 +386,26 @@ export default function SceneTimeline({
     });
   }, [pushUndo, onScenesChange]);
 
-  // 드래그앤드롭 순서 변경
+  // P0#4 fix: dragSource를 ref로 캡처하여 stale closure 방지
+  const dragSourceRef = useRef(dragSource);
+  dragSourceRef.current = dragSource;
+
   const handleDrop = useCallback((targetSi: number, targetBi: number) => {
-    if (!dragSource) return;
-    if (dragSource.sceneIndex === targetSi && dragSource.beatIndex === targetBi) return;
+    const src = dragSourceRef.current;
+    if (!src) return;
+    if (src.sceneIndex === targetSi && src.beatIndex === targetBi) return;
 
     pushUndo();
     setScenes((prev) => {
       const next = prev.map((s) => ({ ...s, beats: [...s.beats] }));
-      const [removed] = next[dragSource.sceneIndex].beats.splice(dragSource.beatIndex, 1);
+      const [removed] = next[src.sceneIndex].beats.splice(src.beatIndex, 1);
       if (!removed) return prev;
       next[targetSi].beats.splice(targetBi, 0, removed);
       onScenesChange(next);
       return next;
     });
     setDragSource(null);
-  }, [dragSource, pushUndo, onScenesChange]);
+  }, [pushUndo, onScenesChange]);
 
   // 원고 내보내기
   const handleExport = useCallback(() => {

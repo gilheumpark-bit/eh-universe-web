@@ -413,6 +413,7 @@ function estimateBeatDuration(beat: SceneBeat): number {
     case 'description': return Math.max(3, charCount / 10);  // 묘사: 읽기 시간
     case 'action':      return Math.max(1.5, charCount / 12); // 행동: 빠르게
     case 'narration':   return Math.max(2, charCount / 10);  // 서술: 보통
+    default:            return Math.max(2, charCount / 10);  // P1#9: 안전 폴백
   }
 }
 

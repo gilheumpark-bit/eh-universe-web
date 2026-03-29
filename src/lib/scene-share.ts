@@ -68,9 +68,18 @@ function generateToken(): string {
 // PART 3 — Firestore 저장/조회
 // ============================================================
 
+// P0#5 fix: Firebase 인스턴스 캐싱 (중복 초기화 방지)
+let _dbCache: ReturnType<typeof import('@/lib/firebase').getFirestoreDb> | null = null;
+let _dbPromise: Promise<typeof _dbCache> | null = null;
+
 async function getFirestore() {
-  const { getFirestoreDb } = await import('@/lib/firebase');
-  return getFirestoreDb();
+  if (_dbCache) return _dbCache;
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = import('@/lib/firebase').then(({ getFirestoreDb }) => {
+    _dbCache = getFirestoreDb();
+    return _dbCache;
+  });
+  return _dbPromise;
 }
 
 /** 공유 링크 생성 → Firestore에 저장 → 토큰 반환 */
