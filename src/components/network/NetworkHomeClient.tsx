@@ -274,12 +274,7 @@ export function NetworkHomeClient() {
   return (
     <main className="pt-14 pb-20">
       <div className="site-shell space-y-8 py-8 md:space-y-10 md:py-10">
-        <Link
-          href="/"
-          className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors cursor-pointer"
-        >
-          &larr; {lang === "ko" ? "유니버스" : "UNIVERSE"}
-        </Link>
+        {/* Header provides navigation — back link removed */}
         <section className="premium-panel p-6 md:p-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">

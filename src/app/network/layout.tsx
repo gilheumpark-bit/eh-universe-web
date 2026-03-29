@@ -1,5 +1,6 @@
 'use client';
 
+import Header from '@/components/Header';
 import { RouteErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function NetworkLayout({
@@ -9,6 +10,7 @@ export default function NetworkLayout({
 }) {
   return (
     <RouteErrorBoundary section="Network">
+      <Header />
       {children}
     </RouteErrorBoundary>
   );
