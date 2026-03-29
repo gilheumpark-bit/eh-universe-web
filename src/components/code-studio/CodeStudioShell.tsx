@@ -25,6 +25,7 @@ import { runStaticPipeline } from "@/lib/code-studio-pipeline";
 import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@/lib/code-studio-search";
 import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugfinder";
 import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
+import { runStressReport, type StressReport } from "@/lib/code-studio-stress-test";
 import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
 import { registerEditorFeatures } from "@/lib/code-studio-editor-features";
 import { setupMonaco } from "@/lib/code-studio-monaco-setup";
@@ -267,6 +268,8 @@ function CodeStudioShellInner() {
   const termRef = useRef<HTMLDivElement>(null);
   const crossFileDisposableRef = useRef<{ dispose(): void } | null>(null);
   const [parsedErrors, setParsedErrors] = useState<ParsedError[]>([]);
+  const [stressReport, setStressReport] = useState<StressReport | null>(null);
+  const [isStressTesting, setIsStressTesting] = useState(false);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
   const splitFile = splitFileId ? (openFiles.find((f) => f.id === splitFileId) ?? null) : null;
@@ -288,6 +291,73 @@ function CodeStudioShellInner() {
       return next;
     });
   }, []);
+
+  // Stress test handler
+  const handleRunStressTest = useCallback(async () => {
+    if (!activeFile || isStressTesting) return;
+    setIsStressTesting(true);
+    try {
+      const report = await runStressReport(activeFile.content, activeFile.name);
+      setStressReport(report);
+      toast(`Stress Test: ${report.grade} (${report.overallScore}/100)`, report.grade === "F" ? "error" : "success");
+    } catch {
+      toast("Stress test failed", "error");
+    } finally {
+      setIsStressTesting(false);
+    }
+  }, [activeFile, isStressTesting, toast]);
+
+  // Full Verification — Pipeline + Bug Scan + Stress Test 통합
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationScore, setVerificationScore] = useState<number | null>(null);
+  const handleRunVerification = useCallback(async () => {
+    if (!activeFile || isVerifying) return;
+    setIsVerifying(true);
+    setRightPanel("progress");
+    toast("Verification started — Pipeline → Bug Scan → Stress Test", "info");
+
+    try {
+      // Step 1: Pipeline (동기, 즉시)
+      const pipeResult = runStaticPipeline(activeFile.content, activeFile.language);
+      setPipelineStages(pipeResult.stages);
+      const pScore = Math.round(pipeResult.stages.reduce((s, st) => s + (st.score ?? 0), 0) / Math.max(pipeResult.stages.length, 1));
+
+      // Step 2: Bug Scan (동기)
+      const bugs = findBugsStatic(activeFile.content, activeFile.language);
+      setBugReports(bugs);
+      const criticalBugs = bugs.filter(b => b.severity === "critical" || b.severity === "high").length;
+
+      // Step 3: Stress Test (비동기, AI)
+      let sScore = 0;
+      let sGrade: "A" | "B" | "C" | "D" | "F" = "F";
+      try {
+        const stress = await runStressReport(activeFile.content, activeFile.name);
+        setStressReport(stress);
+        sScore = stress.overallScore;
+        sGrade = stress.grade;
+      } catch {
+        // Stress failed — score 0, continue
+      }
+
+      // Combined score: Pipeline 50% + Stress 30% + Bug penalty 20%
+      const bugPenalty = Math.max(0, 100 - criticalBugs * 25);
+      const combined = Math.round(pScore * 0.5 + sScore * 0.3 + bugPenalty * 0.2);
+      setVerificationScore(combined);
+
+      // Hard gate: critical bugs or stress F = fail regardless of score
+      const hardFail = criticalBugs > 0 || sGrade === "F";
+      const finalGrade = hardFail ? "FAIL" : combined >= 77 ? "PASS" : "WARN";
+
+      toast(
+        `Verification: ${finalGrade} (${combined}/100) — Pipeline ${pScore} | Stress ${sScore} | Bugs ${bugs.length}`,
+        finalGrade === "PASS" ? "success" : finalGrade === "WARN" ? "info" : "error"
+      );
+    } catch {
+      toast("Verification failed", "error");
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [activeFile, isVerifying, toast]);
 
   // IndexedDB load (once)
   useEffect(() => {
@@ -1170,7 +1240,7 @@ function CodeStudioShellInner() {
                 "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
                 "progress": () => {
                   const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
-                  return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} />;
+                  return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} />;
                 },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
                 "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={() => {}} />,
@@ -1223,6 +1293,8 @@ function CodeStudioShellInner() {
                 if (cmdId === "toggle-terminal") { setShowTerminal((v) => !v); return; }
                 if (cmdId === "quick-open") { setShowQuickOpen(true); return; }
                 if (cmdId === "toggle-settings") { setShowSettings((v) => !v); return; }
+                if (cmdId === "run-stress-test") { handleRunStressTest(); return; }
+                if (cmdId === "run-verification") { handleRunVerification(); return; }
                 // Registry-driven panel toggle
                 const panelId = cmdId.replace("toggle-", "");
                 if (PANEL_REGISTRY.some((p) => p.id === panelId)) {
@@ -1240,6 +1312,8 @@ function CodeStudioShellInner() {
                 })),
                 { id: "quick-open", label: "Quick Open File", shortcut: "Ctrl+P", category: "File" },
                 { id: "toggle-settings", label: "Toggle Inline Settings", category: "View" },
+                { id: "run-stress-test", label: "Run Stress Test (AI-Predicted)", category: "Tools" },
+                { id: "run-verification", label: "Run Full Verification (Pipeline + Bugs + Stress)", category: "Tools" },
               ]}
             />
           )}

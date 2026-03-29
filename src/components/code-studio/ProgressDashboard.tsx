@@ -8,8 +8,10 @@ import { useState, useEffect, useCallback } from "react";
 import {
   X, Activity, FileText, Brain, TrendingUp,
   Clock, BarChart3, Zap, Trophy, AlertTriangle,
+  Loader2, Gauge,
 } from "lucide-react";
 import type { TeamResult } from "@/lib/code-studio-pipeline-teams";
+import type { StressReport } from "@/lib/code-studio-stress-test";
 
 interface TeamProgress {
   name: string;
@@ -30,6 +32,12 @@ interface Props {
   pipelineScore?: number;
   pipelineStatus?: "pass" | "warn" | "fail";
   onClose?: () => void;
+  stressReport?: StressReport | null;
+  onRunStress?: () => void;
+  isStressTesting?: boolean;
+  verificationScore?: number;
+  onRunVerification?: () => void;
+  isVerifying?: boolean;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=TeamProgress,Props
@@ -122,10 +130,42 @@ function ActionIcon({ type }: { type: RecentAction["type"] }) {
 // IDENTITY_SEAL: PART-3 | role=SubComponents | inputs=team,stats | outputs=JSX
 
 // ============================================================
+// PART 3.5 — Stress Test Grade Helpers
+// ============================================================
+
+const GRADE_COLOR: Record<string, string> = {
+  A: "#3fb950", B: "#58a6ff", C: "#d29922", D: "#e3833a", F: "#f85149",
+};
+
+function GradeBadge({ grade }: { grade: string }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold"
+      style={{ backgroundColor: `${GRADE_COLOR[grade] ?? "#8b949e"}22`, color: GRADE_COLOR[grade] ?? "#8b949e" }}
+    >
+      {grade}
+    </span>
+  );
+}
+
+function ScoreBar({ score, grade }: { score: number; grade: string }) {
+  return (
+    <div className="flex-1 h-1.5 rounded-full bg-[#21262d] overflow-hidden">
+      <div
+        className="h-full rounded-full transition-all duration-500"
+        style={{ width: `${Math.max(score, 2)}%`, backgroundColor: GRADE_COLOR[grade] ?? "#8b949e" }}
+      />
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-3.5 | role=StressHelpers | inputs=grade,score | outputs=JSX
+
+// ============================================================
 // PART 4 — Main Component
 // ============================================================
 
-export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClose }: Props) {
+export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClose, stressReport, onRunStress, isStressTesting, verificationScore, onRunVerification, isVerifying }: Props) {
   const timeAgo = useTimeAgo();
   const [sessionStats, setSessionStats] = useState(() => loadSessionStats());
   const [recentActions, setRecentActions] = useState<RecentAction[]>(() => loadRecentActions());
@@ -251,6 +291,115 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
               ))
             )}
           </div>
+        </section>
+
+        {/* AI-Predicted Performance Analysis */}
+        <section>
+          <h3 className="flex items-center gap-1.5 font-semibold text-[#e6edf3] mb-2">
+            <Gauge size={12} className="text-orange-400" /> AI-Predicted Performance
+          </h3>
+
+          {onRunStress && (
+            <button
+              onClick={onRunStress}
+              disabled={isStressTesting}
+              className="w-full mb-3 flex items-center justify-center gap-2 py-1.5 px-3 rounded-md text-[11px] font-medium transition-colors bg-[#21262d] hover:bg-[#30363d] text-[#e6edf3] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isStressTesting ? (
+                <><Loader2 size={12} className="animate-spin" /> Running Stress Test...</>
+              ) : (
+                <><Zap size={12} /> Run Stress Test</>
+              )}
+            </button>
+          )}
+
+          {stressReport ? (
+            <div className="space-y-2">
+              {/* Overall score */}
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-[#21262d]">
+                <div className="text-center">
+                  <div className="text-lg font-bold" style={{ color: GRADE_COLOR[stressReport.grade] }}>
+                    {stressReport.grade}
+                  </div>
+                  <div className="text-[10px] text-[#8b949e]">Grade</div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] mb-1">
+                    <span>Overall</span>
+                    <span>{stressReport.overallScore}/100</span>
+                  </div>
+                  <ScoreBar score={stressReport.overallScore} grade={stressReport.grade} />
+                </div>
+              </div>
+
+              {/* Per-scenario breakdown */}
+              <div className="space-y-1.5">
+                {stressReport.scenarios.map((r) => {
+                  const score = r.grade === "A" ? 100 : r.grade === "B" ? 80 : r.grade === "C" ? 60 : r.grade === "D" ? 40 : 20;
+                  return (
+                    <div key={r.scenario.id} className="flex items-center gap-2">
+                      <span className="w-24 text-[10px] text-[#8b949e] truncate" title={`${r.scenario.name} (${r.scenario.virtualUsers}u)`}>
+                        {r.scenario.name} ({r.scenario.virtualUsers}u)
+                      </span>
+                      <ScoreBar score={score} grade={r.grade} />
+                      <GradeBadge grade={r.grade} />
+                      <span className="w-8 text-right text-[10px] text-[#8b949e]">{score}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Disclaimer */}
+              <div className="flex items-start gap-1.5 pt-1 text-[9px] text-[#8b949e]">
+                <AlertTriangle size={10} className="shrink-0 mt-px text-[#d29922]" />
+                <span>AI-Predicted — not real load test results</span>
+              </div>
+            </div>
+          ) : !isStressTesting ? (
+            <div className="text-[#8b949e] text-center py-3 text-[11px]">
+              Run a stress test to see predicted performance
+            </div>
+          ) : null}
+        </section>
+
+        {/* Full Verification */}
+        <section className="rounded-lg border border-white/8 bg-white/[0.02] p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Trophy size={13} className="text-[#d2a8ff]" />
+              <h3 className="text-[11px] font-semibold text-[#e6edf3]">Full Verification</h3>
+            </div>
+            <button
+              onClick={onRunVerification}
+              disabled={isVerifying}
+              className="flex items-center gap-1 rounded border border-[#d2a8ff]/30 bg-[#d2a8ff]/10 px-2 py-0.5 text-[10px] text-[#d2a8ff] hover:bg-[#d2a8ff]/20 disabled:opacity-40"
+            >
+              {isVerifying ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
+              {isVerifying ? "Verifying..." : "Run All"}
+            </button>
+          </div>
+
+          {verificationScore != null && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-[#8b949e]">Pipeline + Bugs + Stress</span>
+                <div className="flex items-center gap-1.5">
+                  <GradeBadge grade={verificationScore >= 77 ? "A" : verificationScore >= 60 ? "B" : verificationScore >= 40 ? "C" : "F"} />
+                  <span className="text-sm font-bold text-[#e6edf3]">{verificationScore}/100</span>
+                </div>
+              </div>
+              <ScoreBar score={verificationScore} grade={verificationScore >= 77 ? "A" : verificationScore >= 60 ? "C" : "F"} />
+              <div className="text-[9px] text-[#8b949e]">
+                {verificationScore >= 77 ? "✅ PASS — Safe to deploy" : verificationScore >= 60 ? "⚠️ WARN — Review before deploy" : "❌ FAIL — Critical issues found"}
+              </div>
+            </div>
+          )}
+
+          {verificationScore == null && !isVerifying && (
+            <div className="text-[#8b949e] text-center py-2 text-[11px]">
+              Pipeline + Bug Scan + Stress Test combined verification
+            </div>
+          )}
         </section>
       </div>
     </div>
