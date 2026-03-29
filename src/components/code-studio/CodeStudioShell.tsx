@@ -246,6 +246,9 @@ function CodeStudioShellInner() {
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [showTerminal, setShowTerminal] = useState(false);
   const [rightPanel, setRightPanel] = useState<RightPanel>("chat");
+  const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [showProblems, setShowProblems] = useState(false);
+  const [showPipelineBottom, setShowPipelineBottom] = useState(false);
   const [settings, setSettings] = useState<CodeStudioSettings>(DEFAULT_SETTINGS);
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -895,9 +898,52 @@ function CodeStudioShellInner() {
   // ── Desktop Layout (>=1024px) — existing code below ──
   return (
     <div className="flex h-full w-full flex-col bg-bg-primary text-text-primary">
+      {/* Pattern 4: Skip Navigation Link (Accessibility) */}
+      <a href="#main-editor" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-accent-purple focus:text-white focus:px-3 focus:py-1 focus:rounded">
+        Skip to Editor
+      </a>
       <div className="flex flex-1 min-h-0">
-        {/* Left -- File Explorer */}
-        <div className="flex w-56 shrink-0 flex-col border-r border-white/8 bg-bg-secondary">
+        {/* Pattern 1: Activity Bar — left icon column */}
+        <div className="w-12 shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1">
+          {/* Top items */}
+          {([
+            { id: "files" as const, icon: Files, label: "Explorer", shortcut: "Ctrl+Shift+E" },
+            { id: "search" as const, icon: Search, label: "Search", shortcut: "Ctrl+Shift+F" },
+            { id: "git" as const, icon: GitBranch, label: "Git", shortcut: undefined },
+            { id: "bugs" as const, icon: Bug, label: "Problems", shortcut: undefined },
+            { id: "pipeline" as const, icon: Activity, label: "Pipeline", shortcut: undefined },
+            { id: "chat" as const, icon: MessageSquare, label: "AI Chat", shortcut: undefined },
+          ]).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setRightPanel(rightPanel === item.id ? null : item.id as RightPanel)}
+              className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"
+              title={`${item.label}${item.shortcut ? ` (${item.shortcut})` : ""}`}
+            >
+              {/* Active indicator — animated left border */}
+              <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
+                rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
+              }`} />
+              <item.icon className={`h-[18px] w-[18px] transition-colors ${
+                rightPanel === item.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
+              }`} />
+              {item.id === "bugs" && bugReports.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
+              )}
+            </button>
+          ))}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Bottom items */}
+          <button onClick={() => setShowSettings(s => !s)} className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]" title="Settings">
+            <Settings className={`h-[18px] w-[18px] ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} />
+          </button>
+        </div>
+
+        {/* Left -- File Explorer (Pattern 2: resizable sidebar) */}
+        <div className="flex shrink-0 flex-col border-r border-white/8 bg-bg-secondary" style={{ width: sidebarWidth }}>
           <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
             <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Back to Home">
               <Home className="h-3.5 w-3.5" />
@@ -927,8 +973,21 @@ function CodeStudioShellInner() {
           </div>
         </div>
 
-        {/* Resize Handle */}
-        <div className="cs-resize-handle" />
+        {/* Pattern 2: Sidebar Resize Handle */}
+        <div
+          className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = sidebarWidth;
+            const onMove = (ev: MouseEvent) => {
+              setSidebarWidth(Math.max(150, Math.min(500, startWidth + ev.clientX - startX)));
+            };
+            const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+          }}
+        />
 
         {/* Center -- Editor + Terminal */}
         <div className="flex flex-1 flex-col min-w-0">
@@ -962,23 +1021,8 @@ function CodeStudioShellInner() {
               >
                 <Columns2 className="h-4 w-4" />
               </button>
-              <button onClick={() => setShowTerminal(!showTerminal)} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showTerminal ? "text-accent-green" : "text-text-tertiary"}`} title="Terminal"><TermIcon className="h-4 w-4" /></button>
-              {/* Registry-driven panel buttons (first 12 = original activity bar set) */}
-              {[...PANEL_REGISTRY].slice(0, 12).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
-                  className={`relative rounded p-1.5 transition-all duration-150 active:scale-95 ${rightPanel === p.id ? p.color : "text-text-tertiary"}`}
-                  title={p.label + ("shortcut" in p ? ` (${(p as { shortcut: string }).shortcut})` : "")}
-                >
-                  <PanelIcon name={p.icon} className="h-4 w-4" />
-                  {p.id === "bugs" && bugReports.length > 0 && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
-                  )}
-                </button>
-              ))}
               <button onClick={() => setShowCommandPalette(true)} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
-              <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Settings"><Settings className="h-4 w-4" /></button>
+              <button onClick={() => { if (showSettings) toast("Settings saved", "success"); setShowSettings(!showSettings); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Inline Settings"><Settings className="h-4 w-4" /></button>
             </div>
           </div>
 
@@ -1037,8 +1081,8 @@ function CodeStudioShellInner() {
                 />
               </div>
             )}
-            {/* Editor Area (supports split view) */}
-            <div className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
+            {/* Editor Area (supports split view) — Pattern 4: id for skip-nav */}
+            <div id="main-editor" className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
               {/* Primary Editor */}
               <div className={splitFileId ? "flex-1 min-w-0" : "h-full"}>
                 {activeFile ? (
@@ -1325,15 +1369,38 @@ function CodeStudioShellInner() {
             </div>
           )}
 
-          {/* Terminal */}
-          {showTerminal && (
-            <div className="h-48 border-t border-white/8 bg-[#0d0d0d]">
-              <div className="flex items-center gap-2 border-b border-white/8 px-3 py-1">
-                <TermIcon className="h-3.5 w-3.5 text-accent-green" />
-                <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-wider text-text-tertiary">Terminal</span>
-                <button onClick={() => setShowTerminal(false)} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary"><X className="h-3 w-3" /></button>
+          {/* Pattern 3: Bottom Panels — stacked terminal + problems + pipeline */}
+          {(showTerminal || showProblems || showPipelineBottom) && (
+            <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
+              {/* Bottom panel tab bar */}
+              <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
+                <button onClick={() => setShowTerminal(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Terminal</button>
+                <button onClick={() => setShowProblems(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
+                <button onClick={() => setShowPipelineBottom(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
+                <button onClick={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary"><X className="h-3 w-3" /></button>
               </div>
-              <div ref={termRef} className="h-[calc(100%-28px)]" />
+              {/* Panel content */}
+              {showTerminal && (
+                <div className="h-40 bg-[#0d0d0d]">
+                  <div ref={termRef} className="h-full" />
+                </div>
+              )}
+              {showProblems && (
+                <div className="h-40 overflow-auto">
+                  <PI.ProblemsPanelComponent findings={problemFindings} />
+                </div>
+              )}
+              {showPipelineBottom && pipelineStages.length > 0 && (
+                <div className="h-40 overflow-auto p-2">
+                  {pipelineStages.map((s) => (
+                    <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-[family-name:var(--font-mono)]">
+                      <span className={`w-2 h-2 rounded-full ${s.status === "pass" ? "bg-accent-green" : s.status === "warn" ? "bg-accent-amber" : s.status === "fail" ? "bg-accent-red" : "bg-white/20"}`} />
+                      <span className="text-text-secondary flex-1">{s.name}</span>
+                      <span className="text-text-tertiary">{s.score ?? "-"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
