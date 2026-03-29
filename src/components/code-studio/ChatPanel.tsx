@@ -183,14 +183,14 @@ export function ChatPanel({
   ).slice(0, 8) ?? [];
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117]">
+    <div className="flex flex-col h-full bg-bg-secondary">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#30363d]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <Sparkles size={14} className="text-purple-400" />
-        <span className="text-xs font-semibold text-[#e6edf3]">EH Assistant</span>
+        <span className="text-xs font-semibold text-text-primary">EH Assistant</span>
         <span className="text-[10px] px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded">Pipeline</span>
         <div className="ml-auto flex items-center gap-1">
-          <button onClick={toggleHistory} title="Chat history" className="p-1 rounded hover:bg-[#21262d] text-[#8b949e] transition-colors">
+          <button onClick={toggleHistory} title="Chat history" className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary transition-colors">
             <History size={14} />
           </button>
         </div>
@@ -198,34 +198,34 @@ export function ChatPanel({
 
       {/* History Dropdown */}
       {showHistory && (
-        <div className="border-b border-[#30363d] bg-[#010409] max-h-[200px] overflow-y-auto">
+        <div className="border-b border-border bg-bg-primary max-h-[200px] overflow-y-auto">
           <button
             onClick={() => { setShowHistory(false); chat.clearHistory(); setInput(""); }}
-            className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-blue-400 hover:bg-[#21262d] border-b border-[#30363d]"
+            className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-blue-400 hover:bg-bg-tertiary border-b border-border"
           >
             <Plus size={12} /> New Chat
           </button>
           {chatSessions.length === 0 ? (
-            <div className="px-3 py-4 text-center text-xs text-[#8b949e]">No history</div>
+            <div className="px-3 py-4 text-center text-xs text-text-tertiary">No history</div>
           ) : (
             chatSessions.map((session) => (
-              <div key={session.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#21262d] group">
+              <div key={session.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-bg-tertiary group">
                 {renamingId === session.id ? (
                   <div className="flex-1 flex items-center gap-1">
                     <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleConfirmRename(session.id); if (e.key === "Escape") { setRenamingId(null); setRenameValue(""); } }}
                       onBlur={() => handleConfirmRename(session.id)}
-                      className="flex-1 text-xs bg-[#21262d] border border-[#30363d] rounded px-1.5 py-0.5 outline-none text-[#e6edf3]"
+                      className="flex-1 text-xs bg-bg-tertiary border border-border rounded px-1.5 py-0.5 outline-none text-text-primary"
                     />
                     <button onClick={() => handleConfirmRename(session.id)} className="text-green-400 p-0.5"><Check size={11} /></button>
                   </div>
                 ) : (
                   <button
                     onDoubleClick={() => { setRenamingId(session.id); setRenameValue(session.title); }}
-                    className="flex-1 text-left text-xs truncate text-[#e6edf3]" title="Double-click to rename"
+                    className="flex-1 text-left text-xs truncate text-text-primary" title="Double-click to rename"
                   >{session.title}</button>
                 )}
-                <span className="text-[9px] text-[#8b949e] flex-shrink-0">{formatRelativeTime(session.updatedAt)}</span>
+                <span className="text-[9px] text-text-tertiary flex-shrink-0">{formatRelativeTime(session.updatedAt)}</span>
                 <button onClick={() => handleDeleteSession(session.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-0.5" title="Delete">
                   <Trash2 size={11} />
                 </button>
@@ -240,11 +240,11 @@ export function ChatPanel({
         {chat.messages.length === 0 && !chat.isStreaming && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
             <Sparkles size={24} className="text-purple-400 opacity-60" />
-            <p className="text-xs text-[#8b949e] leading-relaxed max-w-[240px]">Ask about your code, request reviews, or generate implementations.</p>
+            <p className="text-xs text-text-tertiary leading-relaxed max-w-[240px]">Ask about your code, request reviews, or generate implementations.</p>
             <div className="flex flex-wrap justify-center gap-2 mt-2 max-w-[280px]">
               {["Review this file", "Find bugs", "Refactor", "Add tests"].map((s, i) => (
                 <button key={i} onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                  className="px-3 py-1.5 text-[10px] rounded-full border border-[#30363d] text-[#8b949e] hover:text-[#e6edf3] hover:border-purple-500 hover:bg-purple-500/10 transition-all">
+                  className="px-3 py-1.5 text-[10px] rounded-full border border-border text-text-tertiary hover:text-text-primary hover:border-purple-500 hover:bg-purple-500/10 transition-all">
                   <Zap size={9} className="inline opacity-50 mr-1" />{s}
                 </button>
               ))}
@@ -262,7 +262,7 @@ export function ChatPanel({
                   <span className="text-purple-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
                 )}
               </div>
-              <div className="text-[#e6edf3] whitespace-pre-wrap">{msg.content}</div>
+              <div className="text-text-primary whitespace-pre-wrap">{msg.content}</div>
               {codeBlocks.map((block, idx) => (
                 <div key={idx} className="mt-1 flex items-center gap-1">
                   <button onClick={() => onApplyCode?.(block.code, block.fileName)}
@@ -270,7 +270,7 @@ export function ChatPanel({
                     Apply
                   </button>
                   <button onClick={() => navigator.clipboard.writeText(block.code)}
-                    className="text-[9px] px-2 py-0.5 rounded bg-[#21262d] text-[#8b949e] hover:bg-[#30363d] transition-colors">
+                    className="text-[9px] px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary hover:bg-border transition-colors">
                     Copy
                   </button>
                 </div>
@@ -279,33 +279,33 @@ export function ChatPanel({
           );
         })}
         {chat.isStreaming && (
-          <div className="flex items-center gap-2 text-xs text-[#8b949e]">
+          <div className="flex items-center gap-2 text-xs text-text-tertiary">
             <Zap size={12} className="animate-pulse text-yellow-400" /> Generating...
           </div>
         )}
       </div>
 
       {/* Input */}
-      <div className="border-t border-[#30363d] p-2 relative">
+      <div className="border-t border-border p-2 relative">
         {showMentions && filteredFiles.length > 0 && (
-          <div className="absolute bottom-full left-2 right-2 mb-1 bg-[#161b22] border border-[#30363d] rounded-lg shadow-lg max-h-40 overflow-y-auto">
+          <div className="absolute bottom-full left-2 right-2 mb-1 bg-bg-secondary border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
             {filteredFiles.map((f) => (
               <button key={f} onClick={() => handleMentionSelect(`@${f}`)}
-                className="block w-full text-left px-3 py-1.5 text-xs text-[#e6edf3] hover:bg-[#21262d] truncate">
+                className="block w-full text-left px-3 py-1.5 text-xs text-text-primary hover:bg-bg-tertiary truncate">
                 {f}
               </button>
             ))}
           </div>
         )}
-        <div className="flex items-center gap-2 bg-[#21262d] rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg px-3 py-2">
           <button onClick={() => { setShowMentions(!showMentions); setMentionQuery(""); }}
-            className="text-[#8b949e] hover:text-blue-400 transition-colors" title="Add context">
+            className="text-text-tertiary hover:text-blue-400 transition-colors" title="Add context">
             <AtSign size={14} />
           </button>
           <input ref={inputRef} value={input} onChange={handleInputChange}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !showMentions) handleSend(); if (e.key === "Escape") setShowMentions(false); }}
             placeholder="Ask about your code..." aria-label="Chat input"
-            className="flex-1 bg-transparent text-xs outline-none text-[#e6edf3] placeholder:text-[#8b949e]"
+            className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
           />
           {chat.isStreaming ? (
             <button onClick={() => chat.abort()} className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
