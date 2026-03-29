@@ -238,7 +238,7 @@ function checkPlatformRules(text: string, publishPlatform?: PublishPlatform): Di
   // density_check: 문피아 편당 밀도 (대화 없는 긴 서술 블록)
   if (preset.nodChecks.includes('density_check')) {
     const paras = text.split('\n\n').filter(p => p.trim().length > 0);
-    const longNarrationBlocks = paras.filter(p => p.length > 500 && !p.includes('"') && !p.includes('"'));
+    const longNarrationBlocks = paras.filter(p => p.length > 500 && !p.includes('"') && !p.includes('\u201C') && !p.includes('\u201D'));
     if (longNarrationBlocks.length >= 3) {
       findings.push({
         kind: 'PLATFORM_DENSITY',
@@ -251,7 +251,7 @@ function checkPlatformRules(text: string, publishPlatform?: PublishPlatform): Di
   // hook_missing_warning: 카카오페이지 회차 엔딩 훅 체크
   if (preset.nodChecks.includes('hook_missing_warning')) {
     const lastPara = text.trim().split('\n\n').pop() || '';
-    const hasHook = /[?!…]$/.test(lastPara.trim()) || /[었했였]다[.]?\s*$/.test(lastPara.trim()) === false;
+    const hasHook = /[?!…]$/.test(lastPara.trim()) || !/[었했였]다[.]?\s*$/.test(lastPara.trim());
     if (!hasHook && lastPara.length < 100) {
       findings.push({
         kind: 'PLATFORM_HOOK',

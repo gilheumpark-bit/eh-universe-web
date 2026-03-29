@@ -101,7 +101,7 @@ export default function WritingTabInline(props: Props) {
 
   const t = createT(language);
   const isKO = language === 'KO';
-  const tObj = TRANSLATIONS[language].writingMode;
+  const tObj = (TRANSLATIONS[language] ?? TRANSLATIONS.KO).writingMode;
   const showAiLockBanner = showAiLock;
   const showApiLockBanner = showAiLock;
 

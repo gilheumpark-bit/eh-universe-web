@@ -158,7 +158,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 )}
               </div>
               <div className="mt-2 text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
-                {new Date(s.lastUpdate).toLocaleDateString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {new Date(s.lastUpdate).toLocaleString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           ))

@@ -1,6 +1,6 @@
 
 import { showAlert } from '@/lib/show-alert';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
 import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
@@ -116,7 +116,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const isKO = language === 'KO';
 
   const totalEpisodes = config.totalEpisodes ?? 25;
-  const tensionData = generateTensionCurveData(totalEpisodes, config.genre);
+  const tensionData = useMemo(() => generateTensionCurveData(totalEpisodes, config.genre), [totalEpisodes, config.genre]);
   const [autoGenGenre, setAutoGenGenre] = useState<Genre>(config.genre);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
