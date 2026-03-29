@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { Cpu, ToggleLeft, ToggleRight, BarChart3, Settings, Zap, Shield, Bot, Code2 } from "lucide-react";
-import { PROVIDERS, PROVIDER_LIST, getApiKey, type ProviderId } from "@/lib/ai-providers";
+import { PROVIDERS, PROVIDER_LIST_UI, getApiKey, type ProviderId } from "@/lib/ai-providers";
 
 export interface AIFeature {
   id: string;
@@ -139,11 +139,11 @@ export default function AIHub({ features, onToggleFeature, onConfigureProvider }
       <div className="border-b border-white/5 p-4">
         <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Providers</h3>
         <div className="grid grid-cols-2 gap-2">
-          {PROVIDER_LIST.map((p) => (
+          {PROVIDER_LIST_UI.map((p) => (
             <ProviderCard
               key={p.id}
-              providerId={p.id}
-              onConfigure={onConfigureProvider ? () => onConfigureProvider(p.id) : undefined}
+              providerId={p.id as ProviderId}
+              onConfigure={onConfigureProvider ? () => onConfigureProvider(p.id as ProviderId) : undefined}
             />
           ))}
         </div>

@@ -7,7 +7,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Zap, Check, AlertTriangle } from "lucide-react";
 import {
-  PROVIDERS, PROVIDER_LIST, getActiveProvider, setActiveProvider,
+  PROVIDERS, PROVIDER_LIST_UI, getActiveProvider, setActiveProvider,
   getActiveModel, setActiveModel, getApiKey, isPreviewModel,
   type ProviderId,
 } from "@/lib/ai-providers";
@@ -90,8 +90,9 @@ export default function ModelSelector({
 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-1 w-72 max-h-80 overflow-y-auto rounded-lg border border-white/10 bg-[#1e1e2e] shadow-xl">
-          {PROVIDER_LIST.map((p) => {
-            const pKey = getApiKey(p.id);
+          {PROVIDER_LIST_UI.map((p) => {
+            const pId = p.id as ProviderId;
+            const pKey = getApiKey(pId);
             const configured = !!pKey || p.capabilities.isLocal;
             return (
               <div key={p.id} className="border-b border-white/5 last:border-0">
@@ -104,13 +105,13 @@ export default function ModelSelector({
                   )}
                 </div>
                 {p.models.map((m) => {
-                  const isActive = activeProvider === p.id && activeModel === m;
+                  const isActive = activeProvider === pId && activeModel === m;
                   const preview = isPreviewModel(m);
                   return (
                     <button
                       key={m}
                       disabled={!configured}
-                      onClick={() => handleSelectModel(p.id, m)}
+                      onClick={() => handleSelectModel(pId, m)}
                       className={`flex w-full items-center gap-2 px-4 py-1 text-xs transition-colors ${
                         isActive
                           ? "bg-white/10 text-white"

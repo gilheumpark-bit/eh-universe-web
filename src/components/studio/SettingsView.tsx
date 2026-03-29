@@ -11,7 +11,7 @@ import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
-import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST, isKeyExpiringSoon, getKeyAge } from '@/lib/ai-providers';
+import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 
 interface VersionedBackup {
@@ -35,7 +35,7 @@ const OBFUSCATION_PREFIXES = ['noa:1:', 'noa:2:'];
 
 function migrateAllKeysToObfuscated(): number {
   let migrated = 0;
-  for (const provider of PROVIDER_LIST) {
+  for (const provider of PROVIDER_LIST_UI) {
     const raw = localStorage.getItem(provider.storageKey);
     if (raw && !OBFUSCATION_PREFIXES.some(p => raw.startsWith(p))) {
       // Plain-text key detected — re-save through setApiKey which obfuscates it

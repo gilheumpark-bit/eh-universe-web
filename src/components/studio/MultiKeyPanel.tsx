@@ -18,7 +18,7 @@ import {
   getTotalUsage,
   resetSlotUsage,
 } from "@/lib/multi-key-manager";
-import { PROVIDERS, PROVIDER_LIST, testApiKey } from "@/lib/ai-providers";
+import { PROVIDERS, PROVIDER_LIST_UI, testApiKey } from "@/lib/ai-providers";
 
 // ============================================================
 // PART 1 — Constants & Labels
@@ -296,7 +296,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                         onChange={(e) => handleProviderChange(slot.id, e.target.value as ProviderId)}
                         className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
                       >
-                        {PROVIDER_LIST.map((p) => (
+                        {PROVIDER_LIST_UI.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>

@@ -284,7 +284,25 @@ export async function POST(req: NextRequest) {
 
     apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, durationMs: timer.elapsed() });
 
-    return new NextResponse(stream, {
+    // Wrap stream to track output token usage
+    let totalOutputChars = 0;
+    const trackingStream = stream.pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        if (chunk instanceof Uint8Array) {
+          totalOutputChars += chunk.length;
+        }
+        controller.enqueue(chunk);
+      },
+      flush() {
+        // Record output token estimate after stream completes
+        const outputEstimate = Math.ceil(totalOutputChars / 4);
+        if (outputEstimate > 0) {
+          recordTokenUsage(ip, outputEstimate);
+        }
+      },
+    }));
+
+    return new NextResponse(trackingStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',

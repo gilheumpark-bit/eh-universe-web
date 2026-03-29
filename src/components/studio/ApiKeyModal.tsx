@@ -5,7 +5,7 @@ import { Key, X, Loader2, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import {
-  PROVIDER_LIST, ProviderId, PROVIDERS,
+  PROVIDER_LIST_UI, ProviderId, PROVIDERS,
   getActiveProvider, setActiveProvider,
   getApiKey, setApiKey,
   getActiveModel, setActiveModel,
@@ -39,13 +39,13 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
   });
   const [keys, setKeys] = useState<Record<ProviderId, string>>(() => {
     const loaded = {} as Record<ProviderId, string>;
-    for (const p of PROVIDER_LIST) loaded[p.id] = getApiKey(p.id);
+    for (const p of PROVIDER_LIST_UI) { const pid = p.id as ProviderId; loaded[pid] = getApiKey(pid); }
     return loaded;
   });
   const [selectedModel, setSelectedModel] = useState(getActiveModel());
   const [testStatus, setTestStatus] = useState<Record<ProviderId, 'idle' | 'testing' | 'success' | 'error'>>(() => {
     const s = {} as Record<ProviderId, 'idle' | 'testing' | 'success' | 'error'>;
-    for (const p of PROVIDER_LIST) s[p.id] = 'idle';
+    for (const p of PROVIDER_LIST_UI) { s[p.id as ProviderId] = 'idle'; }
     return s;
   });
   const [showModels, setShowModels] = useState(false);
@@ -134,7 +134,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
 
         {/* Provider selector */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {PROVIDER_LIST.map(p => {
+          {PROVIDER_LIST_UI.map(p => {
             const hasKey = !!(keys[p.id]?.trim());
             const isActive = activeId === p.id;
             return (
@@ -321,7 +321,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
           <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
             {t('apiKeyModal.savedKeys')}
           </div>
-          {PROVIDER_LIST.map(p => {
+          {PROVIDER_LIST_UI.map(p => {
             const hasKey = !!(keys[p.id]?.trim());
             const isCurrentActive = getActiveProvider() === p.id;
             return (

@@ -597,7 +597,7 @@ function CodeStudioShellInner() {
       term.loadAddon(fit);
       term.open(termRef.current);
       fit.fit();
-      term.writeln("\x1b[32m== EH Code Studio Terminal v1.0 ==\x1b[0m");
+      term.writeln("\x1b[32m== EH Code Studio Console v1.0 (simulated) ==\x1b[0m");
       term.writeln("  Type \x1b[36mhelp\x1b[0m for commands");
       term.write("\x1b[32m$ \x1b[0m");
 
@@ -1300,7 +1300,16 @@ function CodeStudioShellInner() {
                     }}
                   />
                 ),
-                "templates": () => <PI.TemplateGalleryComponent onSelectTemplate={() => {}} onClose={() => setRightPanel(null)} />,
+                "templates": () => <PI.TemplateGalleryComponent onSelectTemplate={(template) => {
+                  if (template?.files) {
+                    for (const f of template.files) {
+                      const node: FileNode = { id: `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.name, type: "file", content: f.content };
+                      setFiles((prev) => [...prev, node]);
+                    }
+                    toast(`Template "${template.name}" loaded`, "success");
+                  }
+                  setRightPanel(null);
+                }} onClose={() => setRightPanel(null)} />,
                 "settings-panel": () => <PI.SettingsPanelComponent />,
                 "packages": () => <PI.PackagePanelComponent files={files} />,
                 "evaluation": () => <PI.EvaluationPanelComponent files={files} onClose={() => setRightPanel(null)} />,
@@ -1333,14 +1342,32 @@ function CodeStudioShellInner() {
                   return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} verificationResult={verificationResult} currentVerifyRound={currentVerifyRound} />;
                 },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
-                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={() => {}} />,
+                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={(_conflictId: string, _resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
+                  if (activeFileId && content) {
+                    fsUpdateContent(activeFileId, content);
+                    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content, isDirty: true } : f));
+                  }
+                  toast("Conflict resolved", "success");
+                }} />,
                 "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => setRightPanel(null)} />,
-                "recent-files": () => <PI.RecentFilesComponent files={[]} onOpen={() => {}} onClear={() => {}} />,
-                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={[]} onSelect={() => {}} onClose={() => setRightPanel(null)} />,
+                "recent-files": () => <PI.RecentFilesComponent files={[]} onOpen={(fileId: string) => {
+                  const found = findFileNodeByName(files, fileId);
+                  if (found) handleFileSelect(found);
+                }} onClear={() => { toast("Recent files cleared", "info"); }} />,
+                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={[]} onSelect={(symbol) => {
+                  if (symbol?.line) {
+                    const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
+                    editor?.revealLineInCenter?.(symbol.line);
+                    editor?.setPosition?.({ lineNumber: symbol.line, column: 1 });
+                  }
+                }} onClose={() => setRightPanel(null)} />,
                 "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => setRightPanel(null)} />,
                 "api-config": () => <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />,
                 "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => setRightPanel(null)} />,
-                "code-actions": () => <PI.QuickActionsComponent selectedText="" position={{ top: 0, left: 0 }} language={activeFile?.language ?? "plaintext"} onAction={() => {}} onClose={() => setRightPanel(null)} />,
+                "code-actions": () => <PI.QuickActionsComponent selectedText="" position={{ top: 0, left: 0 }} language={activeFile?.language ?? "plaintext"} onAction={(actionId: string) => {
+                  setRightPanel("chat");
+                  toast(`Action: ${actionId}`, "info");
+                }} onClose={() => setRightPanel(null)} />,
                 "model-switcher": () => <PI.ModelSwitcherComponent />,
               };
               return (
@@ -1388,7 +1415,7 @@ function CodeStudioShellInner() {
             <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
               {/* Bottom panel tab bar */}
               <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
-                <button onClick={() => setShowTerminal(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Terminal</button>
+                <button onClick={() => setShowTerminal(v => !v)} title="브라우저 콘솔 — 시뮬레이션 환경입니다" className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Console</button>
                 <button onClick={() => setShowProblems(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
                 <button onClick={() => setShowPipelineBottom(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
                 <button onClick={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
@@ -1448,7 +1475,7 @@ function CodeStudioShellInner() {
               }}
               commands={[
                 { id: "new-file", label: lang === "ko" ? "새 파일" : "New File", shortcut: "Ctrl+N", category: "File" },
-                { id: "toggle-terminal", label: lang === "ko" ? "터미널 토글" : "Toggle Terminal", shortcut: "Ctrl+`", category: "View" },
+                { id: "toggle-terminal", label: lang === "ko" ? "콘솔 토글" : "Toggle Console", shortcut: "Ctrl+`", category: "View" },
                 ...Object.entries(
                   PANEL_REGISTRY.reduce<Record<string, readonly PanelDef[]>>((acc, p) => {
                     const g = p.group;

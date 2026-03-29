@@ -4,7 +4,9 @@
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
 
-export type ProviderId = "gemini" | "openai" | "claude" | "groq" | "mistral" | "ollama" | "lmstudio";
+/** Provider ID key tuple — single source of truth for all provider keys */
+const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
+export type ProviderId = (typeof _PROVIDER_KEYS)[number];
 
 export interface ProviderCapabilities {
   streaming: boolean;
@@ -28,6 +30,8 @@ export interface ProviderDef {
   capabilities: ProviderCapabilities;
   /** 로컬 provider는 API key 대신 base URL을 저장 */
   isUrlBased?: boolean;
+  /** true = 개발 환경에서만 노출 (ollama, lmstudio 등) */
+  devOnly?: boolean;
 }
 
 export interface ChatMsg {
@@ -115,6 +119,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_ollama_url",
     isUrlBased: true,
+    devOnly: true,
     capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
   },
   lmstudio: {
@@ -127,6 +132,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_lmstudio_url",
     isUrlBased: true,
+    devOnly: true,
     capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
   },
 };
@@ -143,7 +149,11 @@ export function activeSupportsStructured(): boolean {
   return supportsStructuredOutput(getActiveProvider());
 }
 
-export const PROVIDER_LIST = Object.values(PROVIDERS);
+export const PROVIDER_LIST: ProviderDef[] = Object.values(PROVIDERS);
+/** UI용 — devOnly provider는 개발 환경에서만 포함 */
+export const PROVIDER_LIST_UI: ProviderDef[] = PROVIDER_LIST.filter(
+  (p) => !p.devOnly || process.env.NODE_ENV === 'development',
+);
 const LEGACY_PROVIDER_KEY = "eh-active-provider";
 const LEGACY_MODEL_KEY = "eh-active-model";
 
@@ -369,6 +379,20 @@ function deobfuscateKey(stored: string): string {
   return deobfuscateKeySync(stored);
 }
 
+/**
+ * Migrate legacy provider storage keys to the current format.
+ * Call once at app init — NOT inside getters.
+ */
+export function migrateProviderStorage(): void {
+  if (typeof window === "undefined") return;
+  const legacy = localStorage.getItem(LEGACY_PROVIDER_KEY);
+  if (legacy) {
+    const resolved = legacy in PROVIDERS ? legacy : "gemini";
+    localStorage.setItem("noa_active_provider", resolved);
+    localStorage.removeItem(LEGACY_PROVIDER_KEY);
+  }
+}
+
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
   const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
@@ -377,8 +401,6 @@ export function getActiveProvider(): ProviderId {
   if ((provider === 'ollama' || provider === 'lmstudio') && !localStorage.getItem(PROVIDERS[provider].storageKey)) {
     provider = 'gemini';
   }
-  localStorage.setItem("noa_active_provider", provider);
-  localStorage.removeItem(LEGACY_PROVIDER_KEY);
   return provider;
 }
 
@@ -551,13 +573,21 @@ async function streamLocalDirect(
   const reader = res.body?.getReader();
   if (!reader) throw new Error('No response body');
   const decoder = new TextDecoder();
+  const MAX_BUFFER_BYTES = 65_536; // 64KB buffer cap (same as streamViaProxy)
   let full = '';
   let buffer = '';
+  let bufferSize = 0;
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+      bufferSize += chunk.length;
+      if (bufferSize > MAX_BUFFER_BYTES) {
+        reader.cancel().catch(() => {});
+        throw new Error('Response too large — possible runaway generation');
+      }
+      buffer += chunk;
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
       for (const line of lines) {

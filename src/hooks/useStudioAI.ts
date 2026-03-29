@@ -79,13 +79,13 @@ export function useStudioAI({
     const text = customPrompt || inputValue || '';
     if (!text.trim() || isGenerating || !currentSessionId || !currentSession) return;
     if (generationLockRef.current) return;
-    generationLockRef.current = true;
 
-    // Tier gate: check generation limit
+    // Tier gate: check generation limit (before acquiring lock to avoid permanent lock)
     if (!canGenerate()) {
       setUxError?.({ error: new Error('Free tier limit reached'), retry: () => {} });
       return;
     }
+    generationLockRef.current = true;
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
@@ -285,10 +285,12 @@ export function useStudioAI({
 
   const handleRegenerate = useCallback(async (assistantMsgId: string) => {
     if (isGenerating || !currentSessionId || !currentSession) return;
+    if (generationLockRef.current) return;
+    generationLockRef.current = true;
     const msgIndex = currentSession.messages.findIndex(m => m.id === assistantMsgId);
-    if (msgIndex <= 0) return;
+    if (msgIndex <= 0) { generationLockRef.current = false; return; }
     const userMsg = currentSession.messages[msgIndex - 1];
-    if (userMsg.role !== 'user') return;
+    if (userMsg.role !== 'user') { generationLockRef.current = false; return; }
     const historyMessages = currentSession.messages.slice(0, msgIndex - 1);
 
     // Save current content to versions before regenerating
@@ -362,6 +364,7 @@ export function useStudioAI({
         setUxError({ error: classified, retry: classified.retryable ? () => handleRegenerate(assistantMsgId) : undefined });
       }
     } finally {
+      generationLockRef.current = false;
       setIsGenerating(false);
       abortControllerRef.current = null;
     }

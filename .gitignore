@@ -61,5 +61,12 @@ Desktop.ini
 /playwright-report/
 /test-results/
 
+# General logs
+*.log
+.codex-*.log
+
+# Competitor analysis (generated artifact)
+competitor-analysis.html
+
 # Claude Code
 .claude/worktrees/
