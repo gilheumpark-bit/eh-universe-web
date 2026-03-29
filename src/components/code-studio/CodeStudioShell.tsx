@@ -10,7 +10,7 @@ import Link from "next/link";
 import {
   Files, Plus, X, Play, Settings, ChevronRight,
   FileText, FolderOpen, Folder, Terminal as TermIcon,
-  MessageSquare, Shield, Activity, Send, Trash2, Edit3,
+  MessageSquare, Shield, Activity, Trash2, Edit3,
   AlertTriangle, Loader2,
   Search, GitBranch, Upload, Bug, Command, Home, Columns2,
   Eye, List, Layout, Package, BarChart3, Users, Wand2,
@@ -18,16 +18,18 @@ import {
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
-import { streamChat, getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
-import { runNoa } from "@/lib/noa";
-import { saveSettings, loadSettings, saveChatSession, listChatSessions } from "@/lib/code-studio-store";
+import { getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
+import { saveSettings, loadSettings } from "@/lib/code-studio-store";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
 import { runStaticPipeline } from "@/lib/code-studio-pipeline";
-import type { NoaResult } from "@/lib/noa/types";
 import { searchCode, replaceAll as searchReplaceAll, type SearchResult } from "@/lib/code-studio-search";
 import { findBugsStatic, findBugs, type BugReport } from "@/lib/code-studio-bugfinder";
 import { runAutopilot, type AutopilotPlan } from "@/lib/code-studio-autopilot";
 import { runAgentPipeline, createAgentSession, type AgentMessage, type AgentSession } from "@/lib/code-studio-agents";
+import { registerEditorFeatures } from "@/lib/code-studio-editor-features";
+import { setupMonaco } from "@/lib/code-studio-monaco-setup";
+import { parseErrors, type ParsedError } from "@/lib/code-studio-error-parser";
+import { registerCrossFileProviders } from "@/lib/code-studio-cross-file";
 import { isMultiKeyActive } from "@/lib/multi-key-bridge";
 
 const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"), { ssr: false });
@@ -45,6 +47,18 @@ import * as PI from "@/components/code-studio/PanelImports";
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
 const DiffViewer = dynamic(() => import("@/components/code-studio/DiffViewer"), { ssr: false });
+const BreadcrumbComponent = dynamic(
+  () => import("@/components/code-studio/Breadcrumb").then((m) => ({ default: m.Breadcrumb })),
+  { ssr: false },
+);
+const ToolbarComponent = dynamic(
+  () => import("@/components/code-studio/Toolbar").then((m) => ({ default: m.Toolbar })),
+  { ssr: false },
+);
+const TouchGesturesComponent = dynamic(
+  () => import("@/components/code-studio/TouchGestures").then((m) => ({ default: m.TouchGestures })),
+  { ssr: false },
+);
 
 // Modal/dialog + ErrorBoundary imports
 import { ErrorBoundary } from "@/components/code-studio/ErrorBoundary";
@@ -96,14 +110,6 @@ const DEMO_FILES: FileNode[] = [
   },
 ];
 
-interface ChatMsg {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-  noaResult?: NoaResult;
-}
-
 interface PipelineStage {
   name: string;
   status: "pass" | "warn" | "fail" | "running" | "pending";
@@ -111,7 +117,7 @@ interface PipelineStage {
   message?: string;
 }
 
-// IDENTITY_SEAL: PART-2 | role=DemoFiles+Types | inputs=none | outputs=DEMO_FILES,ChatMsg,PipelineStage
+// IDENTITY_SEAL: PART-2 | role=DemoFiles+Types | inputs=none | outputs=DEMO_FILES,PipelineStage
 
 // ============================================================
 // PART 3 — File Tree Component
@@ -178,182 +184,10 @@ function FileTreeItem({
 
 // IDENTITY_SEAL: PART-3 | role=FileTree | inputs=node,depth | outputs=UI+CRUD
 
-// ============================================================
-// PART 4 — AI Chat Panel (kept inline — uses real streaming + NOA)
-// ============================================================
-
-function AIChatPanel({
-  activeFile, onApplyCode,
-}: {
-  activeFile: OpenFile | null;
-  onApplyCode: (code: string) => void;
-}) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
-  const [input, setInput] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [noaBlocked, setNoaBlocked] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const sessionIdRef = useRef("chat-" + Date.now());
-
-  useEffect(() => {
-    (async () => {
-      const sessions = await listChatSessions();
-      if (sessions.length > 0) {
-        const latest = sessions[0];
-        sessionIdRef.current = latest.id;
-        setMessages(latest.messages.map((m) => ({ ...m, id: crypto.randomUUID() })));
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const t = setTimeout(() => {
-      saveChatSession({
-        id: sessionIdRef.current,
-        title: messages[0]?.content.slice(0, 50) || "Chat",
-        messages: messages.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
-        createdAt: messages[0]?.timestamp || Date.now(),
-        updatedAt: Date.now(),
-      });
-    }, 1000);
-    return () => clearTimeout(t);
-  }, [messages]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
-
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
-    if (!text || isGenerating) return;
-    setInput("");
-    setNoaBlocked(null);
-
-    try {
-      const noaResult = await runNoa({ text });
-      if (!noaResult.allowed) {
-        setNoaBlocked(`[NOA ${noaResult.tactical?.selectedPath ?? "BLOCK"}] ${noaResult.fastTrack?.verdict === "BLOCK" ? "Blocked by safety filter" : `Risk grade: ${noaResult.judgment?.grade ?? "unknown"}`}`);
-        return;
-      }
-    } catch { /* NOA failure → pass through */ }
-
-    const userMsg: ChatMsg = { id: crypto.randomUUID(), role: "user", content: text, timestamp: Date.now() };
-    setMessages((prev) => [...prev, userMsg]);
-
-    const provider = getActiveProvider();
-    const apiKey = getApiKey(provider);
-    if (!apiKey) {
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "API key not configured. Set it in Studio settings.", timestamp: Date.now() }]);
-      return;
-    }
-
-    setIsGenerating(true);
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    const systemPrompt = `You are an AI coding assistant in EH Code Studio.
-${activeFile ? `The user is editing "${activeFile.name}" (${activeFile.language}). Current content:\n\`\`\`${activeFile.language}\n${activeFile.content.slice(0, 2000)}\n\`\`\`` : "No file is open."}
-Respond concisely. Use markdown code blocks for code.`;
-
-    let assistantContent = "";
-    const assistantId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "", timestamp: Date.now() }]);
-
-    try {
-      await streamChat({
-        systemInstruction: systemPrompt,
-        messages: [{ role: "user", content: text }],
-        temperature: 0.3,
-        signal: controller.signal,
-        onChunk: (chunk: string) => {
-          assistantContent += chunk;
-          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
-        },
-      });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        assistantContent += "\n\n*[Cancelled]*";
-      } else {
-        assistantContent += `\n\n*Error: ${err instanceof Error ? err.message : "Unknown error"}*`;
-      }
-      setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
-    } finally {
-      setIsGenerating(false);
-      abortRef.current = null;
-    }
-  }, [input, isGenerating, activeFile]);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <MessageSquare className="h-4 w-4 text-accent-purple" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">AI Chat</span>
-        <Shield className="ml-auto h-3 w-3 text-accent-green" aria-label="NOA Security Active" />
-      </div>
-
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
-        {messages.length === 0 && (
-          <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">
-            Ask about your code, generate functions, or get explanations.
-            <br />NOA 7-Layer security is active.
-          </div>
-        )}
-        {messages.map((m) => (
-          <div key={m.id} className={`flex gap-2 cs-chat-bubble ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[12px] leading-relaxed ${
-              m.role === "user"
-                ? "bg-accent-purple/20 text-text-primary border border-accent-purple/10"
-                : "bg-white/[0.04] text-text-secondary border border-white/6"
-            }`}>
-              <pre className="whitespace-pre-wrap font-[family-name:var(--font-mono)] text-[11px]">{m.content || (isGenerating ? "..." : "")}</pre>
-              {m.role === "assistant" && m.content.includes("```") && (
-                <button
-                  onClick={() => {
-                    const match = m.content.match(/```\w*\n([\s\S]*?)```/);
-                    if (match?.[1]) onApplyCode(match[1]);
-                  }}
-                  className="mt-2 rounded border border-accent-green/20 bg-accent-green/8 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-accent-green hover:bg-accent-green/15"
-                >
-                  Apply Code
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {noaBlocked && (
-        <div className="mx-3 mb-2 rounded-lg border border-accent-red/30 bg-accent-red/10 px-3 py-2 text-[11px] text-accent-red font-[family-name:var(--font-mono)]">
-          <AlertTriangle className="inline h-3 w-3 mr-1" />{noaBlocked}
-        </div>
-      )}
-
-      <div className="border-t border-white/8 p-2">
-        <div className="flex items-center gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Ask AI about your code..."
-            className="flex-1 rounded-lg border border-white/8 bg-white/[0.04] px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] text-text-primary placeholder-text-tertiary outline-none focus:border-accent-green/30"
-          />
-          {isGenerating ? (
-            <button onClick={() => abortRef.current?.abort()} className="rounded-lg bg-accent-red/20 p-2 text-accent-red"><X className="h-4 w-4" /></button>
-          ) : (
-            <button onClick={handleSend} disabled={!input.trim()} className="rounded-lg bg-accent-green/20 p-2 text-accent-green disabled:opacity-30"><Send className="h-4 w-4" /></button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-4 | role=AIChatPanel | inputs=activeFile | outputs=chat+NOA
+// PART 4 — removed (AIChatPanel migrated to external ChatPanel component)
 
 // ============================================================
-// PART 5 — File Tree Helpers (CRUD)
+// PART 5 — File Tree Helpers (addFileToTree only — rest handled by useCodeStudioFileSystem)
 // ============================================================
 
 function addFileToTree(tree: FileNode[], parentId: string, newFile: FileNode): FileNode[] {
@@ -368,29 +202,20 @@ function addFileToTree(tree: FileNode[], parentId: string, newFile: FileNode): F
   });
 }
 
-function deleteFromTree(tree: FileNode[], id: string): FileNode[] {
-  return tree
-    .filter((n) => n.id !== id)
-    .map((n) => n.children ? { ...n, children: deleteFromTree(n.children, id) } : n);
+/** Search the file tree by file name (basename match). Used for cross-file navigation. */
+function findFileNodeByName(nodes: FileNode[], name: string): FileNode | null {
+  const basename = name.includes("/") ? name.split("/").pop()! : name;
+  for (const n of nodes) {
+    if (n.type === "file" && n.name === basename) return n;
+    if (n.children) {
+      const found = findFileNodeByName(n.children, basename);
+      if (found) return found;
+    }
+  }
+  return null;
 }
 
-function renameInTree(tree: FileNode[], id: string, name: string): FileNode[] {
-  return tree.map((n) => {
-    if (n.id === id) return { ...n, name };
-    if (n.children) return { ...n, children: renameInTree(n.children, id, name) };
-    return n;
-  });
-}
-
-function updateContentInTree(tree: FileNode[], id: string, content: string): FileNode[] {
-  return tree.map((n) => {
-    if (n.id === id) return { ...n, content };
-    if (n.children) return { ...n, children: updateContentInTree(n.children, id, content) };
-    return n;
-  });
-}
-
-// IDENTITY_SEAL: PART-5 | role=TreeHelpers | inputs=tree,id | outputs=FileNode[]
+// IDENTITY_SEAL: PART-5 | role=TreeHelper(addFileToTree,findFileNodeByName) | inputs=tree,parentId,newFile | outputs=FileNode[]
 
 // ============================================================
 // PART 6 — Main Shell
@@ -440,6 +265,8 @@ function CodeStudioShellInner() {
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const editorRef = useRef<unknown>(null);
   const termRef = useRef<HTMLDivElement>(null);
+  const crossFileDisposableRef = useRef<{ dispose(): void } | null>(null);
+  const [parsedErrors, setParsedErrors] = useState<ParsedError[]>([]);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
   const splitFile = splitFileId ? (openFiles.find((f) => f.id === splitFileId) ?? null) : null;
@@ -593,11 +420,22 @@ function CodeStudioShellInner() {
           if (af) {
             t.writeln("  \x1b[36mRunning pipeline on " + af.name + "...\x1b[0m");
             const result = runStaticPipeline(af.content, af.language);
+            const outputLines: string[] = [];
             result.stages.forEach((s) => {
               const icon = s.status === "pass" ? "\x1b[32m+\x1b[0m" : s.status === "warn" ? "\x1b[33m!\x1b[0m" : "\x1b[31mx\x1b[0m";
-              t.writeln(`  ${icon} ${s.name}: ${s.score}/100 -- ${s.message}`);
+              const line = `  ${icon} ${s.name}: ${s.score}/100 -- ${s.message}`;
+              t.writeln(line);
+              outputLines.push(s.message);
             });
             t.writeln(`  \x1b[36mOverall: ${result.overallScore}/100 (${result.overallStatus})\x1b[0m`);
+            // Parse any structured errors from pipeline output
+            const errors = parseErrors(outputLines.join("\n"));
+            if (errors.length > 0) {
+              setParsedErrors(errors);
+              setBuildError({ message: `${errors.length} error(s) found`, file: errors[0].file, line: errors[0].line });
+            } else {
+              setParsedErrors([]);
+            }
           } else t.writeln("  \x1b[31mNo file open\x1b[0m");
           break;
         }
@@ -814,6 +652,12 @@ function CodeStudioShellInner() {
         onSelectFile={(id) => setActiveFileId(id)}
         onCloseFile={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }}
       />
+      {activeFile && (
+        <BreadcrumbComponent
+          path={["project", "src", activeFile.name]}
+          isModified={activeFile.isDirty}
+        />
+      )}
       <div className="flex-1 min-h-0">
         {activeFile ? (
           <MonacoEditor
@@ -832,8 +676,21 @@ function CodeStudioShellInner() {
             }}
             onMount={(editor, monaco) => {
               editorRef.current = editor;
+              setupMonaco(monaco, editor, { theme: "dark" });
+              registerEditorFeatures(monaco, editor);
               registerGhostTextProvider(monaco);
-              editor.onDidDispose(() => cancelGhostText());
+              crossFileDisposableRef.current?.dispose();
+              crossFileDisposableRef.current = registerCrossFileProviders(monaco, {
+                onOpenFile: (filePath) => {
+                  const node = findFileNodeByName(files, filePath);
+                  if (node) handleFileSelect(node);
+                },
+              });
+              editor.onDidDispose(() => {
+                cancelGhostText();
+                crossFileDisposableRef.current?.dispose();
+                crossFileDisposableRef.current = null;
+              });
               editor.onDidChangeCursorPosition((e) => {
                 setCursorPos({ line: e.position.lineNumber, col: e.position.column });
               });
@@ -857,7 +714,15 @@ function CodeStudioShellInner() {
     </div>
   );
 
-  const chatPanel = <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />;
+  const chatPanel = (
+    <PI.ChatPanelComponent
+      activeFileContent={activeFile?.content}
+      activeFileName={activeFile?.name}
+      activeFileLanguage={activeFile?.language}
+      allFileNames={openFiles.map(f => f.name)}
+      onApplyCode={handleApplyCode}
+    />
+  );
 
   // Ensure terminal mounts on mobile/tablet (xterm needs showTerminal=true for ref)
   useEffect(() => {
@@ -870,7 +735,18 @@ function CodeStudioShellInner() {
     </div>
   );
 
-  const pipelinePanel = <PipelinePanelInline stages={pipelineStages} />;
+  const pipelinePanel = (() => {
+    const pipelineResult = pipelineStages.length > 0 ? {
+      stages: pipelineStages.map((s) => ({
+        stage: s.name, status: s.status, score: s.score ?? 0,
+        findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
+      })),
+      overallScore: pipelineScore ?? 0,
+      overallStatus: ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail",
+      timestamp: Date.now(),
+    } : null;
+    return <PI.PipelinePanelComponent result={pipelineResult} />;
+  })();
 
   const statusBarEl = (
     <PI.StatusBarComponent
@@ -882,17 +758,27 @@ function CodeStudioShellInner() {
     />
   );
 
-  // ── Mobile Layout (<768px) ──
+  // ── Mobile Layout (<768px) — wrapped with TouchGestures for swipe/pinch ──
   if (isMobile) {
     return (
-      <PI.MobileLayoutComponent
-        explorer={explorerPanel}
-        editor={editorPanel}
-        chat={chatPanel}
-        terminal={terminalPanel}
-        pipeline={pipelinePanel}
-        statusBar={statusBarEl}
-      />
+      <TouchGesturesComponent
+        className="h-full w-full"
+        onSwipeLeft={() => setRightPanel(rightPanel ? null : "chat")}
+        onSwipeRight={() => setRightPanel(null)}
+        onPinchZoom={(scale) => {
+          if (scale > 1.1) setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) }));
+          else if (scale < 0.9) setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) }));
+        }}
+      >
+        <PI.MobileLayoutComponent
+          explorer={explorerPanel}
+          editor={editorPanel}
+          chat={chatPanel}
+          terminal={terminalPanel}
+          pipeline={pipelinePanel}
+          statusBar={statusBarEl}
+        />
+      </TouchGesturesComponent>
     );
   }
 
@@ -949,15 +835,12 @@ function CodeStudioShellInner() {
 
         {/* Center -- Editor + Terminal */}
         <div className="flex flex-1 flex-col min-w-0">
-          {/* Breadcrumb */}
+          {/* Breadcrumb — external component */}
           {activeFile && (
-            <div className="flex items-center gap-1 border-b border-white/8 bg-bg-secondary px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
-              <span className="text-accent-amber">project</span>
-              <ChevronRight className="h-2.5 w-2.5" />
-              <span>src</span>
-              <ChevronRight className="h-2.5 w-2.5" />
-              <span className={fileIconColor(activeFile.name)}>{activeFile.name}</span>
-            </div>
+            <BreadcrumbComponent
+              path={["project", "src", activeFile.name]}
+              isModified={activeFile.isDirty}
+            />
           )}
 
           {/* Editor Tabs -- external component */}
@@ -1002,89 +885,36 @@ function CodeStudioShellInner() {
             </div>
           </div>
 
-          {/* Settings Panel (overlay) */}
+          {/* Toolbar — external component (replaces inline settings overlay) */}
           {showSettings && (
-            <div className="border-b border-white/8 bg-bg-secondary px-4 py-3">
-              <div className="flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Font Size</label>
-                  <input type="number" min={10} max={24} value={settings.fontSize}
-                    onChange={(e) => setSettings((s) => ({ ...s, fontSize: parseInt(e.target.value) || 14 }))}
-                    className="w-14 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Tab Size</label>
-                  <select value={settings.tabSize}
-                    onChange={(e) => setSettings((s) => ({ ...s, tabSize: parseInt(e.target.value) }))}
-                    className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none">
-                    <option value={2}>2</option><option value={4}>4</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Word Wrap</label>
-                  <button
-                    onClick={() => setSettings((s) => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
-                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.wordWrap === "on" ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
-                    {settings.wordWrap}
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Minimap</label>
-                  <button
-                    onClick={() => setSettings((s) => ({ ...s, minimap: !s.minimap }))}
-                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] ${settings.minimap ? "border-accent-green/30 bg-accent-green/10 text-accent-green" : "border-white/8 text-text-tertiary"}`}>
-                    {settings.minimap ? "ON" : "OFF"}
-                  </button>
-                </div>
-                <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">AI</label>
-                  <select
-                    value={getActiveProvider()}
-                    onChange={(e) => { setActiveProvider(e.target.value as Parameters<typeof setActiveProvider>[0]); toast("Provider changed", "info"); }}
-                    className="rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none">
-                    <option value="gemini">Gemini</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="claude">Claude</option>
-                    <option value="groq">Groq</option>
-                    <option value="mistral">Mistral</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-1">
-                  <label className="font-[family-name:var(--font-mono)] text-[10px] uppercase text-text-tertiary">Key</label>
-                  <input
-                    key={getActiveProvider()}
-                    type="password"
-                    placeholder="API Key"
-                    defaultValue={getApiKey(getActiveProvider()) ? "--------" : ""}
-                    onBlur={(e) => {
-                      const provider = getActiveProvider();
-                      const val = e.target.value.trim();
-                      if (val && val !== "--------") {
-                        setApiKey(provider, val);
-                        toast("API key saved", "success");
-                      }
-                    }}
-                    className="w-32 rounded border border-white/8 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none focus:border-accent-purple/30"
-                  />
-                  {getApiKey(getActiveProvider()) && (
-                    <span className="h-2 w-2 rounded-full bg-accent-green" title="API key set" />
-                  )}
-                </div>
-                <div className="flex items-center gap-1 border-l border-white/8 pl-4 ml-2">
-                  <button
-                    onClick={() => setShowMultiKey(true)}
-                    className={`rounded border px-2 py-1 font-[family-name:var(--font-mono)] text-[10px] transition-colors ${
-                      isMultiKeyActive()
-                        ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
-                        : "border-white/8 text-text-tertiary hover:text-text-secondary"
-                    }`}
-                    title="Multi-Key Manager (7 slots)"
-                  >
-                    {isMultiKeyActive() ? "Multi-Key Active" : "Multi-Key"}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ToolbarComponent
+              onToggleChat={() => setRightPanel(rightPanel === "chat" ? null : "chat")}
+              onToggleTerminal={() => setShowTerminal((v) => !v)}
+              onTogglePipeline={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")}
+              onToggleAgent={() => setRightPanel(rightPanel === "agents" ? null : "agents")}
+              onToggleSidebar={() => {}}
+              onToggleSearch={() => setRightPanel(rightPanel === "search" ? null : "search")}
+              onNewFile={() => setShowNewFile(true)}
+              onOpenSettings={() => { setShowSettings(false); toast("Settings saved", "success"); }}
+              onOpenPalette={() => setShowCommandPalette(true)}
+              onToggleProblems={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
+              onRunBugFinder={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
+              onDeploy={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")}
+              onToggleSplit={() => {
+                if (splitFileId) setSplitFileId(null);
+                else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
+              }}
+              onUndo={fsCanUndo ? fsUndo : undefined}
+              onRedo={fsCanRedo ? fsRedo : undefined}
+              onZoomIn={() => setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) }))}
+              onZoomOut={() => setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) }))}
+              onZoomReset={() => setSettings((s) => ({ ...s, fontSize: 14 }))}
+              fontSize={settings.fontSize}
+              showChat={rightPanel === "chat"}
+              showAgent={rightPanel === "agents"}
+              showTerminal={showTerminal}
+              showPipeline={rightPanel === "pipeline"}
+            />
           )}
           {/* Multi-Key Panel Modal */}
           {showMultiKey && (
@@ -1131,8 +961,21 @@ function CodeStudioShellInner() {
                     }}
                     onMount={(editor, monaco) => {
                       editorRef.current = editor;
+                      setupMonaco(monaco, editor, { theme: "dark" });
+                      registerEditorFeatures(monaco, editor);
                       registerGhostTextProvider(monaco);
-                      editor.onDidDispose(() => cancelGhostText());
+                      crossFileDisposableRef.current?.dispose();
+                      crossFileDisposableRef.current = registerCrossFileProviders(monaco, {
+                        onOpenFile: (filePath) => {
+                          const node = findFileNodeByName(files, filePath);
+                          if (node) handleFileSelect(node);
+                        },
+                      });
+                      editor.onDidDispose(() => {
+                        cancelGhostText();
+                        crossFileDisposableRef.current?.dispose();
+                        crossFileDisposableRef.current = null;
+                      });
                       editor.onDidChangeCursorPosition((e) => {
                         setCursorPos({ line: e.position.lineNumber, col: e.position.column });
                       });
@@ -1197,8 +1040,27 @@ function CodeStudioShellInner() {
             {/* Right Panel -- registry-driven render via panelPropsMap */}
             {rightPanel && (() => {
               const panelPropsMap: Record<string, () => React.ReactNode> = {
-                "chat": () => <AIChatPanel activeFile={activeFile} onApplyCode={handleApplyCode} />,
-                "pipeline": () => <PipelinePanelInline stages={pipelineStages} />,
+                "chat": () => (
+                  <PI.ChatPanelComponent
+                    activeFileContent={activeFile?.content}
+                    activeFileName={activeFile?.name}
+                    activeFileLanguage={activeFile?.language}
+                    allFileNames={openFiles.map(f => f.name)}
+                    onApplyCode={handleApplyCode}
+                  />
+                ),
+                "pipeline": () => {
+                  const pipelineResult = pipelineStages.length > 0 ? {
+                    stages: pipelineStages.map((s) => ({
+                      stage: s.name, status: s.status, score: s.score ?? 0,
+                      findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
+                    })),
+                    overallScore: pipelineScore ?? 0,
+                    overallStatus: ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail",
+                    timestamp: Date.now(),
+                  } : null;
+                  return <PI.PipelinePanelComponent result={pipelineResult} />;
+                },
                 "git": () => <PI.GitPanelComponent files={files} openFiles={openFiles} onRestore={(fid: string, content: string) => {
                   setOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
                   fsUpdateContent(fid, content);
@@ -1410,60 +1272,7 @@ function CodeStudioShellInner() {
 
 // IDENTITY_SEAL: PART-6 | role=MainShell | inputs=none | outputs=IDE-layout
 
-// ============================================================
-// PART 7 — Inline Pipeline Panel (kept: different data model from external)
-// ============================================================
-
-// TODO: Migrate to external PipelinePanel when TeamResult data flow is integrated
-function PipelinePanelInline({ stages }: { stages: PipelineStage[] }) {
-  const icons: Record<string, typeof Activity> = {
-    pass: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Activity className={`${className} text-accent-green`} {...p} />,
-    warn: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <AlertTriangle className={`${className} text-accent-amber`} {...p} />,
-    fail: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <X className={`${className} text-accent-red`} {...p} />,
-    running: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Loader2 className={`${className} text-accent-blue animate-spin`} {...p} />,
-    pending: ({ className, ...p }: React.ComponentProps<typeof Activity>) => <Activity className={`${className} text-text-tertiary`} {...p} />,
-  } as unknown as Record<string, typeof Activity>;
-  const colors: Record<string, string> = { pass: "text-accent-green", warn: "text-accent-amber", fail: "text-accent-red", running: "text-accent-blue animate-spin", pending: "text-text-tertiary" };
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Activity className="h-4 w-4 text-accent-blue" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Pipeline</span>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {stages.length === 0 && (
-          <div className="text-center py-8 text-text-tertiary text-[11px] font-[family-name:var(--font-mono)]">
-            8-Team pipeline runs on code changes.
-            <br />Edit a file to trigger analysis.
-          </div>
-        )}
-        {stages.map((s) => {
-          const StatusIcon = s.status === "pass" ? Activity :
-            s.status === "warn" ? AlertTriangle :
-            s.status === "fail" ? X :
-            s.status === "running" ? Loader2 : Activity;
-          return (
-            <div key={s.name} className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-              <StatusIcon className={`h-4 w-4 shrink-0 ${colors[s.status]}`} />
-              <div className="flex-1 min-w-0">
-                <div className="font-[family-name:var(--font-mono)] text-[11px] font-semibold text-text-primary">{s.name}</div>
-                {s.message && <div className="text-[10px] text-text-tertiary truncate">{s.message}</div>}
-              </div>
-              {s.score !== undefined && (
-                <span className={`font-[family-name:var(--font-mono)] text-[11px] font-bold ${s.score >= 80 ? "text-accent-green" : s.score >= 60 ? "text-accent-amber" : "text-accent-red"}`}>
-                  {s.score}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-7 | role=PipelinePanelInline | inputs=stages | outputs=UI
+// PART 7 — removed (PipelinePanelInline migrated to external PipelinePanel component)
 
 // ============================================================
 // PART 8 — Export Wrapper (ToastProvider)
