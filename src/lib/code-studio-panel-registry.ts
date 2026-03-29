@@ -105,6 +105,8 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   // ── settings (설정) ───────────────────────────────────────
   { id: "settings-panel", label: "Settings Panel",       labelKo: "설정 패널",         icon: "Settings",        group: "settings",     category: "View",  color: "text-accent-amber",   status: "stable" },
   { id: "api-config",     label: "API Configuration",    labelKo: "API 설정",          icon: "Key",             group: "settings",     category: "View",  color: "text-accent-red",     status: "stable" },
+  // ── audit (감사) ─────────────────────────────────────────
+  { id: "audit",           label: "Project Audit",        labelKo: "프로젝트 감사",     icon: "ShieldCheck",     group: "verification", category: "View",  color: "text-accent-purple",  status: "stable" },
 ] as const;
 
 // IDENTITY_SEAL: PART-2 | role=Registry | inputs=PanelDef | outputs=PANEL_REGISTRY
