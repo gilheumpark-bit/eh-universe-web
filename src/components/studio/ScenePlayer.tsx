@@ -335,7 +335,7 @@ export default function ScenePlayer({
   });
 
   const ttsRef = useRef<TTSController | null>(null);
-  const autoPlayRef = useRef<ReturnType<typeof setTimeout>>();
+  const autoPlayRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const audioRef = useRef<AudioEngine | null>(null);
@@ -387,14 +387,6 @@ export default function ScenePlayer({
 
   // P0#2 + P1#10 fix: currentBeat + goNext 의존성 추가
   // 자동 재생
-  useEffect(() => {
-    if (!state.isPlaying || state.isPaused || !currentBeat) return;
-
-    const duration = (currentBeat.text.length / 8) * 1000 / state.speed + 1500;
-    autoPlayRef.current = setTimeout(() => goNext(), duration);
-    return () => clearTimeout(autoPlayRef.current);
-  }, [state.isPlaying, state.isPaused, state.sceneIndex, state.beatIndex, state.speed, currentBeat, goNext]);
-
   const goNext = useCallback(() => {
     ttsRef.current?.stop();
     setState((prev) => {
@@ -409,6 +401,14 @@ export default function ScenePlayer({
       return { ...prev, isPlaying: false }; // 끝
     });
   }, [scenes]);
+
+  useEffect(() => {
+    if (!state.isPlaying || state.isPaused || !currentBeat) return;
+
+    const duration = (currentBeat.text.length / 8) * 1000 / state.speed + 1500;
+    autoPlayRef.current = setTimeout(() => goNext(), duration);
+    return () => clearTimeout(autoPlayRef.current);
+  }, [state.isPlaying, state.isPaused, state.sceneIndex, state.beatIndex, state.speed, currentBeat, goNext]);
 
   const goPrev = useCallback(() => {
     ttsRef.current?.stop();

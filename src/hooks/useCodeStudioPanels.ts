@@ -427,6 +427,7 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
 
     try {
       wsAbortRef.current = new AbortController();
+      let accumulated = '';
       const response = await streamChat({
         systemInstruction: systemPrompt,
         messages: [
@@ -436,6 +437,7 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
         temperature: 0.7,
         maxTokens: 2048,
         signal: wsAbortRef.current.signal,
+        onChunk: (text: string) => { accumulated += text; },
       });
 
       const assistantMsg: WorkspaceMessage = { id: `msg-${Date.now()}-resp`, role: "assistant", content: response, timestamp: Date.now() };

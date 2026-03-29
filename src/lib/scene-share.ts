@@ -69,14 +69,15 @@ function generateToken(): string {
 // ============================================================
 
 // P0#5 fix: Firebase 인스턴스 캐싱 (중복 초기화 방지)
-let _dbCache: ReturnType<typeof import('@/lib/firebase').getFirestoreDb> | null = null;
-let _dbPromise: Promise<typeof _dbCache> | null = null;
+import type { Firestore } from 'firebase/firestore';
+let _dbCache: Firestore | null = null;
+let _dbPromise: Promise<Firestore | null> | null = null;
 
 async function getFirestore() {
   if (_dbCache) return _dbCache;
   if (_dbPromise) return _dbPromise;
-  _dbPromise = import('@/lib/firebase').then(({ getFirestoreDb }) => {
-    _dbCache = getFirestoreDb();
+  _dbPromise = import('@/lib/firebase').then(({ getDb }) => {
+    _dbCache = getDb();
     return _dbCache;
   });
   return _dbPromise;

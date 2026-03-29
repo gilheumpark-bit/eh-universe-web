@@ -240,7 +240,7 @@ function estimateEmotion(text: string): Emotion {
       const matches = text.match(new RegExp(p.source, 'gi'));
       if (matches) count += matches.length;
     }
-    (result as Record<string, number>)[key] = Math.min(1, count / (len / 200));
+    (result as unknown as Record<string, number>)[key] = Math.min(1, count / (len / 200));
   }
 
   return result;
