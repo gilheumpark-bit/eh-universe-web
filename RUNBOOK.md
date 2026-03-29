@@ -146,3 +146,62 @@ BYOK 사용자는 자체 프로바이더 한도 적용.
 | Vercel Logs | Vercel 대시보드 → Logs | API 요청 로그 |
 | Firebase Console | console.firebase.google.com | Firestore 사용량 |
 | GitHub Actions | repo → Actions 탭 | CI 상태 |
+
+---
+
+## 9. Feature Flags
+
+Feature flag 시스템은 `src/lib/feature-flags.ts`에서 관리된다. 외부 서비스 없이 코드 내 정의 + 환경변수 + localStorage 오버라이드 3단계로 동작한다.
+
+### 9-1. 플래그 목록
+
+| 플래그 | 용도 | 기본값 | 프로덕션 토글 안전 여부 |
+|--------|------|--------|------------------------|
+| `IMAGE_GENERATION` | DALL-E / Stability AI 이미지 생성 | `true` | 안전 -- UI 숨김만 발생 |
+| `GOOGLE_DRIVE_BACKUP` | Google Drive 백업 기능 | `true` | 안전 -- 백업 버튼 숨김 |
+| `NETWORK_COMMUNITY` | EH Network 커뮤니티 탭 | `true` | 안전 -- 탭 숨김 |
+| `OFFLINE_CACHE` | 오프라인 원고 캐싱 (Service Worker) | `false` | 주의 -- 활성화 시 SW 등록, 비활성화 시 캐시 잔존 가능 |
+| `CODE_STUDIO` | 코드 스튜디오 (CSL IDE 통합) | `true` | 안전 -- 진입점 숨김만 발생 |
+| `EPISODE_COMPARE` | 에피소드 간 비교 분석 | `true` | 안전 -- UI 숨김만 발생 |
+
+### 9-2. 토글 방법
+
+**방법 1: 환경변수 (빌드 타임, 권장)**
+
+Vercel 대시보드 → Settings → Environment Variables에서 설정:
+
+```
+NEXT_PUBLIC_FF_CODE_STUDIO=false
+NEXT_PUBLIC_FF_OFFLINE_CACHE=true
+```
+
+변경 후 재배포 필요 (`git push` 또는 Vercel Redeploy).
+
+**방법 2: localStorage 오버라이드 (런타임, 디버깅/테스트용)**
+
+브라우저 콘솔에서:
+
+```javascript
+// 특정 플래그 활성화
+localStorage.setItem('ff_CODE_STUDIO', 'true');
+
+// 특정 플래그 비활성화
+localStorage.setItem('ff_OFFLINE_CACHE', 'false');
+
+// 오버라이드 제거 (기본값으로 복귀)
+localStorage.removeItem('ff_CODE_STUDIO');
+```
+
+페이지 새로고침 후 적용.
+
+### 9-3. 우선순위
+
+1. **localStorage** (클라이언트 전용, 최우선)
+2. **환경변수** (`NEXT_PUBLIC_FF_*`, 빌드 타임)
+3. **코드 기본값** (`feature-flags.ts` 내 `FLAGS` 객체)
+
+### 9-4. 프로덕션 토글 주의사항
+
+- `OFFLINE_CACHE`는 Service Worker를 등록하므로, 활성화 후 비활성화해도 이미 설치된 SW가 남을 수 있다. 완전 제거가 필요하면 SW unregister 로직을 별도로 배포해야 한다.
+- 나머지 5개 플래그는 UI 표시 여부만 제어하므로 프로덕션에서 안전하게 토글 가능하다.
+- localStorage 오버라이드는 개별 브라우저에만 적용되므로 프로덕션 전체 제어에는 환경변수를 사용한다.

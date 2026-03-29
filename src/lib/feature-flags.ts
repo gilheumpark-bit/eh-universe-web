@@ -26,7 +26,7 @@ const FLAGS: FeatureFlags = {
   GOOGLE_DRIVE_BACKUP: true,
   NETWORK_COMMUNITY: true,
   OFFLINE_CACHE: false,
-  CODE_STUDIO: false,
+  CODE_STUDIO: true,
   EPISODE_COMPARE: true,
 };
 
