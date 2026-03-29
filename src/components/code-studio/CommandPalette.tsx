@@ -249,7 +249,7 @@ export default function CommandPalette({
           className="max-h-[340px] overflow-y-auto overscroll-contain py-1"
           role="listbox"
         >
-          {flatList.length === 0 ? (
+          {grouped.size === 0 ? (
             <div className="px-4 py-6 text-center font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary">
               No matching commands
             </div>
