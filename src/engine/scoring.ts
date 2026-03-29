@@ -176,7 +176,7 @@ export function generateEngineReport(
   const metrics = analyzeMetrics(text, config, sentences, sentenceCount);
   const eosScore = calculateEOSScore(text, sentenceCount);
   const aiTone = validateAITone(text);
-  const { fixes, issues } = validateGeneratedContent(text, language);
+  const { fixes, issues } = validateGeneratedContent(text, language, 2);
 
   const byteSize = calculateByteSize(text);
   const targetRange = getTargetByteRange(platform);

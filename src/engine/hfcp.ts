@@ -53,7 +53,7 @@ export function classifyInput(text: string): InputMode {
 // PART 2: OBSERVATION — 사용자 입력 분석
 // ============================================================
 
-const QUESTION_PATTERNS = [/\?/, /왜/, /어떻게/, /무엇/, /뭐야/, /why/i, /how/i, /what/i];
+const QUESTION_PATTERNS: RegExp[] = [/\?/, /왜/, /어떻게/, /무엇/, /뭐야/, /why/i, /how/i, /what/i];
 const HUMOR_MARKERS = ['ㅋㅋ', 'ㅎㅎ', 'lol', 'haha', '😂', '😅'];
 const CONNECTIVES = ['그래서', '하지만', '그리고', '또한', 'because', 'however', 'and'];
 const OBJECTION_MARKERS = ['아니', '근데', '그건 아닌데', 'but', 'however', 'i disagree'];
@@ -62,7 +62,7 @@ export function buildTurnSignal(text: string): TurnSignal {
   const lower = text.toLowerCase();
   return {
     length: text.length,
-    hasQuestion: QUESTION_PATTERNS.some(p => p.test ? p.test(lower) : lower.includes(p.toString())),
+    hasQuestion: QUESTION_PATTERNS.some(p => p.test(lower)),
     humorLevel: Math.min(1, HUMOR_MARKERS.filter(m => lower.includes(m)).length * 0.3),
     connectiveDensity: Math.min(1, CONNECTIVES.filter(c => lower.includes(c)).length / Math.max(1, text.length / 100)),
     objectionMarker: OBJECTION_MARKERS.some(p => lower.includes(p)),

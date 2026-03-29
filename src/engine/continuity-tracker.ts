@@ -68,11 +68,15 @@ export function extractNamesFromText(text: string, knownNames: Set<string>): Set
 
   let match: RegExpExecArray | null = null;
   KOREAN_NAME_RE.lastIndex = 0;
-  while ((match = KOREAN_NAME_RE.exec(text)) !== null) {
-    const candidate = match[1];
-    if (candidate && candidate.length >= 2 && candidate.length <= 4) {
-      found.add(candidate);
+  try {
+    while ((match = KOREAN_NAME_RE.exec(text)) !== null) {
+      const candidate = match[1];
+      if (candidate && candidate.length >= 2 && candidate.length <= 4) {
+        found.add(candidate);
+      }
     }
+  } finally {
+    KOREAN_NAME_RE.lastIndex = 0;
   }
 
   return found;

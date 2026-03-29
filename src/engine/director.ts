@@ -170,6 +170,10 @@ function checkEndingMono(text: string): { findings: DirectorFinding[]; ratio: nu
   const sentences = text.split(/[.!?]\s/).filter(s => s.trim().length > 5);
   if (sentences.length === 0) return { findings, ratio: 0 };
 
+  // Korean-only check: skip for non-Korean dominant text
+  const koreanCharCount = (text.match(/[\uAC00-\uD7AF]/g) || []).length;
+  if (koreanCharCount < text.length * 0.3) return { findings, ratio: 0 };
+
   let monoCount = 0;
   for (const s of sentences) {
     const trimmed = s.trim();
@@ -340,11 +344,7 @@ function checkPlatformRules(text: string, publishPlatform?: PublishPlatform): Di
 }
 
 // ============================================================
-// PART 4 — Main Analyzer
-// ============================================================
-
-// ============================================================
-// PART 5 — NOA-PRISM v1.1 Shrinkage Check
+// PART 4 — NOA-PRISM v1.1 Shrinkage Check
 // ============================================================
 
 export function checkPrismShrinkage(
@@ -364,7 +364,7 @@ export function checkPrismShrinkage(
 }
 
 // ============================================================
-// PART 5b — PRISM-MODE Violation Check
+// PART 5 — PRISM-MODE Violation Check
 // ============================================================
 
 const PRISM_EXPLICIT_KEYWORDS = [
@@ -391,7 +391,7 @@ export function checkPrismModeViolation(
 
   const lower = text.toLowerCase();
   for (const keyword of PRISM_EXPLICIT_KEYWORDS) {
-    if (lower.includes(keyword.toLowerCase())) {
+    if (lower.includes(keyword)) {
       return {
         kind: 'PRISM_MODE_VIOLATION',
         severity: 5,
@@ -403,7 +403,7 @@ export function checkPrismModeViolation(
 }
 
 // ============================================================
-// PART 6 — Main Analyzer (renumbered from PART 4)
+// PART 6 — Main Analyzer
 // ============================================================
 
 export function analyzeManuscript(text: string, publishPlatform?: PublishPlatform): DirectorReport {
@@ -470,18 +470,19 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
 }
 
 export function gradeFromScore(score: number): string {
-  if (score >= 95) return 'S+';
-  if (score >= 90) return 'S';
-  if (score >= 85) return 'A+';
-  if (score >= 80) return 'A';
-  if (score >= 75) return 'B+';
-  if (score >= 70) return 'B';
-  if (score >= 60) return 'C+';
+  if (score >= 95) return 'S++';
+  if (score >= 90) return 'S+';
+  if (score >= 85) return 'S';
+  if (score >= 80) return 'A+';
+  if (score >= 75) return 'A';
+  if (score >= 70) return 'B+';
+  if (score >= 65) return 'B';
+  if (score >= 55) return 'C+';
   return 'C';
 }
 
 // ============================================================
-// PART 6a — Quality Tag (레벨별 차등 태그)
+// PART 7 — Quality Tag (레벨별 차등 태그)
 // ============================================================
 
 export interface QualityTag {
@@ -528,10 +529,10 @@ export function calculateQualityTag(
   return { tag: '🟢', label: 'CLEAR', visibleFindings: findings.filter(f => f.severity >= 3) };
 }
 
-// IDENTITY_SEAL: PART-6a | role=레벨별 품질 태그 | inputs=DirectorReport,NarrativeIntensity | outputs=QualityTag
+// IDENTITY_SEAL: PART-7 | role=레벨별 품질 태그 | inputs=DirectorReport,NarrativeIntensity | outputs=QualityTag
 
 // ============================================================
-// PART 6b — Adaptive Learner
+// PART 8 — Adaptive Learner
 // ============================================================
 
 export interface AdaptiveThresholds {
@@ -551,7 +552,7 @@ export function adjustThreshold(
 }
 
 // ============================================================
-// PART 7 — Session EMA (Exponential Moving Average)
+// PART 9 — Session EMA (Exponential Moving Average)
 // ============================================================
 
 export function calculateSessionEMA(
