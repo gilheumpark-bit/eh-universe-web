@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
+import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import "@/lib/env"; // validate environment variables at startup
 import "./globals.css";
@@ -71,6 +72,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AuthProvider><LangProvider>{children}</LangProvider></AuthProvider>
         <ErrorReporterInit />
+        <ApiKeyHydrator />
         <WebVitalsReporter />
         <Analytics />
       </body>

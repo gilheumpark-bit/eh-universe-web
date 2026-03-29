@@ -11,6 +11,15 @@ import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS } from '@
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+// ── Input validation helper (#13) ──
+function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
+  if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: 'provider required' };
+  if (!body?.messages || !Array.isArray(body.messages) || body.messages.length === 0) return { valid: false, error: 'messages required' };
+  if (body.messages.length > 200) return { valid: false, error: 'max 200 messages' };
+  if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) return { valid: false, error: 'temperature 0-2' };
+  return { valid: true, data: body };
+}
+
 // ============================================================
 // PART 1: ENV KEY FALLBACKS & CONSTANTS
 // ============================================================
@@ -159,6 +168,7 @@ async function streamGemini(
 export async function POST(req: NextRequest) {
   const timer = createRequestTimer();
   const ip = getClientIp(req.headers);
+  const requestId = crypto.randomUUID();
   try {
     // CSRF: Origin 헤더 검증 — BYOK 포함 모든 요청에 적용
     const origin = req.headers.get('origin');
@@ -195,25 +205,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = body as {
-      provider?: string; model?: string; systemInstruction?: string;
-      messages?: { role: string; content: string }[];
+    // Structured input validation (#13)
+    const validation = validateChatRequest(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error, requestId }, { status: 400 });
+    }
+
+    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = validation.data as {
+      provider: string; model?: string; systemInstruction?: string;
+      messages: { role: string; content: string }[];
       temperature?: number; apiKey?: string; maxTokens?: number;
       prismMode?: string;
     };
 
-    // Input validation
+    // Additional field-level validation (provider allowlist, model format)
     if (!isServerProviderId(provider)) {
-      return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 });
     }
     if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
-      return NextResponse.json({ error: 'Invalid model' }, { status: 400 });
-    }
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
-    }
-    if (typeof temperature !== 'number' || temperature < 0 || temperature > 2) {
-      return NextResponse.json({ error: 'Invalid temperature' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 });
     }
 
     // ── AUTH GATE: Server-hosted keys require BYOK ──
@@ -282,7 +292,7 @@ export async function POST(req: NextRequest) {
     const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
     recordTokenUsage(ip, inputEstimate);
 
-    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, durationMs: timer.elapsed() });
+    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, requestId, durationMs: timer.elapsed() });
 
     // Wrap stream to track output token usage
     let totalOutputChars = 0;
@@ -307,6 +317,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'X-Request-Id': requestId,
       },
     });
   } catch (error: unknown) {
@@ -317,7 +328,7 @@ export async function POST(req: NextRequest) {
       .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
       .slice(0, 200);
     const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : /Request too large/i.test(raw) ? 413 : 500;
-    apiLog({ level: 'error', event: 'chat_error', route: '/api/chat', ip, status, error: safeMsg, durationMs: timer.elapsed() });
-    return NextResponse.json({ error: safeMsg }, { status });
+    apiLog({ level: 'error', event: 'chat_error', route: '/api/chat', ip, status, error: safeMsg, requestId, durationMs: timer.elapsed() });
+    return NextResponse.json({ error: safeMsg, requestId }, { status, headers: { 'X-Request-Id': requestId } });
   }
 }

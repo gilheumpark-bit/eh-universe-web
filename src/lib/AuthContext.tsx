@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 
 interface AuthContextType {
@@ -15,15 +15,16 @@ interface AuthContextType {
   refreshAccessToken: () => Promise<string | null>;
 }
 
+// #22: Default values throw to surface missing AuthProvider early
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
-  signInWithGoogle: async () => {},
-  signOut: async () => {},
+  signInWithGoogle: async () => { throw new Error('AuthProvider not mounted'); },
+  signOut: async () => { throw new Error('AuthProvider not mounted'); },
   isConfigured: false,
   error: null,
   accessToken: null,
-  refreshAccessToken: async () => null,
+  refreshAccessToken: async () => { throw new Error('AuthProvider not mounted'); },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -59,6 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       provider.addScope('https://www.googleapis.com/auth/drive.file');
+      // #25: Mobile browsers often block popups — use redirect flow instead
+      const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return; // Redirect will reload the page; onAuthStateChanged handles the rest
+      }
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       setAccessToken(credential?.accessToken ?? null);

@@ -1,4 +1,4 @@
-import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey } from '../ai-providers';
+import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
 
 describe('PROVIDERS', () => {
   it('has 7 providers (cloud + local)', () => {
@@ -86,5 +86,29 @@ describe('API key obfuscation', () => {
   it('handles unicode in key values', () => {
     setApiKey('groq', 'gsk_테스트키');
     expect(getApiKey('groq')).toBe('gsk_테스트키');
+  });
+});
+
+describe('v4 key hydration', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('getApiKeyAsync returns value for v3 format (set via setApiKey)', async () => {
+    setApiKey('gemini', 'AIzaSyAsyncTest456');
+    const result = await getApiKeyAsync('gemini');
+    expect(result).toBe('AIzaSyAsyncTest456');
+  });
+
+  it('getApiKeyAsync returns empty string for missing key', async () => {
+    const result = await getApiKeyAsync('openai');
+    expect(result).toBe('');
+  });
+
+  it('getApiKeyAsync result matches sync getApiKey for v3 keys', async () => {
+    setApiKey('claude', 'sk-ant-test-789');
+    const syncResult = getApiKey('claude');
+    const asyncResult = await getApiKeyAsync('claude');
+    expect(asyncResult).toBe(syncResult);
   });
 });

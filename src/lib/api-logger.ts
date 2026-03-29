@@ -10,6 +10,7 @@ interface LogEntry {
   ip?: string;
   provider?: string;
   model?: string;
+  requestId?: string;
   durationMs?: number;
   status?: number;
   error?: string;

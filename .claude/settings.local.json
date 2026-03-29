@@ -200,7 +200,9 @@
       "Bash(ls \"/c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/engine/translation\"*)",
       "Bash(ls .env* .eslintrc* .prettierrc* .editorconfig .npmrc)",
       "Bash(node -e \"const r = require\\(''./src/lib/code-studio-panel-registry''\\); console.log\\(''Panel count:'', r.PANEL_REGISTRY.length\\); console.log\\(''Groups:'', [...new Set\\(r.PANEL_REGISTRY.map\\(p => p.group\\)\\)]\\)\")",
-      "Bash(grep -n \"runStressReport\\\\|runVerificationLoop\\\\|IP.*scan\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/lib/code-studio-*.ts)"
+      "Bash(grep -n \"runStressReport\\\\|runVerificationLoop\\\\|IP.*scan\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/lib/code-studio-*.ts)",
+      "Bash(npm list:*)",
+      "Bash(node -e \"Object.defineProperty\\(process.env, ''NODE_ENV'', { value: ''production'', writable: true }\\); console.log\\(process.env.NODE_ENV\\);\")"
     ]
   }
 }

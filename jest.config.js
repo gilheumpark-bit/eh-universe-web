@@ -22,6 +22,10 @@ const config = {
       lines: 60,
       statements: 60,
     },
+    './src/lib/rate-limit.ts': {
+      lines: 90,
+      functions: 90,
+    },
   },
 };
 

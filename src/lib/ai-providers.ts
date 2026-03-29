@@ -191,7 +191,15 @@ const _IV_LENGTH = 12; // AES-GCM recommended IV size
 
 // ── Web Crypto AES-GCM helpers (v4) ──
 
-let _cachedKey: CryptoKey | null = null;
+// #20: Encapsulate CryptoKey cache in closure to prevent module-global exposure
+const keyStore = (() => {
+  let _key: CryptoKey | null = null;
+  return {
+    get: () => _key,
+    set: (k: CryptoKey) => { _key = k; },
+    clear: () => { _key = null; },
+  };
+})();
 
 function _isSubtleCryptoAvailable(): boolean {
   return (
@@ -202,7 +210,8 @@ function _isSubtleCryptoAvailable(): boolean {
 }
 
 async function _deriveAesKey(): Promise<CryptoKey> {
-  if (_cachedKey) return _cachedKey;
+  const cached = keyStore.get();
+  if (cached) return cached;
   const encoder = new TextEncoder();
   const salt = encoder.encode(
     (typeof window !== 'undefined' ? window.location.origin : 'noa-server') +
@@ -215,14 +224,15 @@ async function _deriveAesKey(): Promise<CryptoKey> {
     false,
     ['deriveKey'],
   );
-  _cachedKey = await crypto.subtle.deriveKey(
+  const derived = await crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
     ['encrypt', 'decrypt'],
   );
-  return _cachedKey;
+  keyStore.set(derived);
+  return derived;
 }
 
 async function _encryptAesGcm(plain: string): Promise<string> {
@@ -494,6 +504,15 @@ export function getKeyAge(providerId: ProviderId): number | null {
 export function isKeyExpiringSoon(providerId: ProviderId, thresholdDays = 90): boolean {
   const age = getKeyAge(providerId);
   return age !== null && age > thresholdDays;
+}
+
+/**
+ * #19: Pre-load v4 AES-GCM keys into memory cache on app start.
+ * Call once from a client component on mount to ensure getApiKey() (sync) works for v4 keys.
+ */
+export async function hydrateAllApiKeys(): Promise<void> {
+  const providers = Object.keys(PROVIDERS) as ProviderId[];
+  await Promise.allSettled(providers.map(id => getApiKeyAsync(id)));
 }
 
 function getStoredModelForProvider(providerId: ProviderId): string {
