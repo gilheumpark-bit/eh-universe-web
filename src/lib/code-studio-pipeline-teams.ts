@@ -365,6 +365,68 @@ function checkNullSafety(code: string): Finding[] {
   return findings;
 }
 
+// --- gstack #15: 런타임 호환성 (SSR/CSR API 혼용 감지) ---
+
+const NODE_ONLY_APIS = [
+  { pattern: /\brequire\s*\(\s*['"]fs['"]/, api: 'fs', rule: 'NODE_ONLY_FS' },
+  { pattern: /\brequire\s*\(\s*['"]child_process['"]/, api: 'child_process', rule: 'NODE_ONLY_CP' },
+  { pattern: /\brequire\s*\(\s*['"]path['"]/, api: 'path', rule: 'NODE_ONLY_PATH' },
+  { pattern: /\bimport\b.*\bfrom\s+['"]fs['"]/, api: 'fs', rule: 'NODE_ONLY_FS' },
+  { pattern: /\bimport\b.*\bfrom\s+['"]child_process['"]/, api: 'child_process', rule: 'NODE_ONLY_CP' },
+  { pattern: /\bprocess\.env\b/, api: 'process.env', rule: 'NODE_PROCESS_ENV' },
+];
+
+const BROWSER_ONLY_APIS = [
+  { pattern: /\bdocument\.(getElementById|querySelector|createElement)\b/, api: 'document DOM', rule: 'BROWSER_ONLY_DOM' },
+  { pattern: /\bwindow\.(location|history|navigator|innerWidth|innerHeight)\b/, api: 'window.*', rule: 'BROWSER_ONLY_WINDOW' },
+  { pattern: /\blocalStorage\b|\bsessionStorage\b/, api: 'localStorage/sessionStorage', rule: 'BROWSER_ONLY_STORAGE' },
+  { pattern: /\balert\s*\(|\bconfirm\s*\(|\bprompt\s*\(/, api: 'alert/confirm/prompt', rule: 'BROWSER_ONLY_DIALOG' },
+];
+
+function checkRuntimeCompat(code: string, lines: string[]): Finding[] {
+  const findings: Finding[] = [];
+  const hasUseClient = /^['"]use client['"]/.test(code.trim());
+  const hasUseServer = /^['"]use server['"]/.test(code.trim());
+  const isComponent = /\bexport\s+(?:default\s+)?function\s+[A-Z]/.test(code) || /\bexport\s+default\s+[A-Z]/.test(code);
+
+  // 서버 전용 API가 클라이언트 코드에서 사용됨
+  if (hasUseClient || (!hasUseServer && isComponent)) {
+    for (let i = 0; i < lines.length; i++) {
+      for (const { pattern, api, rule } of NODE_ONLY_APIS) {
+        if (pattern.test(lines[i]) && rule !== 'NODE_PROCESS_ENV') {
+          findings.push({ severity: 'major', message: `클라이언트 코드에서 Node.js API '${api}' 사용`, line: i + 1, rule });
+        }
+      }
+    }
+  }
+
+  // 브라우저 전용 API가 서버 코드에서 사용됨
+  if (hasUseServer) {
+    for (let i = 0; i < lines.length; i++) {
+      for (const { pattern, api, rule } of BROWSER_ONLY_APIS) {
+        if (pattern.test(lines[i])) {
+          findings.push({ severity: 'major', message: `서버 코드에서 브라우저 API '${api}' 사용`, line: i + 1, rule });
+        }
+      }
+    }
+  }
+
+  // SSR 안전성: typeof window 가드 없이 직접 접근
+  if (!hasUseClient && isComponent) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/\bwindow\b/.test(lines[i]) && !/typeof\s+window/.test(lines[i])) {
+        const prevLines = lines.slice(Math.max(0, i - 3), i).join('\n');
+        if (!/typeof\s+window/.test(prevLines)) {
+          findings.push({ severity: 'minor', message: 'SSR 환경에서 typeof 가드 없이 window 접근', line: i + 1, rule: 'SSR_WINDOW_GUARD' });
+          break; // 한 번만 보고
+        }
+      }
+    }
+  }
+
+  return findings;
+}
+
 export function runTeam3Validation(code: string, _language: string, _fileName: string): TeamResult {
   const findings: Finding[] = [];
   const lines = code.split('\n');
@@ -382,6 +444,7 @@ export function runTeam3Validation(code: string, _language: string, _fileName: s
   findings.push(...checkUnusedImports(code));
   findings.push(...checkNullSafety(code));
   findings.push(...checkAsyncPatterns(code));
+  findings.push(...checkRuntimeCompat(code, lines));
 
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
@@ -471,6 +534,52 @@ export function runTeam5AssetTrace(code: string, _language: string, _fileName: s
     findings.push({ severity: 'minor', message: `배럴 파일 감지 (${exportOnlyLines.length}개 re-export)`, rule: 'BARREL_FILE' });
   }
 
+  // --- gstack #20: 의존성 건강도 ---
+
+  // 알려진 deprecated 패키지 패턴
+  const DEPRECATED_PACKAGES = [
+    'request', 'request-promise', 'node-uuid', 'nomnom', 'istanbul',
+    'left-pad', 'querystring', 'colors', 'mkdirp',
+    'tslint', 'moment',
+  ];
+  for (const dep of DEPRECATED_PACKAGES) {
+    const depPattern = new RegExp(`from\\s+['"]${dep}['"]`);
+    for (let i = 0; i < lines.length; i++) {
+      if (depPattern.test(lines[i])) {
+        findings.push({ severity: 'minor', message: `deprecated 패키지 '${dep}' 사용`, line: i + 1, rule: 'DEPRECATED_PACKAGE' });
+        break;
+      }
+    }
+  }
+
+  // 와일드카드 버전 범위 (package.json 코드 내 감지)
+  if (_fileName.includes('package.json')) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/["']\s*:\s*["']\*["']/.test(lines[i])) {
+        findings.push({ severity: 'major', message: '와일드카드(*) 버전 — 재현 불가 빌드 위험', line: i + 1, rule: 'WILDCARD_VERSION' });
+      }
+    }
+  }
+
+  // 동일 모듈 다중 경로 import (../foo와 @/foo 혼용)
+  const importPaths = new Map<string, string[]>();
+  for (const line of importLines) {
+    const pathMatch = line.match(/from\s+['"]([^'"]+)['"]/);
+    if (pathMatch) {
+      const fullPath = pathMatch[1];
+      const baseName = fullPath.split('/').pop() ?? fullPath;
+      const existing = importPaths.get(baseName) ?? [];
+      existing.push(fullPath);
+      importPaths.set(baseName, existing);
+    }
+  }
+  for (const [base, paths] of importPaths) {
+    const uniquePaths = [...new Set(paths)];
+    if (uniquePaths.length >= 2 && uniquePaths.some((p) => p.startsWith('.')) && uniquePaths.some((p) => p.startsWith('@'))) {
+      findings.push({ severity: 'minor', message: `모듈 '${base}' 다중 경로 import (상대+절대 혼용)`, rule: 'MIXED_IMPORT_PATHS' });
+    }
+  }
+
   const score = Math.max(0, 100 - findings.filter((f) => f.severity === 'major').length * 15 - findings.filter((f) => f.severity === 'minor').length * 5);
 
   return {
@@ -541,6 +650,65 @@ export function runTeam6Stability(code: string, _language: string, _fileName: st
       const scope = lines.slice(i, Math.min(i + 20, lines.length)).join('\n');
       if (/\bawait\b.*\b(fetch|query|find|get)\b/.test(scope)) {
         findings.push({ severity: 'major', message: 'N+1 쿼리 패턴 의심 — 배치 처리 권장', line: i + 1, rule: 'N_PLUS_1' });
+      }
+    }
+  }
+
+  // --- gstack #14: 응답속도 예측 (Render Performance) ---
+
+  // Inline object/array/function in JSX props → 매 렌더마다 새 참조 생성
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/\w+=\{\s*\{/.test(trimmed) && /<\w/.test(lines[Math.max(0, i - 3)]?.trim() ?? '')) {
+      findings.push({ severity: 'minor', message: 'JSX prop에 인라인 객체 — 불필요 리렌더 유발 가능', line: i + 1, rule: 'INLINE_OBJECT_PROP' });
+    }
+    if (/\w+=\{\s*\(\)\s*=>/.test(trimmed) || /\w+=\{\s*function\s*\(/.test(trimmed)) {
+      findings.push({ severity: 'minor', message: 'JSX prop에 인라인 함수 — useCallback 권장', line: i + 1, rule: 'INLINE_FUNCTION_PROP' });
+    }
+  }
+
+  // useEffect 의존성 과다 (6개 이상)
+  for (let i = 0; i < lines.length; i++) {
+    const effectMatch = lines[i].match(/useEffect\s*\(/);
+    if (effectMatch) {
+      // 다음 10줄 내에서 의존성 배열 탐색
+      const block = lines.slice(i, Math.min(i + 10, lines.length)).join('\n');
+      const depsMatch = block.match(/\],\s*\[([^\]]*)\]\s*\)/);
+      if (depsMatch) {
+        const deps = depsMatch[1].split(',').filter((d) => d.trim()).length;
+        if (deps >= 6) {
+          findings.push({ severity: 'minor', message: `useEffect 의존성 ${deps}개 — 분리 또는 커스텀 훅 권장`, line: i + 1, rule: 'EFFECT_DEPS_OVERLOAD' });
+        }
+      }
+    }
+  }
+
+  // 렌더 블로킹: 컴포넌트 최상위 레벨 heavy 연산
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/^(?:const|let)\s+\w+\s*=\s*\w+\.(?:filter|map|sort|reduce)\s*\(/.test(trimmed)) {
+      // useMemo 없이 매 렌더마다 재계산
+      const prevLines = lines.slice(Math.max(0, i - 3), i).join('\n');
+      if (!/useMemo/.test(prevLines) && !/useCallback/.test(prevLines)) {
+        // 컴포넌트 내부인지 확인 (return <JSX가 아래 존재)
+        const belowBlock = lines.slice(i, Math.min(i + 30, lines.length)).join('\n');
+        if (/return\s*\(?\s*</.test(belowBlock)) {
+          findings.push({ severity: 'minor', message: '컴포넌트 내 배열 변환 — useMemo 미적용 시 렌더마다 재계산', line: i + 1, rule: 'RENDER_BLOCKING_COMPUTE' });
+        }
+      }
+    }
+  }
+
+  // --- gstack #18: 배치 처리 효율 (Sequential Await) ---
+
+  // for/for-of 루프 내 개별 await → Promise.all 전환 가능
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/\bfor\s*\(|for\s+.*\bof\b/.test(trimmed)) {
+      const scope = lines.slice(i + 1, Math.min(i + 15, lines.length)).join('\n');
+      const awaitCount = (scope.match(/\bawait\b/g) || []).length;
+      if (awaitCount >= 2) {
+        findings.push({ severity: 'major', message: '루프 내 직렬 await — Promise.all 또는 Promise.allSettled 권장', line: i + 1, rule: 'SEQUENTIAL_AWAIT' });
       }
     }
   }
@@ -696,6 +864,57 @@ export function runTeam8Governance(code: string, _language: string, _fileName: s
   const hasLegacy = /\bvar\s+\w|module\.exports/.test(code);
   if (hasLegacy) {
     findings.push({ severity: 'minor', message: '레거시 패턴 감지 (var / module.exports)', rule: 'LEGACY_PATTERN' });
+  }
+
+  // --- gstack #12: 컬러/테마 일관성 ---
+
+  let hardcodedColorCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    // 인라인 style에 하드코딩 색상
+    if (/style\s*=\s*\{/.test(trimmed) && /#[0-9a-fA-F]{3,8}\b/.test(trimmed)) {
+      hardcodedColorCount++;
+      if (hardcodedColorCount <= 2) {
+        findings.push({ severity: 'minor', message: '인라인 스타일에 하드코딩 색상 — CSS 변수 권장', line: i + 1, rule: 'HARDCODED_COLOR_INLINE' });
+      }
+    }
+    // className에 색상 하드코딩 (tailwind zinc-500 등은 허용, #hex는 비허용)
+    if (/(?:color|background|border)\s*:\s*['"]?#[0-9a-fA-F]{3,8}/.test(trimmed)) {
+      hardcodedColorCount++;
+      if (hardcodedColorCount <= 2) {
+        findings.push({ severity: 'minor', message: 'CSS 속성에 하드코딩 hex 색상', line: i + 1, rule: 'HARDCODED_COLOR_CSS' });
+      }
+    }
+  }
+  if (hardcodedColorCount > 2) {
+    findings.push({ severity: 'major', message: `하드코딩 색상 ${hardcodedColorCount}건 — 테마 시스템 미적용 우려`, rule: 'HARDCODED_COLOR_BULK' });
+  }
+
+  // --- gstack #19: 로깅 품질 ---
+
+  // 민감정보 로깅 감지
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/console\.\w+\s*\(/.test(trimmed)) {
+      if (/(?:password|token|secret|apiKey|api_key|bearer|credential)/i.test(trimmed)) {
+        findings.push({ severity: 'major', message: '민감정보 포함 가능한 console 출력', line: i + 1, rule: 'LOG_SENSITIVE_DATA' });
+      }
+    }
+  }
+
+  // console.error 없이 console.log만 남발
+  const logCount = (code.match(/console\.log\s*\(/g) ?? []).length;
+  const errorLogCount = (code.match(/console\.(?:error|warn)\s*\(/g) ?? []).length;
+  if (logCount > 5 && errorLogCount === 0) {
+    findings.push({ severity: 'minor', message: `console.log ${logCount}회, error/warn 0회 — 로그 레벨 미분류`, rule: 'LOG_LEVEL_MISSING' });
+  }
+
+  // 에러 객체에서 스택 트레이스 노출
+  for (let i = 0; i < lines.length; i++) {
+    if (/\.stack\b/.test(lines[i]) && /(?:res|response|json|send|render)/.test(lines[i])) {
+      findings.push({ severity: 'major', message: '에러 스택 트레이스가 응답에 노출될 수 있음', line: i + 1, rule: 'STACK_TRACE_EXPOSURE' });
+      break;
+    }
   }
 
   // Trust scoring

@@ -1467,6 +1467,25 @@ function CodeStudioShellInner() {
                   toast(`Action: ${actionId}`, "info");
                 }} onClose={() => setRightPanel(null)} />,
                 "model-switcher": () => <PI.ModelSwitcherComponent />,
+                "audit": () => <PI.AuditPanelComponent
+                  files={files.flatMap(function flatFiles(n: typeof files[number]): { path: string; content: string; language: string }[] {
+                    if (n.type === 'file') return [{ path: n.name, content: n.content ?? '', language: n.language ?? 'plaintext' }];
+                    return (n.children ?? []).flatMap(flatFiles);
+                  })}
+                  onRunAudit={() => {
+                    import('@/lib/code-studio-audit-engine').then(({ runProjectAudit }) => {
+                      const ctx = {
+                        files: files.flatMap(function flatFiles(n: typeof files[number]): { path: string; content: string; language: string }[] {
+                          if (n.type === 'file') return [{ path: n.name, content: n.content ?? '', language: n.language ?? 'plaintext' }];
+                          return (n.children ?? []).flatMap(flatFiles);
+                        }),
+                        language: 'ko',
+                      };
+                      const report = runProjectAudit(ctx);
+                      toast(`Audit: ${report.totalScore}/100 (${report.totalGrade}) — ${report.totalFindings} findings`, report.hardGateFail ? 'error' : 'success');
+                    });
+                  }}
+                />,
               };
               return (
                 <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">

@@ -231,7 +231,13 @@ export const ModelSwitcherComponent = dynamic(
   { ssr: false },
 );
 
-// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=19-dynamic-components
+// ── audit (named) ───────────────────────────────────────────
+export const AuditPanelComponent = dynamic(
+  () => import("@/components/code-studio/AuditPanel").then((m) => ({ default: m.AuditPanel })),
+  { ssr: false },
+);
+
+// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=20-dynamic-components
 
 // ============================================================
 // PART 3 — Shared Utility Imports
