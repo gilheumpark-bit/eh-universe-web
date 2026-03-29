@@ -6,11 +6,19 @@
   "display": "standalone",
   "theme_color": "#7c3aed",
   "background_color": "#0a0a0a",
+  "orientation": "any",
+  "categories": ["productivity", "entertainment", "education"],
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
+    },
+    {
+      "src": "/icon",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon",
