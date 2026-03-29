@@ -143,6 +143,10 @@ export default function StudioPage() {
     return 'guided';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Close sidebar on mobile after mount (SSR-safe: can't use window in useState)
+  useEffect(() => {
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  }, []);
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);

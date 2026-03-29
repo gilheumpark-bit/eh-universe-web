@@ -37,86 +37,6 @@ function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
 }
 
 
-function StudioChoiceScreen({ onBack, onWithApi, onWithout }: { onBack: () => void; onWithApi: () => void; onWithout: () => void }) {
-  const { lang } = useLang();
-  const isKO = lang === "ko";
-
-  return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
-      <StarField />
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center gap-12">
-        <div className="text-center">
-          <button
-            onClick={onBack}
-            className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-text-tertiary hover:text-text-secondary transition-colors mb-6 flex items-center gap-2 mx-auto"
-          >
-            ← {L4(lang, { ko: "돌아가기", en: "Back", jp: "戻る", cn: "返回" })}
-          </button>
-          <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
-            NOA STUDIO
-          </p>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold text-text-primary">
-            {L4(lang, { ko: "어떻게 사용할까요?", en: "How will you write?", jp: "どのように書きますか？", cn: "您将如何写作？" })}
-          </h1>
-          <p className="mt-4 text-sm text-text-tertiary">
-            {L4(lang, { ko: "AI 연동 여부에 따라 최적화된 화면으로 진입합니다.", en: "Enter the workspace optimized for your setup.", jp: "設定に合わせた最適な画面に進みます。", cn: "进入为您的设置优化的工作区。" })}
-          </p>
-        </div>
-
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* WITH API */}
-          <button
-            onClick={onWithApi}
-            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-purple/30 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
-            </div>
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
-              {L4(lang, { ko: "AI 집필 모드", en: "AI Mode", jp: "AI執筆モード", cn: "AI写作模式" })}
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
-              {L4(lang, { ko: "API 사용", en: "With API", jp: "API使用", cn: "使用API" })}
-            </h2>
-            <p className="text-sm leading-7 text-text-secondary">
-              {isKO
-                ? "API 키를 연결해 NOA 엔진을 도구로서 활용해보세요."
-                : "Connect your API key and use the NOA engine as a tool."}
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
-              {L4(lang, { ko: "API 키 설정하기", en: "Set up API key", jp: "APIキーを設定", cn: "设置API密钥" })} →
-            </div>
-          </button>
-
-          {/* WITHOUT API */}
-          <button
-            onClick={onWithout}
-            className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,18,27,0.9),rgba(7,9,13,0.7))] px-8 py-10 text-left transition-all duration-300 hover:border-accent-amber/30 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/8 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
-            </div>
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
-              {L4(lang, { ko: "수동 집필 모드", en: "Manual Mode", jp: "手動執筆モード", cn: "手动写作模式" })}
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-text-primary mb-3">
-              {L4(lang, { ko: "미사용", en: "Without API", jp: "API不使用", cn: "不使用API" })}
-            </h2>
-            <p className="text-sm leading-7 text-text-secondary">
-              {isKO
-                ? "API 없이 세계관 설계, 캐릭터, 수동 집필 기능을 바로 사용합니다."
-                : "Use worldbuilding, character tools, and manual writing without an API key."}
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
-              {L4(lang, { ko: "바로 시작하기", en: "Start now", jp: "すぐに始める", cn: "立即开始" })} →
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () => void; onStudio: () => void; onCodeStudio: () => void }) {
   const { lang } = useLang();
   const isKO = lang === "ko";
@@ -213,8 +133,6 @@ export default function Home() {
   const { lang } = useLang();
   const router = useRouter();
   const [showSplash, setShowSplash] = useState(false); // SSR-safe: false 시작
-  const [showStudioChoice, setShowStudioChoice] = useState(false);
-
   // 클라이언트에서 스플래시 표시 여부 결정 (hydration mismatch 방지)
   useEffect(() => {
     if (!sessionStorage.getItem("eh-splash-seen")) {
@@ -239,7 +157,7 @@ export default function Home() {
     lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
 
   const universeStats = [
-    { value: "109", label: T({ ko: "아카이브 문서", en: "Archive docs", jp: "アーカイブ文書", cn: "存档文档" }) },
+    { value: "162", label: T({ ko: "문서 + 보고서", en: "Docs + reports", jp: "文書+報告書", cn: "文档+报告" }) },
     { value: "6", label: T({ ko: "세계관 카테고리", en: "Lore categories", jp: "世界観カテゴリ", cn: "世界观类别" }) },
     { value: "200K+", label: T({ ko: "관할 행성계", en: "Planetary systems", jp: "管轄惑星系", cn: "管辖星系" }) },
     { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", jp: "オープンライセンス", cn: "开放许可" }) },
@@ -251,8 +169,16 @@ export default function Home() {
       badge: "AR",
       color: "amber" as const,
       title: T({ ko: "설정집 아카이브", en: "Lore Archive", jp: "設定集アーカイブ", cn: "设定集存档" }),
-      desc: T({ ko: "CORE · TIMELINE · FACTIONS · MILITARY · GEOGRAPHY · TECHNOLOGY — 6개 카테고리, 109개 문서.", en: "CORE · TIMELINE · FACTIONS · MILITARY · GEOGRAPHY · TECHNOLOGY — 6 categories, 109 docs." }),
+      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 53개 기밀 보고서.", en: "6 categories, 109 lore docs + 53 classified reports." }),
       meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", jp: "世界観文書を探索", cn: "浏览世界观文档" }),
+    },
+    {
+      href: "/reports",
+      badge: "RP",
+      color: "purple" as const,
+      title: T({ ko: "기밀 보고서", en: "Classified Reports", jp: "機密報告書", cn: "机密报告" }),
+      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 53 classified documents." }),
+      meta: T({ ko: "보고서 열기", en: "Open reports", jp: "報告書を開く", cn: "打开报告" }),
     },
     {
       href: "/network",
@@ -315,22 +241,6 @@ export default function Home() {
   const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
-
-  if (showStudioChoice) {
-    return (
-      <StudioChoiceScreen
-        onBack={() => setShowStudioChoice(false)}
-        onWithApi={() => {
-          if (typeof window !== 'undefined') localStorage.setItem('noa_studio_mode', 'api');
-          router.push("/studio?setup=1");
-        }}
-        onWithout={() => {
-          if (typeof window !== 'undefined') localStorage.setItem('noa_studio_mode', 'manual');
-          router.push("/studio");
-        }}
-      />
-    );
-  }
 
   if (showSplash) {
     return (

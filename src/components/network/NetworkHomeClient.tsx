@@ -127,6 +127,8 @@ export function NetworkHomeClient() {
   const [boardFilter, setBoardFilter] = useState<BoardFilter>(initialBoard);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
   const [showSamples, setShowSamples] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const handleRetry = useCallback(() => setRetryKey((k) => k + 1), []);
 
   // Re-sync filter state from URL on browser back/forward — with validation
   useEffect(() => {
@@ -215,7 +217,7 @@ export function NetworkHomeClient() {
     return () => {
       cancelled = true;
     };
-  }, [lang, user]);
+  }, [lang, user, retryKey]);
 
   const handleTagToggle = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -419,6 +421,21 @@ export function NetworkHomeClient() {
                     <p className="text-sm text-text-tertiary">{lang === "ko" ? "행성을 불러오는 중..." : "Loading planets..."}</p>
                   </div>
                 )
+              : !loading && error && state.planets.length === 0
+                ? (
+                  <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
+                    <p className="text-sm text-accent-red mb-3">
+                      {lang === "ko" ? "데이터를 불러오는 데 실패했습니다" : "Failed to load data"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
+                    >
+                      {lang === "ko" ? "다시 시도" : "Retry"}
+                    </button>
+                  </div>
+                )
               : !loading && filteredPlanets.length === 0 && state.planets.length === 0
                 ? (
                   <>
@@ -536,6 +553,21 @@ export function NetworkHomeClient() {
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
                     <p className="text-sm text-text-tertiary">{lang === "ko" ? "게시글을 불러오는 중..." : "Loading posts..."}</p>
+                  </div>
+                )
+              : error && state.posts.length === 0
+                ? (
+                  <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
+                    <p className="text-sm text-accent-red mb-3">
+                      {lang === "ko" ? "게시글을 불러오는 데 실패했습니다" : "Failed to load posts"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
+                    >
+                      {lang === "ko" ? "다시 시도" : "Retry"}
+                    </button>
                   </div>
                 )
               : filteredPosts.length === 0

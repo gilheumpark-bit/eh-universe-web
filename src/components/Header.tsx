@@ -15,6 +15,7 @@ export default function Header() {
   const navItems = useMemo(() => [
     { href: "/", label: L4(lang, { ko: "홈", en: "HOME", jp: "ホーム", cn: "首页" }) },
     { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", jp: "アーカイブ", cn: "档案" }) },
+    { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", jp: "報告書", cn: "报告书" }) },
     { href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", jp: "ネットワーク", cn: "网络" }) },
     { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", jp: "コーデックス", cn: "索引" }) },
     { href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" }) },

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, startTransition } fr
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLang, L2 } from "@/lib/LangContext";
 import { createT } from "@/lib/i18n";
+import { ArchiveReportsTabs } from "@/app/reports/ReportsClient";
 
 const categories = [
   {
@@ -273,6 +274,7 @@ export default function ArchiveClient() {
 
         <div className="flex-1 p-6 md:p-10 md:pl-[19rem]">
           <div className="mx-auto max-w-4xl">
+            <ArchiveReportsTabs active="archive" />
             <div className="doc-header rounded-t-[24px] mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
               {t('archivePage.category', 'Category')}: {L2(currentCategory.sublabel, lang)}
