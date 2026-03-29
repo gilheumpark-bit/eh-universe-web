@@ -40,8 +40,11 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit --strict
 
+      - name: Critical path tests
+        run: npx jest --testPathPatterns="verification|composer-state|panel-registry|rate-limit|safe-fix" --no-coverage
+
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npx jest --coverage --coverageThreshold='{"global":{"branches":50,"functions":60,"lines":60,"statements":60}}'
 
       - name: Upload coverage report
         if: always()
