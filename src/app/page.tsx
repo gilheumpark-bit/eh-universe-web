@@ -112,7 +112,7 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
             <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3 flex items-center gap-2">
               <Code2 className="w-5 h-5 text-accent-green" />
               CODE
-              <span className="rounded-full bg-accent-green/20 text-accent-green text-[9px] px-2 py-0.5 font-bold">NEW</span>
+              <span className="rounded-full bg-accent-green/20 text-accent-green text-[9px] px-2 py-0.5 font-bold animate-pulse">NEW</span>
             </h2>
             <p className="text-sm leading-7 text-text-secondary">
               {isKO
@@ -238,6 +238,7 @@ export default function Home() {
     purple: { border: "border-accent-purple/20", bg: "bg-accent-purple/10", text: "text-accent-purple", hoverText: "group-hover:text-accent-purple", glow: "bg-accent-purple/8" },
   };
 
+  const heroRef = useFadeIn<HTMLElement>();
   const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
@@ -273,7 +274,7 @@ export default function Home() {
       <Header />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
+      <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
         <StarField />
         <div className="site-shell relative z-10">
           <div className="premium-panel premium-grid-accent px-6 py-8 md:px-10 md:py-12 xl:px-14">
@@ -304,7 +305,7 @@ export default function Home() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 lg:w-80 lg:shrink-0">
                 {universeStats.map((item) => (
-                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/[0.06] hover:border-accent-amber/20 transition-all hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
+                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/[0.06] hover:border-accent-amber/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
                     <div className="font-[family-name:var(--font-display)] text-[2.4rem] font-bold leading-none text-text-primary">
                       {item.value}
                     </div>

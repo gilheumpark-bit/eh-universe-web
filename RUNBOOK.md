@@ -1,4 +1,4 @@
-# 운영 Runbook — NOA Studio
+# 운영 Runbook — NOA Studio (v1.1.0)
 
 ---
 
@@ -12,6 +12,7 @@
 | DB | Firebase Firestore |
 | 인증 | Firebase Auth (Google SSO) |
 | AI | 7대 프로바이더 (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LMStudio) |
+| 앱 구성 | NOA Studio (서사) + Code Studio (검증형 IDE) + EH Network (커뮤니티) + Reports (기밀 아카이브) |
 
 ---
 

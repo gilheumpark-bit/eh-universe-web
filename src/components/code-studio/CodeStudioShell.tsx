@@ -1349,7 +1349,7 @@ function CodeStudioShellInner() {
 
           {/* Staging Banner — shows when verification fixes are staged */}
           {stagedCode && (
-            <div className="border-t border-accent-amber/30 bg-accent-amber/5 px-4 py-2 flex items-center justify-between">
+            <div className="border-t border-accent-amber/30 bg-accent-amber/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-accent-amber" />
                 <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-amber">
@@ -1369,7 +1369,7 @@ function CodeStudioShellInner() {
 
           {/* Rollback Banner — shows after fixes were applied */}
           {preApplySnapshot && !stagedCode && (
-            <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between">
+            <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
               <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-purple">
                 Verification fixes applied — Rollback available
               </span>
@@ -1384,10 +1384,10 @@ function CodeStudioShellInner() {
             <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
               {/* Bottom panel tab bar */}
               <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
-                <button onClick={() => setShowTerminal(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Terminal</button>
-                <button onClick={() => setShowProblems(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
-                <button onClick={() => setShowPipelineBottom(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
-                <button onClick={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary"><X className="h-3 w-3" /></button>
+                <button onClick={() => setShowTerminal(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>Terminal</button>
+                <button onClick={() => setShowProblems(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
+                <button onClick={() => setShowPipelineBottom(v => !v)} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
+                <button onClick={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
               </div>
               {/* Panel content */}
               {showTerminal && (

@@ -3,6 +3,49 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.0] - 2026-03-29
+
+### Code Studio — Full Implementation
+- **Panel Registry**: 37개 패널 레지스트리 기반 관리, dynamic import barrel
+- **Verification Loop Engine**: 3회 검증 루프 (Pipeline + Bug Scan + Stress Test), 5 stop reasons, hard gate
+- **Composer State Machine**: 7단계 전이표 + canTransition guard
+- **Staging/Rollback**: 사람 승인 후 안전 반영, snapshot 기반 되돌리기
+- **CSL 원본 UI/UX 적용**: ActivityBar, ResizeHandle, 하단 패널 스태킹, a11y skip link
+- **EditorGroup**: 멀티 분할 편집 (split right/down, drag-drop, resize, Ctrl+1~4)
+- **73/76 컴포넌트 연결** (3개 의도적 standalone)
+
+### Reports Archive
+- `/reports` 전용 페이지: 53개 보고서, 7종 서브카테고리, 등급 필터
+- 아카이브/보고서 탭 네비게이션
+- 랜딩 허브에 기밀보고서 카드 추가
+
+### Novel Engine Fixes
+- 인과율 검증(ruleLevel=2) 활성화
+- 등급 스케일 통일 (director.ts ↔ scoring.ts)
+- Director PART 번호 재정리, checkEndingMono 비한국어 방어
+- PRISM 키워드 이중 toLowerCase 제거
+- continuity-tracker lastIndex try/finally 보장
+
+### Testing
+- 115 new tests across 5 suites (composer-state, verification-loop, panel-registry, integration, safe-fix)
+- CI coverage thresholds 상향 (50/60/60/60)
+- Critical path test stage 추가
+
+### Bug Fixes
+- 초기 화면 깜빡임 수정 (3상태 splashState)
+- Studio 모바일 사이드바 기본값 closed
+- StudioChoiceScreen 데드코드 제거
+- Network 에러/빈상태 분리 + 재시도
+- 온보딩 API 키 모달 게이트 수정
+- ESLint errors 0건
+- rate-limit 코드/테스트/문서 정합화
+
+### i18n
+- CN 오번역 교정 8건
+- JP/CN 미번역 보강
+- 4개국어 구조 확장 (ArticleData jp?/cn? optional)
+- 코드 스튜디오 8키 4개국어 추가
+
 ## [1.0.0] - 2026-03-25
 
 First production release. 270 commits across 6 months of development.

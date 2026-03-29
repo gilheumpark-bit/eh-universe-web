@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase";
 
 export default function Header() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [toolsFocusIdx, setToolsFocusIdx] = useState(-1);
@@ -103,16 +105,24 @@ export default function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-2 md:flex" role="navigation" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-testid={`${item.label.toLowerCase()}-link`}
-                className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  data-testid={`${item.label.toLowerCase()}-link`}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.18em] transition-all duration-150 ${
+                    isActive
+                      ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber"
+                      : "border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={closeToolsMenu} onKeyDown={handleToolsKeyDown} ref={toolMenuRef}>
               <button
                 onClick={() => { setToolsOpen((p) => !p); setToolsFocusIdx(-1); }}
@@ -199,33 +209,43 @@ export default function Header() {
       </div>
 
       {/* Mobile menu */}
-      {menuOpen && (
-        <div className="site-shell md:hidden">
-          <nav className="premium-panel-soft mt-3 overflow-hidden rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">
-            {navItems.map((item) => (
+      <div
+        className={`site-shell md:hidden transition-all duration-200 ease-out overflow-hidden ${
+          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <nav className="premium-panel-soft mt-3 overflow-hidden rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">
+          {navItems.map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.18em] text-text-secondary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
+                aria-current={isActive ? "page" : undefined}
+                className={`block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.18em] transition-colors duration-150 ${
+                  isActive
+                    ? "bg-accent-amber/8 text-accent-amber"
+                    : "text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+                }`}
               >
                 {item.label}
               </Link>
-            ))}
-            <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-text-tertiary uppercase">{L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}</div>
-            {toolItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.16em] text-text-tertiary transition-colors hover:bg-white/[0.04] hover:text-text-primary"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      )}
+            );
+          })}
+          <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-text-tertiary uppercase">{L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}</div>
+          {toolItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className="block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.16em] text-text-tertiary transition-colors duration-150 hover:bg-white/[0.04] hover:text-text-primary"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </header>
   );
 }

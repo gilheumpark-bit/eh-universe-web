@@ -1,6 +1,13 @@
 # NOA Studio — EH Universe Web
 
-한국 웹소설 전문 AI 집필 스튜디오. 세계관 설계부터 AI 초안 생성, 원고 관리, 비주얼 프롬프트까지 하나의 워크벤치에서 처리한다.
+![Tests](https://img.shields.io/badge/tests-910+-green)
+![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)
+![Panels](https://img.shields.io/badge/panels-37-blue)
+![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
+
+세계관 창작 + AI 집필 + 검증형 코드 스튜디오. 세계관 설계부터 AI 초안 생성, 원고 관리, 비주얼 프롬프트, 그리고 검증 파이프라인 내장 IDE까지 하나의 플랫폼에서 처리한다.
+
+**3개 앱 구성**: NOA Studio (서사 엔진) / Code Studio (검증형 IDE) / EH Network (커뮤니티)
 
 ## Tech Stack
 
@@ -12,9 +19,14 @@
 | AI | Gemini, OpenAI, Claude, Groq, Mistral (BYOK) |
 | DB | Firebase Firestore (EH Network) |
 | Auth | Firebase Auth (Google SSO) |
+| Code Editor | Monaco Editor (@monaco-editor/react 4.7) |
+| Terminal | xterm.js (@xterm/xterm 6.0, @xterm/addon-fit) |
+| Container | WebContainer API (@webcontainer/api 1.6) |
 | Export | EPUB / DOCX (브라우저 완결형, 외부 라이브러리 없음) |
 | Engine | ANS 10.0 (장르 벤치마크, HFCP, 맥락 추적) |
-| Test | Jest 30 (unit) + Playwright 1.58 (e2e) |
+| Verification | Verification Loop (Pipeline + Bug Scan + Stress Test) |
+| Panel Management | Panel Registry (37개 패널 동적 관리) |
+| Test | Jest 30 (unit, 45 suites) + Playwright 1.58 (e2e) |
 | Deploy | Vercel |
 
 ## Quick Start
@@ -30,71 +42,106 @@ npm run lint         # ESLint
 
 ```
 src/
-├── app/                        # Next.js App Router (29 routes)
-│   ├── studio/                 # 메인 스튜디오 (page.tsx)
-│   ├── network/                # EH Network 커뮤니티
-│   ├── tools/                  # 독립 도구 7종
-│   │   ├── galaxy-map/
-│   │   ├── neka-sound/
-│   │   ├── noa-tower/
-│   │   ├── soundtrack/
-│   │   ├── style-studio/
-│   │   ├── vessel/
-│   │   └── warp-gate/
+├── app/                           # Next.js App Router (28 routes)
+│   ├── studio/                    # NOA Studio (서사 엔진)
+│   ├── code-studio/               # Code Studio (검증형 IDE)
+│   ├── network/                   # EH Network 커뮤니티
+│   ├── reports/                   # 기밀 보고서 아카이브 (53건)
+│   ├── tools/                     # 독립 도구 7종
+│   │   ├── galaxy-map/  neka-sound/  noa-tower/  soundtrack/
+│   │   ├── style-studio/  vessel/  warp-gate/
 │   ├── archive/  codex/  docs/  reference/  rulebook/  about/
+│   ├── world/[id]/                # 세계관 상세
 │   └── api/
-│       ├── chat/               # AI 스트리밍 프록시
-│       └── gemini-structured/  # 구조화 생성 API
+│       ├── chat/                  # AI 스트리밍 프록시
+│       └── gemini-structured/     # 구조화 생성 API
 │
-├── components/studio/ (44개)   # 스튜디오 UI 컴포넌트
-│   ├── tabs/                   # 탭 컨테이너 8종
-│   │   ├── WorldTab       CharacterTab     WritingTabInline
-│   │   ├── StyleTab        ManuscriptTab    HistoryTab
-│   │   └── RulebookTab    VisualTab
-│   ├── SectionErrorBoundary    # 섹션별 에러 바운더리
-│   ├── LoadingSkeleton         # 로딩 스켈레톤
-│   ├── EmotionArcChart         # 감정 아크 그래프
-│   ├── FatigueDetector         # 독자 피로도 감지
-│   ├── RhythmAnalyzer          # 문장 리듬 분석
-│   ├── AuthorDashboard         # 작가 대시보드
-│   ├── ResourceView            # 캐릭터 + 관계 그래프
-│   ├── VisualPromptEditor      # NOI 비주얼 프롬프트
-│   └── ...
+├── components/
+│   ├── studio/ (58개)             # NOA Studio UI 컴포넌트
+│   │   ├── tabs/                  # 탭 컨테이너 8종
+│   │   │   ├── WorldTab       CharacterTab     WritingTabInline
+│   │   │   ├── StyleTab        ManuscriptTab    HistoryTab
+│   │   │   └── RulebookTab    VisualTab
+│   │   ├── SectionErrorBoundary   # 섹션별 에러 바운더리
+│   │   ├── EmotionArcChart        # 감정 아크 그래프
+│   │   ├── FatigueDetector        # 독자 피로도 감지
+│   │   ├── RhythmAnalyzer         # 문장 리듬 분석
+│   │   ├── AuthorDashboard        # 작가 대시보드
+│   │   ├── ResourceView           # 캐릭터 + 관계 그래프
+│   │   ├── VisualPromptEditor     # NOI 비주얼 프롬프트
+│   │   └── ...
+│   │
+│   └── code-studio/ (77개)        # Code Studio UI 컴포넌트
+│       ├── CodeStudioShell        # 최상위 쉘 (ActivityBar + EditorGroup + Panels)
+│       ├── ActivityBar            # 좌측 아이콘 바 (CSL 원본 패턴)
+│       ├── EditorGroup            # 멀티 분할 편집 (split/drag-drop/resize)
+│       ├── ComposerPanel          # AI 코드 생성 + Composer State Machine
+│       ├── PipelinePanel          # 8-Team 정적 분석 파이프라인
+│       ├── ReviewCenter           # 코드 리뷰 + Staging/Rollback
+│       ├── TerminalPanel          # xterm.js 기반 터미널
+│       ├── ProblemsPanel          # 에러/경고 목록
+│       ├── StatusBar              # 하단 상태 바
+│       ├── CommandPalette         # Ctrl+Shift+P 커맨드 팔레트
+│       ├── FileExplorer           # 파일 트리
+│       ├── GitPanel / GitGraph    # Git 연동
+│       ├── SearchPanel            # 전역 검색
+│       ├── CollabPanel            # 실시간 협업
+│       ├── CodeCreatorPanel       # 코드 크리에이터
+│       └── ...
 │
-├── engine/ (19개)              # 서사 엔진
-│   ├── pipeline.ts             # 스타일 파이프라인
-│   ├── director.ts             # 감독 패널
-│   ├── validator.ts            # AI 톤 검증 (50K 하드 리밋)
-│   ├── hfcp.ts                 # 환각 제어
-│   ├── scoring.ts              # 품질 채점
-│   ├── continuity-tracker.ts   # 연속성 추적
-│   ├── quality-gate.ts         # 품질 게이트 루프
-│   └── auto-pipeline.ts        # 자동 파이프라인
+├── engine/ (22개)                 # 서사 엔진
+│   ├── pipeline.ts                # 스타일 파이프라인
+│   ├── director.ts                # 감독 패널
+│   ├── validator.ts               # AI 톤 검증 (50K 하드 리밋)
+│   ├── hfcp.ts                    # 환각 제어
+│   ├── scoring.ts                 # 품질 채점
+│   ├── continuity-tracker.ts      # 연속성 추적
+│   ├── quality-gate.ts            # 품질 게이트 루프
+│   ├── auto-pipeline.ts           # 자동 파이프라인
+│   ├── shadow.ts                  # 그림자 상태 추적
+│   ├── social-register.ts         # 사회 계층 레지스터
+│   └── writer-profile.ts          # 작가 프로필 분석
 │
-├── hooks/ (8개)                # 커스텀 훅
-│   ├── useStudioAI.ts          # AI 생성 (타임아웃 + 동시실행 잠금)
-│   ├── useProjectManager.ts    # 프로젝트 CRUD
-│   └── useStudioSession / Sync / Theme / Keyboard / Export / UX
+├── hooks/ (17개)                  # 커스텀 훅
+│   ├── useStudioAI.ts             # AI 생성 (타임아웃 + 동시실행 잠금)
+│   ├── useProjectManager.ts       # 프로젝트 CRUD
+│   ├── useCodeStudioAgent.ts      # Code Studio 에이전트 관리
+│   ├── useCodeStudioChat.ts       # Code Studio 채팅
+│   ├── useCodeStudioComposer.ts   # Composer State Machine 훅
+│   ├── useCodeStudioFileSystem.ts # 파일 시스템 훅
+│   ├── useCodeStudioKeyboard.ts   # 키보드 단축키
+│   └── useStudioSession / Sync / Theme / Keyboard / Export / UX / UndoRedo
 │
-├── lib/ (29개)                 # 유틸리티
-│   ├── ai-providers.ts         # 멀티 AI 프로바이더 관리
-│   ├── studio-types.ts         # 전체 타입 정의
-│   ├── studio-translations.ts  # i18n (KO/EN/JP/CN)
-│   ├── noi-auto-tags.ts        # NOI 일관성 태그 자동생성
-│   ├── export-utils.ts         # EPUB/DOCX/TXT 내보내기 (순수 JS)
-│   └── errors/StudioError.ts   # 타입 분류 에러 시스템
+├── lib/ (158개)                   # 유틸리티
+│   ├── ai-providers.ts            # 멀티 AI 프로바이더 관리
+│   ├── studio-types.ts            # 전체 타입 정의
+│   ├── studio-translations.ts     # i18n (KO/EN/JP/CN)
+│   ├── noi-auto-tags.ts           # NOI 일관성 태그 자동생성
+│   ├── export-utils.ts            # EPUB/DOCX/TXT 내보내기 (순수 JS)
+│   ├── errors/StudioError.ts      # 타입 분류 에러 시스템
+│   │
+│   ├── code-studio-panel-registry.ts      # 37개 패널 레지스트리
+│   ├── code-studio-verification-loop.ts   # 3회 검증 루프 엔진
+│   ├── code-studio-composer-state.ts      # 7단계 전이표 상태 머신
+│   ├── code-studio-agents.ts              # Multi-Agent 오케스트레이션
+│   ├── code-studio-bugfinder.ts           # 버그 스캔
+│   ├── code-studio-build-scan.ts          # 빌드 스캔
+│   ├── code-studio-chaos-engineering.ts   # 스트레스 테스트
+│   ├── code-studio-ip-scanner.ts          # IP/라이선스 스캐너
+│   └── ... (113개 code-studio-*.ts 모듈)
 │
-├── services/                   # 외부 서비스
-│   ├── geminiService.ts        # Gemini 구조화 생성 (60s timeout)
-│   └── driveService.ts         # Google Drive 백업
+├── services/                      # 외부 서비스
+│   ├── geminiService.ts           # Gemini 구조화 생성 (60s timeout)
+│   ├── driveService.ts            # Google Drive 백업
+│   └── imageGenerationService.ts  # 이미지 생성
 │
 └── contexts/
-    └── StudioContext.tsx        # 스튜디오 전역 상태
+    └── StudioContext.tsx           # 스튜디오 전역 상태
 ```
 
 ## Features
 
-### Studio Tabs
+### Studio Tabs (NOA Studio)
 
 | 탭 | 기능 | 등급 |
 |----|------|------|
@@ -108,13 +155,35 @@ src/
 | 히스토리 | 프로젝트/세션 관리, 검색, 내보내기 | Stable |
 | 설정 | API 키 (BYOK), 플랫폼, 언어, 테마 | Stable |
 
-> **등급**: Stable = QA 통과, 프로덕션 사용 가능 / Beta = 핵심 동작 확인, 엣지케이스 미검증 / Experimental = 프로토타입
+### Code Studio (Verification-First IDE)
+
+| 기능 | 설명 | 상태 |
+|------|------|------|
+| Panel Registry | 37개 패널 레지스트리 기반 관리 | Stable |
+| Verification Loop | Pipeline + Bug Scan + Stress Test 3회 검증 | Stable |
+| Composer State Machine | 7단계 전이표 (idle→generating→verifying→review→staged→applied) | Stable |
+| Staging/Rollback | 사람 승인 후 안전 반영 + 되돌리기 | Stable |
+| 8-Team Pipeline | 정적 분석 8팀 (Simulation~Governance) | Stable |
+| Stress Test | AI 예측 성능 분석 (5 시나리오) | Stable |
+| IP Scanner | 특허/라이선스 리스크 체크 | Stable |
+| Multi-Agent | Architect→Developer→Reviewer→Tester→Documenter | Beta |
+| EditorGroup | 멀티 분할 편집 (split/drag-drop/resize) | Stable |
+| ActivityBar | CSL 원본 패턴 좌측 아이콘 바 | Stable |
+| Bottom Stacking | Terminal + Problems + Pipeline 독립 토글 | Stable |
+
+### Reports Archive
+
+53개 기밀 보고서, 7종 서브카테고리 (인물 파일/사건 보고/기술 사양/제도 규정/조직/분석 평가/기록 유물)
+등급 필터: CLASSIFIED / RESTRICTED / PUBLIC
 
 ### i18n
 한국어(KO), 영어(EN), 일본어(JP), 중국어(CN) 4개 언어 실시간 전환.
+Studio + Code Studio 양쪽 모두 4개국어 지원.
 
 ### Export
 TXT, JSON, EPUB, DOCX — 외부 라이브러리 없이 순수 JS로 ZIP/EPUB/DOCX 생성.
+
+> **등급**: Stable = QA 통과, 프로덕션 사용 가능 / Beta = 핵심 동작 확인, 엣지케이스 미검증 / Experimental = 프로토타입
 
 ---
 
@@ -131,6 +200,8 @@ ErrorBoundary (전역 — app 전체)
         ├── RulebookTab     ├── SettingsView
         ├── StudioDocsView  └── VisualTab
 ```
+
+Code Studio: `CodeStudioShell`에 독립 에러 바운더리 적용.
 
 하위 컴포넌트 크래시 → 해당 섹션만 에러 + Retry 버튼, 나머지 앱 정상.
 
@@ -164,36 +235,73 @@ ErrorBoundary (전역 — app 전체)
 ### Overview
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Layer 1: Static Analysis            │
-│         TypeScript + ESLint + Next.js Build      │
-│                   29 routes                      │
-└──────────────────────┬──────────────────────────┘
-                       │
-         ┌─────────────┼─────────────┐
-         │             │             │
-┌────────┴────────┐ ┌──┴──────────┐ ┌┴────────────────┐
-│  Layer 2: Unit  │ │  Layer 3:   │ │  Layer 4:       │
-│  Jest (13 files)│ │  E2E (2+13) │ │  Runtime Guards │
-│                 │ │  Playwright  │ │  (code-level)   │
-│  engine:        │ │             │ │                  │
-│  · serialization│ │  studio:    │ │  ErrorBoundary   │
-│  · pipeline     │ │  · load     │ │  SectionEB ×10   │
-│  · scoring      │ │  · session  │ │  safe-storage    │
-│  · validator    │ │  · tabs     │ │  useAsyncGuard   │
-│  · hfcp         │ │  · i18n     │ │  AbortController │
-│  · builders     │ │  · modal    │ │  maxLength ×45   │
-│  · models       │ │  · export   │ │  ARIA labels     │
-│  · types        │ │  · errors   │ │                  │
-│                 │ │             │ │                  │
-│  lib:           │ │  network:   │ │                  │
-│  · migration    │ │  · landing  │ │                  │
-│  · ai-providers │ │  · auth     │ │                  │
-│  · errors ×2    │ │  · 404      │ │                  │
-│                 │ │             │ │                  │
-│  services:      │ │             │ │                  │
-│  · driveService │ │             │ │                  │
-└─────────────────┘ └─────────────┘ └──────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                Layer 1: Static Analysis                  │
+│          TypeScript + ESLint + Next.js Build             │
+│                     28 routes                            │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+┌─────────┴─────────┐ ┌─┴────────────┐ ┌┴─────────────────┐
+│  Layer 2: Unit    │ │  Layer 3:    │ │  Layer 4:        │
+│  Jest (45 files)  │ │  E2E (2+13)  │ │  Runtime Guards  │
+│  ~910 tests       │ │  Playwright  │ │  (code-level)    │
+│                   │ │              │ │                   │
+│  engine (17):     │ │  studio:     │ │  ErrorBoundary    │
+│  · serialization  │ │  · load      │ │  SectionEB ×10    │
+│  · pipeline       │ │  · session   │ │  safe-storage     │
+│  · scoring        │ │  · tabs      │ │  useAsyncGuard    │
+│  · validator      │ │  · i18n      │ │  AbortController  │
+│  · hfcp           │ │  · modal     │ │  maxLength ×45    │
+│  · builders       │ │  · export    │ │  ARIA labels      │
+│  · models/types   │ │  · errors    │ │                   │
+│  · continuity     │ │              │ │                   │
+│  · quality-gate   │ │  network:    │ │                   │
+│  · auto-pipeline  │ │  · landing   │ │                   │
+│  · shadow         │ │  · auth      │ │                   │
+│  · social-register│ │  · 404       │ │                   │
+│  · genre-review   │ │              │ │                   │
+│  · writer-profile │ │              │ │                   │
+│  · engine-config  │ │              │ │                   │
+│  · proactive-sug  │ │              │ │                   │
+│                   │ │              │ │                   │
+│  lib (23):        │ │              │ │                   │
+│  · composer-state │ │              │ │                   │
+│  · verification-  │ │              │ │                   │
+│    loop           │ │              │ │                   │
+│  · panel-registry │ │              │ │                   │
+│  · verification-  │ │              │ │                   │
+│    integration    │ │              │ │                   │
+│  · safe-fix-      │ │              │ │                   │
+│    filtering      │ │              │ │                   │
+│  · ai-providers   │ │              │ │                   │
+│  · error-messages │ │              │ │                   │
+│  · studio-error   │ │              │ │                   │
+│  · migration      │ │              │ │                   │
+│  · export-utils   │ │              │ │                   │
+│  · rate-limit     │ │              │ │                   │
+│  · sanitize/etc.  │ │              │ │                   │
+│                   │ │              │ │                   │
+│  hooks (1):       │ │              │ │                   │
+│  · useUndoRedo    │ │              │ │                   │
+│                   │ │              │ │                   │
+│  services (3):    │ │              │ │                   │
+│  · driveService   │ │              │ │                   │
+│  · geminiService  │ │              │ │                   │
+│  · imageGenService│ │              │ │                   │
+└───────────────────┘ └──────────────┘ └───────────────────┘
+```
+
+### Coverage Thresholds
+
+```json
+{
+  "branches": 50,
+  "functions": 60,
+  "lines": 60,
+  "statements": 60
+}
 ```
 
 ### Layer 1 — Static Analysis
@@ -213,21 +321,16 @@ npm run test:coverage     # 커버리지 리포트
 
 **Config**: `jest.config.ts` — ts-jest, jsdom, `@/` alias
 
-| 파일 | 대상 | 검증 |
-|------|------|------|
-| `engine/__tests__/serialization.test.ts` | 직렬화 | 설정 직렬화/역직렬화 무결성 |
-| `engine/__tests__/pipeline.test.ts` | 파이프라인 | 슬라이더→프롬프트 변환 |
-| `engine/__tests__/scoring.test.ts` | 채점 | 메트릭 계산 정확도 |
-| `engine/__tests__/validator.test.ts` | 검증기 | AI 톤 감지, 품질 검증 |
-| `engine/__tests__/hfcp.test.ts` | HFCP | 환각 신호 감지 |
-| `engine/__tests__/builders.test.ts` | 빌더 | 프롬프트 빌더 출력 |
-| `engine/__tests__/models.test.ts` | 모델 | 프로바이더별 메타데이터 |
-| `engine/__tests__/types.test.ts` | 타입 | 런타임 타입 가드 |
-| `lib/__tests__/project-migration.test.ts` | 마이그레이션 | 데이터 버전 업 |
-| `lib/__tests__/ai-providers.test.ts` | AI 프로바이더 | 설정/전환 |
-| `lib/__tests__/error-messages.test.ts` | 에러 메시지 | 분류 매핑 |
-| `lib/__tests__/studio-error.test.ts` | StudioError | 에러 타입 분류 |
-| `services/__tests__/driveService.test.ts` | 드라이브 | 암호화/백업 |
+**주요 테스트 (45 파일, ~910 테스트)**:
+
+| 영역 | 파일 수 | 핵심 검증 |
+|------|---------|----------|
+| engine | 17 | 직렬화, 파이프라인, 채점, 검증, HFCP, 그림자, 연속성 |
+| lib (일반) | 18 | 마이그레이션, AI 프로바이더, 에러, 내보내기, rate-limit, sanitize |
+| lib (Code Studio) | 5 | composer-state, verification-loop, panel-registry, integration, safe-fix |
+| hooks | 1 | useUndoRedo |
+| services | 3 | driveService, geminiService, imageGeneration |
+| network | 1 | helpers |
 
 ### Layer 3 — E2E Tests (Playwright)
 
@@ -251,13 +354,14 @@ npx playwright show-report    # HTML 리포트
 | 가드 | 위치 | 역할 |
 |------|------|------|
 | `ErrorBoundary` | `app/studio/page.tsx` | 전역 크래시 캐치 |
-| `SectionErrorBoundary` ×10 | 각 탭 래핑 | 섹션별 격리 |
+| `SectionErrorBoundary` x10 | 각 탭 래핑 | 섹션별 격리 |
 | `safe-storage` | `lib/safe-storage.ts` | localStorage 예외 방어 |
 | `useAsyncGuard` | `hooks/useAsyncGuard.ts` | 동시 실행 차단 |
 | `AbortSignal.timeout` | API route, geminiService | fetch 무한 대기 방지 |
 | `generationLockRef` | `useStudioAI.ts` | AI 생성 이중 호출 차단 |
-| `maxLength` ×45 | InputArea, ResourceView, SceneSheet 등 | 입력 길이 제한 |
+| `maxLength` x45 | InputArea, ResourceView, SceneSheet 등 | 입력 길이 제한 |
 | `aria-label` | SVG 차트 컴포넌트 | 접근성 |
+| Verification Loop | Code Studio Composer | 3회 자동 검증 후 hard gate |
 
 ---
 

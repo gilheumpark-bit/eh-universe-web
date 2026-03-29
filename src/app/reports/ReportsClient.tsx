@@ -154,10 +154,10 @@ function SubcategoryBadge({
 function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
   const { lang } = useLang();
   return (
-    <div className="flex gap-1 mb-6">
+    <div className="flex gap-2 mb-6">
       <Link
         href="/archive"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
           active === "archive"
             ? "bg-accent-amber/15 border border-accent-amber/30 text-accent-amber"
             : "border border-white/8 text-text-tertiary hover:text-text-secondary hover:border-white/12"
@@ -173,7 +173,7 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
       </Link>
       <Link
         href="/reports"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
           active === "reports"
             ? "bg-accent-red/15 border border-accent-red/30 text-accent-red"
             : "border border-white/8 text-text-tertiary hover:text-text-secondary hover:border-white/12"
@@ -324,9 +324,9 @@ export default function ReportsClient() {
                     <Link
                       key={report.slug}
                       href={`/archive/${report.slug}`}
-                      className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-all ${
+                      className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-all duration-200 ${
                         isClassified
-                          ? "border border-accent-red/12 bg-accent-red/[0.03] hover:border-accent-red/25 hover:bg-accent-red/[0.06]"
+                          ? "border border-accent-red/12 bg-accent-red/[0.03] hover:border-accent-red/25 hover:bg-accent-red/[0.06] hover:-translate-y-0.5"
                           : "premium-link-card card-glow"
                       }`}
                     >
