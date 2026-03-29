@@ -202,7 +202,7 @@ export default function ComposerPanel({
   const pendingCount = changes.filter((c) => c.status === "pending").length;
 
   return (
-    <div className="flex h-full flex-col bg-[#16161e]">
+    <div className="flex h-full flex-col bg-bg-secondary">
       <div className="border-b border-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-500">
         Multi-file Composer
       </div>
@@ -216,7 +216,7 @@ export default function ComposerPanel({
           onChange={(e) => setInstruction(e.target.value)}
           rows={3}
           placeholder="Describe the changes you want across these files..."
-          className="w-full resize-none rounded border border-white/10 bg-[#12121a] px-3 py-2 text-xs text-white outline-none focus:border-blue-500/50 placeholder:text-gray-600"
+          className="w-full resize-none rounded border border-white/10 bg-bg-primary px-3 py-2 text-xs text-white outline-none focus:border-blue-500/50 placeholder:text-gray-600"
         />
         <div className="mt-2 flex items-center justify-between">
           <span className="text-[10px] text-gray-600">{selectedIds.size} file(s) selected</span>

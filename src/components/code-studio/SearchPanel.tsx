@@ -227,7 +227,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
   }, [results]);
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0e17]">
+    <div className="h-full flex flex-col bg-bg-primary">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="text-xs font-semibold flex items-center gap-1 text-text-primary">
@@ -272,7 +272,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
 
           {/* History dropdown */}
           {showHistory && searchHistory.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-50 bg-[#0a0e17] border border-white/8 rounded mt-0.5 shadow-lg max-h-32 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 z-50 bg-bg-primary border border-white/8 rounded mt-0.5 shadow-lg max-h-32 overflow-y-auto">
               {searchHistory.slice().reverse().map((item, i) => (
                 <button
                   key={i}
@@ -333,7 +333,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
               <Filter size={8} /> {fileTypeFilter || "All Files"}
             </button>
             {showFileTypeDropdown && (
-              <div className="absolute right-0 top-full z-50 bg-[#0a0e17] border border-white/8 rounded mt-0.5 shadow-lg">
+              <div className="absolute right-0 top-full z-50 bg-bg-primary border border-white/8 rounded mt-0.5 shadow-lg">
                 {FILE_TYPE_FILTERS.map((ft) => (
                   <button
                     key={ft.value}

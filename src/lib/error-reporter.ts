@@ -34,11 +34,15 @@ function sendReport(report: ErrorReport) {
   }
 }
 
-export function initErrorReporter() {
-  if (typeof window === 'undefined') return;
+let _initialized = false;
+
+/** Returns a cleanup function to remove listeners. Guards against duplicate init. */
+export function initErrorReporter(): (() => void) | undefined {
+  if (typeof window === 'undefined' || _initialized) return;
+  _initialized = true;
 
   // Global unhandled errors
-  window.addEventListener('error', (event) => {
+  const onError = (event: ErrorEvent) => {
     sendReport({
       message: event.message || 'Unknown error',
       stack: event.error?.stack?.slice(0, 500),
@@ -47,10 +51,10 @@ export function initErrorReporter() {
       userAgent: navigator.userAgent.slice(0, 100),
       timestamp: new Date().toISOString(),
     });
-  });
+  };
 
   // Unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
+  const onRejection = (event: PromiseRejectionEvent) => {
     const reason = event.reason;
     sendReport({
       message: reason?.message || String(reason).slice(0, 200),
@@ -60,7 +64,16 @@ export function initErrorReporter() {
       userAgent: navigator.userAgent.slice(0, 100),
       timestamp: new Date().toISOString(),
     });
-  });
+  };
+
+  window.addEventListener('error', onError);
+  window.addEventListener('unhandledrejection', onRejection);
+
+  return () => {
+    window.removeEventListener('error', onError);
+    window.removeEventListener('unhandledrejection', onRejection);
+    _initialized = false;
+  };
 }
 
 // IDENTITY_SEAL: PART-1 | role=client-error-reporter | inputs=window errors | outputs=POST /api/error-report

@@ -557,11 +557,11 @@ export function TerminalPanel({
 
   return (
     <div
-      className="h-48 border-t border-white/8 bg-[#0a0e17] flex flex-col"
+      className="h-48 border-t border-white/8 bg-bg-primary flex flex-col"
       onClick={() => inputRef.current?.focus()}
     >
       {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-1 bg-[#0d1220] border-b border-white/8">
+      <div className="flex items-center justify-between px-3 py-1 bg-bg-secondary border-b border-white/8">
         <span className="flex items-center gap-1 text-xs text-text-secondary">
           <TerminalIcon size={12} /> Terminal
           {wcInstance?.isAvailable && (

@@ -198,7 +198,7 @@ function TreeNode({
         {isRenaming ? (
           <input
             autoFocus
-            className="flex-1 bg-[#0a0e17] border border-purple-400 rounded px-1 text-xs outline-none"
+            className="flex-1 bg-bg-primary border border-purple-400 rounded px-1 text-xs outline-none"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onBlur={commitRename}
@@ -216,7 +216,7 @@ function TreeNode({
         )}
       </button>
       {showPreview && filePreview && (
-        <div className="absolute left-full top-0 ml-2 z-50 bg-[#0a0e17] border border-white/8 rounded shadow-lg p-2 max-w-xs pointer-events-none">
+        <div className="absolute left-full top-0 ml-2 z-50 bg-bg-primary border border-white/8 rounded shadow-lg p-2 max-w-xs pointer-events-none">
           <pre className="text-[9px] text-text-tertiary whitespace-pre-wrap font-mono leading-tight">{filePreview}</pre>
         </div>
       )}
