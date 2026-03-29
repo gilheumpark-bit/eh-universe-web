@@ -42,6 +42,7 @@ import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
 import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
+import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import type { ComposerMode } from "@/lib/code-studio-composer-state";
 
 // Panel Registry + Barrel imports (replaces 25+ individual dynamic imports)
@@ -311,6 +312,14 @@ function CodeStudioShellInner() {
   const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
+
+  // Panel state hook — manages state for stub panels (Recent Files, Symbol Palette, Canvas, AI Hub, AI Workspace, Database, Merge Conflicts, Code Actions)
+  const panels = useCodeStudioPanels({
+    files,
+    activeFileContent: activeFile?.content ?? null,
+    activeFileName: activeFile?.name ?? null,
+    activeFileLanguage: activeFile?.language ?? null,
+  });
 
   // EditorGroup per-pane editor renderer
   const renderEditorPane = useCallback((pane: EditorPane, isFocused: boolean) => {
@@ -682,7 +691,8 @@ function CodeStudioShellInner() {
     }
     setActiveFileId(node.id);
     setHasEverOpened(true);
-  }, [openFiles]);
+    panels.trackFileOpen(node.id, node.name);
+  }, [openFiles, panels.trackFileOpen]);
 
   // Close tab
   const handleCloseTab = useCallback((id: string) => {
@@ -1426,21 +1436,22 @@ function CodeStudioShellInner() {
                     onClose={() => setRightPanel(null)}
                   />
                 ),
-                // New panels (19) — stub props for panels not yet fully integrated
+                // Panels — connected via useCodeStudioPanels hook
                 "terminal-panel": () => <PI.TerminalPanelComponent files={files} />,
                 "multi-terminal": () => <PI.MultiTerminalComponent />,
-                "database": () => <PI.DatabasePanelComponent connections={[]} onConnect={async () => false} onExecuteQuery={async () => ({ columns: [], rows: [], rowCount: 0, duration: 0, executionTime: 0 })} />,
+                "database": () => <PI.DatabasePanelComponent connections={panels.dbConnections} onConnect={panels.handleDbConnect} onExecuteQuery={panels.handleDbQuery} tables={panels.dbTables} />,
                 "diff-editor": () => <PI.DiffEditorPanelComponent original="" modified="" />,
                 "git-graph": () => <PI.GitGraphComponent commits={[]} branches={[]} currentBranch="main" />,
-                "ai-hub": () => <PI.AIHubComponent features={[]} onToggleFeature={() => {}} />,
-                "ai-workspace": () => <PI.AIWorkspaceComponent threads={[]} sharedMemory={[]} onSendMessage={async () => ""} onCreateThread={() => {}} onDeleteThread={() => {}} />,
-                "canvas": () => <PI.CanvasPanelComponent nodes={[]} connections={[]} onNodesChange={() => {}} onConnectionsChange={() => {}} />,
+                "ai-hub": () => <PI.AIHubComponent features={panels.aiFeatures} onToggleFeature={panels.toggleAiFeature} onConfigureProvider={() => setRightPanel("api-config")} />,
+                "ai-workspace": () => <PI.AIWorkspaceComponent threads={panels.wsThreads} sharedMemory={panels.wsSharedMemory} onSendMessage={panels.sendWsMessage} onCreateThread={panels.createWsThread} onDeleteThread={panels.deleteWsThread} />,
+                "canvas": () => { panels.initCanvas(); return <PI.CanvasPanelComponent nodes={panels.canvasNodes} connections={panels.canvasConnections} onNodesChange={panels.setCanvasNodes} onConnectionsChange={panels.setCanvasConnections} />; },
                 "progress": () => {
                   const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
                   return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} verificationResult={verificationResult} currentVerifyRound={currentVerifyRound} />;
                 },
                 "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => setRightPanel(null)} onSkip={() => setRightPanel(null)} />,
-                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={[]} onResolve={(_conflictId: string, _resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
+                "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={panels.mergeConflictsWithResolutions} onResolve={(conflictId: string, resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
+                  panels.resolveConflict(conflictId, resolution, content);
                   if (activeFileId && content) {
                     fsUpdateContent(activeFileId, content);
                     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content, isDirty: true } : f));
@@ -1448,11 +1459,11 @@ function CodeStudioShellInner() {
                   toast("Conflict resolved", "success");
                 }} />,
                 "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => setRightPanel(null)} />,
-                "recent-files": () => <PI.RecentFilesComponent files={[]} onOpen={(fileId: string) => {
+                "recent-files": () => <PI.RecentFilesComponent files={panels.recentFiles} onOpen={(fileId: string) => {
                   const found = findFileNodeByName(files, fileId);
                   if (found) handleFileSelect(found);
-                }} onClear={() => { toast("Recent files cleared", "info"); }} />,
-                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={[]} onSelect={(symbol) => {
+                }} onClear={() => { panels.clearRecentFiles(); toast("Recent files cleared", "info"); }} />,
+                "symbol-palette": () => <PI.SymbolPaletteComponent symbols={panels.symbols} onSelect={(symbol) => {
                   if (symbol?.line) {
                     const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
                     editor?.revealLineInCenter?.(symbol.line);
@@ -1462,7 +1473,7 @@ function CodeStudioShellInner() {
                 "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => setRightPanel(null)} />,
                 "api-config": () => <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />,
                 "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => setRightPanel(null)} />,
-                "code-actions": () => <PI.QuickActionsComponent selectedText="" position={{ top: 0, left: 0 }} language={activeFile?.language ?? "plaintext"} onAction={(actionId: string) => {
+                "code-actions": () => <PI.QuickActionsComponent selectedText={panels.editorSelection.text} position={{ top: panels.editorSelection.top, left: panels.editorSelection.left }} language={activeFile?.language ?? "plaintext"} onAction={(actionId: string) => {
                   setRightPanel("chat");
                   toast(`Action: ${actionId}`, "info");
                 }} onClose={() => setRightPanel(null)} />,
