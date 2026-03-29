@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, startTransition } from "react";
 import { FileText, Bot, Hash, X } from "lucide-react";
 import type { FileNode } from "@/lib/code-studio-types";
 import { fileIconColor } from "@/lib/code-studio-types";
@@ -111,7 +111,7 @@ export default function MentionPopup({
   }, [query, files, agents, symbols]);
 
   useEffect(() => {
-    setSelectedIndex(0);
+    startTransition(() => setSelectedIndex(0));
   }, [query]);
 
   const handleKeyDown = useCallback(

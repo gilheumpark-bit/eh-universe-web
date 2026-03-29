@@ -86,17 +86,17 @@ describe('rate-limit', () => {
   describe('RATE_LIMITS presets', () => {
     it('defines chat preset', () => {
       expect(RATE_LIMITS.chat.windowMs).toBe(60_000);
-      expect(RATE_LIMITS.chat.maxRequests).toBe(60);
+      expect(RATE_LIMITS.chat.maxRequests).toBe(30);
     });
 
     it('defines imageGen preset', () => {
       expect(RATE_LIMITS.imageGen.windowMs).toBe(60_000);
-      expect(RATE_LIMITS.imageGen.maxRequests).toBe(30);
+      expect(RATE_LIMITS.imageGen.maxRequests).toBe(10);
     });
 
     it('defines default preset', () => {
       expect(RATE_LIMITS.default.windowMs).toBe(60_000);
-      expect(RATE_LIMITS.default.maxRequests).toBe(120);
+      expect(RATE_LIMITS.default.maxRequests).toBe(60);
     });
   });
 

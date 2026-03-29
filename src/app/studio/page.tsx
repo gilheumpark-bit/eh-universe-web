@@ -1566,7 +1566,7 @@ export default function StudioPage() {
         isGenerating={isQuickGenerating}
       />
 
-      {showApiKeyModal && !(hydrated && !localStorage.getItem('noa_onboarding_done')) && (
+      {showApiKeyModal && (
         <ApiKeyModal
           language={language}
           hostedProviders={hostedProviders}

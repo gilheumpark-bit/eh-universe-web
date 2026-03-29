@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const rl = sharedCheckRateLimit(ip, 'image-gen', RATE_LIMITS.imageGen);
     if (!rl.allowed) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. Max 30 image generations per minute.' },
+        { error: 'Rate limit exceeded. Max 10 image generations per minute.' },
         { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
       );
     }

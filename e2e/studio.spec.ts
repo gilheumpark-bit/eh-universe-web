@@ -15,8 +15,8 @@ async function dismissOnboarding(page: import('@playwright/test').Page) {
 async function ensureSession(page: import('@playwright/test').Page) {
   await dismissOnboarding(page);
 
-  // "새로운 소설 시작" 버튼 클릭 → 새 세션 생성
-  const newBtn = page.locator('button', { hasText: /새로운 소설 시작|Start New Novel/ }).first();
+  // 온보딩 버튼 클릭 → 새 세션 생성 (Quick Start / Manual Setup / Try Demo)
+  const newBtn = page.locator('button', { hasText: /Quick Start|Manual Setup|Try Demo|쾌속 시작|직접 설정|데모 체험/ }).first();
   await expect(newBtn).toBeVisible({ timeout: 10000 });
   await newBtn.click();
 
