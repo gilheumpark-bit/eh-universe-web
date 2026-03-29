@@ -85,8 +85,18 @@ export default function CommandPalette({
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const toggleGroup = useCallback((category: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }, []);
 
   // -- Reset state when opened --
   useEffect(() => {
@@ -120,14 +130,16 @@ export default function CommandPalette({
     return map;
   }, [filtered]);
 
-  // Flat list for keyboard nav
+  // Flat list for keyboard nav (excludes collapsed groups)
   const flatList = useMemo(() => {
     const result: Command[] = [];
-    for (const cmds of grouped.values()) {
-      result.push(...cmds);
+    for (const [cat, cmds] of grouped.entries()) {
+      if (!collapsedGroups.has(cat)) {
+        result.push(...cmds);
+      }
     }
     return result;
-  }, [grouped]);
+  }, [grouped, collapsedGroups]);
 
   // -- Clamp active index when list changes --
   useEffect(() => {
@@ -214,6 +226,7 @@ export default function CommandPalette({
             onChange={(e) => {
               setQuery(e.target.value);
               setActiveIndex(0);
+              if (e.target.value) setCollapsedGroups(new Set()); // 검색 시 모든 그룹 펼침
             }}
             placeholder="Type a command..."
             className="w-full bg-transparent font-[family-name:var(--font-mono)] text-[13px] text-text-primary placeholder-text-tertiary outline-none"
@@ -240,16 +253,22 @@ export default function CommandPalette({
           ) : (
             Array.from(grouped.entries()).map(([category, cmds]) => (
               <div key={category} role="group" aria-label={category}>
-                {/* Category header */}
-                <div className="flex items-center gap-1.5 px-3 pb-1 pt-2">
-                  <ChevronRight className="h-3 w-3 text-text-tertiary" />
+                {/* Category header — clickable to collapse/expand */}
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(category)}
+                  className="flex w-full items-center gap-1.5 px-3 pb-1 pt-2 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                  aria-expanded={!collapsedGroups.has(category)}
+                >
+                  <ChevronRight className={`h-3 w-3 text-text-tertiary transition-transform duration-150 ${collapsedGroups.has(category) ? "" : "rotate-90"}`} />
                   <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                     {category}
                   </span>
-                </div>
+                  <span className="ml-auto font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary/50">{cmds.length}</span>
+                </button>
 
-                {/* Command items */}
-                {cmds.map((cmd) => {
+                {/* Command items — hidden when collapsed */}
+                {!collapsedGroups.has(category) && cmds.map((cmd) => {
                   renderIndex++;
                   const isActive = renderIndex === activeIndex;
 
