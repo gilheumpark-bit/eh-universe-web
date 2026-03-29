@@ -354,10 +354,20 @@ Appropriate for light novels, web fiction, casual first-person narration.`;
 // PART 5 — 통합 시스템 프롬프트 빌더
 // ============================================================
 
+const MAX_CONTEXT_BRIDGE_CHARS = 2000;
+
 export function buildTranslationSystemPrompt(config: TranslationConfig): string {
+  // Guard: clamp band to valid range regardless of caller input
+  const safeBand = clampBand(config.band);
+  const safeConfig: TranslationConfig = {
+    ...config,
+    band: safeBand,
+    contextBridge: config.contextBridge?.slice(0, MAX_CONTEXT_BRIDGE_CHARS) ?? '',
+  };
+
   const parts: string[] = [];
-  const lang = langName(config.targetLang);
-  const isMode1 = config.mode === 'fidelity';
+  const lang = langName(safeConfig.targetLang);
+  const isMode1 = safeConfig.mode === 'fidelity';
 
   // 역할 정의 (모드별 분기)
   if (isMode1) {
@@ -373,9 +383,9 @@ Output ONLY the recreated text, nothing else.`);
 
   // 모드별 Band 지시문
   if (isMode1) {
-    parts.push(buildFidelityDirective(config.band));
+    parts.push(buildFidelityDirective(safeConfig.band));
   } else {
-    parts.push(buildExperienceDirective(config.band, config.targetLang));
+    parts.push(buildExperienceDirective(safeConfig.band, safeConfig.targetLang));
   }
 
   // 공통 규칙
@@ -411,12 +421,12 @@ Output ONLY the recreated text, nothing else.`);
 
   // MODE2 전용 가드: 무근거 보강 금지 + 세공 제한 + 축약형 제어
   if (!isMode1) {
-    parts.push(buildExperienceGuards(config));
+    parts.push(buildExperienceGuards(safeConfig));
   }
 
   // 용어집
-  if (config.glossary.length > 0) {
-    const glossaryLines = config.glossary.map(g => {
+  if (safeConfig.glossary.length > 0) {
+    const glossaryLines = safeConfig.glossary.map(g => {
       const lock = g.locked ? ' [LOCKED]' : '';
       const ctx = g.context ? ` (${g.context})` : '';
       return `  "${g.source}" → "${g.target}"${ctx}${lock}`;
@@ -426,27 +436,27 @@ ${glossaryLines.join('\n')}`);
   }
 
   // 장르 프리셋 주입 (PART 13)
-  if (config.genre) {
-    const genreDirective = buildGenreTranslationDirective(config.genre, config.targetLang);
+  if (safeConfig.genre) {
+    const genreDirective = buildGenreTranslationDirective(safeConfig.genre, safeConfig.targetLang);
     if (genreDirective) parts.push(genreDirective);
   }
 
   // 캐릭터 레지스터 주입 (PART 14)
-  if (config.characterRegisters && config.characterRegisters.length > 0) {
-    const registerDirective = buildCharacterRegisterDirective(config.characterRegisters, config.targetLang);
+  if (safeConfig.characterRegisters && safeConfig.characterRegisters.length > 0) {
+    const registerDirective = buildCharacterRegisterDirective(safeConfig.characterRegisters, safeConfig.targetLang);
     parts.push(registerDirective);
   }
 
   // 번역 오류 패턴 힌트 (PART 15)
-  if (config.translatorProfile) {
-    const profileHint = buildTranslatorProfileHint(config.translatorProfile);
+  if (safeConfig.translatorProfile) {
+    const profileHint = buildTranslatorProfileHint(safeConfig.translatorProfile);
     if (profileHint) parts.push(profileHint);
   }
 
-  // 문맥 브릿지
-  if (config.contextBridge.trim()) {
+  // 문맥 브릿지 (length-guarded via safeConfig)
+  if (safeConfig.contextBridge.trim()) {
     parts.push(`[Context from previous chapter — for continuity only, do NOT translate this]
-${config.contextBridge}`);
+${safeConfig.contextBridge}`);
   }
 
   return parts.join('\n\n');

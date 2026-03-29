@@ -170,18 +170,16 @@ const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'o
 // Check if a given position in text is inside dialogue quotes.
 // Supports 「」, "", '', "", '' quote pairs.
 function isInsideDialogue(text: string, position: number): boolean {
-  const quoteChars: Array<[string, string]> = [
-    ['「', '」'], ['\u201C', '\u201D'], ['\u2018', '\u2019'], ['"', '"'], ["'", "'"],
-  ];
-  for (const [open, close] of quoteChars) {
-    let depth = 0;
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] === open) depth++;
-      else if (text[i] === close && depth > 0) depth--;
-      if (i === position && depth > 0) return true;
-    }
+  // Single-pass scanner: track open/close quotes up to position (O(n) instead of O(n*q))
+  const openChars = new Set(['「', '『', '\u201C', '\u2018', '"', "'"]);
+  const closeChars = new Set(['」', '』', '\u201D', '\u2019', '"', "'"]);
+  let depth = 0;
+  for (let i = 0; i < position && i < text.length; i++) {
+    const ch = text[i];
+    if (openChars.has(ch)) depth++;
+    else if (closeChars.has(ch) && depth > 0) depth--;
   }
-  return false;
+  return depth > 0;
 }
 
 // Check if a word match is part of a longer compound word (surrounded by Korean chars).
@@ -189,8 +187,10 @@ function isCompoundWord(text: string, position: number, wordLength: number): boo
   const before = position > 0 ? text[position - 1] : '';
   const after = position + wordLength < text.length ? text[position + wordLength] : '';
   const koreanRange = /[\uAC00-\uD7AF]/;
-  // If both before AND after are Korean chars, it's embedded in a compound
-  return (before !== '' && koreanRange.test(before)) && (after !== '' && koreanRange.test(after));
+  // If EITHER before OR after is a Korean char, it's likely part of a compound word
+  const prevIsKorean = before !== '' && koreanRange.test(before);
+  const nextIsKorean = after !== '' && koreanRange.test(after);
+  return prevIsKorean || nextIsKorean;
 }
 
 export function validateCausality(text: string, ruleLevel: number, language?: AppLanguage): { fixes: FixRecord[]; issues: ValidationIssue[] } {
@@ -206,8 +206,14 @@ export function validateCausality(text: string, ruleLevel: number, language?: Ap
     ? pack.bannedWords
     : [...EH_BANNED_WORDS_KO, ...EH_BANNED_WORDS_EN];
 
-  for (const word of allBanned) {
-    const regex = new RegExp(word, 'gi');
+  // Pre-compile regexes outside the loop to avoid recompilation per iteration
+  const compiledBanned = allBanned.map(word => ({
+    word,
+    regex: new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+  }));
+
+  for (const { word, regex } of compiledBanned) {
+    regex.lastIndex = 0;
     let m: RegExpExecArray | null;
     let totalCount = 0;
     let firstPosition = -1;
@@ -240,15 +246,6 @@ export function validateCausality(text: string, ruleLevel: number, language?: Ap
   return { fixes, issues };
 }
 
-// Simplified IP firewall — flag well-known franchise names
-const IP_PATTERNS = [
-  /해리\s?포터/g, /Harry\s?Potter/gi,
-  /스타\s?워즈/g, /Star\s?Wars/gi,
-  /반지의\s?제왕/g, /Lord\s?of\s?the\s?Rings/gi,
-  /나루토/g, /Naruto/gi,
-  /원피스/g, /One\s?Piece/gi,
-];
-
 export function validateStatic(text: string): { fixes: FixRecord[]; issues: ValidationIssue[] } {
   if (text.length > MAX_TEXT_LENGTH) text = text.slice(0, MAX_TEXT_LENGTH);
   const fixes: FixRecord[] = [];
@@ -280,18 +277,8 @@ export function validateStatic(text: string): { fixes: FixRecord[]; issues: Vali
     }
   }
 
-  // IP/copyright scan
-  for (const pattern of IP_PATTERNS) {
-    const matches = text.match(pattern);
-    if (matches) {
-      issues.push({
-        category: 'ip_firewall',
-        message: `저작권 주의: "${matches[0]}" 감지`,
-        severity: Severity.ERROR,
-        suggestion: '고유 명칭으로 대체하세요',
-      });
-    }
-  }
+  // IP/copyright scan — delegated to validateTrademarkIP (single source of truth).
+  // Previously duplicated IP_PATTERNS here; now TRADEMARK_PATTERNS covers all cases.
 
   return { fixes, issues };
 }
@@ -377,7 +364,8 @@ export function calculateCleanTaste(text: string): { aiTone: number; humanNoise:
 
   // AI Tone score
   let aiHits = 0;
-  for (const p of ['그러나 ', '반면에 ', '한편으로는 ', '따라서 ', '것이다.', '되었다.', '있었다.']) {
+  // '있었다.' removed: natural Korean past tense, not an AI tone marker
+  for (const p of ['그러나 ', '반면에 ', '한편으로는 ', '따라서 ', '것이다.', '되었다.']) {
     aiHits += (text.match(new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
   }
   const aiTone = Math.min(1, aiHits / (sentences * 0.5));
@@ -637,7 +625,11 @@ export function detectTrademarks(text: string): TrademarkMatch[] {
   // 2-Track: check both original and normalized (spaces/zero-width removed)
   const normalized = normalizeTrademark(text);
   _TRADEMARK_COMBINED_RE.lastIndex = 0;
-  if (!_TRADEMARK_COMBINED_RE.test(text) && !_TRADEMARK_COMBINED_RE.test(normalized)) return [];
+  const hasInOriginal = _TRADEMARK_COMBINED_RE.test(text);
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  const hasInNormalized = _TRADEMARK_COMBINED_RE.test(normalized);
+  _TRADEMARK_COMBINED_RE.lastIndex = 0;
+  if (!hasInOriginal && !hasInNormalized) return [];
 
   const matches: TrademarkMatch[] = [];
   // Scan both original and normalized text for trademark matches
