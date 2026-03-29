@@ -1,8 +1,8 @@
 export type ArticleData = {
-  title: { ko: string; en: string };
+  title: { ko: string; en: string; jp?: string; cn?: string };
   level: string;
   category: string;
-  content: { ko: string; en: string };
+  content: { ko: string; en: string; jp?: string; cn?: string };
   image?: string;
   related?: string[];
 };
@@ -4438,6 +4438,11 @@ v1.0 (2km) → Tier 3 (2km) → Tier 4 (1km) → Tier 2 (6km) → Tier 1 (12km)`
 import { reportArticles } from "./articles-reports";
 Object.assign(articles, reportArticles);
 
-export function getArticleTitle(slug: string, lang: "ko" | "en"): string {
-  return articles[slug]?.title[lang] ?? slug;
+export function getArticleTitle(slug: string, lang: "ko" | "en" | "jp" | "cn"): string {
+  const t = articles[slug]?.title;
+  if (!t) return slug;
+  if (lang === "ko") return t.ko;
+  if (lang === "jp") return t.jp ?? t.en ?? t.ko;
+  if (lang === "cn") return t.cn ?? t.en ?? t.ko;
+  return t.en;
 }

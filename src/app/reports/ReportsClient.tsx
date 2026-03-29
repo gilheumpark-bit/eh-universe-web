@@ -3,7 +3,7 @@
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { useLang } from "@/lib/LangContext";
+import { useLang, L2 } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import {
   REPORT_CATEGORIES,
@@ -17,7 +17,7 @@ import {
 
 type ReportEntry = {
   slug: string;
-  title: { ko: string; en: string };
+  title: { ko: string; en: string; jp?: string; cn?: string };
   level: string;
   subcategory: ReportSubcategory;
 };
@@ -140,7 +140,7 @@ function SubcategoryBadge({
   if (!cat || cat.id === "all") return null;
   return (
     <span className="font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-[0.14em] text-text-tertiary/60 border border-white/6 rounded px-1.5 py-0.5">
-      {lang === "ko" ? cat.label : cat.labelEn}
+      {(lang === "ko" || lang === "jp" || lang === "cn") ? cat.label : cat.labelEn}
     </span>
   );
 }
@@ -278,7 +278,7 @@ export default function ReportsClient() {
                         : "border border-white/6 text-text-tertiary hover:text-text-secondary hover:border-white/10"
                     }`}
                   >
-                    {lang === "ko" ? cat.label : cat.labelEn}
+                    {(lang === "ko" || lang === "jp" || lang === "cn") ? cat.label : cat.labelEn}
                   </button>
                 ))}
               </div>
@@ -342,9 +342,7 @@ export default function ReportsClient() {
                               : "text-text-primary group-hover:text-accent-purple"
                           }`}
                         >
-                          {lang === "ko"
-                            ? report.title.ko
-                            : report.title.en}
+                          {L2(report.title, lang)}
                         </span>
                       </div>
                       <BadgeLevel level={report.level} />

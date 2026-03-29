@@ -14,7 +14,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
 
   const [articleModule, setArticleModule] = useState<{
     articles: Record<string, ArticleData>;
-    getArticleTitle: (slug: string, lang: "ko" | "en") => string;
+    getArticleTitle: (slug: string, lang: "ko" | "en" | "jp" | "cn") => string;
   } | null>(null);
 
   const [loadFailed, setLoadFailed] = useState(false);
@@ -150,7 +150,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
                         <span className={`badge ${relLvl} text-[10px] px-1 py-0`}>
                           {rel.level.charAt(0)}
                         </span>
-                        {getArticleTitle(relSlug, lang === "ko" ? "ko" : "en")}
+                        {getArticleTitle(relSlug, lang)}
                       </Link>
                     );
                   })}

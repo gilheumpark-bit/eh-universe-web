@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
+import type { EditorPane } from "@/components/code-studio/EditorGroup";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
 import { getApiKey, setApiKey, getActiveProvider, setActiveProvider } from "@/lib/ai-providers";
 import { saveSettings, loadSettings } from "@/lib/code-studio-store";
@@ -267,7 +268,7 @@ function CodeStudioShellInner() {
   const [confirmState, setConfirmState] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [buildError, setBuildError] = useState<{ message: string; stack?: string; file?: string; line?: number } | null>(null);
-  const [splitFileId, setSplitFileId] = useState<string | null>(null);
+  const [useEditorGroup, setUseEditorGroup] = useState(false);
   const [dragTabIdx, setDragTabIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const editorRef = useRef<unknown>(null);
@@ -285,14 +286,44 @@ function CodeStudioShellInner() {
   const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
 
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
-  const splitFile = splitFileId ? (openFiles.find((f) => f.id === splitFileId) ?? null) : null;
 
-  // Split editor change handler
-  const handleSplitEditorChange = useCallback((value: string | undefined) => {
-    if (!splitFileId || value === undefined) return;
-    setOpenFiles((prev) => prev.map((f) => f.id === splitFileId ? { ...f, content: value, isDirty: true } : f));
-    fsUpdateContent(splitFileId, value);
-  }, [splitFileId]);
+  // EditorGroup per-pane editor renderer
+  const renderEditorPane = useCallback((pane: EditorPane, isFocused: boolean) => {
+    const paneFile = pane.files.find((f) => f.id === pane.activeFileId);
+    if (!paneFile) {
+      return (
+        <div className="h-full flex items-center justify-center text-text-tertiary text-xs">
+          Select a file to edit
+        </div>
+      );
+    }
+    return (
+      <MonacoEditor
+        height="100%" language={paneFile.language} value={paneFile.content}
+        onChange={(value: string | undefined) => {
+          if (value === undefined) return;
+          setOpenFiles((prev) => prev.map((f) => f.id === paneFile.id ? { ...f, content: value, isDirty: true } : f));
+          fsUpdateContent(paneFile.id, value);
+        }}
+        theme="vs-dark"
+        options={{
+          fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+          minimap: { enabled: isFocused ? settings.minimap : false }, scrollBeyondLastLine: false, padding: { top: 12 },
+          fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+          lineNumbers: "on", renderLineHighlight: "line",
+          bracketPairColorization: { enabled: true },
+          smoothScrolling: true,
+          cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+        }}
+        onMount={isFocused ? (editor: unknown, monaco: unknown) => {
+          editorRef.current = editor;
+          setupMonaco(monaco as Parameters<typeof setupMonaco>[0], editor as Parameters<typeof setupMonaco>[1], { theme: "dark" });
+          registerEditorFeatures(monaco as Parameters<typeof registerEditorFeatures>[0], editor as Parameters<typeof registerEditorFeatures>[1]);
+          registerGhostTextProvider(monaco as Parameters<typeof registerGhostTextProvider>[0]);
+        } : undefined}
+      />
+    );
+  }, [settings.fontSize, settings.tabSize, settings.wordWrap, settings.minimap, fsUpdateContent]);
 
   // Tab reorder handler
   const handleTabDrop = useCallback((fromIdx: number, toIdx: number) => {
@@ -1016,13 +1047,10 @@ function CodeStudioShellInner() {
             </div>
             <div className="flex items-center gap-1 px-2 flex-shrink-0">
               <button
-                onClick={() => {
-                  if (splitFileId) { setSplitFileId(null); }
-                  else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
-                }}
+                onClick={() => setUseEditorGroup((v) => !v)}
                 disabled={openFiles.length === 0}
-                className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${splitFileId ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
-                title="Split Editor"
+                className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${useEditorGroup ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
+                title="Split Editor (EditorGroup)"
               >
                 <Columns2 className="h-4 w-4" />
               </button>
@@ -1046,10 +1074,7 @@ function CodeStudioShellInner() {
               onToggleProblems={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
               onRunBugFinder={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
               onDeploy={() => setRightPanel(rightPanel === "deploy" ? null : "deploy")}
-              onToggleSplit={() => {
-                if (splitFileId) setSplitFileId(null);
-                else if (activeFileId) { const other = openFiles.find((f) => f.id !== activeFileId); setSplitFileId(other?.id ?? activeFileId); }
-              }}
+              onToggleSplit={() => setUseEditorGroup((v) => !v)}
               onUndo={fsCanUndo ? fsUndo : undefined}
               onRedo={fsCanRedo ? fsRedo : undefined}
               onZoomIn={() => setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) }))}
@@ -1086,11 +1111,20 @@ function CodeStudioShellInner() {
                 />
               </div>
             )}
-            {/* Editor Area (supports split view) — Pattern 4: id for skip-nav */}
-            <div id="main-editor" className={`flex-1 min-w-0 ${splitFileId ? "flex" : ""}`}>
-              {/* Primary Editor */}
-              <div className={splitFileId ? "flex-1 min-w-0" : "h-full"}>
-                {activeFile ? (
+            {/* Editor Area — Pattern 4: id for skip-nav */}
+            <div id="main-editor" className="flex-1 min-w-0 flex flex-col">
+              {useEditorGroup ? (
+                /* Multi-pane EditorGroup mode */
+                <PI.EditorGroupComponent
+                  openFiles={openFiles}
+                  activeFileId={activeFileId}
+                  onSelectFile={(id: string) => setActiveFileId(id)}
+                  onCloseFile={handleCloseTab}
+                  renderEditor={renderEditorPane}
+                />
+              ) : (
+                /* Single editor mode */
+                activeFile ? (
                   <MonacoEditor
                     height="100%" language={activeFile.language} value={activeFile.content}
                     onChange={handleEditorChange} theme="vs-dark"
@@ -1105,24 +1139,24 @@ function CodeStudioShellInner() {
                       cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
                       stickyScroll: { enabled: true },
                     }}
-                    onMount={(editor, monaco) => {
+                    onMount={(editor: unknown, monaco: unknown) => {
                       editorRef.current = editor;
-                      setupMonaco(monaco, editor, { theme: "dark" });
-                      registerEditorFeatures(monaco, editor);
-                      registerGhostTextProvider(monaco);
+                      setupMonaco(monaco as Parameters<typeof setupMonaco>[0], editor as Parameters<typeof setupMonaco>[1], { theme: "dark" });
+                      registerEditorFeatures(monaco as Parameters<typeof registerEditorFeatures>[0], editor as Parameters<typeof registerEditorFeatures>[1]);
+                      registerGhostTextProvider(monaco as Parameters<typeof registerGhostTextProvider>[0]);
                       crossFileDisposableRef.current?.dispose();
-                      crossFileDisposableRef.current = registerCrossFileProviders(monaco, {
-                        onOpenFile: (filePath) => {
+                      crossFileDisposableRef.current = registerCrossFileProviders(monaco as Parameters<typeof registerCrossFileProviders>[0], {
+                        onOpenFile: (filePath: string) => {
                           const node = findFileNodeByName(files, filePath);
                           if (node) handleFileSelect(node);
                         },
                       });
-                      editor.onDidDispose(() => {
+                      (editor as { onDidDispose: (cb: () => void) => void }).onDidDispose(() => {
                         cancelGhostText();
                         crossFileDisposableRef.current?.dispose();
                         crossFileDisposableRef.current = null;
                       });
-                      editor.onDidChangeCursorPosition((e) => {
+                      (editor as { onDidChangeCursorPosition: (cb: (e: { position: { lineNumber: number; column: number } }) => void) => void }).onDidChangeCursorPosition((e) => {
                         setCursorPos({ line: e.position.lineNumber, col: e.position.column });
                       });
                     }}
@@ -1140,46 +1174,7 @@ function CodeStudioShellInner() {
                       <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">Select a file to start editing</p>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Split Editor (right side) */}
-              {splitFileId && splitFile && (
-                <>
-                  <div className="w-px bg-white/8" />
-                  <div className="flex flex-1 min-w-0 flex-col">
-                    <div className="flex items-center gap-2 border-b border-white/8 bg-bg-secondary px-2 py-1">
-                      <Columns2 className="h-3 w-3 text-accent-green" />
-                      <select
-                        value={splitFileId}
-                        onChange={(e) => setSplitFileId(e.target.value)}
-                        className="flex-1 bg-transparent font-[family-name:var(--font-mono)] text-[11px] text-text-secondary outline-none"
-                      >
-                        {openFiles.map((f) => (
-                          <option key={f.id} value={f.id}>{f.name}</option>
-                        ))}
-                      </select>
-                      <button onClick={() => setSplitFileId(null)} className="rounded p-0.5 text-text-tertiary hover:text-text-primary hover:bg-white/10" title="Close Split">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <div className="flex-1 min-h-0">
-                      <MonacoEditor
-                        height="100%" language={splitFile.language} value={splitFile.content}
-                        onChange={handleSplitEditorChange} theme="vs-dark"
-                        options={{
-                          fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
-                          minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 },
-                          fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-                          lineNumbers: "on", renderLineHighlight: "line",
-                          bracketPairColorization: { enabled: true },
-                          smoothScrolling: true,
-                          cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </>
+                )
               )}
             </div>
 
