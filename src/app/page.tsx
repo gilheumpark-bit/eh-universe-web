@@ -132,14 +132,14 @@ function SplashScreen({ onUniverse, onStudio, onCodeStudio }: { onUniverse: () =
 export default function Home() {
   const { lang } = useLang();
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(false); // SSR-safe: false 시작
-  // 클라이언트에서 스플래시 표시 여부 결정 (hydration mismatch 방지)
+  // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
+  // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
+  const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
   useEffect(() => {
-    if (!sessionStorage.getItem("eh-splash-seen")) {
-      // queueMicrotask로 cascading render 방지
-      queueMicrotask(() => setShowSplash(true));
-    }
+    setSplashState(sessionStorage.getItem("eh-splash-seen") ? "hide" : "show");
   }, []);
+  const showSplash = splashState === "show";
+  const setShowSplash = (v: boolean) => setSplashState(v ? "show" : "hide");
 
   // Auto-dismiss: desktop 2.5s, mobile needs more time to read & tap
   useEffect(() => {
@@ -241,6 +241,11 @@ export default function Home() {
   const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
+
+  // SSR → hydration 전까지 빈 화면 (깜빡임 방지)
+  if (splashState === "loading") {
+    return <div className="min-h-screen bg-bg-primary" />;
+  }
 
   if (showSplash) {
     return (
