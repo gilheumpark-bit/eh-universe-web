@@ -99,6 +99,7 @@ async function generateJson<T>(
         config: {
           responseMimeType: 'application/json',
           responseSchema,
+          abortSignal: AbortSignal.timeout(30_000),
         },
       });
 

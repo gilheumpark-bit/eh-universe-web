@@ -89,6 +89,7 @@ async function generateJsonOpenAICompat(
       const res = await fetch(url, {
         method: 'POST',
         headers,
+        signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           model,
           messages: [
@@ -149,6 +150,7 @@ async function generateJsonClaude(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
+    signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({
       model: model || 'claude-sonnet-4-20250514',
       max_tokens: 4096,
@@ -191,7 +193,7 @@ async function generateJsonGemini(
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema },
+        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(30_000) },
       });
       try {
         return JSON.parse(response.text || JSON.stringify(fallback));

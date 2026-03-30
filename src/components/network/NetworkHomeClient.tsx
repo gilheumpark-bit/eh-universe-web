@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
-import { useLang } from "@/lib/LangContext";
+import { useLang, type Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { netT } from "@/lib/network-translations";
 import {
   getAllUniqueTags,
@@ -85,16 +86,16 @@ const SAMPLE_PLANETS = [
   },
 ];
 
-function relativeTime(isoDate: string, lang: string): string {
+function relativeTime(isoDate: string, lang: Lang): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return lang === "ko" ? "방금 전" : "Just now";
-  if (minutes < 60) return lang === "ko" ? `${minutes}분 전` : `${minutes}m ago`;
+  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now" });
+  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago` });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return lang === "ko" ? `${hours}시간 전` : `${hours}h ago`;
+  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago` });
   const days = Math.floor(hours / 24);
-  if (days < 30) return lang === "ko" ? `${days}일 전` : `${days}d ago`;
-  return new Date(isoDate).toLocaleDateString(lang === "ko" ? "ko-KR" : "en-US");
+  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago` });
+  return new Date(isoDate).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }));
 }
 
 export function NetworkHomeClient() {
@@ -200,9 +201,9 @@ export function NetworkHomeClient() {
         if (!cancelled) {
           const msg = caught instanceof Error ? caught.message : "";
           if (msg.includes("Firestore is not available")) {
-            setError(lang === "ko" ? "데이터베이스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요." : "Unable to connect to the database. Please try again later.");
+            setError(L4(lang, { ko: "데이터베이스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.", en: "Unable to connect to the database. Please try again later." }));
           } else {
-            setError(msg || (lang === "ko" ? "불러오기에 실패했습니다." : "Failed to load."));
+            setError(msg || (L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load." })));
           }
         }
       } finally {
@@ -280,7 +281,7 @@ export function NetworkHomeClient() {
             <div className="max-w-3xl">
               <div className="site-kicker">NMF — Narrative Management Foundation</div>
               <p className="mt-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.1em] text-text-tertiary">
-                {lang === "ko" ? "기록하라. 관리하라. 정산하라." : "Narrate. Manage. Finalize."}
+                {L4(lang, { ko: "기록하라. 관리하라. 정산하라.", en: "Narrate. Manage. Finalize." })}
               </p>
               <h1 className="site-title mt-3 text-4xl font-semibold md:text-5xl">
                 {lang === "ko"
@@ -296,14 +297,14 @@ export function NetworkHomeClient() {
 
             <div className="flex flex-wrap gap-3">
               <Link href="/network/new" className="premium-button">
-                {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
+                {L4(lang, { ko: "행성 등록하기", en: "Register a Planet" })}
               </Link>
               <a href="#board-posts" className="premium-button secondary">
                 {netT('latestLogs', lang)}
               </a>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
-                  {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
+                  {L4(lang, { ko: "Google 로그인", en: "Sign In with Google" })}
                 </button>
               ) : null}
             </div>
@@ -312,16 +313,16 @@ export function NetworkHomeClient() {
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {[
               {
-                title: lang === "ko" ? "행성 등록소" : "Planet Registry",
-                body: lang === "ko" ? "세계관 허브와 운영 목표를 등록합니다." : "Register the world hub and operating goal.",
+                title: L4(lang, { ko: "행성 등록소", en: "Planet Registry" }),
+                body: L4(lang, { ko: "세계관 허브와 운영 목표를 등록합니다.", en: "Register the world hub and operating goal." }),
               },
               {
-                title: lang === "ko" ? "관측 로그" : "Observation Logs",
-                body: lang === "ko" ? "이야기, 보고서, 회수문서를 같은 흐름에 쌓습니다." : "Stack stories, reports, and recovered files in one stream.",
+                title: L4(lang, { ko: "관측 로그", en: "Observation Logs" }),
+                body: L4(lang, { ko: "이야기, 보고서, 회수문서를 같은 흐름에 쌓습니다.", en: "Stack stories, reports, and recovered files in one stream." }),
               },
               {
-                title: lang === "ko" ? "정산 결과" : "Settlement Results",
-                body: lang === "ko" ? "행성 상태 판정과 위험도 기록을 운영 축으로 남깁니다." : "Track verdicts and risk changes as the operational layer.",
+                title: L4(lang, { ko: "정산 결과", en: "Settlement Results" }),
+                body: L4(lang, { ko: "행성 상태 판정과 위험도 기록을 운영 축으로 남깁니다.", en: "Track verdicts and risk changes as the operational layer." }),
               },
             ].map((item) => (
               <div key={item.title} className="premium-panel-soft p-5">
@@ -346,7 +347,7 @@ export function NetworkHomeClient() {
                   : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16 hover:text-text-primary"
               }`}
             >
-              {lang === "ko" ? BOARD_FILTER_LABELS.all.ko : BOARD_FILTER_LABELS.all.en}
+              {L4(lang, BOARD_FILTER_LABELS.all)}
               {state.posts.length > 0 && (
                 <span className="ml-1.5 text-[10px] opacity-60">{state.posts.length}</span>
               )}
@@ -413,21 +414,21 @@ export function NetworkHomeClient() {
               ? (
                   <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-green border-t-transparent mb-3" />
-                    <p className="text-sm text-text-tertiary">{lang === "ko" ? "행성을 불러오는 중..." : "Loading planets..."}</p>
+                    <p className="text-sm text-text-tertiary">{L4(lang, { ko: "행성을 불러오는 중...", en: "Loading planets..." })}</p>
                   </div>
                 )
               : !loading && error && state.planets.length === 0
                 ? (
                   <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-accent-red mb-3">
-                      {lang === "ko" ? "데이터를 불러오는 데 실패했습니다" : "Failed to load data"}
+                      {L4(lang, { ko: "데이터를 불러오는 데 실패했습니다", en: "Failed to load data" })}
                     </p>
                     <button
                       type="button"
                       onClick={handleRetry}
                       className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
                     >
-                      {lang === "ko" ? "다시 시도" : "Retry"}
+                      {L4(lang, { ko: "다시 시도", en: "Retry" })}
                     </button>
                   </div>
                 )
@@ -437,16 +438,16 @@ export function NetworkHomeClient() {
                     {/* Empty state */}
                     <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                       <p className="text-lg font-semibold text-text-primary">
-                        {lang === "ko" ? "아직 행성이 없습니다." : "No planets yet."}
+                        {L4(lang, { ko: "아직 행성이 없습니다.", en: "No planets yet." })}
                       </p>
                       <p className="mt-2 text-sm text-text-secondary">
-                        {lang === "ko" ? "첫 번째 행성을 만들어보세요!" : "Create the first one!"}
+                        {L4(lang, { ko: "첫 번째 행성을 만들어보세요!", en: "Create the first one!" })}
                       </p>
                       <Link
                         href="/network/new"
                         className="mt-5 inline-block rounded-lg bg-accent-amber/20 px-6 py-3 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
                       >
-                        {lang === "ko" ? "행성 등록하기" : "Register a Planet"}
+                        {L4(lang, { ko: "행성 등록하기", en: "Register a Planet" })}
                       </Link>
                       <button
                         type="button"
@@ -454,21 +455,21 @@ export function NetworkHomeClient() {
                         className="mt-4 text-xs text-text-tertiary hover:text-text-secondary transition-colors underline underline-offset-2"
                       >
                         {showSamples
-                          ? (lang === "ko" ? "샘플 숨기기" : "Hide samples")
-                          : (lang === "ko" ? "샘플 보기" : "Show samples")}
+                          ? (L4(lang, { ko: "샘플 숨기기", en: "Hide samples" }))
+                          : (L4(lang, { ko: "샘플 보기", en: "Show samples" }))}
                       </button>
                     </div>
                     {/* Sample planets — only shown on explicit toggle */}
                     {showSamples && SAMPLE_PLANETS.map((sample) => (
                       <div key={sample.id} className="premium-link-card relative p-6 opacity-60">
                         <span className="absolute right-4 top-4 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-amber">
-                          {lang === "ko" ? "샘플" : "Sample"}
+                          {L4(lang, { ko: "샘플", en: "Sample" })}
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="site-kicker">{sample.genre}</span>
                         </div>
-                        <h3 className="mt-4 text-xl font-semibold text-text-primary">{lang === "ko" ? sample.name.ko : sample.name.en}</h3>
-                        <p className="mt-3 text-sm leading-7 text-text-secondary">{lang === "ko" ? sample.summary.ko : sample.summary.en}</p>
+                        <h3 className="mt-4 text-xl font-semibold text-text-primary">{L4(lang, sample.name)}</h3>
+                        <p className="mt-3 text-sm leading-7 text-text-secondary">{L4(lang, sample.summary)}</p>
                         <div className="mt-5 flex flex-wrap gap-2">
                           {sample.tags.map((tag) => (
                             <span key={tag} className="badge badge-blue">{tag}</span>
@@ -482,14 +483,14 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-text-tertiary">
-                      {lang === "ko" ? "필터 결과가 없습니다." : "No results match the current filters."}
+                      {L4(lang, { ko: "필터 결과가 없습니다.", en: "No results match the current filters." })}
                     </p>
                     <button
                       type="button"
                       onClick={() => { setBoardFilter("all"); setSelectedTags([]); setShowBookmarksOnly(false); }}
                       className="mt-4 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
                     >
-                      {lang === "ko" ? "필터 해제" : "Clear Filters"}
+                      {L4(lang, { ko: "필터 해제", en: "Clear Filters" })}
                     </button>
                   </div>
                 )
@@ -515,8 +516,8 @@ export function NetworkHomeClient() {
                         ))}
                       </div>
                       <div className="mt-6 flex items-center justify-between text-xs text-text-tertiary">
-                        <span>{lang === "ko" ? `최근 로그 ${planet.stats.logCount}개` : `${planet.stats.logCount} recent logs`}</span>
-                        <span>{lang === "ko" ? `정산 ${planet.stats.settlementCount}` : `${planet.stats.settlementCount} settlements`}</span>
+                        <span>{L4(lang, { ko: `최근 로그 ${planet.stats.logCount}개`, en: `${planet.stats.logCount} recent logs` })}</span>
+                        <span>{L4(lang, { ko: `정산 ${planet.stats.settlementCount}`, en: `${planet.stats.settlementCount} settlements` })}</span>
                       </div>
                     </Link>
                     <div className="mt-3 flex justify-end">
@@ -531,14 +532,14 @@ export function NetworkHomeClient() {
         <section id="board-posts" className="space-y-4 scroll-mt-24">
           <div className="flex items-center justify-between">
             <div>
-              <div className="site-kicker">{lang === "ko" ? "최신 관측 로그" : "Latest Logs"}</div>
-              <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "이야기와 기록 스트림" : "Story and record stream"}</h2>
+              <div className="site-kicker">{L4(lang, { ko: "최신 관측 로그", en: "Latest Logs" })}</div>
+              <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "이야기와 기록 스트림", en: "Story and record stream" })}</h2>
             </div>
             <Link
               href="/network/posts/new"
               className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
             >
-              + {lang === "ko" ? "글쓰기" : "Write"}
+              + {L4(lang, { ko: "글쓰기", en: "Write" })}
             </Link>
           </div>
 
@@ -547,21 +548,21 @@ export function NetworkHomeClient() {
               ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-                    <p className="text-sm text-text-tertiary">{lang === "ko" ? "게시글을 불러오는 중..." : "Loading posts..."}</p>
+                    <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading posts..." })}</p>
                   </div>
                 )
               : error && state.posts.length === 0
                 ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-accent-red mb-3">
-                      {lang === "ko" ? "게시글을 불러오는 데 실패했습니다" : "Failed to load posts"}
+                      {L4(lang, { ko: "게시글을 불러오는 데 실패했습니다", en: "Failed to load posts" })}
                     </p>
                     <button
                       type="button"
                       onClick={handleRetry}
                       className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
                     >
-                      {lang === "ko" ? "다시 시도" : "Retry"}
+                      {L4(lang, { ko: "다시 시도", en: "Retry" })}
                     </button>
                   </div>
                 )
@@ -569,13 +570,13 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-text-tertiary">
-                      {lang === "ko" ? "아직 게시글이 없습니다." : "No posts yet."}
+                      {L4(lang, { ko: "아직 게시글이 없습니다.", en: "No posts yet." })}
                     </p>
                     <Link
                       href="/network/posts/new"
                       className="mt-4 rounded-lg bg-accent-amber/20 px-5 py-2.5 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
                     >
-                      {lang === "ko" ? "첫 글을 작성해보세요" : "Write the first post"}
+                      {L4(lang, { ko: "첫 글을 작성해보세요", en: "Write the first post" })}
                     </Link>
                   </div>
                 )
@@ -634,13 +635,13 @@ export function NetworkHomeClient() {
                           {author?.nickname ?? `Explorer-${post.authorId.slice(0, 6)}`}
                         </span>
                         <span>{relativeTime(post.createdAt, lang)}</span>
-                        <span>{planet?.name ?? (post.planetId || (lang === "ko" ? "일반" : "General"))}</span>
+                        <span>{planet?.name ?? (post.planetId || (L4(lang, { ko: "일반", en: "General" })))}</span>
                         <span className="ml-auto flex items-center gap-3">
                           {post.metrics.commentCount > 0 && (
-                            <span>{lang === "ko" ? `댓글 ${post.metrics.commentCount}` : `${post.metrics.commentCount} comments`}</span>
+                            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments` })}</span>
                           )}
                           {post.metrics.reactionCount > 0 && (
-                            <span>{lang === "ko" ? `반응 ${post.metrics.reactionCount}` : `${post.metrics.reactionCount} reactions`}</span>
+                            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions` })}</span>
                           )}
                         </span>
                       </div>
@@ -653,8 +654,8 @@ export function NetworkHomeClient() {
         {/* Settlements section */}
         <section className="space-y-4">
           <div>
-            <div className="site-kicker">{lang === "ko" ? "최신 정산" : "Latest Settlements"}</div>
-            <h2 className="site-title mt-2 text-2xl font-semibold">{lang === "ko" ? "위험도와 판정 변화" : "Risk and verdict changes"}</h2>
+            <div className="site-kicker">{L4(lang, { ko: "최신 정산", en: "Latest Settlements" })}</div>
+            <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "위험도와 판정 변화", en: "Risk and verdict changes" })}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -672,15 +673,15 @@ export function NetworkHomeClient() {
                       </div>
                       <div className="mt-4 space-y-3 text-sm text-text-secondary">
                         <div className="flex items-center justify-between gap-3">
-                          <span>{lang === "ko" ? "EH 수치" : "EH Value"}</span>
+                          <span>{L4(lang, { ko: "EH 수치", en: "EH Value" })}</span>
                           <span className="text-text-primary">{settlement.ehValue ?? "-"}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span>{lang === "ko" ? "위험도" : "Risk"}</span>
+                          <span>{L4(lang, { ko: "위험도", en: "Risk" })}</span>
                           <span className="text-text-primary">{settlement.risk ?? "-"}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span>{lang === "ko" ? "보관 등급" : "Archive"}</span>
+                          <span>{L4(lang, { ko: "보관 등급", en: "Archive" })}</span>
                           <span className="text-text-primary">{settlement.archiveLevel ?? "-"}</span>
                         </div>
                       </div>
@@ -695,7 +696,7 @@ export function NetworkHomeClient() {
             href="/network/guidelines"
             className="font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
           >
-            {lang === "ko" ? "NMF 2차 창작 가이드라인" : "NMF Creative Guidelines"} &rarr;
+            {L4(lang, { ko: "NMF 2차 창작 가이드라인", en: "NMF Creative Guidelines" })} &rarr;
           </Link>
         </section>
       </div>

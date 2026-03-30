@@ -67,7 +67,7 @@ async function generateJson<T>(
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema },
+        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(30_000) },
       });
       try {
         return JSON.parse(response.text || JSON.stringify(fallback)) as T;

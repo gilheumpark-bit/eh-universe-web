@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
-import { useLang } from "@/lib/LangContext";
+import { useLang, type Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import ToolNav from "@/components/tools/ToolNav";
 
 // ============================================================
@@ -10,7 +11,8 @@ import ToolNav from "@/components/tools/ToolNav";
 // ============================================================
 
 type Bi = { ko: string; en: string };
-function L(b: Bi, lang: string): string { return lang === "ko" ? b.ko : b.en; }
+/** @deprecated Use L4 from @/lib/i18n — supports JP/CN fallback */
+function L(b: Bi, lang: Lang): string { return L4(lang, b); }
 
 interface TowerTemplate {
   code: string;
@@ -630,7 +632,7 @@ function applyProgressMetrics(session: GameState, analysis: Analysis, bucket: st
   session.progress = progressProjection(session, analysis, bucket);
 }
 
-function unlockClues(session: GameState, analysis: Analysis, bucket: string, lang: string): { id: string; title: string; body: string }[] {
+function unlockClues(session: GameState, analysis: Analysis, bucket: string, lang: Lang): { id: string; title: string; body: string }[] {
   const unlocked = new Set(session.clueIds);
   const newClues: { id: string; title: string; body: string }[] = [];
   const maybeUnlock = (clueId: string) => {
@@ -650,7 +652,7 @@ function unlockClues(session: GameState, analysis: Analysis, bucket: string, lan
   return newClues;
 }
 
-function discoverFragments(session: GameState, analysis: Analysis, playerText: string, lang: string): { id: string; title: string; body: string }[] {
+function discoverFragments(session: GameState, analysis: Analysis, playerText: string, lang: Lang): { id: string; title: string; body: string }[] {
   const unlocked = new Set(session.fragmentIds);
   const lowered = playerText.toLowerCase();
   const newFragments: { id: string; title: string; body: string }[] = [];
@@ -689,7 +691,7 @@ function advanceObjectives(session: GameState, analysis: Analysis): void {
   session.objectiveIndex = idx === -1 ? completed.length - 1 : idx;
 }
 
-function resolveGameStatus(session: GameState, analysis: Analysis, bucket: string, playerText: string, lang: string): void {
+function resolveGameStatus(session: GameState, analysis: Analysis, bucket: string, playerText: string, lang: Lang): void {
   if (bucket === "give_up") {
     session.gameStatus = "withdrew";
     session.endingText = lang === "ko"
@@ -716,7 +718,7 @@ function canSubmitVerdict(state: GameState): boolean {
   return state.clueIds.length >= 4 && state.fragmentIds.length >= 3 && state.progress >= 0.55;
 }
 
-function evaluateVerdict(session: GameState, playerText: string, analysis: Analysis, lang: string): string {
+function evaluateVerdict(session: GameState, playerText: string, analysis: Analysis, lang: Lang): string {
   session.verdictAttemptCount += 1;
   const lowered = playerText.toLowerCase();
   if (!canSubmitVerdict(session)) {
@@ -747,7 +749,7 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
     deletion: { ko: "삭제", en: "deletion" },
     floor: { ko: "층", en: "floor" },
   };
-  const missingText = missingConcepts.map((c) => L(conceptNames[c], lang)).join(", ") || (lang === "ko" ? "검증된 균형" : "verified balance");
+  const missingText = missingConcepts.map((c) => L(conceptNames[c], lang)).join(", ") || (L4(lang, { ko: "검증된 균형", en: "verified balance" }));
   session.distortion = Math.min(session.distortion + 0.12, 2);
   const feedback = lang === "ko"
     ? `탑은 문장을 보류했습니다. 아직 ${missingText} 개념이 충분히 묶이지 않았습니다.`
@@ -770,7 +772,7 @@ function towerCondition(state: GameState): string {
   return "active";
 }
 
-function buildPromptSeeds(state: GameState, lang: string): { id: string; title: string; body: string }[] {
+function buildPromptSeeds(state: GameState, lang: Lang): { id: string; title: string; body: string }[] {
   const unlockedFragments = new Set(state.fragmentIds);
   const unlockedClues = new Set(state.clueIds);
   const selectedIds: string[] = [];
@@ -817,7 +819,7 @@ function createInitialState(): GameState {
   };
 }
 
-function buildCasePayload(state: GameState, lang: string): CasePayload {
+function buildCasePayload(state: GameState, lang: Lang): CasePayload {
   const tc = towerCondition(state);
   const unlocked = new Set(state.clueIds);
   const unlockedFragments = new Set(state.fragmentIds);
@@ -846,8 +848,8 @@ function buildCasePayload(state: GameState, lang: string): CasePayload {
   if (currentObjective.complete && state.objectiveIndex === objectives.length - 1) {
     currentObjective = {
       id: "OBJ-FINAL",
-      title: lang === "ko" ? "최종 기록 확인" : "Final Record Verification",
-      body: lang === "ko" ? "탑이 당신의 문장을 최종 기록으로 받아들일지 지켜보십시오." : "Watch whether the tower accepts your statement as the final record.",
+      title: L4(lang, { ko: "최종 기록 확인", en: "Final Record Verification" }),
+      body: L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 받아들일지 지켜보십시오.", en: "Watch whether the tower accepts your statement as the final record." }),
       complete: state.gameStatus === "breakthrough",
       active: state.gameStatus === "active",
     };
@@ -860,7 +862,7 @@ function buildCasePayload(state: GameState, lang: string): CasePayload {
     distortion: round4(state.distortion),
     progress: round4(state.progress),
     towerCondition: tc,
-    towerConditionLabel: tcLabel ? L(tcLabel, lang) : (lang === "ko" ? "탐사 중" : "Exploring"),
+    towerConditionLabel: tcLabel ? L(tcLabel, lang) : (L4(lang, { ko: "탐사 중", en: "Exploring" })),
     gameStatus: state.gameStatus,
     endingText: state.endingText,
     clueCount: unlocked.size,
@@ -888,7 +890,7 @@ function buildPayload(
   replyText: string,
   eventText: string,
   newClues: { id: string; title: string; body: string }[],
-  lang: string
+  lang: Lang
 ): GamePayload {
   const band = progressBand(state.progress);
   const bt = BUCKET_TITLES[bucket];
@@ -915,12 +917,12 @@ function buildPayload(
   };
 }
 
-function bootstrap(lang: string): GamePayload {
+function bootstrap(lang: Lang): GamePayload {
   const state = createInitialState();
-  return buildPayload(state, "insight", null, "", emptyVectors(), "insight", "intro", L(INTRO_TEXT, lang), lang === "ko" ? "탑이 첫 기록을 기다립니다." : "The tower awaits the first record.", [], lang);
+  return buildPayload(state, "insight", null, "", emptyVectors(), "insight", "intro", L(INTRO_TEXT, lang), L4(lang, { ko: "탑이 첫 기록을 기다립니다.", en: "The tower awaits the first record." }), [], lang);
 }
 
-function respond(message: string, currentState: GameState, action: string, lang: string): GamePayload {
+function respond(message: string, currentState: GameState, action: string, lang: Lang): GamePayload {
   const session: GameState = JSON.parse(JSON.stringify(currentState));
   const normalizedAction = (action || "submit").trim().toLowerCase();
   let playerText = (message || "").trim();
@@ -928,18 +930,18 @@ function respond(message: string, currentState: GameState, action: string, lang:
   if (normalizedAction === "restart") {
     const restarted = bootstrap(lang);
     restarted.mode = "restart";
-    restarted.reply.event = lang === "ko" ? "탑이 이전 기록을 덮고 새 장을 폈습니다." : "The tower has overwritten the previous record and opened a new chapter.";
+    restarted.reply.event = L4(lang, { ko: "탑이 이전 기록을 덮고 새 장을 폈습니다.", en: "The tower has overwritten the previous record and opened a new chapter." });
     return restarted;
   }
 
   if (session.gameStatus !== "active") {
-    return buildPayload(session, session.lastBucket || "insight", null, playerText, emptyVectors(), "insight", "ended", session.endingText, lang === "ko" ? "새 기록을 시작하려면 재시작하십시오." : "Restart to begin a new record.", [], lang);
+    return buildPayload(session, session.lastBucket || "insight", null, playerText, emptyVectors(), "insight", "ended", session.endingText, L4(lang, { ko: "새 기록을 시작하려면 재시작하십시오.", en: "Restart to begin a new record." }), [], lang);
   }
 
   if (normalizedAction === "silence") {
     session.pendingReentry = true;
-    appendHistory(session, { role: "system", text: L(WAIT_TEXT, lang), bucket: "silence", code: "WAIT", title: lang === "ko" ? "침묵 유지" : "Silence Maintained" });
-    return buildPayload(session, "silence_reentry", null, "", emptyVectors(), "insight", "wait", "", lang === "ko" ? "탑은 기다립니다. 다음 발화는 재진입으로 기록됩니다." : "The tower waits. Your next utterance will be recorded as a re-entry.", [], lang);
+    appendHistory(session, { role: "system", text: L(WAIT_TEXT, lang), bucket: "silence", code: "WAIT", title: L4(lang, { ko: "침묵 유지", en: "Silence Maintained" }) });
+    return buildPayload(session, "silence_reentry", null, "", emptyVectors(), "insight", "wait", "", L4(lang, { ko: "탑은 기다립니다. 다음 발화는 재진입으로 기록됩니다.", en: "The tower waits. Your next utterance will be recorded as a re-entry." }), [], lang);
   }
 
   if (normalizedAction in ACTION_ECHO && !playerText) {
@@ -948,8 +950,8 @@ function respond(message: string, currentState: GameState, action: string, lang:
 
   if (normalizedAction === "submit_verdict" && !playerText) {
     return buildPayload(session, session.lastBucket || "consistency", null, "", emptyVectors(), "consistency", "verdict_missing",
-      lang === "ko" ? "탑은 빈 문장을 최종 기록으로 받지 않습니다." : "The tower does not accept an empty sentence as a final record.",
-      lang === "ko" ? "최종 기록 후보를 먼저 적어야 합니다." : "You must write a final record candidate first.", [], lang);
+      L4(lang, { ko: "탑은 빈 문장을 최종 기록으로 받지 않습니다.", en: "The tower does not accept an empty sentence as a final record." }),
+      L4(lang, { ko: "최종 기록 후보를 먼저 적어야 합니다.", en: "You must write a final record candidate first." }), [], lang);
   }
 
   const analysis = analyzeMessage(playerText, session);
@@ -962,7 +964,7 @@ function respond(message: string, currentState: GameState, action: string, lang:
   const dv = dominantVector(analysis.vectors);
 
   if (playerText) {
-    appendHistory(session, { role: "player", text: playerText, bucket: "player", code: "USER", title: lang === "ko" ? "플레이어" : "Player" });
+    appendHistory(session, { role: "player", text: playerText, bucket: "player", code: "USER", title: L4(lang, { ko: "플레이어", en: "Player" }) });
   }
 
   session.turnCount += 1;
@@ -988,13 +990,13 @@ function respond(message: string, currentState: GameState, action: string, lang:
 
   appendHistory(session, { role: "tower", text: replyText, bucket, code: template.code, title: L(template.title, lang) });
   for (const clue of unlockedClues) {
-    appendHistory(session, { role: "system", text: `${clue.title}\n${clue.body}`, bucket: "clue", code: clue.id, title: lang === "ko" ? "단서 해금" : "Clue Unlocked" });
+    appendHistory(session, { role: "system", text: `${clue.title}\n${clue.body}`, bucket: "clue", code: clue.id, title: L4(lang, { ko: "단서 해금", en: "Clue Unlocked" }) });
   }
   for (const fragment of unlockedFragments) {
-    appendHistory(session, { role: "system", text: `${fragment.title}\n${fragment.body}`, bucket: "theory", code: fragment.id, title: lang === "ko" ? "이론 조각" : "Theory Fragment" });
+    appendHistory(session, { role: "system", text: `${fragment.title}\n${fragment.body}`, bucket: "theory", code: fragment.id, title: L4(lang, { ko: "이론 조각", en: "Theory Fragment" }) });
   }
   if (verdictFeedback) {
-    appendHistory(session, { role: "system", text: verdictFeedback, bucket: "verdict", code: "VERDICT", title: lang === "ko" ? "최종 기록 판정" : "Final Record Verdict" });
+    appendHistory(session, { role: "system", text: verdictFeedback, bucket: "verdict", code: "VERDICT", title: L4(lang, { ko: "최종 기록 판정", en: "Final Record Verdict" }) });
   }
 
   return buildPayload(session, bucket, template, playerText, analysis.vectors, dv, "reply", replyText, eventText, unlockedClues, lang);
@@ -1034,10 +1036,10 @@ const T: Record<string, { ko: string; en: string }> = {
   towerDialogue: { ko: "탑 응답", en: "TOWER DIALOGUE" },
 };
 
-function t(key: string, lang: string): string {
+function t(key: string, lang: Lang): string {
   const entry = T[key];
   if (!entry) return key;
-  return lang === "ko" ? entry.ko : entry.en;
+  return L4(lang, entry);
 }
 
 // IDENTITY_SEAL: PART-5 | role=i18n | inputs=key,lang | outputs=string
@@ -1060,14 +1062,14 @@ const VECTOR_LABELS: Record<string, { ko: string; en: string }> = {
   risk: { ko: "R 도약", en: "R Risk" },
 };
 
-function VectorBar({ vectors, lang }: { vectors: VectorScores; lang: string }) {
+function VectorBar({ vectors, lang }: { vectors: VectorScores; lang: Lang }) {
   const keys: (keyof VectorScores)[] = ["insight", "consistency", "delusion", "risk"];
   return (
     <div className="space-y-2">
       {keys.map((k) => (
         <div key={k} className="flex items-center gap-2">
           <span className="w-20 shrink-0 font-[family-name:var(--font-mono)] text-[12px] tracking-wider text-text-tertiary">
-            {lang === "ko" ? VECTOR_LABELS[k].ko : VECTOR_LABELS[k].en}
+            {L4(lang, VECTOR_LABELS[k])}
           </span>
           <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
             <div
@@ -1197,11 +1199,11 @@ export default function NoaTowerPage() {
       <main className={`min-h-screen bg-bg-primary pt-28 pb-8 bg-gradient-to-b ${conditionColor} to-transparent`}>
         <div className="mx-auto max-w-7xl px-4">
           <ToolNav
-            toolName={lang === "ko" ? "NOA 타워" : "NOA Tower"}
+            toolName={L4(lang, { ko: "NOA 타워", en: "NOA Tower" })}
             isKO={lang === "ko"}
             relatedTools={[
-              { href: '/tools/warp-gate', label: lang === "ko" ? '워프 게이트' : 'Warp Gate' },
-              { href: '/tools/neka-sound', label: lang === "ko" ? '네카 사운드' : 'NEKA Sound' },
+              { href: '/tools/warp-gate', label: L4(lang, { ko: '워프 게이트', en: 'Warp Gate' }) },
+              { href: '/tools/neka-sound', label: L4(lang, { ko: '네카 사운드', en: 'NEKA Sound' }) },
             ]}
           />
           {/* --- Top Bar --- */}
@@ -1233,7 +1235,7 @@ export default function NoaTowerPage() {
               onClick={() => setSidePanel(sidePanel === "status" ? "case" : "status")}
               className="w-full rounded-xl border border-white/8 px-3 py-2 font-[family-name:var(--font-mono)] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              {sidePanel === "status" ? (lang === "ko" ? "▲ 대시보드 닫기" : "▲ Hide Dashboard") : (lang === "ko" ? "▼ 대시보드 보기" : "▼ Show Dashboard")}
+              {sidePanel === "status" ? L4(lang, { ko: "▲ 대시보드 닫기", en: "▲ Hide Dashboard" }) : L4(lang, { ko: "▼ 대시보드 보기", en: "▼ Show Dashboard" })}
             </button>
           </div>
 
@@ -1313,7 +1315,7 @@ export default function NoaTowerPage() {
                     </div>
                   ))}
                   {caseData.clueCount === 0 && caseData.fragmentCount === 0 && (
-                    <p className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary italic">{lang === "ko" ? "아직 발견된 단서가 없습니다" : "No clues discovered yet"}</p>
+                    <p className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary italic">{L4(lang, { ko: "아직 발견된 단서가 없습니다", en: "No clues discovered yet" })}</p>
                   )}
                 </div>
               </details>

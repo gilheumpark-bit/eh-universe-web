@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import type { PlanetRecord } from "@/lib/network-types";
 import {
   PLANET_GOAL_LABELS,
@@ -20,39 +21,39 @@ interface PlanetHeaderCardProps {
 export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHeaderCardProps) {
   const summaryItems = [
     {
-      label: lang === "ko" ? "운영자" : "Owner",
-      value: ownerName ?? (lang === "ko" ? "미확인" : "Unknown"),
+      label: L4(lang, { ko: "운영자", en: "Owner" }),
+      value: ownerName ?? L4(lang, { ko: "미확인", en: "Unknown" }),
     },
     {
-      label: lang === "ko" ? "장르" : "Genre",
+      label: L4(lang, { ko: "장르", en: "Genre" }),
       value: planet.genre,
     },
     {
-      label: lang === "ko" ? "문명 단계" : "Civilization",
+      label: L4(lang, { ko: "문명 단계", en: "Civilization" }),
       value: planet.civilizationLevel,
     },
     {
-      label: lang === "ko" ? "운영 목표" : "Goal",
+      label: L4(lang, { ko: "운영 목표", en: "Goal" }),
       value: pickNetworkLabel(PLANET_GOAL_LABELS[planet.goal], lang),
     },
     {
-      label: lang === "ko" ? "공개 범위" : "Visibility",
+      label: L4(lang, { ko: "공개 범위", en: "Visibility" }),
       value: pickNetworkLabel(VISIBILITY_LABELS[planet.visibility], lang),
     },
   ];
 
   const statItems = [
     {
-      label: lang === "ko" ? "최근 로그 수" : "Log Count",
+      label: L4(lang, { ko: "최근 로그 수", en: "Log Count" }),
       value: `${planet.stats.logCount}`,
     },
     {
-      label: lang === "ko" ? "정산 수" : "Settlement Count",
+      label: L4(lang, { ko: "정산 수", en: "Settlement Count" }),
       value: `${planet.stats.settlementCount}`,
     },
     {
-      label: lang === "ko" ? "EH 위험도" : "EH Risk",
-      value: planet.ehRisk != null ? `${planet.ehRisk}` : lang === "ko" ? "미기재" : "Not Set",
+      label: L4(lang, { ko: "EH 위험도", en: "EH Risk" }),
+      value: planet.ehRisk != null ? `${planet.ehRisk}` : L4(lang, { ko: "미기재", en: "Not Set" }),
     },
   ];
 
@@ -61,7 +62,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="site-kicker">{lang === "ko" ? "행성 상세" : "Planet Overview"}</span>
+            <span className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Overview" })}</span>
             <SettlementBadge status={planet.status} lang={lang} />
           </div>
           <div>
@@ -96,7 +97,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
 
         <div className="premium-panel-soft p-5">
           <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
-            {lang === "ko" ? "상태 지표" : "Status Metrics"}
+            {L4(lang, { ko: "상태 지표", en: "Status Metrics" })}
           </div>
           <div className="mt-4 space-y-4">
             {statItems.map((item) => (
@@ -109,7 +110,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
           {planet.coreRules.length > 0 ? (
             <div className="mt-5 border-t border-white/6 pt-5">
               <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
-                {lang === "ko" ? "핵심 규칙" : "Core Rules"}
+                {L4(lang, { ko: "핵심 규칙", en: "Core Rules" })}
               </div>
               <ul className="mt-3 space-y-2 text-sm text-text-secondary">
                 {planet.coreRules.map((rule) => (
@@ -132,7 +133,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
             }}
             className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
           >
-            𝕏 {lang === 'ko' ? '공유' : 'Share'}
+            𝕏 {L4(lang, { ko: '공유', en: 'Share' })}
           </button>
           <button
             onClick={() => {
@@ -141,7 +142,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
             }}
             className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
           >
-            🔗 {lang === 'ko' ? '링크 복사' : 'Copy Link'}
+            🔗 {L4(lang, { ko: '링크 복사', en: 'Copy Link' })}
           </button>
         </div>
       </div>

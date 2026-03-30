@@ -233,7 +233,11 @@
       "Bash(for dir:*)",
       "Read(//c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/lib/code-studio/$dir/**)",
       "Bash(sed -i \"s|from ''''./ai-providers''''|from ''''@/lib/ai-providers''''|\" src/lib/code-studio/ai/web-search.ts src/lib/code-studio/features/search.ts src/lib/code-studio/features/usage-tracker.ts)",
-      "Bash(grep -rn \"from ''''\\\\./ai-providers''''\" src/lib/code-studio/ --include='*.ts')"
+      "Bash(grep -rn \"from ''''\\\\./ai-providers''''\" src/lib/code-studio/ --include='*.ts')",
+      "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src\\\\components' -name *.tsx -type f -exec grep -l from.*@/lib/ai-providers {})",
+      "Bash(2)",
+      "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src\\\\app\\\\api' -name *.ts -type f)",
+      "Bash(grep -rn 'lang === \"\"\"\"ko\"\"\"\"\\\\|lang === .ko.' src/ --include='*.tsx')"
     ]
   }
 }

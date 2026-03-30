@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { LogComposer, type LogComposerValue } from "@/components/network/LogComposer";
 import { createPost, ensureNetworkUserRecord, listPlanetsByOwner } from "@/lib/network-firestore";
 import { REPORT_TYPE_TEMPLATES } from "@/lib/network-labels";

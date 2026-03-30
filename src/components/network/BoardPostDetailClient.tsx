@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { CommentSection } from "@/components/network/CommentSection";
 import { ReactionBar } from "@/components/network/ReactionBar";
 import { ReportButton } from "@/components/network/ReportButton";

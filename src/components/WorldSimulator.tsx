@@ -2,7 +2,7 @@
 
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 
 // ============================================================
 // PART 0: TYPES & DATA
@@ -283,10 +283,10 @@ function GenreLeveling({ lang, selections, onToggle }: {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
-          {lang === "ko" ? "장르별 세계관 복잡도" : "Genre World Complexity"}
+          {L4(lang, { ko: "장르별 세계관 복잡도", en: "Genre World Complexity" })}
         </h3>
         <span className="text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary">
-          {selections.length}/{MAX_GENRE_SELECTIONS} {lang === "ko" ? "선택" : "selected"}
+          {selections.length}/{MAX_GENRE_SELECTIONS} {L4(lang, { ko: "선택", en: "selected" })}
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
@@ -313,7 +313,7 @@ function GenreLeveling({ lang, selections, onToggle }: {
                           : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
                       }`}
                       style={active ? { background: g.color, borderColor: g.color } : undefined}
-                      title={lang === "ko" ? lv.ko : lv.en}
+                      title={L4(lang, lv)}
                     >
                       {lv.lv}
                     </button>
@@ -342,7 +342,7 @@ function GenreLeveling({ lang, selections, onToggle }: {
               <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold text-white"
                 style={{ background: g?.color }}>
                 {s.genre} Lv{s.level}
-                <span className="opacity-70">({lang === "ko" ? lvName?.ko : lvName?.en})</span>
+                <span className="opacity-70">({lvName ? L4(lang, lvName) : ''})</span>
                 <button onClick={() => onToggle(s.genre, 0)}
                   className="ml-0.5 opacity-60 hover:opacity-100">×</button>
               </span>
@@ -405,7 +405,7 @@ function CivMapper({ lang, civs, setCivs }: {
           value={newName}
           onChange={e => setNewName(e.target.value)}
           onKeyDown={e => e.key === "Enter" && addCiv()}
-          placeholder={lang === "ko" ? "문명 이름..." : "Civilization name..."}
+          placeholder={L4(lang, { ko: "문명 이름...", en: "Civilization name..." })}
           className="flex-1 bg-bg-primary border border-border rounded px-3 py-2 text-xs outline-none focus:border-accent-purple transition-colors"
         />
         <select
@@ -414,7 +414,7 @@ function CivMapper({ lang, civs, setCivs }: {
           className="bg-bg-primary border border-border rounded px-2 py-2 text-xs outline-none"
         >
           {ERAS.map(era => (
-            <option key={era.id} value={era.id}>{lang === "ko" ? era.ko : era.en}</option>
+            <option key={era.id} value={era.id}>{L4(lang, era)}</option>
           ))}
         </select>
         <button onClick={addCiv} className="px-4 py-2 bg-accent-purple text-white rounded text-xs font-bold hover:opacity-80 transition-opacity">
@@ -424,7 +424,7 @@ function CivMapper({ lang, civs, setCivs }: {
 
       {civs.length === 0 && (
         <div className="text-center py-8 text-text-tertiary text-xs italic">
-          {lang === "ko" ? "문명을 추가하세요" : "Add civilizations"}
+          {L4(lang, { ko: "문명을 추가하세요", en: "Add civilizations" })}
         </div>
       )}
 
@@ -437,7 +437,7 @@ function CivMapper({ lang, civs, setCivs }: {
                 <div>
                   <span className="font-bold text-sm" style={{ color: civ.color }}>{civ.name}</span>
                   <span className="text-[10px] text-text-tertiary ml-2 font-[family-name:var(--font-mono)]">
-                    {lang === "ko" ? era?.ko : era?.en} (TL{era?.techLevel})
+                    {era ? L4(lang, era) : ''} (TL{era?.techLevel})
                   </span>
                 </div>
                 <button onClick={() => removeCiv(civ.id)} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -454,8 +454,8 @@ function CivMapper({ lang, civs, setCivs }: {
                     { key: 'forbidden' as const, icon: '🚫', ko: '금기', en: 'Forbidden' },
                   ]).map(field => (
                     <div key={field.key} className="flex gap-1.5 text-[9px]">
-                      <span className="shrink-0 w-12 text-text-tertiary font-bold">{field.icon} {lang === "ko" ? field.ko : field.en}</span>
-                      <span className="text-text-secondary">{lang === "ko" ? era[field.key].ko : era[field.key].en}</span>
+                      <span className="shrink-0 w-12 text-text-tertiary font-bold">{field.icon} {L4(lang, field)}</span>
+                      <span className="text-text-secondary">{L4(lang, era[field.key])}</span>
                     </div>
                   ))}
                 </div>
@@ -470,7 +470,7 @@ function CivMapper({ lang, civs, setCivs }: {
                 ))}
               </div>
               <input
-                placeholder={lang === "ko" ? "특성 추가 (Enter)" : "Add trait (Enter)"}
+                placeholder={L4(lang, { ko: "특성 추가 (Enter)", en: "Add trait (Enter)" })}
                 className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none focus:border-accent-purple"
                 onKeyDown={e => {
                   if (e.key === "Enter") {
@@ -526,7 +526,7 @@ function RelationsView({ lang, civs, relations, setRelations }: {
   if (civs.length < 2) {
     return (
       <div className="text-center py-12 text-text-tertiary text-xs italic">
-        {lang === "ko" ? "문명을 2개 이상 추가하면 관계도를 구성할 수 있습니다" : "Add 2+ civilizations to create a relationship map"}
+        {L4(lang, { ko: "문명을 2개 이상 추가하면 관계도를 구성할 수 있습니다", en: "Add 2+ civilizations to create a relationship map" })}
       </div>
     );
   }
@@ -536,11 +536,11 @@ function RelationsView({ lang, civs, relations, setRelations }: {
       {/* Controls */}
       <div className="flex flex-wrap gap-2 items-end">
         <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-bg-primary border border-border rounded px-2 py-1.5 text-xs outline-none">
-          <option value="">{lang === "ko" ? "문명 A" : "Civ A"}</option>
+          <option value="">{L4(lang, { ko: "문명 A", en: "Civ A" })}</option>
           {civs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-bg-primary border border-border rounded px-2 py-1.5 text-xs outline-none">
-          <option value="">{lang === "ko" ? "문명 B" : "Civ B"}</option>
+          <option value="">{L4(lang, { ko: "문명 B", en: "Civ B" })}</option>
           {civs.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="flex gap-1">
@@ -551,12 +551,12 @@ function RelationsView({ lang, civs, relations, setRelations }: {
               }`}
               style={selType === rt ? { background: RELATION_STYLES[rt].color, borderColor: RELATION_STYLES[rt].color } : undefined}
             >
-              {lang === "ko" ? RELATION_STYLES[rt].ko : RELATION_STYLES[rt].en}
+              {L4(lang, RELATION_STYLES[rt])}
             </button>
           ))}
         </div>
         <button onClick={addRelation} className="px-3 py-1.5 bg-accent-purple text-white rounded text-xs font-bold">
-          {lang === "ko" ? "추가" : "Add"}
+          {L4(lang, { ko: "추가", en: "Add" })}
         </button>
       </div>
 
@@ -576,7 +576,7 @@ function RelationsView({ lang, civs, relations, setRelations }: {
                   stroke={style.color} strokeWidth="2" strokeDasharray={style.dash} opacity="0.7" />
                 <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 6}
                   fill={style.color} fontSize="8" textAnchor="middle" fontWeight="bold">
-                  {lang === "ko" ? style.ko : style.en}
+                  {L4(lang, style)}
                 </text>
               </g>
             );
@@ -599,7 +599,7 @@ function RelationsView({ lang, civs, relations, setRelations }: {
         {(Object.keys(RELATION_STYLES) as RelationType[]).map(rt => (
           <span key={rt} className="flex items-center gap-1">
             <span className="w-3 h-0.5 inline-block rounded" style={{ background: RELATION_STYLES[rt].color }} />
-            {lang === "ko" ? RELATION_STYLES[rt].ko : RELATION_STYLES[rt].en}
+            {L4(lang, RELATION_STYLES[rt])}
           </span>
         ))}
       </div>
@@ -616,7 +616,7 @@ function RelationsView({ lang, civs, relations, setRelations }: {
                   <span className="text-text-tertiary mx-1">⇄</span>
                   <span style={{ color: toCiv?.color }}>{toCiv?.name}</span>
                   <span className="ml-2 font-bold" style={{ color: style.color }}>
-                    [{lang === "ko" ? style.ko : style.en}]
+                    [{L4(lang, style)}]
                   </span>
                 </span>
                 <button onClick={() => removeRelation(i)} className="text-text-tertiary hover:text-accent-red">✕</button>
@@ -650,7 +650,7 @@ function TimelineView({ lang, civs, transitions, setTransitions }: {
   const addTransition = (fromEra: string, toEra: string) => {
     const exists = transitions.some(t => t.fromEra === fromEra && t.toEra === toEra);
     if (exists) return;
-    const defaultDesc = lang === "ko" ? "전환 이벤트를 입력하세요" : "Enter transition event";
+    const defaultDesc = L4(lang, { ko: "전환 이벤트를 입력하세요", en: "Enter transition event" });
     setTransitions(prev => [...prev, { fromEra, toEra, description: defaultDesc }]);
   };
 
@@ -696,7 +696,7 @@ function TimelineView({ lang, civs, transitions, setTransitions }: {
                     hasCivs ? "bg-accent-purple/10 border-accent-purple/30" : "bg-bg-primary"
                   }`}>
                     <div className="text-[9px] font-bold text-text-tertiary font-[family-name:var(--font-mono)] uppercase">
-                      {lang === "ko" ? era.ko : era.en}
+                      {L4(lang, era)}
                     </div>
                     <div className="text-[8px] text-text-tertiary mt-0.5">TL{era.techLevel}</div>
                     {civsByEra[era.id]?.map(c => (
@@ -713,7 +713,7 @@ function TimelineView({ lang, civs, transitions, setTransitions }: {
                         <button
                           onClick={() => addTransition(era.id, eraOrder[i + 1])}
                           className="w-4 h-4 rounded-full border border-border text-text-tertiary text-[8px] hover:border-accent-purple hover:text-accent-purple transition-colors"
-                          title={lang === "ko" ? "전환 이벤트 추가" : "Add transition event"}
+                          title={L4(lang, { ko: "전환 이벤트 추가", en: "Add transition event" })}
                         >
                           +
                         </button>
@@ -731,7 +731,7 @@ function TimelineView({ lang, civs, transitions, setTransitions }: {
       {transitions.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-            {lang === "ko" ? "시대 전환 이벤트" : "Era Transition Events"}
+            {L4(lang, { ko: "시대 전환 이벤트", en: "Era Transition Events" })}
           </h4>
           {transitions.map((tr, i) => {
             const fromLabel = lang === "ko" ? ERAS.find(e => e.id === tr.fromEra)?.ko : ERAS.find(e => e.id === tr.fromEra)?.en;
@@ -813,7 +813,7 @@ function HexMapView({ lang, civs }: {
       });
       setHexHint('');
     } else {
-      setHexHint(lang === "ko" ? '먼저 세력을 선택하세요' : 'Select a faction first');
+      setHexHint(L4(lang, { ko: '먼저 세력을 선택하세요', en: 'Select a faction first' }));
       setTimeout(() => setHexHint(''), 2000);
     }
   };
@@ -825,7 +825,7 @@ function HexMapView({ lang, civs }: {
       {/* Paint selector */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-          {lang === "ko" ? "세력 페인트:" : "Paint faction:"}
+          {L4(lang, { ko: "세력 페인트:", en: "Paint faction:" })}
         </span>
         {civs.map(c => (
           <button key={c.id} onClick={() => { setPaintCiv(paintCiv === c.id ? null : c.id); setSelectedCiv(c.id); }}
@@ -839,14 +839,14 @@ function HexMapView({ lang, civs }: {
         ))}
         {paintCiv && (
           <button onClick={() => setPaintCiv(null)} className="text-[10px] text-text-tertiary hover:text-accent-red">
-            {lang === "ko" ? "해제" : "Clear"}
+            {L4(lang, { ko: "해제", en: "Clear" })}
           </button>
         )}
       </div>
 
       {civs.length === 0 ? (
         <div className="text-center py-12 text-text-tertiary text-xs italic">
-          {lang === "ko" ? "문명을 추가하면 영역을 칠할 수 있습니다" : "Add civilizations to paint territories"}
+          {L4(lang, { ko: "문명을 추가하면 영역을 칠할 수 있습니다", en: "Add civilizations to paint territories" })}
         </div>
       ) : (
         <div className="flex justify-center overflow-x-auto">
@@ -891,8 +891,8 @@ function HexMapView({ lang, civs }: {
         return (
           <div className="border border-border rounded-lg p-3" style={{ borderLeftWidth: 3, borderLeftColor: civ.color }}>
             <div className="font-bold text-sm" style={{ color: civ.color }}>{civ.name}</div>
-            <div className="text-[10px] text-text-tertiary">{lang === "ko" ? era?.ko : era?.en} | TL{era?.techLevel}</div>
-            <div className="text-[10px] text-text-secondary mt-1">{civ.traits.join(", ") || (lang === "ko" ? "특성 없음" : "No traits")}</div>
+            <div className="text-[10px] text-text-tertiary">{era ? L4(lang, era) : ''} | TL{era?.techLevel}</div>
+            <div className="text-[10px] text-text-secondary mt-1">{civ.traits.join(", ") || (L4(lang, { ko: "특성 없음", en: "No traits" }))}</div>
           </div>
         );
       })()}
@@ -958,7 +958,7 @@ function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
       if (dupes.length > 1 && dupes[0].id === civ.id) {
         result.push({
           civName: civ.name,
-          message: lang === "ko" ? `"${civ.name}" 이름이 중복됩니다` : `Duplicate name: "${civ.name}"`,
+          message: L4(lang, { ko: `"${civ.name}" 이름이 중복됩니다`, en: `Duplicate name: "${civ.name}"` }),
           severity: "error",
         });
       }
@@ -968,7 +968,7 @@ function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
     if (civs.length === 0) {
       result.push({
         civName: "-",
-        message: lang === "ko" ? "문명이 하나도 등록되지 않았습니다" : "No civilizations registered",
+        message: L4(lang, { ko: "문명이 하나도 등록되지 않았습니다", en: "No civilizations registered" }),
         severity: "warning",
       });
     }
@@ -992,11 +992,11 @@ function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
             ? `${errors.length} ERROR${errors.length > 1 ? "S" : ""}`
             : warnings.length > 0
               ? `${warnings.length} WARNING${warnings.length > 1 ? "S" : ""}`
-              : lang === "ko" ? "검증 통과" : "ALL CLEAR"
+              : L4(lang, { ko: "검증 통과", en: "ALL CLEAR" })
           }
         </div>
         <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
-          {civs.length} {lang === "ko" ? "문명" : "civs"} | {selectedGenre} Lv{selectedLevel}
+          {civs.length} {L4(lang, { ko: "문명", en: "civs" })} | {selectedGenre} Lv{selectedLevel}
         </span>
       </div>
 
@@ -1004,10 +1004,10 @@ function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
         <div className="text-center py-12 border border-border rounded-lg">
           <div className="text-2xl mb-2">✓</div>
           <div className="text-text-secondary text-sm font-bold">
-            {lang === "ko" ? "세계관 일관성 검증 통과" : "World consistency validation passed"}
+            {L4(lang, { ko: "세계관 일관성 검증 통과", en: "World consistency validation passed" })}
           </div>
           <div className="text-text-tertiary text-xs mt-1">
-            {lang === "ko" ? "기술 수준, 장르 레벨, 명칭 충돌 없음" : "No tech level, genre, or naming conflicts"}
+            {L4(lang, { ko: "기술 수준, 장르 레벨, 명칭 충돌 없음", en: "No tech level, genre, or naming conflicts" })}
           </div>
         </div>
       ) : (
@@ -1236,7 +1236,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
             className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider uppercase transition-all ${
               subTab === st.id ? "bg-accent-purple text-white" : "bg-bg-primary text-text-tertiary border border-border hover:text-text-secondary"
             }`}>
-            {lang === "ko" ? st.ko : st.en}
+            {L4(lang, st)}
           </button>
         ))}
       </div>
@@ -1250,12 +1250,12 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
           {/* Presets */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-              {lang === "ko" ? "프리셋:" : "Presets:"}
+              {L4(lang, { ko: "프리셋:", en: "Presets:" })}
             </span>
             {Object.entries(GENRE_PHONEME_PRESETS).map(([key, val]) => (
               <button key={key} onClick={() => loadPreset(key)}
                 className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple hover:text-accent-purple transition-colors">
-                {lang === "ko" ? val.label.ko : val.label.en}
+                {L4(lang, val.label)}
               </button>
             ))}
           </div>
@@ -1266,7 +1266,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
               {/* Consonants */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                  {lang === "ko" ? "자음" : "Consonants"} ({consonants.length})
+                  {L4(lang, { ko: "자음", en: "Consonants" })} ({consonants.length})
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {consonants.map(ph => {
@@ -1289,7 +1289,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
               {/* Vowels */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                  {lang === "ko" ? "모음" : "Vowels"} ({vowels.length})
+                  {L4(lang, { ko: "모음", en: "Vowels" })} ({vowels.length})
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {vowels.map(ph => {
@@ -1315,22 +1315,22 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
           {/* Add custom phoneme */}
           <div className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
             <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-              {lang === "ko" ? "커스텀 음소 추가" : "Add Custom Phoneme"}
+              {L4(lang, { ko: "커스텀 음소 추가", en: "Add Custom Phoneme" })}
             </h4>
             <div className="flex flex-wrap gap-2">
               <input value={newPhForm.symbol} onChange={e => setNewPhForm(p => ({ ...p, symbol: e.target.value }))}
-                placeholder={lang === "ko" ? "기호" : "Symbol"} className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
+                placeholder={L4(lang, { ko: "기호", en: "Symbol" })} className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
               <input value={newPhForm.roman} onChange={e => setNewPhForm(p => ({ ...p, roman: e.target.value }))}
-                placeholder={lang === "ko" ? "로마자" : "Roman"} className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
+                placeholder={L4(lang, { ko: "로마자", en: "Roman" })} className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
               <select value={newPhForm.type} onChange={e => setNewPhForm(p => ({ ...p, type: e.target.value as "consonant" | "vowel" }))}
                 className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none">
-                <option value="consonant">{lang === "ko" ? "자음" : "Cons."}</option>
-                <option value="vowel">{lang === "ko" ? "모음" : "Vowel"}</option>
+                <option value="consonant">{L4(lang, { ko: "자음", en: "Cons." })}</option>
+                <option value="vowel">{L4(lang, { ko: "모음", en: "Vowel" })}</option>
               </select>
               <select value={newPhForm.sigClass} onChange={e => setNewPhForm(p => ({ ...p, sigClass: e.target.value as SigClass }))}
                 className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none">
                 {(Object.keys(SIG_CLASS_META) as SigClass[]).map(sc => (
-                  <option key={sc} value={sc}>{lang === "ko" ? SIG_CLASS_META[sc].ko : SIG_CLASS_META[sc].en}</option>
+                  <option key={sc} value={sc}>{L4(lang, SIG_CLASS_META[sc])}</option>
                 ))}
               </select>
               <input type="number" value={newPhForm.freq} onChange={e => setNewPhForm(p => ({ ...p, freq: parseInt(e.target.value) || 0 }))}
@@ -1349,7 +1349,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
             {(Object.keys(SIG_CLASS_META) as SigClass[]).map(sc => (
               <span key={sc} className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full inline-block" style={{ background: SIG_CLASS_META[sc].color }} />
-                {lang === "ko" ? SIG_CLASS_META[sc].ko : SIG_CLASS_META[sc].en}
+                {L4(lang, SIG_CLASS_META[sc])}
               </span>
             ))}
           </div>
@@ -1361,14 +1361,14 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
         <div className="space-y-4">
           {phonemes.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {lang === "ko" ? "먼저 음소 탭에서 음소를 추가하세요" : "Add phonemes in the Phonemes tab first"}
+              {L4(lang, { ko: "먼저 음소 탭에서 음소를 추가하세요", en: "Add phonemes in the Phonemes tab first" })}
             </div>
           ) : (
             <>
               {/* Word creator */}
               <div className="border border-border rounded-lg p-3 bg-bg-primary space-y-3">
                 <input value={newWordMeaning} onChange={e => setNewWordMeaning(e.target.value)}
-                  placeholder={lang === "ko" ? "뜻 (예: 불, 물, 인사)" : "Meaning (e.g. fire, water, hello)"}
+                  placeholder={L4(lang, { ko: "뜻 (예: 불, 물, 인사)", en: "Meaning (e.g. fire, water, hello)" })}
                   className="w-full bg-bg-secondary border border-border rounded px-3 py-2 text-xs outline-none focus:border-accent-purple" />
 
                 {/* Phoneme picker */}
@@ -1385,7 +1385,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
                 {/* Buffer display */}
                 {wordPhBuf.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] text-text-tertiary">{lang === "ko" ? "조합:" : "Build:"}</span>
+                    <span className="text-[10px] text-text-tertiary">{L4(lang, { ko: "조합:", en: "Build:" })}</span>
                     {wordPhBuf.map((pid, i) => {
                       const ph = phonemes.find(p => p.id === pid);
                       return (
@@ -1407,10 +1407,10 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
                 <div className="flex gap-2">
                   <button onClick={addWord} disabled={!newWordMeaning.trim() || wordPhBuf.length === 0}
                     className="px-4 py-1.5 bg-accent-purple text-white rounded text-xs font-bold disabled:opacity-30">
-                    {lang === "ko" ? "단어 등록" : "Register Word"}
+                    {L4(lang, { ko: "단어 등록", en: "Register Word" })}
                   </button>
                   <button onClick={() => setWordPhBuf([])} className="px-3 py-1.5 bg-bg-secondary border border-border rounded text-xs text-text-tertiary">
-                    {lang === "ko" ? "초기화" : "Clear"}
+                    {L4(lang, { ko: "초기화", en: "Clear" })}
                   </button>
                 </div>
               </div>
@@ -1446,14 +1446,14 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
         <div className="space-y-4">
           {words.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {lang === "ko" ? "먼저 어휘 탭에서 단어를 등록하세요" : "Register words in the Vocabulary tab first"}
+              {L4(lang, { ko: "먼저 어휘 탭에서 단어를 등록하세요", en: "Register words in the Vocabulary tab first" })}
             </div>
           ) : (
             <>
               {/* Word palette */}
               <div className="space-y-2">
                 <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-                  {lang === "ko" ? "단어를 클릭하여 문장 조립:" : "Click words to compose sentence:"}
+                  {L4(lang, { ko: "단어를 클릭하여 문장 조립:", en: "Click words to compose sentence:" })}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {words.map(w => (
@@ -1486,7 +1486,7 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
                   {/* Assign to civ */}
                   {civs.length > 0 && (
                     <div className="flex items-center gap-2 text-[9px] text-text-tertiary">
-                      <span>{lang === "ko" ? "문명 지정:" : "Assign to civ:"}</span>
+                      <span>{L4(lang, { ko: "문명 지정:", en: "Assign to civ:" })}</span>
                       {civs.map(c => (
                         <button key={c.id} onClick={() => {
                           // 현재 조합 중인 단어들의 civId를 일괄 변경
@@ -1506,14 +1506,14 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
                   <div className="flex gap-2">
                     <button onClick={() => playSequence(composePhIds)}
                       className="px-4 py-2 bg-accent-purple text-white rounded text-xs font-bold flex items-center gap-1.5">
-                      ▶ {lang === "ko" ? "신호음 재생" : "Play Signal"}
+                      ▶ {L4(lang, { ko: "신호음 재생", en: "Play Signal" })}
                     </button>
                     <button onClick={() => speakTTS(composeRoman)}
                       className="px-4 py-2 bg-accent-blue text-white rounded text-xs font-bold flex items-center gap-1.5">
-                      ▶ {lang === "ko" ? "TTS 발음" : "TTS Speak"}
+                      ▶ {L4(lang, { ko: "TTS 발음", en: "TTS Speak" })}
                     </button>
                     <button onClick={() => setComposeBuf([])} className="px-3 py-2 bg-bg-secondary border border-border rounded text-xs text-text-tertiary">
-                      {lang === "ko" ? "초기화" : "Clear"}
+                      {L4(lang, { ko: "초기화", en: "Clear" })}
                     </button>
                   </div>
                 </div>
@@ -1525,10 +1525,10 @@ function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
 
       {/* Stats bar */}
       <div className="flex flex-wrap gap-3 text-[9px] font-[family-name:var(--font-mono)] pt-2 border-t border-border">
-        <span className="text-text-tertiary">{lang === "ko" ? "음소" : "Phonemes"}: <span className="text-accent-purple font-bold">{phonemes.length}</span></span>
-        <span className="text-text-tertiary">{lang === "ko" ? "자음" : "Cons"}: <span className="font-bold">{consonants.length}</span></span>
-        <span className="text-text-tertiary">{lang === "ko" ? "모음" : "Vowels"}: <span className="font-bold">{vowels.length}</span></span>
-        <span className="text-text-tertiary">{lang === "ko" ? "어휘" : "Words"}: <span className="text-accent-purple font-bold">{words.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "음소", en: "Phonemes" })}: <span className="text-accent-purple font-bold">{phonemes.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "자음", en: "Cons" })}: <span className="font-bold">{consonants.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "모음", en: "Vowels" })}: <span className="font-bold">{vowels.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "어휘", en: "Words" })}: <span className="text-accent-purple font-bold">{words.length}</span></span>
       </div>
     </div>
   );
@@ -1744,7 +1744,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
       }
       // New genre — check max
       if (prev.length >= MAX_GENRE_SELECTIONS) {
-        showAlert(lang === "ko" ? `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다` : `Max ${MAX_GENRE_SELECTIONS} genres allowed`);
+        showAlert(L4(lang, { ko: `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다`, en: `Max ${MAX_GENRE_SELECTIONS} genres allowed` }));
         return prev;
       }
       return [...prev, { genre, level }];
@@ -1786,7 +1786,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
       {/* Header */}
       <div className="doc-header rounded-t mb-0">
         <span className="badge badge-blue mr-2">SIMULATOR</span>
-        {lang === "ko" ? "세계관 시뮬레이터 — World Consistency Engine" : "World Simulator — Consistency Engine"}
+        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine" })}
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
@@ -1799,14 +1799,14 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
-                {lang === "ko" ? "EH 규칙 강도" : "EH Rule Intensity"}
+                {L4(lang, { ko: "EH 규칙 강도", en: "EH Rule Intensity" })}
               </h3>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)]"
                 style={{
                   background: `${RULE_LEVELS[ruleLevel - 1].color}20`,
                   color: RULE_LEVELS[ruleLevel - 1].color,
                 }}>
-                {RULE_LEVELS[ruleLevel - 1].pct}% — {lang === "ko" ? RULE_LEVELS[ruleLevel - 1].genre_ko : RULE_LEVELS[ruleLevel - 1].genre_en}
+                {RULE_LEVELS[ruleLevel - 1].pct}% — {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].genre_ko, en: RULE_LEVELS[ruleLevel - 1].genre_en })}
               </span>
             </div>
             <div className="flex flex-wrap gap-1">
@@ -1821,15 +1821,15 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                     background: rl.color,
                     borderColor: "transparent",
                   } : undefined}
-                  title={lang === "ko" ? rl.desc_ko : rl.desc_en}
+                  title={L4(lang, { ko: rl.desc_ko, en: rl.desc_en })}
                 >
-                  <div>{lang === "ko" ? rl.ko : rl.en}</div>
+                  <div>{L4(lang, rl)}</div>
                   <div className="text-[7px] opacity-70">Lv{rl.lv}</div>
                 </button>
               ))}
             </div>
             <div className="text-[9px] text-text-tertiary">
-              {lang === "ko" ? RULE_LEVELS[ruleLevel - 1].desc_ko : RULE_LEVELS[ruleLevel - 1].desc_en}
+              {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].desc_ko, en: RULE_LEVELS[ruleLevel - 1].desc_en })}
             </div>
           </div>
 
@@ -1837,7 +1837,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
           <div className="flex gap-2 shrink-0 relative">
             <button onClick={() => setShowPresetMenu(v => !v)}
               className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-              ⚡ {lang === "ko" ? '프리셋' : 'Preset'}
+              ⚡ {L4(lang, { ko: '프리셋', en: 'Preset' })}
             </button>
             {showPresetMenu && (
               <div className="absolute bottom-full mb-2 right-0 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
@@ -1867,7 +1867,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
               type="button"
               disabled={aiGenerating}
               onClick={async () => {
-              if (!synopsis) { showAlert(lang === "ko" ? '세계관 설계에서 시놉시스를 먼저 작성하세요.' : 'Write a synopsis in World Design first.'); return; }
+              if (!synopsis) { showAlert(L4(lang, { ko: '세계관 설계에서 시놉시스를 먼저 작성하세요.', en: 'Write a synopsis in World Design first.' })); return; }
               setAiGenerating(true);
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
@@ -1882,7 +1882,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                   setCivs(newCivs);
                   setRelations([]);
                 }
-              } catch { showAlert(lang === "ko" ? '자동 생성 실패. API 키를 확인하세요.' : 'Generation failed. Check API key.'); }
+              } catch { showAlert(L4(lang, { ko: '자동 생성 실패. API 키를 확인하세요.', en: 'Generation failed. Check API key.' })); }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
@@ -1903,7 +1903,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                   : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
-              {lang === "ko" ? tab.ko : tab.en}
+              {L4(lang, tab)}
             </button>
           ))}
         </div>
@@ -1913,7 +1913,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
           <div className="text-center py-8 space-y-3">
             {genreSelections.length === 0 ? (
               <div className="text-text-tertiary text-sm">
-                {lang === "ko" ? "장르를 선택하세요 (최대 5개)" : "Select genres (max 5)"}
+                {L4(lang, { ko: "장르를 선택하세요 (최대 5개)", en: "Select genres (max 5)" })}
               </div>
             ) : (
               <>
@@ -1927,7 +1927,7 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
                           {s.genre} Lv.{s.level}
                         </div>
                         <div className="text-text-secondary text-xs">
-                          {lang === "ko" ? lvName?.ko : lvName?.en}
+                          {lvName ? L4(lang, lvName) : ''}
                         </div>
                       </div>
                     );
@@ -1970,19 +1970,19 @@ export default function WorldSimulator({ lang = "ko", synopsis, worldContext, on
         {/* Footer stats */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{lang === "ko" ? "문명" : "Civs"}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "문명", en: "Civs" })}: </span>
             <span className="text-accent-purple font-bold">{civs.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{lang === "ko" ? "관계" : "Relations"}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "관계", en: "Relations" })}: </span>
             <span className="text-accent-purple font-bold">{relations.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{lang === "ko" ? "전환" : "Transitions"}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "전환", en: "Transitions" })}: </span>
             <span className="text-accent-purple font-bold">{transitions.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{lang === "ko" ? "장르" : "Genre"}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "장르", en: "Genre" })}: </span>
             {genreSelections.map((s, i) => (
               <span key={i}>
                 {i > 0 && <span className="text-text-tertiary"> + </span>}

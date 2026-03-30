@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { SettlementBadge } from "@/components/network/SettlementBadge";
 import {
   createSettlement,
@@ -69,7 +70,7 @@ export function SettlementWorkbench() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : lang === "ko" ? "정산 데이터를 불러오지 못했습니다." : "Failed to load settlements.");
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 데이터를 불러오지 못했습니다.", en: "Failed to load settlements." }));
         }
       }
     };
@@ -113,7 +114,7 @@ export function SettlementWorkbench() {
       setEhValue(null);
       setRisk(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : lang === "ko" ? "정산 저장에 실패했습니다." : "Failed to save settlement.");
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 저장에 실패했습니다.", en: "Failed to save settlement." }));
     } finally {
       setSubmitting(false);
     }
@@ -130,10 +131,10 @@ export function SettlementWorkbench() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{lang === "ko" ? "운영자 로그인 필요" : "Administrator Sign-In Required"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "운영자 로그인 필요", en: "Administrator Sign-In Required" })}</div>
             <div className="mt-8 flex justify-center">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
-                {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
+                {L4(lang, { ko: "Google 로그인", en: "Sign In with Google" })}
               </button>
             </div>
           </section>
@@ -147,14 +148,12 @@ export function SettlementWorkbench() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{lang === "ko" ? "권한 필요" : "Permission Required"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "권한 필요", en: "Permission Required" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {lang === "ko" ? "정산 워크벤치는 운영자 전용입니다." : "The settlement workbench is for administrators only."}
+              {L4(lang, { ko: "정산 워크벤치는 운영자 전용입니다.", en: "The settlement workbench is for administrators only." })}
             </h1>
             <p className="site-lede mt-4 text-sm md:text-base">
-              {lang === "ko"
-                ? "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다."
-                : "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen."}
+              {L4(lang, { ko: "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", en: "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen." })}
             </p>
           </section>
         </div>
@@ -170,14 +169,14 @@ export function SettlementWorkbench() {
         </Link>
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="premium-panel p-6 md:p-8">
-          <div className="site-kicker">{lang === "ko" ? "정산 워크벤치" : "Settlement Workbench"}</div>
+          <div className="site-kicker">{L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench" })}</div>
           <h1 className="site-title mt-3 text-3xl font-semibold">
-            {lang === "ko" ? "관측 로그를 선택하고 상태 판정을 부여하세요." : "Select a log and attach the current verdict."}
+            {L4(lang, { ko: "관측 로그를 선택하고 상태 판정을 부여하세요.", en: "Select a log and attach the current verdict." })}
           </h1>
 
           <div className="mt-8 grid gap-4">
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "대상 로그" : "Target Log"}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "대상 로그", en: "Target Log" })}</div>
               <select
                 value={selectedPostId}
                 onChange={(event) => setSelectedPostId(event.target.value)}
@@ -192,7 +191,7 @@ export function SettlementWorkbench() {
             </label>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "판정" : "Verdict"}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "판정", en: "Verdict" })}</div>
               <select
                 value={verdict}
                 onChange={(event) => setVerdict(event.target.value as PlanetStatus)}
@@ -208,7 +207,7 @@ export function SettlementWorkbench() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "EH 수치" : "EH Value"}</div>
+                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "EH 수치", en: "EH Value" })}</div>
                 <input
                   type="number"
                   min={-100}
@@ -219,7 +218,7 @@ export function SettlementWorkbench() {
                 />
               </label>
               <label className="block">
-                <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "위험도" : "Risk"}</div>
+                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "위험도", en: "Risk" })}</div>
                 <input
                   type="number"
                   min={0}
@@ -232,7 +231,7 @@ export function SettlementWorkbench() {
             </div>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "보관 등급" : "Archive Level"}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "보관 등급", en: "Archive Level" })}</div>
               <input
                 value={archiveLevel}
                 onChange={(event) => setArchiveLevel(event.target.value)}
@@ -242,7 +241,7 @@ export function SettlementWorkbench() {
             </label>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{lang === "ko" ? "권고 조치" : "Recommended Action"}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "권고 조치", en: "Recommended Action" })}</div>
               <textarea
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
@@ -257,14 +256,14 @@ export function SettlementWorkbench() {
 
           <div className="mt-6 flex justify-end">
             <button type="button" onClick={() => void handleSubmit()} disabled={!canSubmit} className="premium-button">
-              {submitting ? (lang === "ko" ? "저장 중..." : "Saving...") : lang === "ko" ? "정산 기록 저장" : "Save Settlement"}
+              {submitting ? L4(lang, { ko: "저장 중...", en: "Saving..." }) : L4(lang, { ko: "정산 기록 저장", en: "Save Settlement" })}
             </button>
           </div>
         </section>
 
         <aside className="space-y-4">
           <div className="premium-panel-soft p-5">
-            <div className="site-kicker">{lang === "ko" ? "대상 미리보기" : "Selected Log Preview"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "대상 미리보기", en: "Selected Log Preview" })}</div>
             {selectedPost ? (
               <>
                 <h2 className="mt-3 text-lg font-semibold text-text-primary">{selectedPost.title}</h2>
@@ -274,12 +273,12 @@ export function SettlementWorkbench() {
                 </div>
               </>
             ) : (
-              <p className="mt-3 text-sm text-text-secondary">{lang === "ko" ? "선택된 로그가 없습니다." : "No log selected."}</p>
+              <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "선택된 로그가 없습니다.", en: "No log selected." })}</p>
             )}
           </div>
 
           <div className="premium-panel-soft p-5">
-            <div className="site-kicker">{lang === "ko" ? "최근 정산" : "Recent Settlements"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "최근 정산", en: "Recent Settlements" })}</div>
             <div className="mt-4 space-y-3">
               {settlements.map((settlement) => (
                 <div key={settlement.id} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
@@ -288,7 +287,7 @@ export function SettlementWorkbench() {
                     <SettlementBadge status={settlement.verdict} lang={lang} />
                   </div>
                   <div className="mt-2 text-xs text-text-tertiary">
-                    {new Date(settlement.createdAt).toLocaleString(lang === "ko" ? "ko-KR" : "en-US")}
+                    {new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }))}
                   </div>
                 </div>
               ))}

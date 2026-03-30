@@ -23,6 +23,7 @@ import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels, type Ri
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
+import { L4 } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/studio-types";
 
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";

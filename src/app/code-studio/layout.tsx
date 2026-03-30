@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: "Code Studio — EH Universe",
@@ -15,5 +16,5 @@ export default function CodeStudioLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <ErrorBoundary variant="full-page">{children}</ErrorBoundary>;
 }

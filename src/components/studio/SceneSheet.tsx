@@ -3,7 +3,7 @@
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from '@/lib/grammar-packs';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
@@ -157,7 +157,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
   const addSegment = () => {
     setSegments(prev => [...prev, {
       id: `seg-${Date.now()}`,
-      label: lang === "ko" ? "새 구간" : "New Segment",
+      label: L4(lang, { ko: "새 구간", en: "New Segment" }),
       color: "#6b7280",
       width: 10,
       desc: "",
@@ -182,11 +182,11 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
             className={`px-3 py-1.5 rounded text-[10px] font-bold border transition-all ${
               selectedPreset === key ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
             }`}>
-            {lang === "ko" ? PLOT_PRESETS[key].ko : PLOT_PRESETS[key].en}
+            {L4(lang, PLOT_PRESETS[key])}
           </button>
         ))}
         <button onClick={addSegment} className="px-3 py-1.5 rounded text-[10px] font-bold border border-dashed border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-all">
-          + {lang === "ko" ? "구간 추가" : "Add Segment"}
+          + {L4(lang, { ko: "구간 추가", en: "Add Segment" })}
         </button>
       </div>
 
@@ -243,13 +243,13 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
               </div>
             </div>
             <input value={seg.desc} onChange={e => updateSegment(i, { desc: e.target.value })}
-              placeholder={lang === "ko" ? "설명..." : "Description..."}
+              placeholder={L4(lang, { ko: "설명...", en: "Description..." })}
               maxLength={500}
               className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
             <div className="flex items-center gap-2">
-              <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "비중" : "Weight"}:</span>
+              <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "비중", en: "Weight" })}:</span>
               <input type="range" min={5} max={80} value={seg.width}
-                aria-label={lang === "ko" ? `${seg.label} 비중` : `${seg.label} weight`}
+                aria-label={L4(lang, { ko: `${seg.label} 비중`, en: `${seg.label} weight` })}
                 onChange={e => {
                   const newW = parseInt(e.target.value);
                   const diff = newW - seg.width;
@@ -473,9 +473,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
   const applyScenePreset = useCallback((presetKey: string) => {
     const preset = SCENE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
-    const confirmMsg = lang === "ko"
-      ? "현재 씬시트 데이터를 프리셋으로 덮어쓰시겠습니까?"
-      : "Overwrite current scene sheet data with this preset?";
+    const confirmMsg = L4(lang, { ko: "현재 씬시트 데이터를 프리셋으로 덮어쓰시겠습니까?", en: "Overwrite current scene sheet data with this preset?" });
     if (!window.confirm(confirmMsg)) return;
     const ts = Date.now();
     const isKO = lang === "ko";
@@ -506,20 +504,20 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
   if (tierContext) {
     const hasCharData = tierContext.charProfiles?.some(c => c.desire || c.conflict);
     if (!hasCharData) {
-      tierWarnings.push(lang === "ko" ? "캐릭터 뼈대(욕망/갈등)가 비어있어 연출이 서사와 연결되지 않습니다" : "Character skeleton (desire/conflict) is empty — direction won't connect to narrative");
+      tierWarnings.push(L4(lang, { ko: "캐릭터 뼈대(욕망/갈등)가 비어있어 연출이 서사와 연결되지 않습니다", en: "Character skeleton (desire/conflict) is empty — direction won't connect to narrative" }));
     }
     if (!tierContext.corePremise) {
-      tierWarnings.push(lang === "ko" ? "세계관 핵심 전제가 없어 훅/클리프행어가 세계관과 무관합니다" : "No world premise — hooks/cliffs won't relate to the world");
+      tierWarnings.push(L4(lang, { ko: "세계관 핵심 전제가 없어 훅/클리프행어가 세계관과 무관합니다", en: "No world premise — hooks/cliffs won't relate to the world" }));
     }
     if (!tierContext.currentConflict) {
-      tierWarnings.push(lang === "ko" ? "세계 갈등이 없어 긴장 장치가 맥락을 잃습니다" : "No world conflict — tension devices lose context");
+      tierWarnings.push(L4(lang, { ko: "세계 갈등이 없어 긴장 장치가 맥락을 잃습니다", en: "No world conflict — tension devices lose context" }));
     }
     // 대사 톤이 있는데 해당 캐릭터의 values가 없으면
     if (tierContext.charProfiles?.length) {
       for (const rule of dialogueRules) {
         const profile = tierContext.charProfiles.find(c => c.name === rule.character);
         if (profile && !profile.values) {
-          tierWarnings.push(lang === "ko" ? `${rule.character}의 가치관/금지선이 없어 대사 톤이 캐릭터와 분리됩니다` : `${rule.character} has no values — dialogue tone disconnected from character`);
+          tierWarnings.push(L4(lang, { ko: `${rule.character}의 가치관/금지선이 없어 대사 톤이 캐릭터와 분리됩니다`, en: `${rule.character} has no values — dialogue tone disconnected from character` }));
           break;
         }
       }
@@ -547,7 +545,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           </div>
           <div>
             <span className="badge badge-amber mr-2">SCENE</span>
-            {lang === "ko" ? "씬시트 — 장르 문법 설계" : "Scene Sheet — Genre Grammar Design"}
+            {L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design" })}
           </div>
         </div>
         <div className="flex gap-2 relative">
@@ -555,18 +553,18 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
               showGrammarPanel ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary'
             }`}>
-            {GRAMMAR_PACKS[grammarRegion].flag} {lang === "ko" ? "문법" : "Grammar"}
+            {GRAMMAR_PACKS[grammarRegion].flag} {L4(lang, { ko: "문법", en: "Grammar" })}
           </button>
           <button onClick={() => setShowScenePresetMenu(v => !v)}
             className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-            ⚡ {lang === "ko" ? "프리셋" : "Preset"}
+            ⚡ {L4(lang, { ko: "프리셋", en: "Preset" })}
           </button>
           {showScenePresetMenu && (
             <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 min-w-[180px] max-h-[300px] overflow-y-auto">
               {SCENE_PRESETS.map(p => (
                 <button key={p.key} onClick={() => applyScenePreset(p.key)}
                   className="w-full text-left px-4 py-2.5 text-[11px] text-text-secondary hover:bg-accent-purple/20 hover:text-text-primary transition-colors border-b border-border/50 last:border-0">
-                  {lang === "ko" ? p.ko : p.en}
+                  {L4(lang, p)}
                 </button>
               ))}
             </div>
@@ -725,7 +723,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         <div className="space-y-1">
           {TAB_GROUPS.map((group, gi) => {
             const hasActive = group.tabs.includes(activeTab);
-            const groupLabel = lang === "ko" ? group.ko : group.en;
+            const groupLabel = L4(lang, group);
             return (
               <details key={gi} open={hasActive} className="group/tab">
                 <summary className={`flex items-center gap-1 cursor-pointer text-[10px] font-bold tracking-wider select-none py-1 ${
@@ -747,7 +745,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
                             : "text-text-tertiary hover:text-text-secondary border border-transparent active:bg-white/5"
                         }`}>
-                        {tab.emoji} {lang === "ko" ? tab.ko : tab.en}
+                        {tab.emoji} {L4(lang, tab)}
                       </button>
                     );
                   })}
@@ -765,18 +763,18 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 <React.Fragment key={intensity}>
                   <button onClick={() => addGoguma("goguma", intensity)}
                     className="px-3 py-1.5 bg-amber-600/10 border border-amber-600/30 rounded text-[10px] font-bold text-amber-500 hover:bg-amber-600/20 transition-colors">
-                    🍠 {lang === "ko" ? ({small:"소(오해)",medium:"중(배신)",large:"대(절망)"})[intensity] : ({small:"Small",medium:"Medium",large:"Large"})[intensity]}
+                    🍠 {L4(lang, ({small:{ko:"소(오해)",en:"Small"},medium:{ko:"중(배신)",en:"Medium"},large:{ko:"대(절망)",en:"Large"}})[intensity])}
                   </button>
                 </React.Fragment>
               ))}
               <button onClick={() => addGoguma("cider", "large")}
                 className="px-3 py-1.5 bg-cyan-600/10 border border-cyan-600/30 rounded text-[10px] font-bold text-cyan-400 hover:bg-cyan-600/20 transition-colors">
-                🥤 {lang === "ko" ? "사이다 추가" : "Add Cider"}
+                🥤 {L4(lang, { ko: "사이다 추가", en: "Add Cider" })}
               </button>
             </div>
             {gogumas.length === 0 ? (
               <div className="text-center py-8 text-text-tertiary text-xs italic">
-                {lang === "ko" ? "고구마(답답함)와 사이다(해소)를 배치하세요. 2~3 고구마 후 1 사이다가 이상적." : "Place tension (goguma) and release (cider). 2-3 tensions then 1 release is ideal."}
+                {L4(lang, { ko: "고구마(답답함)와 사이다(해소)를 배치하세요. 2~3 고구마 후 1 사이다가 이상적.", en: "Place tension (goguma) and release (cider). 2-3 tensions then 1 release is ideal." })}
               </div>
             ) : (
               <div className="space-y-2">
@@ -787,7 +785,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                       {g.type === "goguma" ? g.intensity : "RELEASE"}
                     </span>
                     <input value={g.desc} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, desc: e.target.value } : gg))}
-                      placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
+                      placeholder={L4(lang, { ko: "설명...", en: "Description..." })} maxLength={500} className="flex-1 bg-transparent text-xs outline-none text-text-secondary" />
                     <input type="number" min={1} value={g.episode} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, episode: parseInt(e.target.value) || 1 } : gg))}
                       className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" />
                     <button onClick={() => setGogumas(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
@@ -805,7 +803,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               {(["opening", "middle", "ending"] as const).map(pos => (
                 <button key={pos} onClick={() => addHook(pos)}
                   className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple hover:text-accent-purple transition-colors">
-                  + {lang === "ko" ? ({opening:"오프닝 훅",middle:"미들 훅",ending:"엔딩 훅"})[pos] : ({opening:"Opening Hook",middle:"Middle Hook",ending:"Ending Hook"})[pos]}
+                  + {L4(lang, ({opening:{ko:"오프닝 훅",en:"Opening Hook"},middle:{ko:"미들 훅",en:"Middle Hook"},ending:{ko:"엔딩 훅",en:"Ending Hook"}})[pos])}
                 </button>
               ))}
             </div>
@@ -817,12 +815,12 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   }`}>{h.position}</span>
                   <select value={h.hookType} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, hookType: e.target.value } : hh))}
                     className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none">
-                    {HOOK_TYPES.map(ht => <option key={ht.id} value={ht.id}>{lang === "ko" ? ht.ko : ht.en}</option>)}
+                    {HOOK_TYPES.map(ht => <option key={ht.id} value={ht.id}>{L4(lang, ht)}</option>)}
                   </select>
                   <button onClick={() => setHooks(prev => prev.filter((_, ii) => ii !== i))} className="ml-auto text-text-tertiary hover:text-accent-red text-xs">✕</button>
                 </div>
                 <input value={h.desc} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, desc: e.target.value } : hh))}
-                  placeholder={lang === "ko" ? "훅 내용 (예: \"문이 열렸다. 죽었어야 할 사람이 서 있었다.\")" : "Hook content..."}
+                  placeholder={L4(lang, { ko: "훅 내용 (예: \"문이 열렸다. 죽었어야 할 사람이 서 있었다.\")", en: "Hook content..." })}
                   maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none" />
               </div>
@@ -834,12 +832,12 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {activeTab === "emotion" && (
           <div className="space-y-4">
             <button onClick={addEmotion} className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "감정 포인트 추가" : "Add Emotion Point"}
+              + {L4(lang, { ko: "감정 포인트 추가", en: "Add Emotion Point" })}
             </button>
             {/* Emotion curve visualization */}
             {emotions.length > 0 && (
               <div className="relative h-24 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "감정 곡선 시각화" : "Emotion curve visualization"}>
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={L4(lang, { ko: "감정 곡선 시각화", en: "Emotion curve visualization" })}>
                   {emotions.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-purple)" strokeWidth="0.5"
                       points={sortedEmotions.map(e => `${e.position},${50 - e.intensity / 2}`).join(" ")} />
@@ -856,14 +854,14 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none">
                   {EMOTIONS.map(emo => <option key={emo} value={emo}>{emo}</option>)}
                 </select>
-                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}:</span>
+                <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "위치", en: "Pos" })}:</span>
                 <input type="range" min={0} max={100} value={em.position}
-                  aria-label={lang === "ko" ? "감정 위치" : "Emotion position"}
+                  aria-label={L4(lang, { ko: "감정 위치", en: "Emotion position" })}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, position: parseInt(e.target.value) } : ee))}
                   className="flex-1 h-1 accent-accent-purple" />
-                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Int"}:</span>
+                <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "강도", en: "Int" })}:</span>
                 <input type="range" min={0} max={100} value={em.intensity}
-                  aria-label={lang === "ko" ? "감정 강도" : "Emotion intensity"}
+                  aria-label={L4(lang, { ko: "감정 강도", en: "Emotion intensity" })}
                   onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, intensity: parseInt(e.target.value) } : ee))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-purple w-6 text-right">{em.intensity}</span>
@@ -877,19 +875,19 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {activeTab === "dialogue" && (
           <div className="space-y-4">
             <button onClick={addDialogue} className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "캐릭터 대사 규칙 추가" : "Add Dialogue Rule"}
+              + {L4(lang, { ko: "캐릭터 대사 규칙 추가", en: "Add Dialogue Rule" })}
             </button>
             {dialogueRules.map((dr, i) => (
               <div key={dr.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
                 <div className="flex gap-2">
                   <input value={dr.character} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, character: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
+                    placeholder={L4(lang, { ko: "캐릭터명", en: "Character" })} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none font-bold" />
                   <input value={dr.tone} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, tone: e.target.value } : d))}
-                    placeholder={lang === "ko" ? "톤 (예: 냉소적, 다정함)" : "Tone (e.g. sarcastic, warm)"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
+                    placeholder={L4(lang, { ko: "톤 (예: 냉소적, 다정함)", en: "Tone (e.g. sarcastic, warm)" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none" />
                   <button onClick={() => setDialogueRules(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red">✕</button>
                 </div>
                 <input value={dr.notes} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, notes: e.target.value } : d))}
-                  placeholder={lang === "ko" ? "특이사항 (예: 긴장 시 짧게, 경어 사용)" : "Notes (e.g. short in tension, uses formal speech)"}
+                  placeholder={L4(lang, { ko: "특이사항 (예: 긴장 시 짧게, 경어 사용)", en: "Notes (e.g. short in tension, uses formal speech)" })}
                   maxLength={500}
                   className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
               </div>
@@ -901,25 +899,25 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {activeTab === "dopamine" && (
           <div className="space-y-4">
             <button onClick={addDopamine} className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "도파민 장치 추가" : "Add Dopamine Device"}
+              + {L4(lang, { ko: "도파민 장치 추가", en: "Add Dopamine Device" })}
             </button>
             {dopamines.map((dp, i) => (
               <div key={dp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <select value={dp.scale} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, scale: e.target.value as "micro"|"medium"|"macro" } : d))}
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[9px] font-bold outline-none uppercase">
-                  <option value="micro">{lang === "ko" ? "소 (문단)" : "Micro"}</option>
-                  <option value="medium">{lang === "ko" ? "중 (에피소드)" : "Medium"}</option>
-                  <option value="macro">{lang === "ko" ? "대 (아크)" : "Macro"}</option>
+                  <option value="micro">{L4(lang, { ko: "소 (문단)", en: "Micro" })}</option>
+                  <option value="medium">{L4(lang, { ko: "중 (에피소드)", en: "Medium" })}</option>
+                  <option value="macro">{L4(lang, { ko: "대 (아크)", en: "Macro" })}</option>
                 </select>
                 <select value={dp.device} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, device: e.target.value } : d))}
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none">
-                  {DOPAMINE_DEVICES.map(dd => <option key={dd.id} value={dd.id}>{lang === "ko" ? dd.ko : dd.en}</option>)}
+                  {DOPAMINE_DEVICES.map(dd => <option key={dd.id} value={dd.id}>{L4(lang, dd)}</option>)}
                 </select>
                 <input value={dp.desc} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, desc: e.target.value } : d))}
-                  placeholder={lang === "ko" ? "설명..." : "Description..."} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
+                  placeholder={L4(lang, { ko: "설명...", en: "Description..." })} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <label className="flex items-center gap-1 text-[9px] text-text-tertiary cursor-pointer">
                   <input type="checkbox" checked={dp.resolved} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, resolved: e.target.checked } : d))} className="accent-accent-green" />
-                  {lang === "ko" ? "회수" : "Resolved"}
+                  {L4(lang, { ko: "회수", en: "Resolved" })}
                 </label>
                 <button onClick={() => setDopamines(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
@@ -931,16 +929,16 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {activeTab === "cliff" && (
           <div className="space-y-4">
             <button onClick={addCliff} className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "클리프행어 추가" : "Add Cliffhanger"}
+              + {L4(lang, { ko: "클리프행어 추가", en: "Add Cliffhanger" })}
             </button>
             {cliffs.map((cl, i) => (
               <div key={cl.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <select value={cl.cliffType} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, cliffType: e.target.value } : c))}
                   className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none">
-                  {CLIFF_TYPES.map(ct => <option key={ct.id} value={ct.id}>{lang === "ko" ? ct.ko : ct.en}</option>)}
+                  {CLIFF_TYPES.map(ct => <option key={ct.id} value={ct.id}>{L4(lang, ct)}</option>)}
                 </select>
                 <input value={cl.desc} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, desc: e.target.value } : c))}
-                  placeholder={lang === "ko" ? "내용 (예: \"칼끝이 목에 닿았다. 그 순간—\")" : "Content..."}
+                  placeholder={L4(lang, { ko: "내용 (예: \"칼끝이 목에 닿았다. 그 순간—\")", en: "Content..." })}
                   maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none text-text-secondary" />
                 <input type="number" min={1} value={cl.episode} onChange={e => setCliffs(prev => prev.map((c, ii) => ii === i ? { ...c, episode: parseInt(e.target.value) || 1 } : c))}
                   className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" title="EP" />
@@ -956,27 +954,27 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div className="space-y-4">
             <button onClick={() => setForeshadows(prev => [...prev, { id: `fs-${Date.now()}`, planted: '', payoff: '', episode: 1, resolved: false }])}
               className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "떡밥 추가" : "Add Foreshadow"}
+              + {L4(lang, { ko: "떡밥 추가", en: "Add Foreshadow" })}
             </button>
-            {foreshadows.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "복선을 심고 회수를 추적하세요" : "Plant foreshadowing and track payoffs"}</p>}
+            {foreshadows.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{L4(lang, { ko: "복선을 심고 회수를 추적하세요", en: "Plant foreshadowing and track payoffs" })}</p>}
             {foreshadows.map((fs, i) => (
               <div key={fs.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🌱 심기" : "🌱 Plant"}</span>
+                    <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "🌱 심기", en: "🌱 Plant" })}</span>
                     <input value={fs.planted} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, planted: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "복선 내용..." : "Foreshadow content..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={L4(lang, { ko: "복선 내용...", en: "Foreshadow content..." })} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "🎯 회수" : "🎯 Payoff"}</span>
+                    <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "🎯 회수", en: "🎯 Payoff" })}</span>
                     <input value={fs.payoff} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, payoff: e.target.value } : f))}
-                      placeholder={lang === "ko" ? "회수 방법..." : "Payoff method..."} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
+                      placeholder={L4(lang, { ko: "회수 방법...", en: "Payoff method..." })} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-purple" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-1 text-[10px] text-text-tertiary cursor-pointer">
                     <input type="checkbox" checked={fs.resolved} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, resolved: e.target.checked } : f))} className="accent-accent-green" />
-                    {lang === "ko" ? "회수 완료" : "Resolved"}
+                    {L4(lang, { ko: "회수 완료", en: "Resolved" })}
                   </label>
                   <input type="number" min={1} value={fs.episode} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, episode: parseInt(e.target.value) || 1 } : f))}
                     className="w-12 bg-bg-secondary border border-border rounded px-1 py-0.5 text-[9px] text-center outline-none" title="EP" />
@@ -1001,13 +999,13 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               <div key={p.id} className="flex items-center gap-3 border border-border rounded px-3 py-2 bg-bg-primary">
                 <span className="text-[10px] font-bold w-16">{p.section}</span>
                 <input type="range" min={5} max={80} value={p.percent}
-                  aria-label={lang === "ko" ? "페이싱 비중" : "Pacing weight"}
+                  aria-label={L4(lang, { ko: "페이싱 비중", en: "Pacing weight" })}
                   onChange={e => {
                   setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, percent: parseInt(e.target.value) } : pp));
                 }} className="flex-1 h-1 accent-accent-purple" />
                 <span className="text-[10px] font-bold text-accent-purple w-8 text-right">{p.percent}%</span>
                 <input value={p.desc} onChange={e => setPacings(prev => prev.map((pp, ii) => ii === i ? { ...pp, desc: e.target.value } : pp))}
-                  placeholder={lang === "ko" ? "메모..." : "Note..."} maxLength={500} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                  placeholder={L4(lang, { ko: "메모...", en: "Note..." })} maxLength={500} className="w-32 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
               </div>
             ))}
           </div>
@@ -1018,11 +1016,11 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div className="space-y-4">
             <button onClick={() => setTensionPoints(prev => [...prev, { id: `tp-${Date.now()}`, position: prev.length * 20, level: 50, label: '' }])}
               className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "텐션 포인트" : "Tension Point"}
+              + {L4(lang, { ko: "텐션 포인트", en: "Tension Point" })}
             </button>
             {tensionPoints.length > 0 && (
               <div className="relative h-32 border border-border rounded-lg bg-bg-primary overflow-hidden">
-                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={lang === "ko" ? "텐션 곡선 시각화" : "Tension curve visualization"}>
+                <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={L4(lang, { ko: "텐션 곡선 시각화", en: "Tension curve visualization" })}>
                   {tensionPoints.length >= 2 && (
                     <polyline fill="none" stroke="var(--color-accent-red)" strokeWidth="0.8"
                       points={sortedTensionPoints.map(t => `${t.position},${50 - t.level / 2}`).join(" ")} />
@@ -1036,15 +1034,15 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             {tensionPoints.map((tp, i) => (
               <div key={tp.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tp.label} onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, label: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "라벨 (예: 첫 대치)" : "Label"} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
-                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "위치" : "Pos"}</span>
+                  placeholder={L4(lang, { ko: "라벨 (예: 첫 대치)", en: "Label" })} maxLength={100} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none" />
+                <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "위치", en: "Pos" })}</span>
                 <input type="range" min={0} max={100} value={tp.position}
-                  aria-label={lang === "ko" ? "텐션 위치" : "Tension position"}
+                  aria-label={L4(lang, { ko: "텐션 위치", en: "Tension position" })}
                   onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, position: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-purple" />
-                <span className="text-[9px] text-text-tertiary">{lang === "ko" ? "강도" : "Lv"}</span>
+                <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "강도", en: "Lv" })}</span>
                 <input type="range" min={0} max={100} value={tp.level}
-                  aria-label={lang === "ko" ? "텐션 강도" : "Tension level"}
+                  aria-label={L4(lang, { ko: "텐션 강도", en: "Tension level" })}
                   onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))}
                   className="w-20 h-1 accent-accent-red" />
                 <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
@@ -1059,15 +1057,15 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div className="space-y-4">
             <button onClick={() => setCanons(prev => [...prev, { id: `cn-${Date.now()}`, character: '', rule: '' }])}
               className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "규칙 추가" : "Add Canon Rule"}
+              + {L4(lang, { ko: "규칙 추가", en: "Add Canon Rule" })}
             </button>
-            {canons.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "캐릭터 설정 모순을 방지하는 규칙을 정의하세요" : "Define rules to prevent character inconsistencies"}</p>}
+            {canons.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{L4(lang, { ko: "캐릭터 설정 모순을 방지하는 규칙을 정의하세요", en: "Define rules to prevent character inconsistencies" })}</p>}
             {canons.map((cn, i) => (
               <div key={cn.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={cn.character} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, character: e.target.value } : c))}
-                  placeholder={lang === "ko" ? "캐릭터명" : "Character"} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
+                  placeholder={L4(lang, { ko: "캐릭터명", en: "Character" })} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none" />
                 <input value={cn.rule} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, rule: e.target.value } : c))}
-                  placeholder={lang === "ko" ? '규칙 (예: "절대 웃지 않는다", "경어만 사용")' : 'Rule (e.g. "never smiles")'} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={L4(lang, { ko: '규칙 (예: "절대 웃지 않는다", "경어만 사용")', en: 'Rule (e.g. "never smiles")' })} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -1079,18 +1077,18 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div className="space-y-4">
             <button onClick={() => setTransitions(prev => [...prev, { id: `tr-${Date.now()}`, fromScene: '', toScene: '', method: '' }])}
               className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[10px] font-bold text-text-secondary hover:border-accent-purple transition-colors">
-              + {lang === "ko" ? "전환 추가" : "Add Transition"}
+              + {L4(lang, { ko: "전환 추가", en: "Add Transition" })}
             </button>
-            {transitions.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{lang === "ko" ? "시점/장소/시간 전환 타이밍을 설계하세요" : "Design POV/location/time transition timing"}</p>}
+            {transitions.length === 0 && <p className="text-center py-8 text-text-tertiary text-xs italic">{L4(lang, { ko: "시점/장소/시간 전환 타이밍을 설계하세요", en: "Design POV/location/time transition timing" })}</p>}
             {transitions.map((tr, i) => (
               <div key={tr.id} className="flex items-center gap-2 border border-border rounded px-3 py-2 bg-bg-primary">
                 <input value={tr.fromScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, fromScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 A" : "Scene A"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={L4(lang, { ko: "장면 A", en: "Scene A" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <span className="text-text-tertiary text-xs">→</span>
                 <input value={tr.toScene} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, toScene: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "장면 B" : "Scene B"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={L4(lang, { ko: "장면 B", en: "Scene B" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <input value={tr.method} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, method: e.target.value } : t))}
-                  placeholder={lang === "ko" ? "전환 방법 (컷/페이드/시간경과)" : "Method"} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
+                  placeholder={L4(lang, { ko: "전환 방법 (컷/페이드/시간경과)", en: "Method" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none" />
                 <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs">✕</button>
               </div>
             ))}
@@ -1100,7 +1098,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* ====== WRITER NOTES (작가 메모) ====== */}
         {activeTab === "notes" && (
           <div className="space-y-3">
-            <p className="text-[10px] text-text-tertiary">{lang === "ko" ? "이번 에피소드에 대한 자유 메모. 자동 생성 시 참고됩니다." : "Free notes for this episode. Will be referenced during AI generation."}</p>
+            <p className="text-[10px] text-text-tertiary">{L4(lang, { ko: "이번 에피소드에 대한 자유 메모. 자동 생성 시 참고됩니다.", en: "Free notes for this episode. Will be referenced during AI generation." })}</p>
             <textarea
               value={writerNotes}
               onChange={e => setWriterNotes(e.target.value)}
@@ -1146,7 +1144,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   }}
                   className="accent-accent-purple w-3.5 h-3.5" />
                 <span className={`text-[10px] font-bold transition-colors ${simRef[item.key] ? "text-accent-purple" : "text-text-tertiary group-hover:text-text-secondary"}`}>
-                  {lang === "ko" ? item.ko : item.en}
+                  {L4(lang, item)}
                 </span>
               </label>
             ))}
@@ -1157,7 +1155,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         <div className="border-t border-border pt-4 space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-              {lang === "ko" ? "장르 문법 검사" : "Genre Grammar Check"}
+              {L4(lang, { ko: "장르 문법 검사", en: "Genre Grammar Check" })}
             </span>
             <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
               passCount === 7 ? "bg-accent-green/10 text-accent-green" : passCount >= 4 ? "bg-accent-amber/10 text-accent-amber" : "bg-accent-red/10 text-accent-red"
@@ -1167,13 +1165,13 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[9px]">
             {([
-              [validation.gogumaOk, lang === "ko" ? "고구마/사이다" : "Tension/Release"],
-              [validation.hookOpeningOk, lang === "ko" ? "오프닝 훅" : "Opening Hook"],
-              [validation.hookEndingOk, lang === "ko" ? "엔딩 훅" : "Ending Hook"],
-              [validation.emotionOk, lang === "ko" ? "감정선" : "Emotion Arc"],
-              [validation.dialogueOk, lang === "ko" ? "대사 톤" : "Dialogue Tone"],
-              [validation.dopamineOk, lang === "ko" ? "도파민 루프" : "Dopamine Loop"],
-              [validation.cliffOk, lang === "ko" ? "클리프행어" : "Cliffhanger"],
+              [validation.gogumaOk, L4(lang, { ko: "고구마/사이다", en: "Tension/Release" })],
+              [validation.hookOpeningOk, L4(lang, { ko: "오프닝 훅", en: "Opening Hook" })],
+              [validation.hookEndingOk, L4(lang, { ko: "엔딩 훅", en: "Ending Hook" })],
+              [validation.emotionOk, L4(lang, { ko: "감정선", en: "Emotion Arc" })],
+              [validation.dialogueOk, L4(lang, { ko: "대사 톤", en: "Dialogue Tone" })],
+              [validation.dopamineOk, L4(lang, { ko: "도파민 루프", en: "Dopamine Loop" })],
+              [validation.cliffOk, L4(lang, { ko: "클리프행어", en: "Cliffhanger" })],
             ] as [boolean, string][]).map(([ok, label]) => (
               <div key={label} className={`flex items-center gap-1.5 px-2 py-1 rounded ${ok ? "bg-accent-green/5 text-accent-green" : "bg-bg-primary text-text-tertiary"}`}>
                 <span>{ok ? "✓" : "○"}</span>
@@ -1186,7 +1184,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           {tierWarnings.length > 0 && (
             <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-1">
               <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider">
-                ⚠ {lang === "ko" ? "서사 연동 경고" : "Narrative Link Warning"}
+                ⚠ {L4(lang, { ko: "서사 연동 경고", en: "Narrative Link Warning" })}
               </span>
               {tierWarnings.map((w, i) => (
                 <p key={i} className="text-[9px] text-amber-300/70">{w}</p>
@@ -1200,28 +1198,28 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* ============================================================ */}
         <div className="border-t border-border pt-4 space-y-3">
           <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-            {lang === "ko" ? "설정 조립" : "Direction Assembly"}
+            {L4(lang, { ko: "설정 조립", en: "Direction Assembly" })}
           </span>
 
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {([
-              { tab: "goguma" as SheetTab, emoji: "🍠", label: lang === "ko" ? "고구마/사이다" : "Tension/Release",
+              { tab: "goguma" as SheetTab, emoji: "🍠", label: L4(lang, { ko: "고구마/사이다", en: "Tension/Release" }),
                 count: gogumas.length,
-                detail: gogumas.length > 0 ? gogumas.map(g => g.type === "goguma" ? (lang === "ko" ? "고" : "T") : (lang === "ko" ? "사" : "R")).join("") : null },
-              { tab: "hook" as SheetTab, emoji: "🪝", label: lang === "ko" ? "훅" : "Hook",
+                detail: gogumas.length > 0 ? gogumas.map(g => g.type === "goguma" ? (L4(lang, { ko: "고", en: "T" })) : (L4(lang, { ko: "사", en: "R" }))).join("") : null },
+              { tab: "hook" as SheetTab, emoji: "🪝", label: L4(lang, { ko: "훅", en: "Hook" }),
                 count: hooks.length,
                 detail: hooks.length > 0 ? hooks.map(h => h.position[0].toUpperCase()).join("/") : null },
-              { tab: "emotion" as SheetTab, emoji: "💓", label: lang === "ko" ? "감정선" : "Emotion",
+              { tab: "emotion" as SheetTab, emoji: "💓", label: L4(lang, { ko: "감정선", en: "Emotion" }),
                 count: emotions.length,
                 detail: emotions.length > 0 ? emotions.slice(0, 3).map(e => e.emotion).join("→") : null },
-              { tab: "dialogue" as SheetTab, emoji: "💬", label: lang === "ko" ? "대사 톤" : "Dialogue",
+              { tab: "dialogue" as SheetTab, emoji: "💬", label: L4(lang, { ko: "대사 톤", en: "Dialogue" }),
                 count: dialogueRules.length,
                 detail: dialogueRules.length > 0 ? dialogueRules.map(d => d.character).join("/") : null },
-              { tab: "dopamine" as SheetTab, emoji: "⚡", label: lang === "ko" ? "도파민" : "Dopamine",
+              { tab: "dopamine" as SheetTab, emoji: "⚡", label: L4(lang, { ko: "도파민", en: "Dopamine" }),
                 count: dopamines.length,
-                detail: dopamines.length > 0 ? dopamines.map(d => d.scale === "micro" ? (lang === "ko" ? "소" : "μ") : d.scale === "medium" ? (lang === "ko" ? "중" : "M") : (lang === "ko" ? "대" : "L")).join("/") : null },
-              { tab: "cliff" as SheetTab, emoji: "🔚", label: lang === "ko" ? "클리프행어" : "Cliff",
+                detail: dopamines.length > 0 ? dopamines.map(d => d.scale === "micro" ? (L4(lang, { ko: "소", en: "μ" })) : d.scale === "medium" ? (L4(lang, { ko: "중", en: "M" })) : (L4(lang, { ko: "대", en: "L" }))).join("/") : null },
+              { tab: "cliff" as SheetTab, emoji: "🔚", label: L4(lang, { ko: "클리프행어", en: "Cliff" }),
                 count: cliffs.length,
                 detail: cliffs.length > 0 ? cliffs[0].cliffType : null },
             ]).map(card => (
@@ -1233,7 +1231,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
                 </div>
                 <div className="text-[10px] text-text-tertiary truncate">
-                  {card.detail || (lang === "ko" ? "미설정" : "Not set")}
+                  {card.detail || (L4(lang, { ko: "미설정", en: "Not set" }))}
                 </div>
               </button>
             ))}
@@ -1243,43 +1241,43 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div>
             <button onClick={() => setShowPromptPreview(p => !p)}
               className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary hover:text-accent-purple transition-colors">
-              {showPromptPreview ? "▼" : "▶"} {lang === "ko" ? "AI 지시문 미리보기" : "AI Prompt Preview"}
+              {showPromptPreview ? "▼" : "▶"} {L4(lang, { ko: "AI 지시문 미리보기", en: "AI Prompt Preview" })}
             </button>
 
             {showPromptPreview && (() => {
               const parts: string[] = [];
               if (gogumas.length > 0) {
-                parts.push(lang === "ko" ? "[고구마/사이다 리듬]" : "[Tension/Release Rhythm]");
+                parts.push(L4(lang, { ko: "[고구마/사이다 리듬]", en: "[Tension/Release Rhythm]" }));
                 gogumas.forEach(g => {
-                  parts.push(`  - ${g.type === "goguma" ? (lang === "ko" ? "고구마" : "Tension") : (lang === "ko" ? "사이다" : "Release")} (${g.intensity}): ${g.desc}`);
+                  parts.push(`  - ${g.type === "goguma" ? (L4(lang, { ko: "고구마", en: "Tension" })) : (L4(lang, { ko: "사이다", en: "Release" }))} (${g.intensity}): ${g.desc}`);
                 });
               }
               if (hooks.length > 0) {
-                parts.push(lang === "ko" ? "[훅 배치]" : "[Hook Placement]");
+                parts.push(L4(lang, { ko: "[훅 배치]", en: "[Hook Placement]" }));
                 hooks.forEach(h => {
                   parts.push(`  - ${h.position}: ${h.hookType} — ${h.desc}`);
                 });
               }
               if (emotions.length > 0) {
-                parts.push(lang === "ko" ? "[감정선 목표]" : "[Emotion Targets]");
+                parts.push(L4(lang, { ko: "[감정선 목표]", en: "[Emotion Targets]" }));
                 emotions.forEach(e => {
-                  parts.push(`  - ${e.emotion}: ${lang === "ko" ? "강도" : "intensity"} ${e.intensity}%`);
+                  parts.push(`  - ${e.emotion}: ${L4(lang, { ko: "강도", en: "intensity" })} ${e.intensity}%`);
                 });
               }
               if (dialogueRules.length > 0) {
-                parts.push(lang === "ko" ? "[대사 톤 규칙]" : "[Dialogue Tone Rules]");
+                parts.push(L4(lang, { ko: "[대사 톤 규칙]", en: "[Dialogue Tone Rules]" }));
                 dialogueRules.forEach(d => {
                   parts.push(`  - ${d.character}: ${d.tone}${d.notes ? ` (${d.notes})` : ""}`);
                 });
               }
               if (dopamines.length > 0) {
-                parts.push(lang === "ko" ? "[도파민 장치]" : "[Dopamine Devices]");
+                parts.push(L4(lang, { ko: "[도파민 장치]", en: "[Dopamine Devices]" }));
                 dopamines.forEach(dp => {
                   parts.push(`  - [${dp.scale}] ${dp.device}: ${dp.desc}`);
                 });
               }
               if (cliffs.length > 0) {
-                parts.push(lang === "ko" ? "[클리프행어]" : "[Cliffhanger]");
+                parts.push(L4(lang, { ko: "[클리프행어]", en: "[Cliffhanger]" }));
                 cliffs.forEach(cl => {
                   parts.push(`  - ${cl.cliffType}: ${cl.desc}`);
                 });
@@ -1287,7 +1285,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
 
               const preview = parts.length > 0
                 ? "[SCENE DIRECTION]\n" + parts.join("\n")
-                : (lang === "ko" ? "(설정 없음 — 연출 데이터를 추가하세요)" : "(No direction data — add entries above)");
+                : (L4(lang, { ko: "(설정 없음 — 연출 데이터를 추가하세요)", en: "(No direction data — add entries above)" }));
 
               return (
                 <div className="mt-2 relative">
@@ -1297,7 +1295,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                   {parts.length > 0 && (
                     <button onClick={() => { navigator.clipboard.writeText(preview); }}
                       className="absolute top-2 right-2 text-[10px] font-bold text-text-tertiary hover:text-accent-purple bg-bg-secondary px-2 py-1 rounded border border-border transition-colors">
-                      {lang === "ko" ? "복사" : "Copy"}
+                      {L4(lang, { ko: "복사", en: "Copy" })}
                     </button>
                   )}
                 </div>
@@ -1313,7 +1311,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               onClick={onSaveEpisodeSheet}
               className="w-full px-4 py-2.5 text-xs font-bold bg-accent-purple/15 hover:bg-accent-purple/25 border border-accent-purple/30 rounded-lg text-accent-purple font-[family-name:var(--font-mono)] transition-colors"
             >
-              📋 {lang === "ko" ? "현재 화 씬시트 저장" : "Save Current Episode Scene Sheet"}
+              📋 {L4(lang, { ko: "현재 화 씬시트 저장", en: "Save Current Episode Scene Sheet" })}
             </button>
           </div>
         )}
