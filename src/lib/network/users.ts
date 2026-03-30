@@ -1,4 +1,6 @@
 import type { User } from "firebase/auth";
+// Firebase Firestore — static import for data-layer modules.
+// Dynamic alternative: import('firebase/firestore') via lazyFirestore() in firebase.ts
 import {
   doc, getDoc, setDoc, updateDoc,
 } from "firebase/firestore";

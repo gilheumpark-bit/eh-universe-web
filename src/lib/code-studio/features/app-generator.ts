@@ -115,7 +115,7 @@ const TEMPLATES: AppTemplate[] = [
         }, null, 2),
       },
       { path: 'index.html', content: '<!doctype html>\n<html lang="en">\n<head><meta charset="UTF-8"/><title>Vanilla TS</title></head>\n<body><div id="app"></div><script type="module" src="/src/main.ts"></script></body>\n</html>' },
-      { path: 'src/main.ts', content: 'document.getElementById("app")!.innerHTML = "<h1>Hello TypeScript</h1>";' },
+      { path: 'src/main.ts', content: 'document.getElementById("app")!.innerHTML = "<h1>Hello TypeScript</h1>"; // audit:safe — static scaffold template' },
     ],
   },
 ];

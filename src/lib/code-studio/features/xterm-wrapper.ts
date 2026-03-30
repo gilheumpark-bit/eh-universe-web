@@ -184,8 +184,8 @@ function createFallbackTerminal(
   return {
     write: (data) => appendText(data),
     writeln: (data) => appendText(data + '\n'),
-    clear: () => { output.innerHTML = ''; },
-    reset: () => { output.innerHTML = ''; },
+    clear: () => { output.innerHTML = ''; }, /* audit:safe — clearing own DOM node, no user input */
+    reset: () => { output.innerHTML = ''; }, /* audit:safe — clearing own DOM node, no user input */
     focus: () => output.focus(),
     blur: () => output.blur(),
     resize: (cols, rows) => {

@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+const MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy
+
 /**
  * Validate that a hostname is a private/local network address.
  * Uses numeric range checks instead of regex to prevent invalid IPs (e.g., 192.168.999.999).

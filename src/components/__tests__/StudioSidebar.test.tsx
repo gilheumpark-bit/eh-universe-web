@@ -15,7 +15,7 @@ jest.mock('next/link', () => ({
 }));
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: Record<string, unknown>) => <img {...props} />,
+  default: (props: Record<string, unknown>) => <img alt="" {...props} />,
 }));
 jest.mock('@/lib/i18n', () => ({
   createT: () => (key: string, fallback?: string) => fallback ?? key,

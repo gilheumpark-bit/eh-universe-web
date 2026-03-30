@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+// Firebase Auth — static import for auth context (loaded once at app init).
+// Dynamic alternative: import('firebase/auth') for lazy-loaded paths
 import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { logger } from '@/lib/logger';

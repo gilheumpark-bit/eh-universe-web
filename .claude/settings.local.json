@@ -237,7 +237,21 @@
       "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src\\\\components' -name *.tsx -type f -exec grep -l from.*@/lib/ai-providers {})",
       "Bash(2)",
       "Bash(find 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src\\\\app\\\\api' -name *.ts -type f)",
-      "Bash(grep -rn 'lang === \"\"\"\"ko\"\"\"\"\\\\|lang === .ko.' src/ --include='*.tsx')"
+      "Bash(grep -rn 'lang === \"\"\"\"ko\"\"\"\"\\\\|lang === .ko.' src/ --include='*.tsx')",
+      "Bash(node_modules/.bin/jest src/lib/__tests__/ai-providers.test.ts --no-coverage)",
+      "Bash(mkdir -p src/__tests__)",
+      "Bash(mv audit-runner.test.ts src/__tests__/audit-runner.test.ts)",
+      "Bash(rm src/__tests__/audit-runner.test.ts)",
+      "Bash(rm -rf /tmp/run-audit.mjs /tmp/audit-runner.test.ts)",
+      "Bash(grep -rl \"import.*zustand\\\\|import.*redux\" src/ --include=*.ts --include=*.tsx)",
+      "Bash(echo \"=== dir file counts >20 ===\")",
+      "Bash(grep -rl \"export \\\\* from\" src/lib/code-studio-*.ts)",
+      "Bash(echo $f)",
+      "Bash(do if:*)",
+      "Bash(! grep:*)",
+      "Bash(then echo:*)",
+      "Bash(fi)",
+      "Bash(while read:*)"
     ]
   }
 }

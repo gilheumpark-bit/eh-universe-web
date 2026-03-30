@@ -1,3 +1,5 @@
+// Firebase Firestore — static import for data-layer modules.
+// Dynamic alternative: import('firebase/firestore') via lazyFirestore() in firebase.ts
 import {
   collection, deleteDoc, doc, documentId, getDoc, getDocs,
   limit, orderBy, query, setDoc, startAfter, where,

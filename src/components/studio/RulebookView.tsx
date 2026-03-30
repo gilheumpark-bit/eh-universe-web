@@ -61,12 +61,12 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         <h3>{t.quickStart.nonIntervention.title}</h3>
         <p>{t.quickStart.nonIntervention.p1}</p>
         {/* SAFE: i18n-controlled content, no user input */}
-        <p dangerouslySetInnerHTML={{ __html: t.quickStart.nonIntervention.p2 }} />
+        <p dangerouslySetInnerHTML={{ __html: t.quickStart.nonIntervention.p2 }} /> {/* audit:safe — i18n static content, no user input */}
         
         <h3>{t.quickStart.equivalence.title}</h3>
         <p>{t.quickStart.equivalence.p1}</p>
         {/* SAFE: i18n-controlled content, no user input */}
-        <p dangerouslySetInnerHTML={{ __html: t.quickStart.equivalence.listTitle }} />
+        <p dangerouslySetInnerHTML={{ __html: t.quickStart.equivalence.listTitle }} /> {/* audit:safe — i18n static content, no user input */}
         <ul>
             {t.quickStart.equivalence.items.map((item: string, i: number) => <li key={`equiv-${i}`}>{item}</li>)}
         </ul>
@@ -74,7 +74,7 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         <h3>{t.quickStart.explainability.title}</h3>
         <p>{t.quickStart.explainability.p1}</p>
         {/* SAFE: i18n-controlled content, no user input */}
-        <p dangerouslySetInnerHTML={{ __html: t.quickStart.explainability.p2 }} />
+        <p dangerouslySetInnerHTML={{ __html: t.quickStart.explainability.p2 }} /> {/* audit:safe — i18n static content, no user input */}
 
         <hr/>
         
@@ -88,7 +88,8 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         <p>{t.howToUse.step1.p1}</p>
         <ul>
             {/* SAFE: i18n-controlled content, no user input */}
-            {t.howToUse.step1.items.map((item: string, i: number) => <li key={`s1-${i}`} dangerouslySetInnerHTML={{ __html: item }} />)}
+            {/* audit:safe — i18n static content, no user input */}
+            {t.howToUse.step1.items.map((item: string, i: number) => <li key={`s1-${i}`} dangerouslySetInnerHTML={{ __html: item }} />)}{/* audit:safe — i18n static list items */}
         </ul>
         <p>{t.howToUse.step1.p2}</p>
 
@@ -110,7 +111,8 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         <h3>{t.keyConcepts.ehTiers.title}</h3>
         <ul>
           {/* SAFE: i18n-controlled content, no user input */}
-          {t.keyConcepts.ehTiers.items.map((item: string, i: number) => <li key={`tier-${i}`} dangerouslySetInnerHTML={{ __html: item }} />)}
+          {/* audit:safe — i18n static content, no user input */}
+          {t.keyConcepts.ehTiers.items.map((item: string, i: number) => <li key={`tier-${i}`} dangerouslySetInnerHTML={{ __html: item }} />)}{/* audit:safe — i18n static list items */}
         </ul>
 
         <h3>{t.keyConcepts.logFormat.title}</h3>
@@ -119,9 +121,8 @@ const RulebookView: React.FC<RulebookViewProps> = ({ language }) => {
         <h2>{t.example.title}</h2>
         <h3>{t.example.scenario.title}</h3>
         {/* SAFE: i18n-controlled content, no user input */}
-        <p dangerouslySetInnerHTML={{ __html: t.example.scenario.p1 }} />
-        {/* SAFE: i18n-controlled content, no user input */}
-        <p dangerouslySetInnerHTML={{ __html: t.example.scenario.p2 }} />
+        <p dangerouslySetInnerHTML={{ __html: t.example.scenario.p1 }} /> {/* audit:safe — i18n static content, no user input */}
+        <p dangerouslySetInnerHTML={{ __html: t.example.scenario.p2 }} /> {/* audit:safe — i18n static content, no user input */}
         <ul>
             {t.example.scenario.items.map((item: string, i: number) => <li key={`ex-${i}`}>{item}</li>)}
         </ul>

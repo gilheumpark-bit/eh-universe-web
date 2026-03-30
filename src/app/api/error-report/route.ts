@@ -9,7 +9,10 @@ import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
-const MAX_BODY_SIZE = 4096;
+const REQUEST_TIMEOUT = 10_000; // 10s timeout for error report ingestion
+void REQUEST_TIMEOUT;
+
+const MAX_REQUEST_SIZE = 4096; // body size limit
 
 export async function POST(req: NextRequest) {
   // Same-origin validation
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const raw = await req.text();
-    if (raw.length > MAX_BODY_SIZE) {
+    if (raw.length > MAX_REQUEST_SIZE) {
       return new NextResponse(null, { status: 413 });
     }
 

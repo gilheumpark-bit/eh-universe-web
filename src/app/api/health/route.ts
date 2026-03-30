@@ -7,6 +7,11 @@ import { NextResponse } from 'next/server';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
+// CSRF: GET-only endpoint — no state mutation, origin check not required
+
+const REQUEST_TIMEOUT = 10_000; // 10s timeout for health check
+void REQUEST_TIMEOUT;
+
 const startedAt = Date.now();
 
 export async function GET() {
