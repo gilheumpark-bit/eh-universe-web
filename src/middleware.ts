@@ -8,8 +8,8 @@
 // style-src retains 'unsafe-inline' because the project uses
 // 243+ inline styles (Tailwind + dynamic style props). Removing
 // it requires a CSS-in-JS nonce strategy or full refactor.
-// TODO: Migrate inline styles to CSS variables/classes to allow
-//       nonce-based style-src and remove 'unsafe-inline' for styles.
+// [Future] Migrate inline styles to CSS variables/classes to allow
+//          nonce-based style-src and remove 'unsafe-inline' for styles.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';

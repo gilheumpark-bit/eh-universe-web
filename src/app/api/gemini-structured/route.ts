@@ -458,7 +458,76 @@ Generate multiple items for each array field (2-4 items each). Be specific and d
 }
 
 // ============================================================
-// PART 3 — Route handler
+// PART 3 — Task validation helpers
+// ============================================================
+
+function validateTask(task: unknown): task is StructuredTask {
+  return task === 'characters' || task === 'worldDesign' || task === 'worldSim' || task === 'sceneDirection' || task === 'items';
+}
+
+function clampCount(value: unknown, defaultVal: number): number {
+  return typeof value === 'number' ? Math.min(Math.max(value, 1), 10) : defaultVal;
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === 'string') : [];
+}
+
+/** Dispatch task to the correct handler after validation. Returns data or error response. */
+async function dispatchTask(
+  task: StructuredTask,
+  body: Record<string, unknown>,
+  apiKey: string,
+  model: string,
+  language: AppLanguage,
+): Promise<{ ok: true; data: unknown } | { ok: false; response: NextResponse }> {
+  switch (task) {
+    case 'characters': {
+      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+      if (!config?.genre || !config?.synopsis) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid character config' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleCharacters(apiKey, model, config, language, clampCount(body.count, 4), toStringArray(body.existingNames)) };
+    }
+    case 'worldDesign': {
+      if (typeof body.genre !== 'string' || !body.genre.trim()) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid genre' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleWorldDesign(apiKey, model, body.genre, language, body.hints as StoryHints | undefined) };
+    }
+    case 'worldSim': {
+      if (typeof body.synopsis !== 'string' || typeof body.genre !== 'string') {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid world simulator input' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleWorldSim(apiKey, model, body.synopsis, body.genre, language, body.worldContext as WorldContext | undefined) };
+    }
+    case 'sceneDirection': {
+      if (typeof body.synopsis !== 'string' || !Array.isArray(body.characters)) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid scene direction input' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleSceneDirection(apiKey, model, body.synopsis, toStringArray(body.characters), language, body.tierContext as SceneTierContext | undefined) };
+    }
+    case 'items': {
+      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+      if (!config?.genre || !config?.synopsis) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid item config' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleItems(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
+    }
+    default:
+      return { ok: false, response: NextResponse.json({ error: 'Invalid task' }, { status: 400 }) };
+  }
+}
+
+function errorToStatus(message: string): number {
+  if (/Request too large/i.test(message)) return 413;
+  if (/Invalid JSON/i.test(message)) return 400;
+  if (/401|403|unauthorized/i.test(message)) return 401;
+  return 500;
+}
+
+// ============================================================
+// PART 4 — Route handler (thin orchestrator)
 // ============================================================
 
 export async function POST(req: NextRequest) {
@@ -473,7 +542,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await parseRequest(req);
-    // CSRF: body 파싱 후 클라이언트 키 유무로 Origin 검사 수준 결정
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
@@ -485,79 +553,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const task = body.task;
-    if (task !== 'characters' && task !== 'worldDesign' && task !== 'worldSim' && task !== 'sceneDirection' && task !== 'items') {
+    if (!validateTask(body.task)) {
       return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
     }
 
-    const model = getModel(body.model);
-    const language = getLanguage(body.language);
-
-    switch (task as StructuredTask) {
-      case 'characters': {
-        const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
-        if (!config?.genre || !config?.synopsis) {
-          return NextResponse.json({ error: 'Invalid character config' }, { status: 400 });
-        }
-        const count = typeof body.count === 'number' ? Math.min(Math.max(body.count, 1), 10) : 4;
-        const existingNames = Array.isArray(body.existingNames) ? body.existingNames as string[] : [];
-        return NextResponse.json(await handleCharacters(apiKey, model, config, language, count, existingNames));
-      }
-      case 'worldDesign': {
-        if (typeof body.genre !== 'string' || !body.genre.trim()) {
-          return NextResponse.json({ error: 'Invalid genre' }, { status: 400 });
-        }
-        return NextResponse.json(
-          await handleWorldDesign(apiKey, model, body.genre, language, body.hints as StoryHints | undefined),
-        );
-      }
-      case 'worldSim': {
-        if (typeof body.synopsis !== 'string' || typeof body.genre !== 'string') {
-          return NextResponse.json({ error: 'Invalid world simulator input' }, { status: 400 });
-        }
-        return NextResponse.json(
-          await handleWorldSim(
-            apiKey,
-            model,
-            body.synopsis,
-            body.genre,
-            language,
-            body.worldContext as WorldContext | undefined,
-          ),
-        );
-      }
-      case 'sceneDirection': {
-        if (typeof body.synopsis !== 'string' || !Array.isArray(body.characters)) {
-          return NextResponse.json({ error: 'Invalid scene direction input' }, { status: 400 });
-        }
-        const characters = body.characters.filter((value): value is string => typeof value === 'string');
-        return NextResponse.json(
-          await handleSceneDirection(
-            apiKey,
-            model,
-            body.synopsis,
-            characters,
-            language,
-            body.tierContext as SceneTierContext | undefined,
-          ),
-        );
-      }
-      case 'items': {
-        const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
-        if (!config?.genre || !config?.synopsis) {
-          return NextResponse.json({ error: 'Invalid item config' }, { status: 400 });
-        }
-        const count = typeof body.count === 'number' ? Math.min(Math.max(body.count, 1), 10) : 3;
-        const existingNames = Array.isArray(body.existingNames) ? body.existingNames as string[] : [];
-        return NextResponse.json(await handleItems(apiKey, model, config, language, count, existingNames));
-      }
-      default:
-        return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
-    }
+    const result = await dispatchTask(body.task, body, apiKey, getModel(body.model), getLanguage(body.language));
+    if (!result.ok) return result.response;
+    return NextResponse.json(result.data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:gemini-structured', error instanceof Error ? error.message : error);
-    const status = /Request too large/i.test(message) ? 413 : /Invalid JSON/i.test(message) ? 400 : /401|403|unauthorized/i.test(message) ? 401 : 500;
-    return NextResponse.json({ error: message.slice(0, 240) }, { status });
+    return NextResponse.json({ error: message.slice(0, 240) }, { status: errorToStatus(message) });
   }
 }

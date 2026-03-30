@@ -1,0 +1,137 @@
+/* ============================================================
+   globals-animations.css
+   @keyframes definitions, animation utility classes,
+   transition helpers, motion preferences
+   ============================================================ */
+
+/* Glitch hover effect */
+.glitch-hover:hover {
+  animation: glitch 0.3s ease-in-out;
+}
+
+@keyframes glitch {
+  0% { text-shadow: 2px 0 var(--color-accent-purple), -2px 0 var(--color-accent-red); }
+  25% { text-shadow: -2px 0 var(--color-accent-purple), 2px 0 var(--color-accent-red); }
+  50% { text-shadow: 2px 0 var(--color-accent-red), -2px 0 var(--color-accent-purple); }
+  75% { text-shadow: -1px 0 var(--color-accent-purple), 1px 0 var(--color-accent-red); }
+  100% { text-shadow: none; }
+}
+
+/* Star field animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* Rise-in animation */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.motion-rise {
+  animation: rise-in 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-rise-delay-1 { animation-delay: 0.08s; }
+.motion-rise-delay-2 { animation-delay: 0.16s; }
+.motion-rise-delay-3 { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-rise,
+  .motion-rise-delay-1,
+  .motion-rise-delay-2,
+  .motion-rise-delay-3 {
+    animation: none;
+  }
+}
+
+/* Style Studio pulse animation */
+@keyframes ss-pulse { 0%,100%{opacity:0.2} 50%{opacity:1} }
+
+/* ============================================================
+   Code Studio — Animation System
+   ============================================================ */
+
+@keyframes cs-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cs-fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cs-slide-in-left {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-bounce-dots {
+  0%, 80%, 100% { opacity: 0.4; }
+  40% { opacity: 1; }
+}
+
+/* Skeleton shimmer animation */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.cs-animate-fade-in { animation: cs-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-scale { animation: cs-fade-in-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-slide-left { animation: cs-slide-in-left 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cs-animate-slide-right { animation: cs-slide-in-right 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.cs-delay-1 { animation-delay: 50ms; }
+.cs-delay-2 { animation-delay: 100ms; }
+.cs-delay-3 { animation-delay: 150ms; }
+.cs-delay-4 { animation-delay: 200ms; }
+
+/* Hover lift */
+.cs-hover-lift {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cs-hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cs-hover-lift:active { transform: translateY(0); }
+
+/* Streaming dots */
+.cs-streaming-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--color-text-secondary);
+  animation: cs-bounce-dots 1.4s infinite;
+}
+.cs-streaming-dot:nth-child(2) { animation-delay: 0.2s; }
+.cs-streaming-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Chat bubble entrance */
+.cs-chat-bubble { animation: cs-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Panel transitions */
+.cs-panel-enter { animation: cs-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }

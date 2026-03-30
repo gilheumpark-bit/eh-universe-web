@@ -65,16 +65,26 @@ export function reportError(error: Error, context?: string): void {
 }
 
 // Global unhandled error capture (preserves code-studio behavior)
+// These are app-lifetime listeners; cleanup provided for hot-reload / test teardown
+function _onGlobalError(e: ErrorEvent) {
+  reportError(e.error ?? new Error(e.message), 'window.onerror');
+}
+function _onUnhandledRejection(e: PromiseRejectionEvent) {
+  reportError(
+    e.reason instanceof Error ? e.reason : new Error(String(e.reason)),
+    'unhandledrejection',
+  );
+}
 if (typeof window !== 'undefined') {
-  window.addEventListener('error', (e) =>
-    reportError(e.error ?? new Error(e.message), 'window.onerror'),
-  );
-  window.addEventListener('unhandledrejection', (e) =>
-    reportError(
-      e.reason instanceof Error ? e.reason : new Error(String(e.reason)),
-      'unhandledrejection',
-    ),
-  );
+  window.addEventListener('error', _onGlobalError);
+  window.addEventListener('unhandledrejection', _onUnhandledRejection);
+}
+/** Teardown global listeners (useful in test environments) */
+export function teardownGlobalErrorListeners() {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('error', _onGlobalError);
+    window.removeEventListener('unhandledrejection', _onUnhandledRejection);
+  }
 }
 
 // IDENTITY_SEAL: PART-2 | role=ErrorReporter | inputs=Error | outputs=sessionStorage-log

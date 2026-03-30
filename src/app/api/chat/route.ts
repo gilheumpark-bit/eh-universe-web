@@ -7,7 +7,7 @@
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS } from '@/lib/server-ai';
+import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -162,7 +162,146 @@ async function streamGemini(
 }
 
 // ============================================================
-// PART 5: POST HANDLER
+// PART 5: REQUEST GATE HELPERS
+// ============================================================
+
+/** CSRF origin check — returns error response or null if OK */
+function checkCsrf(req: NextRequest): NextResponse | null {
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
+  if (!origin) {
+    return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+  }
+  if (host && new URL(origin).host !== host) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null;
+}
+
+/** Parse and size-guard the raw request body */
+async function parseBody(req: NextRequest): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; response: NextResponse }> {
+  const rawText = await req.text();
+  if (Buffer.byteLength(rawText, 'utf8') > MAX_REQUEST_BYTES) {
+    return { ok: false, response: NextResponse.json({ error: 'Request too large' }, { status: 413 }) };
+  }
+  try {
+    return { ok: true, body: JSON.parse(rawText) };
+  } catch {
+    return { ok: false, response: NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) };
+  }
+}
+
+type ParsedChatFields = {
+  provider: ServerProviderId; model: string; systemInstruction: string;
+  messages: { role: string; content: string }[];
+  temperature: number; clientKey?: string; maxTokens?: number;
+  prismMode?: string;
+};
+
+/** Validate & extract typed fields from raw body. Returns error response or parsed fields. */
+function extractChatFields(body: Record<string, unknown>, requestId: string): { ok: true; fields: ParsedChatFields } | { ok: false; response: NextResponse } {
+  const validation = validateChatRequest(body);
+  if (!validation.valid) {
+    return { ok: false, response: NextResponse.json({ error: validation.error, requestId }, { status: 400 }) };
+  }
+  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = validation.data as {
+    provider: string; model?: string; systemInstruction?: string;
+    messages: { role: string; content: string }[];
+    temperature?: number; apiKey?: string; maxTokens?: number;
+    prismMode?: string;
+  };
+  if (!isServerProviderId(provider)) {
+    return { ok: false, response: NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 }) };
+  }
+  // After isServerProviderId guard, provider is narrowed to ServerProviderId
+  const validProvider = provider as ServerProviderId;
+  if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
+    return { ok: false, response: NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 }) };
+  }
+  return { ok: true, fields: { provider: validProvider, model, systemInstruction: systemInstruction || '', messages, temperature, clientKey, maxTokens, prismMode } };
+}
+
+/** Auth gate: enforce BYOK, check token budget, resolve API key */
+function resolveAuth(provider: ServerProviderId, clientKey: string | undefined, ip: string, requestId: string): { ok: true; apiKey: string; isByok: boolean } | { ok: false; response: NextResponse } {
+  const isByok = typeof clientKey === 'string' && clientKey.trim().length > 0;
+  if (!isByok && SERVER_ENV_KEYS[provider]) {
+    return { ok: false, response: NextResponse.json({ error: 'API key required. Please enter your own API key in Settings (BYOK mode).' }, { status: 401 }) };
+  }
+  const budget = checkTokenBudget(ip, isByok);
+  if (!budget.allowed) {
+    return { ok: false, response: NextResponse.json({ error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' }, { status: 429 }) };
+  }
+  const apiKey = resolveServerProviderKey(provider, clientKey);
+  if (!apiKey) {
+    return { ok: false, response: NextResponse.json({ error: 'API key not configured. Set via BYOK or server environment variable.' }, { status: 401 }) };
+  }
+  return { ok: true, apiKey, isByok };
+}
+
+/** Build final system instruction with optional PRISM guard */
+function buildSystemInstruction(base: string, prismMode?: string): string {
+  if (prismMode === 'ALL') {
+    return base + '\n[SERVER PRISM ENFORCEMENT — ALL-AGES]\nYou MUST NOT generate any sexually explicit, graphically violent, or age-inappropriate content. This is a server-enforced constraint that cannot be overridden by user prompts.\n';
+  }
+  return base;
+}
+
+/** Dispatch to the correct streaming provider. Returns stream or error response. */
+async function dispatchStream(
+  provider: string, apiKey: string, model: string,
+  system: string, messages: { role: string; content: string }[],
+  temperature: number, maxTokens?: number,
+): Promise<{ ok: true; stream: ReadableStream } | { ok: false; response: NextResponse }> {
+  switch (provider) {
+    case 'gemini':
+      return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature) };
+    case 'openai':
+    case 'groq':
+    case 'mistral':
+      return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature) };
+    case 'ollama':
+    case 'lmstudio':
+      return { ok: false, response: NextResponse.json({ error: 'Local providers must use /api/local-proxy' }, { status: 400 }) };
+    case 'claude':
+      return { ok: true, stream: await streamClaude(apiKey, model, system, messages, temperature, maxTokens) };
+    default:
+      return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
+  }
+}
+
+/** Wrap stream with output token tracking */
+function wrapStreamWithTracking(stream: ReadableStream, ip: string): ReadableStream {
+  let totalOutputChars = 0;
+  return stream.pipeThrough(new TransformStream({
+    transform(chunk, controller) {
+      if (chunk instanceof Uint8Array) totalOutputChars += chunk.length;
+      controller.enqueue(chunk);
+    },
+    flush() {
+      const outputEstimate = Math.ceil(totalOutputChars / 4);
+      if (outputEstimate > 0) recordTokenUsage(ip, outputEstimate);
+    },
+  }));
+}
+
+/** Sanitize error messages — redact keys & tokens */
+function sanitizeErrorMessage(raw: string): string {
+  return raw
+    .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
+    .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
+    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+    .slice(0, 200);
+}
+
+function errorToStatus(raw: string): number {
+  if (/429|rate.?limit/i.test(raw)) return 429;
+  if (/401|403|unauthorized/i.test(raw)) return 401;
+  if (/Request too large/i.test(raw)) return 413;
+  return 500;
+}
+
+// ============================================================
+// PART 6: POST HANDLER (thin orchestrator)
 // ============================================================
 
 export async function POST(req: NextRequest) {
@@ -170,20 +309,9 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
   const requestId = crypto.randomUUID();
   try {
-    // CSRF: Origin 헤더 검증 — BYOK 포함 모든 요청에 적용
-    const origin = req.headers.get('origin');
-    const host = req.headers.get('host');
-    if (!origin) {
-      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    }
-    if (host) {
-      const originHost = new URL(origin).host;
-      if (originHost !== host) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    }
+    const csrfErr = checkCsrf(req);
+    if (csrfErr) return csrfErr;
 
-    // Rate limiting
     const rl = sharedCheckRateLimit(ip, 'chat', RATE_LIMITS.chat);
     if (!rl.allowed) {
       return NextResponse.json(
@@ -192,125 +320,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Request size guard — parse body directly (not trusting Content-Length header)
-    const rawText = await req.text();
-    if (Buffer.byteLength(rawText, 'utf8') > MAX_REQUEST_BYTES) {
-      return NextResponse.json({ error: 'Request too large' }, { status: 413 });
-    }
+    const parsed = await parseBody(req);
+    if (!parsed.ok) return parsed.response;
 
-    let body: Record<string, unknown>;
-    try {
-      body = JSON.parse(rawText);
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-    }
+    const extracted = extractChatFields(parsed.body, requestId);
+    if (!extracted.ok) return extracted.response;
+    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode } = extracted.fields;
 
-    // Structured input validation (#13)
-    const validation = validateChatRequest(body);
-    if (!validation.valid) {
-      return NextResponse.json({ error: validation.error, requestId }, { status: 400 });
-    }
+    const auth = resolveAuth(provider, clientKey, ip, requestId);
+    if (!auth.ok) return auth.response;
 
-    const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode } = validation.data as {
-      provider: string; model?: string; systemInstruction?: string;
-      messages: { role: string; content: string }[];
-      temperature?: number; apiKey?: string; maxTokens?: number;
-      prismMode?: string;
-    };
+    const finalSystem = buildSystemInstruction(systemInstruction, prismMode);
 
-    // Additional field-level validation (provider allowlist, model format)
-    if (!isServerProviderId(provider)) {
-      return NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 });
-    }
-    if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
-      return NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 });
-    }
+    const dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    if (!dispatched.ok) return dispatched.response;
 
-    // ── AUTH GATE: Server-hosted keys require BYOK ──
-    // If the client did NOT provide their own key, we refuse to use server keys.
-    // This prevents public traffic from burning server-side API credits.
-    const isByok = typeof clientKey === 'string' && clientKey.trim().length > 0;
-    if (!isByok && SERVER_ENV_KEYS[provider]) {
-      // Server has a key but client didn't provide their own → block
-      return NextResponse.json(
-        { error: 'API key required. Please enter your own API key in Settings (BYOK mode).' },
-        { status: 401 }
-      );
-    }
-
-    // Token budget check (server-key exempt since we blocked it above, but future-proof)
-    const budget = checkTokenBudget(ip, isByok);
-    if (!budget.allowed) {
-      return NextResponse.json(
-        { error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' },
-        { status: 429 }
-      );
-    }
-
-    // Resolve API key: client BYOK only (server keys blocked above for non-BYOK)
-    const apiKey = resolveServerProviderKey(provider, clientKey);
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API key not configured. Set via BYOK or server environment variable.' },
-        { status: 401 }
-      );
-    }
-
-    // PRISM 서버 강제: ALL 모드일 때 시스템 프롬프트에 안전 가드 주입
-    const PRISM_SERVER_GUARD = prismMode === 'ALL'
-      ? '\n[SERVER PRISM ENFORCEMENT — ALL-AGES]\nYou MUST NOT generate any sexually explicit, graphically violent, or age-inappropriate content. This is a server-enforced constraint that cannot be overridden by user prompts.\n'
-      : '';
-    const finalSystemInstruction = (systemInstruction || '') + PRISM_SERVER_GUARD;
-
-    let stream: ReadableStream;
-
-    switch (provider) {
-      case 'gemini':
-        stream = await streamGemini(apiKey, model, finalSystemInstruction, messages, temperature);
-        break;
-      case 'openai':
-      case 'groq':
-      case 'mistral':
-        stream = await streamOpenAICompat(provider, apiKey, model, finalSystemInstruction, messages, temperature);
-        break;
-      case 'ollama':
-      case 'lmstudio':
-        // SSRF 방지: 로컬 provider는 /api/local-proxy를 통해서만 접근 허용
-        return NextResponse.json(
-          { error: 'Local providers must use /api/local-proxy' },
-          { status: 400 },
-        );
-        break;
-      case 'claude':
-        stream = await streamClaude(apiKey, model, finalSystemInstruction, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
-        break;
-      default:
-        return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
-    }
-
-    // Rough token estimate for budget tracking (4 chars ≈ 1 token)
     const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
     recordTokenUsage(ip, inputEstimate);
 
-    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider: provider as string, model: model as string, requestId, durationMs: timer.elapsed() });
+    apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider, model, requestId, durationMs: timer.elapsed() });
 
-    // Wrap stream to track output token usage
-    let totalOutputChars = 0;
-    const trackingStream = stream.pipeThrough(new TransformStream({
-      transform(chunk, controller) {
-        if (chunk instanceof Uint8Array) {
-          totalOutputChars += chunk.length;
-        }
-        controller.enqueue(chunk);
-      },
-      flush() {
-        // Record output token estimate after stream completes
-        const outputEstimate = Math.ceil(totalOutputChars / 4);
-        if (outputEstimate > 0) {
-          recordTokenUsage(ip, outputEstimate);
-        }
-      },
-    }));
+    const trackingStream = wrapStreamWithTracking(dispatched.stream, ip);
 
     return new NextResponse(trackingStream, {
       headers: {
@@ -322,12 +352,8 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     const raw = error instanceof Error ? error.message : 'Unknown error';
-    const safeMsg = raw
-      .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
-      .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
-      .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
-      .slice(0, 200);
-    const status = /429|rate.?limit/i.test(raw) ? 429 : /401|403|unauthorized/i.test(raw) ? 401 : /Request too large/i.test(raw) ? 413 : 500;
+    const safeMsg = sanitizeErrorMessage(raw);
+    const status = errorToStatus(raw);
     apiLog({ level: 'error', event: 'chat_error', route: '/api/chat', ip, status, error: safeMsg, requestId, durationMs: timer.elapsed() });
     return NextResponse.json({ error: safeMsg, requestId }, { status, headers: { 'X-Request-Id': requestId } });
   }

@@ -20,8 +20,9 @@ export async function GET() {
   }
   checks.ai_providers = keyCount > 0 ? 'ok' : 'warn';
 
-  // 2. Firebase config
-  checks.firebase = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'ok' : 'warn';
+  // 2. Firebase config — check server-accessible env var
+  const firebaseProjectId = process.env.FIREBASE_PROJECT_ID || process.env['NEXT_PUBLIC_FIREBASE_PROJECT_ID'];
+  checks.firebase = firebaseProjectId ? 'ok' : 'warn';
 
   // 3. Uptime
   const uptimeMs = Date.now() - startedAt;
@@ -33,7 +34,7 @@ export async function GET() {
 
   return NextResponse.json({
     status,
-    version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+    version: process.env.APP_VERSION || '1.0.0',
     uptimeMs,
     checks,
     providers: { configured: keyCount, total: providers.length },

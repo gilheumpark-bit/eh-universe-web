@@ -209,7 +209,84 @@ async function generateJsonGemini(
 }
 
 // ============================================================
-// PART 4 — POST handler
+// PART 4 — Request validation helpers
+// ============================================================
+
+type ValidatedInput = {
+  provider: string;
+  apiKey: string;
+  prompt: string;
+  model: string;
+  language: AppLanguage;
+  schema: object | undefined;
+  fallback: Record<string, unknown>;
+};
+
+/** Validate and extract all required fields from the raw body */
+function validateInput(body: Record<string, unknown>): { ok: true; input: ValidatedInput } | { ok: false; response: NextResponse } {
+  const provider = typeof body.provider === 'string' ? body.provider : 'gemini';
+  if (!isServerProviderId(provider)) {
+    return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
+  }
+
+  const apiKey = resolveServerProviderKey(provider, body.apiKey);
+  if (!apiKey) {
+    return { ok: false, response: NextResponse.json({ error: `API key not configured for ${provider}.` }, { status: 401 }) };
+  }
+
+  const prompt = typeof body.prompt === 'string' ? body.prompt : '';
+  if (!prompt) {
+    return { ok: false, response: NextResponse.json({ error: 'Prompt is required.' }, { status: 400 }) };
+  }
+
+  const model = typeof body.model === 'string' && SAFE_MODEL_PATTERN.test(body.model)
+    ? body.model
+    : DEFAULT_MODELS[provider] ?? 'gemini-2.5-flash';
+
+  return {
+    ok: true,
+    input: {
+      provider,
+      apiKey,
+      prompt,
+      model,
+      language: getLanguage(body.language),
+      schema: typeof body.schema === 'object' && body.schema ? (body.schema as object) : undefined,
+      fallback: (body.fallback as Record<string, unknown>) ?? {},
+    },
+  };
+}
+
+/** Dispatch structured generation to the correct provider */
+async function dispatchGeneration(
+  input: ValidatedInput,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<{ ok: true; result: any } | { ok: false; response: NextResponse }> {
+  const { provider, apiKey, model, prompt, schema, fallback } = input;
+
+  if (provider === 'ollama' || provider === 'lmstudio') {
+    return { ok: false, response: NextResponse.json({ error: 'Local providers must use /api/local-proxy' }, { status: 400 }) };
+  }
+  if (provider === 'gemini' && schema) {
+    return { ok: true, result: await generateJsonGemini(apiKey, model, prompt, schema, fallback) };
+  }
+  if (provider === 'claude') {
+    return { ok: true, result: await generateJsonClaude(apiKey, model, prompt, schema, fallback) };
+  }
+  // OpenAI-compatible (openai/groq/mistral)
+  const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
+  return { ok: true, result: await generateJsonOpenAICompat(provider, apiKey, model, prompt + schemaHint, fallback) };
+}
+
+function errorToStatus(message: string): number {
+  if (/Request too large/i.test(message)) return 413;
+  if (/Invalid JSON/i.test(message)) return 400;
+  if (/401|403|unauthorized/i.test(message)) return 401;
+  return 500;
+}
+
+// ============================================================
+// PART 5 — POST handler (thin orchestrator)
 // ============================================================
 
 export async function POST(req: NextRequest) {
@@ -227,68 +304,22 @@ export async function POST(req: NextRequest) {
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
-    const provider = typeof body.provider === 'string' ? body.provider : 'gemini';
-    if (!isServerProviderId(provider)) {
-      return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
-    }
+    const validated = validateInput(body);
+    if (!validated.ok) return validated.response;
 
-    // Claude: tool_use 기반 structured output
-
-    const apiKey = resolveServerProviderKey(provider, body.apiKey);
-    if (!apiKey) {
-      return NextResponse.json({ error: `API key not configured for ${provider}.` }, { status: 401 });
-    }
-
-    const prompt = typeof body.prompt === 'string' ? body.prompt : '';
-    if (!prompt) {
-      return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
-    }
-
-    const model = typeof body.model === 'string' && SAFE_MODEL_PATTERN.test(body.model)
-      ? body.model
-      : DEFAULT_MODELS[provider] ?? 'gemini-2.5-flash';
-    const language = getLanguage(body.language);
-    const schema = typeof body.schema === 'object' && body.schema ? body.schema : undefined;
-    const fallback = (body.fallback as Record<string, unknown>) ?? {};
+    const dispatched = await dispatchGeneration(validated.input);
+    if (!dispatched.ok) return dispatched.response;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let result: any;
-
-    if (provider === 'gemini' && schema) {
-      result = await generateJsonGemini(apiKey, model, prompt, schema, fallback);
-    } else if (provider === 'claude') {
-      result = await generateJsonClaude(apiKey, model, prompt, schema, fallback);
-    } else if (provider === 'ollama' || provider === 'lmstudio') {
-      // SSRF 방지: 로컬 provider는 /api/local-proxy를 통해서만 접근 허용
-      return NextResponse.json(
-        { error: 'Local providers must use /api/local-proxy' },
-        { status: 400 },
-      );
-    } else {
-      // OpenAI-compatible (openai/groq/mistral)
-      const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
-      result = await generateJsonOpenAICompat(
-        provider,
-        apiKey,
-        model,
-        prompt + schemaHint,
-        fallback,
-      );
-    }
-
-    // 언어 태그 (클라이언트에서 활용 가능)
+    const result = dispatched.result as any;
     if (result && typeof result === 'object') {
-      result._meta = { provider, model, language };
+      result._meta = { provider: validated.input.provider, model: validated.input.model, language: validated.input.language };
     }
 
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:structured-generate', error instanceof Error ? error.message : error);
-    const status = /Request too large/i.test(message) ? 413
-      : /Invalid JSON/i.test(message) ? 400
-      : /401|403|unauthorized/i.test(message) ? 401
-      : 500;
-    return NextResponse.json({ error: message.slice(0, 240) }, { status });
+    return NextResponse.json({ error: message.slice(0, 240) }, { status: errorToStatus(message) });
   }
 }

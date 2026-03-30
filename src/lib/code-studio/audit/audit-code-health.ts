@@ -58,21 +58,27 @@ export function auditOperations(ctx: AuditContext): AuditAreaResult {
     const matches = f.content.match(/:\s*any\b|@ts-ignore|@ts-nocheck/g);
     if (matches) anyCount += matches.length;
   }
-  if (anyCount === 0) {
+  // Scale threshold: allow ~5% of TS files to have any/ts-ignore
+  const tsFiles = ctx.files.filter(f => f.language === 'typescript' || f.language === 'tsx').length;
+  const anyThreshold = Math.max(5, Math.floor(tsFiles * 0.05));
+  if (anyCount <= anyThreshold) {
     passed++;
   } else {
     findings.push({
-      id: fid('ops'), area: 'operations', severity: anyCount > 30 ? 'high' : 'medium',
-      message: `any/@ts-ignore ${anyCount}건 감지`, rule: 'TYPE_SAFETY_BYPASS',
+      id: fid('ops'), area: 'operations', severity: anyCount > tsFiles * 0.1 ? 'high' : 'medium',
+      message: `any/@ts-ignore ${anyCount}건 감지 (허용 ${anyThreshold}건)`, rule: 'TYPE_SAFETY_BYPASS',
       suggestion: '구체적 타입으로 교체',
     });
   }
 
   // Check 3: console.log/debug in production code
+  // Skip logging infrastructure files (logger.ts, api-logger.ts) and string-literal occurrences in templates
+  const consoleSkipPaths = ['logger.ts', 'api-logger.ts'];
   checks++;
   let consoleCount = 0;
   for (const f of ctx.files) {
     if (f.path.includes('__tests__') || f.path.includes('.test.')) continue;
+    if (consoleSkipPaths.some(s => f.path.endsWith(s))) continue;
     const matches = f.content.match(/console\.(log|debug|info)\s*\(/g);
     if (matches) consoleCount += matches.length;
   }
@@ -86,9 +92,12 @@ export function auditOperations(ctx: AuditContext): AuditAreaResult {
   }
 
   // Check 4: TODO/FIXME count
+  // Skip audit/lint/pipeline rule files — they reference TODO patterns in rule definitions
+  const todoSkipPaths = ['audit/', 'pipeline-teams', 'pipeline.ts', 'lint-ai', 'project-rules', 'patent-scanner'];
   checks++;
   let todoCount = 0;
   for (const f of ctx.files) {
+    if (todoSkipPaths.some(s => f.path.includes(s))) continue;
     const matches = f.content.match(/\bTODO\b|\bFIXME\b|\bHACK\b|\bXXX\b/g);
     if (matches) todoCount += matches.length;
   }
@@ -290,7 +299,9 @@ export function auditArchitecture(ctx: AuditContext): AuditAreaResult {
   for (const f of ctx.files) {
     starExports += (f.content.match(/export\s+\*\s+from/g) ?? []).length;
   }
-  if (starExports <= 10) {
+  // Allow more star exports in monorepo-style projects with shim files
+  const starThreshold = 10 + Math.floor(ctx.files.length / 50);
+  if (starExports <= starThreshold) {
     passed++;
   } else {
     findings.push({

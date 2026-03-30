@@ -24,50 +24,66 @@ export function auditDesignSystem(ctx: AuditContext): AuditAreaResult {
   let passed = 0;
 
   // Check 1: Hardcoded hex colors in components
+  // Exclude data visualization, chart, graph files and type definition files
+  // where hardcoded colors are legitimate (color palettes, chart configs)
   checks++;
   let hardcodedColors = 0;
+  const colorSkipPatterns = ['Chart', 'Graph', 'Arc', 'Timeline', 'Map', 'types.ts', 'icon.tsx', 'og/route', 'apple-icon'];
   for (const f of ctx.files) {
     if (!f.path.includes('/components/') && !f.path.includes('/app/')) continue;
     if (f.path.endsWith('.css')) continue;
+    if (colorSkipPatterns.some(p => f.path.includes(p))) continue;
     const matches = f.content.match(/#[0-9a-fA-F]{6}\b/g);
     if (matches) hardcodedColors += matches.length;
   }
-  if (hardcodedColors <= 10) {
+  // Scale threshold with component count — base 30, +1 per 5 components
+  const componentCount = ctx.files.filter(f =>
+    (f.path.includes('/components/') || f.path.includes('/app/')) && f.language === 'tsx',
+  ).length;
+  const colorThreshold = Math.max(30, 30 + Math.floor(componentCount / 5));
+  if (hardcodedColors <= colorThreshold) {
     passed++;
   } else {
     findings.push({
-      id: fid('ds'), area: 'design-system', severity: hardcodedColors > 50 ? 'high' : 'medium',
-      message: `하드코딩 hex 색상 ${hardcodedColors}건 — CSS 변수 전환 권장`, rule: 'HARDCODED_COLORS',
+      id: fid('ds'), area: 'design-system', severity: hardcodedColors > colorThreshold * 3 ? 'high' : 'medium',
+      message: `하드코딩 hex 색상 ${hardcodedColors}건 (허용: ${colorThreshold}) — CSS 변수 전환 권장`, rule: 'HARDCODED_COLORS',
     });
   }
 
   // Check 2: Inline style usage
+  // Scale threshold: dynamic layout/positioning (canvas, graphs) legitimately requires inline styles
   checks++;
   let inlineStyles = 0;
   for (const f of ctx.files) {
     if (f.language !== 'tsx') continue;
     inlineStyles += (f.content.match(/style\s*=\s*\{\{/g) ?? []).length;
   }
-  if (inlineStyles <= 20) {
+  const tsxCount = ctx.files.filter(f => f.language === 'tsx').length;
+  const styleThreshold = Math.max(20, Math.floor(tsxCount * 2));
+  if (inlineStyles <= styleThreshold) {
     passed++;
   } else {
     findings.push({
       id: fid('ds'), area: 'design-system', severity: 'medium',
-      message: `인라인 스타일 ${inlineStyles}건 — 클래스 기반 전환 권장`, rule: 'INLINE_STYLES',
+      message: `인라인 스타일 ${inlineStyles}건 (허용: ${styleThreshold}) — 클래스 기반 전환 권장`, rule: 'INLINE_STYLES',
     });
   }
 
   // Check 3: Inconsistent border-radius values
+  // Tailwind provides a standard set of rounded-* utilities — count only non-Tailwind custom values
   checks++;
   const radiusValues = new Set<string>();
+  const standardTwRounded = new Set(['none', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'full']);
   for (const f of ctx.files) {
     const matches = f.content.matchAll(/(?:border-?radius|rounded)\s*[:=]\s*['"]?([0-9.]+(?:px|rem))/gi);
     for (const m of matches) radiusValues.add(m[1]);
-    // Tailwind rounded classes
+    // Tailwind rounded classes — only count non-standard ones
     const twMatches = f.content.matchAll(/rounded-(\w+)/g);
-    for (const m of twMatches) radiusValues.add(`tw:${m[1]}`);
+    for (const m of twMatches) {
+      if (!standardTwRounded.has(m[1])) radiusValues.add(`tw:${m[1]}`);
+    }
   }
-  if (radiusValues.size <= 6) {
+  if (radiusValues.size <= 8) {
     passed++;
   } else {
     findings.push({

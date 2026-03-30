@@ -8,6 +8,10 @@ import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import "@/lib/env"; // validate environment variables at startup
 import "./globals.css";
+import "./globals-components.css";
+import "./globals-studio.css";
+import "./globals-animations.css";
+import "./globals-utilities.css";
 
 export const metadata: Metadata = {
   title: {

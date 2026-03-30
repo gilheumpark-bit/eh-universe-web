@@ -61,6 +61,11 @@ export function generateMonitoringSnippet(config: MonitoringConfig): string {
   return parts.join('');
 }
 
+/** Generate a cleanup snippet that removes monitoring listeners */
+export function generateTeardownSnippet(): string {
+  return `<script>\n(function(){\n  window.removeEventListener('error', window.__monitorErrorHandler);\n  window.removeEventListener('unhandledrejection', window.__monitorRejectHandler);\n  delete window.__monitor;\n})();\n</script>`;
+}
+
 /* ── In-IDE Error Collector ── */
 
 const errorLog: ErrorEvent[] = [];

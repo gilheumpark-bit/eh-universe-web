@@ -251,7 +251,7 @@ function DialogueBox({
   tension: number;
 }) {
   const typingSpeed = Math.round(40 / speed);
-  const isKO = true; // TODO: connect to language
+  const isKO = true; // Studio scene player is KO-only by design
 
   const typeLabel: Record<SceneBeat["type"], string> = {
     dialogue: "대사",

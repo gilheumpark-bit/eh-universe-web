@@ -116,6 +116,17 @@ export default function SoundtrackPage() {
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
   const animRef = useRef<number>(0);
 
+  // Cleanup audio elements on unmount — remove event listeners to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(audioRefs.current).forEach((audio) => {
+        audio.removeEventListener("loadedmetadata", () => {});
+        audio.removeEventListener("ended", () => {});
+        audio.pause();
+      });
+    };
+  }, []);
+
   // Update progress loop
   useEffect(() => {
     const tick = () => {

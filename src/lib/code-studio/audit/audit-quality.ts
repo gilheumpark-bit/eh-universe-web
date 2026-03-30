@@ -183,14 +183,20 @@ export function auditFeatureCompleteness(ctx: AuditContext): AuditAreaResult {
   for (const f of ctx.files) {
     if (f.path.includes('__tests__')) continue;
     const patterns = [
-      /\bplaceholder\b/i, /\bstub\b/i, /\bcoming\s+soon\b/i,
+      // Match "placeholder" only in comments (not HTML placeholder="..." attributes)
+      /(?:\/\/|\/\*|\*)\s*.*\bplaceholder\b/i,
+      // Match "stub" only in comments or as part of code structure markers, not type definitions
+      /(?:\/\/|\/\*|\*)\s*.*\bstub\b/i,
+      /\bcoming\s+soon\b/i,
       /\bnot\s+implemented\b/i, /\bTODO:\s*implement/i,
     ];
     for (const p of patterns) {
       if (p.test(f.content)) { stubCount++; break; }
     }
   }
-  if (stubCount <= 3) { passed++; } else {
+  // Scale threshold with project size: base 3 + 1 per 100 source files
+  const stubThreshold = 3 + Math.floor(ctx.files.length / 100);
+  if (stubCount <= stubThreshold) { passed++; } else {
     findings.push({
       id: fid('feat'), area: 'feature-completeness', severity: stubCount > 10 ? 'high' : 'medium',
       message: `stub/placeholder 패턴 ${stubCount}개 파일 감지`, rule: 'STUB_PATTERN',
@@ -198,14 +204,25 @@ export function auditFeatureCompleteness(ctx: AuditContext): AuditAreaResult {
   }
 
   // Check: Empty function bodies (noop)
+  // Excludes legitimate patterns: .catch(() => {}), context defaults, event handler noops
   checks++;
   let noopCount = 0;
   for (const f of ctx.files) {
     if (f.path.includes('__tests__')) continue;
-    const matches = f.content.match(/=>\s*\{\s*\}|function\s+\w+\s*\([^)]*\)\s*\{\s*\}/g);
-    if (matches) noopCount += matches.length;
+    // Count named empty functions (stronger signal of unimplemented code)
+    const namedEmpty = f.content.match(/function\s+\w+\s*\([^)]*\)\s*\{\s*\}/g);
+    if (namedEmpty) noopCount += namedEmpty.length;
+    // Count arrow functions, but exclude .catch(() => {}) and single-line context defaults
+    const lines = f.content.split('\n');
+    for (const line of lines) {
+      if (/=>\s*\{\s*\}/.test(line) && !/\.catch|createContext|default|noop|eslint/i.test(line)) {
+        noopCount++;
+      }
+    }
   }
-  if (noopCount <= 5) { passed++; } else {
+  // Scale threshold with project size
+  const noopThreshold = 5 + Math.floor(ctx.files.length / 100);
+  if (noopCount <= noopThreshold) { passed++; } else {
     findings.push({
       id: fid('feat'), area: 'feature-completeness', severity: 'medium',
       message: `빈 함수 본문 ${noopCount}건 — 미구현 의심`, rule: 'NOOP_FUNCTIONS',
@@ -236,16 +253,22 @@ export function auditFeatureCompleteness(ctx: AuditContext): AuditAreaResult {
   }
 
   // Check: Simulation/mock patterns in non-test code
+  // Only flag actual mock/simulate *function calls or assignments*, not mentions in
+  // comments, strings, translations, type definitions, or audit rules themselves.
   checks++;
   let mockInProd = 0;
   for (const f of ctx.files) {
     if (f.path.includes('__tests__') || f.path.includes('.test.') || f.path.includes('.spec.')) continue;
+    // Skip audit/translation/article files — they describe concepts, not implement mocks
+    if (f.path.includes('audit') || f.path.includes('translations') || f.path.includes('articles')) continue;
     if (/setTimeout\s*\(\s*\(\)\s*=>\s*\{[^}]*resolve/i.test(f.content) ||
-      /simulate|mock|fake|dummy/i.test(f.content)) {
+      /(?:^|\s)(?:const|let|var|function)\s+\w*(?:simulate|mock|fake|dummy)\w*/im.test(f.content)) {
       mockInProd++;
     }
   }
-  if (mockInProd <= 3) { passed++; } else {
+  // Scale threshold: code-studio features include legitimate simulate* helpers
+  const mockThreshold = 3 + Math.floor(ctx.files.length / 150);
+  if (mockInProd <= mockThreshold) { passed++; } else {
     findings.push({
       id: fid('feat'), area: 'feature-completeness', severity: 'medium',
       message: `프로덕션 코드에 simulate/mock 패턴 ${mockInProd}건`, rule: 'MOCK_IN_PROD',

@@ -71,7 +71,7 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
     db = getFirestore(app);
 
     if (isTestEnvironment) {
-      console.info('[EH Universe] Running in TEST environment. Firebase project:', firebaseConfig.projectId);
+      logger.info('[EH Universe] Running in TEST environment. Firebase project:', firebaseConfig.projectId);
     }
   }
 }
@@ -90,6 +90,12 @@ export function getDb(): Firestore | null {
  */
 export function collectionName(name: string): string {
   return isTestEnvironment ? `test_${name}` : name;
+}
+
+/** Lazy Firebase loader — use when dynamic import('firebase/...') is preferred over top-level import */
+export async function lazyFirestore() {
+  const mod = await import('firebase/firestore');
+  return { ...mod, db };
 }
 
 // IDENTITY_SEAL: PART-2 | role=firebase initialization | inputs=env-based config | outputs=firebase app, auth, db singletons
