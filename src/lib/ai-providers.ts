@@ -4,6 +4,7 @@
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
+import { L4 } from '@/lib/i18n';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -172,9 +173,10 @@ export function isPreviewModel(model: string): boolean {
 /** @returns Localized warning string if model is preview/experimental, null otherwise */
 export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string | null {
   if (!isPreviewModel(model)) return null;
-  return lang === "ko"
-    ? `"${model}"은(는) 프리뷰/실험 모델입니다. 안정성이 보장되지 않으며 예고 없이 변경·중단될 수 있습니다. 프로덕션 용도에는 정식 모델을 권장합니다.`
-    : `"${model}" is a preview/experimental model. Stability is not guaranteed and it may change or be discontinued without notice. Stable models are recommended for production use.`;
+  return L4(lang, {
+    ko: `"${model}"은(는) 프리뷰/실험 모델입니다. 안정성이 보장되지 않으며 예고 없이 변경·중단될 수 있습니다. 프로덕션 용도에는 정식 모델을 권장합니다.`,
+    en: `"${model}" is a preview/experimental model. Stability is not guaranteed and it may change or be discontinued without notice. Stable models are recommended for production use.`,
+  });
 }
 
 // ============================================================
