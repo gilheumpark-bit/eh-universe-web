@@ -103,7 +103,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
               className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500/15 text-red-400 rounded-lg hover:bg-red-500/25">
               <XCircle size={12} /> Reject All
             </button>
-            <button onClick={onReject} className="p-1 hover:bg-white/5 rounded"><X size={14} /></button>
+            <button onClick={onReject} aria-label="닫기" className="p-1 hover:bg-white/5 rounded"><X size={14} /></button>
           </div>
         </div>
 

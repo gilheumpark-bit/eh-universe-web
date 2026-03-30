@@ -82,6 +82,7 @@ function generateId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Chat hook for Code Studio: streaming AI responses, @mention resolution, session persistence, and abort support */
 export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCodeStudioChatReturn {
   const {
     sessionId = `session-${Date.now()}`,

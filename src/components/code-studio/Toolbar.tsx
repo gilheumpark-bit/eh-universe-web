@@ -141,12 +141,12 @@ export function Toolbar({
           { label: "버그 파인더", action: onRunBugFinder },
         ]} />
         <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onUndo} title="Undo" className="p-1 rounded hover:bg-white/10 text-white/40"><Undo2 size={14} /></button>
-        <button onClick={onRedo} title="Redo" className="p-1 rounded hover:bg-white/10 text-white/40"><Redo2 size={14} /></button>
+        <button onClick={onUndo} title="Undo" aria-label="실행 취소" className="p-1 rounded hover:bg-white/10 text-white/40"><Undo2 size={14} /></button>
+        <button onClick={onRedo} title="Redo" aria-label="다시 실행" className="p-1 rounded hover:bg-white/10 text-white/40"><Redo2 size={14} /></button>
         <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onZoomOut} title="Zoom Out" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomOut size={14} /></button>
-        {fontSize != null && <button onClick={onZoomReset} title="Reset" className="px-1 text-[10px] text-white/40 hover:bg-white/10 rounded">{fontSize}px</button>}
-        <button onClick={onZoomIn} title="Zoom In" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomIn size={14} /></button>
+        <button onClick={onZoomOut} title="Zoom Out" aria-label="축소" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomOut size={14} /></button>
+        {fontSize != null && <button onClick={onZoomReset} title="Reset" aria-label="글꼴 크기 초기화" className="px-1 text-[10px] text-white/40 hover:bg-white/10 rounded">{fontSize}px</button>}
+        <button onClick={onZoomIn} title="Zoom In" aria-label="확대" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomIn size={14} /></button>
       </div>
       <div className="flex items-center gap-1">
         <ToolbarButton icon={<Search size={14} />} label="Search" active={false} onClick={() => onToggleSearch?.()} />
@@ -160,7 +160,7 @@ export function Toolbar({
         <ToolbarButton icon={<Columns2 size={14} />} label="Split" active={false} onClick={() => onToggleSplit?.()} />
         <ToolbarButton icon={<Rocket size={14} />} label="Deploy" active={false} onClick={() => onDeploy?.()} accent="green" />
         <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onOpenSettings} className="p-1.5 rounded hover:bg-white/10 text-white/40"><Settings size={14} /></button>
+        <button onClick={onOpenSettings} aria-label="설정 열기" className="p-1.5 rounded hover:bg-white/10 text-white/40"><Settings size={14} /></button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -14,7 +15,7 @@ export default function NetworkError({
   const { lang } = useLang();
 
   useEffect(() => {
-    console.error("[Network Error]", error);
+    logger.error("Network", error);
   }, [error]);
 
   return (

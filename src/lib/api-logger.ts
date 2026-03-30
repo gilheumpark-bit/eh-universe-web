@@ -18,6 +18,7 @@ interface LogEntry {
   timestamp: string;
 }
 
+/** Emit a structured JSON log line to stdout/stderr (Vercel captures these automatically) */
 export function apiLog(entry: Omit<LogEntry, 'timestamp'>): void {
   const log: LogEntry = { ...entry, timestamp: new Date().toISOString() };
   if (entry.level === 'error') {
@@ -27,6 +28,7 @@ export function apiLog(entry: Omit<LogEntry, 'timestamp'>): void {
   }
 }
 
+/** @returns Timer object with `elapsed()` method for measuring API route duration in ms */
 export function createRequestTimer() {
   const start = Date.now();
   return {

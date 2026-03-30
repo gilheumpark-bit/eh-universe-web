@@ -137,6 +137,7 @@ ${textToXhtmlParagraphs(content)}
 </html>`;
 }
 
+/** Generate and download a valid EPUB 3.0 file from a chat session's manuscript content */
 export function exportEPUB(session: ChatSession): void {
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';
@@ -244,6 +245,7 @@ h2 { font-size: 1.2em; margin-top: 1.5em; margin-bottom: 0.5em; }`);
 // PART 2 — DOCX Export (Office Open XML, store-mode ZIP)
 // ============================================================
 
+/** Generate and download a DOCX (Office Open XML) file from a chat session's manuscript content */
 export function exportDOCX(session: ChatSession): void {
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';

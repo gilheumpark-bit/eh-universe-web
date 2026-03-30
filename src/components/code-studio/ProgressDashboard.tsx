@@ -203,7 +203,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
           <Activity size={14} className="text-blue-400" /> Progress Dashboard
         </span>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Close"><X size={14} /></button>
+          <button onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Close" aria-label="닫기"><X size={14} /></button>
         )}
       </div>
 

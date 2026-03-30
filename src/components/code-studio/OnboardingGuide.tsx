@@ -75,7 +75,7 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
       <div className="relative z-10 w-full max-w-md mx-4 bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <span className="text-[10px] text-white/40 font-mono">{step + 1} / {STEPS.length}</span>
-          <button onClick={handleSkip} className="text-white/40 hover:text-white transition-colors"><X size={16} /></button>
+          <button onClick={handleSkip} aria-label="건너뛰기" className="text-white/40 hover:text-white transition-colors"><X size={16} /></button>
         </div>
         <div className="flex justify-center gap-1.5 px-5 pb-3">
           {STEPS.map((_, i) => (

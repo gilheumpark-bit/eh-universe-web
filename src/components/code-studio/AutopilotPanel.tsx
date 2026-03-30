@@ -222,9 +222,9 @@ export function AutopilotPanel({ onComplete, onClose }: Props) {
           {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400">BELOW</span>}
         </span>
         <div className="flex items-center gap-1">
-          {running && <button onClick={() => setRunning(false)} className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-yellow-400" /></button>}
-          {result && <button onClick={handleReset} className="p-1 hover:bg-[#21262d] rounded"><RotateCcw size={12} className="text-[#8b949e]" /></button>}
-          <button onClick={onClose} className="p-1 hover:bg-[#21262d] rounded"><XCircle size={12} className="text-[#8b949e]" /></button>
+          {running && <button onClick={() => setRunning(false)} aria-label="중지" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-yellow-400" /></button>}
+          {result && <button onClick={handleReset} aria-label="초기화" className="p-1 hover:bg-[#21262d] rounded"><RotateCcw size={12} className="text-[#8b949e]" /></button>}
+          <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-[#21262d] rounded"><XCircle size={12} className="text-[#8b949e]" /></button>
         </div>
       </div>
 
@@ -350,7 +350,7 @@ export function AutopilotPanel({ onComplete, onClose }: Props) {
                   <BookOpen size={12} /> {showReport ? "Hide" : "Report"}
                 </button>
               )}
-              <button onClick={handleCopyReport} className="p-1.5 rounded-lg border border-[#30363d] text-[#8b949e] hover:bg-[#21262d]" title="Copy report"><Clipboard size={12} /></button>
+              <button onClick={handleCopyReport} className="p-1.5 rounded-lg border border-[#30363d] text-[#8b949e] hover:bg-[#21262d]" title="Copy report" aria-label="보고서 복사"><Clipboard size={12} /></button>
               <div className="flex-1" />
               <span className="text-[9px] text-[#8b949e]">{formatMs(result.totalTimeMs)} | {result.files.length} files | {result.iterations} iter</span>
             </div>

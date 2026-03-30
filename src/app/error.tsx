@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
 
@@ -16,9 +17,7 @@ export default function Error({
     lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error("[EH Universe] Runtime error:", error);
-    }
+    logger.error("EH Universe", "Runtime error:", error);
   }, [error]);
 
   return (

@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { streamChat } from '@/lib/ai-providers';
+import { logger } from '@/lib/logger';
 import type { FileNode } from '@/lib/code-studio-types';
 import {
   type ComposerMode,
@@ -51,6 +52,7 @@ interface UseCodeStudioComposerReturn {
 // PART 2 — Hook Implementation
 // ============================================================
 
+/** State-machine-driven code composition hook: generate diffs, review, accept/reject changes with guarded transitions */
 export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
   const [mode, setMode] = useState<ComposerMode>('idle');
   const [changes, setChanges] = useState<ComposerChange[]>([]);
@@ -73,7 +75,7 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
   ) => {
     // Guard: only idle → generating is valid
     if (!canTransition(mode, 'generating')) {
-      console.warn(`[Composer] Cannot start composing from mode "${mode}"`);
+      logger.warn('Composer', `Cannot start composing from mode "${mode}"`);
       return;
     }
     setMode('generating');

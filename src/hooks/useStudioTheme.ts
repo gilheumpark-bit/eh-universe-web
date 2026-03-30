@@ -10,6 +10,7 @@ export type ThemeLevel = 0 | 1 | 2 | 3;
 export const THEME_NAMES = ['다크', '딤', '라이트', '최대'] as const;
 export const THEME_NAMES_EN = ['Dark', 'Dim', 'Light', 'Max'] as const;
 
+/** Manages 4-level theme (dark/dim/light/max), focus mode, search overlay, and shortcuts panel */
 export function useStudioTheme() {
   const [themeLevel, setThemeLevel] = useState<ThemeLevel>(() => {
     if (typeof window !== 'undefined') {
@@ -45,6 +46,7 @@ export function useStudioTheme() {
   };
 }
 
+/** Manages app-wide language setting (KO/EN/JP/CN) persisted to localStorage */
 export function useStudioLanguage() {
   const [language, setLanguage] = useState<AppLanguage>(() => {
     if (typeof window !== 'undefined') {

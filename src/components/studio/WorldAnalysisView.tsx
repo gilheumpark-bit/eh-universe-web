@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { Search, Loader2, BookOpen, Layers, Map, Users, Zap, AlertTriangle, Copy, Check } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -242,7 +243,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
         setError(isKeyIssue
           ? t('worldAnalysis.analysisFailed')
           : `${t('worldAnalysis.analysisFailed')} (${msg || 'Unknown error'})`);
-        console.error('[WorldAnalysis] Stream failed:', msg);
+        logger.error('WorldAnalysis', 'Stream failed:', msg);
       }
     } finally {
       setAnalyzing(false);

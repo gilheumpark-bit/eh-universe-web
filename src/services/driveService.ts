@@ -2,6 +2,7 @@
 // PART 0: GOOGLE DRIVE SERVICE — REST API v3 (fetch-based)
 // ============================================================
 
+import { logger } from '@/lib/logger';
 import { Project } from '@/lib/studio-types';
 
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
@@ -331,7 +332,7 @@ export async function syncAllProjects(
       if (r.status === 'rejected') {
         failedCount++;
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[Drive Sync] Batch task failed:', r.reason);
+          logger.warn('Drive Sync', 'Batch task failed:', r.reason);
         }
       }
     }
@@ -349,7 +350,7 @@ export async function syncAllProjects(
       if (r.status === 'rejected') {
         failedCount++;
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[Drive Sync] Remote download failed:', r.reason);
+          logger.warn('Drive Sync', 'Remote download failed:', r.reason);
         }
       }
     }

@@ -170,7 +170,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
           <FileCode2 size={14} className="text-purple-400" />
           Code Creator
         </span>
-        <button onClick={onClose} className="p-1 rounded hover:bg-white/5 text-text-secondary"><X size={14} /></button>
+        <button onClick={onClose} aria-label="닫기" className="p-1 rounded hover:bg-white/5 text-text-secondary"><X size={14} /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">

@@ -28,6 +28,7 @@ interface UseStudioSessionParams {
   closeConfirm: () => void;
 }
 
+/** Manages session lifecycle: creation with unsaved-changes guard, renaming, demo preset loading */
 export function useStudioSession({
   language, currentSession, editDraft,
   doCreateNewSession, updateCurrentSession,

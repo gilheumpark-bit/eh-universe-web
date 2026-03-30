@@ -6,6 +6,7 @@
 //   (2) Gemini structured generation via server route
 // ============================================================
 
+import { logger } from '@/lib/logger';
 import { StoryConfig, Character, Item, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
@@ -155,7 +156,7 @@ export const generateStoryStream = async (
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error;
     }
-    console.error("Story Generation Error:", error);
+    logger.error('geminiService', 'Story Generation Error:', error);
     throw error;
   }
 };

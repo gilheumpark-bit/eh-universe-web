@@ -1,9 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import type { AppLanguage } from "@/lib/studio-types";
+import { CodeStudioSkeleton } from "@/components/SkeletonLoader";
 
 function CodeStudioLoading() {
   const { lang } = useLang();
@@ -34,8 +36,10 @@ const CodeStudioShell = dynamic(
 
 export default function CodeStudioPage() {
   return (
-    <div className="h-screen w-screen overflow-hidden bg-bg-primary">
-      <CodeStudioShell />
-    </div>
+    <Suspense fallback={<CodeStudioSkeleton />}>
+      <div className="h-screen w-screen overflow-hidden bg-bg-primary">
+        <CodeStudioShell />
+      </div>
+    </Suspense>
   );
 }

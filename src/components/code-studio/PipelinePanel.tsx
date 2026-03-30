@@ -139,10 +139,10 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
         </span>
         <span className="flex items-center gap-1">
           {onRun && (
-            <button onClick={onRun} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title="Re-run"><Play size={12} /></button>
+            <button onClick={onRun} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title="Re-run" aria-label="다시 실행"><Play size={12} /></button>
           )}
-          <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Copy report"><Copy size={12} /></button>
-          <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Download report"><Download size={12} /></button>
+          <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Copy report" aria-label="보고서 복사"><Copy size={12} /></button>
+          <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Download report" aria-label="보고서 다운로드"><Download size={12} /></button>
         </span>
       </div>
 

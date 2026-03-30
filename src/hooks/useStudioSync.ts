@@ -3,6 +3,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { syncAllProjects } from '@/services/driveService';
 import type { Project } from '@/lib/studio-types';
 import type { User } from 'firebase/auth';
@@ -16,6 +17,7 @@ interface UseStudioSyncParams {
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
 }
 
+/** Manages Google Drive project synchronization with 2-hour reminder and auto-retry on 401 */
 export function useStudioSync({
   user, accessToken, refreshAccessToken, projects, setProjects, setUxError,
 }: UseStudioSyncParams) {
@@ -75,14 +77,14 @@ export function useStudioSync({
             setTimeout(() => setSyncStatus('idle'), 3000);
             return;
           } catch (retryErr) {
-            console.error('[Sync] Retry failed', retryErr);
+            logger.error('Sync', 'Retry failed', retryErr);
             setSyncStatus('error');
             setTimeout(() => setSyncStatus('idle'), 5000);
             return;
           }
         }
       }
-      console.error('[Sync]', err);
+      logger.error('Sync', err);
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
     }

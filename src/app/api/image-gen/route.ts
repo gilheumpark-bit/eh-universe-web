@@ -6,6 +6,7 @@
 // BYOK mode: user-provided API key. No server fallback for image gen.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const MAX_REQUEST_BYTES = 1_048_576;
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
   } catch (e) {
-    console.error('[API:image-gen]', e instanceof Error ? e.message : e);
+    logger.error('API:image-gen', e instanceof Error ? e.message : e);
     const msg = e instanceof Error ? e.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

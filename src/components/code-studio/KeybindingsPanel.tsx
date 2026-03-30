@@ -50,7 +50,7 @@ export function KeybindingsPanel({ onClose }: Props) {
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[500px] max-h-[500px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <span className="flex items-center gap-2 text-sm font-semibold text-white"><Keyboard size={14} /> 키보드 단축키</span>
-          <button onClick={onClose} className="text-white/40 hover:text-white"><X size={14} /></button>
+          <button onClick={onClose} aria-label="닫기" className="text-white/40 hover:text-white"><X size={14} /></button>
         </div>
         <div className="px-4 py-2 border-b border-white/8">
           <div className="flex items-center gap-2 bg-white/5 rounded px-2 py-1">

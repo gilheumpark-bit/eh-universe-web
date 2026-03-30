@@ -5,6 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('[API:error-report]', error instanceof Error ? error.message : error);
+    logger.error('API:error-report', error instanceof Error ? error.message : error);
     return new NextResponse(null, { status: 400 });
   }
 }

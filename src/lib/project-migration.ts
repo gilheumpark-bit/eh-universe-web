@@ -3,6 +3,7 @@
 // ============================================================
 
 import { ChatSession, Project, Genre } from './studio-types';
+import { logger } from '@/lib/logger';
 
 export const STORAGE_KEY_SESSIONS_LEGACY = 'noa_chat_sessions_v2';
 export const STORAGE_KEY_PROJECTS = 'noa_projects_v2';
@@ -137,17 +138,17 @@ export function saveProjects(projects: Project[]): boolean {
   } catch (e) {
     // QuotaExceededError — attempt cleanup and retry once
     if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
-      console.warn('[NOA] QuotaExceededError — clearing orphaned data and retrying...');
+      logger.warn('NOA', 'QuotaExceededError — clearing orphaned data and retrying...');
       clearOrphanedData();
       try {
         localStorage.setItem(STORAGE_KEY_PROJECTS, payload);
         return true;
       } catch (retryErr) {
-        console.error('[NOA] localStorage write failed after cleanup:', retryErr);
+        logger.error('NOA', 'localStorage write failed after cleanup:', retryErr);
         return false;
       }
     }
-    console.error('[NOA] localStorage write failed:', e);
+    logger.error('NOA', 'localStorage write failed:', e);
     return false;
   }
 }

@@ -48,6 +48,7 @@ const isValidProject = (p: unknown): p is Project => {
 // PART 3 — Hook implementation
 // ============================================================
 
+/** Provides export functions (TXT, EPUB, DOCX, JSON, HTML) and project import/delete/duplicate operations */
 export function useStudioExport({
   currentSession,
   sessions: _sessions,

@@ -2,6 +2,8 @@
 // PART 1 — Environment Variable Validation
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 /**
  * Validates required environment variables at module load time.
  * Import this module early (e.g., in layout or middleware) to get
@@ -45,7 +47,7 @@ export function validateEnv(): { valid: boolean; warnings: string[] } {
   // Log warnings at startup (server-side only)
   if (typeof window === 'undefined' && warnings.length > 0) {
     for (const w of warnings) {
-      console.warn(w);
+      logger.warn('env', w);
     }
   }
 

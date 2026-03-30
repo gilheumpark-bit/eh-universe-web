@@ -7,6 +7,7 @@
 // Falls back to /api/gemini-structured for Gemini-specific tasks
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
 import type { AppLanguage } from '@/lib/studio-types';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -281,7 +282,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[API:structured-generate]', error instanceof Error ? error.message : error);
+    logger.error('API:structured-generate', error instanceof Error ? error.message : error);
     const status = /Request too large/i.test(message) ? 413
       : /Invalid JSON/i.test(message) ? 400
       : /401|403|unauthorized/i.test(message) ? 401

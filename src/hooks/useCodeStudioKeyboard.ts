@@ -92,6 +92,7 @@ function matchesCombo(e: KeyboardEvent, combo: ParsedCombo): boolean {
 // PART 3 — Hook
 // ============================================================
 
+/** Dynamic keyboard shortcut manager for Code Studio. Supports modal-awareness, suppress mode, and runtime register/unregister. */
 export function useCodeStudioKeyboard(
   options: UseCodeStudioKeyboardOptions = {},
 ): UseCodeStudioKeyboardReturn {

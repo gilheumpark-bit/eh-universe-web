@@ -24,6 +24,7 @@ type ConfirmState = {
   onConfirm: () => void;
 };
 
+/** Manages UX transient state: toasts, error alerts, save flash, confirm modal, provider fallback notices */
 export function useStudioUX() {
   // Error toast
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);

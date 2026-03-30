@@ -1,14 +1,11 @@
 "use client";
 
 import { useReportWebVitals } from "next/web-vitals";
+import { logger } from "@/lib/logger";
 
 export function WebVitalsReporter() {
   useReportWebVitals((metric) => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[WebVitals] ${metric.name}: ${Math.round(metric.value)}ms (${metric.rating})`,
-      );
-    }
+    logger.info("WebVitals", `${metric.name}: ${Math.round(metric.value)}ms (${metric.rating})`);
 
     // Send to /api/vitals endpoint for server-side logging
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {

@@ -4536,7 +4536,7 @@ export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
       prismModeT15Desc: "15岁以上",
       prismModeM18Desc: "18岁以上",
       prismModeCustomDesc: "自定义",
-      prismSexual: "色情",
+      prismSexual: "性描写",
       prismViolence: "暴力",
       prismProfanity: "脏话",
       ratingGuide: "中国标准: ALL=全年龄, T15=限制级, M18=成人级"

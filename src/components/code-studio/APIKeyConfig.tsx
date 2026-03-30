@@ -160,7 +160,7 @@ export function APIKeyConfig({ onClose }: Props) {
               <p className="text-[11px] text-white/50">동일 프로바이더의 키를 여러 역할로 등록 가능</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 text-white/50"><X size={18} /></button>
+          <button onClick={onClose} aria-label="닫기" className="p-1.5 rounded hover:bg-white/10 text-white/50"><X size={18} /></button>
         </div>
 
         {/* Slot List */}
@@ -187,7 +187,7 @@ export function APIKeyConfig({ onClose }: Props) {
                     {slot.enabled ? <ToggleRight size={18} className="text-green-400" /> : <ToggleLeft size={18} />}
                   </button>
                   <button onClick={() => handleStartEdit(slot)} className="p-1 rounded hover:bg-white/10 text-white/50"><Pencil size={14} /></button>
-                  <button onClick={() => handleDelete(slot.id)} className="p-1 rounded hover:bg-white/10 text-red-400"><Trash2 size={14} /></button>
+                  <button onClick={() => handleDelete(slot.id)} aria-label="키 슬롯 삭제" className="p-1 rounded hover:bg-white/10 text-red-400"><Trash2 size={14} /></button>
                 </div>
               </div>
             );

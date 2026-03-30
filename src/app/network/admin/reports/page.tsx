@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/lib/AuthContext";
 import { listReports, updateReportStatus } from "@/lib/network-firestore";
 import type { ReportRecord } from "@/lib/network-types";
@@ -26,7 +27,7 @@ export default function ReportsAdminPage() {
       const data = await listReports(filter, 100);
       setReports(data);
     } catch (err) {
-      console.error("Failed to load reports:", err);
+      logger.error("Reports", "Failed to load reports:", err);
     } finally {
       setLoading(false);
     }

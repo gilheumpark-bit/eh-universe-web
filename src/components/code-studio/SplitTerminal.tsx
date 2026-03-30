@@ -71,12 +71,12 @@ export function SplitTerminal() {
             className={`flex items-center gap-1 px-2 py-1 text-[10px] border-r border-white/8 ${p.id === activeId ? "bg-[#0a0e17] text-white" : "text-white/40 hover:bg-white/5"}`}>
             <TerminalIcon size={10} />{p.name}
             {panes.length > 1 && (
-              <span onClick={(e) => { e.stopPropagation(); closePane(p.id); }} className="hover:text-red-400 ml-1 cursor-pointer"><X size={8} /></span>
+              <span onClick={(e) => { e.stopPropagation(); closePane(p.id); }} role="button" aria-label="터미널 탭 닫기" className="hover:text-red-400 ml-1 cursor-pointer"><X size={8} /></span>
             )}
           </button>
         ))}
-        <button onClick={addPane} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded" title="새 터미널"><Plus size={10} /></button>
-        <button onClick={toggleSplit} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded ml-auto" title="분할">
+        <button onClick={addPane} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded" title="새 터미널" aria-label="새 터미널"><Plus size={10} /></button>
+        <button onClick={toggleSplit} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded ml-auto" title="분할" aria-label="분할 방향 전환">
           {splitDir === "horizontal" ? <Columns2 size={10} /> : <Rows2 size={10} />}
         </button>
       </div>

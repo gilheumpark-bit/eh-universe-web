@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
 import {
   Send,
   Sparkles, Menu,
@@ -11,6 +11,7 @@ import {
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { StudioPageSkeleton } from '@/components/SkeletonLoader';
 import {
   StoryConfig, Genre,
   AppLanguage, AppTab,
@@ -27,9 +28,10 @@ import CharacterTab from '@/components/studio/tabs/CharacterTab';
 import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 // EngineStatusBar used in dynamic sub-components
+import { logger } from '@/lib/logger';
 import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
-import { ErrorBoundary } from '@/components/studio/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import MobileTabBar from '@/components/studio/MobileTabBar';
@@ -77,6 +79,14 @@ type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
 
 export default function StudioPage() {
+  return (
+    <Suspense fallback={<StudioPageSkeleton />}>
+      <StudioPageInner />
+    </Suspense>
+  );
+}
+
+function StudioPageInner() {
   // ============================================================
   // PROJECT-BASED STATE MANAGEMENT (extracted to hook)
   // ============================================================
@@ -284,7 +294,7 @@ export default function StudioPage() {
         }
         setHostedProviders(nextHosted);
       } catch (error) {
-        console.warn('[AI] Capability check failed', error);
+        logger.warn('AI', 'Capability check failed', error);
         if (!cancelled) {
           setHostedProviders({});
         }
@@ -612,7 +622,7 @@ export default function StudioPage() {
       if (/401|api key|not configured/i.test(errorMessage)) {
         setShowApiKeyModal(true);
       } else {
-        console.error("Quick Start Failed:", err);
+        logger.error("Studio", "Quick Start Failed:", err);
         setUxError({ error: err });
       }
     } finally {
@@ -853,7 +863,7 @@ export default function StudioPage() {
   };
 
   return (
-    <ErrorBoundary language={isKO ? 'KO' : 'EN'}>
+    <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
     <div

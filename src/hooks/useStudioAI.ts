@@ -8,6 +8,7 @@ import {
 } from '@/lib/studio-types';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
+import { logger } from '@/lib/logger';
 import { classifyAsStudioError, StudioErrorCode } from '@/lib/errors';
 import { canGenerate, incrementGenerationCount } from '@/lib/tier';
 import { trackAIGeneration } from '@/lib/analytics';
@@ -44,6 +45,10 @@ interface UseStudioAIParams {
 // PART 2 — Hook implementation
 // ============================================================
 
+/**
+ * Core AI generation hook. Handles streaming story generation, HFCP turn processing,
+ * quality gate evaluation with retry, proactive suggestions, and writer profile updates.
+ */
 export function useStudioAI({
   currentSession,
   currentSessionId,
@@ -167,7 +172,7 @@ export function useStudioAI({
       try {
         dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform);
       } catch (dirErr) {
-        console.warn('[Director] Analysis failed:', dirErr);
+        logger.warn('Director', 'Analysis failed:', dirErr);
       }
       setDirectorReport(dReport);
       const qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
@@ -264,7 +269,7 @@ export function useStudioAI({
         if (classified.code === StudioErrorCode.KEY_MISSING || classified.code === StudioErrorCode.KEY_INVALID) {
           setShowApiKeyModal(true);
         } else {
-          console.error(classified);
+          logger.error('StudioAI', classified);
           setUxError({ error: classified, retry: classified.retryable ? () => handleSend(text, undefined, undefined) : undefined });
         }
       }
@@ -360,7 +365,7 @@ export function useStudioAI({
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
         const classified = classifyAsStudioError(error);
-        console.error(classified);
+        logger.error('StudioAI', classified);
         setUxError({ error: classified, retry: classified.retryable ? () => handleRegenerate(assistantMsgId) : undefined });
       }
     } finally {

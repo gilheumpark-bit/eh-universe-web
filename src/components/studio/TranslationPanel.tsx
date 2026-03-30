@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Languages, Play, Square, ChevronDown, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { logger } from "@/lib/logger";
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from "@/lib/studio-types";
 import type { TranslationMode, TranslationTarget, TranslationProgress } from "@/engine/translation";
 import { bandLabel, modeDescription, BAND_META, getDefaultConfig } from "@/engine/translation";
@@ -26,7 +27,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
   const { translateEpisode, progress, isTranslating, abort } = useTranslation({
     onProgress: () => {},
-    onError: (err) => console.error("[Translation]", err),
+    onError: (err) => logger.error("Translation", err),
     onSave: (entry) => {
       setConfig((prev) => ({
         ...prev,

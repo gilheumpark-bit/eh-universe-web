@@ -220,7 +220,7 @@ export function ChatPanel({
                       onBlur={() => handleConfirmRename(session.id)}
                       className="flex-1 text-xs bg-bg-tertiary border border-border rounded px-1.5 py-0.5 outline-none text-text-primary"
                     />
-                    <button onClick={() => handleConfirmRename(session.id)} className="text-green-400 p-0.5"><Check size={11} /></button>
+                    <button onClick={() => handleConfirmRename(session.id)} aria-label="이름 변경 확인" className="text-green-400 p-0.5"><Check size={11} /></button>
                   </div>
                 ) : (
                   <button
@@ -311,9 +311,9 @@ export function ChatPanel({
             className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
           />
           {chat.isStreaming ? (
-            <button onClick={() => chat.abort()} className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
+            <button onClick={() => chat.abort()} aria-label="중지" className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
           ) : (
-            <button onClick={handleSend} disabled={!input.trim()} className="text-blue-400 hover:text-white disabled:opacity-30 transition-colors"><Send size={14} /></button>
+            <button onClick={handleSend} disabled={!input.trim()} aria-label="전송" className="text-blue-400 hover:text-white disabled:opacity-30 transition-colors"><Send size={14} /></button>
           )}
         </div>
       </div>

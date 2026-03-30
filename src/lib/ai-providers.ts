@@ -3,6 +3,7 @@
 // ============================================================
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
+import { logger } from '@/lib/logger';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -138,9 +139,11 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
 };
 
 // Capability helpers
+/** @returns Capability metadata for the given provider, falling back to Gemini defaults */
 export function getCapabilities(providerId: ProviderId): ProviderCapabilities {
   return PROVIDERS[providerId]?.capabilities ?? PROVIDERS.gemini.capabilities;
 }
+/** @returns Whether the specified provider supports structured JSON output */
 export function supportsStructuredOutput(providerId: ProviderId): boolean {
   return PROVIDERS[providerId]?.capabilities.structuredOutput ?? false;
 }
@@ -160,11 +163,13 @@ const LEGACY_MODEL_KEY = "eh-active-model";
 // Preview/experimental model detection
 const PREVIEW_PATTERNS = ["preview", "nano", "experimental", "beta"];
 
+/** @returns True if the model name matches preview/experimental/beta patterns */
 export function isPreviewModel(model: string): boolean {
   const lower = model.toLowerCase();
   return PREVIEW_PATTERNS.some(p => lower.includes(p));
 }
 
+/** @returns Localized warning string if model is preview/experimental, null otherwise */
 export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string | null {
   if (!isPreviewModel(model)) return null;
   return lang === "ko"
@@ -403,6 +408,7 @@ export function migrateProviderStorage(): void {
   }
 }
 
+/** @returns Currently active AI provider ID from localStorage, defaults to "gemini" */
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
   const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
@@ -414,6 +420,7 @@ export function getActiveProvider(): ProviderId {
   return provider;
 }
 
+/** Persist the active AI provider selection to localStorage */
 export function setActiveProvider(id: ProviderId): void {
   if (typeof window === "undefined") return;
   localStorage.setItem("noa_active_provider", id);
@@ -536,14 +543,17 @@ function getStoredModelForProvider(providerId: ProviderId): string {
   return model;
 }
 
+/** @returns Stored model name for the currently active provider */
 export function getActiveModel(): string {
   return getStoredModelForProvider(getActiveProvider());
 }
 
+/** @returns Stored model for a specific provider (not necessarily the active one) */
 export function getPreferredModel(providerId: ProviderId): string {
   return getStoredModelForProvider(providerId);
 }
 
+/** Persist model selection to both per-provider and global localStorage keys */
 export function setActiveModel(model: string): void {
   if (typeof window === "undefined") return;
   // 커스텀 모델명도 그대로 저장 — BYOK/로컬 LLM에서 사용자 입력 모델 지원
@@ -722,6 +732,11 @@ function getFallbackProviders(
     .filter((p) => p.key.trim().length > 0);
 }
 
+/**
+ * Unified streaming chat API. Routes through server proxy with retry + quota fallback.
+ * @param opts - System instruction, messages, temperature, abort signal, and chunk callback
+ * @returns Concatenated full response text
+ */
 export async function streamChat(opts: StreamOptions): Promise<string> {
   const provider = getActiveProvider();
   const apiKey = getApiKey(provider);
@@ -758,7 +773,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 
       if (isRetryable && attempt < MAX_RETRIES) {
         lastError = proxyErr instanceof Error ? proxyErr : new Error(errMsg);
-        console.warn(`[retry] Attempt ${attempt + 1} failed: ${errMsg}. Retrying...`);
+        logger.warn('retry', `Attempt ${attempt + 1} failed: ${errMsg}. Retrying...`);
         continue;
       }
 
@@ -774,7 +789,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     const fallbacks = getFallbackProviders(provider);
     for (const fallback of fallbacks) {
       try {
-        console.warn(`[fallback] ${provider} quota/rate-limit hit. Switching to ${fallback.id}...`);
+        logger.warn('fallback', `${provider} quota/rate-limit hit. Switching to ${fallback.id}...`);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('noa:provider-fallback', {
             detail: { from: provider, to: fallback.id },
@@ -789,7 +804,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
         );
       } catch (fallbackErr) {
         if (fallbackErr instanceof DOMException && fallbackErr.name === 'AbortError') throw fallbackErr;
-        console.warn(`[fallback] ${fallback.id} also failed:`, fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+        logger.warn('fallback', `${fallback.id} also failed:`, fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
       }
     }
   }
@@ -801,6 +816,10 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 // PART 5: TEST KEY (all requests via server proxy)
 // ============================================================
 
+/**
+ * Validate an API key by making a minimal test request through the server proxy.
+ * @returns True if the key produces a successful response
+ */
 export async function testApiKey(providerId: ProviderId, key: string): Promise<boolean> {
   if (!key.trim()) return false;
   try {

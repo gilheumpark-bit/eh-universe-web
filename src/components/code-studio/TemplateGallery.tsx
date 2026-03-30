@@ -81,7 +81,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[680px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <h2 className="text-sm font-semibold text-white">새 프로젝트 만들기</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-white/10 transition-colors"><X size={14} className="text-white/40" /></button>
+          <button onClick={onClose} aria-label="닫기" className="p-1 rounded hover:bg-white/10 transition-colors"><X size={14} className="text-white/40" /></button>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 border-b border-white/8">
           <Search size={14} className="text-white/30 shrink-0" />

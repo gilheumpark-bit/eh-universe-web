@@ -106,6 +106,7 @@ function updateInTree(nodes: FileNode[], id: string, updater: (node: FileNode) =
 
 const MAX_UNDO = 50;
 
+/** Virtual file system hook: CRUD on FileNode tree with undo/redo stacks and IndexedDB persistence */
 export function useCodeStudioFileSystem(initialTree: FileNode[] = []): UseCodeStudioFileSystemReturn {
   const [tree, setTreeState] = useState<FileNode[]>(initialTree);
   const [canUndo, setCanUndo] = useState(false);

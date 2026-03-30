@@ -92,7 +92,7 @@ export function EvaluationPanel({ files, onClose }: Props) {
       <div className="bg-[#0a0e17] border border-white/10 rounded-xl shadow-2xl flex flex-col" style={{ width: 520, maxHeight: "80vh" }}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <div className="flex items-center gap-2 text-sm font-semibold text-white"><BarChart3 size={16} /> 프로젝트 평가</div>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/50"><X size={16} /></button>
+          <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-white/10 rounded text-white/50"><X size={16} /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {!result && !loading && (

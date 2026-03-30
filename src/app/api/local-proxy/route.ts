@@ -5,6 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 /**
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err) {
-    console.error('[API:local-proxy:GET]', err instanceof Error ? err.message : err);
+    logger.error('API:local-proxy:GET', err instanceof Error ? err.message : err);
     const msg = err instanceof Error ? err.message : 'proxy error';
     return NextResponse.json({ error: msg }, { status: 502 });
   }
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err) {
-    console.error('[API:local-proxy:POST]', err instanceof Error ? err.message : err);
+    logger.error('API:local-proxy:POST', err instanceof Error ? err.message : err);
     const msg = err instanceof Error ? err.message : 'proxy error';
     return NextResponse.json({ error: msg }, { status: 502 });
   }

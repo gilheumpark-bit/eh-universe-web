@@ -27,6 +27,7 @@ interface UseStudioKeyboardOptions {
   disabled?: boolean;
 }
 
+/** Register global keyboard shortcuts for Studio (F1-F8 tabs, Ctrl combos, Escape). Respects disabled flag for modal states. */
 export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
   useEffect(() => {
     const tabByFKey: Record<string, AppTab> = {

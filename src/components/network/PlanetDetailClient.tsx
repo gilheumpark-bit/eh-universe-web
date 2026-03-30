@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
+import { logger } from "@/lib/logger";
 import { netT } from "@/lib/network-translations";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
 import { CommentSection } from "@/components/network/CommentSection";
@@ -84,7 +85,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
       } catch (caught) {
         if (!cancelled) {
           // User-friendly error — never expose raw Firestore/internal messages
-          console.error('[PlanetDetailClient]', caught);
+          logger.error('PlanetDetailClient', caught);
           const userMsg = L4(lang, {
             ko: "데이터를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
             en: "Something went wrong while loading data. Please try again shortly.",

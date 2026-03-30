@@ -15,6 +15,11 @@ const DEFAULT_ADVANCED: AdvancedWritingSettings = {
   outputMode: 'draft', includes: '', excludes: '',
 };
 
+/**
+ * Manages writing mode state (ai/edit/canvas/refine/advanced) with per-session editDraft persistence.
+ * @param currentSessionId - Active session for draft isolation
+ * @param hydrated - Whether localStorage has been loaded (prevents SSR flash)
+ */
 export function useStudioWritingMode(currentSessionId: string | null, hydrated: boolean) {
   const [writingMode, setWritingMode] = useState<WritingMode>('ai');
   const [editDraft, setEditDraft] = useState('');

@@ -85,8 +85,8 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
   return (
     <div className="flex flex-col h-full border-t border-white/8 bg-[#0f1419]">
       <div className="flex items-center gap-1.5 px-2 py-1 border-b border-white/8 text-xs">
-        <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/40"><X size={12} /></button>
-        <button onClick={() => { setEntries([]); setSelectedId(null); }} className="p-1 hover:bg-white/10 rounded text-white/40"><Trash2 size={12} /></button>
+        <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-white/10 rounded text-white/40"><X size={12} /></button>
+        <button onClick={() => { setEntries([]); setSelectedId(null); }} aria-label="기록 지우기" className="p-1 hover:bg-white/10 rounded text-white/40"><Trash2 size={12} /></button>
         <div className="flex-1" />
         <div className="flex items-center gap-1 bg-white/5 border border-white/8 rounded px-1.5 py-0.5">
           <Search size={10} className="text-white/30" />
@@ -128,7 +128,7 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
           <div className="w-1/2 border-l border-white/8 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-2 py-1 border-b border-white/8 text-xs font-semibold text-white">
               <span>{selectedEntry.method} {truncateUrl(selectedEntry.url, 40)}</span>
-              <button onClick={() => setSelectedId(null)} className="p-0.5 hover:bg-white/10 rounded"><X size={10} /></button>
+              <button onClick={() => setSelectedId(null)} aria-label="상세 닫기" className="p-0.5 hover:bg-white/10 rounded"><X size={10} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 text-[10px] space-y-3 text-white/60">
               <DetailSection title="General">

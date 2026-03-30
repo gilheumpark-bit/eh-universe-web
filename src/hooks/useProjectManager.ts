@@ -4,6 +4,7 @@ import {
 } from '@/lib/studio-types';
 import { loadProjects, saveProjects, getStorageUsageBytes } from '@/lib/project-migration';
 import { backupToIndexedDB, restoreFromIndexedDB, saveVersionedBackup, listVersionedBackups, restoreVersionedBackup, type VersionedBackup } from '@/lib/indexeddb-backup';
+import { logger } from '@/lib/logger';
 import { PlatformType } from '@/engine/types';
 import { trackStudioSessionStart } from '@/lib/analytics';
 import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
@@ -38,6 +39,10 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
 // PART 2 — Hook implementation
 // ============================================================
 
+/**
+ * Central project/session CRUD hook. Handles localStorage hydration, project creation,
+ * session switching, IndexedDB backup/restore, and storage quota management.
+ */
 export function useProjectManager(language: AppLanguage) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -76,7 +81,7 @@ export function useProjectManager(language: AppLanguage) {
           const restored = await restoreFromIndexedDB();
           if (restored && restored.length > 0) loaded = restored;
         } catch (err) {
-          console.error('[IndexedDB] Restore failed:', err);
+          logger.error('IndexedDB', 'Restore failed:', err);
           const msg = language === 'KO'
             ? 'IndexedDB 복원에 실패했습니다. 데이터가 유실될 수 있습니다.'
             : 'IndexedDB restore failed. Data may be lost.';
@@ -103,13 +108,13 @@ export function useProjectManager(language: AppLanguage) {
       const ok = saveProjects(projects);
       if (!ok) {
         const mb = (getStorageUsageBytes() / 1024 / 1024).toFixed(1);
-        console.warn(`[NOA] Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
+        logger.warn('NOA', `Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
         // Surface storage-full warning to user via custom event
         window.dispatchEvent(new CustomEvent('noa:storage-full', {
           detail: { usageMB: mb },
         }));
       }
-      backupToIndexedDB(projects).catch(err => console.warn('[IndexedDB] Backup failed:', err));
+      backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
       if (ok) window.dispatchEvent(new CustomEvent('noa:auto-saved'));
     }, 500);
     return () => clearTimeout(timer);
@@ -159,7 +164,7 @@ export function useProjectManager(language: AppLanguage) {
       if (current.length === 0) return;
       saveVersionedBackup(current)
         .then(() => listVersionedBackups().then(setVersionedBackups))
-        .catch(err => console.warn('[IndexedDB] Versioned backup failed:', err));
+        .catch(err => logger.warn('IndexedDB', 'Versioned backup failed:', err));
     }, BACKUP_INTERVAL);
     return () => clearInterval(interval);
   }, [hydrated, projects.length]);

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { ArchiveSkeleton } from "@/components/SkeletonLoader";
 import ArchiveClient from "./ArchiveClient";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function ArchivePage() {
   return (
-    <Suspense>
+    <Suspense fallback={<ArchiveSkeleton />}>
       <ArchiveClient />
     </Suspense>
   );

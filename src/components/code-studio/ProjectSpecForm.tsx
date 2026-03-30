@@ -97,7 +97,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
               {step === "category" ? "1/3" : step === "questions" ? `2/3 (${currentQ + 1}/${QUESTIONS.length})` : "3/3"}
             </span>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white"><X size={16} /></button>
+          <button onClick={onClose} aria-label="닫기" className="text-white/40 hover:text-white"><X size={16} /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {step === "category" && (

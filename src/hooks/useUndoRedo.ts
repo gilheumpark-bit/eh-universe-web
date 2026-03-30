@@ -26,6 +26,11 @@ interface UseUndoRedoReturn<T> {
 // PART 2 — Hook implementation (state-based history for React 19 compat)
 // ============================================================
 
+/**
+ * Generic undo/redo hook backed by state-based history stacks.
+ * @param initialState - Starting value for the managed state
+ * @param maxHistory - Maximum number of undo steps to retain (default 20)
+ */
 export function useUndoRedo<T>({ initialState, maxHistory = 20 }: UseUndoRedoOptions<T>): UseUndoRedoReturn<T> {
   const [state, setStateRaw] = useState<T>(initialState);
   const [past, setPast] = useState<T[]>([]);

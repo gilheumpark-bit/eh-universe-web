@@ -3,6 +3,7 @@
 // ============================================================
 
 import { useState, useRef, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
 import {
@@ -168,7 +169,11 @@ async function scoreTranslation(
 // PART 3 — Hook 구현
 // ============================================================
 
-/** TranslatedEpisode → TranslatedManuscriptEntry 변환 (저장용) */
+/**
+ * Convert a TranslatedEpisode result into a TranslatedManuscriptEntry for persistent storage.
+ * @param result - Completed translation result with chunks, scores, and glossary
+ * @param title - Optional translated episode title
+ */
 export function toManuscriptEntry(
   result: TranslatedEpisode,
   title: string = ''
@@ -190,6 +195,10 @@ export function toManuscriptEntry(
   };
 }
 
+/**
+ * AI-powered translation hook with chunk-level scoring, recreation loop, glossary enforcement,
+ * batch mode with auto-context bridging, and translator profile learning.
+ */
 export function useTranslation({
   onProgress,
   onBatchProgress,
@@ -334,10 +343,10 @@ export function useTranslation({
         manuscript.content, translatedText, config.targetLang, config.mode,
       );
       if (!lengthCheck.passed) {
-        console.warn('[Translation] Length verification issues:', lengthCheck.issues);
+        logger.warn('Translation', 'Length verification issues:', lengthCheck.issues);
       }
       if (tracker.inconsistencies.length > 0) {
-        console.warn('[Translation] Cross-chunk consistency issues:', tracker.inconsistencies);
+        logger.warn('Translation', 'Cross-chunk consistency issues:', tracker.inconsistencies);
       }
       const avgScore = chunks.length > 0
         ? chunks.reduce((sum, c) => sum + c.score, 0) / chunks.length : 0;

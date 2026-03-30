@@ -305,9 +305,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 disabled={isGenerating || !hasApiKey}
               />
               {isGenerating ? (
-                <button onClick={handleCancel} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-accent-red text-white shrink-0"><StopCircle className="w-5 h-5" /></button>
+                <button onClick={handleCancel} aria-label="생성 중지" className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-accent-red text-white shrink-0"><StopCircle className="w-5 h-5" /></button>
               ) : (
-                <button onClick={() => handleSend()} disabled={!input.trim()} className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shrink-0 ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}><Send className="w-5 h-5" /></button>
+                <button onClick={() => handleSend()} disabled={!input.trim()} aria-label="전송" className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shrink-0 ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}><Send className="w-5 h-5" /></button>
               )}
             </div>
           </div>

@@ -33,6 +33,7 @@ interface UseCodeStudioAgentReturn {
 
 const ALL_ROLES: AgentRole[] = ['architect', 'developer', 'reviewer', 'tester', 'documenter'];
 
+/** Runs the multi-role agent pipeline (architect/developer/reviewer/tester/documenter) with progress tracking and abort */
 export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
   const [running, setRunning] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);

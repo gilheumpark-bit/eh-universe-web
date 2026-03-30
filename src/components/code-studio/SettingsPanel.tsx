@@ -137,8 +137,8 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
       <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
         <h2 className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple">Settings</h2>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={reset} title="Reset" className="text-text-tertiary hover:text-text-primary"><RotateCcw size={14} /></button>
-          <button type="button" onClick={onClose} className="text-text-tertiary hover:text-text-primary"><X size={14} /></button>
+          <button type="button" onClick={reset} title="Reset" aria-label="설정 초기화" className="text-text-tertiary hover:text-text-primary"><RotateCcw size={14} /></button>
+          <button type="button" onClick={onClose} aria-label="닫기" className="text-text-tertiary hover:text-text-primary"><X size={14} /></button>
         </div>
       </div>
 

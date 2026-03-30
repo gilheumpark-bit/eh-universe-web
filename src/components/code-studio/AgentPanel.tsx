@@ -219,10 +219,10 @@ export function AgentPanel({ code, language, fileName }: Props) {
         </span>
         <div className="flex items-center gap-1">
           {mode === "executing" && (
-            <button onClick={() => { agent.abort(); setMode("paused"); }} className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
+            <button onClick={() => { agent.abort(); setMode("paused"); }} aria-label="일시정지" className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
           )}
           {(mode === "complete" || mode === "error") && (
-            <button onClick={handleReset} className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-[#8b949e]" /></button>
+            <button onClick={handleReset} aria-label="초기화" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-[#8b949e]" /></button>
           )}
         </div>
       </div>

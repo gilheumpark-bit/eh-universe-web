@@ -3,9 +3,15 @@
 import { useState, useCallback, useRef } from "react";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import dynamic from "next/dynamic";
 import ToolNav from "@/components/tools/ToolNav";
-import StyleStudioView from "@/components/studio/StyleStudioView";
+import { SkeletonLoader } from "@/components/SkeletonLoader";
 import type { StyleProfile } from "@/lib/studio-types";
+
+const StyleStudioView = dynamic(
+  () => import("@/components/studio/StyleStudioView"),
+  { ssr: false, loading: () => <SkeletonLoader variant="panel" height={300} /> }
+);
 
 // ============================================================
 // PART 1 — Style Studio Page Wrapper

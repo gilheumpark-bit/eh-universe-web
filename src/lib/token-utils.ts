@@ -6,6 +6,7 @@ import type { ChatMsg } from './ai-providers';
 
 // Approximate token counts per character by language
 // Korean/CJK: ~1.5 tokens per char, English: ~0.25 tokens per word (~4 chars/token)
+/** Estimate token count using CJK density heuristic (~1.5 tok/char CJK, ~0.25 tok/char Latin) */
 function estimateTokens(text: string): number {
   if (!text) return 0;
   const cjkChars = (text.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
@@ -36,6 +37,7 @@ const CONTEXT_LIMITS: Record<string, number> = {
 
 const DEFAULT_LIMIT = 128000;
 
+/** @returns Context window token limit for the given model, or 128k default */
 export function getContextLimit(model: string): number {
   return CONTEXT_LIMITS[model] ?? DEFAULT_LIMIT;
 }
@@ -45,6 +47,10 @@ const OUTPUT_RESERVE_RATIO = 0.15; // 15% of context for output
 const MIN_OUTPUT_RESERVE = 4096;
 const MAX_OUTPUT_RESERVE = 16384;
 
+/**
+ * Calculate max output tokens based on remaining context budget.
+ * @returns Clamped output token count between MIN_OUTPUT_RESERVE and MAX_OUTPUT_RESERVE
+ */
 export function getMaxOutputTokens(model: string, systemTokens: number, messageTokens: number): number {
   const limit = getContextLimit(model);
   const used = systemTokens + messageTokens;

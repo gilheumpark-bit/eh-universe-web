@@ -10,6 +10,7 @@ const STORE_NAME = 'projects';
 const VERSIONED_STORE = 'versioned_backups';
 const MAX_VERSIONED_BACKUPS = 5;
 
+/** @returns True if IndexedDB API is available in the current environment */
 export function isIndexedDBAvailable(): boolean {
   try {
     return typeof indexedDB !== 'undefined' && indexedDB !== null;
@@ -43,6 +44,7 @@ function openDB(): Promise<IDBDatabase | null> {
   });
 }
 
+/** Write all projects to IndexedDB as a full backup. @returns True on success */
 export async function backupToIndexedDB(projects: Project[]): Promise<boolean> {
   const db = await openDB();
   if (!db) return false;
@@ -66,6 +68,7 @@ export async function backupToIndexedDB(projects: Project[]): Promise<boolean> {
   });
 }
 
+/** Restore all projects from the IndexedDB backup store. @returns Project array or null if unavailable */
 export async function restoreFromIndexedDB(): Promise<Project[] | null> {
   const db = await openDB();
   if (!db) return null;

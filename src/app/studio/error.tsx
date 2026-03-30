@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 export default function StudioError({
   error,
@@ -10,9 +11,7 @@ export default function StudioError({
   reset: () => void;
 }) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error("[NOA Studio Error]", error);
-    }
+    logger.error("NOA Studio", error);
   }, [error]);
 
   return (
