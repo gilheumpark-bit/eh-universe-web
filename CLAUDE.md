@@ -578,9 +578,34 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 
 ## 코드 스튜디오 아키텍처
 
-- **Panel Registry**: 37개 패널을 `code-studio-panel-registry.ts` + `PanelImports.ts`로 관리
+- **Shell 3파일 분리**: CodeStudioShell (레이아웃) + CodeStudioEditor (에디터) + CodeStudioPanelManager (패널 렌더)
+- **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
+- **Panel Registry**: 37개 패널을 `core/panel-registry.ts` + `PanelImports.ts`로 관리
 - 새 패널 추가 = 레지스트리 1줄 + PanelImports 1줄 + panelPropsMap 1항목
 - 하드코딩 패널 금지 — 반드시 레지스트리 경유
+
+## 로깅 정책
+
+- `console.log` / `console.warn` / `console.error` 직접 사용 금지
+- `import { logger } from '@/lib/logger'` 사용 필수
+- logger.info() / logger.warn() / logger.error() / logger.debug()
+
+## ErrorBoundary
+
+- 통합 컴포넌트: `src/components/ErrorBoundary.tsx`
+- variant prop: `'full-page'` | `'section'` | `'panel'`
+- 기존 개별 ErrorBoundary (studio/, code-studio/) 는 래퍼로 유지
+
+## CSP 미들웨어
+
+- `src/middleware.ts`가 모든 보안 헤더 (CSP nonce, X-Frame-Options 등) 통합 관리
+- 보안 헤더를 다른 파일에서 분산 설정하지 않음
+
+## SkeletonLoader
+
+- 공용: `src/components/SkeletonLoader.tsx` — 5 variants: text, card, panel, editor, sidebar
+- 코드 스튜디오 전용: `src/components/code-studio/SkeletonLoader.tsx`
+- shimmer 애니메이션, CSS 변수 기반 다크 테마 호환
 
 ## Verification-First 원칙
 

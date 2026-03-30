@@ -1,6 +1,6 @@
 # EH Universe Web
 
-![Tests](https://img.shields.io/badge/tests-910+-green)
+![Tests](https://img.shields.io/badge/tests-970+-green)
 ![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)
 ![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
 ![License](https://img.shields.io/badge/license-CC--BY--NC--4.0-blue)
@@ -29,7 +29,7 @@
 | DB/Auth | Firebase Firestore + Auth (EH Network) |
 | Engine | ANS 10.0 (서사 엔진), Verification Loop (코드 검증) |
 | Export | EPUB / DOCX / TXT (순수 JS, 외부 의존성 없음) |
-| Test | Jest 30 (~910 tests) + Playwright 1.58 (E2E) |
+| Test | Jest 30 (~970 tests, 68 suites) + Playwright 1.58 (E2E) |
 | Deploy | Vercel |
 
 ## Quick Start
@@ -69,6 +69,8 @@ npm run test:e2e     # Playwright E2E
 ## Code Studio (검증형 IDE)
 
 - **Panel Registry**: 37개 패널 (8개 필수 기본 노출 + Advanced 토글)
+- **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager 3파일 분리
+- **lib/code-studio/**: 6-directory 구조 — `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **Verification Loop**: Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) 3회 검증
 - **Composer State Machine**: idle → generating → verifying → review → staged → applied
 - **Staging/Rollback**: 사람 승인 후 반영, 되돌리기 가능
@@ -83,7 +85,10 @@ Fallback: JP/CN → EN → KO.
 
 ## Resilience
 
-- **Error Boundaries**: 전역 + 섹션별 10개 (크래시 격리)
+- **ErrorBoundary**: 통합 컴포넌트, variant prop (`full-page` | `section` | `panel`)
+- **SkeletonLoader**: 5 variants (`text` | `card` | `panel` | `editor` | `sidebar`) — shimmer 기반
+- **CSP Middleware**: `src/middleware.ts` — nonce 기반 보안 헤더 통합 관리
+- **Logger**: `@/lib/logger` — `console.*` 대신 logger.info/warn/error 사용
 - **Streaming**: fetch 120s + AI 180s + 구조화 60s + 동시실행 lock
 - **Storage**: localStorage try/catch + IndexedDB 백업 + 용량 감지
 - **Input Validation**: maxLength 45건 + 엔진 50K 하드 리밋
@@ -92,9 +97,9 @@ Fallback: JP/CN → EN → KO.
 
 ```
 Layer 1: Static — TypeScript + ESLint + Next.js Build (28 routes)
-Layer 2: Unit   — Jest 45 files, ~910 tests
+Layer 2: Unit   — Jest 68 files (~970 tests), 22 component suites
 Layer 3: E2E    — Playwright (studio + network)
-Layer 4: Runtime Guards — ErrorBoundary, AbortController, generationLockRef
+Layer 4: Runtime Guards — ErrorBoundary (3 variants), AbortController, generationLockRef
 ```
 
 Coverage thresholds: branches 50%, functions/lines/statements 60%.
