@@ -1,7 +1,8 @@
 # EH Universe Web
 
-![Tests](https://img.shields.io/badge/tests-970+-green)
-![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)
+![Tests](https://img.shields.io/badge/tests-1400+-green)
+![Suites](https://img.shields.io/badge/suites-212-green)
+![Audit](https://img.shields.io/badge/audit-95%2F100%20(S)-brightgreen)
 ![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
 ![License](https://img.shields.io/badge/license-CC--BY--NC--4.0-blue)
 
@@ -29,7 +30,8 @@
 | DB/Auth | Firebase Firestore + Auth (EH Network) |
 | Engine | ANS 10.0 (서사 엔진), Verification Loop (코드 검증) |
 | Export | EPUB / DOCX / TXT (순수 JS, 외부 의존성 없음) |
-| Test | Jest 30 (~970 tests, 68 suites) + Playwright 1.58 (E2E) |
+| Test | Jest 30 (~1,400 tests, 212 suites) + Playwright 1.58 (E2E 3 specs) |
+| Audit | 16-area Project Audit Engine — 95/100 (S) |
 | Deploy | Vercel |
 
 ## Quick Start
@@ -58,7 +60,7 @@ npm run test:e2e     # Playwright E2E
 
 | 탭 | 기능 |
 |----|------|
-| 세계관 | 3-tier 설계, 문명 시뮬레이터, 타임라인, 지도 |
+| 세계관 | 3-tier 설계, 문명 시뮬레이터 (5파일 분리), 타임라인, 지도 |
 | 캐릭터 | 22필드 3-tier, 관계 그래프, 아이템/스킬/마법 체계 |
 | 연출 | 씬시트, 복선 관리, 텐션 커브, 장면 전환 |
 | 집필 | AI 초안 생성 (6종 프로바이더), 캔버스, 인라인 리라이터 |
@@ -69,8 +71,9 @@ npm run test:e2e     # Playwright E2E
 ## Code Studio (검증형 IDE)
 
 - **Panel Registry**: 37개 패널 (8개 필수 기본 노출 + Advanced 토글)
-- **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager 3파일 분리
+- **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager 3파일 분리 (1,721줄 → 3파일)
 - **lib/code-studio/**: 6-directory 구조 — `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
+- **useAIProvider Hook**: 18개 컴포넌트의 ai-providers 레이어 위반 → 훅 브릿지 경유
 - **Verification Loop**: Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) 3회 검증
 - **Composer State Machine**: idle → generating → verifying → review → staged → applied
 - **Staging/Rollback**: 사람 승인 후 반영, 되돌리기 가능
@@ -97,12 +100,24 @@ Fallback: JP/CN → EN → KO.
 
 ```
 Layer 1: Static — TypeScript + ESLint + Next.js Build (28 routes)
-Layer 2: Unit   — Jest 68 files (~970 tests), 22 component suites
-Layer 3: E2E    — Playwright (studio + network)
-Layer 4: Runtime Guards — ErrorBoundary (3 variants), AbortController, generationLockRef
+Layer 2: Unit   — Jest 212 suites (~1,400 tests), 22 component + 19 hooks + 137 lib suites
+Layer 3: E2E    — Playwright 3 specs (navigation, studio, code-studio)
+Layer 4: Audit  — 16-area Project Audit Engine, 4,400+ checks, 95/100 (S)
+Layer 5: Runtime Guards — ErrorBoundary (3 variants), AbortController, generationLockRef
 ```
 
 Coverage thresholds: branches 50%, functions/lines/statements 60%.
+
+## Project Audit (95/100 S)
+
+16개 영역, 4개 카테고리 자동 감사:
+
+| 카테고리 | 점수 | 영역 |
+|----------|------|------|
+| Code Health | A | operations, complexity, architecture, dependencies |
+| Quality | S | testing, error-handling, feature-completeness, documentation |
+| User Experience | S | design-system, accessibility, ux-quality, i18n |
+| Infra & Security | S | security, performance, api-health, env-config |
 
 ## NOA Rules
 

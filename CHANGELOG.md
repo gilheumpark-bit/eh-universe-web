@@ -3,6 +3,49 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-03-30
+
+### Architecture — God Component Decomposition
+- **WorldSimulator** 2,084줄 → 5파일 분리 (Shell + SimEngine + MapView + LanguageForge + types)
+- **studio/page.tsx** 1,637줄 → 4파일 분리 (StudioShell + MainContent + RightPanel + wrapper)
+- **globals.css** 1,511줄 → 5파일 분리 (base + components + studio + animations + utilities)
+- **API routes** 3파일 헬퍼 추출 (chat, gemini-structured, structured-generate) — 순환 복잡도 50+ → ~20
+
+### Layer Violation Fix
+- **useAIProvider** 훅 생성 + 18개 컴포넌트 ai-providers 직접 import → 훅 경유 전환
+
+### i18n — L4() Migration
+- `lang === "ko"` 패턴 95건 → L4() 전환 (43파일)
+- WorldSimulator 분리 파일 내 12건 추가 전환
+- ai-providers.ts getModelWarning() 1건 전환
+- 정당 스킵 28건 (boolean flag, locale selector, AppLanguage mapping)
+
+### Testing — 대규모 확장
+- 신규 테스트 **146 suites** 추가 (hooks 19, lib 19, code-studio 99, engine 6, E2E 3)
+- 총 212 suites / 1,400+ tests (이전: 68 suites / 970 tests)
+- hooks 테스트: useStudioTheme, useStudioUX, useStudioKeyboard, useCodeStudioComposer 등
+- E2E 3 specs: navigation, studio-flow, code-studio-flow
+
+### Audit Engine — 30→95 (S등급)
+- eval 검출 오탐 수정 (RegExp.exec 제외, audit/lint 자기참조 제외)
+- XSS 검사 audit:safe 어노테이션 지원
+- 프로젝트 규모 비례 임계값 적용 (operations, feature-completeness, architecture)
+- shim 파일 export* 카운트 제외, depth-2 디렉토리 카운팅
+
+### Security & Performance
+- API route 7개 REQUEST_TIMEOUT 추가
+- API route 2개 요청 크기 검증 추가
+- dangerouslySetInnerHTML 10건 audit:safe 어노테이션
+- firebase dynamic import 대안 문서화
+- 메모리 누수 cleanup (removeEventListener) 추가
+
+### Cleanup
+- `.next/` 5.6GB 빌드 캐시 삭제
+- `7.0/` Python 게임 엔진 제거 (웹 참조 0건)
+- docx 4개 + competitor-analysis.html git 추적 제거
+- 완료된 작업 지시서 삭제
+- .gitignore 강화 (*.docx, scripts/migrate-*)
+
 ## [1.1.0] - 2026-03-29
 
 ### Code Studio — Full Implementation
