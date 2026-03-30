@@ -68,5 +68,11 @@ Desktop.ini
 # Competitor analysis (generated artifact)
 competitor-analysis.html
 
+# Binary documents (not suited for git)
+*.docx
+
+# One-off scripts (completed migrations)
+scripts/migrate-*.mjs
+
 # Claude Code
 .claude/worktrees/

@@ -251,7 +251,10 @@
       "Bash(! grep:*)",
       "Bash(then echo:*)",
       "Bash(fi)",
-      "Bash(while read:*)"
+      "Bash(while read:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Directory | ForEach-Object { $size = \\(Get-ChildItem $_FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum; [PSCustomObject]@{Name=$_Name; SizeMB=[math]::Round\\($size/1MB,1\\)} } | Sort-Object SizeMB -Descending | Format-Table -AutoSize\")",
+      "Bash(ls -ld --block-size=G */ .next/ .git/)",
+      "Bash(node -e \"const fs=require\\(''fs''\\),path=require\\(''path''\\);function ds\\(d\\){let s=0;try{for\\(const e of fs.readdirSync\\(d,{withFileTypes:true}\\)\\){const p=path.join\\(d,e.name\\);if\\(e.isDirectory\\(\\)\\)s+=ds\\(p\\);else try{s+=fs.statSync\\(p\\).size}catch{}}}catch{}return s}for\\(const d of [''node_modules'',''.next'',''src'',''.git'',''7.0'',''public'',''coverage'',''playwright-report'']\\){const s=ds\\(d\\);if\\(s>0\\)console.log\\(\\(s/1024/1024\\).toFixed\\(0\\)+''MB'',d\\)}\")"
     ]
   }
 }
