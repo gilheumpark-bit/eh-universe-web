@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLang, L2 } from "@/lib/LangContext";
-import { createT } from "@/lib/i18n";
+import { createT, L4 } from "@/lib/i18n";
 import { ArchiveReportsTabs } from "@/app/reports/ReportsClient";
 
 const categories = [
@@ -229,7 +229,7 @@ export default function ArchiveClient() {
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder={lang === "ko" ? "🔍 문서 검색..." : lang === "jp" ? "🔍 文書検索..." : lang === "cn" ? "🔍 搜索文档..." : "🔍 Search..."}
+            placeholder={L4(lang, { ko: "🔍 문서 검색...", en: "🔍 Search...", jp: "🔍 文書検索...", cn: "🔍 搜索文档..." })}
             className="w-full mb-3 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)]"
           />
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
@@ -289,7 +289,7 @@ export default function ArchiveClient() {
                 {searchResults ? (
                   <>
                     <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase mb-2">
-                      🔍 {searchResults.length} {lang === "ko" ? "건 검색됨" : lang === "jp" ? "件の結果" : lang === "cn" ? "条结果" : "results"} — &quot;{searchQuery}&quot;
+                      🔍 {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", jp: "件の結果", cn: "条结果" })} — &quot;{searchQuery}&quot;
                     </p>
                     {searchResults.map((article) => (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
@@ -302,7 +302,7 @@ export default function ArchiveClient() {
                       </Link>
                     ))}
                     {searchResults.length === 0 && (
-                      <p className="text-center text-text-tertiary text-sm py-8">{lang === "ko" ? "검색 결과가 없습니다." : lang === "jp" ? "検索結果がありません。" : lang === "cn" ? "未找到搜索结果。" : "No results found."}</p>
+                      <p className="text-center text-text-tertiary text-sm py-8">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", jp: "検索結果がありません。", cn: "未找到搜索结果。" })}</p>
                     )}
                   </>
                 ) : null}

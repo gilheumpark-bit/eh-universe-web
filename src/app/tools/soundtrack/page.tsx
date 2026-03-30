@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useLang, L2 } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import ToolNav from "@/components/tools/ToolNav";
 
 /* ─── TRACK DATA ─── */
@@ -108,8 +109,7 @@ const TRACKS: Track[] = [
 export default function SoundtrackPage() {
   const { lang } = useLang();
   const en = lang !== "ko";
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
-    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
   const [playing, setPlaying] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [durations, setDurations] = useState<Record<string, number>>({});

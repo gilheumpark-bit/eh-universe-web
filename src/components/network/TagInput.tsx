@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 - PROPS AND AUTOCOMPLETE LOGIC
@@ -84,7 +85,7 @@ export function TagInput({
               type="button"
               onClick={() => removeTag(index)}
               className="ml-0.5 text-accent-amber/60 transition hover:text-accent-amber"
-              aria-label={lang === "ko" ? `${tag} 태그 제거` : `Remove tag ${tag}`}
+              aria-label={L4(lang, { ko: `${tag} 태그 제거`, en: `Remove tag ${tag}` })}
             >
               x
             </button>
@@ -97,7 +98,7 @@ export function TagInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder={placeholder ?? (lang === "ko" ? "태그 입력 후 Enter" : "Type tag, press Enter")}
+            placeholder={placeholder ?? L4(lang, { ko: "태그 입력 후 Enter", en: "Type tag, press Enter" })}
             className="min-w-[120px] flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
           />
         )}
@@ -121,7 +122,7 @@ export function TagInput({
 
       {tags.length >= maxTags && (
         <p className="mt-1 text-[11px] text-text-tertiary">
-          {lang === "ko" ? `최대 ${maxTags}개까지 가능합니다.` : `Maximum ${maxTags} tags allowed.`}
+          {L4(lang, { ko: `최대 ${maxTags}개까지 가능합니다.`, en: `Maximum ${maxTags} tags allowed.` })}
         </p>
       )}
     </div>

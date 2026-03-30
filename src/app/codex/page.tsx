@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
@@ -20,8 +21,7 @@ type TabId = typeof TABS[number]["id"];
 
 export default function CodexPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
-    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
   const [tab, setTab] = useState<TabId>("rulebook");
 
   return (
@@ -53,7 +53,7 @@ export default function CodexPage() {
                       : "border-transparent text-text-tertiary hover:text-text-secondary"
                   }`}
                 >
-                  {lang === "ko" ? t.ko : lang === "jp" ? t.jp : lang === "cn" ? t.cn : t.en}
+                  {L4(lang, t)}
                 </button>
               );
             })}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { addBookmark, isBookmarked, removeBookmark } from "@/lib/network-firestore";
 
 // ============================================================
@@ -58,7 +59,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       await signInWithGoogle();
       // After login completes, user state updates asynchronously.
       // Show a hint so the user knows to tap again.
-      const hint = lang === "ko" ? "로그인 완료! 다시 눌러주세요" : "Logged in! Tap again to bookmark";
+      const hint = L4(lang, { ko: "로그인 완료! 다시 눌러주세요", en: "Logged in! Tap again to bookmark" });
       setLoginHint(hint);
       clearTimeout(loginHintTimer.current);
       loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);

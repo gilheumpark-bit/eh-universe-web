@@ -284,14 +284,10 @@ export function NetworkHomeClient() {
                 {L4(lang, { ko: "기록하라. 관리하라. 정산하라.", en: "Narrate. Manage. Finalize." })}
               </p>
               <h1 className="site-title mt-3 text-4xl font-semibold md:text-5xl">
-                {lang === "ko"
-                  ? "행성을 만들고, 첫 로그를 남기고, 정산으로 세계를 쌓아가세요."
-                  : "Register planets, publish first logs, and grow a world through settlement records."}
+                {L4(lang, { ko: "행성을 만들고, 첫 로그를 남기고, 정산으로 세계를 쌓아가세요.", en: "Register planets, publish first logs, and grow a world through settlement records." })}
               </h1>
               <p className="site-lede mt-4 max-w-2xl text-sm md:text-base">
-                {lang === "ko"
-                  ? "EH Network는 행성 등록소, 관측 로그, 정산 결과를 한 흐름으로 묶는 세계관 게시판입니다."
-                  : "EH Network links planet registry, observation logs, and settlement outcomes into one narrative board."}
+                {L4(lang, { ko: "EH Network는 행성 등록소, 관측 로그, 정산 결과를 한 흐름으로 묶는 세계관 게시판입니다.", en: "EH Network links planet registry, observation logs, and settlement outcomes into one narrative board." })}
               </p>
             </div>
 
@@ -404,7 +400,7 @@ export function NetworkHomeClient() {
                     : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
                 }`}
               >
-                {lang === "ko" ? (showBookmarksOnly ? "전체 보기" : "북마크만") : (showBookmarksOnly ? "Show All" : "Bookmarked")}
+                {showBookmarksOnly ? L4(lang, { ko: "전체 보기", en: "Show All" }) : L4(lang, { ko: "북마크만", en: "Bookmarked" })}
               </button>
             ) : null}
           </div>

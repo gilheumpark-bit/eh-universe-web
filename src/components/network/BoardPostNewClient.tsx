@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { TagInput } from "@/components/network/TagInput";
 import {
   createBoardPost,
@@ -119,7 +120,7 @@ export function BoardPostNewClient() {
 
       router.push(`/network/posts/${post.id}`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : lang === "ko" ? "저장에 실패했습니다." : "Failed to save.");
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "저장에 실패했습니다.", en: "Failed to save." }));
     } finally {
       setSubmitting(false);
     }
@@ -199,7 +200,7 @@ export function BoardPostNewClient() {
               </div>
               {showPreview ? (
                 <div className="min-h-[240px] rounded-3xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-text-secondary whitespace-pre-line">
-                  {content || (lang === "ko" ? "(내용 없음)" : "(empty)")}
+                  {content || L4(lang, { ko: "(내용 없음)", en: "(empty)" })}
                 </div>
               ) : (
                 <textarea

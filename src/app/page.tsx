@@ -147,7 +147,7 @@ export default function Home() {
   }, [showSplash]);
 
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
-    lang === "ko" ? v.ko : (lang === "jp" && v.jp) ? v.jp : (lang === "cn" && v.cn) ? v.cn : v.en;
+    L4(lang, v as unknown as { ko: string; en: string; jp?: string; cn?: string }) as unknown as V;
 
   const universeStats = [
     { value: "173", label: T({ ko: "문서 + 보고서", en: "Docs + reports", jp: "文書+報告書", cn: "文档+报告" }) },

@@ -24,12 +24,12 @@ import type { PlanetRecord, PostRecord, UserRecord } from "@/lib/network-types";
 function relativeTime(isoDate: string, lang: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return lang === "ko" ? "방금 전" : "Just now";
-  if (minutes < 60) return lang === "ko" ? `${minutes}분 전` : `${minutes}m ago`;
+  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now" });
+  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago` });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return lang === "ko" ? `${hours}시간 전` : `${hours}h ago`;
+  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago` });
   const days = Math.floor(hours / 24);
-  if (days < 30) return lang === "ko" ? `${days}일 전` : `${days}d ago`;
+  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago` });
   return new Date(isoDate).toLocaleDateString(lang === "ko" ? "ko-KR" : "en-US");
 }
 
@@ -62,7 +62,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
 
         const postRecord = await getPostById(postId);
         if (!postRecord) {
-          throw new Error(lang === "ko" ? "게시글을 찾을 수 없습니다." : "Post not found.");
+          throw new Error(L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found." }));
         }
 
         const [authorRecord, planetRecord] = await Promise.all([
@@ -77,7 +77,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : lang === "ko" ? "불러오기에 실패했습니다." : "Failed to load.");
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load." }));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -109,7 +109,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
             &larr; NETWORK
           </Link>
           <section className="premium-panel p-8 text-center">
-            <p className="text-sm text-accent-red">{error ?? (lang === "ko" ? "게시글을 찾을 수 없습니다." : "Post not found.")}</p>
+            <p className="text-sm text-accent-red">{error ?? L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found." })}</p>
           </section>
         </div>
       </main>
@@ -177,9 +177,9 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
 
           {/* Metrics bar */}
           <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-white/8 pt-5 text-xs text-text-tertiary">
-            <span>{lang === "ko" ? `조회 ${post.metrics.viewCount}` : `${post.metrics.viewCount} views`}</span>
-            <span>{lang === "ko" ? `댓글 ${post.metrics.commentCount}` : `${post.metrics.commentCount} comments`}</span>
-            <span>{lang === "ko" ? `반응 ${post.metrics.reactionCount}` : `${post.metrics.reactionCount} reactions`}</span>
+            <span>{L4(lang, { ko: `조회 ${post.metrics.viewCount}`, en: `${post.metrics.viewCount} views` })}</span>
+            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments` })}</span>
+            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions` })}</span>
             <button
               type="button"
               onClick={() => {
@@ -196,7 +196,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
               }}
               className="ml-auto rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
             >
-              {lang === "ko" ? "Studio에서 열기" : "Open in Studio"}
+              {L4(lang, { ko: "Studio에서 열기", en: "Open in Studio" })}
             </button>
           </div>
         </article>

@@ -567,8 +567,8 @@ function CodeStudioShellInner() {
     const node = files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.id === id);
     const name = node?.name ?? id;
     setConfirmState({
-      title: lang === "ko" ? "파일 삭제" : "Delete File",
-      message: lang === "ko" ? `"${name}"을(를) 삭제하시겠습니까? 되돌릴 수 없습니다.` : `Delete "${name}"? This cannot be undone.`,
+      title: L4(lang, { ko: "파일 삭제", en: "Delete File" }),
+      message: L4(lang, { ko: `"${name}"을(를) 삭제하시겠습니까? 되돌릴 수 없습니다.`, en: `Delete "${name}"? This cannot be undone.` }),
       onConfirm: () => {
         fsDeleteNode(id);
         setOpenFiles((prev) => prev.filter((f) => f.id !== id));
@@ -619,7 +619,7 @@ function CodeStudioShellInner() {
         const firstFile = tree.flatMap(function findFiles(n: FileNode): FileNode[] { return n.type === "file" ? [n] : (n.children ?? []).flatMap(findFiles); })[0];
         if (firstFile) { setOpenFiles([{ id: firstFile.id, name: firstFile.name, content: firstFile.content ?? "", language: detectLanguage(firstFile.name) }]); setActiveFileId(firstFile.id); }
         setHasEverOpened(true);
-        toast(lang === "ko" ? "프로젝트 복원됨" : "Project resumed", "success");
+        toast(L4(lang, { ko: "프로젝트 복원됨", en: "Project resumed" }), "success");
       } else { handleOpenDemo(); }
     } catch { handleOpenDemo(); }
   }, [handleOpenDemo, toast, lang]);
@@ -916,17 +916,17 @@ function CodeStudioShellInner() {
               if (PANEL_REGISTRY.some((p) => p.id === panelId)) { setRightPanel((v) => v === panelId ? null : panelId as RightPanel); }
             }}
             commands={[
-              { id: "new-file", label: lang === "ko" ? "새 파일" : "New File", shortcut: "Ctrl+N", category: "File" },
-              { id: "toggle-terminal", label: lang === "ko" ? "콘솔 토글" : "Toggle Console", shortcut: "Ctrl+`", category: "View" },
+              { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File" }), shortcut: "Ctrl+N", category: "File" },
+              { id: "toggle-terminal", label: L4(lang, { ko: "콘솔 토글", en: "Toggle Console" }), shortcut: "Ctrl+`", category: "View" },
               ...Object.entries(
                 PANEL_REGISTRY.reduce<Record<string, readonly PanelDef[]>>((acc, p) => { const g = p.group; return { ...acc, [g]: [...(acc[g] ?? []), p] }; }, {})
               ).flatMap(([group, panels]) =>
                 panels.map((p) => ({ id: `toggle-${p.id}`, label: `${getPanelLabel(p, lang)}${p.status === 'stub' ? ' (Preview)' : p.status === 'beta' ? ' (Beta)' : ''}`, shortcut: p.shortcut, category: getGroupLabel(group as PanelGroup, lang) }))
               ),
-              { id: "quick-open", label: lang === "ko" ? "빠른 파일 열기" : "Quick Open File", shortcut: "Ctrl+P", category: "File" },
-              { id: "toggle-settings", label: lang === "ko" ? "인라인 설정 토글" : "Toggle Inline Settings", category: "View" },
-              { id: "run-stress-test", label: lang === "ko" ? "스트레스 테스트 실행" : "Run Stress Test (AI-Predicted)", category: "Tools" },
-              { id: "run-verification", label: lang === "ko" ? "통합 검증 실행" : "Run Full Verification (Pipeline + Bugs + Stress)", category: "Tools" },
+              { id: "quick-open", label: L4(lang, { ko: "빠른 파일 열기", en: "Quick Open File" }), shortcut: "Ctrl+P", category: "File" },
+              { id: "toggle-settings", label: L4(lang, { ko: "인라인 설정 토글", en: "Toggle Inline Settings" }), category: "View" },
+              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (AI-Predicted)" }), category: "Tools" },
+              { id: "run-verification", label: L4(lang, { ko: "통합 검증 실행", en: "Run Full Verification (Pipeline + Bugs + Stress)" }), category: "Tools" },
             ]}
           />
         )}

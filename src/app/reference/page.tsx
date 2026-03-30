@@ -2,12 +2,12 @@
 
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 export default function ReferencePage() {
   const { lang } = useLang();
   const en = lang !== "ko";
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
-    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
 
   return (
     <>

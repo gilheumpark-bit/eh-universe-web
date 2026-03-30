@@ -55,7 +55,7 @@ export function NetworkLogNewClient() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : lang === "ko" ? "행성 목록을 불러오지 못했습니다." : "Failed to load planets.");
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "행성 목록을 불러오지 못했습니다.", en: "Failed to load planets." }));
         }
       } finally {
         if (!cancelled) {
@@ -111,7 +111,7 @@ export function NetworkLogNewClient() {
 
       router.push(`/network/planets/${post.planetId}`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : lang === "ko" ? "로그 저장에 실패했습니다." : "Failed to save the log.");
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "로그 저장에 실패했습니다.", en: "Failed to save the log." }));
     } finally {
       setSubmitting(false);
     }
@@ -122,13 +122,13 @@ export function NetworkLogNewClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{lang === "ko" ? "로그인 필요" : "Authentication Required"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {lang === "ko" ? "관측 로그를 쓰려면 로그인하세요." : "Sign in to publish a log."}
+              {L4(lang, { ko: "관측 로그를 쓰려면 로그인하세요.", en: "Sign in to publish a log." })}
             </h1>
             <div className="mt-8 flex justify-center">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
-                {lang === "ko" ? "Google 로그인" : "Sign In with Google"}
+                {L4(lang, { ko: "Google 로그인", en: "Sign In with Google" })}
               </button>
             </div>
           </section>
@@ -143,7 +143,7 @@ export function NetworkLogNewClient() {
         <div className="site-shell py-10">
           <section className="premium-panel p-8 flex flex-col items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-            <p className="text-sm text-text-tertiary">{lang === "ko" ? "행성 목록을 불러오는 중..." : "Loading planets..."}</p>
+            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "행성 목록을 불러오는 중...", en: "Loading planets..." })}</p>
           </section>
         </div>
       </main>
@@ -155,13 +155,13 @@ export function NetworkLogNewClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{lang === "ko" ? "먼저 행성을 등록하세요" : "Create a Planet First"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "먼저 행성을 등록하세요", en: "Create a Planet First" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {lang === "ko" ? "로그는 소속 행성이 있어야 쌓입니다." : "Logs need a planet anchor before they can be published."}
+              {L4(lang, { ko: "로그는 소속 행성이 있어야 쌓입니다.", en: "Logs need a planet anchor before they can be published." })}
             </h1>
             <div className="mt-8 flex justify-center">
               <Link href="/network/new" className="premium-button">
-                {lang === "ko" ? "신규 행성 만들기" : "Create New Planet"}
+                {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet" })}
               </Link>
             </div>
           </section>
@@ -178,13 +178,13 @@ export function NetworkLogNewClient() {
         </Link>
         <section className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="site-kicker">{lang === "ko" ? "관측 로그 작성" : "Write Observation Log"}</div>
+            <div className="site-kicker">{L4(lang, { ko: "관측 로그 작성", en: "Write Observation Log" })}</div>
             <h1 className="site-title mt-2 text-3xl font-semibold">
-              {lang === "ko" ? "이야기부터 떠오른 사람을 위한 빠른 작성 화면" : "A fast composer for writers who start from the scene first."}
+              {L4(lang, { ko: "이야기부터 떠오른 사람을 위한 빠른 작성 화면", en: "A fast composer for writers who start from the scene first." })}
             </h1>
           </div>
           <Link href="/network/new" className="premium-button secondary">
-            {lang === "ko" ? "신규 행성 만들기" : "Create New Planet"}
+            {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet" })}
           </Link>
         </section>
 
@@ -197,7 +197,7 @@ export function NetworkLogNewClient() {
           planetOptions={planetOptions}
           showPlanetSelect
           submitting={submitting}
-          submitLabel={lang === "ko" ? "관측 로그 저장" : "Publish Log"}
+          submitLabel={L4(lang, { ko: "관측 로그 저장", en: "Publish Log" })}
           onChange={setValue}
           onInsertTemplate={handleInsertTemplate}
           onSubmit={() => void handleSubmit()}

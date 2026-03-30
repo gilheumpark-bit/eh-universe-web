@@ -1,6 +1,7 @@
 "use client";
 
 import type { Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 - TAG FILTER CHIPS
@@ -22,7 +23,7 @@ export function TagFilter({ availableTags, selectedTags, onToggle, onClear, lang
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
-        {lang === "ko" ? "태그" : "Tags"}
+        {L4(lang, { ko: "태그", en: "Tags" })}
       </span>
       {availableTags.slice(0, 20).map((tag) => {
         const active = selectedSet.has(tag);
@@ -47,7 +48,7 @@ export function TagFilter({ availableTags, selectedTags, onToggle, onClear, lang
           onClick={onClear}
           className="rounded-full border border-white/8 bg-white/[0.02] px-3 py-1 text-xs text-text-tertiary transition hover:border-accent-red/20 hover:text-accent-red"
         >
-          {lang === "ko" ? "초기화" : "Clear"}
+          {L4(lang, { ko: "초기화", en: "Clear" })}
         </button>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import { useLang, L2A } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { useState, useEffect } from "react";
 
 // ============================================================
@@ -292,8 +293,7 @@ const sectionMap = { ko: sectionsKo, en: sectionsEn };
 
 export default function DocsPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) =>
-    lang === "ko" ? v.ko : lang === "jp" && v.jp ? v.jp : lang === "cn" && v.cn ? v.cn : v.en;
+  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
   const secs = L2A(sectionMap, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import {
   addComment,
   deleteComment,
@@ -81,7 +82,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       const records = await listCommentsForPost(postId);
       setComments(records);
     } catch {
-      setError(lang === "ko" ? "댓글을 불러오지 못했습니다." : "Failed to load comments.");
+      setError(L4(lang, { ko: "댓글을 불러오지 못했습니다.", en: "Failed to load comments." }));
     } finally {
       setLoading(false);
     }
@@ -126,12 +127,12 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
 
       setComments((prev) => [record, ...prev]);
       setDraft("");
-      setSuccessMsg(lang === "ko" ? "댓글이 등록되었습니다" : "Comment posted");
+      setSuccessMsg(L4(lang, { ko: "댓글이 등록되었습니다", en: "Comment posted" }));
       setTimeout(() => setSuccessMsg(null), 2500);
       // scroll to bottom after state update
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
-      setError(lang === "ko" ? "등록에 실패했습니다." : "Failed to post comment.");
+      setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post comment." }));
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +155,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         setEditingId(null);
         setEditDraft("");
       } catch {
-        setError(lang === "ko" ? "수정에 실패했습니다." : "Failed to update.");
+        setError(L4(lang, { ko: "수정에 실패했습니다.", en: "Failed to update." }));
       } finally {
         setSubmitting(false);
       }
@@ -169,7 +170,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         await deleteComment(comment.id, comment.postId, user!.uid);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       } catch {
-        setError(lang === "ko" ? "삭제에 실패했습니다." : "Failed to delete comment.");
+        setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment." }));
       }
     },
     [lang],
@@ -221,7 +222,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
             onClick={() => void signInWithGoogle()}
             className="rounded-lg bg-accent-purple/20 px-3 py-1.5 text-xs font-medium text-accent-purple transition hover:bg-accent-purple/30"
           >
-            Google {lang === "ko" ? "로그인" : "Sign In"}
+            {L4(lang, { ko: "Google 로그인", en: "Google Sign In" })}
           </button>
         </div>
       )}
@@ -244,7 +245,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
                   {new Date(comment.createdAt).toLocaleString(lang === "ko" ? "ko-KR" : "en-US")}
                 </span>
                 {comment.updatedAt && comment.updatedAt !== comment.createdAt ? (
-                  <span className="text-xs text-text-tertiary">({lang === "ko" ? "수정됨" : "edited"})</span>
+                  <span className="text-xs text-text-tertiary">({L4(lang, { ko: "수정됨", en: "edited" })})</span>
                 ) : null}
               </div>
 

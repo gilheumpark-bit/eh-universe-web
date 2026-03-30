@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { submitReport } from "@/lib/network-firestore";
 import { REPORT_REASONS, type ReportReason } from "@/lib/network-types";
 
@@ -69,9 +70,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
     } catch (caught) {
       const msg = caught instanceof Error ? caught.message : '';
       if (msg.includes('Duplicate report') || msg.includes('already reported')) {
-        setSubmitError(lang === "ko" ? "이미 동일한 신고가 접수되어 있습니다." : "You have already reported this item.");
+        setSubmitError(L4(lang, { ko: "이미 동일한 신고가 접수되어 있습니다.", en: "You have already reported this item." }));
       } else {
-        setSubmitError(lang === "ko" ? "신고 제출에 실패했습니다." : "Failed to submit report.");
+        setSubmitError(L4(lang, { ko: "신고 제출에 실패했습니다.", en: "Failed to submit report." }));
       }
     } finally {
       setSubmitting(false);
@@ -86,7 +87,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
           onClick={() => {
             if (!user) {
               void signInWithGoogle().then(() => {
-                const hint = lang === "ko" ? "로그인 후 다시 신고 버튼을 눌러주세요" : "Please tap report again after login";
+                const hint = L4(lang, { ko: "로그인 후 다시 신고 버튼을 눌러주세요", en: "Please tap report again after login" });
                 setLoginHint(hint);
                 clearTimeout(loginHintTimer.current);
                 loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);

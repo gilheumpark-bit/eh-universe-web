@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { getReactions, toggleReaction } from "@/lib/network-firestore";
 import { REACTION_EMOJI, REACTION_TYPES, type ReactionRecord, type ReactionType } from "@/lib/network-types";
 
@@ -81,7 +82,7 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
           return prev.filter((r) => !(r.userId === user.uid && r.reactionType === type));
         });
       } catch {
-        setError(lang === "ko" ? "반응 처리에 실패했습니다." : "Failed to toggle reaction.");
+        setError(L4(lang, { ko: "반응 처리에 실패했습니다.", en: "Failed to toggle reaction." }));
         setTimeout(() => setError(null), 4000);
       } finally {
         setToggling(null);

@@ -3,7 +3,7 @@ import { TRANSLATIONS } from './studio-translations';
 import type { Lang } from './LangContext';
 
 /** 4개 언어 인라인 번역 헬퍼 — JP/CN 없으면 KO로 fallback */
-export function L4(lang: AppLanguage | Lang, t: { ko: string; en: string; jp?: string; cn?: string }): string {
+export function L4(lang: AppLanguage | Lang | string, t: { ko: string; en: string; jp?: string; cn?: string }): string {
   const l = (typeof lang === 'string' ? lang.toUpperCase() : 'KO') as AppLanguage;
   if (l === 'EN') return t.en;
   if (l === 'JP') return t.jp || t.ko;

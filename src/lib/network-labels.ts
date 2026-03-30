@@ -1,3 +1,4 @@
+import { L4 } from "@/lib/i18n";
 import type {
   BoardType,
   Officiality,
@@ -368,10 +369,7 @@ Related Incident:
 // ============================================================
 
 export function pickNetworkLabel(pair: LabelPair, lang: Lang) {
-  if (lang === "ko") return pair.ko;
-  if (lang === "jp") return pair.jp || pair.ko;
-  if (lang === "cn") return pair.cn || pair.ko;
-  return pair.en;
+  return L4(lang, pair);
 }
 
 // IDENTITY_SEAL: PART-3 | role=label helper | inputs=label pair and language | outputs=resolved string

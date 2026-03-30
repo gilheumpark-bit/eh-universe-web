@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useLang, type Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import Link from "next/link";
 import type { StoryConfig, Character } from "@/lib/studio-types";
 
@@ -443,13 +444,13 @@ export default function WorldSharePage() {
                 onClick={() => router.push("/")}
                 className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
               >
-                {lang === "ko" ? "홈으로" : lang === "jp" ? "ホームへ" : lang === "cn" ? "回到首页" : "Home"}
+                {L4(lang, { ko: "홈으로", en: "Home", jp: "ホームへ", cn: "回到首页" })}
               </button>
               <button
                 onClick={() => router.push("/studio")}
                 className="inline-block rounded-full border border-accent-purple/30 bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:bg-accent-purple/20 transition-colors cursor-pointer"
               >
-                {lang === "ko" ? "스튜디오로" : lang === "jp" ? "スタジオへ" : lang === "cn" ? "去工作室" : "Studio"}
+                {L4(lang, { ko: "스튜디오로", en: "Studio", jp: "スタジオへ", cn: "去工作室" })}
               </button>
             </div>
           </div>

@@ -694,23 +694,17 @@ function advanceObjectives(session: GameState, analysis: Analysis): void {
 function resolveGameStatus(session: GameState, analysis: Analysis, bucket: string, playerText: string, lang: Lang): void {
   if (bucket === "give_up") {
     session.gameStatus = "withdrew";
-    session.endingText = lang === "ko"
-      ? "탑은 당신을 붙잡지 않았습니다. 하지만 이 중단도 기록으로 남았습니다."
-      : "The tower did not hold you. But this interruption, too, remains as a record.";
+    session.endingText = L4(lang, { ko: "탑은 당신을 붙잡지 않았습니다. 하지만 이 중단도 기록으로 남았습니다.", en: "The tower did not hold you. But this interruption, too, remains as a record." });
     return;
   }
   if (session.distortion >= 1.1 || (bucket === "delusion_threshold" && session.distortion >= 0.84)) {
     session.gameStatus = "collapse";
-    session.endingText = lang === "ko"
-      ? "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사건을 다시 시작하면 다른 문장을 남길 수 있습니다."
-      : "The tower has grown hazy. Your conviction outran the structure and the records collapsed. If you restart the same case, you may leave a different statement.";
+    session.endingText = L4(lang, { ko: "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사건을 다시 시작하면 다른 문장을 남길 수 있습니다.", en: "The tower has grown hazy. Your conviction outran the structure and the records collapsed. If you restart the same case, you may leave a different statement." });
     return;
   }
   if (session.completedObjectives.every(Boolean) && playerText.includes(FINAL_VERDICT.slice(0, 18))) {
     session.gameStatus = "breakthrough";
-    session.endingText = lang === "ko"
-      ? "탑이 당신의 마지막 문장을 기록으로 승인했습니다. 삭제된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다."
-      : "The tower has approved your final statement as a record. The deleted floor is no longer a hidden space but evidence of erasure.";
+    session.endingText = L4(lang, { ko: "탑이 당신의 마지막 문장을 기록으로 승인했습니다. 삭제된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다.", en: "The tower has approved your final statement as a record. The deleted floor is no longer a hidden space but evidence of erasure." });
   }
 }
 
@@ -722,9 +716,7 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
   session.verdictAttemptCount += 1;
   const lowered = playerText.toLowerCase();
   if (!canSubmitVerdict(session)) {
-    const feedback = lang === "ko"
-      ? "탑은 아직 최종 기록을 받지 않습니다. 단서와 이론 조각을 더 모아야 합니다."
-      : "The tower does not yet accept a final record. You must gather more clues and theory fragments.";
+    const feedback = L4(lang, { ko: "탑은 아직 최종 기록을 받지 않습니다. 단서와 이론 조각을 더 모아야 합니다.", en: "The tower does not yet accept a final record. You must gather more clues and theory fragments." });
     session.lastVerdictFeedback = feedback;
     session.distortion = Math.min(session.distortion + 0.04, 2);
     return feedback;
@@ -734,12 +726,8 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
     .map(([key]) => key);
   if (missingConcepts.length === 0 && analysis.vectors.delusion < 0.62) {
     session.gameStatus = "breakthrough";
-    session.endingText = lang === "ko"
-      ? "탑이 당신의 문장을 최종 기록으로 승인했습니다. 정답을 말했기 때문이 아니라, 방향과 삭제 규칙을 동시에 묶어냈기 때문입니다."
-      : "The tower has approved your statement as the final record. Not because you gave the right answer, but because you bound direction and deletion rules together.";
-    const feedback = lang === "ko"
-      ? "탑이 문장을 접수했습니다. 기록이 닫히는 대신 한 층이 다시 드러납니다."
-      : "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more.";
+    session.endingText = L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 승인했습니다. 정답을 말했기 때문이 아니라, 방향과 삭제 규칙을 동시에 묶어냈기 때문입니다.", en: "The tower has approved your statement as the final record. Not because you gave the right answer, but because you bound direction and deletion rules together." });
+    const feedback = L4(lang, { ko: "탑이 문장을 접수했습니다. 기록이 닫히는 대신 한 층이 다시 드러납니다.", en: "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more." });
     session.lastVerdictFeedback = feedback;
     return feedback;
   }
@@ -751,15 +739,11 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
   };
   const missingText = missingConcepts.map((c) => L(conceptNames[c], lang)).join(", ") || (L4(lang, { ko: "검증된 균형", en: "verified balance" }));
   session.distortion = Math.min(session.distortion + 0.12, 2);
-  const feedback = lang === "ko"
-    ? `탑은 문장을 보류했습니다. 아직 ${missingText} 개념이 충분히 묶이지 않았습니다.`
-    : `The tower has deferred your statement. The concepts of ${missingText} are not yet sufficiently bound.`;
+  const feedback = L4(lang, { ko: `탑은 문장을 보류했습니다. 아직 ${missingText} 개념이 충분히 묶이지 않았습니다.`, en: `The tower has deferred your statement. The concepts of ${missingText} are not yet sufficiently bound.` });
   session.lastVerdictFeedback = feedback;
   if (session.distortion >= 1.1) {
     session.gameStatus = "collapse";
-    session.endingText = lang === "ko"
-      ? "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사건은 흐려진 채 닫혔습니다."
-      : "A hasty final record submission has collapsed the structure. The tower preserved the statement, but the case was closed in a haze.";
+    session.endingText = L4(lang, { ko: "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사건은 흐려진 채 닫혔습니다.", en: "A hasty final record submission has collapsed the structure. The tower preserved the statement, but the case was closed in a haze." });
   }
   return feedback;
 }

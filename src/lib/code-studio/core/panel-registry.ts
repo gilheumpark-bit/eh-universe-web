@@ -1,3 +1,5 @@
+import { L4 } from "@/lib/i18n";
+
 // ============================================================
 // PART 1 — Panel Definition Interface & Types
 // ============================================================
@@ -127,13 +129,13 @@ export const getPanelDef = (id: string): PanelDef | undefined =>
  * Falls back to English label when lang !== "ko".
  */
 export const getPanelLabel = (p: PanelDef, lang: string): string =>
-  lang === "ko" ? p.labelKo : p.label;
+  L4(lang, { ko: p.labelKo, en: p.label });
 
 /**
  * Get the localized label for a PanelGroup.
  */
 export const getGroupLabel = (group: PanelGroup, lang: string): string =>
-  lang === "ko" ? GROUP_LABELS[group].ko : GROUP_LABELS[group].en;
+  L4(lang, GROUP_LABELS[group]);
 
 /**
  * Get only essential panels (default view — reduces decision fatigue).

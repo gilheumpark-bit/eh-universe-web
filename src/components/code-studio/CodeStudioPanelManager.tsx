@@ -12,6 +12,7 @@ import {
   Upload, Bug, Play, Shield, List, Layout,
   Package, BarChart3, Users, Wand2,
 } from "lucide-react";
+import { L4 } from "@/lib/i18n";
 import type { FileNode, OpenFile } from "@/lib/code-studio-types";
 import type { RightPanel, PanelGroup, PanelDef } from "@/lib/code-studio-panel-registry";
 import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels } from "@/lib/code-studio-panel-registry";
@@ -132,7 +133,7 @@ function ActivityBar({
   return (
     <div className="w-12 shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1">
       {coreItems.map((item) => {
-        const displayLabel = lang === "ko" ? item.labelKo : item.label;
+        const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
         return (
           <button
             key={item.id}
@@ -158,7 +159,7 @@ function ActivityBar({
         .filter(p => !["chat","search","outline","preview","composer","pipeline","bugs","git"].includes(p.id))
         .map(p => {
           const Icon = LUCIDE_MAP[p.icon];
-          const lbl = lang === "ko" ? p.labelKo : p.label;
+          const lbl = L4(lang, { ko: p.labelKo, en: p.label });
           return (
             <button key={p.id} onClick={() => onSetRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
               className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"

@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { Code2, Play, FolderOpen, ChevronDown } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { listProjects } from "@/lib/code-studio-store";
 import type { AppLanguage } from "@/lib/studio-types";
@@ -118,8 +119,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           >
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
             {showExtras
-              ? (lang === "ko" ? "접기" : "Less")
-              : (lang === "ko" ? "더 보기" : "More options")}
+              ? L4(lang, { ko: "접기", en: "Less" })
+              : L4(lang, { ko: "더 보기", en: "More options" })}
           </button>
 
           {showExtras && (
