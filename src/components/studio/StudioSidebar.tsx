@@ -277,36 +277,43 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               PART 2 — NAV: mode toggle + tabs + episode jump
               ============================================================ */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            {/* Studio mode toggle */}
-            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary min-w-[80px]">
-                {hydrated
-                  ? (studioMode === 'guided'
-                      ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
-                      : (language === 'KO' ? '자유 모드' : 'Free Mode'))
-                  : (language === 'KO' ? '가이드 모드' : 'Guided Mode')}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = studioMode === 'guided' ? 'free' : 'guided';
-                  setStudioMode(next);
-                  localStorage.setItem('noa_studio_mode', next);
-                }}
-                className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                  hydrated && studioMode === 'free' ? 'bg-accent-purple' : 'bg-white/15'
-                }`}
-                style={{ width: 44, height: 24, minWidth: 44, minHeight: 24 }}
-                aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}
-              >
-                <span
-                  className={`pointer-events-none absolute top-[2px] rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    hydrated && studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
+            {/* Studio mode toggle - render skeleton until hydrated to prevent mismatch */}
+            {!hydrated ? (
+              <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary min-w-[80px]">
+                  {language === 'KO' ? '로딩...' : 'Loading...'}
+                </span>
+                <div className="w-[44px] h-[24px] rounded-full bg-white/15" />
+              </div>
+            ) : (
+              <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary min-w-[80px]">
+                  {studioMode === 'guided'
+                    ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
+                    : (language === 'KO' ? '자유 모드' : 'Free Mode')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = studioMode === 'guided' ? 'free' : 'guided';
+                    setStudioMode(next);
+                    localStorage.setItem('noa_studio_mode', next);
+                  }}
+                  className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                    studioMode === 'free' ? 'bg-accent-purple' : 'bg-white/15'
                   }`}
-                  style={{ width: 20, height: 20 }}
-                />
-              </button>
-            </div>
+                  style={{ width: 44, height: 24, minWidth: 44, minHeight: 24 }}
+                  aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}
+                >
+                  <span
+                    className={`pointer-events-none absolute top-[2px] rounded-full bg-white shadow-md transition-transform duration-200 ${
+                      studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                    }`}
+                    style={{ width: 20, height: 20 }}
+                  />
+                </button>
+              </div>
+            )}
 
             {/* Nav tabs - Premium styling */}
             <nav className="space-y-1.5" role="tablist" aria-label="Studio navigation">
@@ -475,7 +482,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                               },
                             });
                           }}
-                          className="text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 transition-colors"
+                          className="px-2 py-1 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 hover:bg-accent-red/10 active:animate-delete-warning transition-all duration-200"
                           title={language === 'KO' ? '선택 삭제' : 'Delete selected'}
                         >
                           {language === 'KO' ? '삭제' : 'Del'}

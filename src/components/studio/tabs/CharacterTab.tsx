@@ -63,17 +63,21 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
             </button>
           </div>
 
-          {/* Save Button — Premium Style */}
+          {/* Save Button — Premium Style with Micro-interactions */}
           <button 
             onClick={triggerSave} 
-            className={`group flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 ${
+            className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
               saveFlash 
-                ? 'bg-accent-green text-white shadow-[0_0_20px_rgba(47,155,131,0.3)]' 
-                : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5'
+                ? 'bg-accent-green text-white animate-save-bounce-glow' 
+                : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
             }`}
           >
-            <span className="text-base">{saveFlash ? '✓' : '💾'}</span>
-            {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+            <span className={`text-base transition-transform duration-200 ${saveFlash ? 'animate-icon-pop' : 'group-hover:scale-110'}`}>
+              {saveFlash ? '✓' : '💾'}
+            </span>
+            <span className={saveFlash ? 'animate-text-swap-in' : ''}>
+              {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+            </span>
           </button>
         </div>
       </div>

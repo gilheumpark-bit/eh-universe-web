@@ -64,8 +64,20 @@ const StyleTab: React.FC<StyleTabProps> = ({
       </div>
       )}
       <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-        <button onClick={triggerSave} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}>
-          💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+        <button 
+          onClick={triggerSave} 
+          className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all duration-300 ${
+            saveFlash 
+              ? 'bg-accent-green text-white animate-save-bounce-glow' 
+              : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
+          }`}
+        >
+          <span className={`transition-transform duration-200 ${saveFlash ? 'animate-icon-pop' : 'group-hover:scale-110'}`}>
+            {saveFlash ? '✓' : '💾'}
+          </span>
+          <span className={saveFlash ? 'animate-text-swap-in' : ''}>
+            {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+          </span>
         </button>
       </div>
     </>
