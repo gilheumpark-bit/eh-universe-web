@@ -5,12 +5,12 @@
    ============================================================ */
 
 /* ============================================================
-   Page Transition System — Smooth fade+slide on every route
+   Page Transition System — Fast, smooth fade+slide on every route
    ============================================================ */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -19,11 +19,45 @@
 }
 
 #main-content > * {
-  animation: page-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* View Transitions API for supported browsers */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out-slide;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in-slide;
+}
+
+@keyframes fade-out-slide {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes fade-in-slide {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Smooth scrolling globally */
 html {
+  scroll-behavior: smooth;
+}
+
+/* Instant scroll for programmatic navigation */
+html:focus-within {
   scroll-behavior: smooth;
 }
 
