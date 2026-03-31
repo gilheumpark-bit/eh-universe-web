@@ -5,7 +5,7 @@
 // ============================================================
 
 import { showAlert } from '@/lib/show-alert';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -127,6 +127,12 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const [lastClickedIdx, setLastClickedIdx] = useState<number | null>(null);
   const [batchMode, setBatchMode] = useState(false);
+  
+  // Track hydration to prevent mismatch for studioMode text
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const exportButtonClass =
     'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
@@ -272,11 +278,13 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               ============================================================ */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
             {/* Studio mode toggle */}
-            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2" suppressHydrationWarning>
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary" suppressHydrationWarning>
-                {studioMode === 'guided'
-                  ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
-                  : (language === 'KO' ? '자유 모드' : 'Free Mode')}
+            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary min-w-[80px]">
+                {hydrated
+                  ? (studioMode === 'guided'
+                      ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
+                      : (language === 'KO' ? '자유 모드' : 'Free Mode'))
+                  : (language === 'KO' ? '가이드 모드' : 'Guided Mode')}
               </span>
               <button
                 type="button"
@@ -286,18 +294,16 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   localStorage.setItem('noa_studio_mode', next);
                 }}
                 className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                  studioMode === 'free' ? 'bg-accent-purple' : 'bg-white/15'
+                  hydrated && studioMode === 'free' ? 'bg-accent-purple' : 'bg-white/15'
                 }`}
                 style={{ width: 44, height: 24, minWidth: 44, minHeight: 24 }}
                 aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}
-                suppressHydrationWarning
               >
                 <span
                   className={`pointer-events-none absolute top-[2px] rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                    hydrated && studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
                   }`}
                   style={{ width: 20, height: 20 }}
-                  suppressHydrationWarning
                 />
               </button>
             </div>

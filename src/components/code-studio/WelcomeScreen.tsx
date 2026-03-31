@@ -56,56 +56,71 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
   const primaryAccent = hasProjects ? "bg-accent-amber/10" : "bg-accent-purple/10";
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-      {/* Background */}
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-bg-primary">
+      {/* Premium Background Effects */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.07]" style={{ background: "radial-gradient(circle, #2f9b83 0%, transparent 70%)" }} />
-        <div className="absolute left-1/4 top-2/3 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" style={{ background: "radial-gradient(circle, #8d7bc3 0%, transparent 70%)" }} />
+        {/* Main glow */}
+        <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #2f9b83 0%, transparent 70%)" }} />
+        <div className="absolute left-1/4 top-2/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05]" style={{ background: "radial-gradient(circle, #8d7bc3 0%, transparent 70%)" }} />
+        <div className="absolute right-1/4 top-1/4 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" style={{ background: "radial-gradient(circle, #5c8fd6 0%, transparent 70%)" }} />
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
       </div>
 
       <div
-        className={`relative z-10 flex flex-col items-center gap-8 px-6 py-12 transition-all duration-700 ${
-          visible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+        className={`relative z-10 flex flex-col items-center gap-10 px-6 py-12 transition-all duration-700 ease-out ${
+          visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
         }`}
       >
-        {/* Title */}
+        {/* Title with Premium Typography */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
+          <div className="mb-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20">
+            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
+            <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase tracking-widest text-accent-green">
+              Code Studio
+            </span>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
             {t.title}
           </h1>
-          <p className="mt-3 font-[family-name:var(--font-mono)] text-sm text-text-tertiary">
+          <p className="mt-4 font-[family-name:var(--font-mono)] text-sm text-text-tertiary max-w-md leading-relaxed">
             {t.subtitle}
           </p>
         </div>
 
-        {/* 2 Main CTAs */}
-        <div className="flex flex-col items-center gap-4">
+        {/* 2 Main CTAs — Premium Card Style */}
+        <div className="flex flex-col items-center gap-5 w-full max-w-md">
           {/* Primary CTA */}
           <button
             onClick={primaryAction}
-            className="group relative flex w-full max-w-md items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-8 py-5 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-white/[0.15] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+            className="group relative flex w-full items-center gap-5 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-8 py-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/[0.15] hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
           >
-            <div className={`rounded-xl border border-white/[0.08] p-3 ${primaryAccent}`}>
+            <div className={`rounded-2xl border border-white/[0.08] p-4 ${primaryAccent} group-hover:scale-110 transition-transform duration-300`}>
               {primaryIcon}
             </div>
-            <div className="text-left">
-              <div className="font-[family-name:var(--font-mono)] text-base font-semibold text-text-primary">
+            <div className="text-left flex-1">
+              <div className="font-[family-name:var(--font-mono)] text-lg font-bold text-text-primary">
                 {primaryLabel}
               </div>
-              <div className="mt-0.5 font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary">
+              <div className="mt-1 font-[family-name:var(--font-mono)] text-xs text-text-tertiary">
                 {primaryDesc}
               </div>
             </div>
+            <span className="text-text-tertiary group-hover:text-accent-green group-hover:translate-x-1 transition-all duration-300">
+              &rarr;
+            </span>
           </button>
 
           {/* Secondary CTA */}
           <button
             onClick={onNewFile}
-            className="group flex w-full max-w-xs items-center justify-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] px-6 py-3.5 backdrop-blur-md transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
           >
-            <Code2 className="h-5 w-5 text-accent-green" />
+            <div className="p-2 rounded-xl bg-accent-green/10 group-hover:bg-accent-green/20 transition-colors">
+              <Code2 className="h-5 w-5 text-accent-green" />
+            </div>
             <div className="text-left">
-              <div className="font-[family-name:var(--font-mono)] text-sm font-semibold text-text-primary">{t.newFile}</div>
+              <div className="font-[family-name:var(--font-mono)] text-sm font-bold text-text-primary">{t.newFile}</div>
               <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">{t.newFileDesc}</div>
             </div>
           </button>

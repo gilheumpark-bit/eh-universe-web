@@ -35,10 +35,28 @@ const iconMap: Record<ToastType, typeof CheckCircle> = {
   info: Info,
 };
 
-const colorMap: Record<ToastType, { icon: string; border: string; progress: string }> = {
-  success: { icon: "text-accent-green", border: "border-accent-green/20", progress: "bg-accent-green" },
-  error: { icon: "text-accent-red", border: "border-accent-red/20", progress: "bg-accent-red" },
-  info: { icon: "text-accent-blue", border: "border-accent-blue/20", progress: "bg-accent-blue" },
+const colorMap: Record<ToastType, { icon: string; border: string; progress: string; bg: string; glow: string }> = {
+  success: { 
+    icon: "text-accent-green", 
+    border: "border-accent-green/30", 
+    progress: "bg-accent-green",
+    bg: "from-accent-green/20 to-accent-green/5",
+    glow: "shadow-[0_0_20px_rgba(47,155,131,0.15)]"
+  },
+  error: { 
+    icon: "text-accent-red", 
+    border: "border-accent-red/30", 
+    progress: "bg-accent-red",
+    bg: "from-accent-red/20 to-accent-red/5",
+    glow: "shadow-[0_0_20px_rgba(244,63,94,0.15)]"
+  },
+  info: { 
+    icon: "text-accent-blue", 
+    border: "border-accent-blue/30", 
+    progress: "bg-accent-blue",
+    bg: "from-accent-blue/20 to-accent-blue/5",
+    glow: "shadow-[0_0_20px_rgba(92,143,214,0.15)]"
+  },
 };
 
 function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: string) => void }) {
@@ -83,23 +101,25 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: strin
 
   return (
     <div
-      className={`relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white/[0.04] px-4 py-3 backdrop-blur-lg transition-all duration-300 ${colors.border} ${
+      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-r ${colors.bg} backdrop-blur-xl px-4 py-3.5 transition-all duration-300 ${colors.border} ${colors.glow} ${
         entering ? "translate-x-full opacity-0" : exiting ? "translate-x-full opacity-0" : "translate-x-0 opacity-100"
       }`}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${colors.icon}`} />
-      <span className="flex-1 font-[family-name:var(--font-mono)] text-[12px] text-text-primary">{item.message}</span>
+      <div className={`p-1.5 rounded-lg ${colors.bg}`}>
+        <Icon className={`h-4 w-4 shrink-0 ${colors.icon}`} />
+      </div>
+      <span className="flex-1 font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-primary">{item.message}</span>
       <button
         onClick={handleManualDismiss}
-        className="shrink-0 rounded p-0.5 text-text-tertiary transition-colors hover:text-text-primary active:scale-95"
+        className="shrink-0 p-1 rounded-lg text-text-tertiary transition-colors hover:text-text-primary hover:bg-white/5 active:scale-95"
       >
-        <X className="h-3 w-3" />
+        <X className="h-3.5 w-3.5" />
       </button>
       {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white/[0.06]">
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.06] rounded-b-2xl overflow-hidden">
         <div
           className={`h-full transition-none ${colors.progress}`}
-          style={{ width: `${progress}%`, opacity: 0.6 }}
+          style={{ width: `${progress}%`, opacity: 0.7 }}
         />
       </div>
     </div>
