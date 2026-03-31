@@ -1,6 +1,7 @@
 "use client";
 
-import { Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Globe, Cloud, AlertTriangle, CheckCircle, Info, X, RefreshCw, Download } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { ErrorToast } from './UXHelpers';
@@ -32,6 +33,120 @@ interface StudioToastsProps {
   setUxError: (v: { error: unknown; retry?: () => void } | null) => void;
 }
 
+// Premium Toast Card Component
+function ToastCard({ 
+  children, 
+  variant = 'info',
+  onClose,
+  progress,
+}: { 
+  children: React.ReactNode; 
+  variant?: 'info' | 'success' | 'warning' | 'error';
+  onClose?: () => void;
+  progress?: number;
+}) {
+  const variants = {
+    info: {
+      bg: 'from-accent-blue/20 to-accent-blue/5',
+      border: 'border-accent-blue/30',
+      icon: 'text-accent-blue',
+      close: 'text-accent-blue/60 hover:text-accent-blue',
+      progress: 'bg-accent-blue',
+    },
+    success: {
+      bg: 'from-accent-green/20 to-accent-green/5',
+      border: 'border-accent-green/30',
+      icon: 'text-accent-green',
+      close: 'text-accent-green/60 hover:text-accent-green',
+      progress: 'bg-accent-green',
+    },
+    warning: {
+      bg: 'from-accent-amber/20 to-accent-amber/5',
+      border: 'border-accent-amber/30',
+      icon: 'text-accent-amber',
+      close: 'text-accent-amber/60 hover:text-accent-amber',
+      progress: 'bg-accent-amber',
+    },
+    error: {
+      bg: 'from-accent-red/20 to-accent-red/5',
+      border: 'border-accent-red/30',
+      icon: 'text-accent-red',
+      close: 'text-accent-red/60 hover:text-accent-red',
+      progress: 'bg-accent-red',
+    },
+  };
+  const v = variants[variant];
+
+  return (
+    <div className={`
+      relative overflow-hidden rounded-2xl border ${v.border}
+      bg-gradient-to-r ${v.bg} backdrop-blur-xl
+      shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.05)]
+      animate-in slide-in-from-top-2 fade-in duration-300
+    `}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        {children}
+        {onClose && (
+          <button 
+            onClick={onClose} 
+            className={`shrink-0 p-1 rounded-lg transition-colors ${v.close}`}
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      {progress !== undefined && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
+          <div 
+            className={`h-full ${v.progress} transition-all duration-100`} 
+            style={{ width: `${progress}%`, opacity: 0.6 }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Auto-dismiss wrapper
+function AutoDismissToast({ 
+  children, 
+  duration = 4000,
+  onDismiss,
+  variant,
+}: { 
+  children: React.ReactNode;
+  duration?: number;
+  onDismiss: () => void;
+  variant?: 'info' | 'success' | 'warning' | 'error';
+}) {
+  const [progress, setProgress] = useState(100);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+      setProgress(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setVisible(false);
+        setTimeout(onDismiss, 300);
+      }
+    }, 30);
+    return () => clearInterval(interval);
+  }, [duration, onDismiss]);
+
+  if (!visible) return null;
+
+  return (
+    <ToastCard variant={variant} onClose={onDismiss} progress={progress}>
+      {children}
+    </ToastCard>
+  );
+}
+
 export default function StudioToasts({
   language, isKO,
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
@@ -44,58 +159,74 @@ export default function StudioToasts({
   const t = createT(language);
 
   return (
-    <>
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 w-full max-w-md px-4">
+      {/* Sync Reminder */}
       {showSyncReminder && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-lg">
-          <span className="text-sm">
-            {user
-              ? `${t('syncReminder.lastSyncPrefix')}${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString(language === 'KO' ? 'ko-KR' : language === 'JP' ? 'ja-JP' : language === 'CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : t('syncReminder.never')}${t('syncReminder.lastSyncSuffix')}`
-              : t('syncReminder.browserOnly')}
-          </span>
-          {user ? (
-            <button onClick={() => { setShowSyncReminder(false); handleSync(); }}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors">
-              {t('syncReminder.sync')}
-            </button>
-          ) : (
-            <button onClick={() => { setShowSyncReminder(false); signInWithGoogle(); }}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-md shrink-0 transition-colors">
-              {t('syncReminder.signIn')}
-            </button>
-          )}
-          <button onClick={() => setShowSyncReminder(false)} className="text-blue-400 hover:text-blue-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
-        </div>
+        <ToastCard variant="info" onClose={() => setShowSyncReminder(false)}>
+          <Cloud className="w-5 h-5 text-accent-blue shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-text-primary truncate">
+              {user
+                ? `${t('syncReminder.lastSyncPrefix')}${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString(language === 'KO' ? 'ko-KR' : language === 'JP' ? 'ja-JP' : language === 'CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : t('syncReminder.never')}${t('syncReminder.lastSyncSuffix')}`
+                : t('syncReminder.browserOnly')}
+            </p>
+          </div>
+          <button 
+            onClick={() => { setShowSyncReminder(false); user ? handleSync() : signInWithGoogle(); }}
+            className="shrink-0 px-3 py-1.5 bg-accent-blue/20 hover:bg-accent-blue/30 border border-accent-blue/30 text-accent-blue text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3 h-3" />
+            {user ? t('syncReminder.sync') : t('syncReminder.signIn')}
+          </button>
+        </ToastCard>
       )}
 
+      {/* Storage Full Warning */}
       {storageFull && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-900/95 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
-          <span className="text-sm">{t('ui.storageFull')}</span>
-          <button onClick={exportAllJSON} className="px-2 py-1 bg-yellow-600 text-white rounded text-xs font-bold shrink-0 hover:bg-yellow-500">{isKO ? '백업' : 'Backup'}</button>
-          <button onClick={() => setStorageFull(false)} className="text-yellow-400 hover:text-yellow-200 shrink-0" aria-label={t('ui.close')}>&times;</button>
-        </div>
+        <ToastCard variant="warning" onClose={() => setStorageFull(false)}>
+          <AlertTriangle className="w-5 h-5 text-accent-amber shrink-0" />
+          <p className="flex-1 text-sm font-medium text-text-primary">{t('ui.storageFull')}</p>
+          <button 
+            onClick={exportAllJSON}
+            className="shrink-0 px-3 py-1.5 bg-accent-amber/20 hover:bg-accent-amber/30 border border-accent-amber/30 text-accent-amber text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <Download className="w-3 h-3" />
+            {isKO ? '백업' : 'Backup'}
+          </button>
+        </ToastCard>
       )}
 
+      {/* Fallback Notice */}
       {fallbackNotice && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-blue-900/95 border border-blue-600 text-blue-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
-          <span className="text-sm">{isKO ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}</span>
-          <button onClick={() => setFallbackNotice(null)} className="text-blue-400 hover:text-blue-200 shrink-0">&times;</button>
-        </div>
+        <AutoDismissToast variant="info" duration={5000} onDismiss={() => setFallbackNotice(null)}>
+          <Info className="w-5 h-5 text-accent-blue shrink-0" />
+          <p className="flex-1 text-sm font-medium text-text-primary">
+            {isKO ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}
+          </p>
+        </AutoDismissToast>
       )}
 
+      {/* Export Complete */}
       {exportDoneFormat && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-green-900/95 border border-green-600 text-green-100 px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-bottom-4 duration-300">
-          <span className="text-sm">✅ {exportDoneFormat} {isKO ? '내보내기 완료' : 'export complete'}</span>
-        </div>
+        <AutoDismissToast variant="success" duration={3000} onDismiss={() => {}}>
+          <CheckCircle className="w-5 h-5 text-accent-green shrink-0" />
+          <p className="flex-1 text-sm font-medium text-text-primary">
+            {exportDoneFormat} {isKO ? '내보내기 완료' : 'export complete'}
+          </p>
+        </AutoDismissToast>
       )}
 
+      {/* World Import Banner */}
       {worldImportBanner && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-emerald-900/95 border border-emerald-600 text-emerald-100 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md animate-in fade-in slide-in-from-top-2 duration-300">
-          <Globe className="w-4 h-4 shrink-0" />
-          <span className="text-sm">{isKO ? 'Network에서 세계관을 불러왔습니다' : 'World imported from Network'}</span>
-          <button onClick={() => setWorldImportBanner(false)} className="text-emerald-400 hover:text-emerald-200 shrink-0" aria-label="close">&times;</button>
-        </div>
+        <AutoDismissToast variant="success" duration={4000} onDismiss={() => setWorldImportBanner(false)}>
+          <Globe className="w-5 h-5 text-accent-green shrink-0" />
+          <p className="flex-1 text-sm font-medium text-text-primary">
+            {isKO ? 'Network에서 세계관을 불러왔습니다' : 'World imported from Network'}
+          </p>
+        </AutoDismissToast>
       )}
 
+      {/* Error Toast */}
       {uxError && (
         <ErrorToast
           error={uxError.error}
@@ -104,6 +235,6 @@ export default function StudioToasts({
           onRetry={uxError.retry ? () => { setUxError(null); uxError.retry?.(); } : undefined}
         />
       )}
-    </>
+    </div>
   );
 }

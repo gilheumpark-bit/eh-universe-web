@@ -92,11 +92,23 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   if (!mounted) {
     return (
       <nav 
-        className="fixed bottom-0 inset-x-0 z-50 md:hidden h-[68px] bg-bg-primary/90" 
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden" 
         role="tablist" 
         aria-label="Studio navigation"
         suppressHydrationWarning
-      />
+      >
+        <div
+          className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
+          {primaryTabs.map(({ key }) => (
+            <div key={key} className="flex flex-col items-center gap-1 py-1.5 px-3 min-w-[56px]">
+              <div className="w-6 h-6 rounded bg-bg-secondary/50 animate-pulse" />
+              <div className="w-8 h-2 rounded bg-bg-secondary/50 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </nav>
     );
   }
 
@@ -105,7 +117,6 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
       className="fixed bottom-0 inset-x-0 z-50 md:hidden" 
       role="tablist" 
       aria-label="Studio navigation"
-      suppressHydrationWarning
     >
       {/* More panel — horizontally scrollable overlay */}
       {!isGuided && moreOpen && (
