@@ -258,9 +258,8 @@ export default function Header() {
       {/* Mobile menu */}
       <div
         aria-hidden={!menuOpen}
-        inert={!menuOpen ? true : undefined}
         className={`site-shell md:hidden transition-all duration-200 ease-out overflow-hidden ${
-          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <nav className="premium-panel-soft mt-3 overflow-hidden rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">

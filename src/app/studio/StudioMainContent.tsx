@@ -280,47 +280,64 @@ export default function StudioMainContent(props: StudioMainContentProps) {
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
             <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-            {/* Premium Brightness Control */}
-            <div className="relative group">
+            {/* Premium Theme Switcher - Dial Style */}
+            <div className="relative">
               <button 
                 onClick={toggleTheme} 
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-bg-secondary/60 hover:bg-bg-secondary border border-white/[0.06] hover:border-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
-                title={isKO ? ['Dark','Dim','Light','Max'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
+                className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_4px_12px_rgba(0,0,0,0.3)]"
+                title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
                 aria-label={t('ui.toggleThemeLabel')}
               >
-                {/* Icon with glow effect */}
-                <span className={`relative transition-all duration-300 ${themeLevel >= 2 ? 'text-accent-amber' : 'text-text-tertiary'}`}>
+                {/* Rotating dial indicator */}
+                <div 
+                  className="absolute inset-1 rounded-full border border-white/5"
+                  style={{
+                    background: `conic-gradient(from ${90 + themeLevel * 90}deg, transparent 0deg, ${
+                      themeLevel === 0 ? 'rgba(141,123,195,0.4)' : 
+                      themeLevel === 1 ? 'rgba(92,143,214,0.4)' : 
+                      themeLevel === 2 ? 'rgba(202,161,92,0.4)' : 
+                      'rgba(202,161,92,0.6)'
+                    } 90deg, transparent 90deg)`
+                  }}
+                />
+                
+                {/* Center icon */}
+                <span className={`relative z-10 transition-all duration-300 ${
+                  themeLevel === 0 ? 'text-accent-purple' : 
+                  themeLevel === 1 ? 'text-accent-blue' : 
+                  themeLevel === 2 ? 'text-accent-amber' : 
+                  'text-accent-amber drop-shadow-[0_0_8px_rgba(202,161,92,0.8)]'
+                }`}>
                   {themeLevel === 0 ? (
                     <Moon className="w-4 h-4" />
                   ) : (
-                    <Sun className={`w-4 h-4 transition-all duration-300 ${themeLevel === 1 ? 'opacity-50' : themeLevel === 2 ? 'opacity-80' : 'opacity-100 drop-shadow-[0_0_6px_rgba(202,161,92,0.6)]'}`} />
+                    <Sun className={`w-4 h-4 transition-transform duration-300 ${themeLevel === 3 ? 'scale-110' : ''}`} />
                   )}
                 </span>
                 
-                {/* Brightness level indicator bar */}
-                <div className="hidden md:flex items-center gap-0.5">
-                  {[0, 1, 2, 3].map((level) => (
-                    <div
-                      key={level}
-                      className={`w-1.5 rounded-full transition-all duration-200 ${
-                        level <= themeLevel 
-                          ? level === 0 
-                            ? 'h-2 bg-accent-purple/80' 
-                            : level === 1 
-                              ? 'h-2.5 bg-accent-blue/70' 
-                              : level === 2 
-                                ? 'h-3 bg-accent-amber/80' 
-                                : 'h-3.5 bg-accent-amber shadow-[0_0_8px_rgba(202,161,92,0.5)]'
-                          : 'h-2 bg-white/10'
-                      }`}
-                    />
-                  ))}
-                </div>
+                {/* Notch indicators around the dial */}
+                {[0, 1, 2, 3].map((level) => (
+                  <span
+                    key={level}
+                    className={`absolute w-1 h-1 rounded-full transition-all duration-200 ${
+                      level <= themeLevel 
+                        ? level === 0 ? 'bg-accent-purple' : level === 1 ? 'bg-accent-blue' : 'bg-accent-amber'
+                        : 'bg-white/20'
+                    }`}
+                    style={{
+                      top: level === 0 ? '2px' : level === 3 ? '2px' : '50%',
+                      left: level === 1 ? '2px' : level === 2 ? 'auto' : '50%',
+                      right: level === 2 ? '2px' : 'auto',
+                      bottom: level === 3 ? 'auto' : 'auto',
+                      transform: level === 0 || level === 3 ? 'translateX(-50%)' : level === 1 || level === 2 ? 'translateY(-50%)' : 'none',
+                    }}
+                  />
+                ))}
                 
-                {/* Label */}
-                <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary group-hover:text-text-secondary transition-colors hidden lg:inline">
-                  {isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]}
-                </span>
+                {/* Pulse effect on max brightness */}
+                {themeLevel === 3 && (
+                  <span className="absolute inset-0 rounded-full bg-accent-amber/20 animate-ping" style={{ animationDuration: '2s' }} />
+                )}
               </button>
             </div>
             <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
