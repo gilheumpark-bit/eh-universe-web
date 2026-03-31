@@ -22,24 +22,14 @@ import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritin
 import type { VersionedBackup } from '@/lib/indexeddb-backup';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
-import CharacterTab from '@/components/studio/tabs/CharacterTab';
-import SettingsView from '@/components/studio/SettingsView';
 import EngineDashboard from '@/components/studio/EngineDashboard';
-import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import WorldTab from '@/components/studio/tabs/WorldTab';
-import StyleTab from '@/components/studio/tabs/StyleTab';
-import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
 import { ShortcutsModal } from '@/components/studio/StudioModals';
+import StudioTabRouter from '@/components/studio/StudioTabRouter';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
-const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
-const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
-const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
-const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
-const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HostedAiAvailability = Record<string, boolean>;
@@ -371,136 +361,35 @@ export default function StudioMainContent(props: StudioMainContentProps) {
               </div>
             </div>
           ) : (
-            <>
-              {activeTab === 'world' && currentSession && (
-                <SectionErrorBoundary sectionName="World">
-                <WorldTab
-                  language={language} config={currentSession.config} setConfig={setConfig}
-                  onStart={() => setActiveTab('writing')} onSave={triggerSave} saveFlash={saveFlash}
-                  updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId}
-                  hostedProviders={hostedProviders}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'characters' && currentSession && (
-                <SectionErrorBoundary sectionName="Characters">
-                <CharacterTab
-                  language={language} config={currentSession.config} setConfig={setConfig}
-                  charSubTab={charSubTab} setCharSubTab={setCharSubTab}
-                  triggerSave={triggerSave} saveFlash={saveFlash}
-                  setUxError={setUxError} showAiLock={showAiLock} hostedProviders={hostedProviders}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'settings' && (
-                <SectionErrorBoundary sectionName="Settings">
-                <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'rulebook' && currentSession && (
-                <SectionErrorBoundary sectionName="Rulebook">
-                <RulebookTab
-                  language={language}
-                  config={currentSession.config}
-                  updateCurrentSession={updateCurrentSession}
-                  triggerSave={triggerSave}
-                  saveFlash={saveFlash}
-                  currentSessionId={currentSessionId}
-                  showAiLock={showAiLock}
-                  hostedProviders={hostedProviders}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'writing' && currentSession && (
-                <SectionErrorBoundary sectionName="Writing" fallbackHeight={400}>
-                <WritingTabInline
-                  language={language} currentSession={currentSession} currentSessionId={currentSessionId}
-                  updateCurrentSession={updateCurrentSession} setConfig={setConfig}
-                  writingMode={writingMode as 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'} setWritingMode={setWritingMode}
-                  editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
-                  canvasContent={canvasContent} setCanvasContent={setCanvasContent}
-                  canvasPass={canvasPass} setCanvasPass={setCanvasPass}
-                  promptDirective={promptDirective} setPromptDirective={setPromptDirective}
-                  isGenerating={isGenerating} lastReport={lastReport}
-                  handleSend={doHandleSend} handleCancel={handleCancel}
-                  handleRegenerate={handleRegenerate} handleVersionSwitch={handleVersionSwitch}
-                  handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef}
-                  searchQuery={searchQuery} filteredMessages={filteredMessages}
-                  hasApiKey={hasAiAccess} setShowApiKeyModal={setShowApiKeyModal}
-                  setActiveTab={setActiveTab}
-                  advancedSettings={advancedSettings} setAdvancedSettings={setAdvancedSettings}
-                  advancedOutputMode={advancedSettings.outputMode} setAdvancedOutputMode={(m: string) => setAdvancedSettings({ ...advancedSettings, outputMode: m as typeof advancedSettings.outputMode })}
-                  showDashboard={showDashboard}
-                  rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
-                  directorReport={directorReport} hfcpState={hfcpState}
-                  handleNextEpisode={handleNextEpisode}
-                  showAiLock={showAiLock} hostedProviders={hostedProviders}
-                  saveFlash={saveFlash} triggerSave={triggerSave}
-                  writingColumnShell={writingColumnShell}
-                  input={input} setInput={setInput}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'style' && currentSession && (
-                <SectionErrorBoundary sectionName="Style">
-                <StyleTab
-                  language={language} config={currentSession.config}
-                  updateCurrentSession={updateCurrentSession}
-                  triggerSave={triggerSave} saveFlash={saveFlash}
-                  showAiLock={showAiLock} hostedProviders={hostedProviders}
-                  messages={currentSession.messages}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'manuscript' && currentSession && (
-                <SectionErrorBoundary sectionName="Manuscript">
-                <ManuscriptTab
-                  language={language} config={currentSession.config} setConfig={setConfig}
-                  messages={currentSession.messages}
-                  onEditInStudio={(content) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'history' && (
-                <SectionErrorBoundary sectionName="History">
-                <HistoryTab
-                  language={language}
-                  archiveScope={archiveScope}
-                  setArchiveScope={setArchiveScope}
-                  archiveFilter={archiveFilter}
-                  setArchiveFilter={setArchiveFilter}
-                  projects={projects}
-                  sessions={sessions}
-                  currentProject={currentProject}
-                  currentProjectId={currentProjectId}
-                  setCurrentProjectId={setCurrentProjectId}
-                  currentSessionId={currentSessionId}
-                  setCurrentSessionId={setCurrentSessionId}
-                  setActiveTab={setActiveTab}
-                  startRename={startRename}
-                  renamingSessionId={renamingSessionId}
-                  setRenamingSessionId={setRenamingSessionId}
-                  renameValue={renameValue}
-                  setRenameValue={setRenameValue}
-                  confirmRename={confirmRename}
-                  moveSessionToProject={moveSessionToProject}
-                  handlePrint={handlePrint}
-                  deleteSession={deleteSession}
-                  currentSession={currentSession}
-                />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'docs' && (
-                <SectionErrorBoundary sectionName="Docs">
-                <StudioDocsView lang={language} />
-                </SectionErrorBoundary>
-              )}
-              {activeTab === 'visual' && currentSession && (
-                <SectionErrorBoundary sectionName="Visual">
-                <VisualTab config={currentSession.config} setConfig={setConfig} currentSession={currentSession} language={language} />
-                </SectionErrorBoundary>
-              )}
-            </>
+              <StudioTabRouter
+                activeTab={activeTab} language={language} currentSession={currentSession}
+                currentSessionId={currentSessionId} config={currentSession?.config || null}
+                setConfig={setConfig} updateCurrentSession={updateCurrentSession}
+                triggerSave={triggerSave} saveFlash={saveFlash} hostedProviders={hostedProviders}
+                showAiLock={showAiLock} setActiveTab={setActiveTab} charSubTab={charSubTab}
+                setCharSubTab={setCharSubTab} setUxError={setUxError} clearAllSessions={clearAllSessions}
+                setShowApiKeyModal={setShowApiKeyModal} versionedBackups={versionedBackups}
+                doRestoreVersionedBackup={doRestoreVersionedBackup} refreshBackupList={refreshBackupList}
+                writingMode={writingMode} setWritingMode={setWritingMode} editDraft={editDraft}
+                setEditDraft={setEditDraft} editDraftRef={editDraftRef} canvasContent={canvasContent}
+                setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
+                promptDirective={promptDirective} setPromptDirective={setPromptDirective}
+                isGenerating={isGenerating} lastReport={lastReport} doHandleSend={doHandleSend}
+                handleCancel={handleCancel} handleRegenerate={handleRegenerate} handleVersionSwitch={handleVersionSwitch}
+                handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef} searchQuery={searchQuery}
+                filteredMessages={filteredMessages} hasAiAccess={hasAiAccess} advancedSettings={advancedSettings}
+                setAdvancedSettings={setAdvancedSettings} showDashboard={showDashboard}
+                rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
+                directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
+                writingColumnShell={writingColumnShell} input={input} setInput={setInput}
+                archiveScope={archiveScope} setArchiveScope={setArchiveScope} archiveFilter={archiveFilter}
+                setArchiveFilter={setArchiveFilter} projects={projects} sessions={sessions}
+                currentProject={currentProject} currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
+                setCurrentSessionId={setCurrentSessionId} startRename={startRename}
+                renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}
+                renameValue={renameValue} setRenameValue={setRenameValue} confirmRename={confirmRename}
+                moveSessionToProject={moveSessionToProject} handlePrint={handlePrint} deleteSession={deleteSession}
+              />
           )}
         </div>
 

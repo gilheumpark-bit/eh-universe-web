@@ -18,6 +18,7 @@ import { stripEngineArtifacts } from '@/engine/pipeline';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
+import { executePipeline, getDefaultPipelineConfig, type PipelineExecution } from '@/engine/auto-pipeline';
 import type { ProactiveSuggestion } from '@/lib/studio-types';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
@@ -39,6 +40,7 @@ interface UseStudioAIParams {
   // 3.8 자율 시스템 콜백
   onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
   onQualityGateRetry?: (attempt: number, maxRetries: number) => void;
+  onPipelineUpdate?: (result: PipelineExecution) => void;
 }
 
 // ============================================================
@@ -65,6 +67,7 @@ export function useStudioAI({
   advancedOutputMode,
   onSuggestionsUpdate,
   onQualityGateRetry,
+  onPipelineUpdate,
 }: UseStudioAIParams) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
@@ -124,6 +127,38 @@ export function useStudioAI({
     if (!currentSession) { clearTimeout(timeoutId); generationLockRef.current = false; setIsGenerating(false); return; }
     const capturedConfig = currentSession.config;
 
+    // --- AUTO PIPELINE EXECUTION ---
+    const writerProfile = loadProfile('default');
+    const pipelineConfig = getDefaultPipelineConfig(writerProfile.skillLevel);
+    
+    // UI feedback for pipeline running
+    onPipelineUpdate?.({ id: 'running', stages: [], totalDuration: 0, finalStatus: 'running' } as any);
+
+    const pipelineResultExecution = executePipeline(
+      { config: capturedConfig, currentEpisode: capturedConfig.episode ?? 1 },
+      pipelineConfig
+    );
+    
+    onPipelineUpdate?.(pipelineResultExecution);
+
+    if (pipelineResultExecution.finalStatus === 'failed') {
+      generationLockRef.current = false;
+      setIsGenerating(false);
+      clearTimeout(timeoutId);
+      const blockedMsg: Message = {
+        id: `sys-${Date.now()}`, role: 'assistant', 
+        content: language === 'KO' 
+          ? `[시스템 통보] 파이프라인 검증 실패로 인해 AI 생성이 차단되었습니다. (${pipelineResultExecution.blockedAt} 완료 필요)` 
+          : `[SYSTEM] AI generation blocked due to pipeline verification failure. (${pipelineResultExecution.blockedAt} required)`, 
+        timestamp: Date.now() 
+      };
+      updateCurrentSession({
+        messages: [...updatedMessages.slice(0, -1), blockedMsg], // Replace empty assistant message
+      });
+      return;
+    }
+    // --------------------------------
+
     let fullContent = '';
     try {
       // Inject genreSelections from worldSimData into simulatorRef for AI prompt
@@ -135,7 +170,6 @@ export function useStudioAI({
         },
       };
       // 3.8 — Writer Profile 힌트를 프롬프트에 주입
-      const writerProfile = loadProfile('default');
       const profileHint = buildProfileHint(writerProfile, language === 'KO');
       const basePrompt = directivePrefix + outputModePrefix + hfcpPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
       

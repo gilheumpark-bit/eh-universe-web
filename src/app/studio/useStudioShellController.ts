@@ -71,11 +71,10 @@ export function useStudioShellController(
 ): StudioControllerState {
   const config = currentSession?.config;
 
-  // -- WorldSim readiness --
   const worldSimConnected = useMemo(() => {
     if (!config?.worldSimData) return false;
     const ws = config.worldSimData;
-    return (ws.civs && ws.civs.length > 0) || (ws.genreSelections && ws.genreSelections.length > 0);
+    return !!((ws.civs && ws.civs.length > 0) || (ws.genreSelections && ws.genreSelections.length > 0));
   }, [config?.worldSimData]);
 
   const worldSimCivCount = config?.worldSimData?.civs?.length ?? 0;

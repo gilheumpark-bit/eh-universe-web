@@ -25,24 +25,22 @@ import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
 import { useStudioTheme } from '@/hooks/useStudioTheme';
 import { useStudioSession } from '@/hooks/useStudioSession';
+import { useStudioImport } from '@/hooks/useStudioImport';
+import { useStudioQuickStart } from '@/hooks/useStudioQuickStart';
+import { useStudioSessionActions } from '@/hooks/useStudioSessionActions';
 import { StudioConfigProvider, StudioUIProvider } from '@/contexts/StudioContext';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { setDriveEncryptionKey } from '@/services/driveService';
-import { ConfirmModal, useUnsavedWarning } from '@/components/studio/UXHelpers';
-import StudioToasts from '@/components/studio/StudioToasts';
-import { MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
-import ApiKeyModal from '@/components/studio/ApiKeyModal';
+import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioMainContent from './StudioMainContent';
 import { StudioSaveSlotPanel, StudioWritingAssistantPanel } from './StudioRightPanel';
 import { useStudioShellController } from './useStudioShellController';
-
-const DynSkeleton = () => <LoadingSkeleton height={120} />;
-const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
+import StudioOverlayManager from '@/components/studio/StudioOverlayManager';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -57,8 +55,6 @@ export default function StudioShell() {
   const searchParams = useSearchParams();
   const studioRouter = useRouter();
   const pathname = usePathname();
-  const [worldImportBanner, setWorldImportBanner] = useState(false);
-  const [worldImportDone, setWorldImportDone] = useState<string | null>(null);
   const [language, setLanguage] = useState<AppLanguage>(() => {
     const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
     return map[lang] || 'KO';
@@ -121,8 +117,6 @@ export default function StudioShell() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
-  const [showQuickStartModal, setShowQuickStartModal] = useState(false);
-  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -247,106 +241,16 @@ export default function StudioShell() {
   // ============================================================
   // PART 3 — Import Effects & Quick Start
   // ============================================================
-  useEffect(() => {
-    if (!hydrated) return;
-    const raw = searchParams.get('worldImport');
-    if (!raw) return;
-    if (worldImportDone === raw) {
-      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
-      return;
-    }
-    try {
-      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
-      const genreGuess = (json.tags as string[] | undefined)?.find((tag: string) =>
-        Object.values(Genre).map(g => g.toLowerCase()).includes(tag.toLowerCase())
-      );
-      const importedConfig: Partial<StoryConfig> = {
-        title: json.name ?? '',
-        synopsis: json.summary ?? '',
-        corePremise: (json.coreRules as string[] | undefined)?.join('\n') ?? '',
-      };
-      if (genreGuess) {
-        const matched = Object.values(Genre).find(g => g.toLowerCase() === genreGuess.toLowerCase());
-        if (matched) importedConfig.genre = matched;
-      }
-      const importedSessionId = doCreateNewSession();
-      setProjects(prevProjects => prevProjects.map(project => {
-        if (!project.sessions.some(session => session.id === importedSessionId)) return project;
-        return {
-          ...project,
-          lastUpdate: Date.now(),
-          sessions: project.sessions.map(session =>
-            session.id === importedSessionId
-              ? { ...session, config: { ...session.config, ...importedConfig }, lastUpdate: Date.now() }
-              : session,
-          ),
-        };
-      }));
-      setActiveTab('world');
-      setWorldImportBanner(true);
-      setWorldImportDone(raw);
-      setTimeout(() => setWorldImportBanner(false), 5000);
-      studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
-    } catch {
-      setAlertToast({ message: language === 'KO' ? '\uC138\uACC4\uAD00 \uB370\uC774\uD130\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB9C1\uD06C\uAC00 \uC190\uC0C1\uB410\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
-      studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (searchParams.get('worldImport')) return;
-    const raw = searchParams.get('postImport');
-    if (!raw) return;
-    try {
-      const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
-      const importedConfig: Partial<StoryConfig> = {
-        title: json.title ?? '',
-        synopsis: json.content?.slice(0, 500) ?? '',
-      };
-      if (json.planetName) importedConfig.setting = json.planetName;
-      const importedSessionId = doCreateNewSession();
-      setProjects(prevProjects => prevProjects.map(project => {
-        if (!project.sessions.some(session => session.id === importedSessionId)) return project;
-        return {
-          ...project,
-          lastUpdate: Date.now(),
-          sessions: project.sessions.map(session =>
-            session.id === importedSessionId
-              ? {
-                  ...session,
-                  config: { ...session.config, ...importedConfig },
-                  messages: [
-                    ...session.messages,
-                    { id: `import-${Date.now()}`, role: 'assistant' as const, content: json.content ?? '', timestamp: Date.now() },
-                  ],
-                  lastUpdate: Date.now(),
-                }
-              : session,
-          ),
-        };
-      }));
-      setActiveTab('writing');
-      setWorldImportBanner(true);
-      setTimeout(() => setWorldImportBanner(false), 5000);
-      studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
-    } catch {
-      setAlertToast({ message: language === 'KO' ? '\uAC8C\uC2DC\uAE00 \uB370\uC774\uD130\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.' : 'Failed to import post data.', variant: 'error' });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (searchParams.get('setup') !== '1') return;
-    if (typeof window !== 'undefined' && !localStorage.getItem('noa_onboarding_done')) {
-      localStorage.setItem('noa_onboarding_done', '1');
-    }
-    setShowApiKeyModal(true);
-    studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
+  const { worldImportBanner, setWorldImportBanner } = useStudioImport({
+    hydrated,
+    language,
+    activeTab,
+    setActiveTab,
+    doCreateNewSession,
+    setProjects,
+    setAlertToast,
+    setShowApiKeyModal,
+  });
 
   useEffect(() => {
     if (!aiCapabilitiesLoaded) return;
@@ -398,16 +302,7 @@ export default function StudioShell() {
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
   const [saveSlotName, setSaveSlotName] = useState('');
 
-  const prevFocusRef = useRef<Element | null>(null);
-  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
-  useEffect(() => {
-    if (anyModalOpen) {
-      prevFocusRef.current = document.activeElement;
-    } else if (prevFocusRef.current && prevFocusRef.current instanceof HTMLElement) {
-      prevFocusRef.current.focus();
-      prevFocusRef.current = null;
-    }
-  }, [anyModalOpen]);
+
 
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
@@ -429,77 +324,29 @@ export default function StudioShell() {
     showConfirm, closeConfirm,
   });
 
-  const [pendingQuickStartPrompt, setPendingQuickStartPrompt] = useState<string | null>(null);
+  const { isGenerating, lastReport, directorReport, handleCancel, handleSend: doHandleSend, handleRegenerate } = useStudioAI({
+    currentSession, currentSessionId, setSessions, updateCurrentSession,
+    hfcpState, promptDirective, language, canvasPass,
+    setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
+    advancedOutputMode: advancedSettings.outputMode,
+    onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
+    onPipelineUpdate: setPipelineResult as any,
+  });
 
-  const handleQuickStart = async (genre: Genre, userPrompt: string) => {
-    if (showQuickStartLock) { setShowApiKeyModal(true); return; }
-    setIsQuickGenerating(true);
-    try {
-      const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
-      const qsConfig: StoryConfig = {
-        ...INITIAL_CONFIG,
-        title: world.title, genre, synopsis: world.synopsis,
-        povCharacter: world.povCharacter, setting: world.setting,
-        primaryEmotion: world.primaryEmotion, corePremise: world.corePremise,
-        powerStructure: world.powerStructure, currentConflict: world.currentConflict,
-        worldHistory: world.worldHistory || '', socialSystem: world.socialSystem || '',
-        economy: world.economy || '', magicTechSystem: world.magicTechSystem || '',
-        factionRelations: world.factionRelations || '', survivalEnvironment: world.survivalEnvironment || '',
-        culture: world.culture || '', religion: world.religion || '',
-        education: world.education || '', lawOrder: world.lawOrder || '',
-        taboo: world.taboo || '', dailyLife: world.dailyLife || '',
-        travelComm: world.travelComm || '', truthVsBeliefs: world.truthVsBeliefs || '',
-      };
-      const characters = await generateCharacters(qsConfig, language);
-      qsConfig.characters = characters;
-      const targetProjectId = currentProjectId || createNewProject();
-      const newSessionId = `s-${Date.now()}`;
-      const newSession: ChatSession = { id: newSessionId, title: qsConfig.title, config: qsConfig, messages: [], lastUpdate: Date.now() };
-      setProjects(prev => prev.map(p =>
-        p.id === targetProjectId
-          ? { ...p, sessions: [newSession, ...p.sessions], lastUpdate: Date.now() }
-          : p,
-      ));
-      setCurrentSessionId(newSessionId);
-      setActiveTab('writing');
-      setShowQuickStartModal(false);
-      setPipelineResult({
-        stages: [
-          { stage: 'world_check', status: 'passed', duration: 0, warnings: [] },
-          { stage: 'character_sync', status: 'passed', duration: 0, warnings: [] },
-          { stage: 'direction_setup', status: 'skipped', duration: 0, warnings: [] },
-          { stage: 'generation', status: 'running', duration: 0, warnings: [] },
-        ],
-        finalStatus: 'running',
-      });
-      setPendingQuickStartPrompt(`${userPrompt}\n\n\uCCAB \uC7A5\uBA74\uC744 \uC368\uC918.`);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '';
-      if (/401|api key|not configured/i.test(errorMessage)) {
-        setShowApiKeyModal(true);
-      } else {
-        logger.error("Studio", "Quick Start Failed:", err);
-        setUxError({ error: err });
-      }
-    } finally {
-      setIsQuickGenerating(false);
-    }
-  };
+  const { showQuickStartModal, setShowQuickStartModal, isQuickGenerating, handleQuickStart, openQuickStart } = useStudioQuickStart({
+    language, showQuickStartLock, setShowApiKeyModal, currentProjectId, createNewProject, setProjects, setCurrentSessionId, setActiveTab, setPipelineResult, setUxError, doHandleSend, currentSessionId, currentSession
+  });
 
+  const prevFocusRef = useRef<Element | null>(null);
+  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
   useEffect(() => {
-    if (pendingQuickStartPrompt && currentSessionId && currentSession) {
-      doHandleSend(pendingQuickStartPrompt, '', () => {
-        setPipelineResult(prev => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map(s => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
-      });
-      setPendingQuickStartPrompt(null);
+    if (anyModalOpen) {
+      prevFocusRef.current = document.activeElement;
+    } else if (prevFocusRef.current && prevFocusRef.current instanceof HTMLElement) {
+      prevFocusRef.current.focus();
+      prevFocusRef.current = null;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingQuickStartPrompt, currentSessionId, currentSession]);
-
-  const openQuickStart = useCallback(() => {
-    if (showQuickStartLock) { setShowApiKeyModal(true); return; }
-    setShowQuickStartModal(true);
-  }, [showQuickStartLock]);
+  }, [anyModalOpen, showApiKeyModal, showShortcuts, confirmState.open, saveSlotModalOpen, moveModal, showQuickStartModal]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
     if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
@@ -523,29 +370,14 @@ export default function StudioShell() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm]);
 
-  const deleteSession = (sessionIdToDelete: string) => {
-    const sessionToDelete = sessions.find(s => s.id === sessionIdToDelete);
-    if (!sessionToDelete) return;
-    showConfirm({
-      title: t('confirm.deleteSession'),
-      message: `'${sessionToDelete.title}'${t('confirm.deleteSessionMsg')}`,
-      confirmLabel: t('confirm.delete'),
-      cancelLabel: t('confirm.cancel'),
-      variant: 'danger',
-      onConfirm: () => { closeConfirm(); doDeleteSession(sessionIdToDelete); if (sessions.length <= 1) setActiveTab('world'); },
-    });
-  };
-
-  const clearAllSessions = () => {
-    showConfirm({
-      title: t('confirm.deleteAll'),
-      message: t('confirm.deleteAllMsg'),
-      confirmLabel: t('confirm.deleteAllConfirm'),
-      cancelLabel: t('confirm.cancel'),
-      variant: 'danger',
-      onConfirm: () => { closeConfirm(); doClearAllSessions(); setActiveTab('world'); },
-    });
-  };
+  const {
+    deleteSession, clearAllSessions, startRename, confirmRename,
+    handleReorderSessions, handleVersionSwitch, handleTypoFix
+  } = useStudioSessionActions({
+    language, sessions, currentSessionId, setSessions, doDeleteSession, doClearAllSessions,
+    showConfirm, closeConfirm, setActiveTab, setRenamingSessionId, setRenameValue,
+    renamingSessionId, renameValue,
+  });
 
   const {
     exportTXT, exportJSON, exportAllJSON, handleImportJSON,
@@ -558,57 +390,10 @@ export default function StudioShell() {
     isKO, language, writingMode, editDraft,
   });
 
-  const startRename = (sessionId: string, currentTitle: string) => {
-    setRenamingSessionId(sessionId);
-    setRenameValue(currentTitle);
-  };
-  const confirmRename = () => {
-    if (!renamingSessionId || !renameValue.trim()) return;
-    setSessions(prev => prev.map(s =>
-      s.id === renamingSessionId ? { ...s, title: renameValue.trim() } : s
-    ));
-    setRenamingSessionId(null);
-    setRenameValue('');
-  };
-
-  const handleReorderSessions = useCallback((fromIndex: number, toIndex: number) => {
-    setSessions(prev => {
-      const sorted = [...prev].sort((a, b) => a.lastUpdate - b.lastUpdate);
-      const [moved] = sorted.splice(fromIndex, 1);
-      sorted.splice(toIndex, 0, moved);
-      return sorted.map((s, i) => ({ ...s, lastUpdate: i + 1 }));
-    });
-  }, [setSessions]);
-
   const filteredMessages = currentSession?.messages.filter(m =>
     !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
   const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
-
-  const handleVersionSwitch = useCallback((messageId: string, versionIndex: number) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id !== currentSessionId) return s;
-      const msgs = s.messages.map(m => {
-        if (m.id !== messageId || !m.versions) return m;
-        const content = m.versions[versionIndex];
-        if (content == null) return m;
-        return { ...m, content, currentVersionIndex: versionIndex };
-      });
-      return { ...s, messages: msgs };
-    }));
-  }, [currentSessionId, setSessions]);
-
-  const handleTypoFix = useCallback((messageId: string, index: number, original: string, suggestion: string) => {
-    setSessions(prev => prev.map(s => {
-      if (s.id !== currentSessionId) return s;
-      const msgs = s.messages.map(m => {
-        if (m.id !== messageId) return m;
-        const fixed = m.content.slice(0, index) + suggestion + m.content.slice(index + original.length);
-        return { ...m, content: fixed };
-      });
-      return { ...s, messages: msgs };
-    }));
-  }, [currentSessionId, setSessions]);
 
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
@@ -641,16 +426,7 @@ export default function StudioShell() {
     disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 
-  const {
-    isGenerating, lastReport, directorReport, handleCancel,
-    handleSend: doHandleSend, handleRegenerate,
-  } = useStudioAI({
-    currentSession, currentSessionId, setSessions, updateCurrentSession,
-    hfcpState, promptDirective, language, canvasPass,
-    setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
-    advancedOutputMode: advancedSettings.outputMode,
-    onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
-  });
+
 
   useUnsavedWarning(isGenerating || (writingMode === 'edit' && editDraft.trim().length > 0));
 
@@ -886,45 +662,17 @@ export default function StudioShell() {
         )}
       </StudioMainContent>
 
-      <QuickStartModal
+      <StudioOverlayManager
         language={language}
-        isOpen={showQuickStartModal}
-        onClose={() => setShowQuickStartModal(false)}
-        onStart={handleQuickStart}
-        isGenerating={isQuickGenerating}
-      />
-
-      {showApiKeyModal && (
-        <ApiKeyModal
-          language={language}
-          hostedProviders={hostedProviders}
-          onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
-          onSave={() => setApiKeyVersion(v => v + 1)}
-        />
-      )}
-
-      <ConfirmModal
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmLabel={confirmState.confirmLabel}
-        cancelLabel={confirmState.cancelLabel}
-        variant={confirmState.variant}
-        onConfirm={confirmState.onConfirm}
-        onCancel={closeConfirm}
-      />
-
-      {moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
-
-      {saveSlotModalOpen && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
-        onSave={(slot) => {
-          updateCurrentSession({ config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config.savedSlots || []), slot] } });
-          triggerSave();
-        }}
-        onClose={() => setSaveSlotModalOpen(false)} />}
-
-      <StudioToasts
-        language={language} isKO={isKO}
+        isKO={isKO}
+        showQuickStartModal={showQuickStartModal} setShowQuickStartModal={setShowQuickStartModal}
+        handleQuickStart={handleQuickStart} isQuickGenerating={isQuickGenerating}
+        showApiKeyModal={showApiKeyModal} setShowApiKeyModal={setShowApiKeyModal}
+        hostedProviders={hostedProviders} setApiKeyVersion={setApiKeyVersion}
+        confirmState={confirmState} closeConfirm={closeConfirm}
+        moveModal={moveModal} setMoveModal={setMoveModal} moveSessionToProject={moveSessionToProject}
+        saveSlotModalOpen={saveSlotModalOpen} setSaveSlotModalOpen={setSaveSlotModalOpen}
+        activeTab={activeTab} currentSession={currentSession} updateCurrentSession={updateCurrentSession} triggerSave={triggerSave}
         showSyncReminder={showSyncReminder} setShowSyncReminder={setShowSyncReminder}
         user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
         storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
@@ -932,17 +680,8 @@ export default function StudioShell() {
         exportDoneFormat={exportDoneFormat}
         worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
         uxError={uxError} setUxError={setUxError}
+        alertToast={alertToast} setAlertToast={setAlertToast}
       />
-      {alertToast && (
-        <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
-          alertToast.variant === 'error' ? 'bg-red-900/95 border border-red-600 text-red-100'
-          : alertToast.variant === 'info' ? 'bg-blue-900/95 border border-blue-600 text-blue-100'
-          : 'bg-amber-900/95 border border-amber-600 text-amber-100'
-        }`}>
-          <span>{alertToast.variant === 'error' ? '\u274C' : alertToast.variant === 'info' ? '\u2139\uFE0F' : '\u26A0\uFE0F'} {alertToast.message}</span>
-          <button onClick={() => setAlertToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
-        </div>
-      )}
     </div>
     </StudioUIProvider>
     </StudioConfigProvider>

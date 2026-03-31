@@ -111,7 +111,7 @@ export interface WorldSimData {
   ruleLevel?: number;
   territories?: { id: string; name: string; civName: string; x: number; y: number; color?: string }[];
   territoryLinks?: { from: string; to: string; type: 'trade' | 'conflict' | 'border' | 'alliance' }[];
-  phonemes?: { id: string; symbol: string; roman: string; type: string; sigClass: string; freq: number; wave: string }[];
+  phonemes?: { id: string; symbol: string; roman: string; type: "consonant" | "vowel"; sigClass: "sustained" | "modulated" | "percussive" | "cyclic" | "silent"; freq: number; wave: "sine" | "sawtooth" | "square" | "triangle"; }[];
   words?: { id: string; meaning: string; phonemes: string[]; roman: string; civId?: string }[];
   hexMap?: Record<string, string>;
 }

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
+import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 // ── Input validation helper (#13) ──
@@ -54,112 +55,7 @@ function recordTokenUsage(ip: string, tokens: number): void {
 // PART 2: OPENAI-COMPATIBLE STREAMING
 // ============================================================
 
-const OPENAI_COMPAT_URLS: Record<string, string> = {
-  openai:  'https://api.openai.com/v1/chat/completions',
-  groq:    'https://api.groq.com/openai/v1/chat/completions',
-  mistral: 'https://api.mistral.ai/v1/chat/completions',
-};
-
-async function streamOpenAICompat(
-  provider: string, apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number,
-  customBaseUrl?: string,
-): Promise<ReadableStream> {
-  // 로컬 provider는 customBaseUrl 사용, 클라우드는 OPENAI_COMPAT_URLS
-  const url = customBaseUrl
-    ? `${customBaseUrl.replace(/\/$/, '')}/v1/chat/completions`
-    : OPENAI_COMPAT_URLS[provider];
-  if (!url) throw new Error(`Unknown provider: ${provider}`);
-
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  // 로컬 provider는 Authorization 불필요
-  if (apiKey && !customBaseUrl) headers['Authorization'] = `Bearer ${apiKey}`;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers,
-    signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: system }, ...messages],
-      temperature,
-      stream: true,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    throw new Error(`${provider} API ${res.status}: ${err}`);
-  }
-
-  if (!res.body) throw new Error('Empty response body');
-  return res.body;
-}
-
-// ============================================================
-// PART 3: CLAUDE STREAMING
-// ============================================================
-
-async function streamClaude(
-  apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number,
-  maxTokens?: number
-): Promise<ReadableStream> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({ model, max_tokens: maxTokens ?? 8192, system, messages, temperature, stream: true }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    throw new Error(`Claude API ${res.status}: ${err}`);
-  }
-
-  if (!res.body) throw new Error('Empty response body');
-  return res.body;
-}
-
-// ============================================================
-// PART 4: GEMINI STREAMING
-// ============================================================
-
-async function streamGemini(
-  apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number
-): Promise<ReadableStream> {
-  const contents = messages.map(m => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }));
-
-  // Use header auth to avoid key leaking in URL/server logs
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({
-      contents,
-      systemInstruction: { parts: [{ text: system }] },
-      generationConfig: { temperature, topP: 0.95 },
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    throw new Error(`Gemini API ${res.status}: ${err}`);
-  }
-
-  if (!res.body) throw new Error('Empty response body');
-  return res.body;
-}
+// Stream parsing and formatting logic is in @/services/aiProviders
 
 // ============================================================
 // PART 5: REQUEST GATE HELPERS
@@ -246,29 +142,6 @@ function buildSystemInstruction(base: string, prismMode?: string): string {
   return base;
 }
 
-/** Dispatch to the correct streaming provider. Returns stream or error response. */
-async function dispatchStream(
-  provider: string, apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[],
-  temperature: number, maxTokens?: number,
-): Promise<{ ok: true; stream: ReadableStream } | { ok: false; response: NextResponse }> {
-  switch (provider) {
-    case 'gemini':
-      return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature) };
-    case 'openai':
-    case 'groq':
-    case 'mistral':
-      return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature) };
-    case 'ollama':
-    case 'lmstudio':
-      return { ok: false, response: NextResponse.json({ error: 'Local providers must use /api/local-proxy' }, { status: 400 }) };
-    case 'claude':
-      return { ok: true, stream: await streamClaude(apiKey, model, system, messages, temperature, maxTokens) };
-    default:
-      return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
-  }
-}
-
 /** Wrap stream with output token tracking */
 function wrapStreamWithTracking(stream: ReadableStream, ip: string): ReadableStream {
   let totalOutputChars = 0;
@@ -333,7 +206,7 @@ export async function POST(req: NextRequest) {
     const finalSystem = buildSystemInstruction(systemInstruction, prismMode);
 
     const dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
-    if (!dispatched.ok) return dispatched.response;
+    if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 
     const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
     recordTokenUsage(ip, inputEstimate);
