@@ -4,6 +4,66 @@
    transition helpers, motion preferences
    ============================================================ */
 
+/* ============================================================
+   Page Transition System — Smooth fade+slide on every route
+   ============================================================ */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+#main-content > * {
+  animation: page-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Smooth scrolling globally */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================================
+   Enhanced Focus Ring — Accessibility A++ grade
+   ============================================================ */
+*:focus-visible {
+  outline: 2px solid var(--color-accent-purple, #8d7bc3) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px rgba(141, 123, 195, 0.25) !important;
+  transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
+}
+
+a:focus-visible,
+button:focus-visible {
+  border-radius: 8px;
+}
+
+/* ============================================================
+   Low-Contrast Text Fix — WCAG AA 4.5:1 minimum
+   ============================================================ */
+.text-text-tertiary,
+[class*="text-zinc-600"],
+[class*="text-zinc-700"] {
+  color: #9e9a93 !important; /* boosted from #7e7a73 to pass AA */
+}
+
+/* Mobile text wrapping optimization */
+@media (max-width: 640px) {
+  h1, h2, h3 {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+}
+
 /* Glitch hover effect */
 .glitch-hover:hover {
   animation: glitch 0.3s ease-in-out;

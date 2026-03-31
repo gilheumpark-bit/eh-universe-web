@@ -10,19 +10,20 @@ import { isTestEnvironment } from "@/lib/firebase";
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
-  const [toolsFocusIdx, setToolsFocusIdx] = useState(-1);
+  const [exploreOpen, setExploreOpen] = useState(false);
   const { lang, toggleLang } = useLang();
 
   const navItems = useMemo(() => [
     { href: "/", label: L4(lang, { ko: "홈", en: "HOME", jp: "ホーム", cn: "首页" }) },
-    { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", jp: "アーカイブ", cn: "档案" }) },
-    { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", jp: "報告書", cn: "报告书" }) },
     { href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", jp: "ネットワーク", cn: "网络" }) },
-    { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", jp: "コーデックス", cn: "索引" }) },
     { href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" }) },
     { href: "/code-studio", label: L4(lang, { ko: "코드", en: "CODE", jp: "コード", cn: "代码" }) },
-    { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", jp: "紹介", cn: "关于" }) },
+  ], [lang]);
+
+  const exploreItems = useMemo(() => [
+    { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", jp: "アーカイブ", cn: "档案" }) },
+    { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", jp: "報告書", cn: "报告书" }) },
+    { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", jp: "コーデックス", cn: "索引" }) },
   ], [lang]);
 
   const toolItems = useMemo(() => [
@@ -32,6 +33,7 @@ export default function Header() {
     { href: "/tools/vessel", label: L4(lang, { ko: "함선 제원", en: "VESSEL CLASS", jp: "艦船クラス", cn: "舰船分类" }) },
     { href: "/tools/warp-gate", label: L4(lang, { ko: "워프 게이트", en: "WARP GATE", jp: "ワープゲート", cn: "跃迁门" }) },
     { href: "/tools/noa-tower", label: L4(lang, { ko: "노아 타워", en: "NOA TOWER", jp: "ノアタワー", cn: "诺亚塔" }) },
+    { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", jp: "紹介", cn: "关于" }) },
   ], [lang]);
 
   useEffect(() => {
@@ -83,6 +85,10 @@ export default function Header() {
     }
   }, [toolsOpen, closeToolsMenu]);
 
+  const closeExploreMenu = useCallback(() => {
+    setExploreOpen(false);
+  }, []);
+
   return (
     <header data-testid="home-header" className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
       <div className="site-shell">
@@ -132,6 +138,44 @@ export default function Header() {
                 </Link>
               );
             })}
+            {/* Explore dropdown (아카이브/보고서/코덱스) */}
+            <div className="relative" onMouseEnter={() => setExploreOpen(true)} onMouseLeave={closeExploreMenu}>
+              <button
+                onClick={() => { setExploreOpen((p) => !p); }}
+                aria-expanded={exploreOpen}
+                aria-haspopup="menu"
+                aria-label="Explore menu"
+                className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+                  ['/archive', '/reports', '/codex'].some(p => pathname.startsWith(p))
+                    ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
+                    : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+                }`}
+              >
+                {L4(lang, { ko: "탐색", en: "EXPLORE", jp: "探索", cn: "探索" })}
+              </button>
+              {exploreOpen && (
+                <div className="absolute left-0 top-full z-[100] pt-3">
+                  <div className="premium-panel-soft min-w-[180px] overflow-hidden rounded-3xl border border-white/8 p-2" role="menu" aria-label="Explore">
+                    {exploreItems.map((ei) => {
+                      const isExActive = pathname.startsWith(ei.href);
+                      return (
+                        <Link
+                          key={ei.href}
+                          href={ei.href}
+                          role="menuitem"
+                          onClick={closeExploreMenu}
+                          className={`block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-[0.04em] transition-colors ${
+                            isExActive ? "bg-accent-amber/8 text-accent-amber font-bold" : "text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+                          }`}
+                        >
+                          {ei.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="relative" onMouseEnter={() => setToolsOpen(true)} onMouseLeave={closeToolsMenu} onKeyDown={handleToolsKeyDown} ref={toolMenuRef}>
               <button
                 onClick={() => { setToolsOpen((p) => !p); setToolsFocusIdx(-1); }}
@@ -162,15 +206,6 @@ export default function Header() {
                 </div>
               )}
             </div>
-            <a
-              href="https://github.com/gilheumpark-bit/eh-universe-web"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository (opens in new tab)"
-              className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-tertiary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
-            >
-              {L4(lang, { ko: "깃허브", en: "GITHUB", jp: "ギットハブ", cn: "代码库" })}
-            </a>
             <button
               onClick={toggleLang}
               className="rounded-full border border-accent-amber/20 bg-accent-amber/10 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber transition-colors hover:bg-accent-amber/15"
