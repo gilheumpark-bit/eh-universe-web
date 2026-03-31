@@ -272,8 +272,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               ============================================================ */}
           <div className="flex-1 overflow-y-auto px-4 py-3">
             {/* Studio mode toggle */}
-            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+            <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2" suppressHydrationWarning>
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary" suppressHydrationWarning>
                 {studioMode === 'guided'
                   ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
                   : (language === 'KO' ? '자유 모드' : 'Free Mode')}
@@ -290,12 +290,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 }`}
                 style={{ width: 44, height: 24, minWidth: 44, minHeight: 24 }}
                 aria-label={language === 'KO' ? '모드 전환' : 'Toggle mode'}
+                suppressHydrationWarning
               >
                 <span
                   className={`pointer-events-none absolute top-[2px] rounded-full bg-white shadow-md transition-transform duration-200 ${
                     studioMode === 'free' ? 'translate-x-[22px]' : 'translate-x-[2px]'
                   }`}
                   style={{ width: 20, height: 20 }}
+                  suppressHydrationWarning
                 />
               </button>
             </div>

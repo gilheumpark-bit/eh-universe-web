@@ -90,17 +90,18 @@ export default function StudioShell() {
   }, [studioRouter, pathname]);
 
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
-  const [studioMode, setStudioMode] = useState<'guided' | 'free'>(() => {
-    if (typeof window !== 'undefined') {
-      const raw = localStorage.getItem('noa_studio_mode');
-      if (raw === 'guided' || raw === 'free') return raw;
-      if (raw) localStorage.setItem('noa_studio_mode', 'free');
-      return raw ? 'free' : 'guided';
-    }
-    return 'guided';
-  });
+  // Use fixed initial value to prevent hydration mismatch, then sync from localStorage
+  const [studioMode, setStudioMode] = useState<'guided' | 'free'>('guided');
+  const [studioModeHydrated, setStudioModeHydrated] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Hydrate studioMode from localStorage after mount
   useEffect(() => {
+    const raw = localStorage.getItem('noa_studio_mode');
+    if (raw === 'guided' || raw === 'free') {
+      setStudioMode(raw);
+    }
+    setStudioModeHydrated(true);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, []);
   const [input, setInput] = useState('');

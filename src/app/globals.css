@@ -130,6 +130,15 @@ main[class~="pt-14"] {
    4-Level Brightness Themes (data-theme attribute)
    ============================================================ */
 
+/* ============================================================
+   Theme Application to Body
+   ============================================================ */
+body[data-theme="dim"],
+body[data-theme="light"],
+body[data-theme="max"] {
+  background: var(--color-bg-primary);
+}
+
 /* Level 1: 딤 (Dim) */
 [data-theme="dim"] {
   --color-bg-primary: #1a1a2e;
@@ -142,6 +151,9 @@ main[class~="pt-14"] {
   --color-surface-strong: rgba(34, 34, 58, 0.92);
   --color-surface-soft: rgba(26, 26, 46, 0.72);
   --gradient-page: none;
+}
+body[data-theme="dim"] {
+  background: linear-gradient(180deg, #1a1a2e 0%, #22223a 100%);
 }
 [data-theme="dim"] * { --tw-bg-opacity: 1; }
 [data-theme="dim"] .bg-black\/40, [data-theme="dim"] .bg-black\/30, [data-theme="dim"] .bg-black\/20 { background-color: rgba(26, 26, 46, 0.4); }
@@ -164,6 +176,9 @@ main[class~="pt-14"] {
   --color-surface-strong: rgba(240, 240, 235, 0.95);
   --color-surface-soft: rgba(245, 245, 240, 0.85);
   --gradient-page: none;
+}
+body[data-theme="light"] {
+  background: linear-gradient(180deg, #f5f5f0 0%, #eaeae5 100%);
 }
 [data-theme="light"] .bg-black\/40, [data-theme="light"] .bg-black\/30, [data-theme="light"] .bg-black\/20, [data-theme="light"] .bg-black\/60 { background-color: rgba(0, 0, 0, 0.06); }
 [data-theme="light"] .bg-zinc-900, [data-theme="light"] .bg-zinc-900\/20, [data-theme="light"] .bg-zinc-900\/30, [data-theme="light"] .bg-zinc-900\/50 { background-color: rgba(0, 0, 0, 0.04); }
@@ -188,6 +203,9 @@ main[class~="pt-14"] {
   --color-surface-soft: rgba(248, 248, 245, 0.9);
   --gradient-page: none;
 }
+body[data-theme="max"] {
+  background: #ffffff;
+}
 [data-theme="max"] .bg-black\/40, [data-theme="max"] .bg-black\/30, [data-theme="max"] .bg-black\/20, [data-theme="max"] .bg-black\/60 { background-color: rgba(0, 0, 0, 0.04); }
 [data-theme="max"] .bg-zinc-900, [data-theme="max"] .bg-zinc-900\/20, [data-theme="max"] .bg-zinc-900\/30, [data-theme="max"] .bg-zinc-900\/50 { background-color: rgba(0, 0, 0, 0.02); }
 [data-theme="max"] .border-zinc-800, [data-theme="max"] .border-zinc-800\/50, [data-theme="max"] .border-white\/6, [data-theme="max"] .border-white\/8, [data-theme="max"] .border-white\/5 { border-color: #d8d8d0; }
@@ -199,6 +217,27 @@ main[class~="pt-14"] {
 /* ============================================================
    Color Themes (data-color-theme attribute)
    ============================================================ */
+
+/* ============================================================
+   Color Theme Body Backgrounds
+   ============================================================ */
+body[data-color-theme="beige"] { background: linear-gradient(180deg, #1a1814 0%, #24211a 100%); }
+body[data-color-theme="ocean"] { background: linear-gradient(180deg, #0a1628 0%, #0e1e34 100%); }
+body[data-color-theme="forest"] { background: linear-gradient(180deg, #0d1a14 0%, #12241c 100%); }
+body[data-color-theme="rose"] { background: linear-gradient(180deg, #1a0d14 0%, #24121c 100%); }
+body[data-color-theme="midnight"] { background: linear-gradient(180deg, #0d0d1a 0%, #141424 100%); }
+
+/* Color theme + light mode combinations */
+body[data-color-theme="beige"][data-theme="light"],
+body[data-color-theme="beige"][data-theme="max"] { background: linear-gradient(180deg, #f5f0e8 0%, #ebe5da 100%); }
+body[data-color-theme="ocean"][data-theme="light"],
+body[data-color-theme="ocean"][data-theme="max"] { background: linear-gradient(180deg, #e8f2f8 0%, #d8e8f0 100%); }
+body[data-color-theme="forest"][data-theme="light"],
+body[data-color-theme="forest"][data-theme="max"] { background: linear-gradient(180deg, #e8f5f0 0%, #d8ebe4 100%); }
+body[data-color-theme="rose"][data-theme="light"],
+body[data-color-theme="rose"][data-theme="max"] { background: linear-gradient(180deg, #f8f0f4 0%, #f0e0e8 100%); }
+body[data-color-theme="midnight"][data-theme="light"],
+body[data-color-theme="midnight"][data-theme="max"] { background: linear-gradient(180deg, #f0f0f8 0%, #e4e4f0 100%); }
 
 /* Beige — Warm, paper-like feel */
 [data-color-theme="beige"] {

@@ -64,9 +64,22 @@ export function useStudioTheme() {
     document.documentElement.setAttribute('data-color-theme', theme);
   };
 
-  // Apply color theme on mount
+  // Apply theme level to document
+  useEffect(() => {
+    const themeValue = (['', 'dim', 'light', 'max'] as const)[themeLevel] || '';
+    if (themeValue) {
+      document.documentElement.setAttribute('data-theme', themeValue);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    // Also apply to body for full coverage
+    document.body.setAttribute('data-theme', themeValue);
+  }, [themeLevel]);
+  
+  // Apply color theme on mount and change
   useEffect(() => {
     document.documentElement.setAttribute('data-color-theme', colorTheme);
+    document.body.setAttribute('data-color-theme', colorTheme);
   }, [colorTheme]);
 
   return {
