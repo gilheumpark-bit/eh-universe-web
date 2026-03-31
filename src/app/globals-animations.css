@@ -51,13 +51,13 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Smooth scrolling globally */
-html {
+/* Smooth scrolling — only when data-scroll-behavior is set (Next.js compatible) */
+html[data-scroll-behavior="smooth"] {
   scroll-behavior: smooth;
 }
 
 /* Instant scroll for programmatic navigation */
-html:focus-within {
+html[data-scroll-behavior="smooth"]:focus-within {
   scroll-behavior: smooth;
 }
 

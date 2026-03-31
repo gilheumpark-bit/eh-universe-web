@@ -280,10 +280,49 @@ export default function StudioMainContent(props: StudioMainContentProps) {
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
             <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-            <button onClick={toggleTheme} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple flex items-center gap-1" title={isKO ? ['Dark','Dim','Light','Max'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} aria-label={t('ui.toggleThemeLabel')}>
-              {themeLevel === 0 ? <Moon className="w-4 h-4" /> : themeLevel === 1 ? <Sun className="w-4 h-4 opacity-40" /> : themeLevel === 2 ? <Sun className="w-4 h-4 opacity-70" /> : <Sun className="w-4 h-4" />}
-              <span className="text-[9px] font-[family-name:var(--font-mono)] hidden md:inline">{isKO ? ['\uB2E4\uD06C','\uB518','\uB77C\uC774\uD2B8','\uCD5C\uB300'][themeLevel] : ['D','DM','L','MX'][themeLevel]}</span>
-            </button>
+            {/* Premium Brightness Control */}
+            <div className="relative group">
+              <button 
+                onClick={toggleTheme} 
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-bg-secondary/60 hover:bg-bg-secondary border border-white/[0.06] hover:border-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                title={isKO ? ['Dark','Dim','Light','Max'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
+                aria-label={t('ui.toggleThemeLabel')}
+              >
+                {/* Icon with glow effect */}
+                <span className={`relative transition-all duration-300 ${themeLevel >= 2 ? 'text-accent-amber' : 'text-text-tertiary'}`}>
+                  {themeLevel === 0 ? (
+                    <Moon className="w-4 h-4" />
+                  ) : (
+                    <Sun className={`w-4 h-4 transition-all duration-300 ${themeLevel === 1 ? 'opacity-50' : themeLevel === 2 ? 'opacity-80' : 'opacity-100 drop-shadow-[0_0_6px_rgba(202,161,92,0.6)]'}`} />
+                  )}
+                </span>
+                
+                {/* Brightness level indicator bar */}
+                <div className="hidden md:flex items-center gap-0.5">
+                  {[0, 1, 2, 3].map((level) => (
+                    <div
+                      key={level}
+                      className={`w-1.5 rounded-full transition-all duration-200 ${
+                        level <= themeLevel 
+                          ? level === 0 
+                            ? 'h-2 bg-accent-purple/80' 
+                            : level === 1 
+                              ? 'h-2.5 bg-accent-blue/70' 
+                              : level === 2 
+                                ? 'h-3 bg-accent-amber/80' 
+                                : 'h-3.5 bg-accent-amber shadow-[0_0_8px_rgba(202,161,92,0.5)]'
+                          : 'h-2 bg-white/10'
+                      }`}
+                    />
+                  ))}
+                </div>
+                
+                {/* Label */}
+                <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary group-hover:text-text-secondary transition-colors hidden lg:inline">
+                  {isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]}
+                </span>
+              </button>
+            </div>
             <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
           </div>
         </div>

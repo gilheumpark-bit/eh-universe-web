@@ -258,7 +258,7 @@ export default function Header() {
       {/* Mobile menu */}
       <div
         aria-hidden={!menuOpen}
-        {...(!menuOpen ? { inert: true } : {})}
+        inert={!menuOpen ? true : undefined}
         className={`site-shell md:hidden transition-all duration-200 ease-out overflow-hidden ${
           menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
         }`}
