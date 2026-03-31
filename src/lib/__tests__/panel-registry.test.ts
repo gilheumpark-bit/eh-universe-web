@@ -12,15 +12,15 @@ import {
   type PanelDef,
   type PanelGroup,
   type RightPanel,
-} from '../code-studio-panel-registry';
+} from '../code-studio/core/panel-registry';
 
 // ============================================================
 // PART 1 — Registry Size & Structure
 // ============================================================
 
 describe('PANEL_REGISTRY', () => {
-  test('has exactly 37 entries', () => {
-    expect(PANEL_REGISTRY).toHaveLength(37);
+  test('has exactly 38 entries', () => {
+    expect(PANEL_REGISTRY).toHaveLength(38);
   });
 
   test('all IDs are unique', () => {

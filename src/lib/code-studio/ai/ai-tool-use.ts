@@ -2,7 +2,7 @@
 // Code Studio — AI Tool Use Framework
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types & Tool Definitions

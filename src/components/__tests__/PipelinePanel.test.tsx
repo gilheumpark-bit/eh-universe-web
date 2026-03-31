@@ -10,9 +10,9 @@ jest.mock('@/lib/LangContext', () => ({
   useLang: () => ({ lang: 'en', toggleLang: jest.fn(), setLangDirect: jest.fn() }),
 }));
 
-jest.mock('@/lib/code-studio-pipeline-teams', () => ({}));
+jest.mock('@/lib/code-studio/pipeline/pipeline-teams', () => ({}));
 
-jest.mock('@/lib/code-studio-pipeline-utils', () => ({
+jest.mock('@/lib/code-studio/pipeline/pipeline-utils', () => ({
   generateReport: () => 'report text',
 }));
 

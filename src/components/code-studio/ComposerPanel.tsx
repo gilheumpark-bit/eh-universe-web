@@ -6,9 +6,9 @@
 
 import { useState, useCallback } from "react";
 import { FileText, Send, Check, X, ChevronDown, ChevronRight, Loader2, Eye, RefreshCw } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio-types";
-import { fileIconColor } from "@/lib/code-studio-types";
-import type { ComposerMode } from "@/lib/code-studio-composer-state";
+import type { FileNode } from "@/lib/code-studio/core/types";
+import { fileIconColor } from "@/lib/code-studio/core/types";
+import type { ComposerMode } from "@/lib/code-studio/core/composer-state";
 
 export interface FileChange {
   fileId: string;

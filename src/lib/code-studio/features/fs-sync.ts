@@ -2,7 +2,7 @@
 // Code Studio — Bidirectional FS Sync (IndexedDB <-> WebContainer)
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 import { createWebContainer, type WebContainerInstance } from './webcontainer';
 
 // ============================================================
@@ -111,15 +111,18 @@ export class FileSyncManager {
     this.notify();
 
     const flat = flattenTree(files);
-    for (const f of flat) {
-      if (isWCManagedPath(f.path)) continue;
-      try {
-        await this.container.writeFile(f.path, f.content);
-        this.status.fileStatuses.set(f.path, 'synced');
-      } catch {
-        this.status.fileStatuses.set(f.path, 'error');
-      }
-    }
+    await Promise.all(
+      flat
+        .filter((f) => !isWCManagedPath(f.path))
+        .map(async (f) => {
+          try {
+            await this.container!.writeFile(f.path, f.content);
+            this.status.fileStatuses.set(f.path, 'synced');
+          } catch {
+            this.status.fileStatuses.set(f.path, 'error');
+          }
+        }),
+    );
 
     this.status.overall = 'idle';
     this.status.lastSyncAt = Date.now();

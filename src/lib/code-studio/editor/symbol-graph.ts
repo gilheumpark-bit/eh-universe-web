@@ -3,7 +3,7 @@
 // ============================================================
 // import/export 그래프 구축, 순환 의존성 탐지, 연결 시각화.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types

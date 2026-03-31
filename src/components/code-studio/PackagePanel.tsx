@@ -9,7 +9,7 @@ import {
   Package, Search, Download, Trash2, Loader2,
   ChevronDown, ChevronRight, Terminal,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 interface PackageInfo { name: string; version: string; description: string }
 

@@ -11,15 +11,15 @@ import {
   Files, Plus, X, FileText, FolderOpen, Folder,
   Edit3, Trash2, AlertTriangle, Home, Loader2,
 } from "lucide-react";
-import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
-import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio-types";
-import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio-store";
-import { runStaticPipeline } from "@/lib/code-studio-pipeline";
-import { findBugsStatic, type BugReport } from "@/lib/code-studio-bugfinder";
-import { runStressReport, type StressReport } from "@/lib/code-studio-stress-test";
-import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio-verification-loop";
-import { parseErrors, type ParsedError } from "@/lib/code-studio-error-parser";
-import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio-panel-registry";
+import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
+import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio/core/types";
+import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio/core/store";
+import { runStaticPipeline } from "@/lib/code-studio/pipeline/pipeline";
+import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfinder";
+import { runStressReport, type StressReport } from "@/lib/code-studio/pipeline/stress-test";
+import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
+import { parseErrors, type ParsedError } from "@/lib/code-studio/pipeline/error-parser";
+import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
@@ -217,6 +217,7 @@ function CodeStudioShellInner() {
   // ── Panel State ──
   const [rightPanel, setRightPanel] = useState<RightPanel>("chat");
   const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [rightPanelWidth, setRightPanelWidth] = useState(380);
   const [showTerminal, setShowTerminal] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
   const [showPipelineBottom, setShowPipelineBottom] = useState(false);
@@ -237,8 +238,8 @@ function CodeStudioShellInner() {
   const [currentVerifyRound, setCurrentVerifyRound] = useState(0);
 
   // ── Staging/Rollback State ──
-  const [stagedCode, setStagedCode] = useState<string | null>(null);
-  const [preApplySnapshot, setPreApplySnapshot] = useState<string | null>(null);
+  const [stagedFiles, setStagedFiles] = useState<Record<string, string>>({});
+  const [preApplySnapshot, setPreApplySnapshot] = useState<Record<string, string>>({});
 
   // ── Dialog State ──
   const [confirmState, setConfirmState] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
@@ -584,11 +585,34 @@ function CodeStudioShellInner() {
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
   }, []);
 
-  const handleApplyCode = useCallback((code: string) => {
-    if (!activeFileId) return;
-    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: code, isDirty: true } : f));
-    fsUpdateContent(activeFileId, code);
-  }, [activeFileId, fsUpdateContent]);
+  const handleApplyCode = useCallback((code: string, fileName?: string) => {
+    const targetFileId = fileName 
+      ? openFiles.find(f => f.name === fileName)?.id || findFileNodeByName(files, fileName)?.id
+      : activeFileId;
+
+    if (!targetFileId) {
+      toast(`Cannot find file: ${fileName ?? 'active file'}`, "error");
+      return;
+    }
+
+    setOpenFiles((prev) => {
+      const exists = prev.some(f => f.id === targetFileId);
+      if (exists) {
+        return prev.map((f) => f.id === targetFileId ? { ...f, content: code, isDirty: true } : f);
+      }
+      const node = findFileNodeByName(files, fileName ?? "");
+      if (node && node.type === "file") {
+        return [...prev, { id: node.id, name: node.name, content: code, language: detectLanguage(node.name), isDirty: true }];
+      }
+      return prev;
+    });
+
+    fsUpdateContent(targetFileId, code);
+    if (!activeFileId || (fileName && targetFileId !== activeFileId)) {
+        setActiveFileId(targetFileId);
+    }
+    toast(`Applied code to ${fileName ?? 'active file'}`, "success");
+  }, [activeFileId, fsUpdateContent, openFiles, files, toast]);
 
   const handleOpenDemo = useCallback(() => {
     setFiles(DEMO_FILES);
@@ -654,8 +678,9 @@ function CodeStudioShellInner() {
       setVerificationResult(result);
       setVerificationScore(result.finalScore);
       if (result.totalFixesApplied > 0 && result.finalCode !== result.originalCode) {
-        setStagedCode(result.finalCode);
-        toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.totalFixesApplied} fixes staged`, result.finalStatus === "pass" ? "success" : "info");
+        setStagedFiles(prev => ({ ...prev, [activeFile.name]: result.finalCode }));
+        setRightPanel("review");
+        toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.totalFixesApplied} fixes staged. Open Review Center to apply.`, result.finalStatus === "pass" ? "success" : "info");
       } else {
         toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.stopReason}`, result.finalStatus === "pass" ? "success" : result.finalStatus === "warn" ? "info" : "error");
       }
@@ -664,24 +689,37 @@ function CodeStudioShellInner() {
   }, [activeFile, isVerifying, files, toast, tcs]);
 
   // Staging flow
-  const handleApplyStagedCode = useCallback(() => {
-    if (!stagedCode || !activeFileId) return;
-    setPreApplySnapshot(activeFile?.content ?? null);
-    fsUpdateContent(activeFileId, stagedCode);
-    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: stagedCode, isDirty: true } : f));
-    toast("Staged fixes applied", "success");
-    setStagedCode(null);
-  }, [stagedCode, activeFileId, activeFile, fsUpdateContent, toast]);
+  const handleApproveFile = useCallback((fileName: string) => {
+    const code = stagedFiles[fileName];
+    if (!code) return;
+    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: import("@/lib/code-studio/core/types").FileNode): import("@/lib/code-studio/core/types").FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.name === fileName);
+    const targetFileId = fileNode?.id;
+    if (targetFileId) {
+      setPreApplySnapshot(prev => ({ ...prev, [fileName]: fileNode.content ?? "" }));
+      fsUpdateContent(targetFileId, code);
+      setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: code, isDirty: true } : f));
+    }
+    setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
+    toast(`Approved fixes for ${fileName}`, "success");
+  }, [stagedFiles, openFiles, files, fsUpdateContent, toast]);
 
-  const handleRejectStaged = useCallback(() => { setStagedCode(null); toast("Staged fixes rejected", "info"); }, [toast]);
+  const handleRejectFile = useCallback((fileName: string) => {
+    setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
+    toast(`Rejected fixes for ${fileName}`, "info");
+  }, [toast]);
 
-  const handleRollback = useCallback(() => {
-    if (!preApplySnapshot || !activeFileId) return;
-    fsUpdateContent(activeFileId, preApplySnapshot);
-    setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: preApplySnapshot, isDirty: true } : f));
-    setPreApplySnapshot(null);
-    toast("Rolled back to pre-verification state", "info");
-  }, [preApplySnapshot, activeFileId, fsUpdateContent, toast]);
+  const handleRollback = useCallback((fileName: string) => {
+    const snapshot = preApplySnapshot[fileName];
+    if (!snapshot) return;
+    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: import("@/lib/code-studio/core/types").FileNode): import("@/lib/code-studio/core/types").FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.name === fileName);
+    const targetFileId = fileNode?.id;
+    if (targetFileId) {
+      fsUpdateContent(targetFileId, snapshot);
+      setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: snapshot, isDirty: true } : f));
+      setPreApplySnapshot(prev => { const next = { ...prev }; delete next[fileName]; return next; });
+      toast(`Rolled back ${fileName} to pre-verification state`, "info");
+    }
+  }, [preApplySnapshot, openFiles, files, fsUpdateContent, toast]);
 
   // Editor navigate-to-line callback (for outline/symbol navigation)
   const editorNavigateToLine = useCallback((line: number) => {
@@ -723,9 +761,9 @@ function CodeStudioShellInner() {
           <MonacoEditor height="100%" language={activeFile.language} value={activeFile.content} onChange={handleEditorChange} theme="vs-dark"
             options={{ fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize, wordWrap: isMobile ? "on" as const : settings.wordWrap, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 }, fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", lineNumbers: isMobile ? "off" as const : "on" as const, renderLineHighlight: "line" as const, bracketPairColorization: { enabled: true }, smoothScrolling: true, cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const }}
             onMount={(editor, monaco) => {
-              import("@/lib/code-studio-monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco, editor, { theme: "dark" }));
-              import("@/lib/code-studio-editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco, editor));
-              import("@/lib/code-studio-ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco));
+              import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco, editor, { theme: "dark" }));
+              import("@/lib/code-studio/editor/editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco, editor));
+              import("@/lib/code-studio/ai/ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco));
             }}
           />
         ) : !loaded ? (
@@ -771,6 +809,7 @@ function CodeStudioShellInner() {
     onFileSelect: handleFileSelect, onApplyCode: handleApplyCode,
     onSetDiffState: setDiffState, fsUpdateContent, onSetOpenFiles: setOpenFiles, onSetFiles: setFiles,
     handleRunStressTest, handleRunVerification, editorNavigateToLine,
+    onApproveFile: handleApproveFile, onRejectFile: handleRejectFile, stagedFiles,
     toast, lang, tcs,
   } as const;
 
@@ -857,31 +896,36 @@ function CodeStudioShellInner() {
           fsUpdateContent={fsUpdateContent}
           tcs={tcs}
         >
-          {/* Right Panel (extracted component) */}
+          {/* Right Panel (extracted component) with resize handle */}
           {rightPanel && (
-            <RightPanelContent {...panelManagerProps as Parameters<typeof RightPanelContent>[0]} />
+            <>
+              {/* Right Panel Resize Handle */}
+              <div
+                className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = rightPanelWidth;
+                  const onMove = (ev: MouseEvent) => { setRightPanelWidth(Math.max(250, Math.min(700, startWidth - (ev.clientX - startX)))); };
+                  const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); document.body.style.cursor = ""; document.body.style.userSelect = ""; };
+                  document.addEventListener("mousemove", onMove);
+                  document.addEventListener("mouseup", onUp);
+                  document.body.style.cursor = "col-resize";
+                  document.body.style.userSelect = "none";
+                }}
+              />
+              <div className="shrink-0 flex flex-col border-l border-white/8 bg-bg-secondary overflow-hidden" style={{ width: rightPanelWidth }}>
+                <RightPanelContent {...panelManagerProps as Parameters<typeof RightPanelContent>[0]} />
+              </div>
+            </>
           )}
         </CodeStudioEditor>
 
-        {/* Staging Banner */}
-        {stagedCode && (
-          <div className="border-t border-accent-amber/30 bg-accent-amber/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-accent-amber" />
-              <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-amber">{verificationResult?.totalFixesApplied ?? 0} fixes staged — Review before applying</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={handleApplyStagedCode} className="rounded border border-accent-green/30 bg-accent-green/10 px-3 py-1 text-[11px] text-accent-green hover:bg-accent-green/20">Accept &amp; Apply</button>
-              <button onClick={handleRejectStaged} className="rounded border border-accent-red/30 bg-accent-red/10 px-3 py-1 text-[11px] text-accent-red hover:bg-accent-red/20">Reject</button>
-            </div>
-          </div>
-        )}
-
         {/* Rollback Banner */}
-        {preApplySnapshot && !stagedCode && (
+        {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (
           <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
             <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-purple">Verification fixes applied — Rollback available</span>
-            <button onClick={handleRollback} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">Rollback</button>
+            <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">Rollback All</button>
           </div>
         )}
 

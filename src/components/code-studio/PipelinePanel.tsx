@@ -11,9 +11,9 @@ import {
   Network, ShieldCheck, Gavel, BarChart3, Download, Copy,
   Play, Square,
 } from "lucide-react";
-import type { TeamResult, Finding } from "@/lib/code-studio-pipeline-teams";
+import type { TeamResult, Finding } from "@/lib/code-studio/pipeline/pipeline-teams";
 import { useLang } from "@/lib/LangContext";
-import { generateReport } from "@/lib/code-studio-pipeline-utils";
+import { generateReport } from "@/lib/code-studio/pipeline/pipeline-utils";
 
 interface PipelineResultData {
   stages: TeamResult[];

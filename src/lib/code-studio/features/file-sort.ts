@@ -3,7 +3,7 @@
 // ============================================================
 // 이름순 (폴더 우선), 타입순 (확장자), 크기순, 수정일순 정렬.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 export type SortMode = 'name' | 'type' | 'size' | 'modified';
 

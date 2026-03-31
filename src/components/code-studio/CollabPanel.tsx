@@ -15,7 +15,7 @@ import {
   clearSession,
   type CollabUser as ManagerCollabUser,
   type CollaborationManager,
-} from "@/lib/code-studio-collaboration";
+} from "@/lib/code-studio/features/collaboration";
 
 interface CollabUser {
   id: string;

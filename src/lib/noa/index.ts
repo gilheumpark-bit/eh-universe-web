@@ -7,8 +7,8 @@
 //   Input → Sanitize → FastTrack → Trinity → Judgment
 //         → Availability → Tactical → Audit → Result
 //
-// 현재 상태: 구조만 구축 (스텁). 기능 구현 후 각 레이어 로직 채우기.
-// 스텁은 allowed: true 반환 → 기존 기능에 영향 없음.
+// 현재 상태: 7계층 라이브 구현 완료 (v42.6).
+// FAST_TRACK, TRINITY, JUDGMENT, AVAILABILITY, TACTICAL, AUDIT 모든 레이어 작동 중.
 // ============================================================
 
 import type {

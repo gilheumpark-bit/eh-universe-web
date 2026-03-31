@@ -3,8 +3,8 @@
 // ============================================================
 // 드롭 이벤트 핸들링, 파일 내용 읽기, FileNode 생성, 폴더 재귀 처리.
 
-import type { FileNode } from '../../code-studio-types';
-import { detectLanguage } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
+import { detectLanguage } from '../core/types';
 import { isBinaryFile } from './file-icons';
 
 // ============================================================

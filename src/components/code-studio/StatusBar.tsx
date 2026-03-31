@@ -13,7 +13,7 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
-import type { OpenFile } from "@/lib/code-studio-types";
+import type { OpenFile } from "@/lib/code-studio/core/types";
 
 interface StatusBarProps {
   activeFile: OpenFile | null;

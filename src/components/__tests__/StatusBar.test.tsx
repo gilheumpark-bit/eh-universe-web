@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { StatusBar } from '../code-studio/StatusBar';
 
-jest.mock('@/lib/code-studio-types', () => ({
+jest.mock('@/lib/code-studio/core/types', () => ({
   detectLanguage: () => 'typescript',
 }));
 

@@ -9,13 +9,13 @@ import dynamic from "next/dynamic";
 import {
   Files, Columns2, Command, Settings, Loader2,
 } from "lucide-react";
-import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
+import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
-import { detectLanguage } from "@/lib/code-studio-types";
-import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio-ghost";
-import { registerEditorFeatures } from "@/lib/code-studio-editor-features";
-import { setupMonaco } from "@/lib/code-studio-monaco-setup";
-import { registerCrossFileProviders } from "@/lib/code-studio-cross-file";
+import { detectLanguage } from "@/lib/code-studio/core/types";
+import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai/ghost";
+import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
+import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";
+import { registerCrossFileProviders } from "@/lib/code-studio/core/cross-file";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import * as PI from "@/components/code-studio/PanelImports";
 
@@ -77,7 +77,7 @@ export interface CodeStudioEditorProps {
   onFileSelect: (node: FileNode) => void;
   onCloseTab: (id: string) => void;
   onEditorChange: (value: string | undefined) => void;
-  onApplyCode: (code: string) => void;
+  onApplyCode: (code: string, fileName?: string) => void;
   onSetActiveFileId: (id: string | null) => void;
   onOpenFiles: React.Dispatch<React.SetStateAction<OpenFile[]>>;
 

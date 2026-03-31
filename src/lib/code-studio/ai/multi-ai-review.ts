@@ -6,7 +6,7 @@
 // and computes a confidence-weighted consensus score.
 
 import { streamChat } from '@/lib/ai-providers';
-import type { Finding, Severity } from '@/lib/code-studio-pipeline-teams';
+import type { Finding, Severity } from '@/lib/code-studio/pipeline/pipeline-teams';
 
 export interface AIReviewerConfig {
   providerId: string;

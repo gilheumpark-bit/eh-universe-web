@@ -35,7 +35,7 @@ jest.mock('@/lib/studio-translations', () => ({
   },
 }));
 
-jest.mock('@/lib/code-studio-store', () => ({
+jest.mock('@/lib/code-studio/core/store', () => ({
   listProjects: () => Promise.resolve([]),
 }));
 

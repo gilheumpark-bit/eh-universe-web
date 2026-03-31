@@ -8,9 +8,9 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Bot, Play, Pause, Square, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronRight, FileCode, Pencil, Search,
-  Terminal, GitBranch, Zap,
+  Terminal, GitBranch,
 } from "lucide-react";
-import type { AgentRole, AgentSession } from "@/lib/code-studio-agents";
+import type { AgentRole, AgentSession } from "@/lib/code-studio/ai/agents";
 import { useCodeStudioAgent } from "@/hooks/useCodeStudioAgent";
 
 type AgentMode = "idle" | "planning" | "executing" | "paused" | "complete" | "error";
@@ -28,6 +28,14 @@ interface Props {
   code: string;
   language: string;
   fileName: string;
+  onApplyCode?: (code: string, fileName?: string) => void;
+}
+
+interface AgentApplyCandidate {
+  code: string;
+  fileName?: string;
+  language: string;
+  sourceRole: AgentRole;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=AgentStep,Props
@@ -119,13 +127,73 @@ const AGENT_ROLES: Array<{ role: AgentRole; label: string; color: string }> = [
   { role: "documenter", label: "Documenter", color: "text-cyan-400" },
 ];
 
+const ROLE_PRIORITY: Record<AgentRole, number> = {
+  developer: 5,
+  reviewer: 4,
+  tester: 3,
+  documenter: 2,
+  architect: 1,
+};
+
+function extractCodeBlocks(content: string): Array<{ code: string; language: string; fileName?: string }> {
+  const blocks: Array<{ code: string; language: string; fileName?: string }> = [];
+  const regex = /```([\w.+-]*)\n([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(content)) !== null) {
+    const code = match[2]?.trim();
+    if (!code) {
+      continue;
+    }
+
+    const beforeBlock = content.slice(Math.max(0, match.index - 120), match.index);
+    const fileMatch = beforeBlock.match(/[`"]([^`"]+\.\w+)[`"]/);
+    blocks.push({
+      code,
+      language: match[1] || "plaintext",
+      fileName: fileMatch?.[1],
+    });
+  }
+
+  return blocks;
+}
+
+export function pickAgentApplyCandidate(session: AgentSession | null): AgentApplyCandidate | null {
+  if (!session) {
+    return null;
+  }
+
+  const candidates = session.messages.flatMap((message, messageIndex) =>
+    extractCodeBlocks(message.content).map((block, blockIndex) => ({
+      ...block,
+      sourceRole: message.role,
+      score: ROLE_PRIORITY[message.role] * 10_000 + messageIndex * 100 + blockIndex,
+    })),
+  );
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const best = candidates.reduce((currentBest, candidate) =>
+    candidate.score > currentBest.score ? candidate : currentBest,
+  );
+
+  return {
+    code: best.code,
+    fileName: best.fileName,
+    language: best.language,
+    sourceRole: best.sourceRole,
+  };
+}
+
 // IDENTITY_SEAL: PART-3 | role=AgentRoles | inputs=none | outputs=AGENT_ROLES
 
 // ============================================================
 // PART 4 — Main Component
 // ============================================================
 
-export function AgentPanel({ code, language, fileName }: Props) {
+export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
   const agent = useCodeStudioAgent();
 
   const [mode, setMode] = useState<AgentMode>("idle");
@@ -172,6 +240,11 @@ export function AgentPanel({ code, language, fileName }: Props) {
     return idx >= 0 ? idx : 0;
   }, [agent.progress.currentRole]);
 
+  const applyCandidate = useMemo(
+    () => pickAgentApplyCandidate(session),
+    [session],
+  );
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [steps]);
@@ -193,7 +266,7 @@ export function AgentPanel({ code, language, fileName }: Props) {
       const ctx = `File: ${fileName}\nLanguage: ${language}\n\n${code}`;
       const result = await agent.run(input.trim(), ctx);
       setSession(result);
-      setSummary(`Pipeline complete — ${result.messages.length} messages, avg confidence: ${(agent.averageConfidence * 100).toFixed(0)}%`);
+      setSummary(`Pipeline complete — ${result.messages.length} messages, avg confidence: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%`);
       setMode("complete");
     } catch {
       setMode("error");
@@ -262,6 +335,28 @@ export function AgentPanel({ code, language, fileName }: Props) {
             {mode === "complete" && summary && (
               <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-xs text-green-400"><CheckCircle size={12} />{summary}</div>
+              </div>
+            )}
+            {mode === "complete" && applyCandidate && (
+              <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <div className="text-[11px] text-blue-300">
+                  Ready to apply {applyCandidate.sourceRole} output
+                  {applyCandidate.fileName ? ` from ${applyCandidate.fileName}` : ""}.
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    onClick={() => onApplyCode?.(applyCandidate.code, applyCandidate.fileName)}
+                    className="rounded bg-blue-500/15 px-2.5 py-1 text-[10px] text-blue-300 hover:bg-blue-500/25"
+                  >
+                    Apply to editor
+                  </button>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(applyCandidate.code)}
+                    className="rounded bg-[#21262d] px-2.5 py-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]"
+                  >
+                    Copy code
+                  </button>
+                </div>
               </div>
             )}
             {mode === "error" && summary && (

@@ -3,8 +3,8 @@
 // ============================================================
 // 부분 경로 입력 시 매칭 파일 제안, @/ 별칭 처리.
 
-import type { FileNode } from '../../code-studio-types';
-import { fuzzyMatch } from '../../code-studio-fuzzy-match';
+import type { FileNode } from '../core/types';
+import { fuzzyMatch } from '../editor/fuzzy-match';
 
 export interface PathCompletion {
   fullPath: string;

@@ -3,7 +3,7 @@
 // ============================================================
 // 공유 링크 생성, 프로젝트를 base64 인코딩, 공유 링크에서 임포트.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 export interface SharedProject {
   version: 1;

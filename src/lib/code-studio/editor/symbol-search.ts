@@ -3,7 +3,7 @@
 // ============================================================
 // 코드에서 심볼 추출, 퍼지 매치, 타입별 랭킹 (function > class > variable).
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 import { fuzzyMatch, type FuzzyMatchResult } from './fuzzy-match';
 
 // ============================================================

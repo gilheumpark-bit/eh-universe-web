@@ -3,7 +3,7 @@
 // ============================================================
 // 프로젝트 복제 (새 ID), 전체 파일 복사, 이름 변경.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 export interface ForkResult {
   projectId: string;

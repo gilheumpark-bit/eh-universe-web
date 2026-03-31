@@ -5,15 +5,15 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { streamChat } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
-import type { FileNode } from '@/lib/code-studio-types';
+import type { FileNode } from '@/lib/code-studio/core/types';
 import {
   type ComposerMode,
   canTransition,
   createModeTransition,
-} from '@/lib/code-studio-composer-state';
+} from '@/lib/code-studio/core/composer-state';
 
-export type { ComposerMode } from '@/lib/code-studio-composer-state';
-export { canTransition, createModeTransition } from '@/lib/code-studio-composer-state';
+export type { ComposerMode } from '@/lib/code-studio/core/composer-state';
+export { canTransition, createModeTransition } from '@/lib/code-studio/core/composer-state';
 
 export interface ComposerChange {
   fileId: string;

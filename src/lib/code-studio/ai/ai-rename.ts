@@ -2,7 +2,7 @@
 // Code Studio — AI-Assisted Symbol Rename
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 import { streamChat } from '@/lib/ai-providers';
 
 /* ── Types ── */

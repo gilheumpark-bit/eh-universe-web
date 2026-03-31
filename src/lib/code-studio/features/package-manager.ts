@@ -3,7 +3,7 @@
 // ============================================================
 // package.json 파싱, 의존성 추가/제거, WebContainer install 실행, 오래된 패키지 표시.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types

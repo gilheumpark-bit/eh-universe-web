@@ -22,26 +22,26 @@ jest.mock('next/dynamic', () => {
   };
 });
 
-jest.mock('@/lib/code-studio-types', () => ({
+jest.mock('@/lib/code-studio/core/types', () => ({
   DEFAULT_SETTINGS: { fontSize: 14 },
   detectLanguage: () => 'typescript',
   fileIconColor: () => '#fff',
 }));
 
-jest.mock('@/lib/code-studio-ghost', () => ({
+jest.mock('@/lib/code-studio/ai/ghost', () => ({
   registerGhostTextProvider: jest.fn(),
   cancelGhostText: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-editor-features', () => ({
+jest.mock('@/lib/code-studio/editor/editor-features', () => ({
   registerEditorFeatures: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-monaco-setup', () => ({
+jest.mock('@/lib/code-studio/editor/monaco-setup', () => ({
   setupMonaco: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-cross-file', () => ({
+jest.mock('@/lib/code-studio/core/cross-file', () => ({
   registerCrossFileProviders: jest.fn(),
 }));
 

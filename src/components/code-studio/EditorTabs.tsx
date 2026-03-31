@@ -6,7 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { X } from "lucide-react";
-import type { OpenFile } from "@/lib/code-studio-types";
+import type { OpenFile } from "@/lib/code-studio/core/types";
 
 export interface EditorTabsProps {
   openFiles: OpenFile[];

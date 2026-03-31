@@ -13,15 +13,15 @@ import {
   Package, BarChart3, Users, Wand2,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
-import type { FileNode, OpenFile } from "@/lib/code-studio-types";
-import type { RightPanel, PanelGroup, PanelDef } from "@/lib/code-studio-panel-registry";
-import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels } from "@/lib/code-studio-panel-registry";
-import { detectLanguage } from "@/lib/code-studio-types";
-import type { BugReport } from "@/lib/code-studio-bugfinder";
-import type { StressReport } from "@/lib/code-studio-stress-test";
-import type { VerificationResult } from "@/lib/code-studio-verification-loop";
-import type { ComposerMode } from "@/lib/code-studio-composer-state";
-import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio-ai-features";
+import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
+import type { RightPanel, PanelGroup, PanelDef } from "@/lib/code-studio/core/panel-registry";
+import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
+import { detectLanguage } from "@/lib/code-studio/core/types";
+import type { BugReport } from "@/lib/code-studio/pipeline/bugfinder";
+import type { StressReport } from "@/lib/code-studio/pipeline/stress-test";
+import type { VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
+import type { ComposerMode } from "@/lib/code-studio/core/composer-state";
+import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio/ai/ai-features";
 import type { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import * as PI from "@/components/code-studio/PanelImports";
 
@@ -82,10 +82,13 @@ export interface CodeStudioPanelManagerProps {
 
   // Callbacks
   onFileSelect: (node: FileNode) => void;
-  onApplyCode: (code: string) => void;
+  onApplyCode: (code: string, fileName?: string) => void;
   onSetDiffState: (state: { original: string; modified: string; fileName: string } | null) => void;
   fsUpdateContent: (id: string, content: string) => void;
   onSetOpenFiles: React.Dispatch<React.SetStateAction<OpenFile[]>>;
+  onApproveFile: (fileName: string) => void;
+  onRejectFile: (fileName: string) => void;
+  stagedFiles: Record<string, string>;
   onSetFiles: React.Dispatch<React.SetStateAction<FileNode[]>>;
   handleRunStressTest: () => void;
   handleRunVerification: () => void;
@@ -211,7 +214,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
     composerMode, onComposerTransition, panels,
     onFileSelect, onApplyCode, onSetDiffState, fsUpdateContent,
     onSetOpenFiles, onSetFiles, handleRunStressTest, handleRunVerification,
-    editorNavigateToLine, toast, lang,
+    editorNavigateToLine, toast, lang, onApproveFile, onRejectFile, stagedFiles,
   } = props;
 
   if (!rightPanel) return null;
@@ -265,6 +268,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         code={activeFile?.content ?? ""}
         language={activeFile?.language ?? "plaintext"}
         fileName={activeFile?.name ?? "untitled"}
+        onApplyCode={onApplyCode}
       />
     ),
     "search": () => (
@@ -320,6 +324,14 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
             overallStatus: effectiveStatus,
             timestamp: Date.now(),
           } : null}
+          files={Object.entries(stagedFiles || {}).map(([name]) => ({
+            name,
+            status: "pending",
+            comments: [],
+            findings: [{ severity: "info", message: "Self-repair fix staged for review", source: "pipeline", line: 0 }] as any
+          }))}
+          onApproveFile={onApproveFile}
+          onRejectFile={onRejectFile}
         />
       );
     },
@@ -413,7 +425,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         return (n.children ?? []).flatMap(flatFiles);
       })}
       onRunAudit={() => {
-        import('@/lib/code-studio-audit-engine').then(({ runProjectAudit }) => {
+        import('@/lib/code-studio/audit/audit-engine').then(({ runProjectAudit }) => {
           const ctx = {
             files: files.flatMap(function flatFiles(n: typeof files[number]): { path: string; content: string; language: string }[] {
               if (n.type === 'file') return [{ path: n.name, content: n.content ?? '', language: n.language ?? 'plaintext' }];

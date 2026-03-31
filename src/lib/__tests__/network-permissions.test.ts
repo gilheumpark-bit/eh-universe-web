@@ -68,6 +68,15 @@ describe('network-permissions', () => {
     it('returns false for null userId', () => {
       expect(isPlanetOwner(null, planet)).toBe(false);
     });
+    it('returns false for undefined userId', () => {
+      expect(isPlanetOwner(undefined, planet)).toBe(false);
+    });
+    it('returns false for empty string userId', () => {
+      expect(isPlanetOwner('', planet)).toBe(false);
+    });
+    it('returns false when the planet ownerId is empty', () => {
+      expect(isPlanetOwner('u2', { ...planet, ownerId: '' } as PlanetRecord)).toBe(false);
+    });
     it('returns false for null planet', () => {
       expect(isPlanetOwner('u2', null)).toBe(false);
     });
@@ -79,6 +88,9 @@ describe('network-permissions', () => {
     });
     it('returns true for admin non-owner', () => {
       expect(canManagePlanet('u1', adminUser, planet)).toBe(true);
+    });
+    it('returns true when a user is both admin and owner', () => {
+      expect(canManagePlanet('u2', { ...adminUser, id: 'u2' }, planet)).toBe(true);
     });
     it('returns false for non-owner member', () => {
       expect(canManagePlanet('u99', memberUser, planet)).toBe(false);

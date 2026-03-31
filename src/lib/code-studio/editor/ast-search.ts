@@ -9,7 +9,7 @@
 // PART 1 — Types
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 export type SearchPatternKind =
   | 'function-returning'

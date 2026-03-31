@@ -6,9 +6,9 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, startTransition } from "react";
 import { FileText, Bot, Hash, X } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio-types";
-import { fileIconColor } from "@/lib/code-studio-types";
-import type { AgentRole } from "@/lib/code-studio-agents";
+import type { FileNode } from "@/lib/code-studio/core/types";
+import { fileIconColor } from "@/lib/code-studio/core/types";
+import type { AgentRole } from "@/lib/code-studio/ai/agents";
 
 export type MentionKind = "file" | "agent" | "symbol";
 

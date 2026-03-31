@@ -4,7 +4,7 @@
 // Ported from CSL IDE ai-hover.ts + ai-code-actions.ts
 
 import { streamChat } from "@/lib/ai-providers";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 /** Result of an AI hover explanation request. */
 export interface HoverExplanation {

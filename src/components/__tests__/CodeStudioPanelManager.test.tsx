@@ -5,11 +5,11 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-jest.mock('@/lib/code-studio-types', () => ({
+jest.mock('@/lib/code-studio/core/types', () => ({
   detectLanguage: () => 'typescript',
 }));
 
-jest.mock('@/lib/code-studio-panel-registry', () => ({
+jest.mock('@/lib/code-studio/core/panel-registry', () => ({
   PANEL_REGISTRY: [
     { id: 'chat', label: 'Chat', labelKo: '채팅', icon: 'MessageSquare', group: 'ai', category: 'core', color: '#a855f7' },
   ],
@@ -18,11 +18,11 @@ jest.mock('@/lib/code-studio-panel-registry', () => ({
   getVisiblePanels: () => [],
 }));
 
-jest.mock('@/lib/code-studio-bugfinder', () => ({}));
-jest.mock('@/lib/code-studio-stress-test', () => ({}));
-jest.mock('@/lib/code-studio-verification-loop', () => ({}));
-jest.mock('@/lib/code-studio-composer-state', () => ({}));
-jest.mock('@/lib/code-studio-ai-features', () => ({
+jest.mock('@/lib/code-studio/pipeline/bugfinder', () => ({}));
+jest.mock('@/lib/code-studio/pipeline/stress-test', () => ({}));
+jest.mock('@/lib/code-studio/pipeline/verification-loop', () => ({}));
+jest.mock('@/lib/code-studio/core/composer-state', () => ({}));
+jest.mock('@/lib/code-studio/ai/ai-features', () => ({
   explainCode: jest.fn(),
   lintCode: jest.fn(),
   generateDocstring: jest.fn(),

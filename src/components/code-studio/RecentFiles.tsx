@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Trash2, Clock, X } from "lucide-react";
-import { fileIconColor } from "@/lib/code-studio-types";
+import { fileIconColor } from "@/lib/code-studio/core/types";
 
 interface RecentFileEntry {
   fileId: string;

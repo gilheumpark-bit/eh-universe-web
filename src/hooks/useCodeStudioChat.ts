@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { streamChat, type ChatMsg } from '@/lib/ai-providers';
-import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio-store';
+import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
 
 export interface ChatMessage {
   id: string;

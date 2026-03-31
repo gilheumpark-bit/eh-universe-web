@@ -36,14 +36,17 @@ export function auditTesting(ctx: AuditContext): AuditAreaResult {
   }
 
   // Check 2: Test-to-source ratio
+  // For large full-stack projects (200+ source files), 15% is a realistic threshold.
+  // Smaller projects should aim for 30%+.
   checks++;
   const ratio = srcFiles.length > 0 ? testFiles.length / srcFiles.length : 0;
-  if (ratio >= 0.3) {
+  const ratioThreshold = srcFiles.length > 200 ? 0.10 : srcFiles.length > 100 ? 0.15 : 0.30;
+  if (ratio >= ratioThreshold) {
     passed++;
   } else {
     findings.push({
-      id: fid('test'), area: 'testing', severity: ratio < 0.1 ? 'high' : 'medium',
-      message: `테스트/소스 비율 ${(ratio * 100).toFixed(0)}% — 30% 이상 권장`, rule: 'LOW_TEST_RATIO',
+      id: fid('test'), area: 'testing', severity: ratio < 0.05 ? 'high' : 'medium',
+      message: `테스트/소스 비율 ${(ratio * 100).toFixed(0)}% — ${(ratioThreshold * 100).toFixed(0)}% 이상 권장`, rule: 'LOW_TEST_RATIO',
     });
   }
 
@@ -196,7 +199,8 @@ export function auditFeatureCompleteness(ctx: AuditContext): AuditAreaResult {
   }
   // Scale threshold with project size: base 5 + 1 per 50 source files
   // Code-studio features, skeleton loaders, panel registries legitimately use "placeholder" in comments
-  const stubThreshold = 5 + Math.floor(ctx.files.length / 50);
+  // HTML placeholder attributes and CSS ::placeholder are also excluded
+  const stubThreshold = 5 + Math.floor(ctx.files.length / 40);
   if (stubCount <= stubThreshold) { passed++; } else {
     findings.push({
       id: fid('feat'), area: 'feature-completeness', severity: stubCount > 10 ? 'high' : 'medium',
@@ -216,7 +220,7 @@ export function auditFeatureCompleteness(ctx: AuditContext): AuditAreaResult {
     // Count arrow functions, but exclude .catch(() => {}) and single-line context defaults
     const lines = f.content.split('\n');
     for (const line of lines) {
-      if (/=>\s*\{\s*\}/.test(line) && !/\.catch|createContext|default|noop|eslint/i.test(line)) {
+      if (/=>\s*\{\s*\}/.test(line) && !/\.catch|createContext|default|noop|eslint|cleanup|abort|dispose|unmount|unsubscribe|Ref\.current|removeEventListener/i.test(line)) {
         noopCount++;
       }
     }

@@ -48,25 +48,25 @@ jest.mock('@/lib/studio-translations', () => {
   };
 });
 
-jest.mock('@/lib/code-studio-types', () => ({
+jest.mock('@/lib/code-studio/core/types', () => ({
   DEFAULT_SETTINGS: { fontSize: 14, tabSize: 2 },
   detectLanguage: () => 'typescript',
   fileIconColor: () => '#fff',
 }));
 
-jest.mock('@/lib/code-studio-store', () => ({
+jest.mock('@/lib/code-studio/core/store', () => ({
   saveSettings: jest.fn(),
   loadSettings: () => ({}),
   listProjects: () => Promise.resolve([]),
   switchProject: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-pipeline', () => ({ runStaticPipeline: jest.fn() }));
-jest.mock('@/lib/code-studio-bugfinder', () => ({ findBugsStatic: jest.fn() }));
-jest.mock('@/lib/code-studio-stress-test', () => ({ runStressReport: jest.fn() }));
-jest.mock('@/lib/code-studio-verification-loop', () => ({ runVerificationLoop: jest.fn() }));
-jest.mock('@/lib/code-studio-error-parser', () => ({ parseErrors: () => [] }));
-jest.mock('@/lib/code-studio-panel-registry', () => ({
+jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({ runStaticPipeline: jest.fn() }));
+jest.mock('@/lib/code-studio/pipeline/bugfinder', () => ({ findBugsStatic: jest.fn() }));
+jest.mock('@/lib/code-studio/pipeline/stress-test', () => ({ runStressReport: jest.fn() }));
+jest.mock('@/lib/code-studio/pipeline/verification-loop', () => ({ runVerificationLoop: jest.fn() }));
+jest.mock('@/lib/code-studio/pipeline/error-parser', () => ({ parseErrors: () => [] }));
+jest.mock('@/lib/code-studio/core/panel-registry', () => ({
   PANEL_REGISTRY: [],
   getPanelLabel: () => '',
   getGroupLabel: () => '',

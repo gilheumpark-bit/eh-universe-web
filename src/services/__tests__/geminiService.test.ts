@@ -525,13 +525,14 @@ describe('generateStoryStream', () => {
 
   it('re-throws generic errors', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    mockStreamChat.mockRejectedValue(new Error('network failure'));
+    const error = new Error('network failure');
+    mockStreamChat.mockRejectedValue(error);
 
     await expect(
       generateStoryStream(baseConfig, 'draft', jest.fn()),
     ).rejects.toThrow('network failure');
 
-    expect(consoleSpy).toHaveBeenCalledWith('Story Generation Error:', expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith('[geminiService]', 'Story Generation Error:', error);
     consoleSpy.mockRestore();
   });
 

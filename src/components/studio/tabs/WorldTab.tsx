@@ -67,6 +67,9 @@ const WorldTab: React.FC<WorldTabProps> = ({
               selectedLevel: data.selectedLevel,
               genreSelections: data.genreSelections,
               ruleLevel: data.ruleLevel,
+              phonemes: data.phonemes,
+              words: data.words,
+              hexMap: data.hexMap,
             },
           },
         });

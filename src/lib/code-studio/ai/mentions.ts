@@ -3,7 +3,7 @@
 // ============================================================
 // @file, @agent, @symbol 파싱, 실제 객체 해석, AI 컨텍스트 포매팅.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types & Patterns

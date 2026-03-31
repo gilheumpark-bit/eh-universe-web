@@ -2,7 +2,7 @@
  * Unit tests for file-sort — sortFileNodes, sortPaths
  */
 import { sortFileNodes, sortPaths } from '../file-sort';
-import type { FileNode } from '../../../code-studio-types';
+import type { FileNode } from '../../core/types';
 
 function makeNode(name: string, type: 'file' | 'folder', content?: string): FileNode {
   return { id: name, name, type, content } as FileNode;

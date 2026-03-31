@@ -405,11 +405,15 @@ export function buildSystemInstruction(
     }
   }
 
-  // Simulator reference data
+  // Simulator reference data (Legacy simulatorRef + New worldSimData)
   const simRef = config.simulatorRef;
+  const worldSim = config.worldSimData;
   let simulatorBlock = '';
+  
+  const simParts: string[] = [];
+  
+  // Legacy simulatorRef handling
   if (simRef) {
-    const simParts: string[] = [];
     if (simRef.worldConsistency) simParts.push(`- ${t('pipeline.worldConsistency')}`);
     if (simRef.genreLevel && simRef.ruleLevel) simParts.push(`- ${t('pipeline.genreLevelRules')}: Lv${simRef.ruleLevel}`);
     if (simRef.genreSelections && simRef.genreSelections.length > 0) {
@@ -426,9 +430,40 @@ export function buildSystemInstruction(
     if (simRef.timeline) simParts.push(`- ${t('pipeline.eraTimeline')}`);
     if (simRef.territoryMap) simParts.push(`- ${t('pipeline.territoryMap')}`);
     if (simRef.languageSystem) simParts.push(`- ${t('pipeline.worldLanguageSystem')}`);
-    if (simParts.length > 0) {
-      simulatorBlock = '\n[WORLD SIMULATOR REFERENCE]\n' + simParts.join('\n');
+  }
+
+  // New worldSimData handling (Universe Studio)
+  if (worldSim) {
+    if (worldSim.genreSelections && worldSim.genreSelections.length > 0) {
+      const genreStr = worldSim.genreSelections.map(s => `${s.genre} Lv${s.level}`).join(' + ');
+      simParts.push(`- [UNIVERSE MODE] Genre Blend: ${genreStr}`);
     }
+    if (worldSim.ruleLevel) {
+      simParts.push(`- [UNIVERSE MODE] Rule Intensity: Lv${worldSim.ruleLevel}`);
+    }
+    if (worldSim.civs && worldSim.civs.length > 0) {
+      simParts.push(`- [UNIVERSE MODE] Civilizations:`);
+      worldSim.civs.forEach(c => {
+        const traits = c.traits && c.traits.length > 0 ? c.traits.join(', ') : 'No traits';
+        simParts.push(`  * ${c.name} (Era: ${c.era}) - Traits: ${traits}`);
+      });
+    }
+    if (worldSim.relations && worldSim.relations.length > 0) {
+      simParts.push(`- [UNIVERSE MODE] Faction Relations:`);
+      worldSim.relations.forEach(r => {
+        simParts.push(`  * ${r.fromName} -> ${r.toName} (${r.type})`);
+      });
+    }
+    if (worldSim.transitions && worldSim.transitions.length > 0) {
+      simParts.push(`- [UNIVERSE MODE] Historical Transitions:`);
+      worldSim.transitions.forEach(tr => {
+        simParts.push(`  * ${tr.fromEra} -> ${tr.toEra}: ${tr.description}`);
+      });
+    }
+  }
+
+  if (simParts.length > 0) {
+    simulatorBlock = '\n[WORLD SIMULATOR REFERENCE]\n' + simParts.join('\n');
   }
 
   // World 3-tier framework injection

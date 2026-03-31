@@ -392,8 +392,8 @@ export interface WorldSimProps {
   lang?: Lang;
   synopsis?: string;
   worldContext?: { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string };
-  onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; genreSelections: GenreSelectionEntry[]; ruleLevel: number }) => void;
-  initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; genreSelections?: GenreSelectionEntry[]; ruleLevel?: number };
+  onSave?: (data: { civs: Civilization[]; relations: CivRelation[]; transitions: TransitionEvent[]; selectedGenre: string; selectedLevel: number; genreSelections: GenreSelectionEntry[]; ruleLevel: number; phonemes: CustomPhoneme[]; words: LangWord[]; hexMap: Record<string, string> }) => void;
+  initialData?: { civs?: { name: string; era: string; color: string; traits: string[] }[]; relations?: { fromName: string; toName: string; type: string }[]; transitions?: { fromEra: string; toEra: string; description: string }[]; selectedGenre?: string; selectedLevel?: number; genreSelections?: GenreSelectionEntry[]; ruleLevel?: number; phonemes?: CustomPhoneme[]; words?: LangWord[]; hexMap?: Record<string, string> };
 }
 
 // ── Utility re-export for brevity ──────────────────────────

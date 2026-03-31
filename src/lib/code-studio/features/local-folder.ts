@@ -2,8 +2,8 @@
 // Code Studio — Local Folder (File System Access API)
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
-import { detectLanguage } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
+import { detectLanguage } from '../core/types';
 
 // ============================================================
 // PART 1 — Types

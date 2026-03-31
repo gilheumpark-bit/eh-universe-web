@@ -8,9 +8,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
   createWebContainer,
   type WebContainerInstance,
-} from "@/lib/code-studio-webcontainer";
-import { createHMRBridge, type HMRBridge, type HMREvent } from "@/lib/code-studio-preview-hmr";
-import type { FileNode } from "@/lib/code-studio-types";
+} from "@/lib/code-studio/features/webcontainer";
+import { createHMRBridge, type HMRBridge, type HMREvent } from "@/lib/code-studio/features/preview-hmr";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 type PreviewState = "idle" | "booting" | "installing" | "starting" | "ready" | "error";
 type DeviceMode = "responsive" | "mobile" | "tablet" | "desktop";
@@ -75,6 +75,15 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
   const [navIndex, setNavIndex] = useState(-1);
 
   const hmrBridgeRef = useRef<HMRBridge | null>(null);
+  const projectFiles = useMemo(() => flattenFiles(files), [files]);
+  const previewOrigin = useMemo(() => {
+    if (!previewUrl) return "";
+    try {
+      return new URL(previewUrl).origin;
+    } catch {
+      return "";
+    }
+  }, [previewUrl]);
 
   // Auto-detect framework
   const detectedFramework = useMemo(() => {
@@ -107,10 +116,8 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
 
       setState("installing");
 
-      // Write all project files to the container
-      for (const file of flattenFiles(files)) {
-        await wc.writeFile(file.path, file.content);
-      }
+      // Write all project files to the container concurrently.
+      await Promise.all(projectFiles.map((file) => wc.writeFile(file.path, file.content)));
 
       if (wc.isAvailable) {
         await wc.installDependencies();
@@ -126,7 +133,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
       setState("error");
       setErrorMsg(err instanceof Error ? err.message : String(err));
     }
-  }, [files]);
+  }, [projectFiles]);
 
   // ── Auto-refresh on file changes ──
   useEffect(() => {
@@ -136,22 +143,23 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
       try {
         const wc = containerRef.current;
         if (!wc) return;
-        for (const file of flattenFiles(files)) {
-          await wc.writeFile(file.path, file.content);
-        }
+        await Promise.all(projectFiles.map((file) => wc.writeFile(file.path, file.content)));
         if (iframeRef.current && previewUrl) {
           iframeRef.current.src = previewUrl;
         }
       } catch { /* silent */ }
     }, 1000);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [files, visible, previewUrl]);
+  }, [projectFiles, visible, previewUrl]);
 
   // ── Initialize HMR Bridge when iframe is ready ──
   useEffect(() => {
     if (state !== "ready" || !iframeRef.current) return;
     if (hmrBridgeRef.current) { hmrBridgeRef.current.dispose(); hmrBridgeRef.current = null; }
-    const bridge = createHMRBridge(iframeRef.current, { debounceMs: 300 });
+    const bridge = createHMRBridge(iframeRef.current, {
+      debounceMs: 300,
+      targetOrigin: previewOrigin || undefined,
+    });
     bridge.on("client-error", (event: HMREvent) => {
       if (event.error) {
         setConsoleEntries((prev) => [...prev, {
@@ -164,17 +172,17 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
     });
     hmrBridgeRef.current = bridge;
     return () => { hmrBridgeRef.current?.dispose(); hmrBridgeRef.current = null; };
-  }, [state, previewUrl]);
+  }, [state, previewOrigin, previewUrl]);
 
   // ── Notify HMR bridge on file changes ──
   useEffect(() => {
     if (!hmrBridgeRef.current || state !== "ready") return;
-    for (const file of files) {
-      if (file.type === "file" && file.content != null) {
-        hmrBridgeRef.current.fileChanged(file.name, file.content);
+    for (const file of projectFiles) {
+      if (file.content != null) {
+        hmrBridgeRef.current.fileChanged(file.path, file.content);
       }
     }
-  }, [files, state]);
+  }, [projectFiles, state]);
 
   // ── Start on first visible ──
   useEffect(() => {
@@ -188,6 +196,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+      if (previewOrigin && event.origin !== previewOrigin) return;
       if (event.data?.__eh_console) {
         const { type, args } = event.data.__eh_console as { type: string; args: string[] };
         setConsoleEntries((prev) => [...prev.slice(-200), {
@@ -198,7 +207,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, []);
+  }, [previewOrigin]);
 
   // ── Navigation ──
   const handleRefresh = useCallback(() => {

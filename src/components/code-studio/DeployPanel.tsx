@@ -9,7 +9,7 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 // ============================================================
 // PART 1 — Types & Constants

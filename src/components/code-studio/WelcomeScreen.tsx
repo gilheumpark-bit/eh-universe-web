@@ -9,7 +9,7 @@ import { Code2, Play, FolderOpen, ChevronDown } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
-import { listProjects } from "@/lib/code-studio-store";
+import { listProjects } from "@/lib/code-studio/core/store";
 import type { AppLanguage } from "@/lib/studio-types";
 
 interface WelcomeScreenProps {

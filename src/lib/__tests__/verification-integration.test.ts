@@ -4,60 +4,60 @@
 // Full flow: verify -> fix -> re-verify -> stage -> apply -> rollback
 // Tests multiple modules working together.
 
-import type { PipelineResult, PipelineStage } from '@/lib/code-studio-pipeline';
-import type { BugReport } from '@/lib/code-studio-bugfinder';
-import type { FixSuggestion } from '@/lib/code-studio-pipeline-utils';
-import type { Finding } from '@/lib/code-studio-pipeline-teams';
+import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
+import type { BugReport } from '@/lib/code-studio/pipeline/bugfinder';
+import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
+import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
 import {
   runVerificationLoop,
   type VerificationConfig,
   type VerificationResult,
-} from '@/lib/code-studio-verification-loop';
+} from '@/lib/code-studio/pipeline/verification-loop';
 import {
   canTransition,
   createModeTransition,
   ALLOWED_TRANSITIONS,
   type ComposerMode,
-} from '@/lib/code-studio-composer-state';
+} from '@/lib/code-studio/core/composer-state';
 
 // ============================================================
 // PART 1 — Mocks
 // ============================================================
 
-jest.mock('@/lib/code-studio-pipeline', () => ({
+jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
   runStaticPipeline: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-bugfinder', () => ({
+jest.mock('@/lib/code-studio/pipeline/bugfinder', () => ({
   findBugsStatic: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-pipeline-utils', () => ({
+jest.mock('@/lib/code-studio/pipeline/pipeline-utils', () => ({
   generateFixes: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-stress-test', () => ({
+jest.mock('@/lib/code-studio/pipeline/stress-test', () => ({
   runStressReport: jest.fn(),
 }));
 
-jest.mock('@/lib/code-studio-patent-scanner', () => ({
+jest.mock('@/lib/code-studio/features/patent-scanner', () => ({
   scanProject: jest.fn(),
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { runStaticPipeline } = require('@/lib/code-studio-pipeline') as {
+const { runStaticPipeline } = require('@/lib/code-studio/pipeline/pipeline') as {
   runStaticPipeline: jest.Mock;
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { findBugsStatic } = require('@/lib/code-studio-bugfinder') as {
+const { findBugsStatic } = require('@/lib/code-studio/pipeline/bugfinder') as {
   findBugsStatic: jest.Mock;
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { generateFixes } = require('@/lib/code-studio-pipeline-utils') as {
+const { generateFixes } = require('@/lib/code-studio/pipeline/pipeline-utils') as {
   generateFixes: jest.Mock;
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { scanProject } = require('@/lib/code-studio-patent-scanner') as {
+const { scanProject } = require('@/lib/code-studio/features/patent-scanner') as {
   scanProject: jest.Mock;
 };
 

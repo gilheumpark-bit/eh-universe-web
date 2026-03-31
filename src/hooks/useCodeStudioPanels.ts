@@ -11,15 +11,15 @@
 
 import { useState, useCallback, useRef, useMemo } from "react";
 import { streamChat, type ChatMsg } from "@/lib/ai-providers";
-import type { AgentRole } from "@/lib/code-studio-agents";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { AgentRole } from "@/lib/code-studio/ai/agents";
+import type { FileNode } from "@/lib/code-studio/core/types";
 import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";
 import type { SymbolEntry } from "@/components/code-studio/SymbolPalette";
 import type { AIFeature } from "@/components/code-studio/AIHub";
 import type { WorkspaceThread, WorkspaceMessage } from "@/components/code-studio/AIWorkspace";
 import type { DBConnection, QueryResult } from "@/components/code-studio/DatabasePanel";
 import type { ConflictBlock } from "@/components/code-studio/MergeConflictEditor";
-import { estimateTaskCost, explainCode, lintCode, generateCommitMessage } from "@/lib/code-studio-ai-features";
+import { estimateTaskCost, explainCode, lintCode, generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 
 /** Recent file entry for the RecentFiles panel */
 export interface RecentFileEntry {

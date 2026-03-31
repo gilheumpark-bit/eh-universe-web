@@ -11,7 +11,7 @@ import {
   type AgentMessage,
   type AgentSession,
   type AgentRole,
-} from '@/lib/code-studio-agents';
+} from '@/lib/code-studio/ai/agents';
 
 export interface AgentProgress {
   currentRole: AgentRole | null;

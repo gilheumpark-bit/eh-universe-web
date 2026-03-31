@@ -39,6 +39,7 @@ import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-provider
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioMainContent from './StudioMainContent';
 import { StudioSaveSlotPanel, StudioWritingAssistantPanel } from './StudioRightPanel';
+import { useStudioShellController } from './useStudioShellController';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
@@ -170,7 +171,7 @@ export default function StudioShell() {
   } = useStudioUX();
 
   const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
-  const [suggestions, setSuggestions] = useState<import('@/lib/studio-types').ProactiveSuggestion[]>([]);
+  const { suggestions, setSuggestions } = useStudioShellController(currentSession || null, language);
   const [pipelineResult, setPipelineResult] = useState<{ stages: import('@/lib/studio-types').PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>(null);
 
   useEffect(() => {

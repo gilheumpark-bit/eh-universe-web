@@ -2,7 +2,7 @@
  * Unit tests for dead-code — scanDeadCode
  */
 import { scanDeadCode } from '../dead-code';
-import type { FileNode } from '../../../code-studio-types';
+import type { FileNode } from '../../core/types';
 
 function makeFile(id: string, name: string, content: string): FileNode {
   return { id, name, type: 'file' as const, content };

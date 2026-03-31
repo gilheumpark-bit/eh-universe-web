@@ -111,6 +111,9 @@ export interface WorldSimData {
   ruleLevel?: number;
   territories?: { id: string; name: string; civName: string; x: number; y: number; color?: string }[];
   territoryLinks?: { from: string; to: string; type: 'trade' | 'conflict' | 'border' | 'alliance' }[];
+  phonemes?: { id: string; symbol: string; roman: string; type: string; sigClass: string; freq: number; wave: string }[];
+  words?: { id: string; meaning: string; phonemes: string[]; roman: string; civId?: string }[];
+  hexMap?: Record<string, string>;
 }
 
 // World Simulator reference flags

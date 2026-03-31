@@ -5,8 +5,8 @@
 // ============================================================
 
 import React, { createContext, useContext, useReducer, useCallback, useTransition, useMemo } from "react";
-import type { OpenFile, CodeStudioSettings } from "@/lib/code-studio-types";
-import { DEFAULT_SETTINGS } from "@/lib/code-studio-types";
+import type { OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
+import { DEFAULT_SETTINGS } from "@/lib/code-studio/core/types";
 
 export type RightPanel = "chat" | "agent" | "composer" | "collab" | "none";
 export type CenterView = "editor" | "canvas" | "split" | "preview" | "diff-editor";

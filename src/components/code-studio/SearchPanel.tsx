@@ -10,7 +10,7 @@ import {
   Search, X, FileCode, ChevronDown, ChevronRight,
   Replace, History, Filter,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 const FILE_TYPE_FILTERS = [
   { label: "All Files", value: "" },

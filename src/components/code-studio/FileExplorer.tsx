@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { ContextMenu, buildFileExplorerMenu, type ContextMenuAction } from "./ContextMenu";
 import { InputDialog } from "./InputDialog";
-import type { FileNode } from "@/lib/code-studio-types";
-import { fileIconColor } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
+import { fileIconColor } from "@/lib/code-studio/core/types";
 
 interface Props {
   files: FileNode[];

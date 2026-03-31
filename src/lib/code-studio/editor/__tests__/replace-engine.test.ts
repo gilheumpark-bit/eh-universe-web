@@ -2,7 +2,7 @@
  * Unit tests for replace-engine — previewReplace, executeReplace
  */
 import { previewReplace, executeReplace } from '../replace-engine';
-import type { FileNode } from '../../../code-studio-types';
+import type { FileNode } from '../../core/types';
 
 function makeFile(id: string, name: string, content: string): FileNode {
   return { id, name, type: 'file', content } as FileNode;

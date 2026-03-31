@@ -2,8 +2,8 @@
 // PART 1 — Types & Constants
 // ============================================================
 
-import type { FileNode } from "@/lib/code-studio-types";
-import { tokenize, type Token } from "@/lib/code-studio-shell-parser";
+import type { FileNode } from "@/lib/code-studio/core/types";
+import { tokenize, type Token } from "@/lib/code-studio/core/shell-parser";
 
 export interface TerminalLine {
   id: string;

@@ -8,7 +8,7 @@ import {
   createModeTransition,
   ALLOWED_TRANSITIONS,
   type ComposerMode,
-} from '../code-studio-composer-state';
+} from '../code-studio/core/composer-state';
 
 // ============================================================
 // PART 1 — canTransition: Valid Transitions

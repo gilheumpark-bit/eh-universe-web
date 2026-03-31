@@ -187,10 +187,11 @@ function isCompoundWord(text: string, position: number, wordLength: number): boo
   const before = position > 0 ? text[position - 1] : '';
   const after = position + wordLength < text.length ? text[position + wordLength] : '';
   const koreanRange = /[\uAC00-\uD7AF]/;
-  // If EITHER before OR after is a Korean char, it's likely part of a compound word
+  // Treat it as a compound word only when the match is surrounded by Korean text
+  // on both sides. This still flags inflected forms like "기적이", "운명이다".
   const prevIsKorean = before !== '' && koreanRange.test(before);
   const nextIsKorean = after !== '' && koreanRange.test(after);
-  return prevIsKorean || nextIsKorean;
+  return prevIsKorean && nextIsKorean;
 }
 
 export function validateCausality(text: string, ruleLevel: number, language?: AppLanguage): { fixes: FixRecord[]; issues: ValidationIssue[] } {

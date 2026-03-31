@@ -8,7 +8,7 @@
 // PART 1 — Types
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 export type SymbolKind = 'function' | 'class' | 'variable' | 'interface' | 'type' | 'enum' | 'const' | 'import' | 'export';
 

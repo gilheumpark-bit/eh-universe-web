@@ -13,6 +13,8 @@ import {
   type TransitionEvent,
   type GenreSelectionEntry,
   type WorldSimProps,
+  type CustomPhoneme,
+  type LangWord,
   GENRE_LEVELS,
   ERAS,
   CIV_COLORS,
@@ -83,14 +85,18 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
     initialData?.transitions || []
   );
 
+  const [phonemes, setPhonemes] = useState<CustomPhoneme[]>(initialData?.phonemes || []);
+  const [words, setWords] = useState<LangWord[]>(initialData?.words || []);
+  const [hexMap, setHexMap] = useState<Record<string, string>>(initialData?.hexMap || {});
+
   // Auto-save to parent when data changes
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
   useEffect(() => {
     onSaveRef.current?.({
-      civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel,
+      civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel, phonemes, words, hexMap
     });
-  }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel]);
+  }, [civs, relations, transitions, selectedGenre, selectedLevel, genreSelections, ruleLevel, phonemes, words, hexMap]);
 
   const handleGenreToggle = useCallback((genre: string, level: number) => {
     setGenreSelections(prev => {
@@ -324,7 +330,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         )}
 
         {activeView === "map" && (
-          <HexMapView lang={lang} civs={civs} />
+          <HexMapView lang={lang} civs={civs} hexMap={hexMap} setHexMap={setHexMap} />
         )}
 
         {activeView === "validation" && (
@@ -332,7 +338,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         )}
 
         {activeView === "language" && (
-          <LanguageForge lang={lang} civs={civs} />
+          <LanguageForge lang={lang} civs={civs} phonemes={phonemes} setPhonemes={setPhonemes} words={words} setWords={setWords} />
         )}
 
         {/* Footer stats */}

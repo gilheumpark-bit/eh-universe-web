@@ -3,7 +3,7 @@
 // ============================================================
 // 누락된 import 감지, import 문 제안, 경로 해석, named/default import 처리.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types & Patterns

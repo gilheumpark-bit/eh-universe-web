@@ -3,7 +3,7 @@
 // ============================================================
 // TF-IDF 키워드 검색 + AI 리랭킹, 하이브리드 스코어링.
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 // ============================================================
 // PART 1 — Types & Config

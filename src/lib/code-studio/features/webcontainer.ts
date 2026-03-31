@@ -325,13 +325,42 @@ function simulateGit(args: string[]): SimProcess {
   const sub = args[0] ?? "";
   switch (sub) {
     case "status":
+      if (args.includes("--porcelain=v1")) {
+        return ok("## main");
+      }
       return ok("On branch main\nnothing to commit, working tree clean");
     case "log":
+      if (args.includes("--oneline")) {
+        return ok("abc1234 Initial commit");
+      }
       return ok("commit abc1234 (HEAD -> main)\nAuthor: Code Studio\nDate: today\n\n    Initial commit");
     case "init":
       return ok("Initialized empty Git repository in /home/project/.git/");
     case "branch":
+      if (args.some((arg) => arg.startsWith("--format="))) {
+        return ok("main * abc1234");
+      }
+      if (args[1] === "-b" && args[2]) {
+        return ok(`Switched to a new branch '${args[2]}'`);
+      }
       return ok("* main");
+    case "checkout":
+      if (args[1] === "-b" && args[2]) {
+        return ok(`Switched to a new branch '${args[2]}'`);
+      }
+      return ok(`Switched to branch '${args[1] ?? "main"}'`);
+    case "add":
+      return ok("");
+    case "commit":
+      return ok("[main def5678] Simulated commit\n 1 file changed, 1 insertion(+)");
+    case "push":
+      return ok("Everything up-to-date");
+    case "pull":
+      return ok("Already up to date.");
+    case "merge":
+      return ok("Already up to date.");
+    case "config":
+      return ok("");
     default:
       return ok(`[sim] git ${args.join(" ")}`);
   }

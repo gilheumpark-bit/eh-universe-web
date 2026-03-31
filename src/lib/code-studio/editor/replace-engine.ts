@@ -2,7 +2,7 @@
 // Code Studio — Multi-File Replace Engine
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 /* ── Types ── */
 

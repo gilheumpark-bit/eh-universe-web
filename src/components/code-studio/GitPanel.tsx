@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   GitBranch,
   GitCommit,
@@ -11,16 +11,21 @@ import {
   Plus,
   ChevronDown,
 } from "lucide-react";
-import type { FileNode, OpenFile } from "@/lib/code-studio-types";
+import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
 import {
   gitStatus,
   gitCommit as gitRealCommit,
   gitStageAll,
   gitCheckout,
   gitCreateBranch,
+  setGitRunner,
   type GitStatus,
-} from "@/lib/code-studio-git";
-import { generateCommitMessage } from "@/lib/code-studio-ai-features";
+} from "@/lib/code-studio/features/git";
+import {
+  createWebContainer,
+  type WebContainerInstance,
+} from "@/lib/code-studio/features/webcontainer";
+import { generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 import { useLang } from "@/lib/LangContext";
 
 // ============================================================
@@ -47,6 +52,13 @@ interface CommitEntry {
   message: string;
   timestamp: number;
   files: FileSnapshot[];
+}
+
+interface GitWorkspaceFile {
+  id: string;
+  name: string;
+  path: string;
+  content: string;
 }
 
 type TabId = "changes" | "history";
@@ -109,6 +121,35 @@ function flattenFiles(nodes: FileNode[]): FileNode[] {
   for (const node of nodes) {
     if (node.type === "file") result.push(node);
     if (node.children) result.push(...flattenFiles(node.children));
+  }
+  return result;
+}
+
+function flattenFilesWithPaths(
+  nodes: FileNode[],
+  parentPath = "",
+  isTopLevel = true,
+): GitWorkspaceFile[] {
+  const result: GitWorkspaceFile[] = [];
+  const skipTopLevelFolderName = isTopLevel && nodes.length === 1;
+  for (const node of nodes) {
+    if (node.type === "file") {
+      const path = parentPath ? `${parentPath}/${node.name}` : node.name;
+      result.push({
+        id: node.id,
+        name: node.name,
+        path,
+        content: node.content ?? "",
+      });
+      continue;
+    }
+
+    const nextPath = skipTopLevelFolderName
+      ? parentPath
+      : (parentPath ? `${parentPath}/${node.name}` : node.name);
+    if (node.children) {
+      result.push(...flattenFilesWithPaths(node.children, nextPath, false));
+    }
   }
   return result;
 }
@@ -356,23 +397,76 @@ export default function GitPanel({
 
   // Real git integration state
   const [gitAvailable, setGitAvailable] = useState(false);
+  const [gitBackendLabel, setGitBackendLabel] = useState("Simulation");
   const [gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
+  const gitContainerRef = useRef<WebContainerInstance | null>(null);
 
   const dirtyFiles = useMemo(
     () => openFiles.filter((f) => f.isDirty),
     [openFiles]
   );
 
-  // Check if real git runner is available on mount
-  useEffect(() => {
-    gitStatus().then((status) => {
-      setGitAvailable(true);
-      setGitStatusData(status);
-      if (status.branch) setCurrentBranch(status.branch);
-    }).catch(() => {
-      setGitAvailable(false);
+  const gitWorkspaceFiles = useMemo(
+    () => flattenFilesWithPaths(files),
+    [files],
+  );
+
+  const ensureGitRunner = useCallback(async (): Promise<WebContainerInstance> => {
+    if (gitContainerRef.current) {
+      return gitContainerRef.current;
+    }
+
+    const container = await createWebContainer();
+    gitContainerRef.current = container;
+    setGitRunner(async (args) => {
+      const result = await container.run(["git", ...args].join(" "));
+      if (result.exitCode !== 0) {
+        throw new Error(result.stderr || result.stdout || "Git command failed");
+      }
+      return result.stdout || result.stderr;
     });
+
+    try {
+      await container.run("git init");
+      await container.run("git config user.name EH-Code-Studio");
+      await container.run("git config user.email code-studio@example.local");
+    } catch {
+      // Simulated runners can no-op here.
+    }
+
+    setGitBackendLabel(container.isAvailable ? "WebContainer" : "Simulated Runner");
+    return container;
   }, []);
+
+  const syncGitWorkspace = useCallback(async (): Promise<void> => {
+    const container = await ensureGitRunner();
+    await Promise.all(
+      gitWorkspaceFiles.map((file) => container.writeFile(`/${file.path}`, file.content)),
+    );
+  }, [ensureGitRunner, gitWorkspaceFiles]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await syncGitWorkspace();
+        const status = await gitStatus();
+        if (cancelled) return;
+        setGitAvailable(true);
+        setGitStatusData(status);
+        if (status.branch) setCurrentBranch(status.branch);
+      } catch {
+        if (cancelled) return;
+        setGitAvailable(false);
+        setGitBackendLabel("Simulation");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [syncGitWorkspace]);
 
   const flatFileMap = useMemo(() => {
     const map = new Map<string, FileNode>();
@@ -389,6 +483,7 @@ export default function GitPanel({
 
     if (gitAvailable) {
       try {
+        await syncGitWorkspace();
         await gitCreateBranch(name);
       } catch {
         // Fall through to simulation
@@ -402,7 +497,7 @@ export default function GitPanel({
     setCommits(branchCommits[currentBranch] ?? []);
     setNewBranchName("");
     setShowNewBranch(false);
-  }, [newBranchName, branches, currentBranch, branchCommits, gitAvailable]);
+  }, [newBranchName, branches, currentBranch, branchCommits, gitAvailable, syncGitWorkspace]);
 
   // Branch: switch to existing branch
   const handleSwitchBranch = useCallback(async (branch: string) => {
@@ -410,6 +505,7 @@ export default function GitPanel({
 
     if (gitAvailable) {
       try {
+        await syncGitWorkspace();
         await gitCheckout(branch);
       } catch {
         // Fall through to simulation
@@ -422,7 +518,7 @@ export default function GitPanel({
     setCurrentBranch(branch);
     setCommits(branchCommits[branch] ?? []);
     setExpandedHash(null);
-  }, [currentBranch, commits, branchCommits, gitAvailable]);
+  }, [currentBranch, commits, branchCommits, gitAvailable, syncGitWorkspace]);
 
   const handleCommit = useCallback(async () => {
     if (dirtyFiles.length === 0) return;
@@ -433,6 +529,7 @@ export default function GitPanel({
     // Try real git commit first if available
     if (gitAvailable) {
       try {
+        await syncGitWorkspace();
         await gitStageAll();
         await gitRealCommit(commitMessage);
         // Refresh git status after commit
@@ -472,7 +569,7 @@ export default function GitPanel({
     setActiveTab("history");
     // 커밋 후 dirty 상태 해제
     onClearDirty?.();
-  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty, gitAvailable]);
+  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty, gitAvailable, syncGitWorkspace]);
 
   const handleRestore = useCallback(
     (commit: CommitEntry) => {
@@ -511,11 +608,11 @@ export default function GitPanel({
       <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08] flex items-center gap-2">
         <span>
           {gitAvailable
-            ? "Live Git — connected to runner"
+            ? `Git runner connected — ${gitBackendLabel}`
             : "Local simulation — changes are saved in browser only"}
         </span>
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
-          {gitAvailable ? "Live Git" : "Simulation"}
+          {gitAvailable ? gitBackendLabel : "Simulation"}
         </span>
       </div>
       {/* Branch selector */}

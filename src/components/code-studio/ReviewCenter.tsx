@@ -10,8 +10,8 @@ import {
   CheckCircle, XCircle, ChevronDown, ChevronRight,
   Filter, ThumbsUp, ThumbsDown, MessageSquare,
 } from "lucide-react";
-import type { TeamResult, Finding, Severity } from "@/lib/code-studio-pipeline-teams";
-import { getReviewChecklist, type ChecklistItem } from "@/lib/code-studio-pipeline-utils";
+import type { TeamResult, Finding, Severity } from "@/lib/code-studio/pipeline/pipeline-teams";
+import { getReviewChecklist, type ChecklistItem } from "@/lib/code-studio/pipeline/pipeline-utils";
 
 type ReviewTab = "problems" | "pipeline" | "checklist" | "bugfinder";
 

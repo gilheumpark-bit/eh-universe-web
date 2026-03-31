@@ -18,9 +18,22 @@ import {
 // Phoneme design, vocabulary builder, sentence composer
 // ============================================================
 
-export function LanguageForge({ lang, civs }: { lang: Lang; civs: Civilization[] }) {
-  const [phonemes, setPhonemes] = useState<CustomPhoneme[]>([]);
-  const [words, setWords] = useState<LangWord[]>([]);
+export function LanguageForge({ 
+  lang, 
+  civs,
+  phonemes,
+  setPhonemes,
+  words,
+  setWords
+}: { 
+  lang: Lang; 
+  civs: Civilization[];
+  phonemes: CustomPhoneme[];
+  setPhonemes: React.Dispatch<React.SetStateAction<CustomPhoneme[]>>;
+  words: LangWord[];
+  setWords: React.Dispatch<React.SetStateAction<LangWord[]>>;
+}) {
+
   const [subTab, setSubTab] = useState<"phonemes" | "words" | "compose">("phonemes");
   const [composeBuf, setComposeBuf] = useState<string[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);

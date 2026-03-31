@@ -15,12 +15,12 @@ import {
 import {
   executeCommand,
   type CommandContext,
-} from "@/lib/code-studio-terminal";
+} from "@/lib/code-studio/features/terminal";
 import {
   createWebContainer,
   type WebContainerInstance,
-} from "@/lib/code-studio-webcontainer";
-import { parseAnsi } from "@/lib/code-studio-ansi";
+} from "@/lib/code-studio/features/webcontainer";
+import { parseAnsi } from "@/lib/code-studio/core/ansi";
 import {
   HistoryManager,
   EnvironmentManager,
@@ -30,9 +30,9 @@ import {
   getAutocompleteSuggestions,
   highlightInput,
   type HighlightedSpan,
-} from "@/lib/code-studio-terminal-emulator";
+} from "@/lib/code-studio/features/terminal-emulator";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
-import type { FileNode } from "@/lib/code-studio-types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 export interface TerminalPanelProps {
   files?: FileNode[];

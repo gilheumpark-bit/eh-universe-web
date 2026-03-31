@@ -1,5 +1,5 @@
 // ============================================================
-// PART 1 — Types & Constants
+// PART 1 -- Types & Constants
 // ============================================================
 // HMR Bridge for live preview in EH Universe Code Studio.
 // Bridges the editor and the preview iframe, enabling CSS hot reload,
@@ -29,6 +29,8 @@ export interface HMRBridgeOptions {
   cssHotReload?: boolean;
   /** Verbose logging to console. Default false */
   verbose?: boolean;
+  /** Explicit iframe target origin for postMessage. Defaults to the iframe src origin. */
+  targetOrigin?: string;
 }
 
 interface FileHash {
@@ -42,10 +44,10 @@ interface PendingChange {
   type: "css" | "module" | "unknown";
 }
 
-// IDENTITY_SEAL: PART-1 | role=타입 정의 | inputs=none | outputs=HMREvent, HMRBridgeOptions
+// IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=HMREvent, HMRBridgeOptions
 
 // ============================================================
-// PART 2 — Content Hashing & Classification
+// PART 2 -- Content Hashing & Classification
 // ============================================================
 
 function simpleHash(str: string): string {
@@ -63,27 +65,32 @@ function classifyFile(filePath: string): "css" | "module" | "unknown" {
     return "css";
   }
   if (
-    lower.endsWith(".tsx") || lower.endsWith(".jsx") ||
-    lower.endsWith(".ts") || lower.endsWith(".js") || lower.endsWith(".mjs")
+    lower.endsWith(".tsx") || lower.endsWith(".jsx")
+    || lower.endsWith(".ts") || lower.endsWith(".js") || lower.endsWith(".mjs")
   ) {
     return "module";
   }
   return "unknown";
 }
 
-// IDENTITY_SEAL: PART-2 | role=해싱 및 분류 | inputs=string | outputs=hash, fileType
+// IDENTITY_SEAL: PART-2 | role=hash and classify | inputs=string | outputs=hash, fileType
 
 // ============================================================
-// PART 3 — HMR Client Script (injected into preview iframe)
+// PART 3 -- HMR Client Script
 // ============================================================
 
-const HMR_CLIENT_SCRIPT = `
+function buildHMRClientScript(parentOrigin: string): string {
+  const serializedParentOrigin = JSON.stringify(parentOrigin);
+
+  return `
 (function() {
   if (window.__hmrClientInstalled) return;
   window.__hmrClientInstalled = true;
+  var parentOrigin = ${serializedParentOrigin};
 
   window.addEventListener("message", function(event) {
     var data = event.data;
+    if (event.origin !== parentOrigin) return;
     if (!data || data.source !== "eh-hmr-bridge") return;
 
     try {
@@ -101,9 +108,9 @@ const HMR_CLIENT_SCRIPT = `
       window.parent.postMessage({
         source: "eh-hmr-client",
         type: "error",
-        error: err.message || String(err),
+        error: err && err.message ? err.message : String(err),
         file: data.filePath
-      }, "*");
+      }, parentOrigin);
     }
   });
 
@@ -130,22 +137,25 @@ const HMR_CLIENT_SCRIPT = `
       source: "eh-hmr-client",
       type: "css-update-applied",
       file: filePath
-    }, "*");
+    }, parentOrigin);
   }
 
-  window.parent.postMessage({ source: "eh-hmr-client", type: "ready" }, "*");
+  window.parent.postMessage({ source: "eh-hmr-client", type: "ready" }, parentOrigin);
 })();
 `;
+}
 
-// IDENTITY_SEAL: PART-3 | role=iframe 주입 스크립트 | inputs=postMessage | outputs=CSS 핫 리로드
+// IDENTITY_SEAL: PART-3 | role=iframe client script | inputs=parent origin | outputs=CSS hot reload
 
 // ============================================================
-// PART 4 — HMRBridge Class
+// PART 4 -- HMRBridge Class
 // ============================================================
 
 export class HMRBridge {
   private iframe: HTMLIFrameElement;
   private options: Required<HMRBridgeOptions>;
+  private targetOrigin: string;
+  private parentOrigin: string;
   private fileHashes = new Map<string, FileHash>();
   private pendingChanges: PendingChange[] = [];
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -160,11 +170,14 @@ export class HMRBridge {
       debounceMs: options.debounceMs ?? 300,
       cssHotReload: options.cssHotReload ?? true,
       verbose: options.verbose ?? false,
+      targetOrigin: options.targetOrigin ?? this.inferTargetOrigin(),
     };
+    this.targetOrigin = this.options.targetOrigin;
+    this.parentOrigin = window.location.origin;
     this.setupMessageListener();
   }
 
-  /** Inject the HMR client script into the iframe */
+  /** Inject the HMR client script into the iframe. */
   injectClient(): void {
     if (this.disposed) return;
     const iframeWindow = this.iframe.contentWindow;
@@ -174,19 +187,21 @@ export class HMRBridge {
       const doc = this.iframe.contentDocument;
       if (doc) {
         const script = doc.createElement("script");
-        script.textContent = HMR_CLIENT_SCRIPT;
+        script.textContent = buildHMRClientScript(this.parentOrigin);
         doc.head.appendChild(script);
       }
     } catch {
-      // Cross-origin — use postMessage approach
-      iframeWindow.postMessage(
-        { source: "eh-hmr-bridge", action: "inject-script", script: HMR_CLIENT_SCRIPT },
-        "*",
-      );
+      // Cross-origin fallback: ask the frame to evaluate the script if it already
+      // has a compatible listener installed.
+      this.postToIframe({
+        source: "eh-hmr-bridge",
+        action: "inject-script",
+        script: buildHMRClientScript(this.parentOrigin),
+      });
     }
   }
 
-  /** Notify the bridge that a file has changed */
+  /** Notify the bridge that a file has changed. */
   fileChanged(filePath: string, content: string): void {
     if (this.disposed) return;
 
@@ -202,14 +217,16 @@ export class HMRBridge {
     this.debounceTimer = setTimeout(() => this.flushPendingChanges(), this.options.debounceMs);
   }
 
-  /** Subscribe to HMR events */
+  /** Subscribe to HMR events. */
   on(type: HMREventType, handler: HMREventHandler): () => void {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set());
     this.listeners.get(type)!.add(handler);
-    return () => { this.listeners.get(type)?.delete(handler); };
+    return () => {
+      this.listeners.get(type)?.delete(handler);
+    };
   }
 
-  /** Force a full iframe reload */
+  /** Force a full iframe reload. */
   forceReload(): void {
     if (this.disposed) return;
     this.clientReady = false;
@@ -217,32 +234,42 @@ export class HMRBridge {
     const iframeWindow = this.iframe.contentWindow;
     if (iframeWindow) {
       try {
-        iframeWindow.postMessage({ source: "eh-hmr-bridge", action: "full-reload" }, "*");
+        this.postToIframe({ source: "eh-hmr-bridge", action: "full-reload" });
       } catch {
         this.reloadIframeSrc();
       }
     } else {
       this.reloadIframeSrc();
     }
+
     this.emit({ type: "hmr-fail-full-reload", timestamp: Date.now() });
   }
 
-  isClientReady(): boolean { return this.clientReady; }
+  isClientReady(): boolean {
+    return this.clientReady;
+  }
 
-  /** Clean up all listeners and timers */
+  /** Clean up all listeners and timers. */
   dispose(): void {
     this.disposed = true;
-    if (this.debounceTimer) { clearTimeout(this.debounceTimer); this.debounceTimer = null; }
-    if (this.messageHandler) { window.removeEventListener("message", this.messageHandler); this.messageHandler = null; }
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    if (this.messageHandler) {
+      window.removeEventListener("message", this.messageHandler);
+      this.messageHandler = null;
+    }
     this.listeners.clear();
     this.fileHashes.clear();
     this.pendingChanges = [];
   }
 
-  // ── Private ──
-
   private setupMessageListener(): void {
     this.messageHandler = (event: MessageEvent) => {
+      if (event.source !== this.iframe.contentWindow) return;
+      if (event.origin !== this.targetOrigin) return;
+
       const data = event.data;
       if (!data || data.source !== "eh-hmr-client") return;
 
@@ -255,10 +282,18 @@ export class HMRBridge {
           this.emit({ type: "css-update", file: data.file, timestamp: Date.now() });
           break;
         case "error":
-          this.emit({ type: "client-error", file: data.file, error: data.error, timestamp: Date.now() });
+          this.emit({
+            type: "client-error",
+            file: data.file,
+            error: data.error,
+            timestamp: Date.now(),
+          });
+          break;
+        default:
           break;
       }
     };
+
     window.addEventListener("message", this.messageHandler);
   }
 
@@ -267,22 +302,23 @@ export class HMRBridge {
     const changes = [...this.pendingChanges];
     this.pendingChanges = [];
 
-    const cssChanges = changes.filter((c) => c.type === "css");
-    const otherChanges = changes.filter((c) => c.type !== "css");
+    const cssChanges = changes.filter((change) => change.type === "css");
+    const otherChanges = changes.filter((change) => change.type !== "css");
 
-    const iframeWindow = this.iframe.contentWindow;
-    if (!iframeWindow) return;
+    if (!this.iframe.contentWindow) return;
 
     if (this.options.cssHotReload && cssChanges.length > 0) {
       for (const change of cssChanges) {
-        iframeWindow.postMessage(
-          { source: "eh-hmr-bridge", action: "css-update", filePath: change.filePath, content: change.content },
-          "*",
-        );
+        this.postToIframe({
+          source: "eh-hmr-bridge",
+          action: "css-update",
+          filePath: change.filePath,
+          content: change.content,
+        });
       }
     }
 
-    // Non-CSS changes trigger full reload
+    // Non-CSS changes trigger full reload.
     if (otherChanges.length > 0 || (!this.options.cssHotReload && cssChanges.length > 0)) {
       this.forceReload();
     }
@@ -297,19 +333,37 @@ export class HMRBridge {
     }
   }
 
+  private inferTargetOrigin(): string {
+    try {
+      return new URL(this.iframe.src, window.location.href).origin;
+    } catch {
+      return window.location.origin;
+    }
+  }
+
+  private postToIframe(message: Record<string, unknown>): void {
+    const iframeWindow = this.iframe.contentWindow;
+    if (!iframeWindow) return;
+    iframeWindow.postMessage(message, this.targetOrigin);
+  }
+
   private emit(event: HMREvent): void {
     const handlers = this.listeners.get(event.type);
     if (!handlers) return;
     for (const handler of handlers) {
-      try { handler(event); } catch { /* ignore listener errors */ }
+      try {
+        handler(event);
+      } catch {
+        // ignore listener errors
+      }
     }
   }
 }
 
-// IDENTITY_SEAL: PART-4 | role=HMR 브릿지 코어 | inputs=iframe, options | outputs=HMR 이벤트
+// IDENTITY_SEAL: PART-4 | role=HMR bridge core | inputs=iframe, options | outputs=HMR events
 
 // ============================================================
-// PART 5 — Factory
+// PART 5 -- Factory
 // ============================================================
 
 export function createHMRBridge(
@@ -318,7 +372,9 @@ export function createHMRBridge(
 ): HMRBridge {
   const bridge = new HMRBridge(iframe, options);
 
-  const onLoad = () => { bridge.injectClient(); };
+  const onLoad = () => {
+    bridge.injectClient();
+  };
   iframe.addEventListener("load", onLoad);
 
   if (iframe.contentDocument?.readyState === "complete") {
@@ -334,4 +390,4 @@ export function createHMRBridge(
   return bridge;
 }
 
-// IDENTITY_SEAL: PART-5 | role=팩토리 | inputs=iframe, options | outputs=HMRBridge
+// IDENTITY_SEAL: PART-5 | role=factory | inputs=iframe, options | outputs=HMRBridge

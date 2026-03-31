@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Bot, Send, Plus, Trash2, MessageSquare, Brain, Users, Loader2, X } from "lucide-react";
-import type { AgentRole } from "@/lib/code-studio-agents";
+import type { AgentRole } from "@/lib/code-studio/ai/agents";
 
 export interface WorkspaceThread {
   id: string;

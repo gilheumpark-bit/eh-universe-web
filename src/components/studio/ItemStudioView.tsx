@@ -361,7 +361,6 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   const [newMagic, setNewMagic] = useState<Partial<MagicSystem>>({
     name: '', source: '', rules: '', limitations: '',
   });
-  // const [newRank, setNewRank] = useState(''); // reserved for future rank input UI
 
   const addMagic = () => {
     if (!newMagic.name) return;

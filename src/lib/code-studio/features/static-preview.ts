@@ -2,7 +2,7 @@
 // Code Studio — Static Preview (iframe-based, no server)
 // ============================================================
 
-import type { FileNode } from '../../code-studio-types';
+import type { FileNode } from '../core/types';
 
 /* ── Types ── */
 

@@ -4,18 +4,18 @@
 // Pipeline → Auto-fix → Re-verify, up to 3 rounds.
 // Pure async — no React hooks, no DOM, no side effects.
 
-import { runStaticPipeline } from '@/lib/code-studio-pipeline';
-import type { PipelineResult, PipelineStage } from '@/lib/code-studio-pipeline';
-import { findBugsStatic } from '@/lib/code-studio-bugfinder';
-import type { BugReport } from '@/lib/code-studio-bugfinder';
-import { generateFixes } from '@/lib/code-studio-pipeline-utils';
-import type { FixSuggestion } from '@/lib/code-studio-pipeline-utils';
-import type { Finding } from '@/lib/code-studio-pipeline-teams';
-import { runStressReport } from '@/lib/code-studio-stress-test';
-import type { StressReport } from '@/lib/code-studio-stress-test';
-import { scanProject } from '@/lib/code-studio-patent-scanner';
-import type { IPReport } from '@/lib/code-studio-patent-scanner';
-import type { FileNode } from '@/lib/code-studio-types';
+import { runStaticPipeline } from '@/lib/code-studio/pipeline/pipeline';
+import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
+import { findBugsStatic } from '@/lib/code-studio/pipeline/bugfinder';
+import type { BugReport } from '@/lib/code-studio/pipeline/bugfinder';
+import { generateFixes } from '@/lib/code-studio/pipeline/pipeline-utils';
+import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
+import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
+import { runStressReport } from '@/lib/code-studio/pipeline/stress-test';
+import type { StressReport } from '@/lib/code-studio/pipeline/stress-test';
+import { scanProject } from '@/lib/code-studio/features/patent-scanner';
+import type { IPReport } from '@/lib/code-studio/features/patent-scanner';
+import type { FileNode } from '@/lib/code-studio/core/types';
 
 // ============================================================
 // PART 1 — Types & Configuration

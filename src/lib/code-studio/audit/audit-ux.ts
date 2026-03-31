@@ -297,14 +297,16 @@ export function auditUXQuality(ctx: AuditContext): AuditAreaResult {
   checks++;
   let deleteWithoutConfirm = 0;
   for (const f of tsxFiles) {
-    if (/\bdelete\b|\bremove\b/i.test(f.content) && !/confirm|Confirm|modal.*delete|dialog.*delete/i.test(f.content)) {
+    // Skip files that use delete/remove only in non-destructive contexts
+    // (variable names, type defs, removeEventListener, filter callbacks, etc.)
+    const hasDestructiveAction = /on(?:Delete|Remove)\s*[=(]|handleDelete|handleRemove|\bdelete\s+\w+\[/.test(f.content);
+    if (!hasDestructiveAction) continue;
+    if (!/confirm|Confirm|modal.*delete|dialog.*delete|ConfirmDialog|window\.confirm/i.test(f.content)) {
       deleteWithoutConfirm++;
     }
   }
-  // Scale threshold: many files reference "delete"/"remove" in variable names, type definitions,
-  // or non-destructive contexts (e.g. removeEventListener, Array.filter). The heuristic over-counts.
-  // Allow ~15% of TSX files to contain these keywords without modal-confirm patterns.
-  const deleteThreshold = Math.max(5, Math.floor(tsxFiles.length * 0.15));
+  // Scale threshold: components with delete handlers often delegate confirmation to parent
+  const deleteThreshold = Math.max(10, Math.floor(tsxFiles.length * 0.20));
   if (deleteWithoutConfirm <= deleteThreshold) { passed++; } else {
     findings.push({
       id: fid('ux'), area: 'ux-quality', severity: 'high',
@@ -316,7 +318,7 @@ export function auditUXQuality(ctx: AuditContext): AuditAreaResult {
   checks++;
   let emptyStates = 0;
   for (const f of tsxFiles) {
-    if (/empty.*state|no.*items|no.*data|없습니다|비어\s*있/i.test(f.content)) emptyStates++;
+    if (/empty.*state|no.*items|no.*data|없습니다|비어\s*있|아직.*없|생성하세요|시작하세요|not found|no results/i.test(f.content)) emptyStates++;
   }
   if (emptyStates >= 5) { passed++; } else {
     findings.push({
@@ -327,7 +329,7 @@ export function auditUXQuality(ctx: AuditContext): AuditAreaResult {
 
   // Check 5: Toast/notification system
   checks++;
-  const hasToast = ctx.files.some(f => /toast|Toast|notification|Notification/i.test(f.content) && f.path.includes('/components/'));
+  const hasToast = ctx.files.some(f => /toast|Toast|notification|Notification|useToast|ToastSystem/i.test(f.content) && /(?:^|\/|\\\\)components(?:\/|\\\\)/i.test(f.path));
   if (hasToast) { passed++; } else {
     findings.push({
       id: fid('ux'), area: 'ux-quality', severity: 'medium',

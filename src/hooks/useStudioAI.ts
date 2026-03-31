@@ -135,56 +135,73 @@ export function useStudioAI({
         },
       };
       // 3.8 — Writer Profile 힌트를 프롬프트에 주입
-      const profileHint = buildProfileHint(loadProfile('default'), language === 'KO');
-      const fullPrompt = directivePrefix + outputModePrefix + hfcpPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
-      const result = await generateStoryStream(
-        configForAI, fullPrompt,
-        (chunk) => {
-          fullContent += chunk;
-          const displayContent = stripEngineArtifacts(fullContent);
-          if (canvasPass >= 1 && canvasPass <= 3) {
-            setCanvasContent(displayContent);
-          }
-          setSessions(prev => prev.map(s => {
-            if (s.id === capturedSessionId) {
-              const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: displayContent } : m);
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        },
-        { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages }
-      );
+      const writerProfile = loadProfile('default');
+      const profileHint = buildProfileHint(writerProfile, language === 'KO');
+      const basePrompt = directivePrefix + outputModePrefix + hfcpPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
+      
+      const { getDefaultGateConfig } = await import('@/engine/quality-gate');
+      const gateConfig = getDefaultGateConfig(writerProfile.skillLevel);
+      const maxAttempts = (gateConfig.enabled && gateConfig.autoMode === 'full_auto') ? gateConfig.maxRetries : 1;
+      
+      let attempt = 1;
+      let finalContent = '';
+      let result: any;
+      let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };
+      let qTag: any;
+      let gateResult: any;
+      let ipCheck: any;
+      let currentRetryHint = '';
 
-      // Trademark/IP filter
-      const { filterTrademarks } = await import('@/engine/validator');
-      const ipCheck = filterTrademarks(fullContent);
-      if (ipCheck.matches.length > 0) {
-        fullContent = ipCheck.filtered;
-        // IP Filter 로그는 프로덕션에서 노출하지 않음
+      while (attempt <= maxAttempts) {
+        fullContent = '';
+        const promptWithHint = basePrompt + (currentRetryHint ? `\n\n${currentRetryHint}` : '');
+        result = await generateStoryStream(
+          configForAI, promptWithHint,
+          (chunk) => {
+            fullContent += chunk;
+            const displayContent = stripEngineArtifacts(fullContent);
+            if (canvasPass >= 1 && canvasPass <= 3) {
+              setCanvasContent(displayContent);
+            }
+            setSessions(prev => prev.map(s => {
+              if (s.id === capturedSessionId) {
+                const visualPrefix = attempt > 1 ? `[Quality Gate: 자동 재작성 시도 ${attempt}/${maxAttempts}]\n\n` : '';
+                const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: visualPrefix + displayContent } : m);
+                return { ...s, messages: msgs };
+              }
+              return s;
+            }));
+          },
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages }
+        );
+
+        // Trademark/IP filter
+        const { filterTrademarks } = await import('@/engine/validator');
+        ipCheck = filterTrademarks(fullContent);
+        if (ipCheck.matches.length > 0) fullContent = ipCheck.filtered;
+
+        finalContent = stripEngineArtifacts(fullContent) || result.content;
+        
+        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform); } catch(e) {}
+        qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
+
+        gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);
+        if (gateResult.passed) break;
+
+        currentRetryHint = buildRetryHint(gateResult, attempt, language === 'KO');
+        onQualityGateRetry?.(attempt, maxAttempts);
+        if (attempt < maxAttempts) {
+          attempt++;
+        } else {
+          break;
+        }
       }
 
-      const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
       incrementGenerationCount();
-      // NOD Director analysis + Quality Tag (with error guard)
-      let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };
-      try {
-        dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform);
-      } catch (dirErr) {
-        logger.warn('Director', 'Analysis failed:', dirErr);
-      }
       setDirectorReport(dReport);
-      const qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
-      // ============================================================
-      // 3.8 — Quality Gate 평가
-      // ============================================================
-      const writerProfile = loadProfile('default');
-      const gateThresholds = getDefaultThresholds(writerProfile.skillLevel);
-      const gateResult = evaluateQuality(finalContent, capturedConfig, gateThresholds, language);
-      // Quality Gate 결과를 메타에 포함 + 재시도 힌트 생성
-      const retryHint = !gateResult.passed ? buildRetryHint(gateResult, gateResult.attempt, language === 'KO') : '';
+      const retryHint = !gateResult.passed ? currentRetryHint : '';
       const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons, qualityGateRetryHint: retryHint };
 
       // ============================================================
@@ -242,7 +259,7 @@ export function useStudioAI({
               ? { ...m, content: finalContent, meta: {
                   engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length,
                   qualityTag: qTag.tag, qualityLabel: qTag.label,
-                  qualityFindings: qTag.visibleFindings.map(f => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
+                  qualityFindings: qTag.visibleFindings.map((f: any) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
                   ...gateMeta,
                 } }
               : m
