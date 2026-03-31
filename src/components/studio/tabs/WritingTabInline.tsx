@@ -26,6 +26,7 @@ const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { s
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
 const WritingToolbar = dynamic(() => import('@/components/studio/WritingToolbar').then(m => ({ default: m.WritingToolbar })), { ssr: false, loading: () => null });
 const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false, loading: () => null });
+import { RightChatPanel } from '@/components/studio/tabs/RightChatPanel';
 
 interface Props {
   language: AppLanguage;
@@ -119,7 +120,7 @@ export default function WritingTabInline(props: Props) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [isGenerating, lastMsgContent, messagesEndRef]);
 
-  return (
+  return (<div className="flex flex-row">
                   <div ref={streamContainerRef} onScroll={handleStreamScroll} className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
                     {/* Continuity Tracker Graph — 맥락 추적 */}
                     {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
@@ -647,5 +648,7 @@ export default function WritingTabInline(props: Props) {
                       </div>
                     )}
                   </div>
-  );
+                  <RightChatPanel language={language} messages={currentSession.messages.slice(0, -2)} />
+  </div>
+);
 }
