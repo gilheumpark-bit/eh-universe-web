@@ -4,11 +4,13 @@
 // PART 1 — Imports & Types
 // ============================================================
 import { type RefObject } from 'react';
+import { useState } from 'react';
 import {
   Send, Menu, X, StopCircle,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
-  Key, Sparkles,
+  Key, Sparkles, Palette,
 } from 'lucide-react';
+import { type ColorTheme, COLOR_THEMES } from '@/hooks/useStudioTheme';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import type {
@@ -31,6 +33,88 @@ import StudioTabRouter from '@/components/studio/StudioTabRouter';
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
 
+// ============================================================
+// Color Theme Picker Component
+// ============================================================
+function ColorThemePicker({ 
+  colorTheme, 
+  setColorTheme, 
+  isKO 
+}: { 
+  colorTheme: ColorTheme; 
+  setColorTheme: (theme: ColorTheme) => void; 
+  isKO: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentTheme = COLOR_THEMES.find(t => t.id === colorTheme) || COLOR_THEMES[0];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+        title={isKO ? '색상 테마' : 'Color Theme'}
+        aria-label={isKO ? '색상 테마 선택' : 'Select color theme'}
+        aria-expanded={isOpen}
+      >
+        <div 
+          className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
+          style={{ backgroundColor: currentTheme.preview }}
+        />
+        <span className="text-[10px] font-medium text-text-tertiary group-hover:text-text-secondary hidden sm:inline">
+          {isKO ? currentTheme.name : currentTheme.nameEn}
+        </span>
+        <Palette className="w-3 h-3 text-text-tertiary group-hover:text-text-secondary" />
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)} 
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-full mt-2 z-50 w-48 p-2 rounded-xl bg-bg-secondary/95 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary px-2 py-1.5 mb-1">
+              {isKO ? '색상 테마' : 'Color Theme'}
+            </div>
+            <div className="space-y-0.5">
+              {COLOR_THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => {
+                    setColorTheme(theme.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-150 ${
+                    colorTheme === theme.id 
+                      ? 'bg-accent-purple/15 text-text-primary' 
+                      : 'hover:bg-white/5 text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  <div 
+                    className={`w-5 h-5 rounded-full border-2 shadow-inner transition-all ${
+                      colorTheme === theme.id ? 'border-accent-purple scale-110' : 'border-white/20'
+                    }`}
+                    style={{ backgroundColor: theme.preview }}
+                  />
+                  <span className="text-xs font-medium">
+                    {isKO ? theme.name : theme.nameEn}
+                  </span>
+                  {colorTheme === theme.id && (
+                    <span className="ml-auto text-accent-purple text-xs">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HostedAiAvailability = Record<string, boolean>;
 
@@ -49,6 +133,8 @@ export interface StudioMainContentProps {
   // Theme
   themeLevel: number;
   toggleTheme: () => void;
+  colorTheme: ColorTheme;
+  setColorTheme: (theme: ColorTheme) => void;
 
   // Search
   showSearch: boolean;
@@ -192,9 +278,9 @@ export interface StudioMainContentProps {
 // ============================================================
 export default function StudioMainContent(props: StudioMainContentProps) {
   const {
-    focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
-    themeLevel, toggleTheme,
-    showSearch, setShowSearch, searchQuery, setSearchQuery,
+  focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
+  themeLevel, toggleTheme, colorTheme, setColorTheme,
+  showSearch, setShowSearch, searchQuery, setSearchQuery,
     showShortcuts, setShowShortcuts,
     showGlobalSearch, setShowGlobalSearch, globalSearchQuery, setGlobalSearchQuery,
     activeTab, handleTabChange, setActiveTab,
@@ -280,65 +366,34 @@ export default function StudioMainContent(props: StudioMainContentProps) {
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
             <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
-            {/* Premium Theme Switcher - Dial Style */}
-            <div className="relative">
+            {/* Premium Theme Controls - Brightness + Color */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/[0.04]">
+              {/* Brightness Dial */}
               <button 
                 onClick={toggleTheme} 
-                className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_4px_12px_rgba(0,0,0,0.3)]"
+                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
                 title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
                 aria-label={t('ui.toggleThemeLabel')}
               >
-                {/* Rotating dial indicator */}
-                <div 
-                  className="absolute inset-1 rounded-full border border-white/5"
-                  style={{
-                    background: `conic-gradient(from ${90 + themeLevel * 90}deg, transparent 0deg, ${
-                      themeLevel === 0 ? 'rgba(141,123,195,0.4)' : 
-                      themeLevel === 1 ? 'rgba(92,143,214,0.4)' : 
-                      themeLevel === 2 ? 'rgba(202,161,92,0.4)' : 
-                      'rgba(202,161,92,0.6)'
-                    } 90deg, transparent 90deg)`
-                  }}
-                />
-                
-                {/* Center icon */}
                 <span className={`relative z-10 transition-all duration-300 ${
                   themeLevel === 0 ? 'text-accent-purple' : 
                   themeLevel === 1 ? 'text-accent-blue' : 
                   themeLevel === 2 ? 'text-accent-amber' : 
-                  'text-accent-amber drop-shadow-[0_0_8px_rgba(202,161,92,0.8)]'
+                  'text-accent-amber drop-shadow-[0_0_6px_rgba(202,161,92,0.6)]'
                 }`}>
-                  {themeLevel === 0 ? (
-                    <Moon className="w-4 h-4" />
-                  ) : (
-                    <Sun className={`w-4 h-4 transition-transform duration-300 ${themeLevel === 3 ? 'scale-110' : ''}`} />
-                  )}
+                  {themeLevel === 0 ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
                 </span>
-                
-                {/* Notch indicators around the dial */}
-                {[0, 1, 2, 3].map((level) => (
-                  <span
-                    key={level}
-                    className={`absolute w-1 h-1 rounded-full transition-all duration-200 ${
-                      level <= themeLevel 
-                        ? level === 0 ? 'bg-accent-purple' : level === 1 ? 'bg-accent-blue' : 'bg-accent-amber'
-                        : 'bg-white/20'
-                    }`}
-                    style={{
-                      top: level === 0 ? '2px' : level === 3 ? '2px' : '50%',
-                      left: level === 1 ? '2px' : level === 2 ? 'auto' : '50%',
-                      right: level === 2 ? '2px' : 'auto',
-                      bottom: level === 3 ? 'auto' : 'auto',
-                      transform: level === 0 || level === 3 ? 'translateX(-50%)' : level === 1 || level === 2 ? 'translateY(-50%)' : 'none',
-                    }}
-                  />
-                ))}
-                
-                {/* Pulse effect on max brightness */}
-                {themeLevel === 3 && (
-                  <span className="absolute inset-0 rounded-full bg-accent-amber/20 animate-ping" style={{ animationDuration: '2s' }} />
-                )}
               </button>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-white/10" />
+
+              {/* Color Theme Picker */}
+              <ColorThemePicker 
+                colorTheme={colorTheme} 
+                setColorTheme={setColorTheme} 
+                isKO={isKO} 
+              />
             </div>
             <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
           </div>

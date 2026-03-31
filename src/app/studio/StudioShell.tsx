@@ -133,6 +133,7 @@ export default function StudioShell() {
 
   const {
     themeLevel, toggleTheme,
+    colorTheme, setColorTheme,
     focusMode, setFocusMode,
     showShortcuts, setShowShortcuts,
     showSearch, setShowSearch,
@@ -571,7 +572,7 @@ export default function StudioShell() {
       <StudioMainContent
         focusMode={focusMode} setFocusMode={setFocusMode}
         isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        themeLevel={themeLevel} toggleTheme={toggleTheme}
+        themeLevel={themeLevel} toggleTheme={toggleTheme} colorTheme={colorTheme} setColorTheme={setColorTheme}
         showSearch={showSearch} setShowSearch={setShowSearch}
         searchQuery={searchQuery} setSearchQuery={setSearchQuery}
         showShortcuts={showShortcuts} setShowShortcuts={setShowShortcuts}
