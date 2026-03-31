@@ -89,6 +89,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   }, []);
 
   // Render placeholder on server to prevent hydration mismatch
+  // Use fixed skeleton that doesn't depend on activeTab state
   if (!mounted) {
     return (
       <nav 
@@ -100,11 +101,13 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
         <div
           className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+          suppressHydrationWarning
         >
-          {primaryTabs.map(({ key }) => (
-            <div key={key} className="flex flex-col items-center gap-1 py-1.5 px-3 min-w-[56px]">
-              <div className="w-6 h-6 rounded bg-bg-secondary/50 animate-pulse" />
-              <div className="w-8 h-2 rounded bg-bg-secondary/50 animate-pulse" />
+          {/* Static skeleton - 5 items for free mode */}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-1 py-2.5 px-4 min-w-[52px]" suppressHydrationWarning>
+              <div className="w-6 h-6 rounded-lg bg-bg-secondary/30" />
+              <div className="w-8 h-2 rounded bg-bg-secondary/30" />
             </div>
           ))}
         </div>
@@ -117,6 +120,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
       className="fixed bottom-0 inset-x-0 z-50 md:hidden" 
       role="tablist" 
       aria-label="Studio navigation"
+      suppressHydrationWarning
     >
       {/* More panel — horizontally scrollable overlay */}
       {!isGuided && moreOpen && (
@@ -169,6 +173,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
       <div
         className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        suppressHydrationWarning
       >
         {/* Subtle top highlight */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
