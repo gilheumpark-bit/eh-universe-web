@@ -282,6 +282,24 @@ export default function Header() {
               </Link>
             );
           })}
+          <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.06em] text-text-tertiary uppercase">{L4(lang, { ko: "탐색", en: "EXPLORE", jp: "探索", cn: "探索" })}</div>
+          {exploreItems.map((item) => {
+            const isExActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className={`block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] transition-colors duration-150 ${
+                  isExActive
+                    ? "bg-accent-amber/8 text-accent-amber font-bold"
+                    : "text-text-tertiary hover:bg-white/[0.04] hover:text-text-primary"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.06em] text-text-tertiary uppercase">{L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}</div>
           {toolItems.map((item) => (
             <Link
