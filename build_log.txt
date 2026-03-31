@@ -1,0 +1,26 @@
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead. (Not supported with Turbopack.)
+??Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  쨌 clientTraceMetadata
+
+??The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead. (Not supported with Turbopack.)
+??Compiled successfully in 7.5s
+  Running next.config.js provided runAfterProductionCompile ...
+??Completed runAfterProductionCompile in 305ms
+  Running TypeScript ...
+Failed to type check.
+
+./src/app/studio/StudioShell.tsx:640:30
+Type error: Cannot find name 'setSaveSlotName'.
+
+  638 |             triggerSave={triggerSave}
+  639 |             setSaveSlotModalOpen={setSaveSlotModalOpen}
+> 640 |             setSaveSlotName={setSaveSlotName}
+      |                              ^
+  641 |           />
+  642 |         )}
+  643 |         {activeTab === 'writing' && writingMode === 'ai' && currentSession && !showDashbo...
+Next.js build worker exited with code: 1 and signal: null

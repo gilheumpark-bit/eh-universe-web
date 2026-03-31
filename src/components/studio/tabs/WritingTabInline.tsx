@@ -15,7 +15,6 @@ import type { HFCPState } from '@/engine/hfcp';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
-import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -25,8 +24,6 @@ const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: 
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: () => null });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: () => null });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
-const DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: () => null });
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: () => null });
 const WritingToolbar = dynamic(() => import('@/components/studio/WritingToolbar').then(m => ({ default: m.WritingToolbar })), { ssr: false, loading: () => null });
 const EditReferencePanel = dynamic(() => import('@/components/studio/EditReferencePanel'), { ssr: false, loading: () => null });
 
@@ -87,23 +84,19 @@ export default function WritingTabInline(props: Props) {
     canvasContent, setCanvasContent, canvasPass, setCanvasPass,
     promptDirective, setPromptDirective,
     isGenerating, lastReport,
-    handleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix,
+    handleSend, handleRegenerate, handleVersionSwitch, handleTypoFix,
     messagesEndRef, searchQuery, filteredMessages,
-    hasApiKey, setShowApiKeyModal, setActiveTab,
+    setActiveTab,
     advancedSettings, setAdvancedSettings,
-    advancedOutputMode, setAdvancedOutputMode,
-    showDashboard, rightPanelOpen, setRightPanelOpen,
-    directorReport, hfcpState, handleNextEpisode,
-    showAiLock, hostedProviders,
-    saveFlash, triggerSave, writingColumnShell,
+    rightPanelOpen, setRightPanelOpen,
+    showAiLock,
+    writingColumnShell,
     input, setInput,
   } = props;
 
   const t = createT(language);
   const isKO = language === 'KO';
-  const tObj = (TRANSLATIONS[language] ?? TRANSLATIONS.KO).writingMode;
   const showAiLockBanner = showAiLock;
-  const showApiLockBanner = showAiLock;
 
   // Fix #10: Streaming auto-scroll with manual scroll detection
   const streamContainerRef = useRef<HTMLDivElement>(null);
@@ -125,21 +118,6 @@ export default function WritingTabInline(props: Props) {
     if (userScrolledUpRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [isGenerating, lastMsgContent, messagesEndRef]);
-
-  const handleApplyEdit = () => {
-    if (!editDraft.trim()) return;
-    const editMsg: Message = { id: `edit-${Date.now()}`, role: 'assistant', content: editDraft, timestamp: Date.now() };
-    updateCurrentSession({
-      messages: [...currentSession.messages, { id: `u-edit-${Date.now()}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: Date.now() }, editMsg],
-      title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title,
-    });
-    if (currentSessionId) localStorage.removeItem(`noa_editdraft_${currentSessionId}`);
-    if (!showAiLock) setWritingMode('ai');
-    setEditDraft('');
-  };
-
-  const searchMatchesEditDraft = !!(searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase()));
-  const doHandleSend = handleSend;
 
   return (
                   <div ref={streamContainerRef} onScroll={handleStreamScroll} className={`${writingColumnShell} flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>
@@ -375,7 +353,7 @@ export default function WritingTabInline(props: Props) {
                               {t('writingMode.describeFirstScene')}
                             </p>
                             <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-2xl">
-                              {(tObj.presets as string[]).map((preset: string, i: number) => (
+                              {((TRANSLATIONS[language]?.presets ?? TRANSLATIONS.KO?.presets ?? []) as string[]).map((preset: string, i: number) => (
                                 <button key={i} onClick={() => handleSend(preset)}
                                   className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)]">
                                   {preset}

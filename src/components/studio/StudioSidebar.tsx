@@ -50,6 +50,7 @@ interface StudioSidebarProps {
   exportAllJSON: () => void;
   handleExportEPUB: () => void;
   handleExportDOCX: () => void;
+  handleImportTextFiles: (e: React.ChangeEvent<HTMLInputElement>) => void;
   exportProjectJSON?: () => void;
   exportAllEpisodesTXT?: () => void;
   exportMarkdown?: () => void;
@@ -96,6 +97,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   exportTXT,
   exportJSON,
   handleImportJSON,
+  handleImportTextFiles,
   exportAllJSON,
   handleExportEPUB,
   handleExportDOCX,
@@ -120,15 +122,16 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const [showSessionList, setShowSessionList] = useState(false);
   const [jumpValue, setJumpValue] = useState('');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const [lastClickedIdx, setLastClickedIdx] = useState<number | null>(null);
   const [batchMode, setBatchMode] = useState(false);
 
   const exportButtonClass =
-    'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
+    'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
   const languageButtonClass =
-    'rounded-full border px-3 py-1.5 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] transition-all';
+    'rounded-full border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-all';
   const lastSyncLabel = lastSyncTime
     ? new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
@@ -160,7 +163,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* Collapse toggle */}
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest"
+            className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-mono text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest"
           >
             ◀ {language === 'KO' ? '접기' : 'Collapse'}
           </button>
@@ -174,10 +177,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 </span>
                 <div>
                   <div className="site-kicker text-[0.62rem]">Narrative Workbench</div>
-                  <h1 className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-[-0.04em] text-text-primary">
+                  <h1 className="font-display text-lg font-semibold tracking-[-0.04em] text-text-primary">
                     NOA Studio
                   </h1>
-                  <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-text-tertiary">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-text-tertiary">
                     EH Universe
                   </span>
                 </div>
@@ -185,10 +188,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary md:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/4 text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary md:hidden"
                 aria-label="Close sidebar"
               >
-                <X className="h-[1.125rem] w-[1.125rem]" />
+                <X className="h-4.5 w-4.5" />
               </button>
             </div>
 
@@ -196,7 +199,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             <div className="rounded-[1.25rem] border border-white/8 bg-black/20 p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="site-kicker text-[0.58rem]">{t('sidebar.activeProject')}</span>
-                <span className="rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+                <span className="rounded-full border border-white/8 bg-white/4 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
                   {projects.length} projects
                 </span>
               </div>
@@ -204,7 +207,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               {projects.length === 0 ? (
                 <button
                   onClick={createNewProject}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-[family-name:var(--font-mono)] text-[12px] font-semibold uppercase tracking-[0.16em] text-[rgba(246,226,188,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-[rgba(246,226,188,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
                 >
                   <Plus className="h-4 w-4" /> {t('project.newProject')}
                 </button>
@@ -214,7 +217,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     <select
                       value={currentProjectId || ''}
                       onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-                      className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 font-[family-name:var(--font-mono)] text-[12px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)]"
+                      className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[12px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)]"
                     >
                       {projects.map(p => (
                         <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
@@ -222,7 +225,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     </select>
                     <button
                       onClick={createNewProject}
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
                       title={t('project.newProject')}
                     >
                       <Plus className="h-4 w-4" />
@@ -230,20 +233,20 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   </div>
 
                   {currentProject && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] font-semibold">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px] font-semibold">
                       <button
                         onClick={() => {
                           const name = window.prompt(t('project.renameProject'), currentProject.name);
                           if (name) renameProject(currentProject.id, name);
                         }}
-                        className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-text-secondary transition-all hover:border-[rgba(92,143,214,0.28)] hover:text-text-primary"
+                        className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-all hover:border-[rgba(92,143,214,0.28)] hover:text-text-primary"
                       >
                         {t('project.renameProject')}
                       </button>
                       {projects.length > 1 && (
                         <button
                           onClick={() => deleteProject(currentProject.id)}
-                          className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-text-secondary transition-all hover:border-accent-red/30 hover:text-accent-red"
+                          className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-all hover:border-accent-red/30 hover:text-accent-red"
                         >
                           {t('project.deleteProject')}
                         </button>
@@ -270,7 +273,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           <div className="flex-1 overflow-y-auto px-4 py-3">
             {/* Studio mode toggle */}
             <div className="mb-3 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2">
-              <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
                 {studioMode === 'guided'
                   ? (language === 'KO' ? '가이드 모드' : 'Guided Mode')
                   : (language === 'KO' ? '자유 모드' : 'Free Mode')}
@@ -319,7 +322,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all ${
                       activeTab === tab
                         ? 'border border-[rgba(202,161,92,0.24)] bg-[linear-gradient(135deg,rgba(202,161,92,0.16),rgba(92,143,214,0.1))] text-text-primary shadow-[0_14px_32px_rgba(0,0,0,0.22)]'
-                        : 'border border-transparent text-text-secondary hover:border-white/8 hover:bg-white/[0.04] hover:text-text-primary'
+                        : 'border border-transparent text-text-secondary hover:border-white/8 hover:bg-white/4 hover:text-text-primary'
                     }`}
                   >
                     <span
@@ -331,7 +334,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     >
                       <Icon className="h-[1.05rem] w-[1.05rem]" />
                     </span>
-                    <span className="font-[family-name:var(--font-mono)] text-[12px] font-semibold uppercase tracking-[0.12em]">
+                    <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em]">
                       {label}
                     </span>
                   </button>
@@ -340,7 +343,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
             {/* Episode Jump */}
             {orderedSessions.length > 0 && (
-              <div className="mt-5 rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+              <div className="mt-5 rounded-3xl border border-white/8 bg-black/20 p-4">
                 <div className="mb-3 flex w-full items-center justify-between gap-2">
                   <button
                     onClick={() => setShowSessionList(prev => !prev)}
@@ -355,7 +358,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   {showSessionList && orderedSessions.length > 1 && (
                     <button
                       onClick={() => { setBatchMode(prev => !prev); setSelectedSessionIds(new Set()); }}
-                      className={`text-[9px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all ${
+                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all ${
                         batchMode ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30' : 'text-text-tertiary border-white/8 hover:text-text-secondary'
                       }`}
                       title={language === 'KO' ? '일괄 선택 모드' : 'Batch select mode'}
@@ -367,7 +370,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
                 {showSessionList && batchMode && orderedSessions.length > 1 && (
                   <div className="mb-2 flex items-center gap-2 flex-wrap">
-                    <label className="flex items-center gap-1.5 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[10px] text-text-tertiary font-mono cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedSessionIds.size === orderedSessions.length}
@@ -384,7 +387,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     </label>
                     {selectedSessionIds.size > 0 && (
                       <>
-                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        <span className="text-[9px] text-text-tertiary font-mono">
                           ({selectedSessionIds.size})
                         </span>
                         <button
@@ -408,7 +411,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                               },
                             });
                           }}
-                          className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-accent-red hover:text-red-400 transition-colors"
+                          className="text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 transition-colors"
                           title={language === 'KO' ? '선택 삭제' : 'Delete selected'}
                         >
                           {language === 'KO' ? '삭제' : 'Del'}
@@ -421,7 +424,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                             setSelectedSessionIds(new Set());
                             setBatchMode(false);
                           }}
-                          className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors"
+                          className="text-[9px] font-bold font-mono uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors"
                           title={language === 'KO' ? '선택 내보내기' : 'Export selected'}
                         >
                           {language === 'KO' ? '내보내기' : 'Export'}
@@ -479,7 +482,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                             ? 'bg-accent-purple/15 text-accent-purple'
                             : currentSessionId === s.id
                             ? 'bg-[rgba(202,161,92,0.12)] text-[rgba(246,226,188,0.92)]'
-                            : 'text-text-tertiary hover:bg-white/[0.04] hover:text-text-secondary'
+                            : 'text-text-tertiary hover:bg-white/4 hover:text-text-secondary'
                         } ${dragIdx === i ? 'opacity-40' : ''} ${dragOverIdx === i && dragIdx !== i ? 'border-t-2 border-accent-purple' : ''}`}
                         title={batchMode ? (language === 'KO' ? 'Shift+클릭으로 범위 선택' : 'Shift+click for range select') : (language === 'KO' ? '드래그하여 순서 변경' : 'Drag to reorder')}
                       >
@@ -494,10 +497,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         {!batchMode && onReorderSessions && (
                           <span className="text-[10px] text-text-tertiary cursor-grab shrink-0" title={language === 'KO' ? '드래그 핸들' : 'Drag handle'}>⠿</span>
                         )}
-                        <span className="font-[family-name:var(--font-mono)] text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary">
+                        <span className="font-mono text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary">
                           {i + 1}
                         </span>
-                        <span className="truncate font-[family-name:var(--font-mono)] text-[11px] font-semibold">
+                        <span className="truncate font-mono text-[11px] font-semibold">
                           {s.title}
                         </span>
                       </button>
@@ -515,11 +518,11 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     onChange={e => setJumpValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleEpisodeJump(); }}
                     placeholder={`1–${orderedSessions.length}`}
-                    className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 font-[family-name:var(--font-mono)] text-[11px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)] focus:border-[rgba(92,143,214,0.4)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-3 py-2 font-mono text-[11px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)] focus:border-[rgba(92,143,214,0.4)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <button
                     onClick={handleEpisodeJump}
-                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
+                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
                     title={language === 'KO' ? '이동' : 'Jump'}
                   >
                     <span className="text-[12px] font-black">↵</span>
@@ -559,7 +562,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         onConfirm: () => { closeConfirm(); signOut(); },
                       })
                     }
-                    className="rounded-full border border-white/8 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary transition-all hover:border-accent-red/30 hover:text-accent-red shrink-0"
+                    className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary transition-all hover:border-accent-red/30 hover:text-accent-red shrink-0"
                   >
                     {t('confirm.logout')}
                   </button>
@@ -574,7 +577,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     signInWithGoogle();
                   }}
                   aria-disabled={!authConfigured}
-                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary ${!authConfigured ? 'opacity-35 cursor-not-allowed' : ''}`}
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary ${!authConfigured ? 'opacity-35 cursor-not-allowed' : ''}`}
                 >
                   <Cloud className="h-4 w-4" /> {t('auth.googleLogin')}
                 </button>
@@ -585,14 +588,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   <button
                     onClick={handleSync}
                     disabled={syncStatus === 'syncing'}
-                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.16em] transition-all ${
+                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-all ${
                       syncStatus === 'syncing'
                         ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-[rgba(216,230,255,0.92)]'
                         : syncStatus === 'done'
                         ? 'border-[rgba(92,214,143,0.28)] bg-[rgba(92,214,143,0.08)] text-[rgba(188,255,224,0.9)]'
                         : syncStatus === 'error'
                         ? 'border-accent-red/30 bg-accent-red/8 text-accent-red'
-                        : 'border-white/8 bg-white/[0.04] text-text-secondary hover:-translate-y-0.5 hover:border-[rgba(92,143,214,0.26)] hover:text-text-primary'
+                        : 'border-white/8 bg-white/4 text-text-secondary hover:-translate-y-0.5 hover:border-[rgba(92,143,214,0.26)] hover:text-text-primary'
                     }`}
                   >
                     {syncStatus === 'syncing'
@@ -623,7 +626,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
             <details className="group">
               <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
-                <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
                   {language === 'KO' ? '내보내기' : 'Export'}
                 </span>
                 <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
@@ -646,8 +649,11 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
                 <Download className="h-3.5 w-3.5" /> Backup
               </button>
-              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '파일 가져오기' : 'Import file'}>
-                <Upload className="h-3.5 w-3.5" /> {t('export.import')}
+              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? 'JSON 가져오기' : 'Import JSON'}>
+                <Upload className="h-3.5 w-3.5" /> JSON / 백업
+              </button>
+              <button onClick={() => textFileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '소설 텍스트 가져오기' : 'Import text novel files'}>
+                <Upload className="h-3.5 w-3.5" /> 텍스트 소설
               </button>
               {exportProjectJSON && (
                 <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
@@ -665,6 +671,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 </button>
               )}
               <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
+              <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
             </div>
 
             </div>{/* end space-y-2 */}
@@ -680,7 +687,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     className={`${languageButtonClass} ${
                       language === l
                         ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-[rgba(246,226,188,0.92)]'
-                        : 'border-white/8 bg-white/[0.04] text-text-tertiary hover:border-white/12 hover:text-text-primary'
+                        : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
                     }`}
                   >
                     {l}
@@ -694,11 +701,11 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
                   activeTab === 'settings'
                     ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-[rgba(246,226,188,0.92)]'
-                    : 'border-white/8 bg-white/[0.04] text-text-tertiary hover:border-white/12 hover:text-text-primary'
+                    : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
                 }`}
                 title={t('sidebar.settings')}
               >
-                <Settings className="h-[1.125rem] w-[1.125rem]" />
+                <Settings className="h-4.5 w-4.5" />
               </button>
             </div>
 
@@ -709,7 +716,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               const color = mb > 4 ? 'bg-red-500' : mb > 2 ? 'bg-yellow-500' : 'bg-green-500';
               return (
                 <div className="mt-2">
-                  <div className="flex justify-between text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary mb-1">
+                  <div className="flex justify-between text-[9px] font-mono text-text-tertiary mb-1">
                     <span>{mb.toFixed(1)} MB / 5 MB</span>
                     {mb > 3 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
                   </div>

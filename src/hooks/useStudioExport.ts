@@ -8,6 +8,7 @@ import { ChatSession, AppLanguage, AppTab, Project, Genre } from '@/lib/studio-t
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
+import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -200,7 +201,85 @@ export function useStudioExport({
     };
     reader.readAsText(file);
     e.target.value = '';
-  }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab]);
+  }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab, setProjects, setCurrentProjectId]);
+
+  // Import multiple text/markdown files
+  const handleImportTextFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    ensureProject();
+    const newSessions: ChatSession[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const text = await file.text();
+        
+        const delimiterTxt = '='.repeat(60);
+        
+        const createNewImportedSession = (title: string, content: string): ChatSession => {
+            const now = Date.now();
+            const id = `session-${crypto.randomUUID()}`;
+            return {
+              id,
+              title: title || '가져온 에피소드',
+              config: { ...INITIAL_CONFIG, title: title || '가져온 에피소드', episode: newSessions.length + 1 },
+              messages: [
+                {
+                  id: `msg-${Date.now()}-assistant`,
+                  role: 'assistant',
+                  content,
+                  timestamp: now
+                }
+              ],
+              lastUpdate: now
+            };
+        };
+        
+        if (text.includes(delimiterTxt)) {
+            // It's from exportAllEpisodesTXT
+            const parts = text.split(delimiterTxt);
+            for (let j = 1; j < parts.length; j += 2) {
+                const titleStr = parts[j].trim();
+                const contentStr = (parts[j+1] || '').trim();
+                if (titleStr || contentStr) {
+                    newSessions.push(createNewImportedSession(titleStr, contentStr));
+                }
+            }
+        } else if (text.startsWith('# ') || text.includes('\n## ')) {
+            // It might be from exportMarkdown
+            const parts = text.split(/^## /m);
+            if (parts.length > 1) {
+                for (let j = 1; j < parts.length; j++) {
+                    const lines = parts[j].split('\n');
+                    const titleStr = lines[0].trim();
+                    let contentStr = lines.slice(1).join('\n').trim();
+                    contentStr = contentStr.replace(/---+$/, '').trim();
+                    newSessions.push(createNewImportedSession(titleStr, contentStr));
+                }
+            } else {
+                 newSessions.push(createNewImportedSession(file.name.replace(/\.[^/.]+$/, ""), text));
+            }
+        } else {
+            // Unstructured txt or single episode
+            const title = file.name.replace(/\.[^/.]+$/, "");
+            newSessions.push(createNewImportedSession(title, text));
+        }
+    }
+    
+    if (newSessions.length > 0) {
+        setSessions(prev => {
+            const result = [...newSessions, ...prev];
+            // Re-assign episode IDs mapping to indices from the end so older is lower ep number mostly, actually let's just reverse and append appropriately or adjust indices. Best to keep simple:
+            return result.map((s, idx) => ({ ...s, config: { ...s.config, episode: result.length - idx } }));
+        });
+        setCurrentSessionId(newSessions[0].id);
+        setActiveTab('writing');
+        showAlert(language === 'KO' ? '텍스트 파일 불러오기 완료' : (t('studioExport.importSuccess') || 'Import successfully'));
+    }
+    
+    e.target.value = '';
+  }, [ensureProject, setSessions, setCurrentSessionId, setActiveTab, language, t, setProjects, setCurrentProjectId]);
 
   // Print — accepts an optional session to print a specific history card
   const handlePrint = useCallback((targetSession?: ChatSession) => {
@@ -353,6 +432,7 @@ export function useStudioExport({
     exportJSON,
     exportAllJSON,
     handleImportJSON,
+    handleImportTextFiles,
     handlePrint,
     handleExportEPUB,
     handleExportDOCX,

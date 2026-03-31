@@ -4,22 +4,17 @@
 // PART 1 — Imports
 // ============================================================
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import type {
-  StoryConfig, AppLanguage, AppTab, ChatSession, Project,
-} from '@/lib/studio-types';
-import { Genre } from '@/lib/studio-types';
+import { useRouter, usePathname } from 'next/navigation';
+import type { AppLanguage, AppTab, Project } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
 import { logger } from '@/lib/logger';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 import MobileDrawer from '@/components/studio/MobileDrawer';
-import { useProjectManager, INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { useProjectManager } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
@@ -32,7 +27,6 @@ import { StudioConfigProvider, StudioUIProvider } from '@/contexts/StudioContext
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
-import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
@@ -52,7 +46,6 @@ const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistr
 // ============================================================
 export default function StudioShell() {
   const { lang } = useLang();
-  const searchParams = useSearchParams();
   const studioRouter = useRouter();
   const pathname = usePathname();
   const [language, setLanguage] = useState<AppLanguage>(() => {
@@ -139,7 +132,7 @@ export default function StudioShell() {
     : t('ui.apiKeySetUp');
 
   const {
-    themeLevel, lightTheme, toggleTheme,
+    themeLevel, toggleTheme,
     focusMode, setFocusMode,
     showShortcuts, setShowShortcuts,
     showSearch, setShowSearch,
@@ -252,18 +245,9 @@ export default function StudioShell() {
     setShowApiKeyModal,
   });
 
-  useEffect(() => {
-    if (!aiCapabilitiesLoaded) return;
-    if (hasAiAccess) {
-      setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
-      localStorage.setItem('noa_writing_access', 'api');
-    } else {
-      setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
-      localStorage.setItem('noa_writing_access', 'manual');
-    }
-  }, [hasAiAccess, aiCapabilitiesLoaded]);
 
-  // IDENTITY_SEAL: PART-3 | role=import-effects | inputs=hydrated,searchParams | outputs=side-effects
+
+  // IDENTITY_SEAL: PART-3 | role=import-effects | inputs=hydrated | outputs=side-effects
 
   // ============================================================
   // PART 4 — Callbacks & Derived State
@@ -297,6 +281,17 @@ export default function StudioShell() {
     canvasPass, setCanvasPass,
     promptDirective, setPromptDirective,
   } = useStudioWritingMode(currentSessionId, hydrated);
+
+  useEffect(() => {
+    if (!aiCapabilitiesLoaded) return;
+    if (hasAiAccess) {
+      setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
+      localStorage.setItem('noa_writing_access', 'api');
+    } else {
+      setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);
+      localStorage.setItem('noa_writing_access', 'manual');
+    }
+  }, [hasAiAccess, aiCapabilitiesLoaded, setWritingMode]);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
@@ -331,6 +326,7 @@ export default function StudioShell() {
     advancedOutputMode: advancedSettings.outputMode,
     advancedSettings,
     onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onPipelineUpdate: setPipelineResult as any,
   });
 
@@ -382,6 +378,7 @@ export default function StudioShell() {
 
   const {
     exportTXT, exportJSON, exportAllJSON, handleImportJSON,
+    handleImportTextFiles,
     handlePrint, handleExportEPUB, handleExportDOCX,
     exportProjectJSON, exportAllEpisodesTXT, exportMarkdown,
   } = useStudioExport({
@@ -539,6 +536,7 @@ export default function StudioShell() {
         exportTXT={exportTXT}
         exportJSON={exportJSON}
         handleImportJSON={handleImportJSON}
+        handleImportTextFiles={handleImportTextFiles}
         exportAllJSON={exportAllJSON}
         handleExportEPUB={handleExportEPUB}
         handleExportDOCX={handleExportDOCX}
@@ -563,7 +561,7 @@ export default function StudioShell() {
       {!isSidebarOpen && !focusMode && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[60] items-center justify-center w-7 h-20 bg-bg-secondary border border-border border-l-0 rounded-r-xl text-text-tertiary hover:text-accent-purple hover:bg-bg-tertiary transition-all shadow-lg cursor-pointer"
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-60 items-center justify-center w-7 h-20 bg-bg-secondary border border-border border-l-0 rounded-r-xl text-text-tertiary hover:text-accent-purple hover:bg-bg-tertiary transition-all shadow-lg cursor-pointer"
           title={language === 'KO' ? '\uC0AC\uC774\uB4DC\uBC14 \uC5F4\uAE30' : 'Open sidebar'}
         >
           <span className="text-xs font-bold">{'\u25B6'}</span>
