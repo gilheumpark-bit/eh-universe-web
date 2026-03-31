@@ -91,26 +91,34 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 
   return (
     <div className="animate-in fade-in duration-500">
-      {/* Sub-tab bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
-        <div className="flex items-center gap-1 p-1 bg-bg-secondary/50 border border-border rounded-2xl w-fit" role="tablist">
+      {/* Sub-tab bar — Premium Card Style */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-4">
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-bg-secondary/30 backdrop-blur-sm border border-border rounded-2xl" role="tablist">
           {SUB_TAB_ORDER.map(tab => {
             const Icon = SUB_TAB_ICONS[tab];
             const active = subTab === tab;
+            const colorMap: Record<WorldSubTab, string> = {
+              design: 'accent-purple',
+              simulator: 'accent-green',
+              analysis: 'accent-blue',
+              timeline: 'accent-amber',
+              map: 'accent-purple',
+            };
+            const color = colorMap[tab];
             return (
               <button
                 key={tab}
                 role="tab"
                 aria-selected={active}
                 onClick={() => setSubTab(tab)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                   active
-                    ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20'
-                    : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50'
+                    ? `bg-${color}/15 text-${color === 'accent-amber' ? 'accent-amber' : color} border border-${color}/30 shadow-[0_0_16px_rgba(141,123,195,0.1)]`
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                {labels[tab]}
+                <Icon className={`w-4 h-4 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-105'}`} />
+                <span>{labels[tab]}</span>
               </button>
             );
           })}

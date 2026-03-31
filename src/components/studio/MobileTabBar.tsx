@@ -48,10 +48,16 @@ const GUIDED_TABS: { key: AppTab; icon: React.ElementType }[] = [
 export default function MobileTabBar({ activeTab, onTabChange, language, mode = 'free' }: MobileTabBarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const isGuided = mode === 'guided';
   const primaryTabs = isGuided ? GUIDED_TABS : PRIMARY_TABS;
   const t = createT(language);
   const moreScrollRef = useRef<HTMLDivElement>(null);
+
+  // Prevent hydration mismatch by only rendering dynamic content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleTab = useCallback((key: AppTab | 'more') => {
     if (isGuided) { onTabChange(key as AppTab); return; }
@@ -82,11 +88,24 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
     }
   }, []);
 
+  // Render placeholder on server to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <nav 
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden h-[68px] bg-bg-primary/90" 
+        role="tablist" 
+        aria-label="Studio navigation"
+        suppressHydrationWarning
+      />
+    );
+  }
+
   return (
     <nav 
       className="fixed bottom-0 inset-x-0 z-50 md:hidden" 
       role="tablist" 
       aria-label="Studio navigation"
+      suppressHydrationWarning
     >
       {/* More panel — horizontally scrollable overlay */}
       {!isGuided && moreOpen && (
