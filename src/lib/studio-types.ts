@@ -75,6 +75,7 @@ export interface CharRelation {
   to: string;
   type: CharRelationType;
   desc?: string;
+  dynamicSpeechStyle?: string;
 }
 
 // Scene Sheet (연출 스튜디오) data
@@ -114,6 +115,7 @@ export interface WorldSimData {
   phonemes?: { id: string; symbol: string; roman: string; type: "consonant" | "vowel"; sigClass: "sustained" | "modulated" | "percussive" | "cyclic" | "silent"; freq: number; wave: "sine" | "sawtooth" | "square" | "triangle"; }[];
   words?: { id: string; meaning: string; phonemes: string[]; roman: string; civId?: string }[];
   hexMap?: Record<string, string>;
+  _latestUpdates?: any;
 }
 
 // World Simulator reference flags
@@ -439,6 +441,8 @@ export interface VisualPromptCard {
   createdAt: number;
   updatedAt: number;
   generatedImages?: GeneratedVisualAsset[];
+  seed?: number;
+  referenceImageUrl?: string;
 }
 
 export interface GeneratedVisualAsset {

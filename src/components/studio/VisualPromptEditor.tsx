@@ -78,7 +78,13 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
     const ac = new AbortController();
     abortRef.current = ac;
 
-    const result = await generateImage(imageProvider, finalPrompt, negPrompt, imageApiKey, { n: 1 }, ac.signal);
+    const options = { 
+      n: 1, 
+      seed: card.seed, 
+      referenceImageUrl: card.referenceImageUrl 
+    };
+
+    const result = await generateImage(imageProvider, finalPrompt, negPrompt, imageApiKey, options, ac.signal);
     if (result.error) {
       setGenError(result.error);
     } else {
@@ -198,6 +204,41 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
               </div>
             );
           })}
+        </div>
+      </details>
+
+      {/* Tunneling / Seed (Advanced) */}
+      <details className="group">
+        <summary className="text-[10px] font-black text-text-tertiary uppercase tracking-widest cursor-pointer hover:text-text-secondary mt-2">
+          {isKO ? '▸ Image2Image 터널링 및 시드 (고급)' : '▸ Image2Image Tunneling & Seed (Advanced)'}
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div>
+            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '시드값 (Seed)' : 'Seed'}</label>
+            <input
+              type="number"
+              value={card.seed || ''}
+              onChange={e => update({ seed: e.target.value ? Number(e.target.value) : undefined })}
+              placeholder="e.g. 42"
+              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus:border-zinc-600 px-3 py-2 rounded-lg"
+            />
+            <p className="text-[9px] text-zinc-500 mt-1">
+              {isKO ? '시드 값을 고정하면 인물의 얼굴이나 아트 스타일의 시각적 일관성(Consistency)을 유지하기 쉽습니다.' : 'Fixing the seed helps maintain face/style consistency.'}
+            </p>
+          </div>
+          <div>
+            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '레퍼런스 이미지 URL' : 'Reference Image URL'}</label>
+            <input
+              type="url"
+              value={card.referenceImageUrl || ''}
+              onChange={e => update({ referenceImageUrl: e.target.value })}
+              placeholder="https://..."
+              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus:border-zinc-600 px-3 py-2 rounded-lg"
+            />
+            <p className="text-[9px] text-zinc-500 mt-1">
+              {isKO ? '컨트롤넷이나 Image2Image 파이프라인에서 참조할 원본 캐릭터의 이미지 주소(URL)입니다.' : 'Source image URL for ControlNet or Image2Image pipeline.'}
+            </p>
+          </div>
         </div>
       </details>
 

@@ -351,6 +351,34 @@ Appropriate for light novels, web fiction, casual first-person narration.`;
 }
 
 // ============================================================
+// PART 4C — 국가별 웹소설 현지화 알고리즘 (JP, CN 특화)
+// ============================================================
+
+function buildCountrySpecificDirective(targetLang: TranslationTarget, mode: TranslationMode): string {
+  if (mode !== 'experience') return ''; // Fidelity 모드에서는 원문 1:1 대응 원칙이므로 생략
+
+  if (targetLang === 'JP') {
+    return `[JP Localization Algorithm (Narou/Light Novel Style)]
+- **Pronouns & Honorifics:** Carefully choose first-person pronouns (俺/僕/私) and second-person pronouns (お前/君/あなた) based on the character's relation and personality.
+- **Suffixes:** Retain or adapt honorific suffixes (-san, -sama, -kun, -chan) if it fits the character dynamics. Translate "선배", "형", "오빠", "누나" to appropriate Japanese equivalents.
+- **Emphasis:** Use Japanese quotation marks (「」 and 『』). Use Katakana (カタカナ) creatively for emphasis, foreign concepts, or magic spells.
+- **Reading Rhythm:** Japanese web novels (Narou-kei) favor extremely short paragraphs and frequent line breaks. Embrace this spacing if the source text implies a fast pace.
+- **Tone:** Translate distinct anime/manga tropes smoothly (e.g., Tsundere, Chuunibyou elements) using native Japanese otaku/novel vocabularies.`;
+  }
+
+  if (targetLang === 'CN') {
+    return `[CN Localization Algorithm (Wangwen/Xianxia Style)]
+- **Cultural Equivalents:** Convert Korean idioms into equivalent four-character Chinese idioms (成语 - Chengyu) where it elevates the prose naturally.
+- **Honorifics & Titles:** Translate martial arts or interpersonal titles into proper Wuxia/Xianxia terms (e.g., 사형 → 师兄 Shixiong, 장문인 → 掌门 Zhangmen, 도련님 → 少爷 Shaoye).
+- **Prose Style:** Chinese web fiction flows with punchy, rhythmic sentences (often pairing 4-character or 6-character phrases). Adapt sentence structure to fit this cadence.
+- **Emphasis & Formatting:** Use full-width punctuation. Translate distinct Korean web novel slang into equivalent native Chinese web novel slang (网文) where possible.
+- **Pacing:** Chinese readers expect forward momentum. Ensure action scenes read dynamically without bloated descriptive padding.`;
+  }
+
+  return '';
+}
+
+// ============================================================
 // PART 5 — 통합 시스템 프롬프트 빌더
 // ============================================================
 
@@ -433,6 +461,12 @@ Output ONLY the recreated text, nothing else.`);
     });
     parts.push(`[Glossary — MUST use these translations consistently]
 ${glossaryLines.join('\n')}`);
+  }
+
+  // 국가 별 특정 알고리즘 주입 (일본/중국 웹소설 특화)
+  const countryDirective = buildCountrySpecificDirective(safeConfig.targetLang, safeConfig.mode);
+  if (countryDirective) {
+    parts.push(countryDirective);
   }
 
   // 장르 프리셋 주입 (PART 13)

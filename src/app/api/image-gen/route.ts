@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { provider, prompt, negativePrompt, apiKey, width, height, n } = body;
+    const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl } = body;
 
     if (!provider || !prompt || !apiKey) {
       return NextResponse.json({ error: 'Missing required fields: provider, prompt, apiKey' }, { status: 400 });
@@ -83,9 +83,25 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================================
-    // Stability AI (SDXL)
+    // Stability AI (SDXL) — Text to Image & Auto-seed
     // ============================================================
     if (provider === 'stability') {
+      const payload: any = {
+        text_prompts: [
+          { text: prompt, weight: 1 },
+          ...(negativePrompt ? [{ text: negativePrompt, weight: -1 }] : []),
+        ],
+        cfg_scale: 7,
+        width: clampSize(width || 1024, 512, 1536),
+        height: clampSize(height || 1024, 512, 1536),
+        steps: 30,
+        samples: Math.min(n || 1, 4),
+      };
+
+      if (seed !== undefined && seed !== null) {
+        payload.seed = Number(seed);
+      }
+
       const res = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
         method: 'POST',
         headers: {
@@ -93,17 +109,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          text_prompts: [
-            { text: prompt, weight: 1 },
-            ...(negativePrompt ? [{ text: negativePrompt, weight: -1 }] : []),
-          ],
-          cfg_scale: 7,
-          width: clampSize(width || 1024, 512, 1536),
-          height: clampSize(height || 1024, 512, 1536),
-          steps: 30,
-          samples: Math.min(n || 1, 4),
-        }),
+        body: JSON.stringify(payload),
         signal: AbortSignal.timeout(55_000),
       });
 

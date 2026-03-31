@@ -321,7 +321,11 @@ export function buildSystemInstruction(
       const fromName = injectedCharacters.find(c => c.id === r.from)?.name || r.from;
       const toName = injectedCharacters.find(c => c.id === r.to)?.name || r.to;
       const label = REL_LABELS[r.type]?.[language] ?? REL_LABELS[r.type]?.EN ?? r.type;
-      return `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
+      let mapStr = `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
+      if (r.dynamicSpeechStyle) {
+        mapStr += `\n    └ ${isKO ? '대화 톤 지시' : 'Speech Rule'} (${fromName} -> ${toName}): ${r.dynamicSpeechStyle}`;
+      }
+      return mapStr;
     }).join('\n')
     : '';
 
@@ -641,26 +645,62 @@ export function postProcessResponse(
   language: AppLanguage,
   platform: PlatformType = PlatformType.MOBILE
 ): { content: string; report: EngineReport } {
+  let worldUpdates = undefined;
+  
+  // Attempt to parse world_updates from any trailing JSON block
+  const jsonMatch = text.match(/```(?:json|JSON)?\s*(\{[\s\S]*?\})\s*```/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      if (parsed.world_updates) {
+        worldUpdates = parsed.world_updates;
+      }
+    } catch (e) {}
+  } else {
+    // Also try without markdown blocks if it's just raw JSON at the end
+    try {
+      const gradeIndex = text.lastIndexOf('"grade"');
+      if (gradeIndex !== -1) {
+        for (let braceIndex = text.lastIndexOf('{', gradeIndex); braceIndex >= 0; braceIndex = text.lastIndexOf('{', braceIndex - 1)) {
+          const candidate = text.slice(braceIndex).trim();
+          if (candidate.startsWith('{')) {
+            const parsed = JSON.parse(candidate);
+            if (parsed.world_updates) {
+              worldUpdates = parsed.world_updates;
+            }
+            break;
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
   const report = generateEngineReport(text, config, language, platform);
+  if (worldUpdates) {
+    report.worldUpdates = worldUpdates;
+  }
   return { content: stripEngineArtifacts(text), report };
 }
 
 function stripTrailingReportJson(text: string): string {
   const gradeIndex = text.lastIndexOf('"grade"');
-  if (gradeIndex === -1 || !/"metrics"\s*:/.test(text.slice(gradeIndex))) {
+  if (gradeIndex === -1 && !/"world_updates"\s*:/.test(text)) {
     return text;
   }
 
-  for (let braceIndex = text.lastIndexOf('{', gradeIndex); braceIndex >= 0; braceIndex = text.lastIndexOf('{', braceIndex - 1)) {
+  const scanStart = Math.max(gradeIndex, text.lastIndexOf('"world_updates"'));
+  if (scanStart === -1) return text;
+
+  for (let braceIndex = text.lastIndexOf('{', scanStart); braceIndex >= 0; braceIndex = text.lastIndexOf('{', braceIndex - 1)) {
     const candidate = text.slice(braceIndex).trim();
     if (!candidate.startsWith('{')) continue;
     try {
       const parsed = JSON.parse(candidate);
-      if (parsed && typeof parsed === 'object' && 'grade' in parsed && 'metrics' in parsed) {
+      if (parsed && typeof parsed === 'object' && ('grade' in parsed || 'metrics' in parsed || 'world_updates' in parsed)) {
         return text.slice(0, braceIndex).trimEnd();
       }
     } catch {
-      // keep scanning earlier braces until a valid trailing report object is found
+      // keep scanning earlier braces
     }
   }
 

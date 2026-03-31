@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 
-export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items';
+export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string; };
 export type WorldContext = { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string; };
 export type SceneTierContext = { charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[]; corePremise?: string; powerStructure?: string; currentConflict?: string; };
@@ -86,6 +86,51 @@ ${existingBlock}`, {
       type: Type.OBJECT,
       properties: { name: { type: Type.STRING }, category: { type: Type.STRING }, rarity: { type: Type.STRING }, description: { type: Type.STRING }, effect: { type: Type.STRING }, obtainedFrom: { type: Type.STRING }, worldConnection: { type: Type.STRING }, flavorText: { type: Type.STRING }, },
       required: ['name', 'category', 'rarity', 'description', 'effect'],
+    },
+  }, []);
+}
+
+export async function handleSkills(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = []) {
+  const existingBlock = existingNames.length > 0 ? `\nExisting skills (DO NOT duplicate): ${existingNames.join(', ')}` : '';
+  return generateJson<unknown[]>(apiKey, model, `Based on the genre [${config.genre}] and world setting [${config.synopsis}],
+generate exactly ${count} unique and compelling skills/abilities in ${LANGUAGE_NAMES[language]}.
+
+For each skill provide ALL of the following:
+- name: The skill or ability's name
+- type: Exactly one of "active", "passive", or "ultimate"
+- owner: The character or class likely to wield this (placeholder name or archetype)
+- description: How the skill is performed and what it looks like (2-3 sentences)
+- cost: What it costs to use (mana, stamina, HP, sanity, etc.)
+- cooldown: Usage limitations
+- rank: Power level or grade (e.g., S-Rank, Level 3)
+${existingBlock}`, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: { name: { type: Type.STRING }, type: { type: Type.STRING }, owner: { type: Type.STRING }, description: { type: Type.STRING }, cost: { type: Type.STRING }, cooldown: { type: Type.STRING }, rank: { type: Type.STRING } },
+      required: ['name', 'type', 'description'],
+    },
+  }, []);
+}
+
+export async function handleMagicSystems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 2, existingNames: string[] = []) {
+  const existingBlock = existingNames.length > 0 ? `\nExisting magic/power systems (DO NOT duplicate): ${existingNames.join(', ')}` : '';
+  return generateJson<unknown[]>(apiKey, model, `Based on the genre [${config.genre}] and world setting [${config.synopsis}],
+generate exactly ${count} unique core magic or power systems in ${LANGUAGE_NAMES[language]}.
+The system MUST fit the world logically and have clear rules.
+
+For each system provide ALL of the following:
+- name: The name of the magic/power system
+- source: Where the energy/power comes from (mana core, divine grace, existence density, etc.)
+- rules: How it is harnessed and utilized (mechanics)
+- limitations: Critical flaws, costs, or side-effects of using it
+- ranks: An array of 3 to 5 power tiers or growth stages (e.g. ["1-Circle", "2-Circle", "3-Circle"])
+${existingBlock}`, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: { name: { type: Type.STRING }, source: { type: Type.STRING }, rules: { type: Type.STRING }, limitations: { type: Type.STRING }, ranks: { type: Type.ARRAY, items: { type: Type.STRING } } },
+      required: ['name', 'source', 'rules', 'limitations', 'ranks'],
     },
   }, []);
 }

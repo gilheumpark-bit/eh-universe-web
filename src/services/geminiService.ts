@@ -7,7 +7,7 @@
 // ============================================================
 
 import { logger } from '@/lib/logger';
-import { StoryConfig, Character, Item, AppLanguage, Message } from "../lib/studio-types";
+import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
@@ -287,6 +287,84 @@ export const generateItems = async (
       category: normalizeCategory((item as Item).category || 'misc') as Item['category'],
       rarity: normalizeRarity((item as Item).rarity || 'common') as Item['rarity'],
       id: `item-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    }));
+};
+
+// ============================================================
+// PART 4C: SKILL GENERATION
+// ============================================================
+
+export const generateSkills = async (
+  config: StoryConfig,
+  language: AppLanguage = 'KO',
+  count: number = 3,
+): Promise<Skill[]> => {
+  const existingNames = (config.skills || []).map(s => s.name).filter(Boolean);
+  const results = await fetchStructuredGemini<unknown[]>({
+    task: 'skills',
+    config: {
+      genre: config.genre,
+      synopsis: config.synopsis,
+    },
+    language,
+    count,
+    existingNames,
+  });
+
+  if (!Array.isArray(results)) return [];
+
+  const VALID_TYPES = ['active', 'passive', 'ultimate'];
+  const normalizeType = (t: string) => VALID_TYPES.includes(t) ? t : 'active';
+
+  return results
+    .filter((skill): skill is Omit<Skill, 'id'> => {
+      return Boolean(
+        skill
+        && typeof skill === 'object'
+        && typeof (skill as Skill).name === 'string'
+      );
+    })
+    .map((skill) => ({
+      ...skill,
+      type: normalizeType((skill as Skill).type || 'active') as Skill['type'],
+      id: `skill-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    }));
+};
+
+// ============================================================
+// PART 4D: MAGIC SYSTEM GENERATION
+// ============================================================
+
+export const generateMagicSystems = async (
+  config: StoryConfig,
+  language: AppLanguage = 'KO',
+  count: number = 2,
+): Promise<MagicSystem[]> => {
+  const existingNames = (config.magicSystems || []).map(m => m.name).filter(Boolean);
+  const results = await fetchStructuredGemini<unknown[]>({
+    task: 'magicSystems',
+    config: {
+      genre: config.genre,
+      synopsis: config.synopsis,
+    },
+    language,
+    count,
+    existingNames,
+  });
+
+  if (!Array.isArray(results)) return [];
+
+  return results
+    .filter((magic): magic is Omit<MagicSystem, 'id'> => {
+      return Boolean(
+        magic
+        && typeof magic === 'object'
+        && typeof (magic as MagicSystem).name === 'string'
+      );
+    })
+    .map((magic) => ({
+      ...magic,
+      id: `magic-ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     }));
 };
 

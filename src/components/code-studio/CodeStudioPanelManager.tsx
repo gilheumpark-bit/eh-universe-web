@@ -259,7 +259,18 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         code={activeFile?.content ?? ""}
         language={activeFile?.language ?? "plaintext"}
         fileName={activeFile?.name ?? "untitled"}
-        onComplete={() => {}}
+        onComplete={(result) => {
+          if (result && result.files?.length > 0) {
+            for (const f of result.files) {
+              if (f.content && activeFileId) {
+                const newContent = f.content;
+                fsUpdateContent(activeFileId, newContent);
+                onSetOpenFiles((prev) => prev.map((file) => file.id === activeFileId ? { ...file, content: newContent, isDirty: true } : file));
+              }
+            }
+            toast(`Autopilot applied to ${result.files.length} file(s)`, "success");
+          }
+        }}
         onClose={() => onSetRightPanel(null)}
       />
     ),

@@ -12,7 +12,7 @@ import {
   Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
   BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
 } from 'lucide-react';
-import { generateItems } from '@/services/geminiService';
+import { generateItems, generateSkills, generateMagicSystems } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
 
 // ============================================================
@@ -413,12 +413,25 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       showAlert(t('itemStudio.synopsisRequired'));
       return;
     }
+    if (subTab === 'balance') {
+      showAlert(language === 'KO' ? '밸런스 탭에서는 생성할 수 없습니다. 아이템/스킬/상성 탭을 선택해주세요.' : 'Cannot generate in balance tab. Select Items, Skills, or Systems tab.');
+      return;
+    }
     setIsGenerating(true);
     try {
-      const generated = await generateItems(config, language, 3);
-      setItems(prev => [...prev, ...generated]);
+      if (subTab === 'items') {
+        const generated = await generateItems(config, language, 3);
+        setItems(prev => [...prev, ...generated]);
+      } else if (subTab === 'skills') {
+        const generated = await generateSkills(config, language, 3);
+        setSkills(prev => [...prev, ...generated]);
+      } else if (subTab === 'magic') {
+        const generated = await generateMagicSystems(config, language, 2);
+        setMagicSystems(prev => [...prev, ...generated]);
+      }
     } catch {
-      const msg = ({ KO: '아이템 생성 실패. API 키를 확인하세요.', EN: 'Item generation failed. Check API key.', JP: 'アイテム生成に失敗しました。', CN: '物品生成失败。' })[language];
+      const targetName = subTab === 'skills' ? 'Skill' : subTab === 'magic' ? 'Magic System' : 'Item';
+      const msg = ({ KO: `${targetName} 생성에 실패했습니다. API 키를 확인하세요.`, EN: `${targetName} generation failed. Check API key.`, JP: '生成に失敗しました。', CN: '生成失败。' })[language];
       showAlert(msg);
     } finally {
       setIsGenerating(false);

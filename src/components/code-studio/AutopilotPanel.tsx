@@ -49,7 +49,7 @@ export interface AutopilotResult {
   totalTimeMs: number;
   iterations: number;
   logs: AutopilotLog[];
-  files: Array<{ path: string; isNew: boolean }>;
+  files: Array<{ path: string; isNew: boolean; content?: string }>;
   commitMessage?: string;
   documentation?: string;
   reviewConsensus?: { score: number; status: string };
@@ -157,7 +157,7 @@ function ScoreCard({ label, score, icon }: { label: string; score: number; icon:
 // PART 4 — Main Component
 // ============================================================
 
-export function AutopilotPanel({ onComplete, onClose }: Props) {
+export function AutopilotPanel({ code, language, fileName, onComplete, onClose }: Props) {
   const [prompt, setPrompt] = useState("");
   const [config, setConfig] = useState<AutopilotConfig>(getDefaultConfig());
   const [showConfig, setShowConfig] = useState(false);
@@ -178,29 +178,48 @@ export function AutopilotPanel({ onComplete, onClose }: Props) {
     setResult(null);
     setProgress(null);
 
-    // Simulate autopilot execution
-    const logs: AutopilotLog[] = [];
-    for (let i = 0; i < PHASE_ORDER.length; i++) {
-      const phase = PHASE_ORDER[i];
-      logs.push({ level: "info", message: `Starting ${PHASE_META[phase].label}...`, timestamp: Date.now() });
-      setProgress({
-        phase, phaseIndex: i, phaseProgress: 50, overallProgress: Math.round(((i + 0.5) / PHASE_ORDER.length) * 100),
-        currentAction: `${PHASE_META[phase].label} in progress`, elapsedMs: i * 200, logs: [...logs],
-      });
-      await new Promise((r) => setTimeout(r, 200));
-      logs.push({ level: "success", message: `${PHASE_META[phase].label} complete`, timestamp: Date.now() });
-    }
+    let allLogs: AutopilotLog[] = [];
 
-    const res: AutopilotResult = {
-      success: true, pipelineScore: 85, summary: "All phases completed successfully.",
-      totalTimeMs: PHASE_ORDER.length * 200, iterations: 1, logs,
-      files: [{ path: "src/index.ts", isNew: false }],
-      commitMessage: "feat: autopilot improvements",
-    };
-    setResult(res);
-    setRunning(false);
-    onComplete(res);
-  }, [prompt, running, onComplete]);
+    try {
+      const resp = await fetch('/api/code/autopilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, config, code, language, fileName })
+      });
+
+      const reader = resp.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          // Note: chunks might contain multiple events
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n\n');
+          for (const block of lines) {
+            const line = block.trim();
+            if (line.startsWith('data: ')) {
+              try {
+                const payload = JSON.parse(line.substring(6));
+                if (payload.type === 'progress') {
+                  const newLogs = payload.data.logs || [];
+                  allLogs = [...allLogs, ...newLogs];
+                  setProgress({ ...payload.data, logs: allLogs });
+                } else if (payload.type === 'complete') {
+                  setResult(payload.data);
+                  setRunning(false);
+                  onComplete(payload.data);
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      }
+    } catch (e) {
+      setRunning(false);
+    }
+  }, [prompt, running, config, code, language, fileName, onComplete]);
 
   const handleReset = useCallback(() => { setResult(null); setProgress(null); setPrompt(""); }, []);
 

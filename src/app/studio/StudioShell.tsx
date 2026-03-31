@@ -329,6 +329,7 @@ export default function StudioShell() {
     hfcpState, promptDirective, language, canvasPass,
     setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
     advancedOutputMode: advancedSettings.outputMode,
+    advancedSettings,
     onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
     onPipelineUpdate: setPipelineResult as any,
   });

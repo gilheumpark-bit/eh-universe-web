@@ -51,6 +51,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
           config: {
             ...config,
             worldSimData: {
+              ...config.worldSimData,
               civs: data.civs.map((c: { name: string; era: string; color: string; traits: string[] }) => ({
                 name: c.name,
                 era: c.era,

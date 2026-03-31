@@ -120,6 +120,28 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       {/* Sub-tab content */}
       {subTab === 'design' && (
         <>
+          {/* AI Auto-Sync Notification Banner */}
+          {config.worldSimData?._latestUpdates && config.worldSimData._latestUpdates.length > 0 && (
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
+              <div className="flex flex-col gap-2 p-4 bg-accent-purple/10 border border-accent-purple/30 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-accent-purple" />
+                  <span className="text-[11px] font-bold text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                    {language === 'KO' ? 'AI 스튜디오 자동 동기화 완료' : 'AI Studio Auto-Sync Completed'}
+                  </span>
+                </div>
+                <ul className="list-disc list-inside text-[11px] text-text-secondary font-[family-name:var(--font-mono)] space-y-1">
+                  {config.worldSimData._latestUpdates.map((update: string, i: number) => (
+                    <li key={i}>{update}</li>
+                  ))}
+                </ul>
+                <div className="text-[9px] text-text-tertiary mt-1">
+                  {language === 'KO' ? '에피소드 작성 시 감지된 설정 변경사항이 세계관 데이터베이스에 자동 반영되었습니다.' : 'Story changes detected during writing were automatically merged into the World Database.'}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Empty state guide — 제목/시놉시스 미입력 시 시작 안내 */}
           {!config.title && !config.synopsis && (
             <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">

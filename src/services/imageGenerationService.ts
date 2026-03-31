@@ -6,6 +6,8 @@ export interface ImageGenOptions {
   width?: number;
   height?: number;
   n?: number; // number of images (default 1)
+  seed?: number; // For Image2Image tunneling consistency
+  referenceImageUrl?: string; // For ControlNet/Img2Img reference (needs API support)
 }
 
 export interface ImageGenResult {
@@ -50,6 +52,8 @@ export async function generateImage(
         width: options.width || 1024,
         height: options.height || 1024,
         n: options.n || 1,
+        seed: options.seed,
+        referenceImageUrl: options.referenceImageUrl,
       }),
       signal,
     });

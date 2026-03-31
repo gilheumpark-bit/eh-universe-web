@@ -4,7 +4,7 @@ import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { resolveServerProviderKey } from '@/lib/server-ai';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import {
-  handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems,
+  handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
   StructuredTask, StoryHints, WorldContext, SceneTierContext
 } from '@/services/geminiStructuredTaskService';
 
@@ -21,7 +21,7 @@ const SAFE_MODEL_PATTERN = /^[a-zA-Z0-9._-]+$/;
 // ============================================================
 
 function validateTask(task: unknown): task is StructuredTask {
-  return task === 'characters' || task === 'worldDesign' || task === 'worldSim' || task === 'sceneDirection' || task === 'items';
+  return task === 'characters' || task === 'worldDesign' || task === 'worldSim' || task === 'sceneDirection' || task === 'items' || task === 'skills' || task === 'magicSystems';
 }
 
 function clampCount(value: unknown, defaultVal: number): number {
@@ -83,6 +83,27 @@ async function dispatchTask(
         return { ok: false, response: NextResponse.json({ error: 'Invalid character config' }, { status: 400 }) };
       }
       return { ok: true, data: await handleCharacters(apiKey, model, config, language, clampCount(body.count, 4), toStringArray(body.existingNames)) };
+    }
+    case 'items': {
+      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+      if (!config?.genre || !config?.synopsis) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid items config' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleItems(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
+    }
+    case 'skills': {
+      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+      if (!config?.genre || !config?.synopsis) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid skills config' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleSkills(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
+    }
+    case 'magicSystems': {
+      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
+      if (!config?.genre || !config?.synopsis) {
+        return { ok: false, response: NextResponse.json({ error: 'Invalid magicSystems config' }, { status: 400 }) };
+      }
+      return { ok: true, data: await handleMagicSystems(apiKey, model, config, language, clampCount(body.count, 2), toStringArray(body.existingNames)) };
     }
     case 'worldDesign': {
       if (typeof body.genre !== 'string' || !body.genre.trim()) {
