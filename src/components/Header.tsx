@@ -11,6 +11,8 @@ export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [toolsFocusIdx, setToolsFocusIdx] = useState(-1);
   const { lang, toggleLang } = useLang();
 
   const navItems = useMemo(() => [
