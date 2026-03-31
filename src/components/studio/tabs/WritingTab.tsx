@@ -114,60 +114,180 @@ const WritingTab: React.FC<WritingTabProps> = ({
               <ContinuityGraph language={language} config={currentSession.config} />
             )}
 
-            {/* Applied Settings Summary */}
+            {/* Applied Settings Summary — Premium Card */}
             {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
-            <details className="group border border-border rounded-xl bg-bg-secondary/50 overflow-hidden">
-              <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-secondary transition-colors">
-                <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
-                  {t('applied.appliedSettings')}
-                </span>
-                <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="px-4 pb-4 space-y-3 text-[10px] border-t border-border pt-3">
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <span className="text-text-tertiary font-bold uppercase w-16">{t('applied.genre')}</span>
-                  <span className="text-accent-purple font-bold">{currentSession.config.genre}</span>
-                  <span className="text-text-tertiary">EP.{currentSession.config.episode}/{currentSession.config.totalEpisodes}</span>
-                  {currentSession.config.setting && <span className="text-text-secondary">📍 {currentSession.config.setting}</span>}
+            <details className="group border border-border rounded-2xl bg-gradient-to-br from-bg-secondary/30 to-transparent backdrop-blur-sm overflow-hidden">
+              <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-bg-secondary/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">📋</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                    {t('applied.appliedSettings')}
+                  </span>
                 </div>
+                <span className="text-xs text-text-tertiary group-open:rotate-180 transition-transform duration-200">▼</span>
+              </summary>
+              <div className="px-5 pb-5 space-y-4 border-t border-border pt-4">
+                {/* Genre & Episode Info */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="px-3 py-1.5 rounded-lg bg-accent-purple/10 border border-accent-purple/20 text-accent-purple text-sm font-bold">
+                    {currentSession.config.genre || 'Genre'}
+                  </span>
+                  <span className="px-3 py-1.5 rounded-lg bg-bg-secondary border border-border text-text-secondary text-sm font-[family-name:var(--font-mono)]">
+                    EP.{currentSession.config.episode}/{currentSession.config.totalEpisodes}
+                  </span>
+                  {currentSession.config.setting && (
+                    <span className="px-3 py-1.5 rounded-lg bg-bg-secondary border border-border text-text-secondary text-sm flex items-center gap-1.5">
+                      <span>📍</span> {currentSession.config.setting}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Characters */}
                 {currentSession.config.characters.length > 0 && (
-                  <div>
-                    <span className="text-text-tertiary font-bold uppercase">{t('applied.characters')}</span>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">{t('applied.characters')}</span>
+                    <div className="flex flex-wrap gap-2">
                       {currentSession.config.characters.map(c => (
-                        <span key={c.id} className="px-2 py-0.5 bg-bg-primary border border-border rounded text-[9px]">
+                        <span key={c.id} className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs">
+                          <span className="w-2 h-2 rounded-full bg-accent-purple" />
                           <span className="font-bold text-text-primary">{c.name}</span>
-                          <span className="text-text-tertiary ml-1">({c.role})</span>
+                          <span className="text-text-tertiary">({c.role})</span>
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
-                <div className="flex gap-2 pt-1">
-                  <button onClick={() => setActiveTab('world')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">{t('applied.editWorld')}</button>
-                  <button onClick={() => setActiveTab('characters')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">{t('applied.editCharacters')}</button>
-                  <button onClick={() => setActiveTab('rulebook')} className="px-2 py-1 bg-bg-primary border border-border rounded text-[8px] font-bold text-text-tertiary hover:text-accent-purple transition-colors">{t('applied.editDirection')}</button>
+                
+                {/* Quick Edit Buttons */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <button onClick={() => setActiveTab('world')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                    🌍 {t('applied.editWorld')}
+                  </button>
+                  <button onClick={() => setActiveTab('characters')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                    👥 {t('applied.editCharacters')}
+                  </button>
+                  <button onClick={() => setActiveTab('rulebook')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                    🎬 {t('applied.editDirection')}
+                  </button>
                 </div>
               </div>
             </details>
             )}
 
-            {/* Writing Modes */}
+            {/* Writing Modes — Premium Layout */}
             {(currentSession.messages.length > 0 || writingMode !== 'ai' || !hasApiKey) && (<>
-            <div className="flex gap-1 items-center flex-wrap">
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'ai' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'ai' ? 'opacity-50' : ''}`}>🤖 {t('writingMode.draftGen')}{!hasApiKey && ' 🔒'}</button>
-              <button onClick={() => { setWritingMode('edit'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'edit' ? 'bg-accent-purple text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'}`}>✏️ {t('writingMode.manualEdit')}</button>
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'canvas' ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'canvas' ? 'opacity-50' : ''}`}>🎨 {t('writingMode.threeStep')}{!hasApiKey && ' 🔒'}</button>
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('refine'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'refine' ? 'bg-gradient-to-r from-accent-purple to-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'refine' ? 'opacity-50' : ''}`}>⚡ {t('writingMode.auto30')}{!hasApiKey && ' 🔒'}</button>
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }} className={`px-4 py-2 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${writingMode === 'advanced' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-secondary'} ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-50' : ''}`}>🎯 {t('writingMode.advanced')}{!hasApiKey && ' 🔒'}</button>
-              {writingMode === 'edit' && (<>
-                <button onClick={handleApplyEdit} disabled={!editDraft.trim()} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0">📋 {t('writingMode.applyToManuscript')}</button>
-                <span className="text-[9px] text-text-tertiary ml-auto">{editDraft.length}{language === 'KO' ? '자' : ' chars'}</span>
-              </>)}
-            </div>
-            <div className="flex gap-2 items-center">
-              <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0">💡 {t('writingMode.directive')}</span>
-              <input value={promptDirective} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPromptDirective(e.target.value)} placeholder={t('writingMode.directivePlaceholder')} className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)]" />
+            <div className="space-y-4">
+              {/* Mode Selection Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {/* AI Draft Mode */}
+                <button 
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }} 
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                    writingMode === 'ai' 
+                      ? 'bg-accent-purple/15 border-accent-purple/40 shadow-[0_0_20px_rgba(141,123,195,0.15)]' 
+                      : 'bg-bg-secondary/50 border-border hover:border-accent-purple/30 hover:bg-bg-secondary'
+                  } ${!hasApiKey && writingMode !== 'ai' ? 'opacity-60' : ''}`}
+                >
+                  <span className="text-2xl">🤖</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'ai' ? 'text-accent-purple' : 'text-text-secondary'}`}>
+                    {t('writingMode.draftGen')}
+                  </span>
+                  {!hasApiKey && <span className="absolute top-2 right-2 text-xs">🔒</span>}
+                </button>
+
+                {/* Manual Edit Mode */}
+                <button 
+                  onClick={() => { setWritingMode('edit'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} 
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                    writingMode === 'edit' 
+                      ? 'bg-accent-amber/15 border-accent-amber/40 shadow-[0_0_20px_rgba(202,161,92,0.15)]' 
+                      : 'bg-bg-secondary/50 border-border hover:border-accent-amber/30 hover:bg-bg-secondary'
+                  }`}
+                >
+                  <span className="text-2xl">✏️</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'edit' ? 'text-accent-amber' : 'text-text-secondary'}`}>
+                    {t('writingMode.manualEdit')}
+                  </span>
+                </button>
+
+                {/* Canvas 3-Step Mode */}
+                <button 
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }} 
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                    writingMode === 'canvas' 
+                      ? 'bg-accent-green/15 border-accent-green/40 shadow-[0_0_20px_rgba(47,155,131,0.15)]' 
+                      : 'bg-bg-secondary/50 border-border hover:border-accent-green/30 hover:bg-bg-secondary'
+                  } ${!hasApiKey && writingMode !== 'canvas' ? 'opacity-60' : ''}`}
+                >
+                  <span className="text-2xl">🎨</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'canvas' ? 'text-accent-green' : 'text-text-secondary'}`}>
+                    {t('writingMode.threeStep')}
+                  </span>
+                  {!hasApiKey && <span className="absolute top-2 right-2 text-xs">🔒</span>}
+                </button>
+
+                {/* Auto Refine Mode */}
+                <button 
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('refine'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} 
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                    writingMode === 'refine' 
+                      ? 'bg-gradient-to-br from-accent-purple/15 to-accent-blue/15 border-accent-blue/40 shadow-[0_0_20px_rgba(92,143,214,0.15)]' 
+                      : 'bg-bg-secondary/50 border-border hover:border-accent-blue/30 hover:bg-bg-secondary'
+                  } ${!hasApiKey && writingMode !== 'refine' ? 'opacity-60' : ''}`}
+                >
+                  <span className="text-2xl">⚡</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'refine' ? 'text-accent-blue' : 'text-text-secondary'}`}>
+                    {t('writingMode.auto30')}
+                  </span>
+                  {!hasApiKey && <span className="absolute top-2 right-2 text-xs">🔒</span>}
+                </button>
+
+                {/* Advanced Mode */}
+                <button 
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }} 
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                    writingMode === 'advanced' 
+                      ? 'bg-gradient-to-br from-amber-500/15 to-orange-500/15 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)]' 
+                      : 'bg-bg-secondary/50 border-border hover:border-amber-500/30 hover:bg-bg-secondary'
+                  } ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-60' : ''}`}
+                >
+                  <span className="text-2xl">🎯</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'advanced' ? 'text-amber-400' : 'text-text-secondary'}`}>
+                    {t('writingMode.advanced')}
+                  </span>
+                  {!hasApiKey && <span className="absolute top-2 right-2 text-xs">🔒</span>}
+                </button>
+              </div>
+
+              {/* Edit Mode Actions */}
+              {writingMode === 'edit' && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-amber/5 border border-accent-amber/20">
+                  <button 
+                    onClick={handleApplyEdit} 
+                    disabled={!editDraft.trim()} 
+                    className="px-5 py-2.5 bg-gradient-to-r from-accent-amber to-orange-500 text-white rounded-xl text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-30 shadow-lg"
+                  >
+                    📋 {t('writingMode.applyToManuscript')}
+                  </button>
+                  <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)]">
+                    {editDraft.length.toLocaleString()}{language === 'KO' ? '자' : ' chars'}
+                  </span>
+                </div>
+              )}
+
+              {/* Directive Input — Enhanced */}
+              <div className="flex gap-3 items-center p-3 rounded-xl bg-bg-secondary/30 border border-border">
+                <span className="text-[10px] text-accent-purple font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t('writingMode.directive')}
+                </span>
+                <input 
+                  value={promptDirective} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPromptDirective(e.target.value)} 
+                  placeholder={t('writingMode.directivePlaceholder')} 
+                  className="flex-1 bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all placeholder:text-text-tertiary" 
+                />
+              </div>
             </div>
             </>)}
 

@@ -133,19 +133,21 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         </select>
       </div>
 
-      {/* Presets */}
+      {/* Presets — Premium Card Layout */}
       <div>
-        <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-2">
+        <div className="text-[11px] font-bold text-text-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-accent-purple" />
           {isKO ? '프리셋' : 'Presets'}
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
           {VISUAL_PRESETS.map(p => (
             <button
               key={p.id}
               onClick={() => update({ levels: { ...p.levels }, shotType: p.defaultShotType || card.shotType })}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary hover:border-text-tertiary transition-all"
+              className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-bg-secondary/50 border border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 hover:bg-accent-purple/5 transition-all duration-200"
             >
-              {p.name}
+              <span className="text-lg group-hover:scale-110 transition-transform">🎬</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{p.name}</span>
             </button>
           ))}
         </div>

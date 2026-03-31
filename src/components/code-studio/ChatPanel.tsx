@@ -249,7 +249,7 @@ export function ChatPanel({
   ).slice(0, 8) ?? [];
 
   return (
-    <div className="flex flex-col h-full bg-bg-secondary">
+    <div className="flex flex-col h-full min-h-0 bg-bg-secondary">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <Sparkles size={14} className="text-purple-400" />
@@ -302,7 +302,7 @@ export function ChatPanel({
       )}
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3" aria-live="polite">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin" aria-live="polite">
         {chat.messages.length === 0 && !chat.isStreaming && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
             <Sparkles size={24} className="text-purple-400 opacity-60" />

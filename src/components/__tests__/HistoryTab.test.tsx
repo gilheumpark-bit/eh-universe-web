@@ -54,12 +54,12 @@ const baseProps = {
 
 describe('HistoryTab', () => {
   it('renders without crashing', () => {
-    const { container } = render(<HistoryTab {...baseProps as never} />);
+    const { container } = render(<HistoryTab {...(baseProps as React.ComponentProps<typeof HistoryTab>)} />);
     expect(container.firstChild).toBeTruthy();
   });
 
   it('renders scope toggle buttons', () => {
-    const { container } = render(<HistoryTab {...baseProps as never} />);
+    const { container } = render(<HistoryTab {...(baseProps as React.ComponentProps<typeof HistoryTab>)} />);
     const buttons = container.querySelectorAll('button');
     expect(buttons.length).toBeGreaterThan(0);
   });

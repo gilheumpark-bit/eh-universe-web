@@ -37,6 +37,7 @@ interface UseStudioAIParams {
   setShowApiKeyModal: (val: boolean) => void;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
   advancedOutputMode?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   advancedSettings?: any;
   // 3.8 자율 시스템 콜백
   onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
@@ -155,7 +156,7 @@ export function useStudioAI({
     const pipelineConfig = getDefaultPipelineConfig(writerProfile.skillLevel);
     
     // UI feedback for pipeline running
-    onPipelineUpdate?.({ id: 'running', stages: [], totalDuration: 0, finalStatus: 'running' } as any);
+    onPipelineUpdate?.({ id: 'running', stages: [], totalDuration: 0, finalStatus: 'running' } as unknown as PipelineExecution);
 
     const pipelineResultExecution = executePipeline(
       { config: capturedConfig, currentEpisode: capturedConfig.episode ?? 1 },
@@ -202,10 +203,14 @@ export function useStudioAI({
       
       let attempt = 1;
       let finalContent = '';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let result: any;
       let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let qTag: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let gateResult: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let ipCheck: any;
       let currentRetryHint = '';
 
@@ -336,6 +341,7 @@ export function useStudioAI({
               ? { ...m, content: finalContent, meta: {
                   engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length,
                   qualityTag: qTag.tag, qualityLabel: qTag.label,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   qualityFindings: qTag.visibleFindings.map((f: any) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
                   ...gateMeta,
                 } }

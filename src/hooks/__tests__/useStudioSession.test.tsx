@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useStudioSession hook.
  * Covers: new session creation, unsaved-work guard, demo session loading.
@@ -117,8 +118,7 @@ describe('useStudioSession', () => {
       title: 'Test',
       messages: [{ role: 'user' as const, content: 'Hello' }] as Message[],
       config: {} as StoryConfig,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      lastUpdate: Date.now(),
     } as ChatSession;
 
     const { get, callbacks, cleanup } = createHarness({ currentSession: session });

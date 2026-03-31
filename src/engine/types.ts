@@ -323,7 +323,7 @@ export interface EngineReport {
   fixes: FixRecord[];
   issues: ValidationIssue[];
   processingTimeMs: number;
-  worldUpdates?: any;
+  worldUpdates?: Record<string, unknown>;
 }
 
 // ============================================================

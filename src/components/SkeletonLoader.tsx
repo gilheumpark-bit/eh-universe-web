@@ -4,44 +4,53 @@ import React from "react";
 // PART 1 — Base SkeletonLoader
 // ============================================================
 
-/** CSS shimmer animation — uses design tokens for dark-theme compatibility */
+/** CSS shimmer animation — premium gradient with glow effect */
 const shimmerStyle: React.CSSProperties = {
   background:
-    "linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-bg-tertiary) 50%, var(--color-bg-secondary) 75%)",
+    "linear-gradient(90deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 20%, rgba(141,123,195,0.08) 50%, var(--color-bg-tertiary) 80%, var(--color-bg-secondary) 100%)",
   backgroundSize: "200% 100%",
-  animation: "skeleton-shimmer 1.8s ease-in-out infinite",
+  animation: "skeleton-shimmer 2s ease-in-out infinite",
 };
 
-export type SkeletonVariant = "text" | "card" | "panel" | "editor" | "sidebar";
+export type SkeletonVariant = "text" | "card" | "panel" | "editor" | "sidebar" | "avatar" | "button" | "badge";
 
 interface SkeletonLoaderProps {
   variant?: SkeletonVariant;
   width?: string | number;
   height?: string | number;
   className?: string;
+  /** Optional delay for staggered animations (in ms) */
+  delay?: number;
 }
 
 /**
- * Reusable skeleton with shimmer animation.
+ * Premium skeleton with shimmer animation.
  * Variants control default sizing:
  * - text: single line placeholder
  * - card: card-sized block
  * - panel: tall panel block
  * - editor: wide editor area
  * - sidebar: narrow sidebar strip
+ * - avatar: circular avatar placeholder
+ * - button: button-sized rectangle
+ * - badge: small badge/tag
  */
 export function SkeletonLoader({
   variant = "text",
   width,
   height,
   className = "",
+  delay = 0,
 }: SkeletonLoaderProps) {
   const defaults: Record<SkeletonVariant, { w: string; h: string; rounded: string }> = {
     text: { w: "100%", h: "16px", rounded: "rounded" },
-    card: { w: "100%", h: "120px", rounded: "rounded-xl" },
-    panel: { w: "100%", h: "200px", rounded: "rounded-xl" },
-    editor: { w: "100%", h: "400px", rounded: "rounded-lg" },
-    sidebar: { w: "240px", h: "100%", rounded: "rounded-lg" },
+    card: { w: "100%", h: "120px", rounded: "rounded-2xl" },
+    panel: { w: "100%", h: "200px", rounded: "rounded-2xl" },
+    editor: { w: "100%", h: "400px", rounded: "rounded-xl" },
+    sidebar: { w: "240px", h: "100%", rounded: "rounded-xl" },
+    avatar: { w: "40px", h: "40px", rounded: "rounded-full" },
+    button: { w: "100px", h: "36px", rounded: "rounded-xl" },
+    badge: { w: "60px", h: "24px", rounded: "rounded-full" },
   };
 
   const d = defaults[variant];
@@ -53,10 +62,66 @@ export function SkeletonLoader({
         ...shimmerStyle,
         width: width ?? d.w,
         height: height ?? d.h,
+        animationDelay: delay ? `${delay}ms` : undefined,
       }}
       role="status"
       aria-label="Loading"
     />
+  );
+}
+
+/** Content card skeleton — image + text combo */
+export function ContentCardSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`p-4 rounded-2xl border border-white/[0.06] bg-bg-secondary/30 ${className}`}>
+      <SkeletonLoader variant="card" height={140} className="mb-3" />
+      <SkeletonLoader variant="badge" width="30%" className="mb-2" delay={100} />
+      <SkeletonLoader variant="text" width="85%" height={20} className="mb-2" delay={150} />
+      <SkeletonLoader variant="text" width="60%" height={14} delay={200} />
+      <div className="flex items-center gap-2 mt-4">
+        <SkeletonLoader variant="avatar" width={28} height={28} delay={250} />
+        <SkeletonLoader variant="text" width={80} height={12} delay={300} />
+      </div>
+    </div>
+  );
+}
+
+/** Character card skeleton */
+export function CharacterCardSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`p-4 rounded-2xl border border-white/[0.06] bg-bg-secondary/30 ${className}`}>
+      <div className="flex items-start gap-3">
+        <SkeletonLoader variant="avatar" width={56} height={56} />
+        <div className="flex-1">
+          <SkeletonLoader variant="text" width="50%" height={18} className="mb-2" delay={100} />
+          <SkeletonLoader variant="badge" width="40%" delay={150} />
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <SkeletonLoader variant="text" width="90%" height={12} delay={200} />
+        <SkeletonLoader variant="text" width="70%" height={12} delay={250} />
+      </div>
+    </div>
+  );
+}
+
+/** Writing mode skeleton */
+export function WritingModeSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`space-y-4 ${className}`}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="p-4 rounded-2xl border border-white/[0.06] bg-bg-secondary/30 flex flex-col items-center gap-2">
+            <SkeletonLoader variant="avatar" width={32} height={32} delay={i * 50} />
+            <SkeletonLoader variant="text" width="60%" height={12} delay={i * 50 + 100} />
+          </div>
+        ))}
+      </div>
+      <div className="p-3 rounded-xl border border-white/[0.06] bg-bg-secondary/30 flex items-center gap-3">
+        <SkeletonLoader variant="badge" width={60} delay={300} />
+        <SkeletonLoader variant="text" className="flex-1" height={36} delay={350} />
+      </div>
+    </div>
   );
 }
 

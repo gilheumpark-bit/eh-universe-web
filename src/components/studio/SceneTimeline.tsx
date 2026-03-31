@@ -7,7 +7,7 @@
 // 드래그 순서 변경, 삭제, 병합, 문제 스팟 표시.
 // 편집 후 원고 역동기화.
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Play, GripVertical, Trash2, Merge, Split, AlertTriangle,
   Eye, RotateCcw, Save, Wand2, ChevronDown, ChevronRight,
@@ -388,7 +388,7 @@ export default function SceneTimeline({
 
   // P0#4 fix: dragSource를 ref로 캡처하여 stale closure 방지
   const dragSourceRef = useRef(dragSource);
-  dragSourceRef.current = dragSource;
+  useEffect(() => { dragSourceRef.current = dragSource; }, [dragSource]);
 
   const handleDrop = useCallback((targetSi: number, targetBi: number) => {
     const src = dragSourceRef.current;

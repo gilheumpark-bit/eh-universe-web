@@ -130,6 +130,15 @@ main[class~="pt-14"] {
    4-Level Brightness Themes (data-theme attribute)
    ============================================================ */
 
+/* ============================================================
+   Theme Application to Body
+   ============================================================ */
+body[data-theme="dim"],
+body[data-theme="light"],
+body[data-theme="max"] {
+  background: var(--color-bg-primary);
+}
+
 /* Level 1: 딤 (Dim) */
 [data-theme="dim"] {
   --color-bg-primary: #1a1a2e;
@@ -142,6 +151,9 @@ main[class~="pt-14"] {
   --color-surface-strong: rgba(34, 34, 58, 0.92);
   --color-surface-soft: rgba(26, 26, 46, 0.72);
   --gradient-page: none;
+}
+body[data-theme="dim"] {
+  background: linear-gradient(180deg, #1a1a2e 0%, #22223a 100%);
 }
 [data-theme="dim"] * { --tw-bg-opacity: 1; }
 [data-theme="dim"] .bg-black\/40, [data-theme="dim"] .bg-black\/30, [data-theme="dim"] .bg-black\/20 { background-color: rgba(26, 26, 46, 0.4); }
@@ -164,6 +176,9 @@ main[class~="pt-14"] {
   --color-surface-strong: rgba(240, 240, 235, 0.95);
   --color-surface-soft: rgba(245, 245, 240, 0.85);
   --gradient-page: none;
+}
+body[data-theme="light"] {
+  background: linear-gradient(180deg, #f5f5f0 0%, #eaeae5 100%);
 }
 [data-theme="light"] .bg-black\/40, [data-theme="light"] .bg-black\/30, [data-theme="light"] .bg-black\/20, [data-theme="light"] .bg-black\/60 { background-color: rgba(0, 0, 0, 0.06); }
 [data-theme="light"] .bg-zinc-900, [data-theme="light"] .bg-zinc-900\/20, [data-theme="light"] .bg-zinc-900\/30, [data-theme="light"] .bg-zinc-900\/50 { background-color: rgba(0, 0, 0, 0.04); }
@@ -188,6 +203,9 @@ main[class~="pt-14"] {
   --color-surface-soft: rgba(248, 248, 245, 0.9);
   --gradient-page: none;
 }
+body[data-theme="max"] {
+  background: #ffffff;
+}
 [data-theme="max"] .bg-black\/40, [data-theme="max"] .bg-black\/30, [data-theme="max"] .bg-black\/20, [data-theme="max"] .bg-black\/60 { background-color: rgba(0, 0, 0, 0.04); }
 [data-theme="max"] .bg-zinc-900, [data-theme="max"] .bg-zinc-900\/20, [data-theme="max"] .bg-zinc-900\/30, [data-theme="max"] .bg-zinc-900\/50 { background-color: rgba(0, 0, 0, 0.02); }
 [data-theme="max"] .border-zinc-800, [data-theme="max"] .border-zinc-800\/50, [data-theme="max"] .border-white\/6, [data-theme="max"] .border-white\/8, [data-theme="max"] .border-white\/5 { border-color: #d8d8d0; }
@@ -195,3 +213,153 @@ main[class~="pt-14"] {
 [data-theme="max"] .text-zinc-400, [data-theme="max"] .text-zinc-300 { color: #444440; }
 [data-theme="max"] .text-white, [data-theme="max"] .text-text-primary { color: #000000; }
 [data-theme="max"] .bg-white\/\[0\.02\], [data-theme="max"] .bg-white\/\[0\.03\], [data-theme="max"] .bg-white\/\[0\.04\] { background-color: rgba(0, 0, 0, 0.02); }
+
+/* ============================================================
+   Color Themes (data-color-theme attribute)
+   ============================================================ */
+
+/* ============================================================
+   Color Theme Body Backgrounds
+   ============================================================ */
+body[data-color-theme="beige"] { background: linear-gradient(180deg, #1a1814 0%, #24211a 100%); }
+body[data-color-theme="ocean"] { background: linear-gradient(180deg, #0a1628 0%, #0e1e34 100%); }
+body[data-color-theme="forest"] { background: linear-gradient(180deg, #0d1a14 0%, #12241c 100%); }
+body[data-color-theme="rose"] { background: linear-gradient(180deg, #1a0d14 0%, #24121c 100%); }
+body[data-color-theme="midnight"] { background: linear-gradient(180deg, #0d0d1a 0%, #141424 100%); }
+
+/* Color theme + light mode combinations */
+body[data-color-theme="beige"][data-theme="light"],
+body[data-color-theme="beige"][data-theme="max"] { background: linear-gradient(180deg, #f5f0e8 0%, #ebe5da 100%); }
+body[data-color-theme="ocean"][data-theme="light"],
+body[data-color-theme="ocean"][data-theme="max"] { background: linear-gradient(180deg, #e8f2f8 0%, #d8e8f0 100%); }
+body[data-color-theme="forest"][data-theme="light"],
+body[data-color-theme="forest"][data-theme="max"] { background: linear-gradient(180deg, #e8f5f0 0%, #d8ebe4 100%); }
+body[data-color-theme="rose"][data-theme="light"],
+body[data-color-theme="rose"][data-theme="max"] { background: linear-gradient(180deg, #f8f0f4 0%, #f0e0e8 100%); }
+body[data-color-theme="midnight"][data-theme="light"],
+body[data-color-theme="midnight"][data-theme="max"] { background: linear-gradient(180deg, #f0f0f8 0%, #e4e4f0 100%); }
+
+/* Beige — Warm, paper-like feel */
+[data-color-theme="beige"] {
+  --color-bg-primary: #1a1814;
+  --color-bg-secondary: #24211a;
+  --color-bg-tertiary: #2e2a22;
+  --color-text-primary: #f5f0e8;
+  --color-text-secondary: #c4baa8;
+  --color-text-tertiary: #8a8070;
+  --color-accent-amber: #d4a855;
+  --color-accent-purple: #a89070;
+  --color-border: #3a352a;
+  --gradient-page: radial-gradient(circle at top left, rgba(212, 168, 85, 0.08), transparent 28%), radial-gradient(circle at top right, rgba(168, 144, 112, 0.06), transparent 32%), linear-gradient(180deg, #1a1814 0%, #1e1b16 42%, #1a1814 100%);
+}
+[data-color-theme="beige"][data-theme="light"],
+[data-color-theme="beige"][data-theme="max"] {
+  --color-bg-primary: #f5f0e8;
+  --color-bg-secondary: #ebe5da;
+  --color-bg-tertiary: #ddd6c8;
+  --color-text-primary: #2a2520;
+  --color-text-secondary: #5a5040;
+  --color-text-tertiary: #8a8070;
+  --color-border: #d0c8b8;
+}
+
+/* Ocean — Deep blue, calm */
+[data-color-theme="ocean"] {
+  --color-bg-primary: #0a1628;
+  --color-bg-secondary: #0e1e34;
+  --color-bg-tertiary: #142840;
+  --color-text-primary: #e8f0f8;
+  --color-text-secondary: #a0b8d0;
+  --color-text-tertiary: #607890;
+  --color-accent-amber: #f0c060;
+  --color-accent-purple: #6090d0;
+  --color-accent-blue: #4080c0;
+  --color-accent-green: #40a090;
+  --color-border: #1e3850;
+  --gradient-page: radial-gradient(circle at top left, rgba(64, 128, 192, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(64, 160, 144, 0.08), transparent 32%), linear-gradient(180deg, #0a1628 0%, #0c1a30 42%, #0a1628 100%);
+}
+[data-color-theme="ocean"][data-theme="light"],
+[data-color-theme="ocean"][data-theme="max"] {
+  --color-bg-primary: #e8f2f8;
+  --color-bg-secondary: #d8e8f0;
+  --color-bg-tertiary: #c8dce8;
+  --color-text-primary: #0a1828;
+  --color-text-secondary: #2a4060;
+  --color-text-tertiary: #506080;
+  --color-border: #b0c8d8;
+}
+
+/* Forest — Natural green */
+[data-color-theme="forest"] {
+  --color-bg-primary: #0d1a14;
+  --color-bg-secondary: #12241c;
+  --color-bg-tertiary: #182e24;
+  --color-text-primary: #e8f5f0;
+  --color-text-secondary: #a0c0b0;
+  --color-text-tertiary: #608070;
+  --color-accent-amber: #d0a850;
+  --color-accent-purple: #70a090;
+  --color-accent-green: #40b080;
+  --color-border: #204030;
+  --gradient-page: radial-gradient(circle at top left, rgba(64, 176, 128, 0.1), transparent 28%), radial-gradient(circle at bottom right, rgba(112, 160, 144, 0.06), transparent 32%), linear-gradient(180deg, #0d1a14 0%, #101e18 42%, #0d1a14 100%);
+}
+[data-color-theme="forest"][data-theme="light"],
+[data-color-theme="forest"][data-theme="max"] {
+  --color-bg-primary: #e8f5f0;
+  --color-bg-secondary: #d8ebe4;
+  --color-bg-tertiary: #c8e0d8;
+  --color-text-primary: #0d1a14;
+  --color-text-secondary: #2a4038;
+  --color-text-tertiary: #506860;
+  --color-border: #b0d0c0;
+}
+
+/* Rose — Warm pink/red tones */
+[data-color-theme="rose"] {
+  --color-bg-primary: #1a0d14;
+  --color-bg-secondary: #24121c;
+  --color-bg-tertiary: #2e1824;
+  --color-text-primary: #f8f0f4;
+  --color-text-secondary: #d0a8b8;
+  --color-text-tertiary: #906878;
+  --color-accent-amber: #e0a080;
+  --color-accent-purple: #c080a0;
+  --color-accent-red: #d06070;
+  --color-border: #402030;
+  --gradient-page: radial-gradient(circle at top left, rgba(208, 96, 112, 0.1), transparent 28%), radial-gradient(circle at bottom right, rgba(192, 128, 160, 0.06), transparent 32%), linear-gradient(180deg, #1a0d14 0%, #1e1018 42%, #1a0d14 100%);
+}
+[data-color-theme="rose"][data-theme="light"],
+[data-color-theme="rose"][data-theme="max"] {
+  --color-bg-primary: #f8f0f4;
+  --color-bg-secondary: #f0e0e8;
+  --color-bg-tertiary: #e8d0dc;
+  --color-text-primary: #2a1820;
+  --color-text-secondary: #5a3848;
+  --color-text-tertiary: #886070;
+  --color-border: #e0c0d0;
+}
+
+/* Midnight — Deep purple/blue */
+[data-color-theme="midnight"] {
+  --color-bg-primary: #0d0d1a;
+  --color-bg-secondary: #141424;
+  --color-bg-tertiary: #1a1a2e;
+  --color-text-primary: #f0f0f8;
+  --color-text-secondary: #b0b0c8;
+  --color-text-tertiary: #707088;
+  --color-accent-amber: #d0b060;
+  --color-accent-purple: #9080c0;
+  --color-accent-blue: #6070b0;
+  --color-border: #2a2a42;
+  --gradient-page: radial-gradient(circle at top left, rgba(144, 128, 192, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(96, 112, 176, 0.08), transparent 32%), linear-gradient(180deg, #0d0d1a 0%, #10101e 42%, #0d0d1a 100%);
+}
+[data-color-theme="midnight"][data-theme="light"],
+[data-color-theme="midnight"][data-theme="max"] {
+  --color-bg-primary: #f0f0f8;
+  --color-bg-secondary: #e4e4f0;
+  --color-bg-tertiary: #d8d8e8;
+  --color-text-primary: #1a1a28;
+  --color-text-secondary: #3a3a50;
+  --color-text-tertiary: #606078;
+  --color-border: #c8c8d8;
+}

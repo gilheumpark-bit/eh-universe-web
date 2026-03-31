@@ -5,9 +5,11 @@
 // ============================================================
 
 import React from "react";
+import Link from "next/link";
 import {
   Files, Search, GitBranch, MessageSquare, Activity,
   Edit3, AlertTriangle, Eye, ChevronRight, Settings, X,
+  Home,
   type LucideIcon,
   Upload, Bug, Play, Shield, List, Layout,
   Package, BarChart3, Users, Wand2,
@@ -135,6 +137,16 @@ function ActivityBar({
 
   return (
     <div className="w-12 shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1">
+      {/* Home button — always visible at the top */}
+      <Link
+        href="/"
+        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-accent-amber/10 group mb-2"
+        title={L4(lang, { ko: "홈으로", en: "Go Home", jp: "ホームへ", cn: "返回首页" })}
+      >
+        <Home className="h-[18px] w-[18px] text-text-tertiary group-hover:text-accent-amber transition-colors" />
+      </Link>
+      <div className="w-6 h-px bg-white/10 mb-2" />
+      
       {coreItems.map((item) => {
         const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
         return (
@@ -339,7 +351,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
             name,
             status: "pending",
             comments: [],
-            findings: [{ severity: "info", message: "Self-repair fix staged for review", source: "pipeline", line: 0 }] as any
+            findings: [{ severity: "info" as const, message: "Self-repair fix staged for review", line: 0 }]
           }))}
           onApproveFile={onApproveFile}
           onRejectFile={onRejectFile}

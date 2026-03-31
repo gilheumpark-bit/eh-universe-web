@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 describe('AgentPanel helpers', () => {
   it('prefers developer code blocks when picking apply candidate', () => {
     const { pickAgentApplyCandidate } = require('../AgentPanel');

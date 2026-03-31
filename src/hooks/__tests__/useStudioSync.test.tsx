@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useStudioSync hook.
  * Covers: sync flow, 401 retry, error states, sync reminder.
@@ -88,7 +89,7 @@ describe('useStudioSync', () => {
   });
 
   it('handleSync sets syncing status and calls syncAllProjects', async () => {
-    mockSyncAll.mockResolvedValue({ merged: [], failedCount: 0 });
+    mockSyncAll.mockResolvedValue({ merged: [], uploaded: 0, downloaded: 0, conflicts: [], failedCount: 0 });
 
     const { get, params, cleanup } = createHarness();
 
@@ -101,7 +102,7 @@ describe('useStudioSync', () => {
   });
 
   it('reports partial failures via setUxError', async () => {
-    mockSyncAll.mockResolvedValue({ merged: [], failedCount: 2 });
+    mockSyncAll.mockResolvedValue({ merged: [], uploaded: 0, downloaded: 0, conflicts: [], failedCount: 2 });
 
     const { get, params, cleanup } = createHarness();
 
@@ -144,7 +145,7 @@ describe('useStudioSync', () => {
   it('retries on 401 error with refreshed token', async () => {
     mockSyncAll
       .mockRejectedValueOnce(new Error('401 Unauthorized'))
-      .mockResolvedValueOnce({ merged: [{ id: 'p1' }], failedCount: 0 });
+      .mockResolvedValueOnce({ merged: [{ id: 'p1' }], uploaded: 0, downloaded: 0, conflicts: [], failedCount: 0 } as any);
 
     const { get, params, cleanup } = createHarness();
 

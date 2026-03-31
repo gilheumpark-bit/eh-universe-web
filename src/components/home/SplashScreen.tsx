@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { Globe, PenTool, Code2 } from "lucide-react";
+import { Globe, PenTool, Code2, ArrowRight, Sparkles } from "lucide-react";
 import StarField from "@/components/StarField";
 
 export default function SplashScreen({
@@ -15,85 +16,259 @@ export default function SplashScreen({
   onCodeStudio: () => void;
 }) {
   const { lang } = useLang();
+  const [mounted, setMounted] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
-  const cardBase = "group relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(14,18,27,0.95),rgba(7,9,13,0.8))] backdrop-blur-xl px-6 py-8 sm:px-8 sm:py-10 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] active:scale-[0.98]";
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const cards = [
+    {
+      id: "universe",
+      onClick: onUniverse,
+      color: "amber",
+      Icon: Globe,
+      kicker: { ko: "세계관 탐색", en: "Explore", jp: "世界観探索", cn: "探索世界观" },
+      title: "UNIVERSE",
+      desc: { ko: "아카이브, 네트워크, 세계관 문서를 탐색합니다.", en: "Browse the archive, network, and worldbuilding docs.", jp: "アーカイブ、ネットワーク、世界観文書を探索します。", cn: "探索档案库、网络和世界观文档。" },
+      cta: { ko: "탐색 시작", en: "Enter", jp: "探索開始", cn: "开始探索" },
+      badge: null,
+    },
+    {
+      id: "studio",
+      onClick: onStudio,
+      color: "purple",
+      Icon: PenTool,
+      kicker: { ko: "집필 시작", en: "Write", jp: "執筆開始", cn: "开始写作" },
+      title: "STUDIO",
+      desc: { ko: "AI와 함께 세계관 기반 소설을 집필합니다.", en: "Write stories with AI in this universe.", jp: "AIと共に世界観ベースの小説を執筆します。", cn: "与AI一起在这个世界观中写作。" },
+      cta: { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" },
+      badge: { ko: "AI 집필", en: "AI Writing", jp: "AI執筆", cn: "AI写作" },
+    },
+    {
+      id: "code",
+      onClick: onCodeStudio,
+      color: "green",
+      Icon: Code2,
+      kicker: { ko: "코드 편집", en: "Code", jp: "コード編集", cn: "代码编辑" },
+      title: "CODE",
+      desc: { ko: "Monaco 에디터 기반 코드 작업 환경.", en: "Monaco-based coding environment with AI.", jp: "Monacoエディタベースのコーディング環境。", cn: "基于Monaco编辑器的编码环境。" },
+      cta: { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" },
+      badge: "NEW",
+    },
+  ];
+
+  const colorMap: Record<string, { border: string; bg: string; text: string; glow: string; shadow: string }> = {
+    amber: { 
+      border: "border-accent-amber/50", 
+      bg: "bg-accent-amber", 
+      text: "text-accent-amber",
+      glow: "bg-accent-amber/20",
+      shadow: "shadow-[0_0_60px_rgba(202,161,92,0.3)]"
+    },
+    purple: { 
+      border: "border-accent-purple/50", 
+      bg: "bg-accent-purple", 
+      text: "text-accent-purple",
+      glow: "bg-accent-purple/20",
+      shadow: "shadow-[0_0_60px_rgba(141,123,195,0.3)]"
+    },
+    green: { 
+      border: "border-accent-green/50", 
+      bg: "bg-accent-green", 
+      text: "text-accent-green",
+      glow: "bg-accent-green/20",
+      shadow: "shadow-[0_0_60px_rgba(47,155,131,0.3)]"
+    },
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
       <StarField />
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col items-center gap-12">
-        <div className="text-center">
-          <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.22em] text-text-tertiary mb-4">
-            EH UNIVERSE
-          </p>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold bg-gradient-to-r from-accent-amber via-accent-purple to-accent-green bg-clip-text text-transparent">
+      
+      {/* Ambient background glow based on hovered card */}
+      <div 
+        className={`fixed inset-0 transition-opacity duration-700 pointer-events-none ${
+          hovered ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {hovered === 'universe' && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-amber/8 blur-[120px]" />
+        )}
+        {hovered === 'studio' && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-purple/8 blur-[120px]" />
+        )}
+        {hovered === 'code' && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-green/8 blur-[120px]" />
+        )}
+      </div>
+
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-10 sm:gap-14">
+        {/* Header */}
+        <div 
+          className={`text-center transition-all duration-700 ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+          }`}
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-sm mb-6">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-amber/20 font-[family-name:var(--font-mono)] text-[8px] font-bold tracking-wider text-accent-amber">
+              EH
+            </span>
+            <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
+              UNIVERSE
+            </span>
+          </div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
             {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", jp: "どこへ向かいますか？", cn: "您要去哪里？" })}
           </h1>
+          <p className="mt-4 text-sm sm:text-base text-text-secondary max-w-md mx-auto">
+            {L4(lang, { 
+              ko: "세계관을 탐색하거나, 직접 이야기를 써보세요.", 
+              en: "Explore the universe or write your own story.", 
+              jp: "世界観を探索するか、自分の物語を書いてみてください。", 
+              cn: "探索这个世界观，或者写下你自己的故事。" 
+            })}
+          </p>
         </div>
 
-        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* UNIVERSE */}
-          <button onClick={onUniverse} className={`${cardBase} hover:border-accent-amber/40 cs-animate-fade-in`}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-amber/10 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
-            </div>
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber mb-4">
-              {L4(lang, { ko: "세계관 탐색", en: "Explore", jp: "世界観探索", cn: "探索世界观" })}
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-accent-amber" />
-              UNIVERSE
-            </h2>
-            <p className="text-sm leading-7 text-text-secondary">
-              {L4(lang, { ko: "아카이브, 네트워크, 세계관 문서를 탐색합니다.", en: "Browse the archive, network, and worldbuilding docs.", jp: "アーカイブ、ネットワーク、世界観文書を探索します。", cn: "探索档案库、网络和世界观文档。" })}
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-amber transition-colors">
-              {L4(lang, { ko: "탐색 시작", en: "Enter", jp: "探索開始", cn: "开始探索" })} →
-            </div>
-          </button>
+        {/* Cards Grid */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          {cards.map((card, index) => {
+            const c = colorMap[card.color];
+            const isHovered = hovered === card.id;
+            
+            return (
+              <button
+                key={card.id}
+                onClick={card.onClick}
+                onMouseEnter={() => setHovered(card.id)}
+                onMouseLeave={() => setHovered(null)}
+                className={`
+                  group relative overflow-hidden rounded-[24px] sm:rounded-[28px]
+                  border bg-[linear-gradient(135deg,rgba(14,18,27,0.95),rgba(7,9,13,0.85))]
+                  backdrop-blur-xl px-5 py-7 sm:px-7 sm:py-9 text-left
+                  transition-all duration-300 ease-out
+                  ${isHovered ? `${c.border} ${c.shadow} scale-[1.02] -translate-y-1` : 'border-white/[0.08]'}
+                  active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary
+                  ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                `}
+                style={{ 
+                  transitionDelay: mounted ? `${150 + index * 100}ms` : '0ms',
+                }}
+              >
+                {/* Background glow */}
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div 
+                    className={`
+                      absolute -right-12 -top-12 h-48 w-48 rounded-full ${c.glow} blur-3xl
+                      transition-all duration-500
+                      ${isHovered ? 'opacity-100 scale-110' : 'opacity-40 scale-100'}
+                    `} 
+                  />
+                </div>
 
-          {/* STUDIO */}
-          <button onClick={onStudio} className={`${cardBase} hover:border-accent-purple/40 cs-animate-fade-in cs-delay-1`}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-purple/10 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
-            </div>
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple mb-4">
-              {L4(lang, { ko: "집필 시작", en: "Write", jp: "執筆開始", cn: "开始写作" })}
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3 flex items-center gap-2">
-              <PenTool className="w-5 h-5 text-accent-purple" />
-              STUDIO
-            </h2>
-            <p className="text-sm leading-7 text-text-secondary">
-              {L4(lang, { ko: "세계관 설계 작업실로 진입합니다.", en: "Enter the world design and writing workspace.", jp: "世界観設計ワークスペースに入ります。", cn: "进入世界观设计工作室。" })}
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-purple transition-colors">
-              {L4(lang, { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" })} →
-            </div>
-          </button>
+                {/* Animated border gradient on hover */}
+                <div 
+                  className={`
+                    absolute inset-0 rounded-[inherit] p-[1px] overflow-hidden
+                    transition-opacity duration-300
+                    ${isHovered ? 'opacity-100' : 'opacity-0'}
+                  `}
+                >
+                  <div 
+                    className={`absolute inset-[-200%] ${c.bg}/30`}
+                    style={{
+                      background: `conic-gradient(from 0deg, transparent, ${card.color === 'amber' ? 'rgba(202,161,92,0.4)' : card.color === 'purple' ? 'rgba(141,123,195,0.4)' : 'rgba(47,155,131,0.4)'}, transparent)`,
+                      animation: isHovered ? 'spin 4s linear infinite' : 'none',
+                    }}
+                  />
+                </div>
 
-          {/* CODE STUDIO */}
-          <button onClick={onCodeStudio} className={`${cardBase} hover:border-accent-green/40 cs-animate-fade-in cs-delay-2`}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent-green/10 blur-3xl transition-opacity duration-300 group-hover:opacity-150" />
-            </div>
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-green mb-4">
-              {L4(lang, { ko: "코드 편집", en: "Code", jp: "コード編集", cn: "代码编辑" })}
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-text-primary mb-3 flex items-center gap-2">
-              <Code2 className="w-5 h-5 text-accent-green" />
-              CODE
-              <span className="rounded-full bg-accent-green/20 text-accent-green text-[9px] px-2 py-0.5 font-bold animate-pulse">NEW</span>
-            </h2>
-            <p className="text-sm leading-7 text-text-secondary">
-              {L4(lang, { ko: "Monaco 에디터 기반 코드 작업 환경.", en: "Monaco-based coding environment with AI.", jp: "Monacoエディタベースのコーディング環境。", cn: "基于Monaco编辑器的编码环境。" })}
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary group-hover:text-accent-green transition-colors">
-              {L4(lang, { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" })} →
-            </div>
-          </button>
+                {/* Content */}
+                <div className="relative z-10">
+                  {/* Kicker with badge */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <p className={`font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] ${c.text}`}>
+                      {L4(lang, card.kicker)}
+                    </p>
+                    {card.badge && (
+                      <span className={`
+                        inline-flex items-center gap-1 rounded-full px-2 py-0.5
+                        font-[family-name:var(--font-mono)] text-[9px] font-bold uppercase
+                        ${card.badge === 'NEW' 
+                          ? 'bg-accent-green/20 text-accent-green animate-pulse' 
+                          : `${c.bg}/15 ${c.text}`
+                        }
+                      `}>
+                        {typeof card.badge === 'string' ? card.badge : L4(lang, card.badge)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title with icon */}
+                  <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-[1.75rem] font-bold text-text-primary mb-3 flex items-center gap-3">
+                    <span className={`
+                      flex h-10 w-10 items-center justify-center rounded-xl
+                      ${c.bg}/15 border border-current/20 ${c.text}
+                      transition-all duration-300
+                      ${isHovered ? 'scale-110' : 'scale-100'}
+                    `}>
+                      <card.Icon className="w-5 h-5" />
+                    </span>
+                    {card.title}
+                  </h2>
+
+                  {/* Description */}
+                  <p className="text-sm leading-7 text-text-secondary mb-6 min-h-[3.5rem]">
+                    {L4(lang, card.desc)}
+                  </p>
+
+                  {/* CTA */}
+                  <div className={`
+                    flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.12em]
+                    transition-all duration-300
+                    ${isHovered ? c.text : 'text-text-tertiary'}
+                  `}>
+                    {L4(lang, card.cta)}
+                    <ArrowRight className={`
+                      w-4 h-4 transition-transform duration-300
+                      ${isHovered ? 'translate-x-1' : 'translate-x-0'}
+                    `} />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer hint */}
+        <div 
+          className={`
+            flex items-center gap-2 text-text-tertiary text-xs
+            transition-all duration-700 delay-500
+            ${mounted ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="font-[family-name:var(--font-mono)] tracking-wide">
+            {L4(lang, { 
+              ko: "CC-BY-NC-4.0 라이선스로 자유롭게 활용하세요", 
+              en: "Free to use under CC-BY-NC-4.0 license", 
+              jp: "CC-BY-NC-4.0ライセンスで自由にご利用ください", 
+              cn: "根据CC-BY-NC-4.0许可证自由使用" 
+            })}
+          </span>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

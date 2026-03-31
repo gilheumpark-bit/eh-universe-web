@@ -250,7 +250,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             </label>
             <select
               value={contractionLevel}
-              onChange={(e) => setContractionLevel(e.target.value as any)}
+              onChange={(e) => setContractionLevel(e.target.value as typeof contractionLevel)}
               disabled={mode !== 'experience'}
               className="w-full rounded-md border border-white/10 bg-bg-secondary px-2 py-1.5 font-[family-name:var(--font-mono)] text-[11px] disabled:opacity-50 text-text-secondary outline-none focus:border-accent-purple/40"
             >
@@ -344,7 +344,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                   <div className="text-white/80">{log.text}</div>
                   {log.detail && (
                     <div className="mt-1 text-white/40 truncate text-[10px] italic border-l border-white/10 pl-2">
-                       "{log.detail}"
+                       &ldquo;{log.detail}&rdquo;
                     </div>
                   )}
                 </div>

@@ -25,6 +25,8 @@ const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "tr
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
+  // React Compiler disabled — requires babel-plugin-react-compiler package
+  // reactCompiler: true,
   images: {
     remotePatterns: [
       {
@@ -32,6 +34,11 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
+  },
+  // Optimize page transitions
+  experimental: {
+    // Prefetch links in viewport for faster navigation
+    optimisticClientCache: true,
   },
   async redirects() {
     return [

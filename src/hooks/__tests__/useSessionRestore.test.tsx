@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useSessionRestore hook.
  * Covers: IndexedDB save/load, debounced auto-save, onRestore callback.

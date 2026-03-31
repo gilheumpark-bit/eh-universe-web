@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     // Stability AI (SDXL) — Text to Image & Auto-seed
     // ============================================================
     if (provider === 'stability') {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         text_prompts: [
           { text: prompt, weight: 1 },
           ...(negativePrompt ? [{ text: negativePrompt, weight: -1 }] : []),

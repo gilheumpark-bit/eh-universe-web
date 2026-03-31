@@ -138,7 +138,7 @@ function ChatArea({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col min-h-0">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2">
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PERSONA_COLORS[thread.persona] }} />
@@ -147,7 +147,7 @@ function ChatArea({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin">
         {thread.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div

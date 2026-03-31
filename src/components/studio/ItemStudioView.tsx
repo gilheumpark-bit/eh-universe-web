@@ -565,7 +565,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color: rCfg.color, border: `1px solid ${rCfg.color}40` }}>
                         {t(rCfg.tKey)}
                       </span>
-                      <button onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="text-text-tertiary hover:text-accent-red">
+                      <button 
+                        onClick={(e) => {
+                          e.currentTarget.classList.add('animate-delete-warning');
+                          setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
+                        }} 
+                        className="p-1 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/10 transition-all duration-200"
+                      >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -704,9 +710,15 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       {(() => { const st = SKILL_TYPES.find(s => s.value === skill.type); return st ? t(st.tKey) : skill.type; })()}
                     </span>
                   </div>
-                  <button onClick={() => setSkills(prev => prev.filter(s => s.id !== skill.id))} className="text-text-tertiary hover:text-accent-red">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                      <button 
+                        onClick={(e) => {
+                          e.currentTarget.classList.add('animate-delete-warning');
+                          setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
+                        }} 
+                        className="p-1 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/10 transition-all duration-200"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                 </div>
                 {skill.owner && <p className="text-[10px] text-text-tertiary">👤 {skill.owner}</p>}
                 {skill.description && <p className="text-xs text-text-secondary">{skill.description}</p>}
@@ -877,7 +889,13 @@ const MagicSystemCard: React.FC<{
           <span className="font-bold text-sm">{magic.name}</span>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
         </button>
-        <button onClick={onDelete} className="text-text-tertiary hover:text-accent-red">
+        <button 
+          onClick={(e) => {
+            e.currentTarget.classList.add('animate-delete-warning');
+            setTimeout(onDelete, 300);
+          }} 
+          className="p-1 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/10 transition-all duration-200"
+        >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>

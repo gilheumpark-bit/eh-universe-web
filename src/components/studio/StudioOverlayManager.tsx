@@ -16,16 +16,22 @@ interface StudioOverlayManagerProps {
   isKO: boolean;
   showQuickStartModal: boolean;
   setShowQuickStartModal: (v: boolean) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleQuickStart: any;
   isQuickGenerating: boolean;
   showApiKeyModal: boolean;
   setShowApiKeyModal: (v: boolean) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   hostedProviders: any;
   setApiKeyVersion: React.Dispatch<React.SetStateAction<number>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   confirmState: any;
   closeConfirm: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   moveModal: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setMoveModal: (v: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   moveSessionToProject: any;
   saveSlotModalOpen: boolean;
   setSaveSlotModalOpen: (v: boolean) => void;
@@ -35,6 +41,7 @@ interface StudioOverlayManagerProps {
   triggerSave: () => void;
   showSyncReminder: boolean;
   setShowSyncReminder: (v: boolean) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any;
   lastSyncTime: number | null;
   handleSync: () => void;
@@ -47,7 +54,9 @@ interface StudioOverlayManagerProps {
   exportDoneFormat: string | null;
   worldImportBanner: boolean;
   setWorldImportBanner: React.Dispatch<React.SetStateAction<boolean>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   uxError: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setUxError: (v: any) => void;
   alertToast: { message: string; variant: string } | null;
   setAlertToast: (v: { message: string; variant: string } | null) => void;

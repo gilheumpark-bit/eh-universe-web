@@ -34,28 +34,52 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
   return (
     <>
-      <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2 flex items-center justify-between gap-4">
-        <div className="flex gap-1 bg-bg-secondary rounded-xl p-1 w-fit">
+      {/* Premium Header Bar */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-5 pb-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Sub-tab Cards */}
+          <div className="flex gap-2 p-1.5 bg-bg-secondary/30 backdrop-blur-sm border border-border rounded-2xl">
+            <button 
+              onClick={() => setCharSubTab('characters')} 
+              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+                charSubTab === 'characters' 
+                  ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/30 shadow-[0_0_16px_rgba(141,123,195,0.1)]' 
+                  : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
+              }`}
+            >
+              <span className={`text-lg transition-transform duration-200 ${charSubTab === 'characters' ? 'scale-110' : 'group-hover:scale-105'}`}>👥</span>
+              <span className="uppercase tracking-wider">{t('ui.characters')}</span>
+            </button>
+            <button 
+              onClick={() => setCharSubTab('items')} 
+              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+                charSubTab === 'items' 
+                  ? 'bg-accent-amber/15 text-accent-amber border border-accent-amber/30 shadow-[0_0_16px_rgba(202,161,92,0.1)]' 
+                  : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
+              }`}
+            >
+              <span className={`text-lg transition-transform duration-200 ${charSubTab === 'items' ? 'scale-110' : 'group-hover:scale-105'}`}>⚔️</span>
+              <span className="uppercase tracking-wider">{t('ui.itemStudio')}</span>
+            </button>
+          </div>
+
+          {/* Save Button — Premium Style with Micro-interactions */}
           <button 
-            onClick={() => setCharSubTab('characters')} 
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'characters' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}
+            onClick={triggerSave} 
+            className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+              saveFlash 
+                ? 'bg-accent-green text-white animate-save-bounce-glow' 
+                : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
+            }`}
           >
-            👥 {t('ui.characters')}
-          </button>
-          <button 
-            onClick={() => setCharSubTab('items')} 
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all font-[family-name:var(--font-mono)] ${charSubTab === 'items' ? 'bg-accent-purple text-white shadow-lg' : 'text-text-tertiary hover:text-text-primary'}`}
-          >
-            ⚔️ {t('ui.itemStudio')}
+            <span className={`text-base transition-transform duration-200 ${saveFlash ? 'animate-icon-pop' : 'group-hover:scale-110'}`}>
+              {saveFlash ? '✓' : '💾'}
+            </span>
+            <span className={saveFlash ? 'animate-text-swap-in' : ''}>
+              {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+            </span>
           </button>
         </div>
-
-        <button 
-          onClick={triggerSave} 
-          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 shadow-lg ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:-translate-y-0.5'}`}
-        >
-          💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
-        </button>
       </div>
 
       {charSubTab === 'characters' ? (

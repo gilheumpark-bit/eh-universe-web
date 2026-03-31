@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        const sendEvent = (data: any) => {
+        const sendEvent = (data: Record<string, unknown>) => {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         };
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             }
           });
 
-          let newLogs: any[] = [];
+          let newLogs: Record<string, unknown>[] = [];
           
           try {
             if (phase === 'planning') {
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
         'Connection': 'keep-alive',
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }

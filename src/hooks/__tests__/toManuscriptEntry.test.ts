@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for toManuscriptEntry pure function from useTranslation.
  * This is a pure data transformer — no React hooks involved.
@@ -22,7 +23,7 @@ describe('toManuscriptEntry', () => {
     sourceLang: 'KO',
     targetLang: 'EN',
     mode: 'fidelity',
-    band: 'premium',
+    band: 0.5,
     sourceText: '원문 텍스트입니다.',
     translatedText: 'This is the original text.',
     chunks: [
@@ -48,15 +49,15 @@ describe('toManuscriptEntry', () => {
     expect(entry.translatedContent).toBe('This is the original text.');
     expect(entry.charCount).toBe('This is the original text.'.length);
     expect(entry.avgScore).toBe(0.875);
-    expect(entry.band).toBe('premium');
+    expect(entry.band).toBe(0.5);
     expect(entry.lastUpdate).toBe(1700000000000);
   });
 
   it('preserves glossary snapshot with source, target, locked fields', () => {
     const entry = toManuscriptEntry(baseResult);
     expect(entry.glossarySnapshot).toHaveLength(2);
-    expect(entry.glossarySnapshot[0]).toEqual({ source: '마법', target: 'magic', locked: true });
-    expect(entry.glossarySnapshot[1]).toEqual({ source: '영웅', target: 'hero', locked: false });
+    expect(entry.glossarySnapshot![0]).toEqual({ source: '마법', target: 'magic', locked: true });
+    expect(entry.glossarySnapshot![1]).toEqual({ source: '영웅', target: 'hero', locked: false });
   });
 
   it('defaults translatedTitle to empty string', () => {
@@ -94,6 +95,6 @@ describe('toManuscriptEntry', () => {
       ],
     };
     const entry = toManuscriptEntry(result);
-    expect(Object.keys(entry.glossarySnapshot[0])).toEqual(['source', 'target', 'locked']);
+    expect(Object.keys(entry.glossarySnapshot![0])).toEqual(['source', 'target', 'locked']);
   });
 });

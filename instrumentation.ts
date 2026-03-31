@@ -9,5 +9,5 @@ export async function register() {
 
 export const onRequestError = async (...args: unknown[]) => {
   const { captureRequestError } = await import("@sentry/nextjs");
-  return (captureRequestError as Function)(...args);
+  return (captureRequestError as (...a: unknown[]) => unknown)(...args);
 };

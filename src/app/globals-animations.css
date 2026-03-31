@@ -5,12 +5,12 @@
    ============================================================ */
 
 /* ============================================================
-   Page Transition System — Smooth fade+slide on every route
+   Page Transition System — Fast, smooth fade+slide on every route
    ============================================================ */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -19,11 +19,45 @@
 }
 
 #main-content > * {
-  animation: page-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Smooth scrolling globally */
-html {
+/* View Transitions API for supported browsers */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: fade-out-slide;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in-slide;
+}
+
+@keyframes fade-out-slide {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes fade-in-slide {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth scrolling — only when data-scroll-behavior is set (Next.js compatible) */
+html[data-scroll-behavior="smooth"] {
+  scroll-behavior: smooth;
+}
+
+/* Instant scroll for programmatic navigation */
+html[data-scroll-behavior="smooth"]:focus-within {
   scroll-behavior: smooth;
 }
 
@@ -62,6 +96,207 @@ button:focus-visible {
 /* Glitch hover effect */
 .glitch-hover:hover {
   animation: glitch 0.3s ease-in-out;
+}
+
+/* ============================================================
+   Theme Transition Animation
+   Smooth color transitions when switching themes
+   ============================================================ */
+html,
+html *,
+html *::before,
+html *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disable transitions for specific elements that shouldn't animate */
+html [data-no-theme-transition],
+html [data-no-theme-transition] * {
+  transition-property: none !important;
+}
+
+/* Theme change overlay flash effect */
+@keyframes theme-flash {
+  0% { opacity: 0; }
+  50% { opacity: 0.03; }
+  100% { opacity: 0; }
+}
+
+html::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: white;
+  opacity: 0;
+}
+
+html[data-theme-changing]::after {
+  animation: theme-flash 0.4s ease-out;
+}
+
+/* ============================================================
+   Success/Feedback Animations
+   ============================================================ */
+@keyframes success-pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 0 0 0 rgba(47, 155, 131, 0.4);
+  }
+  50% { 
+    transform: scale(1.02); 
+    box-shadow: 0 0 20px 4px rgba(47, 155, 131, 0.2);
+  }
+}
+
+@keyframes save-success {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes checkmark-draw {
+  0% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.animate-success-pulse {
+  animation: success-pulse 0.6s ease-out;
+}
+
+.animate-save-success {
+  animation: save-success 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-checkmark {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: checkmark-draw 0.3s ease-out 0.1s forwards;
+}
+
+/* Error shake animation */
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-error-shake {
+  animation: error-shake 0.5s ease-out;
+}
+
+/* Loading progress pulse */
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-progress-pulse {
+  animation: progress-pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   Accessibility Enhancements (WCAG 2.1 AA+)
+   ============================================================ */
+
+/* Skip to main content link */
+.skip-to-main {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-accent-purple);
+  color: white;
+  font-weight: bold;
+  border-radius: 0 0 0.75rem 0.75rem;
+  transition: top 0.2s ease-out;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-color: currentColor !important;
+  }
+  
+  .text-text-tertiary {
+    color: var(--color-text-secondary) !important;
+  }
+  
+  button, a {
+    text-decoration: underline;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping {
+    animation: none !important;
+  }
+}
+
+/* Focus trap indicator for modals */
+[role="dialog"] {
+  outline: none;
+}
+
+[role="dialog"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-accent-purple);
+}
+
+/* Screen reader only utility - enhanced */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Not sr-only when focused (for skip links) */
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: inherit;
+}
+
+/* ============================================================
+   Progress Slide Animation (for indeterminate progress bars)
+   ============================================================ */
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
 }
 
 @keyframes glitch {
@@ -190,3 +425,160 @@ button:focus-visible {
 
 /* Panel transitions */
 .cs-panel-enter { animation: cs-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ============================================================
+   Save/Delete Micro-interactions
+   Premium feedback animations for user actions
+   ============================================================ */
+
+/* Save bounce with glow */
+@keyframes save-bounce-glow {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(47, 155, 131, 0);
+  }
+  30% { 
+    transform: scale(1.08);
+    box-shadow: 0 0 20px 4px rgba(47, 155, 131, 0.4);
+  }
+  50% { 
+    transform: scale(0.95);
+  }
+  70% { 
+    transform: scale(1.02);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(47, 155, 131, 0);
+  }
+}
+
+.animate-save-bounce-glow {
+  animation: save-bounce-glow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Delete warning shake */
+@keyframes delete-warning {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-4px) rotate(-2deg); }
+  30% { transform: translateX(4px) rotate(2deg); }
+  45% { transform: translateX(-3px) rotate(-1deg); }
+  60% { transform: translateX(3px) rotate(1deg); }
+  75% { transform: translateX(-2px) rotate(0); }
+  90% { transform: translateX(2px) rotate(0); }
+}
+
+.animate-delete-warning {
+  animation: delete-warning 0.5s ease-out;
+}
+
+/* Confirm checkmark draw */
+@keyframes confirm-check {
+  0% { 
+    stroke-dashoffset: 30;
+    opacity: 0;
+  }
+  30% { opacity: 1; }
+  100% { 
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-confirm-check {
+  stroke-dasharray: 30;
+  animation: confirm-check 0.4s ease-out forwards;
+}
+
+/* Button click ripple */
+@keyframes click-ripple {
+  0% { 
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% { 
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.btn-ripple:active::before {
+  animation: click-ripple 0.5s ease-out;
+}
+
+/* Success ring expansion */
+@keyframes success-ring {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(47, 155, 131, 0.5);
+  }
+  100% { 
+    box-shadow: 0 0 0 12px rgba(47, 155, 131, 0);
+  }
+}
+
+.animate-success-ring {
+  animation: success-ring 0.6s ease-out;
+}
+
+/* Error ring */
+@keyframes error-ring {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  100% { 
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-error-ring {
+  animation: error-ring 0.6s ease-out;
+}
+
+/* Icon pop */
+@keyframes icon-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.animate-icon-pop {
+  animation: icon-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Text fade swap */
+@keyframes text-fade-out {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes text-fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-text-swap-out {
+  animation: text-fade-out 0.15s ease-out forwards;
+}
+
+.animate-text-swap-in {
+  animation: text-fade-in 0.2s ease-out forwards;
+}

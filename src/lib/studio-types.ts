@@ -115,7 +115,7 @@ export interface WorldSimData {
   phonemes?: { id: string; symbol: string; roman: string; type: "consonant" | "vowel"; sigClass: "sustained" | "modulated" | "percussive" | "cyclic" | "silent"; freq: number; wave: "sine" | "sawtooth" | "square" | "triangle"; }[];
   words?: { id: string; meaning: string; phonemes: string[]; roman: string; civId?: string }[];
   hexMap?: Record<string, string>;
-  _latestUpdates?: any;
+  _latestUpdates?: string[];
 }
 
 // World Simulator reference flags

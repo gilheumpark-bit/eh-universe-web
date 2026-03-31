@@ -156,9 +156,11 @@ export default function PreviewPage() {
   const token = params?.token as string;
   const [state, setState] = useState<PageState>({ status: "loading" });
   const [passwordInput, setPasswordInput] = useState("");
+  const [previewMode, setPreviewMode] = useState<'select' | 'radio' | 'visual'>('select');
 
   // 데이터 로드
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!token) { setState({ status: "not-found" }); return; }
 
     loadSharedScene(token)
@@ -253,7 +255,6 @@ export default function PreviewPage() {
 
   // 재생
   const { data } = state;
-  const [previewMode, setPreviewMode] = useState<'select' | 'radio' | 'visual'>('select');
   // P2#11 fix: 공유 데이터에서 캐릭터 이름 추출하여 음성 매핑 복원
   const voiceMappings: VoiceMapping[] = data.voiceMappings.length > 0
     ? data.voiceMappings

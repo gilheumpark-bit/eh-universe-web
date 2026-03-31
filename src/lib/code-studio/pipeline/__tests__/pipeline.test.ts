@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Unit tests for pipeline module (code-studio internal)
  */

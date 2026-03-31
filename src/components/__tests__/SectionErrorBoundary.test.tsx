@@ -23,7 +23,7 @@ jest.mock('next/link', () => ({
   ),
 }));
 
-function BrokenChild() {
+function BrokenChild(): React.JSX.Element {
   throw new Error('Section boom');
 }
 

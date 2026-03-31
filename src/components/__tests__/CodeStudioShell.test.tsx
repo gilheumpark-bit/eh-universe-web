@@ -137,6 +137,6 @@ describe('CodeStudioShell', () => {
     const mod = await import('../code-studio/CodeStudioShell');
     // Verify the component is a valid function component
     expect(mod.default).toBeDefined();
-    expect(mod.default.name || mod.default.displayName || 'CodeStudioShell').toBeTruthy();
+    expect(mod.default.name || (mod.default as unknown as { displayName?: string }).displayName || 'CodeStudioShell').toBeTruthy();
   });
 });

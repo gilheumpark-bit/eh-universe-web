@@ -148,58 +148,86 @@ export default function OnboardingGuide({
   ];
 
   return (
-    <div className={`mx-auto w-full max-w-2xl transition-all duration-500 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-      <div className="relative rounded-[1.75rem] border border-border/50 bg-bg-secondary/80 p-6 shadow-2xl shadow-black/20 backdrop-blur md:p-8">
+    <div className={`mx-auto w-full max-w-2xl transition-all duration-700 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
+      {/* Premium Glass Container */}
+      <div className="relative rounded-[2rem] border border-white/[0.08] bg-gradient-to-b from-bg-secondary/90 to-bg-primary/80 p-8 shadow-[0_32px_64px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-xl md:p-10">
+        {/* Decorative Glow */}
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[300px] h-[200px] bg-accent-purple/20 rounded-full blur-[80px] pointer-events-none" />
+        
         {/* Skip */}
         <button type="button" onClick={skip}
-          className="absolute right-4 top-4 text-text-tertiary transition-colors hover:text-text-primary"
+          className="absolute right-5 top-5 p-2 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-white/5 transition-all"
           aria-label={L.skip}>
           <X className="h-4 w-4" />
         </button>
 
         {/* Header */}
-        <p className="text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.18em] text-accent-purple">
-          {L.eyebrow}
-        </p>
-        <h3 className="mt-4 text-center text-xl font-black tracking-tight md:text-2xl">
-          {L.title}
-        </h3>
-        <p className="mt-2 text-center text-sm text-text-secondary">
-          {L.subtitle}
-        </p>
+        <div className="relative">
+          <p className="text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.25em] text-accent-purple font-bold">
+            {L.eyebrow}
+          </p>
+          <h3 className="mt-5 text-center text-2xl font-black tracking-tight md:text-3xl bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
+            {L.title}
+          </h3>
+          <p className="mt-3 text-center text-sm text-text-tertiary max-w-md mx-auto leading-relaxed">
+            {L.subtitle}
+          </p>
+        </div>
 
-        {/* 3 Cards */}
+        {/* 3 Cards — Premium Style */}
         {!showDemoList ? (
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {cards.map(({ key, icon, title, desc, accent, badge }) => (
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {cards.map(({ key, icon, title, desc, accent, badge }, idx) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => handleAction(key)}
-                className={`group relative flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                style={{ animationDelay: `${idx * 100}ms` }}
+                className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
                   accent
-                    ? "border-accent-purple/30 bg-accent-purple/8 hover:border-accent-purple/50 hover:bg-accent-purple/12"
-                    : "border-border/50 bg-bg-primary/50 hover:border-border hover:bg-bg-primary"
+                    ? "border-accent-purple/40 bg-gradient-to-b from-accent-purple/15 to-accent-purple/5 hover:border-accent-purple/60 hover:shadow-[0_8px_32px_rgba(141,123,195,0.2)]"
+                    : "border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent hover:border-white/[0.15] hover:bg-white/[0.06] hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                 }`}
               >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                  accent ? "bg-accent-purple/15 text-accent-purple" : "bg-white/5 text-text-tertiary group-hover:text-text-primary"
+                {/* Icon Container */}
+                <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 ${
+                  accent 
+                    ? "bg-accent-purple/20 text-accent-purple group-hover:bg-accent-purple/30 group-hover:shadow-[0_0_24px_rgba(141,123,195,0.3)]" 
+                    : "bg-white/[0.06] text-text-tertiary group-hover:text-text-primary group-hover:bg-white/[0.1]"
                 }`}>
                   {icon}
+                  {accent && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent-purple rounded-full animate-pulse" />
+                  )}
                 </div>
+                
+                {/* Title */}
                 <span className={`text-sm font-black uppercase tracking-wider font-[family-name:var(--font-mono)] ${
                   accent ? "text-accent-purple" : "text-text-primary"
                 }`}>
                   {title}
                 </span>
-                <span className="text-[11px] leading-5 text-text-tertiary">
+                
+                {/* Description */}
+                <span className="text-xs leading-relaxed text-text-tertiary group-hover:text-text-secondary transition-colors">
                   {desc}
                 </span>
+                
+                {/* Badge */}
                 {badge && (
-                  <span className="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-400">
+                  <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 text-[9px] font-bold text-amber-400">
                     {badge}
                   </span>
                 )}
+                
+                {/* Arrow indicator */}
+                <span className={`mt-auto text-[10px] uppercase tracking-wider font-bold transition-all duration-300 ${
+                  accent 
+                    ? "text-accent-purple/60 group-hover:text-accent-purple" 
+                    : "text-text-tertiary/40 group-hover:text-text-tertiary"
+                }`}>
+                  {language === 'KO' ? '시작하기 →' : 'Start →'}
+                </span>
               </button>
             ))}
           </div>

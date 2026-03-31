@@ -140,8 +140,8 @@ export async function generateJsonGemini(
 }
 
 export async function dispatchStructuredGeneration(
-  provider: string, apiKey: string, model: string, prompt: string, schema: object | undefined, fallback: any
-): Promise<{ ok: true; result: any } | { ok: false; error: string }> {
+  provider: string, apiKey: string, model: string, prompt: string, schema: object | undefined, fallback: unknown
+): Promise<{ ok: true; result: unknown } | { ok: false; error: string }> {
   try {
     if (provider === 'ollama' || provider === 'lmstudio') {
       return { ok: false, error: 'Local providers must use /api/local-proxy' };

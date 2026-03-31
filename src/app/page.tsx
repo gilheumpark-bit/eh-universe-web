@@ -46,6 +46,7 @@ export default function Home() {
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSplashState(sessionStorage.getItem("eh-splash-seen") ? "hide" : "show");
   }, []);
   const showSplash = splashState === "show";

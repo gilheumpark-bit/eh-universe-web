@@ -35,6 +35,7 @@ import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import * as PI from "@/components/code-studio/PanelImports";
+import { useStudioTheme } from "@/hooks/useStudioTheme";
 
 // Extracted components
 import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
@@ -194,6 +195,9 @@ function CodeStudioShellInner() {
   const tcs = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  
+  // Apply theme system (same as novel studio)
+  const { themeLevel, colorTheme } = useStudioTheme();
 
   // ── File System ──
   const { tree: files, setTree: setFiles, createFile: fsCreateFile, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
