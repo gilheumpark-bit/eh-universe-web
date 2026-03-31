@@ -206,13 +206,16 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
 
   // Sync mode with agent.running
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (agent.running && mode === "idle") setMode("executing");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!agent.running && mode === "executing") setMode(agent.session ? "complete" : "idle");
   }, [agent.running, agent.session, mode]);
 
   // Derive steps from agent.messages
   useEffect(() => {
     if (agent.messages.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSteps(agent.messages.map((m, i) => ({
         id: `step-${i}`,
         action: "think" as const,

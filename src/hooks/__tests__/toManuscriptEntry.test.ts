@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for toManuscriptEntry pure function from useTranslation.
  * This is a pure data transformer — no React hooks involved.

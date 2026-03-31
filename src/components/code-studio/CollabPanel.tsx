@@ -119,6 +119,7 @@ export default function CollabPanel({ onClose }: Props) {
   useEffect(() => {
     const saved = restoreSession();
     if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoomId(saved.roomId);
       setUserName(saved.userName);
       const mgr = createCollaborationManager(saved.roomId, saved.userName);

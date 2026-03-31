@@ -27,11 +27,15 @@ export function useStudioQuickStart({
   createNewProject: () => string;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   setCurrentSessionId: (id: string | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setActiveTab: (tab: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setPipelineResult: React.Dispatch<React.SetStateAction<any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setUxError: (error: any) => void;
   doHandleSend: (customPrompt?: string, overrideInput?: string, cb?: () => void) => void;
   currentSessionId: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   currentSession: any;
 }) {
   const [showQuickStartModal, setShowQuickStartModal] = useState(false);
@@ -96,6 +100,7 @@ export function useStudioQuickStart({
   useEffect(() => {
     if (pendingQuickStartPrompt && currentSessionId && currentSession) {
       doHandleSend(pendingQuickStartPrompt, '', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPipelineResult((prev: any) => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map((s: any) => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
       });
       setPendingQuickStartPrompt(null);

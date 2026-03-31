@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useStudioSync hook.
  * Covers: sync flow, 401 retry, error states, sync reminder.

@@ -20,6 +20,7 @@ export default function SplashScreen({
   const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

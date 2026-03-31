@@ -155,16 +155,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
     }
   }, [open]);
 
-  if (!open) return null;
-
-  const heightPercent = snap * 100;
-  const adjustedHeight = dragging
-    ? Math.max(10, heightPercent - (dragOffset / window.innerHeight) * 100)
-    : (visible ? heightPercent : 0);
-
-  const backdropOpacity = visible ? 1 : 0;
-
-  // Haptic feedback
+  // Haptic feedback (hooks must be before conditional returns)
   const triggerHaptic = useCallback(() => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(5);
@@ -179,6 +170,15 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
       return idx === 1 ? SNAP_POINTS[2] : SNAP_POINTS[1];
     });
   }, [triggerHaptic]);
+
+  if (!open) return null;
+
+  const heightPercent = snap * 100;
+  const adjustedHeight = dragging
+    ? Math.max(10, heightPercent - (dragOffset / window.innerHeight) * 100)
+    : (visible ? heightPercent : 0);
+
+  const backdropOpacity = visible ? 1 : 0;
 
   return (
     <>

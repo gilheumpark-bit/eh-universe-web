@@ -85,7 +85,7 @@ function extractSymbols(content: string, fileName: string): SymbolEntry[] {
 function generateCanvasNodes(fileTree: FileNode[], parentX = 0, parentY = 0): { nodes: CanvasNode[]; connections: CanvasConnection[] } {
   const nodes: CanvasNode[] = [];
   const connections: CanvasConnection[] = [];
-  let x = parentX;
+  const x = parentX;
   let y = parentY;
 
   function traverse(items: FileNode[], depth: number, parentId?: string) {

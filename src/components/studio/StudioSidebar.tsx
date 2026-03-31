@@ -131,6 +131,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   // Track hydration to prevent mismatch for studioMode text
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
 

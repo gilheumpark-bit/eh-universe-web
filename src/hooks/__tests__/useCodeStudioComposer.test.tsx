@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useCodeStudioComposer hook.
  * Covers: state machine transitions, accept/reject changes, reset, abort.

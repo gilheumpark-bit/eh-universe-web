@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for useStudioSession hook.
  * Covers: new session creation, unsaved-work guard, demo session loading.
