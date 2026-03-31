@@ -118,8 +118,7 @@ describe('useStudioSession', () => {
       title: 'Test',
       messages: [{ role: 'user' as const, content: 'Hello' }] as Message[],
       config: {} as StoryConfig,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      lastUpdate: Date.now(),
     } as ChatSession;
 
     const { get, callbacks, cleanup } = createHarness({ currentSession: session });

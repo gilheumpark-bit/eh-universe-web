@@ -120,8 +120,9 @@ describe('useCodeStudioComposer', () => {
   // ============================================================
 
   it('compose generates changes and transitions to verifying', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('modified content');
+      return 'modified content';
     });
 
     const { get, cleanup } = createHarness();
@@ -142,8 +143,9 @@ describe('useCodeStudioComposer', () => {
   });
 
   it('accept marks a change as accepted', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('modified');
+      return 'modified';
     });
 
     const { get, cleanup } = createHarness();
@@ -158,8 +160,9 @@ describe('useCodeStudioComposer', () => {
   });
 
   it('reject marks a change as rejected', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('modified');
+      return 'modified';
     });
 
     const { get, cleanup } = createHarness();
@@ -173,8 +176,9 @@ describe('useCodeStudioComposer', () => {
   });
 
   it('acceptAll / rejectAll bulk-updates pending changes', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('mod');
+      return 'mod';
     });
 
     const { get, cleanup } = createHarness();
@@ -194,8 +198,9 @@ describe('useCodeStudioComposer', () => {
   });
 
   it('getAccepted returns only accepted changes', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('mod');
+      return 'mod';
     });
 
     const { get, cleanup } = createHarness();
@@ -213,8 +218,9 @@ describe('useCodeStudioComposer', () => {
   });
 
   it('skips files where getContent returns null', async () => {
-    mockStreamChat.mockImplementation(async (opts: any) => {
+    mockStreamChat.mockImplementation(async (opts: any): Promise<string> => {
       opts.onChunk('mod');
+      return 'mod';
     });
 
     const { get, cleanup } = createHarness();

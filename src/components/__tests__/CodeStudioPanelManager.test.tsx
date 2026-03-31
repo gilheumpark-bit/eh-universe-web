@@ -36,14 +36,13 @@ describe('ActivityBar', () => {
   it('renders without crashing', () => {
     const { container } = render(
       <ActivityBar
-        rightPanel={null}
+        rightPanel={null as never}
         onSetRightPanel={jest.fn()}
         bugReports={[]}
         showAdvancedPanels={false}
         onToggleAdvancedPanels={jest.fn()}
         showSettings={false}
         onToggleSettings={jest.fn()}
-        language="en"
         lang="en"
       />,
     );
@@ -53,14 +52,13 @@ describe('ActivityBar', () => {
   it('renders activity bar buttons for core items', () => {
     const { container } = render(
       <ActivityBar
-        rightPanel={null}
+        rightPanel={null as never}
         onSetRightPanel={jest.fn()}
         bugReports={[]}
         showAdvancedPanels={false}
         onToggleAdvancedPanels={jest.fn()}
         showSettings={false}
         onToggleSettings={jest.fn()}
-        language="en"
         lang="en"
       />,
     );

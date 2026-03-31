@@ -79,26 +79,26 @@ describe('local-proxy security', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = origEnv;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: origEnv, writable: true });
     global.fetch = savedFetch;
   });
 
   // --- rejection tests (no fetch needed) ---
 
   it('rejects non-localhost URLs (GET)', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
     const res = await GET(makeGetReq('http://evil.com:1234'));
     expect(res.status).toBe(403);
   });
 
   it('rejects non-localhost URLs (POST)', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
     const res = await POST(makePostReq({ baseUrl: 'http://attacker.io:8080' }));
     expect(res.status).toBe(403);
   });
 
   it('blocks in production (GET)', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
     const res = await GET(makeGetReq('http://localhost:1234'));
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -106,13 +106,13 @@ describe('local-proxy security', () => {
   });
 
   it('blocks in production (POST)', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
     const res = await POST(makePostReq({ baseUrl: 'http://localhost:1234' }));
     expect(res.status).toBe(403);
   });
 
   it('rejects invalid IP ranges like 192.168.999.999', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
     const res = await GET(makeGetReq('http://192.168.999.999:1234'));
     expect(res.status).toBe(403);
   });
@@ -120,7 +120,7 @@ describe('local-proxy security', () => {
   // --- pass-through tests (mock fetch) ---
 
   it('allows localhost in development (GET)', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ data: [{ id: 'model-1' }] }),
@@ -135,7 +135,7 @@ describe('local-proxy security', () => {
   });
 
   it('allows private IP 192.168.x.x in development (POST)', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ choices: [{ message: { content: 'ok' } }] }),

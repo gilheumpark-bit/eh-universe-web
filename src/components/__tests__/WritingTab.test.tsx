@@ -96,7 +96,7 @@ describe('WritingTab', () => {
       setRightPanelOpen: noop,
     };
 
-    const { container } = render(<WritingTab {...propsWithMessages as never} />);
+    const { container } = render(<WritingTab {...(propsWithMessages as unknown as React.ComponentProps<typeof WritingTab>)} />);
     expect(container.firstChild).toBeTruthy();
   });
 });
