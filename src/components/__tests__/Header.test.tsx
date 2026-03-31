@@ -53,7 +53,7 @@ describe('Header', () => {
     render(<Header />);
     // getAllByText because links appear in both desktop and mobile nav
     expect(screen.getAllByText('HOME').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('ARCHIVE').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('NETWORK').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('STUDIO').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('CODE').length).toBeGreaterThanOrEqual(1);
   });

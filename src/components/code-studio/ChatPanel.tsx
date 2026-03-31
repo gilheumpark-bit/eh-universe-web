@@ -9,16 +9,9 @@ import {
   Send, Sparkles, Shield, Square, AtSign, History,
   Trash2, Plus, Check, Zap,
 } from "lucide-react";
-import { useCodeStudioChat, type ChatMessage as HookChatMessage } from "@/hooks/useCodeStudioChat";
+import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-  codeBlock?: { original: string; modified: string; language: string };
-}
+import { getServers, addServer, connectServer, callTool } from "@/lib/code-studio/features/mcp-client";
 
 interface ChatSession {
   id: string;
@@ -111,8 +104,22 @@ export function ChatPanel({
 }: Props) {
   const { lang } = useLang();
   const ko = lang === "ko";
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    // eslint-disable-next-line
+    setIsMounted(true);
+  }, []);
+
+  const mcpToolsDoc = isMounted ? (() => {
+    const servers = getServers().filter(s => s.status === 'connected');
+    if (servers.length === 0) return "";
+    const doc = servers.flatMap(s => s.tools.map(t => `- /mcp call ${s.name} ${t.name} (args: ${JSON.stringify(t.inputSchema)})`)).join("\n");
+    return `\n\nYou have access to external MCP tools. If you need information from them, ask the user to run the appropriate command:\n${doc}`;
+  })() : "";
+
   const chat = useCodeStudioChat({
-    systemInstruction: `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.`,
+    systemInstruction: `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.${mcpToolsDoc}`,
     onMentionResolve: (mention) => {
       const found = allFileNames?.find(f => f.includes(mention));
       return found ? `[File: ${found}]` : null;
@@ -159,6 +166,62 @@ export function ChatPanel({
     if (!text || chat.isStreaming) return;
     setInput("");
     setShowMentions(false);
+
+    if (text.startsWith("/mcp")) {
+      const parts = text.split(" ");
+      const cmd = parts[1];
+      
+      if (cmd === "list") {
+        const servers = getServers();
+        const msg = servers.length > 0 
+          ? "Connected MCP Servers:\n" + servers.map(s => `- ${s.name} (${s.status})`).join("\n")
+          : "No MCP servers connected. Use `/mcp connect <name> <url>`";
+        await chat.sendMessage(`User executed: /mcp list\n\nSystem Response:\n${msg}`);
+        return;
+      }
+      
+      if (cmd === "connect") {
+        const name = parts[2];
+        const url = parts[3];
+        if (!name || !url) {
+          await chat.sendMessage("User executed: /mcp connect\n\nSystem Response: Usage: /mcp connect <name> <url>");
+          return;
+        }
+        const server = addServer(name, url);
+        const connected = await connectServer(server.id);
+        const msg = connected?.status === 'connected' 
+          ? `Successfully connected to MCP server: ${name}\nTools available: ${connected.tools.map(t => t.name).join(", ")}`
+          : `Failed to connect to MCP server: ${name}`;
+        await chat.sendMessage(`User executed: /mcp connect ${name}\n\nSystem Response:\n${msg}`);
+        return;
+      }
+      
+      if (cmd === "call") {
+        const serverName = parts[2];
+        const toolName = parts[3];
+        const argsStr = parts.slice(4).join(" ");
+        
+        const servers = getServers();
+        const server = servers.find(s => s.name === serverName);
+        
+        if (!server) {
+          await chat.sendMessage(`System: Server not found: ${serverName}`);
+          return;
+        }
+        try {
+          const args = argsStr ? JSON.parse(argsStr) : {};
+          const result = await callTool(server.id, toolName, args);
+          await chat.sendMessage(`[MCP Tool Result: ${serverName}.${toolName}]\n${result.content}\n\nPlease analyze this result.`);
+        } catch (e) {
+          await chat.sendMessage(`System Error: Tool call failed. Invalid JSON arguments or execution error. ${e}`);
+        }
+        return;
+      }
+      
+      await chat.sendMessage("System: Available MCP commands:\n- /mcp list\n- /mcp connect <name> <url>\n- /mcp call <serverName> <toolName> [argsJSON]");
+      return;
+    }
+
     await chat.sendMessage(text);
   }, [input, chat]);
 
@@ -228,7 +291,7 @@ export function ChatPanel({
                     className="flex-1 text-left text-xs truncate text-text-primary" title="Double-click to rename"
                   >{session.title}</button>
                 )}
-                <span className="text-[9px] text-text-tertiary flex-shrink-0">{formatRelativeTime(session.updatedAt)}</span>
+                <span className="text-[9px] text-text-tertiary shrink-0">{formatRelativeTime(session.updatedAt)}</span>
                 <button onClick={() => handleDeleteSession(session.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-0.5" title="Delete">
                   <Trash2 size={11} />
                 </button>

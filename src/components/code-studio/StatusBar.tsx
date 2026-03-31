@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio/core/types";
+import { LanguageSwitch } from "./LanguageSwitch";
 
 interface StatusBarProps {
   activeFile: OpenFile | null;
@@ -81,11 +82,11 @@ export function StatusBar({
 
   return (
     <div
-      className="hidden sm:flex items-center justify-between px-3 bg-accent-purple text-white text-[11px] leading-[11px] select-none overflow-x-auto flex-shrink-0"
+      className="hidden sm:flex items-center justify-between px-3 bg-accent-purple text-white text-[11px] leading-[11px] select-none overflow-x-auto shrink-0"
       style={{ height: 24 }}
     >
       {/* ---- Left Section ---- */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         {/* Git branch */}
         <span className="flex items-center gap-1">
           <GitBranch size={12} /> {branch}
@@ -101,7 +102,7 @@ export function StatusBar({
           aria-label="AI 모델 변경"
         >
           <Cpu size={10} />
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-purple flex-shrink-0" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />
           <span className="truncate max-w-[120px]">
             <Sparkles size={9} className="inline mr-0.5" />
             AI Provider
@@ -159,7 +160,10 @@ export function StatusBar({
       </div>
 
       {/* ---- Right Section ---- */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
+        <LanguageSwitch compact />
+        {SEPARATOR}
+
         {activeFile && (
           <>
             {/* Cursor position */}

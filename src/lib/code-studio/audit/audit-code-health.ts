@@ -7,6 +7,7 @@
 import type {
   AuditContext, AuditAreaResult, AuditFinding, AuditGrade,
 } from './audit-types';
+import { scanDeadCode } from '../pipeline/dead-code';
 
 let findingCounter = 0;
 function fid(area: string): string {
@@ -146,12 +147,26 @@ export function auditOperations(ctx: AuditContext): AuditAreaResult {
   const dupeThreshold = Math.max(15, Math.floor(totalFiles / 8));
   if (dupeCount <= dupeThreshold) passed++;
 
+  // Check 6: Dead code (unused exports, unreachable code, etc)
+  checks++;
+  const fileNodes = ctx.files.map(f => ({ name: f.path, type: 'file' as const, id: f.path, content: f.content }));
+  const deadCodeFindings = scanDeadCode(fileNodes);
+  if (deadCodeFindings.length <= 10) {
+    passed++;
+  } else {
+    findings.push({
+      id: fid('ops'), area: 'operations', severity: deadCodeFindings.length > 50 ? 'high' : 'medium',
+      message: `미사용 코드/데드코드 ${deadCodeFindings.length}건 감지`, rule: 'DEAD_CODE_DETECTED',
+      suggestion: 'dead-code.ts 스캔 결과 확인 후 정리 권장',
+    });
+  }
+
   const score = Math.max(0, Math.round((passed / Math.max(checks, 1)) * 100));
 
   return {
     area: 'operations', category: 'code-health', score, grade: gradeFromScore(score),
     findings, checks, passed,
-    metrics: { totalFiles, totalLines, largeFiles: largeFiles.length, anyCount, consoleCount, todoCount },
+    metrics: { totalFiles, totalLines, largeFiles: largeFiles.length, anyCount, consoleCount, todoCount, deadCodeCount: deadCodeFindings.length },
   };
 }
 

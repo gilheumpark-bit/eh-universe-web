@@ -15,6 +15,7 @@ import StyleTab from '@/components/studio/tabs/StyleTab';
 import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
@@ -45,7 +46,7 @@ interface StudioTabRouterProps {
   doRestoreVersionedBackup: (timestamp: number) => Promise<boolean>;
   refreshBackupList: () => void;
   writingMode: string;
-  setWritingMode: (mode: any) => void;
+  setWritingMode: (mode: string) => void;
   editDraft: string;
   setEditDraft: (v: string) => void;
   editDraftRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -127,6 +128,14 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId!}
           hostedProviders={hostedProviders}
         />
+        <div className="hidden lg:block fixed bottom-6 right-6 z-40 w-80">
+          <NetworkFeedWidget 
+            language={language} 
+            worldTags={config.subGenres || [config.genre]} 
+            projectTitle={config.title} 
+            compact 
+          />
+        </div>
         </SectionErrorBoundary>
       )}
       {activeTab === 'characters' && currentSession && config && (

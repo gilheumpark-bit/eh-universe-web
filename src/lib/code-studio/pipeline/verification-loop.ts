@@ -13,6 +13,8 @@ import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
 import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
 import { runStressReport } from '@/lib/code-studio/pipeline/stress-test';
 import type { StressReport } from '@/lib/code-studio/pipeline/stress-test';
+import { runChaosReport } from '@/lib/code-studio/pipeline/chaos-engineering';
+import type { ChaosReport } from '@/lib/code-studio/pipeline/chaos-engineering';
 import { scanProject } from '@/lib/code-studio/features/patent-scanner';
 import type { IPReport } from '@/lib/code-studio/features/patent-scanner';
 import type { FileNode } from '@/lib/code-studio/core/types';
@@ -34,6 +36,7 @@ export interface VerificationConfig {
   maxIterations: number;
   passThreshold: number;
   enableStress: boolean;
+  enableChaos: boolean;
   enableIP: boolean;
   safeFixCategories: SafeFixCategory[];
 }
@@ -48,6 +51,8 @@ export interface VerificationIteration {
   fixesSkipped: number;
   stressScore?: number;
   stressGrade?: string;
+  chaosScore?: number;
+  chaosGrade?: string;
   ipScore?: number;
   ipGrade?: string;
   combinedScore: number;
@@ -77,6 +82,7 @@ const DEFAULT_CONFIG: VerificationConfig = {
   maxIterations: 3,
   passThreshold: 77,
   enableStress: false,
+  enableChaos: false,
   enableIP: true,
   safeFixCategories: [
     'unused-import',
@@ -154,26 +160,42 @@ interface ScoreInput {
   criticalBugCount: number;
   stressScore?: number;
   stressEnabled: boolean;
+  chaosScore?: number;
+  chaosEnabled: boolean;
 }
 
 function calculateCombinedScore(input: ScoreInput): number {
   const bugPenalty = Math.min(100, input.criticalBugCount * 25 + input.bugCount * 5);
   const bugScore = Math.max(0, 100 - bugPenalty);
 
-  if (input.stressEnabled && input.stressScore != null) {
-    // pipeline 50% + stress 30% + bug penalty 20%
-    return Math.round(
-      input.pipelineScore * 0.5 +
-      input.stressScore * 0.3 +
-      bugScore * 0.2,
-    );
+  let totalWeight = 0;
+  let scoreSum = 0;
+
+  // Pipeline is always on
+  totalWeight += 0.5;
+  scoreSum += input.pipelineScore * 0.5;
+
+  // Bug score is always on
+  totalWeight += 0.2;
+  scoreSum += bugScore * 0.2;
+
+  // Stress and Chaos split the remaining 0.3
+  if (input.stressEnabled && input.stressScore != null && input.chaosEnabled && input.chaosScore != null) {
+      scoreSum += input.stressScore * 0.15;
+      scoreSum += input.chaosScore * 0.15;
+      totalWeight += 0.3;
+  } else if (input.stressEnabled && input.stressScore != null) {
+      scoreSum += input.stressScore * 0.3;
+      totalWeight += 0.3;
+  } else if (input.chaosEnabled && input.chaosScore != null) {
+      scoreSum += input.chaosScore * 0.3;
+      totalWeight += 0.3;
+  } else {
+      // If neither is enabled, pipeline gets 0.6 and bug gets 0.4
+      return Math.round(input.pipelineScore * 0.6 + bugScore * 0.4);
   }
 
-  // pipeline 60% + bug penalty 40%
-  return Math.round(
-    input.pipelineScore * 0.6 +
-    bugScore * 0.4,
-  );
+  return Math.round(scoreSum / totalWeight);
 }
 
 function deriveStatus(
@@ -188,6 +210,7 @@ function deriveStatus(
 interface HardGateInput {
   criticalBugCount: number;
   stressGrade?: string;
+  chaosGrade?: string;
   ipGrade?: string;
 }
 
@@ -199,6 +222,9 @@ function checkHardGates(input: HardGateInput): string[] {
   }
   if (input.stressGrade === 'F') {
     failures.push('stress: F');
+  }
+  if (input.chaosGrade === 'F') {
+    failures.push('chaos: F');
   }
   if (input.ipGrade === 'F') {
     failures.push('ip: F');
@@ -323,6 +349,16 @@ export async function runVerificationLoop(
       }
     }
 
+    // --- Step 3-b: Optional chaos test (round 1 only to save cost) ---
+    let chaosReport: ChaosReport | undefined;
+    if (cfg.enableChaos && round === 1) {
+      try {
+        chaosReport = await runChaosReport(currentCode, fileName);
+      } catch {
+        chaosReport = undefined;
+      }
+    }
+
     // --- Step 4: Optional IP scan (round 1 only) ---
     let ipReport: IPReport | undefined;
     if (cfg.enableIP && round === 1) {
@@ -340,6 +376,8 @@ export async function runVerificationLoop(
       criticalBugCount,
       stressScore: stressReport?.overallScore,
       stressEnabled: cfg.enableStress,
+      chaosScore: chaosReport?.overallScore,
+      chaosEnabled: cfg.enableChaos,
     });
 
     const status = deriveStatus(combinedScore, cfg.passThreshold);
@@ -348,6 +386,7 @@ export async function runVerificationLoop(
     const hardGates = checkHardGates({
       criticalBugCount,
       stressGrade: stressReport?.grade,
+      chaosGrade: chaosReport?.grade,
       ipGrade: ipReport?.grade,
     });
 
@@ -382,6 +421,8 @@ export async function runVerificationLoop(
       fixesSkipped: skippedCount,
       stressScore: stressReport?.overallScore,
       stressGrade: stressReport?.grade,
+      chaosScore: chaosReport?.overallScore,
+      chaosGrade: chaosReport?.grade,
       ipScore: ipReport?.score,
       ipGrade: ipReport?.grade,
       combinedScore,
@@ -428,6 +469,7 @@ export async function runVerificationLoop(
     checkHardGates({
       criticalBugCount: iterations[iterations.length - 1]?.criticalBugCount ?? 0,
       stressGrade: iterations[0]?.stressGrade,
+      chaosGrade: iterations[0]?.chaosGrade,
       ipGrade: iterations[0]?.ipGrade,
     }),
   );
