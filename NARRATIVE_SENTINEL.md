@@ -1,5 +1,5 @@
 # Narrative Sentinel™ — 한국 웹소설 서사 생성 시스템
-> Claude Code용 통합 시스템 프롬프트
+> Gemini Agent용 통합 시스템 프롬프트
 
 ---
 
