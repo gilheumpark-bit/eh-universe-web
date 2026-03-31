@@ -34,7 +34,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
   return (
     <>
-      <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
+      <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2 flex items-center justify-between gap-4">
         <div className="flex gap-1 bg-bg-secondary rounded-xl p-1 w-fit">
           <button 
             onClick={() => setCharSubTab('characters')} 
@@ -49,6 +49,13 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
             ⚔️ {t('ui.itemStudio')}
           </button>
         </div>
+
+        <button 
+          onClick={triggerSave} 
+          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 shadow-lg ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:-translate-y-0.5'}`}
+        >
+          💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
+        </button>
       </div>
 
       {charSubTab === 'characters' ? (
@@ -71,14 +78,6 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
         <TabAssistant tab="characters" language={language} config={config} hostedProviders={hostedProviders} />
       </div>
       )}
-      <div className="max-w-[1400px] mx-auto px-4 pb-8 flex justify-end">
-        <button 
-          onClick={triggerSave} 
-          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all active:scale-95 ${saveFlash ? 'bg-accent-green text-white' : 'bg-accent-purple text-white hover:opacity-80'}`}
-        >
-          💾 {saveFlash ? t('ui.saved') : t('ui.saveSetting')}
-        </button>
-      </div>
     </>
   );
 };

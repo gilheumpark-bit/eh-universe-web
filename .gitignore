@@ -76,3 +76,4 @@ scripts/migrate-*.mjs
 
 # Claude Code
 .claude/worktrees/
+.env*.local

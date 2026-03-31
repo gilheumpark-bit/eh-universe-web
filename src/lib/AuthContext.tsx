@@ -61,7 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
+      provider.setCustomParameters({ 
+        prompt: 'select_account consent',
+        access_type: 'offline' 
+      });
       provider.addScope('https://www.googleapis.com/auth/drive.file');
       // #25: Mobile browsers often block popups — use redirect flow instead
       const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
