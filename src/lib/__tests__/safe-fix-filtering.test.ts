@@ -96,7 +96,7 @@ function setupDefaults() {
 const CODE = 'import { unused } from "mod";\nconst x = 1;\nconsole.log(x);\n';
 const LANG = 'typescript';
 const FILE = 'test.ts';
-const FILES = [{ name: 'test.ts', type: 'file' as const, content: CODE }];
+const FILES = [{ id: 'test-1', name: 'test.ts', type: 'file' as const, content: CODE }];
 
 // IDENTITY_SEAL: PART-2 | role=test-helpers | inputs=params | outputs=mock-data
 
