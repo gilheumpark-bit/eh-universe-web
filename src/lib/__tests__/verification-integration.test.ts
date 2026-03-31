@@ -113,7 +113,7 @@ function makeFix(
 const DEFAULT_CODE = 'const x = 1;\nconsole.log(x);\n';
 const DEFAULT_LANG = 'typescript';
 const DEFAULT_FILE = 'test.ts';
-const DEFAULT_FILES = [{ name: 'test.ts', type: 'file' as const, content: DEFAULT_CODE }];
+const DEFAULT_FILES = [{ id: 'test-1', name: 'test.ts', type: 'file' as const, content: DEFAULT_CODE }];
 
 // IDENTITY_SEAL: PART-2 | role=test-helpers | inputs=params | outputs=mock-data
 
