@@ -300,46 +300,102 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               </button>
             </div>
 
-            {/* Nav tabs */}
-            <nav className="space-y-1">
+            {/* Nav tabs - Premium styling */}
+            <nav className="space-y-1.5" role="tablist" aria-label="Studio navigation">
               {([
-                { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true },
-                { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true },
-                { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true },
-                { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false },
-                { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false },
-                { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false },
-                { tab: 'visual' as AppTab, icon: Zap, label: language === 'KO' ? '비주얼 설계' : 'Visual Design', guided: false },
-                { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false },
-                { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true },
+                { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true, color: 'amber' },
+                { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true, color: 'purple' },
+                { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true, color: 'blue' },
+                { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false, color: 'green' },
+                { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false, color: 'amber' },
+                { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false, color: 'purple' },
+                { tab: 'visual' as AppTab, icon: Zap, label: language === 'KO' ? '비주얼 설계' : 'Visual Design', guided: false, color: 'green' },
+                { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false, color: 'blue' },
+                { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true, color: 'amber' },
               ] as const)
                 .filter(item => studioMode === 'free' || item.guided)
-                .map(({ tab, icon: Icon, label }) => (
-                  <button
-                    key={tab}
-                    data-testid={`tab-${tab}`}
-                    onClick={() => handleTabChange(tab)}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all ${
-                      activeTab === tab
-                        ? 'border border-[rgba(202,161,92,0.24)] bg-[linear-gradient(135deg,rgba(202,161,92,0.16),rgba(92,143,214,0.1))] text-text-primary shadow-[0_14px_32px_rgba(0,0,0,0.22)]'
-                        : 'border border-transparent text-text-secondary hover:border-white/8 hover:bg-white/4 hover:text-text-primary'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl border ${
-                        activeTab === tab
-                          ? 'border-[rgba(202,161,92,0.22)] bg-[rgba(202,161,92,0.12)] text-[rgba(246,226,188,0.92)]'
-                          : 'border-white/8 bg-black/20 text-text-tertiary'
-                      }`}
+                .map(({ tab, icon: Icon, label, color }) => {
+                  const isActive = activeTab === tab;
+                  const colorClasses = {
+                    amber: {
+                      active: 'border-accent-amber/30 bg-gradient-to-r from-accent-amber/15 to-accent-amber/5 shadow-[0_0_20px_rgba(202,161,92,0.1)]',
+                      icon: 'border-accent-amber/25 bg-accent-amber/15 text-accent-amber',
+                      text: 'text-accent-amber',
+                    },
+                    purple: {
+                      active: 'border-accent-purple/30 bg-gradient-to-r from-accent-purple/15 to-accent-purple/5 shadow-[0_0_20px_rgba(141,123,195,0.1)]',
+                      icon: 'border-accent-purple/25 bg-accent-purple/15 text-accent-purple',
+                      text: 'text-accent-purple',
+                    },
+                    blue: {
+                      active: 'border-accent-blue/30 bg-gradient-to-r from-accent-blue/15 to-accent-blue/5 shadow-[0_0_20px_rgba(92,143,214,0.1)]',
+                      icon: 'border-accent-blue/25 bg-accent-blue/15 text-accent-blue',
+                      text: 'text-accent-blue',
+                    },
+                    green: {
+                      active: 'border-accent-green/30 bg-gradient-to-r from-accent-green/15 to-accent-green/5 shadow-[0_0_20px_rgba(47,155,131,0.1)]',
+                      icon: 'border-accent-green/25 bg-accent-green/15 text-accent-green',
+                      text: 'text-accent-green',
+                    },
+                  };
+                  const c = colorClasses[color];
+                  
+                  return (
+                    <button
+                      key={tab}
+                      data-testid={`tab-${tab}`}
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => handleTabChange(tab)}
+                      className={`
+                        group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left
+                        transition-all duration-200 ease-out
+                        ${isActive
+                          ? `border ${c.active}`
+                          : 'border border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary active:scale-[0.98]'
+                        }
+                      `}
                     >
-                      <Icon className="h-[1.05rem] w-[1.05rem]" />
-                    </span>
-                    <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em]">
-                      {label}
-                    </span>
-                  </button>
-                ))}
+                      {/* Active indicator bar */}
+                      {isActive && (
+                        <span 
+                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${c.icon.replace('border-', 'bg-').replace('/25', '/60').replace('text-', '')}`}
+                          style={{ animation: 'scale-in-x 200ms ease-out' }}
+                        />
+                      )}
+                      
+                      <span
+                        className={`
+                          flex h-9 w-9 items-center justify-center rounded-xl border
+                          transition-all duration-200
+                          ${isActive ? c.icon : 'border-white/8 bg-black/20 text-text-tertiary group-hover:border-white/12 group-hover:text-text-secondary'}
+                        `}
+                      >
+                        <Icon className="h-[1.1rem] w-[1.1rem]" strokeWidth={isActive ? 2.5 : 2} />
+                      </span>
+                      <span className={`
+                        font-mono text-[11px] font-semibold uppercase tracking-[0.1em]
+                        transition-colors duration-200
+                        ${isActive ? c.text : ''}
+                      `}>
+                        {label}
+                      </span>
+                      
+                      {/* Hover glow effect */}
+                      {!isActive && (
+                        <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-r from-white/[0.02] to-transparent" />
+                      )}
+                    </button>
+                  );
+                })}
             </nav>
+            
+            <style jsx>{`
+              @keyframes scale-in-x {
+                from { transform: translateY(-50%) scaleX(0); }
+                to { transform: translateY(-50%) scaleX(1); }
+              }
+            `}</style>
 
             {/* Episode Jump */}
             {orderedSessions.length > 0 && (

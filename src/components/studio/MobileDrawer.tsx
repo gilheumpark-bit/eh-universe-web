@@ -1,11 +1,11 @@
 "use client";
 
 // ============================================================
-// PART 1 — Mobile Bottom Drawer — swipe-up panel for right-side content
+// PART 1 — Mobile Bottom Drawer — Premium swipe-up panel
 // ============================================================
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -14,7 +14,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-const SNAP_POINTS = [0, 0.5, 1.0]; // closed, half, full
+const SNAP_POINTS = [0, 0.5, 0.85]; // closed, half, almost-full (not 100% to show peek of content behind)
 const DRAG_THRESHOLD = 30;
 const VELOCITY_THRESHOLD = 0.5; // px/ms — fast swipe detection
 const EDGE_SWIPE_ZONE = 20; // px from right edge for swipe-to-open
@@ -164,26 +164,44 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
 
   const backdropOpacity = visible ? 1 : 0;
 
+  // Haptic feedback
+  const triggerHaptic = useCallback(() => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(5);
+    }
+  }, []);
+
+  const handleSnapToggle = useCallback(() => {
+    triggerHaptic();
+    setSnap(prev => {
+      const idx = SNAP_POINTS.indexOf(prev);
+      // Toggle between half and full
+      return idx === 1 ? SNAP_POINTS[2] : SNAP_POINTS[1];
+    });
+  }, [triggerHaptic]);
+
   return (
     <>
-      {/* Backdrop — tap to close, animated opacity */}
+      {/* Backdrop — tap to close, animated opacity with blur */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/60 md:hidden"
         style={{
           opacity: backdropOpacity,
-          transition: 'opacity 0.3s ease-out',
+          backdropFilter: visible ? 'blur(8px)' : 'blur(0px)',
+          WebkitBackdropFilter: visible ? 'blur(8px)' : 'blur(0px)',
+          transition: 'opacity 0.3s ease-out, backdrop-filter 0.3s ease-out',
         }}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Drawer — Premium glass morphism */}
       <div
         ref={containerRef}
-        className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-bg-primary border-t border-border rounded-t-2xl overflow-hidden flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.4)]"
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden overflow-hidden flex flex-col"
         style={{
           height: `${adjustedHeight}vh`,
-          transition: dragging ? 'none' : 'height 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          transition: dragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           willChange: dragging ? 'height' : 'auto',
         }}
@@ -191,35 +209,67 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
         aria-modal="true"
         aria-label={title}
       >
-        {/* Drag handle — 44px min touch target */}
-        <div
-          className="flex items-center justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 min-h-[44px]"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          style={{ touchAction: 'none' }}
-        >
-          <div className="w-10 h-1.5 bg-white/20 rounded-full" />
-        </div>
-
-        {/* Header */}
-        {title && (
-          <div className="flex items-center justify-between px-4 pb-2 shrink-0">
-            <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">{title}</span>
+        {/* Glass panel with premium styling */}
+        <div className="flex-1 flex flex-col bg-bg-primary/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl shadow-[0_-12px_48px_rgba(0,0,0,0.5),0_-4px_16px_rgba(0,0,0,0.3)]">
+          {/* Top highlight line */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-t-3xl" />
+          
+          {/* Drag handle — enhanced touch target with visual feedback */}
+          <div
+            className="relative flex items-center justify-center py-4 cursor-grab active:cursor-grabbing shrink-0 min-h-[48px]"
+            onPointerDown={(e) => { triggerHaptic(); onPointerDown(e); }}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ touchAction: 'none' }}
+          >
+            {/* Handle pill with glow on drag */}
+            <div className={`
+              w-12 h-1.5 rounded-full transition-all duration-200
+              ${dragging ? 'bg-accent-purple scale-110 shadow-[0_0_12px_rgba(141,123,195,0.5)]' : 'bg-white/25'}
+            `} />
+            
+            {/* Snap indicator arrows */}
             <button
-              onClick={onClose}
-              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-tertiary hover:text-white transition-colors"
-              aria-label="Close"
+              onClick={handleSnapToggle}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full text-text-tertiary hover:text-text-secondary transition-colors"
+              aria-label={snap === SNAP_POINTS[2] ? 'Minimize' : 'Maximize'}
             >
-              <X className="w-4 h-4" />
+              {snap === SNAP_POINTS[2] ? (
+                <ChevronDown className="w-5 h-5" />
+              ) : (
+                <ChevronUp className="w-5 h-5" />
+              )}
             </button>
           </div>
-        )}
 
-        {/* Content — overscroll-contain prevents pull-to-refresh interference */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 -webkit-overflow-scrolling-touch">
-          {children}
+          {/* Header — Premium styling */}
+          {title && (
+            <div className="flex items-center justify-between px-5 pb-3 shrink-0 border-b border-white/[0.06]">
+              <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold text-text-tertiary uppercase tracking-[0.2em]">
+                {title}
+              </span>
+              <button
+                onClick={() => { triggerHaptic(); onClose(); }}
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-tertiary hover:text-white hover:bg-white/5 transition-all active:scale-90"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Content — smooth scroll with fade edges */}
+          <div className="relative flex-1 overflow-hidden">
+            <div 
+              className="h-full overflow-y-auto overscroll-contain px-5 py-4"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {children}
+            </div>
+            {/* Fade edge at bottom */}
+            <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-bg-primary/95 to-transparent pointer-events-none" />
+          </div>
         </div>
       </div>
     </>
