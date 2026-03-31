@@ -1,5 +1,3 @@
-import { ServerProviderId } from '@/lib/server-ai';
-
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai:  'https://api.openai.com/v1/chat/completions',
   groq:    'https://api.groq.com/openai/v1/chat/completions',

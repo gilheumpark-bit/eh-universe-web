@@ -351,7 +351,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
             name,
             status: "pending",
             comments: [],
-            findings: [{ severity: "info", message: "Self-repair fix staged for review", source: "pipeline", line: 0 }] as any
+            findings: [{ severity: "info" as const, message: "Self-repair fix staged for review", line: 0 }]
           }))}
           onApproveFile={onApproveFile}
           onRejectFile={onRejectFile}

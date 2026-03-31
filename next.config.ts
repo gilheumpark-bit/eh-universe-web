@@ -25,8 +25,8 @@ const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "tr
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
-  // Enable React Compiler for better performance (Next.js 16)
-  reactCompiler: true,
+  // React Compiler disabled — requires babel-plugin-react-compiler package
+  // reactCompiler: true,
   images: {
     remotePatterns: [
       {

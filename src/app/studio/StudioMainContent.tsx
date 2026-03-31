@@ -340,7 +340,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
             <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
             <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
-            {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}{lastSaveTime && !saveFlash ? ` \u00B7 ${Math.max(1, Math.round((Date.now() - lastSaveTime) / 1000))}${isKO ? '\uCD08 \uC804' : 's ago'}` : ''}</span>}
+            {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
