@@ -236,7 +236,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
         <div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div>
-        <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p>
+        <p className="font-mono text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p>
       </div>
     </div>
   );

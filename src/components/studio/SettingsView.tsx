@@ -231,7 +231,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <Shield className="w-4 h-4 text-green-500" /> {language === 'KO' ? '자동 백업 (10분 간격)' : 'Auto Backup (every 10 min)'}
               </h3>
               {onRefreshBackups && (
-                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors" title={language === 'KO' ? '목록 새로고침' : 'Refresh list'}>
+                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors" title={language === 'KO' ? '목록 새로고침' : 'Refresh list'}>
                   {language === 'KO' ? '새로고침' : 'Refresh'}
                 </button>
               )}
@@ -246,7 +246,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <div key={b.timestamp} className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-border">
                     <div>
                       <div className="text-xs font-bold text-text-primary">{new Date(b.timestamp).toLocaleString()}</div>
-                      <div className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                      <div className="text-[10px] text-text-tertiary font-mono">
                         {language === 'KO' ? '자동 백업' : 'Auto backup'}
                       </div>
                     </div>
@@ -259,7 +259,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                           showAlert(language === 'KO' ? '복원에 실패했습니다.' : 'Restore failed.');
                         }
                       }}
-                      className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors px-3 py-1.5 border border-blue-500/30 rounded-lg hover:bg-blue-500/10"
+                      className="text-[10px] font-bold font-mono uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors px-3 py-1.5 border border-blue-500/30 rounded-lg hover:bg-blue-500/10"
                       title={language === 'KO' ? '이 백업으로 복원' : 'Restore from this backup'}
                     >
                       {language === 'KO' ? '복원' : 'Restore'}

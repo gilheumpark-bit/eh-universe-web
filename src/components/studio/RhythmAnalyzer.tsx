@@ -137,10 +137,10 @@ function RhythmAnalyzer({ messages, language }: Props) {
     <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
           {L4(language, { ko: '문장 리듬 분석', en: 'Sentence Rhythm', jp: '文章リズム分析', cn: '句子节奏分析' })}
         </h3>
-        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+        <span className="text-[9px] text-text-tertiary font-mono">
           {stats.totalSentences} {isKO ? '문장' : 'sentences'}
         </span>
       </div>
@@ -174,7 +174,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
           const ratio = stats.totalSentences > 0 ? Math.round((bucket.count / stats.totalSentences) * 100) : 0;
           return (
             <div key={bucket.label} className="flex items-center gap-2">
-              <span className="text-[9px] text-text-tertiary w-14 shrink-0 text-right font-[family-name:var(--font-mono)]">
+              <span className="text-[9px] text-text-tertiary w-14 shrink-0 text-right font-mono">
                 {bucket.label}
               </span>
               <div className="flex-1 h-4 bg-white/5 rounded overflow-hidden relative">
@@ -182,7 +182,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
                   className="h-full rounded transition-all"
                   style={{ width: `${pct}%`, backgroundColor: bucket.color, opacity: 0.7 }}
                 />
-                <span className="absolute right-1 top-0 h-full flex items-center text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                <span className="absolute right-1 top-0 h-full flex items-center text-[8px] text-text-tertiary font-mono">
                   {bucket.count} ({ratio}%)
                 </span>
               </div>

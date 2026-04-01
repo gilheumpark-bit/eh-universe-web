@@ -184,7 +184,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
                 <div className="text-sm font-semibold text-text-primary truncate">{r.label}</div>
                 <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
               </div>
-              <span className="text-[9px] font-[family-name:var(--font-mono)] uppercase text-text-tertiary tracking-widest shrink-0">
+              <span className="text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
                 {categoryLabel(r.type)}
               </span>
             </button>

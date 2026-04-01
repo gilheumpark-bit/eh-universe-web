@@ -304,14 +304,14 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <BookOpen className="w-5 h-5 text-accent-purple" />
-          <h2 className="text-lg font-black tracking-tighter uppercase font-[family-name:var(--font-mono)]">
+          <h2 className="text-lg font-black tracking-tighter uppercase font-mono">
             {t('manuscript.manuscriptTitle')}
           </h2>
         </div>
         <div className="flex gap-2">
           <button
             onClick={collectFromMessages}
-            className="px-4 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
+            className="px-4 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity"
           >
             <Save className="w-3 h-3 inline mr-1" />
             {`EP.${config.episode} ${t('manuscript.collectEp')}`}
@@ -319,7 +319,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
           <button
             onClick={exportEpub}
             disabled={manuscripts.length === 0}
-            className="px-4 py-2 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
+            className="px-4 py-2 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 font-mono uppercase tracking-wider transition-colors"
           >
             <Download className="w-3 h-3 inline mr-1" />
             {t('manuscript.exportAll')}
@@ -329,7 +329,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
 
       {/* Progress */}
       <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider">
+        <div className="flex items-center justify-between text-[10px] font-bold font-mono uppercase tracking-wider">
           <span className="text-text-tertiary">
             {t('manuscript.overallProgress')}
           </span>
@@ -343,7 +343,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <div className="flex justify-between text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+        <div className="flex justify-between text-[9px] text-text-tertiary font-mono">
           <span>{sorted.length} / {config.totalEpisodes} {t('manuscript.eps')}</span>
           <span>{t('manuscript.target')}: {targetPerEp.toLocaleString()}{t('manuscript.charsPerEp')}</span>
         </div>
@@ -360,7 +360,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
             <button
               key={ep}
               onClick={() => ms && setExpandedEp(expandedEp === ep ? null : ep)}
-              className={`relative h-8 rounded text-[9px] font-bold font-[family-name:var(--font-mono)] transition-all ${
+              className={`relative h-8 rounded text-[9px] font-bold font-mono transition-all ${
                 ms
                   ? pct >= 100
                     ? "bg-accent-green/20 text-accent-green border border-accent-green/30"
@@ -395,13 +395,13 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-tertiary/30 transition-colors"
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <span className="text-xs font-black font-[family-name:var(--font-mono)] text-accent-purple shrink-0">
+                  <span className="text-xs font-black font-mono text-accent-purple shrink-0">
                     EP.{m.episode}
                   </span>
                   <span className="text-xs font-bold text-text-primary truncate min-w-0">
                     {m.title}
                   </span>
-                  <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 hidden sm:inline">
+                  <span className="text-[9px] text-text-tertiary font-mono shrink-0 hidden sm:inline">
                     {m.charCount.toLocaleString()}{t('manuscript.charUnit')}
                   </span>
                   {m.charCount >= targetPerEp ? (
@@ -432,7 +432,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-lg p-4 text-sm leading-[2] font-serif outline-none focus:border-accent-purple resize-y"
                       />
                       <div className="flex justify-between items-center">
-                        <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                        <span className="text-[9px] text-text-tertiary font-mono">
                           {editContent.length.toLocaleString()}{t('manuscript.charUnit')}
                         </span>
                         <div className="flex gap-2">
@@ -450,7 +450,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                       <div className="flex flex-wrap justify-end gap-2 mb-3">
                         <button
                           onClick={() => setAnalysisEp(analysisEp === m.episode ? null : m.episode)}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors ${
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-colors ${
                             analysisEp === m.episode
                               ? "bg-accent-amber/25 text-accent-amber border border-accent-amber/40"
                               : getAnalysis(m.episode)
@@ -498,10 +498,10 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         return (
                           <div className="mb-4 border border-blue-500/20 rounded-xl overflow-hidden">
                             <div className="px-4 py-2 bg-blue-600/10 flex items-center justify-between">
-                              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-[family-name:var(--font-mono)]">
+                              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-mono">
                                 {t('manuscript.aiVsCurrent')}
                               </span>
-                              <span className="text-[9px] font-[family-name:var(--font-mono)]">
+                              <span className="text-[9px] font-mono">
                                 <span className="text-green-400">+{adds}</span>{' '}
                                 <span className="text-red-400">-{removes}</span>
                               </span>
@@ -540,7 +540,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                       <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[60vh] sm:max-h-[50vh] overflow-y-auto overscroll-contain whitespace-pre-wrap text-sm sm:text-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
                         {m.content}
                       </div>
-                      <div className="mt-3 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                      <div className="mt-3 text-[10px] text-text-tertiary font-mono">
                         {t('manuscript.lastUpdate')}: {new Date(m.lastUpdate).toLocaleString()}
                       </div>
                     </div>

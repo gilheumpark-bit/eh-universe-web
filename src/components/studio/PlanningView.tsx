@@ -369,12 +369,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
       {/* 간단 모드: PRISM-MODE 프리셋만 표시 */}
       {!advancedMode && (
         <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+          <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-mono">
             {isKO ? '콘텐츠 등급' : 'Content Rating'}
           </span>
           {(['OFF', 'FREE', 'ALL', 'T15', 'M18'] as const).map(mode => (
             <button key={mode} onClick={() => setConfig({ ...config, prismMode: mode })}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-mono border transition-all ${
                 (config.prismMode ?? 'OFF') === mode
                   ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-secondary'

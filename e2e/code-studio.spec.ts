@@ -31,8 +31,9 @@ test.describe('Code Studio', () => {
     }
 
     // File explorer should be visible (allow either testid or known label)
-    const explorer = page.locator('[data-testid="file-explorer"], .file-tree, text=/파일|Files|Explorer/i');
-    await expect(explorer.first()).toBeVisible({ timeout: 20000 });
+    const explorer = page.locator('[data-testid="file-explorer"], .file-tree').first();
+    const explorerLabel = page.getByText(/파일|Files|Explorer/i).first();
+    await expect(explorer.or(explorerLabel)).toBeVisible({ timeout: 20000 });
   });
 
   test('should toggle terminal panel', async ({ page }) => {

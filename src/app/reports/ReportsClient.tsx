@@ -255,7 +255,7 @@ export default function ReportsClient() {
             <ArchiveReportsTabs active="reports" />
 
             {/* Header */}
-            <div className="doc-header rounded-t-[24px] mb-0">
+            <div className="doc-header rounded-t-3xl mb-0">
               <span className="badge badge-classified mr-2">REPORTS</span>
               {L4(lang, {
                 ko: "기밀 보고서 아카이브",
@@ -265,7 +265,7 @@ export default function ReportsClient() {
               })}
             </div>
 
-            <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-8">
+            <div className="premium-panel rounded-b-3xl rounded-t-none border-t-0 p-6 sm:p-8">
               {/* Subcategory filter bar */}
               <div className="flex flex-wrap gap-1.5 mb-5">
                 {REPORT_CATEGORIES.map((cat) => (
@@ -326,7 +326,7 @@ export default function ReportsClient() {
                       href={`/archive/${report.slug}`}
                       className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-all duration-200 ${
                         isClassified
-                          ? "border border-accent-red/12 bg-accent-red/[0.03] hover:border-accent-red/25 hover:bg-accent-red/[0.06] hover:-translate-y-0.5"
+                          ? "border border-accent-red/12 bg-accent-red/5 hover:border-accent-red/25 hover:bg-accent-red/10 hover:-translate-y-0.5"
                           : "premium-link-card card-glow"
                       }`}
                     >

@@ -685,7 +685,7 @@ export default function EpisodeCompare({ messages, language }: Props) {
       {/* Overlay chart + table */}
       {selectedEpisodes.length > 0 && (
         <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
-          <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+          <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
             {isKO ? '에피소드 비교' : 'Episode Comparison'}
             <span className="ml-2 text-[8px] text-text-tertiary/50 font-normal">
               {isKO ? '(헤더 클릭 시 상세 분석)' : '(click header to drill down)'}

@@ -51,10 +51,10 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
   return (
     <div className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
       <div className="flex items-center justify-between mb-3">
-        <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
+        <span className="font-mono text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
           {isKO ? '자동 파이프라인' : 'Auto-Pipeline'}
         </span>
-        <span className={`font-[family-name:var(--font-mono)] text-[10px] font-bold ${statusColor}`}>
+        <span className={`font-mono text-[10px] font-bold ${statusColor}`}>
           {statusLabel}
         </span>
       </div>
@@ -69,11 +69,11 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
               {i > 0 && <div className="w-4 h-px bg-white/10" />}
               <div className="flex items-center gap-1.5 group relative" title={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${stage.score ?? '-'}/100`}>
                 <Icon className={`w-4 h-4 ${color}`} />
-                <span className="font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary hidden sm:inline">
+                <span className="font-mono text-[9px] text-text-tertiary hidden sm:inline">
                   {label ? (isKO ? label.ko : label.en) : stage.stage}
                 </span>
                 {stage.score != null && stage.status !== 'skipped' && (
-                  <span className="font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">
+                  <span className="font-mono text-[9px] text-text-tertiary">
                     {stage.score}
                   </span>
                 )}
@@ -87,7 +87,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
       {stages.some(s => s.warnings.length > 0) && (
         <div className="mt-2 pt-2 border-t border-white/5">
           {stages.filter(s => s.warnings.length > 0).map(s => (
-            <div key={s.stage} className="font-[family-name:var(--font-mono)] text-[9px] text-amber-400/70 leading-snug">
+            <div key={s.stage} className="font-mono text-[9px] text-amber-400/70 leading-snug">
               {STAGE_LABELS[s.stage] ? (isKO ? STAGE_LABELS[s.stage].ko : STAGE_LABELS[s.stage].en) : s.stage}: {s.warnings.slice(0, 2).join(', ')}
             </div>
           ))}

@@ -272,7 +272,7 @@ export default function ArchiveClient() {
           </div>
         </aside>
 
-        <div className="flex-1 p-6 md:p-10 md:pl-[19rem]">
+        <div className="flex-1 p-6 md:p-10 md:pl-76">
           <div className="mx-auto max-w-4xl">
             <ArchiveReportsTabs active="archive" />
             <div className="doc-header rounded-t-3xl mb-0">

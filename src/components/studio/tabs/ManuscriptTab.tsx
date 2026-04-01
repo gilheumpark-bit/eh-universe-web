@@ -55,35 +55,35 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     <>
       <div className="max-w-6xl mx-auto px-4 pt-4 flex gap-2">
         <button onClick={() => setShowDashboard(!showDashboard)}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all ${
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all ${
             showDashboard ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           📊 {language === 'KO' ? '작가 대시보드' : 'Author Dashboard'}
         </button>
         <button onClick={() => { setShowTranslation(!showTranslation); if (!showTranslation) setShowDashboard(false); }}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
             showTranslation ? 'bg-accent-green text-white border-accent-green' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           <Languages className="w-3 h-3" /> {language === 'KO' ? '번역' : 'Translate'}
         </button>
         <button onClick={() => setShowShare(true)}
-          className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
+          className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
           <Share2 className="w-3 h-3" /> {language === 'KO' ? '네트워크 공유' : 'Share'}
         </button>
         <button onClick={() => handleSceneMode('edit')}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
             sceneMode === 'edit' ? 'bg-accent-blue text-white border-accent-blue' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           <PenLine className="w-3 h-3" /> {language === 'KO' ? '① 편집' : '① Edit'}
         </button>
         <button onClick={() => handleSceneMode('radio')}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
             sceneMode === 'radio' ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           <Headphones className="w-3 h-3" /> {language === 'KO' ? '② 라디오' : '② Radio'}
         </button>
         <button onClick={() => handleSceneMode('visual')}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
             sceneMode === 'visual' ? 'bg-accent-amber text-white border-accent-amber' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           <Film className="w-3 h-3" /> {language === 'KO' ? '③ 비주얼 노벨' : '③ Visual Novel'}

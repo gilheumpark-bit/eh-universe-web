@@ -386,41 +386,41 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-purple" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
+          <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple font-mono">
             {t('autoRefiner.header')}
           </span>
           {suggestions.length > 0 && (
-            <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+            <span className="text-[9px] text-text-tertiary font-mono">
               {appliedCount}/{suggestions.length}
             </span>
           )}
         </button>
         <div className="flex items-center gap-2">
           {phase === 'idle' && (
-            <button onClick={startAnalysis} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:opacity-80 transition-opacity">
+            <button onClick={startAnalysis} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-mono hover:opacity-80 transition-opacity">
               <Play className="w-3 h-3" /> {t('autoRefiner.analyzeStart')}
             </button>
           )}
           {phase === 'analyzing' && (
             <>
               <StreamingIndicator charCount={streamingChars} language={language} />
-              <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-red-600/30 transition-colors">
+              <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-mono hover:bg-red-600/30 transition-colors">
                 <X className="w-3 h-3" /> {t('autoRefiner.stop')}
               </button>
             </>
           )}
           {phase === 'ready' && pendingCount > 0 && (
-            <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-blue-600/30 transition-colors">
+            <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-mono hover:bg-blue-600/30 transition-colors">
               <Play className="w-3 h-3" /> {t('autoRefiner.generateAll')}
             </button>
           )}
           {undoStack.length > 0 && (
-            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-bg-tertiary/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-bg-tertiary/50 transition-colors" title={t('ui.undo')}>
+            <button onClick={undoLast} className="flex items-center gap-1.5 px-2 py-1.5 bg-bg-tertiary/30 border border-zinc-600/30 text-text-secondary rounded-lg text-[10px] font-bold font-mono hover:bg-bg-tertiary/50 transition-colors" title={t('ui.undo')}>
               <Undo2 className="w-3 h-3" />
             </button>
           )}
           {appliedCount > 0 && (
-            <button onClick={applyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] hover:bg-green-600/30 transition-colors">
+            <button onClick={applyAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-lg text-[10px] font-bold font-mono hover:bg-green-600/30 transition-colors">
               <CheckCheck className="w-3 h-3" /> {t('autoRefiner.applyToMs')}
             </button>
           )}
@@ -448,8 +448,8 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">P{sug.paragraphIndex + 1}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${actionInfo.color} font-[family-name:var(--font-mono)]`}>
+                    <span className="text-[10px] font-bold text-text-tertiary font-mono">P{sug.paragraphIndex + 1}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${actionInfo.color} font-mono`}>
                       {actionInfo.label[language]}
                     </span>
                     <span className="text-[10px] text-text-secondary">{sug.issue}</span>

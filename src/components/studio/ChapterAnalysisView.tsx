@@ -112,7 +112,7 @@ function stringToArray(str: string): string[] {
 function SectionHeader({ icon, title, open, onToggle }: { icon: React.ReactNode; title: string; open: boolean; onToggle: () => void }) {
   return (
     <button onClick={onToggle} className="w-full flex items-center justify-between py-2.5 px-1 group">
-      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] text-text-secondary group-hover:text-text-primary transition-colors">
+      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest font-mono text-text-secondary group-hover:text-text-primary transition-colors">
         {icon} {title}
       </div>
       {open ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
@@ -123,7 +123,7 @@ function SectionHeader({ icon, title, open, onToggle }: { icon: React.ReactNode;
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
-      <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] shrink-0 w-24 pt-1.5">{label}</label>
+      <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono shrink-0 w-24 pt-1.5">{label}</label>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -159,7 +159,7 @@ function IntensitySelect({ value, onChange, language }: { value: EmotionIntensit
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`px-2 py-1 rounded text-[9px] font-bold font-[family-name:var(--font-mono)] border transition-colors ${
+          className={`px-2 py-1 rounded text-[9px] font-bold font-mono border transition-colors ${
             value === opt.value
               ? "bg-accent-purple/20 border-accent-purple/40 text-accent-purple"
               : "bg-bg-secondary border-border text-text-tertiary hover:text-text-primary"
@@ -318,7 +318,7 @@ export default function ChapterAnalysisView({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-amber" />
-          <h3 className="text-sm font-black tracking-tighter uppercase font-[family-name:var(--font-mono)]">
+          <h3 className="text-sm font-black tracking-tighter uppercase font-mono">
             EP.{episode} {t('chapterAnalysis.title')}
           </h3>
         </div>
@@ -326,27 +326,27 @@ export default function ChapterAnalysisView({
           <button
             onClick={runAutoAnalysis}
             disabled={analyzing || !manuscriptContent.trim()}
-            className="px-3 py-1.5 bg-accent-amber/20 border border-accent-amber/30 text-accent-amber rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30"
+            className="px-3 py-1.5 bg-accent-amber/20 border border-accent-amber/30 text-accent-amber rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity disabled:opacity-30"
           >
             <Sparkles className="w-3 h-3 inline mr-1" />
             {analyzing ? t('chapterAnalysis.analyzing') : t('chapterAnalysis.aiAutoAnalyze')}
           </button>
           <button
             onClick={exportPrompts}
-            className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors"
           >
             <Download className="w-3 h-3 inline mr-1" />
             {t('chapterAnalysis.exportPrompts')}
           </button>
           <button
             onClick={handleSave}
-            className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
+            className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity"
           >
             {t('chapterAnalysis.save')}
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors"
           >
             {t('chapterAnalysis.close')}
           </button>
@@ -368,7 +368,7 @@ export default function ChapterAnalysisView({
             {characters.map((char, idx) => (
               <div key={idx} className="bg-bg-primary border border-border rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-accent-purple font-[family-name:var(--font-mono)]">
+                  <span className="text-[10px] font-black text-accent-purple font-mono">
                     {`${t('chapterAnalysis.characterN')} ${idx + 1}`}
                   </span>
                   <button onClick={() => removeCharacter(idx)} className="text-[9px] text-text-tertiary hover:text-accent-red transition-colors">
@@ -425,7 +425,7 @@ export default function ChapterAnalysisView({
             ))}
             <button
               onClick={addCharacter}
-              className="w-full py-2 border border-dashed border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 transition-colors font-[family-name:var(--font-mono)]"
+              className="w-full py-2 border border-dashed border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 transition-colors font-mono"
             >
               + {t('chapterAnalysis.addCharacter')}
             </button>
@@ -600,7 +600,7 @@ export default function ChapterAnalysisView({
             {(imagePrompt.characterFocus || imagePrompt.backgroundFocus || imagePrompt.sceneFocus) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-purple/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[9px] font-bold text-accent-purple font-[family-name:var(--font-mono)] uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
+                  <span className="text-[9px] font-bold text-accent-purple font-mono uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
                   <CopyButton text={[imagePrompt.characterFocus, imagePrompt.backgroundFocus, imagePrompt.sceneFocus, imagePrompt.styleHints.join(", ")].filter(Boolean).join(". ")} language={language} />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed">
@@ -646,7 +646,7 @@ export default function ChapterAnalysisView({
             {(musicPrompt.mood || musicPrompt.emotionFlow) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-blue/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[9px] font-bold text-accent-blue font-[family-name:var(--font-mono)] uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
+                  <span className="text-[9px] font-bold text-accent-blue font-mono uppercase">{t('chapterAnalysis.combinedPrompt')}</span>
                   <CopyButton text={[musicPrompt.mood, musicPrompt.emotionFlow, musicPrompt.soundKeywords.join(", "), musicPrompt.musicStyle.join(", ")].filter(Boolean).join(". ")} language={language} />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed">

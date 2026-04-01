@@ -182,7 +182,7 @@ export default function MobileLayout({
                 className={`
                   flex flex-col items-center justify-center gap-0.5
                   flex-1 h-full transition-colors
-                  font-[family-name:var(--font-mono)]
+                  font-mono
                   ${isActive
                     ? "text-accent-green"
                     : "text-text-tertiary hover:text-text-secondary"

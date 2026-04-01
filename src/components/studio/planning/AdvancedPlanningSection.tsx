@@ -231,11 +231,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2"><Shield className="w-4 h-4" /> {tl('planningExtra.prismTitle')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-4">
-            <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismPreserve')}</span><span className="font-[family-name:var(--font-mono)]">{config.prismPreserve ?? 100}</span></div>
+            <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismPreserve')}</span><span className="font-mono">{config.prismPreserve ?? 100}</span></div>
             <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismPreserve')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismPreserve ?? 100} onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })} />
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismExpand')}</span><span className="font-[family-name:var(--font-mono)]">{config.prismScale ?? 120}</span></div>
+            <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismExpand')}</span><span className="font-mono">{config.prismScale ?? 120}</span></div>
             <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismExpand')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismScale ?? 120} onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })} />
           </div>
         </div>
@@ -248,7 +248,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { label: tl('planningExtra.prism150'), preserve: 100, scale: 150 },
           ]).map(p => {
             const isActive = (config.prismPreserve ?? 100) === p.preserve && (config.prismScale ?? 120) === p.scale;
-            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
+            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-mono ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
           })}
         </div>
       </div>
@@ -266,7 +266,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
           ]).map(pm => (
             <button key={pm.key} onClick={() => setConfig({ ...config, prismMode: pm.key })}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-[family-name:var(--font-mono)] ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-mono ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
@@ -283,11 +283,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
           return (
             <div className="space-y-1.5 mt-2">
               {activePm && (
-                <p className="text-[10px] text-text-secondary font-[family-name:var(--font-mono)]">
+                <p className="text-[10px] text-text-secondary font-mono">
                   {activePm.key}: {activePm.desc}
                 </p>
               )}
-              <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              <p className="text-[9px] text-text-tertiary font-mono">
                 {tl('planningExtra.ratingGuide')}
               </p>
             </div>
@@ -300,7 +300,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               const val = config.prismCustom?.[axis] ?? 0;
               return (
                 <div key={axis} className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl(`planningExtra.${labelKey}`)}</span><span className="font-[family-name:var(--font-mono)]">{val}/5</span></div>
+                  <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl(`planningExtra.${labelKey}`)}</span><span className="font-mono">{val}/5</span></div>
                   <input type="range" min="0" max="5" step="1" aria-label={tl(`planningExtra.${labelKey}`)} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={val}
                     onChange={e => setConfig({ ...config, prismCustom: { sexual: config.prismCustom?.sexual ?? 0, violence: config.prismCustom?.violence ?? 0, profanity: config.prismCustom?.profanity ?? 0, [axis]: parseInt(e.target.value) } })} />
                 </div>

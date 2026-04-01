@@ -73,10 +73,10 @@ describe('useStudioTheme', () => {
     localStorage.clear();
   });
 
-  it('defaults to dark theme (level 0) when no stored value', () => {
+  it('defaults to light theme (level 2) when no stored value', () => {
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(0);
-    expect(get().lightTheme).toBe(false);
+    expect(get().themeLevel).toBe(2);
+    expect(get().lightTheme).toBe(true);
     cleanup();
   });
 
@@ -95,16 +95,9 @@ describe('useStudioTheme', () => {
     cleanup();
   });
 
-  it('cycles theme levels on toggleTheme: 0 → 1 → 2 → 3 → 0', () => {
+  it('cycles theme levels on toggleTheme: 2 → 3 → 0 → 1 → 2', () => {
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(0);
-
-    act(() => { get().toggleTheme(); });
-    expect(get().themeLevel).toBe(1);
-
-    act(() => { get().toggleTheme(); });
     expect(get().themeLevel).toBe(2);
-    expect(get().lightTheme).toBe(true);
 
     act(() => { get().toggleTheme(); });
     expect(get().themeLevel).toBe(3);
@@ -114,13 +107,21 @@ describe('useStudioTheme', () => {
     expect(get().themeLevel).toBe(0);
     expect(get().lightTheme).toBe(false);
 
+    act(() => { get().toggleTheme(); });
+    expect(get().themeLevel).toBe(1);
+    expect(get().lightTheme).toBe(false);
+
+    act(() => { get().toggleTheme(); });
+    expect(get().themeLevel).toBe(2);
+    expect(get().lightTheme).toBe(true);
+
     cleanup();
   });
 
   it('persists theme level to localStorage on toggle', () => {
     const { get, cleanup } = createThemeHarness();
     act(() => { get().toggleTheme(); });
-    expect(localStorage.getItem('noa_theme_level')).toBe('1');
+    expect(localStorage.getItem('noa_theme_level')).toBe('3');
     cleanup();
   });
 
@@ -155,7 +156,7 @@ describe('useStudioTheme', () => {
   it('ignores invalid stored theme values', () => {
     localStorage.setItem('noa_theme_level', '99');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(0);
+    expect(get().themeLevel).toBe(2);
     cleanup();
   });
 });

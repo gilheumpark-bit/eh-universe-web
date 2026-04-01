@@ -103,7 +103,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       <div className="flex justify-end mt-4">
         <button 
           onClick={triggerSave} 
-          className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-[family-name:var(--font-mono)] transition-all duration-300 ${
+          className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-mono transition-all duration-300 ${
             saveFlash 
               ? 'bg-accent-green text-white animate-save-bounce-glow' 
               : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'

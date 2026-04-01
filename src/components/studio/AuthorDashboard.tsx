@@ -63,11 +63,11 @@ function MetricBar({ value, max, color, label }: { value: number; max: number; c
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div className="flex items-center gap-2" title={`${label}: ${value}% (max ${max}%)`}>
-      <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] w-16 shrink-0 uppercase">{label}</span>
+      <span className="text-[9px] text-text-tertiary font-mono w-16 shrink-0 uppercase">{label}</span>
       <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden" title={`${pct.toFixed(0)}%`}>
         <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] w-8 text-right">{value}%</span>
+      <span className="text-[9px] text-text-tertiary font-mono w-8 text-right">{value}%</span>
     </div>
   );
 }
@@ -142,27 +142,27 @@ function AuthorDashboard({ messages, language }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="bg-bg-secondary border border-border rounded-xl p-3 text-center">
           <div className="text-lg font-black text-text-primary">{metrics.length}</div>
-          <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase">{language === 'KO' ? '생성 챕터' : 'Chapters'}</div>
+          <div className="text-[9px] text-text-tertiary font-mono uppercase">{language === 'KO' ? '생성 챕터' : 'Chapters'}</div>
         </div>
         <div className="bg-bg-secondary border border-border rounded-xl p-3 text-center">
           <div className="text-lg font-black text-text-primary">{(totalChars / 1000).toFixed(1)}K</div>
-          <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase">{language === 'KO' ? '총 글자수' : 'Total chars'}</div>
+          <div className="text-[9px] text-text-tertiary font-mono uppercase">{language === 'KO' ? '총 글자수' : 'Total chars'}</div>
         </div>
         <div className="bg-bg-secondary border border-border rounded-xl p-3 text-center">
           <div className="text-lg font-black text-text-primary">{avg.charCount.toLocaleString()}</div>
-          <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase">{language === 'KO' ? '평균 글자수' : 'Avg chars'}</div>
+          <div className="text-[9px] text-text-tertiary font-mono uppercase">{language === 'KO' ? '평균 글자수' : 'Avg chars'}</div>
         </div>
         <div className="bg-bg-secondary border border-border rounded-xl p-3 text-center">
           <div className={`text-lg font-black ${GRADE_COLORS[metrics[metrics.length - 1]?.grade] || 'text-text-primary'}`}>
             {metrics[metrics.length - 1]?.grade || '—'}
           </div>
-          <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase">{language === 'KO' ? '최근 등급' : 'Last grade'}</div>
+          <div className="text-[9px] text-text-tertiary font-mono uppercase">{language === 'KO' ? '최근 등급' : 'Last grade'}</div>
         </div>
       </div>
 
       {/* Average metrics */}
       <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-2">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-2">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono mb-2">
           {language === 'KO' ? '평균 메트릭' : 'Average Metrics'}
         </h3>
         <MetricBar value={avg.tension} max={100} color="bg-red-500" label={L4(language, { ko: "긴장감", en: "Tension", jp: "緊張感", cn: "紧张感" })} />
@@ -173,7 +173,7 @@ function AuthorDashboard({ messages, language }: Props) {
 
       {/* Per-chapter SVG trend chart */}
       <div className="bg-bg-secondary border border-border rounded-xl p-4">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-3">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono mb-3">
           {language === 'KO' ? '챕터별 추세' : 'Chapter Trend'}
         </h3>
         {metrics.length >= 2 ? (
@@ -258,7 +258,7 @@ function AuthorDashboard({ messages, language }: Props) {
           a.click();
           URL.revokeObjectURL(url);
         }}
-        className="w-full py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] hover:bg-white/5 transition-colors"
+        className="w-full py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono hover:bg-white/5 transition-colors"
       >
         📊 {language === 'KO' ? '마크다운 리포트 내보내기' : 'Export Markdown Report'}
       </button>

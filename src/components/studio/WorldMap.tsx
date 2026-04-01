@@ -131,7 +131,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
           {L4(language, { ko: '영토 지도', en: 'Territory Map', jp: '領土マップ', cn: '领土地图' })}
         </h3>
         <div className="flex gap-2">

@@ -216,7 +216,7 @@ function FatigueDetector({ messages, language }: Props) {
   if (alerts.length === 0) {
     return (
       <div className="bg-bg-secondary border border-border rounded-xl p-4">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)] mb-2">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono mb-2">
           {L4(language, { ko: '독자 피로도', en: 'Reader Fatigue', jp: '読者疲労度', cn: '读者疲劳度' })}
         </h3>
         <div className="text-[10px] text-green-400">
@@ -229,7 +229,7 @@ function FatigueDetector({ messages, language }: Props) {
   return (
     <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
           {L4(language, { ko: '독자 피로도 감지', en: 'Reader Fatigue Detection', jp: '読者疲労度検出', cn: '读者疲劳度检测' })}
         </h3>
         <span className="text-[9px] font-bold text-amber-400">
@@ -244,7 +244,7 @@ function FatigueDetector({ messages, language }: Props) {
             <div className="flex items-center gap-2 mb-1">
               <span>{style.icon}</span>
               <span className={`text-[11px] font-bold ${style.text}`}>{alert.message}</span>
-              <span className="text-[8px] text-text-tertiary ml-auto font-[family-name:var(--font-mono)]">
+              <span className="text-[8px] text-text-tertiary ml-auto font-mono">
                 [{alert.range}]
               </span>
             </div>

@@ -114,7 +114,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             </div>
             <div>
               <h3 id="api-key-modal-title" className="font-black text-base">{t('apiKeyModal.title')}</h3>
-              <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] tracking-wider uppercase">
+              <p className="text-[10px] text-text-tertiary font-mono tracking-wider uppercase">
                 {subtitle}
               </p>
             </div>
@@ -143,7 +143,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
                 onClick={() => handleProviderSwitch(p.id)}
                 aria-label={`Select ${p.name} provider`}
                 aria-pressed={isActive}
-                className={`relative px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-wider whitespace-nowrap border transition-all font-[family-name:var(--font-mono)] ${
+                className={`relative px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-wider whitespace-nowrap border transition-all font-mono ${
                   isActive
                     ? 'text-white border-transparent'
                     : 'text-text-tertiary border-border hover:border-text-tertiary bg-bg-primary'
@@ -164,7 +164,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
 
         {/* Key / URL input */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
             {currentProvider.isUrlBased
               ? `${currentProvider.name} ${language === 'KO' ? '서버 주소' : 'Server URL'}`
               : `${currentProvider.name} API Key`}
@@ -174,17 +174,17 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             value={currentKey}
             onChange={e => handleKeyChange(e.target.value)}
             placeholder={currentProvider.placeholder}
-            className="w-full bg-bg-secondary border border-border rounded-xl p-3 text-sm font-[family-name:var(--font-mono)] focus:border-accent-purple outline-none transition-all"
+            className="w-full bg-bg-secondary border border-border rounded-xl p-3 text-sm font-mono focus:border-accent-purple outline-none transition-all"
             autoFocus
           />
           {currentProvider.capabilities.isLocal && (
             <div className="space-y-1.5">
-              <p className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              <p className="text-[9px] text-text-tertiary font-mono">
                 {language === 'KO'
                   ? '💡 로컬 서버가 실행 중이어야 합니다. Ollama: ollama serve / LM Studio: 서버 시작'
                   : '💡 Local server must be running. Ollama: ollama serve / LM Studio: Start server'}
               </p>
-              <details className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              <details className="text-[9px] text-text-tertiary font-mono">
                 <summary className="cursor-pointer text-amber-400 hover:text-amber-300">
                   {language === 'KO' ? '📖 로컬 LLM 설정 가이드' : '📖 Local LLM Setup Guide'}
                 </summary>
@@ -208,7 +208,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
 
         {/* Model selector */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
             {t('apiKeyModal.modelSelect')}
           </label>
           <div className="relative">
@@ -217,7 +217,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
               aria-expanded={showModels}
               aria-haspopup="listbox"
               aria-label={`Select model: ${selectedModel}`}
-              className="w-full flex items-center justify-between bg-bg-secondary border border-border rounded-xl p-3 text-xs font-bold font-[family-name:var(--font-mono)] hover:border-text-tertiary transition-colors"
+              className="w-full flex items-center justify-between bg-bg-secondary border border-border rounded-xl p-3 text-xs font-bold font-mono hover:border-text-tertiary transition-colors"
             >
               <span>{selectedModel}</span>
               <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${showModels ? 'rotate-180' : ''}`} />
@@ -228,7 +228,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
                   <button
                     key={m}
                     onClick={() => { setSelectedModel(m); setShowModels(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-[family-name:var(--font-mono)] hover:bg-bg-secondary transition-colors ${
+                    className={`w-full text-left px-4 py-2.5 text-xs font-mono hover:bg-bg-secondary transition-colors ${
                       selectedModel === m ? 'text-accent-purple font-bold' : 'text-text-secondary'
                     }`}
                   >
@@ -253,9 +253,9 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             value={selectedModel}
             onChange={e => setSelectedModel(e.target.value)}
             placeholder={language === 'KO' ? '커스텀 모델명 직접 입력...' : 'Enter custom model name...'}
-            className="flex-1 bg-bg-secondary border border-border rounded-lg px-3 py-1.5 text-[10px] font-[family-name:var(--font-mono)] outline-none focus:border-accent-purple transition-colors"
+            className="flex-1 bg-bg-secondary border border-border rounded-lg px-3 py-1.5 text-[10px] font-mono outline-none focus:border-accent-purple transition-colors"
           />
-          <span className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0">
+          <span className="text-[9px] text-text-tertiary font-mono shrink-0">
             {language === 'KO' ? '직접 입력' : 'Custom'}
           </span>
         </div>
@@ -288,7 +288,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             onClick={handleTest}
             disabled={!currentKey.trim() || status === 'testing'}
             aria-label={t('ui.testApiKey')}
-            className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-[family-name:var(--font-mono)]"
+            className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-mono"
           >
             {status === 'testing' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {t('apiKeyModal.test')}
@@ -297,7 +297,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             onClick={handleSave}
             disabled={!currentKey.trim()}
             aria-label={t('ui.saveApiKey')}
-            className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
+            className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-mono"
           >
             {t('apiKeyModal.save')}
           </button>
@@ -315,7 +315,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             }}
             disabled={!currentKey.trim()}
             aria-label={t('ui.deleteApiKey')}
-            className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-[family-name:var(--font-mono)]"
+            className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-mono"
           >
             {t('apiKeyModal.delete')}
           </button>
@@ -323,7 +323,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
 
         {/* Saved keys overview */}
         <div className="pt-3 border-t border-border space-y-1.5">
-          <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
+          <div className="text-[9px] text-text-tertiary font-mono uppercase tracking-wider">
             {t('apiKeyModal.savedKeys')}
           </div>
           {PROVIDER_LIST_UI.map(p => {
@@ -342,7 +342,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
                     </span>
                   )}
                 </div>
-                <span className="text-text-tertiary font-[family-name:var(--font-mono)]">
+                <span className="text-text-tertiary font-mono">
                   {hasKey ? `${keys[p.id].slice(0, 6)}...` : t('apiKeyModal.notSet')}
                 </span>
               </div>

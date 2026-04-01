@@ -288,7 +288,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           {config && (
             <button
               onClick={loadFromConfig}
-              className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-xs font-bold text-accent-purple hover:bg-accent-purple/20 transition-colors font-[family-name:var(--font-mono)]"
+              className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-xs font-bold text-accent-purple hover:bg-accent-purple/20 transition-colors font-mono"
             >
               📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
             </button>

@@ -101,7 +101,7 @@ export function ShortcutsModal({ language, onClose }: { language: AppLanguage; o
                     <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors truncate">
                       {desc}
                     </span>
-                    <kbd className="shrink-0 flex items-center gap-1 px-2 py-1 bg-bg-secondary/80 border border-white/[0.08] rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] text-text-tertiary">
+                    <kbd className="shrink-0 flex items-center gap-1 px-2 py-1 bg-bg-secondary/80 border border-white/[0.08] rounded-lg text-[10px] font-bold font-mono text-text-tertiary">
                       {key.includes('Ctrl') && <Command className="w-3 h-3" />}
                       {key.replace('Ctrl+', '')}
                     </kbd>

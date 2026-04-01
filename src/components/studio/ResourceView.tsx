@@ -705,7 +705,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 >
                   {language === 'KO' ? '이전' : 'Prev'}
                 </button>
-                <span className="text-[10px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">
+                <span className="text-[10px] font-bold text-text-tertiary font-mono">
                   {currentPage} / {totalPages}
                 </span>
                 <button

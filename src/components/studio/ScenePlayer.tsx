@@ -221,7 +221,7 @@ function CharacterDisplay({ name, emotion, side }: { name: string; emotion?: Emo
     <div className={`absolute bottom-32 ${side === "left" ? "left-8" : "right-8"} flex flex-col items-center gap-1 transition-all duration-300`}>
       <div className="text-3xl">{getEmotionEmoji(emotion)}</div>
       <div className="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
-        <span className="text-xs font-[family-name:var(--font-mono)] text-accent-purple">{name}</span>
+        <span className="text-xs font-mono text-accent-purple">{name}</span>
       </div>
     </div>
   );
@@ -267,7 +267,7 @@ function DialogueBox({
         {/* 화자 이름 */}
         {beat.speaker && (
           <div className="mb-2 flex items-center gap-2">
-            <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-accent-green">
+            <span className="font-mono text-sm font-semibold text-accent-green">
               {beat.speaker}
             </span>
             <span className="text-[9px] text-text-tertiary bg-bg-tertiary/50 rounded px-1.5 py-0.5">
@@ -295,7 +295,7 @@ function DialogueBox({
             <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 transition-colors" aria-label="이전">
               <ChevronLeft className="h-4 w-4 text-text-secondary" />
             </button>
-            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-[family-name:var(--font-mono)] transition-colors" aria-label="다음">
+            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label="다음">
               다음 ▶
             </button>
           </div>
@@ -488,7 +488,7 @@ export default function ScenePlayer({
               'text-base text-text-secondary'
             }`} style={{ opacity: 0.8 }}>
               {currentBeat.speaker && currentBeat.type === 'dialogue' && (
-                <span className="block text-xs text-accent-green/60 font-[family-name:var(--font-mono)] mb-2">{currentBeat.speaker}</span>
+                <span className="block text-xs text-accent-green/60 font-mono mb-2">{currentBeat.speaker}</span>
               )}
               {currentBeat.text}
             </p>
@@ -518,7 +518,7 @@ export default function ScenePlayer({
       {/* 장면 타이틀 (전환 시) */}
       <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <span className={`text-[10px] font-[family-name:var(--font-mono)] bg-bg-primary/40 backdrop-blur-sm rounded px-2 py-0.5 ${isRadio ? 'text-accent-purple' : 'text-text-tertiary'}`}>
+          <span className={`text-[10px] font-mono bg-bg-primary/40 backdrop-blur-sm rounded px-2 py-0.5 ${isRadio ? 'text-accent-purple' : 'text-text-tertiary'}`}>
             {isRadio ? '🎧' : '🎬'} {currentScene.title} {currentScene.timeOfDay ? `· ${currentScene.timeOfDay}` : ""}
           </span>
           <span className="text-[9px] text-text-tertiary">
@@ -581,7 +581,7 @@ export default function ScenePlayer({
                 className="h-64 object-contain drop-shadow-2xl"
               />
               <div className="text-center mt-1 bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
-                <span className="text-xs font-[family-name:var(--font-mono)] text-accent-purple">{currentBeat.speaker}</span>
+                <span className="text-xs font-mono text-accent-purple">{currentBeat.speaker}</span>
               </div>
             </div>
           ) : (
@@ -607,7 +607,7 @@ export default function ScenePlayer({
           <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="이전">
             <ChevronLeft className="h-5 w-5 text-text-secondary" />
           </button>
-          <button onClick={goNext} className="px-6 py-2 bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple rounded-full text-sm font-[family-name:var(--font-mono)] transition-colors">
+          <button onClick={goNext} className="px-6 py-2 bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple rounded-full text-sm font-mono transition-colors">
             다음
           </button>
         </div>

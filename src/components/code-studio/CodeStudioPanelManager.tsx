@@ -508,9 +508,9 @@ function BottomPanels({
   return (
     <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
       <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
-        <button onClick={onToggleTerminal} title={tcs.consoleTooltip} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console}</button>
-        <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
-        <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-[family-name:var(--font-mono)] transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
+        <button onClick={onToggleTerminal} title={tcs.consoleTooltip} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console}</button>
+        <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
+        <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
         <button onClick={onCloseAllBottom} aria-label="하단 패널 닫기" className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
       </div>
       {showTerminal && (
@@ -526,7 +526,7 @@ function BottomPanels({
       {showPipelineBottom && pipelineStages.length > 0 && (
         <div className="h-40 overflow-auto p-2">
           {pipelineStages.map((s) => (
-            <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-[family-name:var(--font-mono)]">
+            <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-mono">
               <span className={`w-2 h-2 rounded-full ${s.status === "pass" ? "bg-accent-green" : s.status === "warn" ? "bg-accent-amber" : s.status === "fail" ? "bg-accent-red" : "bg-white/20"}`} />
               <span className="text-text-secondary flex-1">{s.name}</span>
               <span className="text-text-tertiary">{s.score ?? "-"}</span>

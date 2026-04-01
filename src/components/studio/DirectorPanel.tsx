@@ -116,7 +116,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         )}
 
         {/* Stats summary */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-border/50 text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-border/50 text-[10px] text-text-tertiary font-mono">
           {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JP:'語尾',CN:'结尾'}[language])}{report.stats.ending_mono}%</span>}
           {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JP:'ぼかし',CN:'模糊'}[language])}{report.stats.blur}</span>}
           {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JP:'無対価',CN:'无代价'}[language])}{report.stats.gain_no_cost}</span>}

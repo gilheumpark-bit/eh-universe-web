@@ -54,7 +54,7 @@ const EditReferencePanel: React.FC<EditReferencePanelProps> = ({
       {/* Toggle */}
       <button
         onClick={onToggle}
-        className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)] flex items-center justify-center gap-1"
+        className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-mono flex items-center justify-center gap-1"
       >
         {isOpen ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
         {isOpen && (isKO ? '참조' : 'Ref')}
@@ -68,7 +68,7 @@ const EditReferencePanel: React.FC<EditReferencePanelProps> = ({
               <button
                 key={key}
                 onClick={() => setActiveRefTab(key)}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-bold font-mono uppercase tracking-wider transition-colors ${
                   activeRefTab === key
                     ? 'text-accent-purple border-b-2 border-accent-purple'
                     : 'text-text-tertiary hover:text-text-secondary'

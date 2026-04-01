@@ -173,7 +173,7 @@ function DiffPreview({ snapshot, lang }: DiffPreviewProps) {
 
   return (
     <div className="mt-2 rounded border border-border/30 bg-bg-primary/50 p-2 text-xs">
-      <div className="mb-1 font-[family-name:var(--font-mono)] text-text-tertiary">
+      <div className="mb-1 font-mono text-text-tertiary">
         {snapshot.fileName}
       </div>
       <div className="flex gap-3">
@@ -256,7 +256,7 @@ function ChangesTab({
             }`}
           >
             <FileText size={14} className="shrink-0 text-accent-amber" />
-            <span className="truncate font-[family-name:var(--font-mono)] text-xs">
+            <span className="truncate font-mono text-xs">
               {file.name}
             </span>
             <span className="ml-auto shrink-0 rounded bg-accent-amber/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-amber">
@@ -334,7 +334,7 @@ function HistoryTab({
                   {commit.message}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                  <span className="font-[family-name:var(--font-mono)]">
+                  <span className="font-mono">
                     {shortHash(commit.hash)}
                   </span>
                   <span>{formatTimestamp(commit.timestamp)}</span>
@@ -618,7 +618,7 @@ export default function GitPanel({
         <select
           value={currentBranch}
           onChange={(e) => handleSwitchBranch(e.target.value)}
-          className="flex-1 rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-[family-name:var(--font-mono)] text-xs text-text-primary outline-none"
+          className="flex-1 rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-mono text-xs text-text-primary outline-none"
         >
           {branches.map((b) => (
             <option key={b} value={b}>{b}</option>
@@ -634,7 +634,7 @@ export default function GitPanel({
                 if (e.key === "Escape") { setShowNewBranch(false); setNewBranchName(""); }
               }}
               placeholder={L4(lang, { ko: "브랜치-이름", en: "branch-name" })}
-              className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none"
+              className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-mono text-[10px] text-text-primary outline-none"
               autoFocus
             />
             <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">{L4(lang, { ko: "확인", en: "OK" })}</button>

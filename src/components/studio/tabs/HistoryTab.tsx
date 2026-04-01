@@ -83,17 +83,17 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
       <div className="mb-6 space-y-3">
         {projects.length > 1 && (
           <div className="flex gap-1.5">
-            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+            <button onClick={() => setArchiveScope('project')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${archiveScope === 'project' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
               {t('archive.currentProject')}
             </button>
-            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+            <button onClick={() => setArchiveScope('all')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${archiveScope === 'all' ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
               {t('archive.allProjects')}
             </button>
           </div>
         )}
         <div className="flex gap-1.5 flex-wrap">
           {categories.map(cat => (
-            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-[family-name:var(--font-mono)] border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
+            <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
               {cat.label}
               <span className="ml-1 text-[8px] opacity-50">
                 {cat.key === 'ALL' ? allSessions.length : cat.key === 'WORLD' ? allSessions.filter(s => (s.config.worldSimData?.civs?.length ?? 0) > 0).length : allSessions.filter(s => s.config.genre === cat.key).length}
@@ -106,7 +106,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
       {/* Session Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {filtered.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-[family-name:var(--font-mono)]">{t('engine.noArchive')}</div>
+          <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-mono">{t('engine.noArchive')}</div>
         ) : (
           filtered.map(s => (
             <div
@@ -143,21 +143,21 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
               )}
               <div className="flex flex-wrap gap-1.5 mt-1">
-                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">{s.config.genre}</span>
-                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-[family-name:var(--font-mono)]">EP.{s.config.episode}</span>
+                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-mono">{s.config.genre}</span>
+                <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary uppercase font-mono">EP.{s.config.episode}</span>
                 {s.messages.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary font-[family-name:var(--font-mono)]">{s.messages.length} msg</span>
+                  <span className="px-1.5 py-0.5 bg-bg-tertiary/80 rounded text-[8px] font-bold text-text-tertiary font-mono">{s.messages.length} msg</span>
                 )}
                 {(s.config.worldSimData?.civs?.length ?? 0) > 0 && (
-                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-[family-name:var(--font-mono)]">
+                  <span className="px-1.5 py-0.5 bg-emerald-900/30 border border-emerald-500/20 rounded text-[8px] font-bold text-emerald-400 font-mono">
                     {t('archive.worldLabel')} · {s.config.worldSimData!.civs!.length}
                   </span>
                 )}
                 {archiveScope === 'all' && s._projectName && (
-                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-[family-name:var(--font-mono)]">{s._projectName}</span>
+                  <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-mono">{s._projectName}</span>
                 )}
               </div>
-              <div className="mt-2 text-[8px] text-text-tertiary font-[family-name:var(--font-mono)]">
+              <div className="mt-2 text-[8px] text-text-tertiary font-mono">
                 {new Date(s.lastUpdate).toLocaleString(language === 'KO' ? 'ko-KR' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>

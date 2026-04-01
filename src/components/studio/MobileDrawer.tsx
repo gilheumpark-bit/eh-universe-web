@@ -246,7 +246,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
           {/* Header — Premium styling */}
           {title && (
             <div className="flex items-center justify-between px-5 pb-3 shrink-0 border-b border-white/[0.06]">
-              <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold text-text-tertiary uppercase tracking-[0.2em]">
+              <span className="font-mono text-[10px] font-bold text-text-tertiary uppercase tracking-[0.2em]">
                 {title}
               </span>
               <button

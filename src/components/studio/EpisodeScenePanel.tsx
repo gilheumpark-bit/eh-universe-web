@@ -133,8 +133,8 @@ function SceneEditor({
     });
   };
 
-  const inputCls = "w-full bg-bg-secondary border border-border rounded px-2 py-1 text-sm text-text-primary font-[family-name:var(--font-mono)] focus:border-accent-purple focus:outline-none";
-  const selectCls = "bg-bg-secondary border border-border rounded px-1 py-1 text-xs text-text-primary font-[family-name:var(--font-mono)] focus:border-accent-purple focus:outline-none";
+  const inputCls = "w-full bg-bg-secondary border border-border rounded px-2 py-1 text-sm text-text-primary font-mono focus:border-accent-purple focus:outline-none";
+  const selectCls = "bg-bg-secondary border border-border rounded px-1 py-1 text-xs text-text-primary font-mono focus:border-accent-purple focus:outline-none";
 
   return (
     <div className="space-y-3 p-3 bg-bg-secondary/50 rounded-lg border border-border">
@@ -156,7 +156,7 @@ function SceneEditor({
 
       {/* Scene table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs border-collapse font-[family-name:var(--font-mono)]">
+        <table className="w-full text-xs border-collapse font-mono">
           <thead>
             <tr className="bg-bg-secondary">
               <th className="border border-border px-2 py-1 text-text-secondary w-14">{L.sceneId}</th>
@@ -204,12 +204,12 @@ function SceneEditor({
         </table>
       </div>
 
-      <button onClick={addScene} className="text-xs text-accent-purple hover:text-accent-purple/80 font-[family-name:var(--font-mono)]">{L.addScene}</button>
+      <button onClick={addScene} className="text-xs text-accent-purple hover:text-accent-purple/80 font-mono">{L.addScene}</button>
 
       {/* Actions */}
       <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="px-3 py-1 text-xs bg-bg-secondary hover:bg-bg-secondary/80 rounded text-text-secondary border border-border font-[family-name:var(--font-mono)]">{L.cancel}</button>
-        <button onClick={handleSave} className="px-3 py-1 text-xs bg-accent-purple hover:bg-accent-purple/80 rounded text-white font-[family-name:var(--font-mono)]">{L.confirm}</button>
+        <button onClick={onCancel} className="px-3 py-1 text-xs bg-bg-secondary hover:bg-bg-secondary/80 rounded text-text-secondary border border-border font-mono">{L.cancel}</button>
+        <button onClick={handleSave} className="px-3 py-1 text-xs bg-accent-purple hover:bg-accent-purple/80 rounded text-white font-mono">{L.confirm}</button>
       </div>
     </div>
   );
@@ -235,7 +235,7 @@ function SceneTable({ sheet, lang }: { sheet: EpisodeSceneSheet; lang: AppLangua
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs border-collapse font-[family-name:var(--font-mono)]">
+      <table className="w-full text-xs border-collapse font-mono">
         <thead>
           <tr className="bg-bg-secondary">
             <th className="border border-border px-2 py-1 text-text-tertiary w-12">{L.sceneId}</th>
@@ -312,7 +312,7 @@ export default function EpisodeScenePanel({
       {/* Save button for current episode */}
       <button
         onClick={handleSaveNew}
-        className="w-full px-3 py-2 text-xs bg-accent-purple/20 hover:bg-accent-purple/30 border border-accent-purple/30 rounded-lg text-accent-purple font-[family-name:var(--font-mono)] transition-colors"
+        className="w-full px-3 py-2 text-xs bg-accent-purple/20 hover:bg-accent-purple/30 border border-accent-purple/30 rounded-lg text-accent-purple font-mono transition-colors"
       >
         {currentEpisode}{L.ep} {L.save}
       </button>
@@ -330,7 +330,7 @@ export default function EpisodeScenePanel({
 
       {/* Saved sheets list */}
       {sorted.length === 0 && editingEp === null && (
-        <p className="text-xs text-text-tertiary text-center py-2 font-[family-name:var(--font-mono)]">{L.empty}</p>
+        <p className="text-xs text-text-tertiary text-center py-2 font-mono">{L.empty}</p>
       )}
 
       {sorted.map(sheet => (
@@ -341,7 +341,7 @@ export default function EpisodeScenePanel({
             className="w-full flex items-center justify-between px-3 py-2 bg-bg-secondary/50 hover:bg-bg-secondary text-left transition-colors"
           >
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-text-primary font-[family-name:var(--font-mono)]">
+              <span className="text-sm font-medium text-text-primary font-mono">
                 {sheet.episode}{L.ep}
                 {sheet.title && <> &laquo;{sheet.title}&raquo;</>}
               </span>
@@ -359,8 +359,8 @@ export default function EpisodeScenePanel({
             <div className="p-2 border-t border-border bg-bg-primary/30">
               <SceneTable sheet={sheet} lang={lang} />
               <div className="flex gap-2 justify-end mt-2">
-                <button onClick={() => setEditingEp(sheet.episode)} className="px-2 py-1 text-[10px] bg-bg-secondary hover:bg-bg-secondary/80 rounded text-text-secondary border border-border font-[family-name:var(--font-mono)]">{L.edit}</button>
-                <button onClick={() => handleDelete(sheet.episode)} className="px-2 py-1 text-[10px] bg-red-900/30 hover:bg-red-900/50 rounded text-red-400 font-[family-name:var(--font-mono)]">{L.delete}</button>
+                <button onClick={() => setEditingEp(sheet.episode)} className="px-2 py-1 text-[10px] bg-bg-secondary hover:bg-bg-secondary/80 rounded text-text-secondary border border-border font-mono">{L.edit}</button>
+                <button onClick={() => handleDelete(sheet.episode)} className="px-2 py-1 text-[10px] bg-red-900/30 hover:bg-red-900/50 rounded text-red-400 font-mono">{L.delete}</button>
               </div>
             </div>
           )}

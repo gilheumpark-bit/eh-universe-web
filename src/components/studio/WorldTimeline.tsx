@@ -111,7 +111,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+      <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
         {L4(language, { ko: '문명 타임라인', en: 'Civilization Timeline', jp: '文明タイムライン', cn: '文明时间线' })}
       </h3>
 

@@ -64,7 +64,7 @@ function ShortcutBadge({ shortcut }: { shortcut: string }) {
       {keys.map((key, i) => (
         <kbd
           key={i}
-          className="inline-flex min-w-[20px] items-center justify-center rounded border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] leading-none text-text-tertiary"
+          className="inline-flex min-w-[20px] items-center justify-center rounded border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] leading-none text-text-tertiary"
         >
           {key.trim()}
         </kbd>
@@ -232,12 +232,12 @@ export default function CommandPalette({
               if (e.target.value) setCollapsedGroups(new Set()); // 검색 시 모든 그룹 펼침
             }}
             placeholder="Type a command..."
-            className="w-full bg-transparent font-[family-name:var(--font-mono)] text-[13px] text-text-primary placeholder-text-tertiary outline-none"
+            className="w-full bg-transparent font-mono text-[13px] text-text-primary placeholder-text-tertiary outline-none"
             spellCheck={false}
             autoComplete="off"
           />
           {query && (
-            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-text-tertiary">
               {filtered.length} found
             </span>
           )}
@@ -250,7 +250,7 @@ export default function CommandPalette({
           role="listbox"
         >
           {grouped.size === 0 ? (
-            <div className="px-4 py-6 text-center font-[family-name:var(--font-mono)] text-[12px] text-text-tertiary">
+            <div className="px-4 py-6 text-center font-mono text-[12px] text-text-tertiary">
               No matching commands
             </div>
           ) : (
@@ -264,10 +264,10 @@ export default function CommandPalette({
                   aria-expanded={!collapsedGroups.has(category)}
                 >
                   <ChevronRight className={`h-3 w-3 text-text-tertiary transition-transform duration-150 ${collapsedGroups.has(category) ? "" : "rotate-90"}`} />
-                  <span className="font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                     {category}
                   </span>
-                  <span className="ml-auto font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary/50">{cmds.length}</span>
+                  <span className="ml-auto font-mono text-[9px] text-text-tertiary/50">{cmds.length}</span>
                 </button>
 
                 {/* Command items — hidden when collapsed */}
@@ -307,7 +307,7 @@ export default function CommandPalette({
                       )}
 
                       {/* Label */}
-                      <span className="truncate font-[family-name:var(--font-mono)] text-[12px]">
+                      <span className="truncate font-mono text-[12px]">
                         {cmd.label}
                       </span>
 
@@ -325,19 +325,19 @@ export default function CommandPalette({
 
         {/* Footer hint */}
         <div className="flex items-center gap-3 border-t border-white/8 px-3 py-1.5">
-          <span className="flex items-center gap-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+          <span className="flex items-center gap-1 font-mono text-[10px] text-text-tertiary">
             <kbd className="rounded border border-white/10 bg-white/[0.06] px-1 text-[9px]">
               &uarr;&darr;
             </kbd>
             Navigate
           </span>
-          <span className="flex items-center gap-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+          <span className="flex items-center gap-1 font-mono text-[10px] text-text-tertiary">
             <kbd className="rounded border border-white/10 bg-white/[0.06] px-1 text-[9px]">
               Enter
             </kbd>
             Execute
           </span>
-          <span className="flex items-center gap-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+          <span className="flex items-center gap-1 font-mono text-[10px] text-text-tertiary">
             <kbd className="rounded border border-white/10 bg-white/[0.06] px-1 text-[9px]">
               Esc
             </kbd>

@@ -172,7 +172,7 @@ function BeatBlock({
         <div className="flex items-center gap-1.5 mb-0.5">
           <span className="text-[10px]">{BEAT_ICONS[beat.type]}</span>
           {beat.speaker && (
-            <span className="text-[9px] font-[family-name:var(--font-mono)] text-accent-green truncate">{beat.speaker}</span>
+            <span className="text-[9px] font-mono text-accent-green truncate">{beat.speaker}</span>
           )}
           <span className="text-[8px] text-text-tertiary">{BEAT_LABELS[beat.type]}</span>
         </div>
@@ -241,7 +241,7 @@ function SceneLane({
       <div className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/[0.02] transition-colors" onClick={onToggle}>
         {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-text-tertiary" /> : <ChevronDown className="h-3.5 w-3.5 text-text-tertiary" />}
 
-        <span className="text-xs font-[family-name:var(--font-mono)] text-text-primary font-medium">{scene.title}</span>
+        <span className="text-xs font-mono text-text-primary font-medium">{scene.title}</span>
 
         {scene.timeOfDay && <span className="text-[9px] text-text-tertiary">{scene.timeOfDay}</span>}
 
@@ -426,7 +426,7 @@ export default function SceneTimeline({
       {/* 툴바 */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/20">
         <div className="flex items-center gap-3">
-          <h3 className="text-xs font-[family-name:var(--font-mono)] font-semibold text-text-primary uppercase tracking-wider">
+          <h3 className="text-xs font-mono font-semibold text-text-primary uppercase tracking-wider">
             {isKO ? "타임라인 편집" : "Timeline Editor"}
           </h3>
           <span className="text-[9px] text-text-tertiary">{scenes.length}장면 · {totalBeats}비트</span>

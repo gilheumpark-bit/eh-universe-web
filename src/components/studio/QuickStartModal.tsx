@@ -55,7 +55,7 @@ export default function QuickStartModal({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-purple/10">
               <Sparkles className="h-6 w-6 text-accent-purple" />
             </div>
-            <h2 className="font-[family-name:var(--font-mono)] text-2xl font-black italic tracking-tighter">
+            <h2 className="font-mono text-2xl font-black italic tracking-tighter">
               {t('quickStartModal.title')}
             </h2>
           </div>
@@ -65,7 +65,7 @@ export default function QuickStartModal({
           </p>
 
           <div className="mt-4 rounded-2xl border border-white/6 bg-bg-secondary/70 px-4 py-3">
-            <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-accent-purple">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent-purple">
               {t('quickStartModal.flowLabel')}
             </p>
             <p className="mt-2 text-xs leading-6 text-text-secondary">
@@ -139,7 +139,7 @@ export default function QuickStartModal({
             )}
           </button>
 
-          <p className="text-center font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-tight text-text-tertiary/60">
+          <p className="text-center font-mono text-[10px] uppercase tracking-tight text-text-tertiary/60">
             Title + World Hook + Character Seed + First Scene
           </p>
         </form>

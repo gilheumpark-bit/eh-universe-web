@@ -200,14 +200,14 @@ export default function DiffViewer({
         >
           {/* 라인 번호 거터 */}
           <span
-            className={`inline-block w-12 shrink-0 select-none px-2 text-right font-[family-name:var(--font-mono)] text-[11px] ${gutterColor}`}
+            className={`inline-block w-12 shrink-0 select-none px-2 text-right font-mono text-[11px] ${gutterColor}`}
           >
             {row.lineNum ?? ""}
           </span>
 
           {/* +/- 기호 */}
           <span
-            className={`inline-block w-5 shrink-0 select-none text-center font-[family-name:var(--font-mono)] text-[11px] ${
+            className={`inline-block w-5 shrink-0 select-none text-center font-mono text-[11px] ${
               prefix === "+" ? "text-accent-green" :
               prefix === "-" ? "text-accent-red" :
               "text-transparent"
@@ -217,7 +217,7 @@ export default function DiffViewer({
           </span>
 
           {/* 코드 내용 */}
-          <span className="flex-1 whitespace-pre font-[family-name:var(--font-mono)] text-[12px] text-text-primary pr-4">
+          <span className="flex-1 whitespace-pre font-mono text-[12px] text-text-primary pr-4">
             {row.content}
           </span>
         </div>
@@ -232,13 +232,13 @@ export default function DiffViewer({
       <div className="flex items-center justify-between border-b border-border bg-bg-secondary px-4 py-2">
         <div className="flex items-center gap-3">
           <FileText size={14} className="text-text-secondary" />
-          <span className="font-[family-name:var(--font-mono)] text-xs font-medium text-text-primary">
+          <span className="font-mono text-xs font-medium text-text-primary">
             {fileName}
           </span>
-          <span className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary uppercase">
+          <span className="font-mono text-[10px] text-text-tertiary uppercase">
             {language}
           </span>
-          <span className="ml-2 font-[family-name:var(--font-mono)] text-[11px]">
+          <span className="ml-2 font-mono text-[11px]">
             <span className="text-accent-green">+{added}</span>
             {" "}
             <span className="text-accent-red">-{removed}</span>
@@ -248,14 +248,14 @@ export default function DiffViewer({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onAccept(modified)}
-            className="flex items-center gap-1.5 rounded-md bg-accent-green/15 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[11px] font-medium text-accent-green transition-colors hover:bg-accent-green/25 active:scale-[0.97]"
+            className="flex items-center gap-1.5 rounded-md bg-accent-green/15 px-3 py-1.5 font-mono text-[11px] font-medium text-accent-green transition-colors hover:bg-accent-green/25 active:scale-[0.97]"
           >
             <Check size={12} />
             Accept
           </button>
           <button
             onClick={onReject}
-            className="flex items-center gap-1.5 rounded-md bg-accent-red/15 px-3 py-1.5 font-[family-name:var(--font-mono)] text-[11px] font-medium text-accent-red transition-colors hover:bg-accent-red/25 active:scale-[0.97]"
+            className="flex items-center gap-1.5 rounded-md bg-accent-red/15 px-3 py-1.5 font-mono text-[11px] font-medium text-accent-red transition-colors hover:bg-accent-red/25 active:scale-[0.97]"
           >
             <X size={12} />
             Reject
@@ -268,7 +268,7 @@ export default function DiffViewer({
         {/* 좌측: Original */}
         <div className="flex flex-1 flex-col border-r border-border">
           <div className="border-b border-border bg-bg-secondary/60 px-4 py-1">
-            <span className="font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-wider text-text-tertiary uppercase">
+            <span className="font-mono text-[10px] font-medium tracking-wider text-text-tertiary uppercase">
               Original
             </span>
           </div>
@@ -284,7 +284,7 @@ export default function DiffViewer({
         {/* 우측: Modified */}
         <div className="flex flex-1 flex-col">
           <div className="border-b border-border bg-bg-secondary/60 px-4 py-1">
-            <span className="font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-wider text-text-tertiary uppercase">
+            <span className="font-mono text-[10px] font-medium tracking-wider text-text-tertiary uppercase">
               Modified
             </span>
           </div>

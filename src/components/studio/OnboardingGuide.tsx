@@ -163,7 +163,7 @@ export default function OnboardingGuide({
 
         {/* Header */}
         <div className="relative">
-          <p className="text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.25em] text-accent-purple font-bold">
+          <p className="text-center font-mono text-[11px] uppercase tracking-[0.25em] text-accent-purple font-bold">
             {L.eyebrow}
           </p>
           <h3 className="mt-5 text-center text-2xl font-black tracking-tight md:text-3xl bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
@@ -202,7 +202,7 @@ export default function OnboardingGuide({
                 </div>
                 
                 {/* Title */}
-                <span className={`text-sm font-black uppercase tracking-wider font-[family-name:var(--font-mono)] ${
+                <span className={`text-sm font-black uppercase tracking-wider font-mono ${
                   accent ? "text-accent-purple" : "text-text-primary"
                 }`}>
                   {title}
@@ -252,7 +252,7 @@ export default function OnboardingGuide({
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-text-tertiary group-hover:text-text-primary">
                       {icons[idx]}
                     </div>
-                    <span className="text-sm font-black font-[family-name:var(--font-mono)] text-text-primary">
+                    <span className="text-sm font-black font-mono text-text-primary">
                       {preset.name[language === 'KO' ? 'ko' : 'en']}
                     </span>
                     <span className="text-[11px] leading-5 text-text-tertiary line-clamp-3">

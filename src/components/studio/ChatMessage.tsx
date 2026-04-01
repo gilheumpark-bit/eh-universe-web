@@ -78,7 +78,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
         {!isUser && (
-          <span className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-[family-name:var(--font-mono)]">
+          <span className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-mono">
             NOW — Narrative Origin Writer
           </span>
         )}
@@ -137,12 +137,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Detailed Engine Validation Report */}
           {!isUser && report && (
             <div className="mt-3">
-              <button onClick={() => setShowDetail(!showDetail)} className="flex items-center gap-1 text-[9px] text-text-tertiary hover:text-text-secondary transition-colors font-[family-name:var(--font-mono)] uppercase tracking-wider">
+              <button onClick={() => setShowDetail(!showDetail)} className="flex items-center gap-1 text-[9px] text-text-tertiary hover:text-text-secondary transition-colors font-mono uppercase tracking-wider">
                 <ChevronDown className={`w-3 h-3 transition-transform ${showDetail ? 'rotate-180' : ''}`} />
                 {language === 'KO' ? '검증 상세' : 'Validation Detail'}
               </button>
               {showDetail && (
-                <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-[family-name:var(--font-mono)] animate-in fade-in duration-300">
+                <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-mono animate-in fade-in duration-300">
                   <div className="flex justify-between text-text-tertiary">
                     <span>AI {language === 'KO' ? '톤' : 'Tone'}</span>
                     <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>

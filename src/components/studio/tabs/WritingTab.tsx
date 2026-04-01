@@ -132,7 +132,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   <span className="px-3 py-1.5 rounded-lg bg-accent-purple/10 border border-accent-purple/20 text-accent-purple text-sm font-bold">
                     {currentSession.config.genre || 'Genre'}
                   </span>
-                  <span className="px-3 py-1.5 rounded-lg bg-bg-secondary border border-border text-text-secondary text-sm font-[family-name:var(--font-mono)]">
+                  <span className="px-3 py-1.5 rounded-lg bg-bg-secondary border border-border text-text-secondary text-sm font-mono">
                     EP.{currentSession.config.episode}/{currentSession.config.totalEpisodes}
                   </span>
                   {currentSession.config.setting && (
@@ -269,7 +269,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   >
                     📋 {t('writingMode.applyToManuscript')}
                   </button>
-                  <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)]">
+                  <span className="text-xs text-text-tertiary font-mono">
                     {editDraft.length.toLocaleString()}{language === 'KO' ? '자' : ' chars'}
                   </span>
                 </div>
@@ -277,7 +277,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
               {/* Directive Input — Enhanced */}
               <div className="flex gap-3 items-center p-3 rounded-xl bg-bg-secondary/30 border border-border">
-                <span className="text-[10px] text-accent-purple font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+                <span className="text-[10px] text-accent-purple font-bold font-mono uppercase tracking-wider shrink-0 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
                   {t('writingMode.directive')}
                 </span>
@@ -326,7 +326,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">
                     <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
-                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)] resize-y" />
+                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-mono resize-y" />
                   </div>
                 ) : (
                   <InlineRewriter content={editDraft} language={language} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
@@ -408,8 +408,8 @@ const WritingTab: React.FC<WritingTabProps> = ({
         <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
           <div className="max-w-6xl mx-auto relative px-0">
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.nextChapter')}</button>
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.plotTwist')}</button>
+              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.nextChapter')}</button>
+              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.plotTwist')}</button>
               {currentSession.config.episode < currentSession.config.totalEpisodes && (
                 <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple">EP.{currentSession.config.episode} → {currentSession.config.episode + 1}</button>
               )}

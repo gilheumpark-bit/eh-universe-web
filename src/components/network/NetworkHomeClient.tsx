@@ -87,7 +87,9 @@ const SAMPLE_PLANETS = [
   },
 ];
 
-const NETWORK_LOAD_TIMEOUT_MS = 25_000;
+// Keep this below the E2E "stuck loading" regression threshold.
+// If the backend is unavailable/blocked, we fall back to sample data and show retry UI.
+const NETWORK_LOAD_TIMEOUT_MS = 12_000;
 
 function withTimeout<T>(promise: Promise<T>, label: string, timeoutMs = NETWORK_LOAD_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {

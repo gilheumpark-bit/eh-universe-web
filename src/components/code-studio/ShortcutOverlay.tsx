@@ -132,7 +132,7 @@ export default function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps)
                     <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">
                       {s.description}
                     </span>
-                    <kbd className="shrink-0 rounded-lg border border-white/[0.08] bg-bg-secondary/80 px-2 py-1 text-[10px] font-bold font-[family-name:var(--font-mono)] text-text-tertiary">
+                    <kbd className="shrink-0 rounded-lg border border-white/[0.08] bg-bg-secondary/80 px-2 py-1 text-[10px] font-bold font-mono text-text-tertiary">
                       {s.keys}
                     </kbd>
                   </div>

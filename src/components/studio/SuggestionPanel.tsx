@@ -48,10 +48,10 @@ export default function SuggestionPanel({ suggestions, onDismiss, language }: Su
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-3.5 h-3.5 text-amber-500/60" />
-        <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
+        <span className="font-mono text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
           {isKO ? '서사 감독 경고' : 'Narrative Director Alerts'}
         </span>
-        <span className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">
+        <span className="font-mono text-[10px] text-text-tertiary">
           {visible.length}
         </span>
       </div>
@@ -65,10 +65,10 @@ export default function SuggestionPanel({ suggestions, onDismiss, language }: Su
               <Icon className={`w-4 h-4 ${style.color} shrink-0 mt-0.5`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-wider uppercase ${style.color}`}>
+                  <span className={`font-mono text-[9px] font-bold tracking-wider uppercase ${style.color}`}>
                     {catLabel ? (isKO ? catLabel.ko : catLabel.en) : sg.category}
                   </span>
-                  <span className="font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">
+                  <span className="font-mono text-[9px] text-text-tertiary">
                     EP.{sg.episode}
                   </span>
                 </div>

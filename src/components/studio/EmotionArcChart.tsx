@@ -124,7 +124,7 @@ function EmotionArcChart({ messages, language }: Props) {
   return (
     <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
+        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
           {L4(language, { ko: '감정 아크', en: 'Emotion Arc', jp: '感情アーク', cn: '情感弧线' })}
         </h3>
         <div className="flex gap-3 text-[8px] text-text-tertiary">

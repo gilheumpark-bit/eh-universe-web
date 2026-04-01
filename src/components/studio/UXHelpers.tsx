@@ -518,7 +518,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             {sublabel && <span className="text-[10px] text-text-tertiary ml-2">{sublabel}</span>}
           </div>
           {showPercent && !indeterminate && (
-            <span className="text-xs font-bold font-[family-name:var(--font-mono)] text-accent-purple">
+            <span className="text-xs font-bold font-mono text-accent-purple">
               {Math.round(percent)}%
             </span>
           )}

@@ -550,13 +550,13 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         </div>
         <div className="flex gap-2 relative">
           <button onClick={() => setShowGrammarPanel(v => !v)}
-            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-all ${
+            className={`px-3 py-1.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-all ${
               showGrammarPanel ? 'bg-accent-green text-white' : 'bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary'
             }`}>
             {GRAMMAR_PACKS[grammarRegion].flag} {L4(lang, { ko: "문법", en: "Grammar" })}
           </button>
           <button onClick={() => setShowScenePresetMenu(v => !v)}
-            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity">
             ⚡ {L4(lang, { ko: "프리셋", en: "Preset" })}
           </button>
           {showScenePresetMenu && (
@@ -597,7 +597,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               if (result.tensionCurve?.length) setTensionPoints(result.tensionCurve.map((t, i) => ({ id: `ai-t-${ts}-${i}`, position: t.position, level: t.level, label: t.label })));
             } catch { showAlert(tl('sceneSheet.aiFailed')); }
           }}
-            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
+            className="px-3 py-1.5 bg-accent-purple text-white rounded text-[10px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity">
             🤖 {tl('sceneSheet.aiGenerate')}
           </button>
         </div>
@@ -740,7 +740,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                       <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                         role="tab"
                         aria-selected={activeTab === tab.id}
-                        className={`px-2.5 py-2 sm:py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider transition-all whitespace-nowrap min-h-[36px] sm:min-h-0 shrink-0 ${
+                        className={`px-2.5 py-2 sm:py-1.5 rounded text-[10px] font-bold font-mono tracking-wider transition-all whitespace-nowrap min-h-[36px] sm:min-h-0 shrink-0 ${
                           activeTab === tab.id
                             ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/30"
                             : "text-text-tertiary hover:text-text-secondary border border-transparent active:bg-white/5"
@@ -1106,7 +1106,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm leading-relaxed text-text-primary outline-none focus:border-accent-purple transition-colors resize-y"
               placeholder={tl('sceneSheet.writerNotesPlaceholder')}
             />
-            <div className="text-[9px] text-text-tertiary font-[family-name:var(--font-mono)]">
+            <div className="text-[9px] text-text-tertiary font-mono">
               {writerNotes.length.toLocaleString()}{tl('sceneSheet.chars')}
             </div>
           </div>
@@ -1119,7 +1119,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* Simulator reference checkpoints */}
         <div className="border border-border rounded-xl p-4 bg-bg-primary space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+            <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary">
               🗺️ {tl('sceneSheet.worldSimRef')}
             </span>
             <span className="text-[10px] text-text-tertiary">
@@ -1154,7 +1154,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* Validation receipt */}
         <div className="border-t border-border pt-4 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+            <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary">
               {L4(lang, { ko: "장르 문법 검사", en: "Genre Grammar Check" })}
             </span>
             <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
@@ -1197,7 +1197,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         {/* Direction Assembly — 설정 조립 요약 카드 + AI 프롬프트 미리보기 */}
         {/* ============================================================ */}
         <div className="border-t border-border pt-4 space-y-3">
-          <span className="text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary">
+          <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary">
             {L4(lang, { ko: "설정 조립", en: "Direction Assembly" })}
           </span>
 
@@ -1227,7 +1227,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 className={`text-left p-2.5 rounded-lg border transition-all ${card.count > 0 ? "border-accent-purple/30 bg-accent-purple/5 hover:bg-accent-purple/10" : "border-border bg-bg-primary hover:bg-bg-secondary"}`}>
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-xs">{card.emoji}</span>
-                  <span className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase">{card.label}</span>
+                  <span className="text-[9px] font-bold font-mono uppercase">{card.label}</span>
                   <span className={`ml-auto text-[9px] font-bold ${card.count > 0 ? "text-accent-purple" : "text-text-tertiary"}`}>{card.count}</span>
                 </div>
                 <div className="text-[10px] text-text-tertiary truncate">
@@ -1240,7 +1240,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           {/* AI Prompt Preview toggle */}
           <div>
             <button onClick={() => setShowPromptPreview(p => !p)}
-              className="text-[9px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider text-text-tertiary hover:text-accent-purple transition-colors">
+              className="text-[9px] font-bold font-mono uppercase tracking-wider text-text-tertiary hover:text-accent-purple transition-colors">
               {showPromptPreview ? "▼" : "▶"} {L4(lang, { ko: "AI 지시문 미리보기", en: "AI Prompt Preview" })}
             </button>
 
@@ -1289,7 +1289,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
 
               return (
                 <div className="mt-2 relative">
-                  <pre className="text-[9px] text-text-secondary bg-bg-primary border border-border rounded-lg p-3 overflow-x-auto whitespace-pre-wrap font-[family-name:var(--font-mono)] max-h-60 overflow-y-auto">
+                  <pre className="text-[9px] text-text-secondary bg-bg-primary border border-border rounded-lg p-3 overflow-x-auto whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
                     {preview}
                   </pre>
                   {parts.length > 0 && (
@@ -1309,7 +1309,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           <div className="mt-4 pt-3 border-t border-border">
             <button
               onClick={onSaveEpisodeSheet}
-              className="w-full px-4 py-2.5 text-xs font-bold bg-accent-purple/15 hover:bg-accent-purple/25 border border-accent-purple/30 rounded-lg text-accent-purple font-[family-name:var(--font-mono)] transition-colors"
+              className="w-full px-4 py-2.5 text-xs font-bold bg-accent-purple/15 hover:bg-accent-purple/25 border border-accent-purple/30 rounded-lg text-accent-purple font-mono transition-colors"
             >
               📋 {L4(lang, { ko: "현재 화 씬시트 저장", en: "Save Current Episode Scene Sheet" })}
             </button>

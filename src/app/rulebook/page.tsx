@@ -59,12 +59,12 @@ export default function RulebookPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-56 shrink-0">
               <div className="premium-panel-soft rounded-xl p-4 lg:sticky lg:top-24">
-                <h2 className="font-[--font-mono] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
+                <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
                   {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
                 </h2>
                 <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
                   {secs.map((s) => (
-                    <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-[--font-mono] ${
+                    <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-mono ${
                       activeId === s.id
                         ? "text-accent-amber bg-accent-amber/10 font-bold"
                         : "text-text-secondary hover:text-text-primary hover:bg-white/4"
@@ -81,19 +81,19 @@ export default function RulebookPage() {
                 <span className="badge badge-classified mr-2">RESTRICTED</span>
                 {T({ ko: "문서 등급: RESTRICTED — Level 3 | 버전: 1.0 | 작성: 비밀조사국", en: "Document Level: RESTRICTED — Level 3 | Version: 1.0 | Author: Bureau of Investigation" })}
               </div>
-              <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
+              <div className="premium-panel rounded-b-3xl rounded-t-none border-t-0 p-8 sm:p-12">
                 <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH RULEBOOK v1.0</h1>
-                <p className="text-text-tertiary text-sm font-[--font-document] mb-12">A Narrative Engine That Prevents Story Collapse</p>
+                <p className="text-text-tertiary text-sm font-serif mb-12">A Narrative Engine That Prevents Story Collapse</p>
 
                 {secs.map((s) => (
                   <section key={s.id} id={s.id} className="mb-12 scroll-mt-24">
-                    <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-4 pb-2 border-b border-border">{s.title}</h2>
+                    <h2 className="font-mono text-lg font-bold text-accent-purple tracking-wider uppercase mb-4 pb-2 border-b border-border">{s.title}</h2>
                     <div className="whitespace-pre-line text-text-secondary leading-relaxed text-sm">{s.content}</div>
                   </section>
                 ))}
 
                 <div className="mt-16 border-t border-border pt-6">
-                  <p className="font-[--font-document] text-xs text-text-tertiary italic text-center">
+                  <p className="font-serif text-xs text-text-tertiary italic text-center">
                     {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}<br />
                     {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
                   </p>

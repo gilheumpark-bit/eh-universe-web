@@ -324,7 +324,7 @@ function DeploySimulation({ files, t, onDeployComplete }: DeploySimulationProps)
 
       {steps.length > 0 && (
         <div className="rounded border border-border/20 bg-bg-primary/30 p-3">
-          <div className="space-y-2 font-[family-name:var(--font-mono)] text-xs">
+          <div className="space-y-2 font-mono text-xs">
             {steps.map((step, i) => (
               <div key={i} className="flex items-center gap-2">
                 {step.status === "pending" && (
@@ -415,7 +415,7 @@ function DeployHistory({ records, t }: DeployHistoryProps) {
                 {record.fileCount} {t.files}
               </span>
             </div>
-            <div className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">
+            <div className="font-mono text-xs text-text-tertiary">
               {formatTimestamp(record.timestamp)}
             </div>
           </div>

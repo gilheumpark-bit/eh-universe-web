@@ -108,7 +108,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: strin
       <div className={`p-1.5 rounded-lg ${colors.bg}`}>
         <Icon className={`h-4 w-4 shrink-0 ${colors.icon}`} />
       </div>
-      <span className="flex-1 font-[family-name:var(--font-mono)] text-[12px] font-medium text-text-primary">{item.message}</span>
+      <span className="flex-1 font-mono text-[12px] font-medium text-text-primary">{item.message}</span>
       <button
         onClick={handleManualDismiss}
         className="shrink-0 p-1 rounded-lg text-text-tertiary transition-colors hover:text-text-primary hover:bg-white/5 active:scale-95"
