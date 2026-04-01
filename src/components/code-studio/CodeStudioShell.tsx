@@ -928,7 +928,7 @@ function CodeStudioShellInner() {
           tcs={tcs}
         >
           {/* Right Panel (extracted component) with resize handle */}
-          {rightPanel && (
+          {rightPanel && rightPanel !== "api-config" && (
             <>
               {/* Right Panel Resize Handle */}
               <div
@@ -951,6 +951,13 @@ function CodeStudioShellInner() {
             </>
           )}
         </CodeStudioEditor>
+
+        {/* Global Modal Panels (Not constrained by Right Panel) */}
+        {rightPanel === "api-config" && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center">
+            <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
+          </div>
+        )}
 
         {/* Rollback Banner */}
         {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (

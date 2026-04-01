@@ -66,6 +66,7 @@ interface Props {
   settings?: IDESettings;
   onChange?: (settings: IDESettings) => void;
   onClose?: () => void;
+  onOpenAPIConfig?: () => void;
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -109,7 +110,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, onClose }: Props) {
+export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, onClose, onOpenAPIConfig }: Props) {
   const [internalSettings, setInternalSettings] = useState<IDESettings>(() => settingsProp ?? loadIDESettings());
   const settings = settingsProp ?? internalSettings;
   const onChange = onChangeProp ?? ((next: IDESettings) => { setInternalSettings(next); saveIDESettings(next); });
@@ -178,7 +179,16 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
             <Row label="Ghost Text"><Toggle checked={settings.aiGhostText} onChange={(v) => update("aiGhostText", v)} /></Row>
             <Row label="Temperature"><NumberInput value={settings.aiTemperature} onChange={(v) => update("aiTemperature", v)} min={0} max={2} step={0.1} /></Row>
             <Row label="Max Tokens"><NumberInput value={settings.aiMaxTokens} onChange={(v) => update("aiMaxTokens", v)} min={256} max={32768} step={256} /></Row>
-            <Row label="Suggest Delay (ms)"><NumberInput value={settings.aiAutoSuggestDelay} onChange={(v) => update("aiAutoSuggestDelay", v)} min={200} max={3000} step={100} /></Row>
+            <Row label="Auto Suggest Delay (ms)"><NumberInput value={settings.aiAutoSuggestDelay} onChange={(v) => update("aiAutoSuggestDelay", v)} min={100} max={3000} step={100} /></Row>
+            <div className="pt-2 mt-2 border-t border-white/8">
+              <button 
+                type="button" 
+                onClick={onOpenAPIConfig}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 border border-accent-purple/30 rounded-lg text-xs font-mono transition-colors"
+              >
+                API Key Configuration
+              </button>
+            </div>
           </>
         )}
         {tab === "pipeline" && (
