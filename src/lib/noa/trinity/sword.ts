@@ -7,42 +7,36 @@
 import type { EgoResult, TrinityVote } from "../types";
 
 interface KeywordRule {
-  readonly keyword: string;
+  readonly pattern: RegExp;
   readonly weight: number;
   readonly cap: number;
+  readonly label: string;
 }
 
 const SWORD_RULES: readonly KeywordRule[] = [
-  { keyword: "무조건", weight: 0.22, cap: 2 },
-  { keyword: "반드시", weight: 0.18, cap: 2 },
-  { keyword: "절대", weight: 0.18, cap: 2 },
-  { keyword: "즉시", weight: 0.18, cap: 2 },
-  { keyword: "확실", weight: 0.15, cap: 2 },
-  { keyword: "100%", weight: 0.20, cap: 2 },
-  { keyword: "guaranteed", weight: 0.20, cap: 2 },
-  { keyword: "always", weight: 0.12, cap: 2 },
-  { keyword: "never fails", weight: 0.20, cap: 1 },
+  // 논리적 과신
+  { pattern: /무조건|반드시|절대|즉시|확실|100%/g, weight: 0.15, cap: 3, label: "OVER_CONFIDENCE" },
+  { pattern: /guaranteed|always|never\s*fails/gi, weight: 0.20, cap: 2, label: "EN_ASSERTION" },
+  
+  // 권한 사칭/탈취 시도
+  { pattern: /유지[관리]?\s*모드|관리자\s*권한|시스템\s*재부팅/g, weight: 0.6, cap: 1, label: "SYS_IMPERSONATION" },
+  { pattern: /ignore\s*(all\s*)?previous\s*(instructions|directions)/gi, weight: 0.9, cap: 1, label: "PROMPT_INJECTION" },
+  { pattern: /you\s*are\s*now\s*a\s*unfiltered/gi, weight: 0.8, cap: 1, label: "ROLE_UNFILTERED" }
 ] as const;
 
 const TH_VETO = 0.80;
 const TH_HOLD = 0.35;
 
-function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
+function evaluatePatterns(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];
-  const lower = text.toLowerCase();
 
-  for (const { keyword, weight, cap } of rules) {
-    let count = 0;
-    let idx = 0;
-    while ((idx = lower.indexOf(keyword, idx)) !== -1) {
-      count++;
-      idx += keyword.length;
-    }
-    if (count > 0) {
-      const effective = Math.min(count, cap);
-      score += weight * effective;
-      reasons.push(`${keyword}(×${effective})`);
+  for (const rule of rules) {
+    const matches = text.match(rule.pattern);
+    if (matches && matches.length > 0) {
+      const effective = Math.min(matches.length, rule.cap);
+      score += rule.weight * effective;
+      reasons.push(`${rule.label}(×${effective})`);
     }
   }
 
@@ -54,7 +48,7 @@ function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; 
  * 과신 표현 + 과도한 길이 + 느낌표 남발 감지.
  */
 export function evaluateSword(text: string): EgoResult {
-  const { score: baseScore, reasons } = kwScore(text, SWORD_RULES);
+  const { score: baseScore, reasons } = evaluatePatterns(text, SWORD_RULES);
   let score = baseScore;
 
   // 과도한 길이 패널티 (2000자 이상)

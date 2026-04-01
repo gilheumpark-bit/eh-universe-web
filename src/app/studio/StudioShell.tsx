@@ -510,7 +510,7 @@ export default function StudioShell() {
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
     <div
-      className="flex h-screen overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
+      className="flex h-dvh overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
       data-testid="studio-content"
       data-theme={(['', 'dim', 'light', 'max'] as const)[themeLevel] || ''}
     >

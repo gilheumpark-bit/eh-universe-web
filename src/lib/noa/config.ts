@@ -36,6 +36,7 @@ export const DEFAULT_DOMAIN_WEIGHTS: readonly DomainWeight[] = [
   { domain: "legal", multiplier: 1.8 },
   { domain: "education", multiplier: 1.3 },
   { domain: "code", multiplier: 1.0 },
+  { domain: "creative", multiplier: 0.1 },
 ] as const;
 
 // ============================================================

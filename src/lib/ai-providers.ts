@@ -49,6 +49,7 @@ export interface StreamOptions {
   signal?: AbortSignal;
   onChunk: (text: string) => void;
   prismMode?: string;
+  isChatMode?: boolean;
 }
 
 // ============================================================
@@ -464,17 +465,19 @@ export async function getApiKeyAsync(providerId: ProviderId): Promise<string> {
 /** In-memory plaintext cache for v4 keys (populated by async operations) */
 const _v4PlainCache = new Map<string, string>();
 
-/**
- * Synchronous setApiKey — writes v3 XOR format (all sync callers can read).
- * Existing behavior preserved; 27+ callers depend on this being sync.
- */
 export function setApiKey(providerId: ProviderId, key: string): void {
   if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
-  localStorage.setItem(def.storageKey, obfuscateKey(key));
-  localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
-  // Clear v4 cache since we wrote v3
+  if (!key) {
+    localStorage.removeItem(def.storageKey);
+    localStorage.removeItem(`${def.storageKey}_ts`);
+  } else {
+    localStorage.setItem(def.storageKey, obfuscateKey(key));
+    localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
+  }
+  // Clear v4 cache since we wrote v3 or removed
   _v4PlainCache.delete(def.storageKey);
+  window.dispatchEvent(new Event('noa-keys-changed'));
 }
 
 /**
@@ -484,6 +487,13 @@ export function setApiKey(providerId: ProviderId, key: string): void {
 export async function setApiKeyAsync(providerId: ProviderId, key: string): Promise<void> {
   if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
+  if (!key) {
+    localStorage.removeItem(def.storageKey);
+    localStorage.removeItem(`${def.storageKey}_ts`);
+    _v4PlainCache.delete(def.storageKey);
+    window.dispatchEvent(new Event('noa-keys-changed'));
+    return;
+  }
   const encrypted = await encryptKey(key);
   localStorage.setItem(def.storageKey, encrypted);
   localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
@@ -491,6 +501,7 @@ export async function setApiKeyAsync(providerId: ProviderId, key: string): Promi
   if (encrypted.startsWith(_ENCRYPTION_PREFIX_V4)) {
     _v4PlainCache.set(def.storageKey, key);
   }
+  window.dispatchEvent(new Event('noa-keys-changed'));
 }
 
 /**
@@ -660,12 +671,22 @@ async function streamViaProxy(
       maxTokens: opts.maxTokens,
       apiKey: apiKey || undefined,
       prismMode: opts.prismMode, // 서버 측 PRISM 강제 적용
+      isChatMode: opts.isChatMode,
     }),
     signal: opts.signal,
   });
 
   if (!res.ok) {
-    throw new Error(`Proxy error ${res.status}`);
+    let errMsg = `Proxy error ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData.noa?.reason) {
+        errMsg = `🛑 NOA 보안 차단: ${errData.noa.reason}`;
+      } else if (errData.error) {
+        errMsg = errData.error;
+      }
+    } catch {}
+    throw new Error(errMsg);
   }
 
   const reader = res.body?.getReader();

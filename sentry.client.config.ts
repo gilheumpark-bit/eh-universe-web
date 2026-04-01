@@ -7,4 +7,13 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
   environment: process.env.NODE_ENV,
   enabled: process.env.NODE_ENV === "production",
+  ignoreErrors: [
+    "ResizeObserver loop limit exceeded",
+    "ResizeObserver loop completed with undelivered notifications",
+    "Non-Error promise rejection captured",
+    "Network Error",
+    /WebGL.*context lost/i,
+    /Failed to fetch/i,
+    /Load failed/i
+  ],
 });

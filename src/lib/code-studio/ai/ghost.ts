@@ -13,7 +13,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let abortController: AbortController | null = null;
 let lastContext = '';
 
-const DEFAULT_DEBOUNCE_MS = 600;
+const DEFAULT_DEBOUNCE_MS = 1500; // AI-2 Damper: 휴지기(Idle) 1.5초 강제 적용
 const MAX_CONTEXT_CHARS = 1500;
 
 // 완성 캐시 (같은 컨텍스트에 재요청 방지)
@@ -188,9 +188,10 @@ function getAdaptiveDebounceMs(): number {
   const rate = getAcceptanceRate();
   if (totalSuggestions < 5) return DEFAULT_DEBOUNCE_MS; // Not enough data yet
 
-  if (rate > 0.6) return 400;
-  if (rate >= 0.3) return 600;
-  return 1000;
+  // AI-2 Damper: 인간(엔진)이 돌 때는 바퀴는 조용히 대기 (최소 1초 이상 보장)
+  if (rate > 0.6) return 1000;
+  if (rate >= 0.3) return 1500;
+  return 2000;
 }
 
 /**
@@ -394,8 +395,8 @@ Complete the code at the cursor position:`;
 export function registerGhostTextProvider(
   monaco: typeof import('monaco-editor'),
   language: string = '*',
-): void {
-  monaco.languages.registerInlineCompletionsProvider(language, {
+): import('monaco-editor').IDisposable {
+  return monaco.languages.registerInlineCompletionsProvider(language, {
     provideInlineCompletions: async (model: import('monaco-editor').editor.ITextModel, position: import('monaco-editor').Position, _context: unknown, token: import('monaco-editor').CancellationToken) => {
       cancelGhostText();
 

@@ -683,19 +683,27 @@ export function postProcessResponse(
 }
 
 function stripTrailingReportJson(text: string): string {
+  // 1. Try to find the exact markdown block containing the grade
+  const mdMatch = text.match(/```(?:json|JSON)?\s*\{[\s\S]*?"grade"\s*:\s*[\s\S]*?\}\s*```\s*$/);
+  if (mdMatch) {
+    return text.slice(0, mdMatch.index).trimEnd();
+  }
+
+  // 2. Fallback to brace-matching for non-markdown JSON at the end
   const gradeIndex = text.lastIndexOf('"grade"');
   if (gradeIndex === -1 && !/"world_updates"\s*:/.test(text)) {
     return text;
   }
 
   const scanStart = Math.max(gradeIndex, text.lastIndexOf('"world_updates"'));
-  if (scanStart === -1) return text;
-
   for (let braceIndex = text.lastIndexOf('{', scanStart); braceIndex >= 0; braceIndex = text.lastIndexOf('{', braceIndex - 1)) {
     const candidate = text.slice(braceIndex).trim();
     if (!candidate.startsWith('{')) continue;
     try {
-      const parsed = JSON.parse(candidate);
+      // Basic sanity check to avoid parsing huge strings
+      if (candidate.length > 5000) continue;
+      
+      const parsed = JSON.parse(candidate.replace(/\s*```\s*$/, ''));
       if (parsed && typeof parsed === 'object' && ('grade' in parsed || 'metrics' in parsed || 'world_updates' in parsed)) {
         return text.slice(0, braceIndex).trimEnd();
       }
@@ -709,7 +717,6 @@ function stripTrailingReportJson(text: string): string {
 
 export function stripEngineArtifacts(text: string): string {
   let clean = text
-    .replace(/```(?:json|JSON)?\s*[\s\S]*?```/g, '')
     .replace(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*"(?:grade|metrics|critique|tension|eos(?:_score|Score)?|pacing|immersion)"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '')
     .replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique|eosScore|serialization)"[\s\S]*?\n\s*\}/g, '')
     .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')

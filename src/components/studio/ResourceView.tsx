@@ -3,9 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT } from '@/lib/i18n';
-import { UserPlus, Trash2, Fingerprint, Sparkles, Loader2, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, Link2, ChevronDown, ChevronUp } from 'lucide-react';
-import { generateCharacters } from '@/services/geminiService';
-import { activeSupportsStructured } from '@/lib/ai-providers';
+import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
 import CharRelationGraph from './CharRelationGraph';
@@ -31,26 +29,17 @@ const ROLE_KEYS = ['hero', 'villain', 'ally', 'extra'] as const;
 
 const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig, onError }) => {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [expandedTiers, setExpandedTiers] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
-  // Fix #3: Inline toast for API error visibility when onError not provided
-  const [inlineToast, setInlineToast] = useState<string | null>(null);
-  // Fix #7: Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 20;
-  // Fix #6: Character name validation
-  const [nameError, setNameError] = useState(false);
   const t = TRANSLATIONS[language].resource;
   const te = TRANSLATIONS[language].engine;
 
-  const showError = (msg: string) => {
-    if (onError) { onError(msg); }
-    else {
-      setInlineToast(msg);
-      setTimeout(() => setInlineToast(null), 5000);
-    }
-  };
+  // Fix #7: Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const PAGE_SIZE = 20;
+
+  // Fix #6: Character name validation
+  const [nameError, setNameError] = React.useState(false);
 
   const roleLabels = ROLE_KEYS.map(key => ({
     value: key,
@@ -65,41 +54,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   const [newChar, setNewChar] = useState<Partial<Character>>({
     name: '', role: 'hero', traits: '', appearance: '', dna: 50
   });
-  const [genCount, setGenCount] = useState(4);
-
   const filteredCharacters = useMemo(() => {
     if (activeCategory === 'all') return config.characters;
     return config.characters.filter(c => c.role === activeCategory);
   }, [config.characters, activeCategory]);
-
-  const canStructured = activeSupportsStructured();
-
-  const handleAutoGenerate = async () => {
-    if (!canStructured) {
-      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
-      showError(msg);
-      return;
-    }
-    if (!config.synopsis) {
-      const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
-      showError(msg);
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const generated = await generateCharacters(config, language, genCount);
-      setConfig(prev => ({
-        ...prev,
-        characters: [...prev.characters, ...generated]
-      }));
-    } catch {
-      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
-      showError(msg);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const addCharacter = () => {
     if (!newChar.name || !newChar.name.trim()) {
@@ -130,52 +88,23 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     : filteredCharacters;
 
   // Reset page when filter changes
-  const prevCategory = React.useRef(activeCategory);
-  if (prevCategory.current !== activeCategory) {
-    prevCategory.current = activeCategory;
-    if (currentPage !== 1) setCurrentPage(1);
-  }
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory]);
 
   return (
     <div className="max-w-[1400px] mx-auto w-full p-4 md:p-10 space-y-8 lg:space-y-12 animate-in fade-in duration-500">
-      {/* Fix #3: Inline error toast */}
-      {inlineToast && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg bg-red-900/95 border border-red-600 text-red-100 text-sm flex items-center gap-2 max-w-md">
-          <span>{inlineToast}</span>
-          <button onClick={() => setInlineToast(null)} className="ml-2 opacity-60 hover:opacity-100">&times;</button>
-        </div>
-      )}
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
-        <div className="flex items-center gap-4 md:gap-6">
+      <div className="flex items-center justify-between bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
+        <div className="flex items-center gap-4 md:gap-6 w-full">
           <div className="p-4 md:p-5 bg-blue-600/10 border border-blue-500/20 rounded-2xl md:rounded-3xl shrink-0">
             <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
           </div>
-          <div className="min-w-0">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase truncate">{t.title}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase truncate">{t.title}</h2>
             <p className="text-text-tertiary text-[10px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={genCount}
-            onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
-            className="w-14 bg-black border border-border rounded-xl px-2 py-3 md:py-4 text-center text-sm font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
-          />
-          <button
-            onClick={handleAutoGenerate}
-            disabled={isGenerating}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-blue-500/20 active:scale-95 disabled:opacity-50 group"
-          >
-            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {isGenerating ? "Synthesizing..." : t.autoGen}
-          </button>
         </div>
       </div>
 

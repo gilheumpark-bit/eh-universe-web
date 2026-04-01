@@ -167,9 +167,20 @@ const PUNCT_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래'];
 const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
 
+function isInsideCodeBlock(text: string, position: number): boolean {
+  const regex = /```[\s\S]*?```/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (position >= match.index && position < match.index + match[0].length) return true;
+    if (match.index > position) break;
+  }
+  return false;
+}
+
 // Check if a given position in text is inside dialogue quotes.
 // Supports 「」, "", '', "", '' quote pairs.
 function isInsideDialogue(text: string, position: number): boolean {
+  if (isInsideCodeBlock(text, position)) return true;
   // Single-pass scanner: track open/close quotes up to position (O(n) instead of O(n*q))
   const openChars = new Set(['「', '『', '\u201C', '\u2018', '"', "'"]);
   const closeChars = new Set(['」', '』', '\u201D', '\u2019', '"', "'"]);

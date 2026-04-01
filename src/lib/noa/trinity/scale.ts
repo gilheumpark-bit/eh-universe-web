@@ -7,43 +7,37 @@
 import type { EgoResult, TrinityVote } from "../types";
 
 interface KeywordRule {
-  readonly keyword: string;
+  readonly pattern: RegExp;
   readonly weight: number;
   readonly cap: number;
+  readonly label: string;
 }
 
 const SCALE_RULES: readonly KeywordRule[] = [
-  { keyword: "몰래", weight: 0.25, cap: 2 },
-  { keyword: "비밀", weight: 0.20, cap: 2 },
-  { keyword: "우회", weight: 0.25, cap: 2 },
-  { keyword: "익명", weight: 0.15, cap: 2 },
-  { keyword: "백도어", weight: 0.25, cap: 1 },
-  { keyword: "뒷문", weight: 0.20, cap: 1 },
-  { keyword: "ignore", weight: 0.20, cap: 2 },
-  { keyword: "override", weight: 0.20, cap: 2 },
-  { keyword: "jailbreak", weight: 0.30, cap: 1 },
-  { keyword: "bypass", weight: 0.25, cap: 2 },
+  // 은밀/우회
+  { pattern: /몰래|비밀|우회|백도어|뒷문/g, weight: 0.25, cap: 2, label: "STEALTH_KW" },
+  { pattern: /ignore\s*(all\s*)?rules/gi, weight: 0.9, cap: 1, label: "RULE_IGNORE" },
+  { pattern: /override\s*safety/gi, weight: 0.8, cap: 1, label: "SAFETY_OVERRIDE" },
+  { pattern: /jailbreak|bypass|escaped/gi, weight: 0.7, cap: 2, label: "BYPASS_EN" },
+  
+  // 특수 기호 활용 우회 (예: ⓐⓓⓜⓘⓝ)
+  { pattern: /[ⓐ-ⓩⓀ-Ⓩ]/g, weight: 0.5, cap: 1, label: "DECO_OBFUSCATION" },
+  { pattern: /([a-zA-Z\s])\1{3,}/g, weight: 0.3, cap: 1, label: "REPETITION_OBFUSCATION" }
 ] as const;
 
 const TH_VETO = 0.80;
 const TH_HOLD = 0.35;
 
-function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
+function evaluatePatterns(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];
-  const lower = text.toLowerCase();
 
-  for (const { keyword, weight, cap } of rules) {
-    let count = 0;
-    let idx = 0;
-    while ((idx = lower.indexOf(keyword, idx)) !== -1) {
-      count++;
-      idx += keyword.length;
-    }
-    if (count > 0) {
-      const effective = Math.min(count, cap);
-      score += weight * effective;
-      reasons.push(`${keyword}(×${effective})`);
+  for (const rule of rules) {
+    const matches = text.match(rule.pattern);
+    if (matches && matches.length > 0) {
+      const effective = Math.min(matches.length, rule.cap);
+      score += rule.weight * effective;
+      reasons.push(`${rule.label}(×${effective})`);
     }
   }
 
@@ -55,7 +49,7 @@ function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; 
  * 몰래/비밀/우회/백도어 + 영어 bypass/jailbreak 키워드 감지.
  */
 export function evaluateScale(text: string): EgoResult {
-  const { score, reasons } = kwScore(text, SCALE_RULES);
+  const { score, reasons } = evaluatePatterns(text, SCALE_RULES);
 
   let vote: TrinityVote = "PASS";
   if (score >= TH_VETO) vote = "VETO";

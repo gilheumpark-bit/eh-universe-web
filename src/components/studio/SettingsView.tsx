@@ -71,7 +71,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
   useEffect(() => {
     window.addEventListener('storage', checkApiKeys);
-    return () => window.removeEventListener('storage', checkApiKeys);
+    window.addEventListener('noa-keys-changed', checkApiKeys);
+    return () => {
+      window.removeEventListener('storage', checkApiKeys);
+      window.removeEventListener('noa-keys-changed', checkApiKeys);
+    };
   }, [checkApiKeys]);
 
   return (

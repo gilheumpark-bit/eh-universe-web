@@ -133,6 +133,7 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
         systemInstruction,
         messages: chatHistory,
         signal: controller.signal,
+        isChatMode: true,
         onChunk: (chunk) => {
           setMessages((prev) => {
             const last = prev[prev.length - 1];
@@ -158,7 +159,8 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
             const errText = err instanceof Error ? err.message : 'Unknown error';
-            return [...prev.slice(0, -1), { ...last, content: `[Error] ${errText}` }];
+            const appendText = last.content ? `\n\n[Error] ${errText}` : `[Error] ${errText}`;
+            return [...prev.slice(0, -1), { ...last, content: last.content + appendText }];
           }
           return prev;
         });

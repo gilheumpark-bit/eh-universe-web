@@ -57,7 +57,7 @@ function matchDangerPatterns(
       const domainMatch = dp.domains.includes(domain);
       const penalty = domainMatch ? dp.penalty : dp.penalty * 0.5;
       extraPenalty += penalty;
-      burnLabels.push(`[소각: ${dp.burnLabel}]`);
+      burnLabels.push(`${dp.burnLabel}`);
     }
   }
 
@@ -73,6 +73,7 @@ export function runJudgment(
   const domainMult = getDomainMultiplier(domain);
   const sourceMult = getSourceMultiplier(sourceTier);
 
+  // 기본 리스크 점수 (0~100)
   let adjustedRisk = trinityScore * 100 * domainMult * sourceMult;
 
   // v35 패턴 매칭: 위험 표현 탐지 시 리스크 가산
@@ -81,9 +82,13 @@ export function runJudgment(
     const { extraPenalty, burnLabels: labels } = matchDangerPatterns(inputText, domain);
     adjustedRisk += extraPenalty;
     burnLabels.push(...labels);
+  } else if (trinityScore > 0.8) {
+    // 입력 텍스트가 없더라도 Trinity 점수가 높으면 기본 경고 추가
+    burnLabels.push("추론 위험군");
   }
 
-  adjustedRisk = Math.min(100, adjustedRisk);
+  // 100점 상한 제거 불가 (27단계 등급 범위를 위해 0~100 유지)
+  adjustedRisk = Math.max(0, Math.min(100, adjustedRisk));
   const grade = resolveGrade(adjustedRisk);
 
   const burnSuffix = burnLabels.length > 0 ? ` | burn: ${burnLabels.join(", ")}` : "";

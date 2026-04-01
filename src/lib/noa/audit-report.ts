@@ -35,6 +35,7 @@ export interface AuditReport {
 /* ── Storage helpers ── */
 
 function loadEntries(): AuditEntry[] {
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as AuditEntry[]) : [];
@@ -44,6 +45,7 @@ function loadEntries(): AuditEntry[] {
 }
 
 function saveEntries(entries: AuditEntry[]): void {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
 }
 
@@ -223,5 +225,7 @@ export function formatAuditMarkdown(report: AuditReport): string {
  * Clear all stored audit entries.
  */
 export function clearAuditLog(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEY);
+  }
 }

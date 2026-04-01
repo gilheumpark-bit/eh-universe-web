@@ -60,8 +60,10 @@ body {
   line-height: 1.65;
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-attachment: fixed;
+  overscroll-behavior-y: none; /* AI-2: 제스처 및 리플로우 폭주 차단 */
+  overscroll-behavior-x: none;
 }
 
 button,

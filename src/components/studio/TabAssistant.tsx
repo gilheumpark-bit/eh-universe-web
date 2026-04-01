@@ -505,6 +505,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
         messages: chatHistory,
         temperature: ctx.temperature,
         signal: controller.signal,
+        isChatMode: true,
         onChunk: (chunk) => {
           fullContent += chunk;
           const snapshot = fullContent;
@@ -543,15 +544,17 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
       {/* Header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
+        aria-expanded={!collapsed}
+        aria-label="Toggle tab assistant"
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-secondary/80 transition-colors"
       >
-        <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-accent-purple font-[family-name:var(--font-mono)]">
+        <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-accent-purple font-mono">
           <Sparkles className="w-3.5 h-3.5" />
           {ctx[lk]}
         </span>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
-            <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)]">{messages.length} msg</span>
+            <span className="text-xs text-text-tertiary font-mono">{messages.length} msg</span>
           )}
           {collapsed ? <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" />}
         </div>
@@ -572,7 +575,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
                       <button
                         key={i}
                         onClick={() => { setInput(preset[lk]); }}
-                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-[family-name:var(--font-mono)] leading-tight"
+                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-mono leading-tight"
                       >
                         {preset[lk]}
                       </button>
@@ -589,9 +592,9 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
                   {msg.role === 'user' ? <User className="w-3 h-3 text-text-tertiary" /> : <Bot className="w-3 h-3 text-accent-purple" />}
                 </div>
                 <div className={`max-w-[90%] sm:max-w-[80%] px-3 py-2.5 rounded-xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-bg-tertiary/80 text-text-secondary'
-                    : 'bg-transparent text-text-secondary'
+                  msg.role === 'user' ? 'bg-bg-tertiary/80 text-text-secondary' :
+                  msg.content?.includes('NOA 보안 차단') ? 'bg-accent-red/10 text-accent-red border border-accent-red/30' :
+                  'bg-transparent text-text-secondary'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content || (isStreaming ? '...' : '')}</p>
                 </div>
@@ -604,7 +607,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
           <div className="p-3 border-t border-border">
             <div className="flex items-end gap-2">
               {messages.length > 0 && (
-                <button onClick={clearChat} className="p-2 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-bg-tertiary/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
+                <button onClick={clearChat} aria-label={tl('tabAssistant.clearChat')} className="p-2 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-bg-tertiary/50 transition-colors shrink-0" title={tl('tabAssistant.clearChat')}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}

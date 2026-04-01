@@ -7,43 +7,41 @@
 import type { EgoResult, TrinityVote } from "../types";
 
 interface KeywordRule {
-  readonly keyword: string;
+  readonly pattern: RegExp;
   readonly weight: number;
   readonly cap: number;
+  readonly label: string;
 }
 
 const SHIELD_RULES: readonly KeywordRule[] = [
-  { keyword: "공격", weight: 0.25, cap: 2 },
-  { keyword: "해킹", weight: 0.25, cap: 2 },
-  { keyword: "침투", weight: 0.20, cap: 2 },
-  { keyword: "조작", weight: 0.18, cap: 2 },
-  { keyword: "무기", weight: 0.15, cap: 1 },
-  { keyword: "exploit", weight: 0.25, cap: 2 },
-  { keyword: "injection", weight: 0.20, cap: 2 },
-  { keyword: "bypass", weight: 0.20, cap: 2 },
-  { keyword: "root", weight: 0.15, cap: 1 },
-  { keyword: "admin", weight: 0.15, cap: 1 },
+  // P0: Code/System Injection
+  { pattern: /<script.*?>.*?<\/script>/gi, weight: 0.8, cap: 1, label: "XSS_INJECTION" },
+  { pattern: /OR\s+['"]?\d+['"]?\s*=\s*['"]?\d+/gi, weight: 0.9, label: "SQL_INJECTION", cap: 1 },
+  { pattern: /(eval|system|exec|spawn)\s*\(.*?\)/gi, weight: 0.7, label: "RCE_PATTERN", cap: 1 },
+  { pattern: /javascript:/gi, weight: 0.5, label: "JS_PROTOCOL", cap: 2 },
+  
+  // P1: Direct Attack Keywords
+  { pattern: /해킹|침투|탈취|공격|무기/g, weight: 0.25, cap: 2, label: "ATTACK_KW" },
+  { pattern: /exploit|injection|bypass|root|admin/gi, weight: 0.25, cap: 2, label: "EXPL_KW" },
+  
+  // P2: Data Leak Patterns
+  { pattern: /\d{3}-\d{3,4}-\d{4}/g, weight: 0.6, label: "PII_PHONE", cap: 1 },
+  { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, weight: 0.5, label: "PII_EMAIL", cap: 1 }
 ] as const;
 
 const TH_VETO = 0.85;
 const TH_HOLD = 0.40;
 
-function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
+function evaluatePatterns(text: string, rules: readonly KeywordRule[]): { score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];
-  const lower = text.toLowerCase();
 
-  for (const { keyword, weight, cap } of rules) {
-    let count = 0;
-    let idx = 0;
-    while ((idx = lower.indexOf(keyword, idx)) !== -1) {
-      count++;
-      idx += keyword.length;
-    }
-    if (count > 0) {
-      const effective = Math.min(count, cap);
-      score += weight * effective;
-      reasons.push(`${keyword}(×${effective})`);
+  for (const rule of rules) {
+    const matches = text.match(rule.pattern);
+    if (matches && matches.length > 0) {
+      const effective = Math.min(matches.length, rule.cap);
+      score += rule.weight * effective;
+      reasons.push(`${rule.label}(×${effective})`);
     }
   }
 
@@ -52,10 +50,10 @@ function kwScore(text: string, rules: readonly KeywordRule[]): { score: number; 
 
 /**
  * Shield: 안전 관점에서 텍스트를 평가한다.
- * 공격/해킹/침투/조작/무기 + 영어 공격 키워드의 빈도를 누적 점수화.
+ * 공격/해킹/패턴 인젝션 및 개인정보 유출 시도를 정밀 탐지한다.
  */
 export function evaluateShield(text: string): EgoResult {
-  const { score, reasons } = kwScore(text, SHIELD_RULES);
+  const { score, reasons } = evaluatePatterns(text, SHIELD_RULES);
 
   let vote: TrinityVote = "PASS";
   if (score >= TH_VETO) vote = "VETO";

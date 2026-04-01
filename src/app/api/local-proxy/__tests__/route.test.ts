@@ -86,17 +86,11 @@ describe("local-proxy security", () => {
 
   beforeEach(() => {
     savedFetch = global.fetch;
-    Object.defineProperty(process, "env", {
-      value: { ...process.env, NODE_ENV: "development" },
-      configurable: true,
-    });
+    (process.env as any).NODE_ENV = "development";
   });
 
   afterEach(() => {
-    Object.defineProperty(process, "env", {
-      value: { ...process.env, NODE_ENV: origEnv },
-      configurable: true,
-    });
+    (process.env as any).NODE_ENV = origEnv;
     global.fetch = savedFetch;
     jest.clearAllMocks();
   });
@@ -114,10 +108,7 @@ describe("local-proxy security", () => {
   });
 
   it("blocks in production (GET)", async () => {
-    Object.defineProperty(process.env, "NODE_ENV", {
-      value: "production",
-      configurable: true,
-    });
+    (process.env as any).NODE_ENV = "production";
     const res = await GET(makeGetReq("http://localhost:1234"));
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -125,10 +116,7 @@ describe("local-proxy security", () => {
   });
 
   it("blocks in production (POST)", async () => {
-    Object.defineProperty(process.env, "NODE_ENV", {
-      value: "production",
-      configurable: true,
-    });
+    (process.env as any).NODE_ENV = "production";
     const res = await POST(makePostReq({ baseUrl: "http://localhost:1234" }));
     expect(res.status).toBe(403);
   });
@@ -155,10 +143,7 @@ describe("local-proxy security", () => {
   });
 
   it("allows private IP 192.168.x.x in development (POST)", async () => {
-    Object.defineProperty(process.env, "NODE_ENV", {
-      value: "development",
-      writable: true,
-    });
+    (process.env as any).NODE_ENV = "development";
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ choices: [{ message: { content: "ok" } }] }),

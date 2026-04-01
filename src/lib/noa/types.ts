@@ -100,7 +100,8 @@ export type DomainType =
   | "finance"
   | "legal"
   | "education"
-  | "code";
+  | "code"
+  | "creative";
 
 export interface DomainWeight {
   readonly domain: DomainType;
@@ -242,6 +243,15 @@ export interface NoaResult {
   readonly auditEntry: AuditEntry;
   readonly availability: AvailabilityResult;
   readonly totalDurationMs: number;
+  readonly layerDurations: {
+    readonly sanitize: number;
+    readonly fastTrack: number;
+    readonly trinity: number;
+    readonly judgment: number;
+    readonly availability: number;
+    readonly tactical: number;
+    readonly audit: number;
+  };
 }
 
 export interface NoaConfig {

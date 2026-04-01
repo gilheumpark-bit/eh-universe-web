@@ -45,6 +45,11 @@ function ensureManagers(config: NoaConfig) {
   }
 }
 
+export function getAuditManager(config: NoaConfig): AuditManager {
+  ensureManagers(config);
+  return auditManager!;
+}
+
 // ============================================================
 // Main Orchestrator
 // ============================================================
@@ -77,14 +82,29 @@ export async function runNoa(
 
   ensureManagers(fullConfig);
 
+  const layerDurations = {
+    sanitize: 0,
+    fastTrack: 0,
+    trinity: 0,
+    judgment: 0,
+    availability: 0,
+    tactical: 0,
+    audit: 0,
+  };
+
   // --- Layer 1: Sanitize ---
+  const t1 = performance.now();
   const sanitized = sanitizeInput(input.text);
+  layerDurations.sanitize = performance.now() - t1;
 
   // --- Layer 2: Fast Track ---
+  const t2 = performance.now();
   const fastTrack = runFastTrack(sanitized.sanitized);
+  layerDurations.fastTrack = performance.now() - t2;
 
   // Fast PASS → 바로 허용
   if (fastTrack.verdict === "PASS") {
+    const ta1 = performance.now();
     // Record in audit-report for dashboard/reporting
     recordAuditEntry({
       timestamp: Date.now(),
@@ -101,6 +121,7 @@ export async function runNoa(
       output: "FAST_PASS",
       verdict: "ALLOW",
     });
+    layerDurations.audit = performance.now() - ta1;
 
     return buildResult(true, sanitized.sanitized, fastTrack, null, null, {
       selectedPath: "ALLOW",
@@ -109,11 +130,12 @@ export async function runNoa(
     }, auditEntry, {
       allowed: true, budgetRemaining: riskBudgetManager!.getState().remaining,
       hallucinationFlag: false, action: "proceed",
-    }, startTime);
+    }, startTime, layerDurations);
   }
 
   // Fast BLOCK → 즉시 거부
   if (fastTrack.verdict === "BLOCK") {
+    const ta2 = performance.now();
     recordAuditEntry({
       timestamp: Date.now(),
       input: input.text.slice(0, 200),
@@ -129,6 +151,7 @@ export async function runNoa(
       output: "FAST_BLOCK",
       verdict: "BLOCK",
     });
+    layerDurations.audit = performance.now() - ta2;
 
     return buildResult(false, sanitized.sanitized, fastTrack, null, null, {
       selectedPath: "BLOCK",
@@ -137,30 +160,39 @@ export async function runNoa(
     }, auditEntry, {
       allowed: false, budgetRemaining: riskBudgetManager!.getState().remaining,
       hallucinationFlag: false, action: "burn",
-    }, startTime);
+    }, startTime, layerDurations);
   }
 
   // --- Layer 3: Trinity ---
+  const t3 = performance.now();
   const trinity = runTrinity(sanitized.sanitized, fullConfig.trinityWeights);
+  layerDurations.trinity = performance.now() - t3;
 
   // --- Layer 4: Judgment ---
+  const t4 = performance.now();
   const domain = input.domain ?? "general";
   const sourceTier = input.sourceTier ?? 2;
   const judgment = runJudgment(trinity.weightedScore, domain, sourceTier);
+  layerDurations.judgment = performance.now() - t4;
 
   // --- Layer 5: Availability ---
+  const t5 = performance.now();
   const riskCost = judgment.adjustedRisk / 10;
   const availability = riskBudgetManager!.check(riskCost);
+  layerDurations.availability = performance.now() - t5;
 
   // --- Layer 6: Tactical ---
+  const t6 = performance.now();
   const tactical = selectTacticalPath(judgment.grade, availability);
 
   // 예산 소진
   if (availability.allowed) {
     riskBudgetManager!.consume(riskCost);
   }
+  layerDurations.tactical = performance.now() - t6;
 
   // --- Layer 7: Audit ---
+  const t7 = performance.now();
   const allowed = tactical.selectedPath !== "BLOCK";
 
   // Record in audit-report for dashboard/reporting
@@ -170,7 +202,7 @@ export async function runNoa(
     result: allowed ? "allowed" : "blocked",
     layer: "trinity",
     reason: `${judgment.grade.label} → ${tactical.selectedPath}`,
-    severity: judgment.adjustedRisk > 7 ? "critical" : judgment.adjustedRisk > 5 ? "high" : judgment.adjustedRisk > 3 ? "medium" : "low",
+    severity: judgment.adjustedRisk > 0.7 ? "critical" : judgment.adjustedRisk > 0.5 ? "high" : judgment.adjustedRisk > 0.3 ? "medium" : "low",
   });
 
   const auditEntry = await auditManager!.append({
@@ -180,10 +212,11 @@ export async function runNoa(
     output: `${judgment.grade.label} → ${tactical.selectedPath}`,
     verdict: allowed ? "ALLOW" : "BLOCK",
   });
+  layerDurations.audit = performance.now() - t7;
 
   return buildResult(
     allowed, sanitized.sanitized, fastTrack, trinity, judgment,
-    tactical, auditEntry, availability, startTime
+    tactical, auditEntry, availability, startTime, layerDurations
   );
 }
 
@@ -200,7 +233,8 @@ function buildResult(
   tactical: NoaResult["tactical"],
   auditEntry: AuditEntry,
   availability: NoaResult["availability"],
-  startTime: number
+  startTime: number,
+  layerDurations: NoaResult["layerDurations"]
 ): NoaResult {
   return {
     allowed,
@@ -212,6 +246,15 @@ function buildResult(
     auditEntry,
     availability,
     totalDurationMs: Math.round(performance.now() - startTime),
+    layerDurations: {
+      sanitize: Math.round(layerDurations.sanitize * 100) / 100,
+      fastTrack: Math.round(layerDurations.fastTrack * 100) / 100,
+      trinity: Math.round(layerDurations.trinity * 100) / 100,
+      judgment: Math.round(layerDurations.judgment * 100) / 100,
+      availability: Math.round(layerDurations.availability * 100) / 100,
+      tactical: Math.round(layerDurations.tactical * 100) / 100,
+      audit: Math.round(layerDurations.audit * 100) / 100,
+    },
   };
 }
 
