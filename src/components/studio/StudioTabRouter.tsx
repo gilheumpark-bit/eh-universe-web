@@ -1,6 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message } from '@/lib/studio-types';
+import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message, ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
@@ -97,6 +97,10 @@ interface StudioTabRouterProps {
   moveSessionToProject: (sessionId: string, targetProjectId: string) => void;
   handlePrint: () => void;
   deleteSession: (id: string) => void;
+  // External control props for sidebar integration
+  suggestions: ProactiveSuggestion[];
+  setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
+  pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
 }
 
 export default function StudioTabRouter(props: StudioTabRouterProps) {
@@ -115,7 +119,8 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
     archiveScope, setArchiveScope, archiveFilter, setArchiveFilter, projects, sessions,
     currentProject, currentProjectId, setCurrentProjectId, setCurrentSessionId,
     startRename, renamingSessionId, setRenamingSessionId, renameValue, setRenameValue, confirmRename,
-    moveSessionToProject, handlePrint, deleteSession
+    moveSessionToProject, handlePrint, deleteSession,
+    suggestions, setSuggestions, pipelineResult
   } = props;
 
   return (
@@ -182,6 +187,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
           showAiLock={showAiLock} hostedProviders={hostedProviders} saveFlash={saveFlash} triggerSave={triggerSave}
           writingColumnShell={writingColumnShell} input={input} setInput={setInput}
+          suggestions={suggestions} setSuggestions={setSuggestions} pipelineResult={pipelineResult}
         />
         </SectionErrorBoundary>
       )}

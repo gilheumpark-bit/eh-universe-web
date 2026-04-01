@@ -12,6 +12,7 @@ import type { EngineReport } from '@/engine/types';
 import { createT } from '@/lib/i18n';
 import { RightChatPanel } from '@/components/studio/tabs/RightChatPanel';
 import { useWritingChat } from '@/hooks/useWritingChat';
+import type { ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -71,6 +72,10 @@ interface Props {
   writingInputDockOffset?: string;
   input: string;
   setInput: (v: string) => void;
+  // External control props for sidebar integration
+  suggestions: ProactiveSuggestion[];
+  setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
+  pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
 }
 
 export default function WritingTabInline(props: Props) {
@@ -84,6 +89,8 @@ export default function WritingTabInline(props: Props) {
     showAiLock,
     writingColumnShell,
     input, setInput,
+    suggestions, setSuggestions, pipelineResult,
+    setConfig, setActiveTab,
   } = props;
 
   const {
@@ -113,14 +120,18 @@ export default function WritingTabInline(props: Props) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [isGenerating, lastMsgContent, messagesEndRef]);
 
+  const handleChatSend = useCallback((txt: string) => {
+    sendChat(txt, language);
+  }, [sendChat, language]);
+
   return (
-    <div className="flex flex-row h-full overflow-hidden bg-bg-primary">
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-bg-primary">
       {/* 7: 소설 본문 영역 */}
-      <div className="flex-1 flex flex-col min-w-0 relative h-full border-r border-border/40">
+      <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
         <div 
           ref={streamContainerRef} 
           onScroll={handleStreamScroll} 
-          className={`${writingColumnShell} flex-1 overflow-y-auto ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'flex flex-col justify-center items-center px-4' : 'py-6 md:py-8 space-y-6 px-4 md:px-8'}`}
+          className={`${writingColumnShell} flex-1 overflow-y-auto ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'flex flex-col justify-center items-center px-4' : 'py-6 md:py-8 space-y-6 px-4 md:px-8 custom-scrollbar'}`}
         >
           {/* Continuity Tracker Graph */}
           {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
@@ -219,14 +230,22 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: 독립 AI 채팅 패널 */}
+      {/* 3: 고도화 통합 AI 어시스턴트 패널 */}
       <RightChatPanel 
         language={language} 
+        currentSession={currentSession}
         messages={chatMessages} 
         loading={chatLoading}
-        onSend={(txt) => sendChat(txt, language)}
+        onSend={handleChatSend}
         onAbort={abortChat}
         onClear={clearChat}
+        directorReport={props.directorReport}
+        hfcpState={props.hfcpState}
+        suggestions={suggestions}
+        setSuggestions={setSuggestions}
+        pipelineResult={pipelineResult}
+        setConfig={setConfig}
+        setActiveTab={setActiveTab}
       />
     </div>
   );

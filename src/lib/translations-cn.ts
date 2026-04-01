@@ -1,5 +1,5 @@
 // Auto-generated
-export default {
+const translations = {
   "sidebar": {
     "newProject": "开始新小说",
     "settings": "设置",
@@ -943,7 +943,7 @@ export default {
     "expandDetail": "展开详情"
   },
   "director": {
-    "nodDirector": "导演反馈",
+    "nodDirector": "演出反馈",
     "autoAnalysis": "AI响应后自动分析",
     "noIssues": "无问题",
     "more": "条更多提示"
@@ -1258,3 +1258,5 @@ export default {
     "consoleTooltip": "浏览器控制台 — 模拟环境"
   }
 };
+
+export default translations;

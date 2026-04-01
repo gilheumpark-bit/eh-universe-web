@@ -32,7 +32,7 @@ import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioMainContent from './StudioMainContent';
-import { StudioSaveSlotPanel, StudioWritingAssistantPanel } from './StudioRightPanel';
+import { StudioSaveSlotPanel } from './StudioRightPanel';
 import { useStudioShellController } from './useStudioShellController';
 import StudioOverlayManager from '@/components/studio/StudioOverlayManager';
 
@@ -658,6 +658,9 @@ export default function StudioShell() {
         versionedBackups={versionedBackups} doRestoreVersionedBackup={doRestoreVersionedBackup}
         refreshBackupList={refreshBackupList}
         clearAllSessions={clearAllSessions}
+        suggestions={suggestions}
+        setSuggestions={setSuggestions}
+        pipelineResult={pipelineResult}
       >
         {/* Right panels injected as children */}
         {currentSession && (
@@ -675,24 +678,7 @@ export default function StudioShell() {
             setSaveSlotName={setSaveSlotName}
           />
         )}
-        {activeTab === 'writing' && writingMode === 'ai' && currentSession && !showDashboard && (
-          <StudioWritingAssistantPanel
-            currentSession={currentSession}
-            language={language}
-            rightPanelOpen={rightPanelOpen}
-            setRightPanelOpen={setRightPanelOpen}
-            setActiveTab={setActiveTab}
-            setConfig={setConfig}
-            writingMode={writingMode}
-            showDashboard={showDashboard}
-            directorReport={directorReport}
-            hfcpState={hfcpState}
-            suggestions={suggestions}
-            setSuggestions={setSuggestions}
-            pipelineResult={pipelineResult}
-            hostedProviders={hostedProviders}
-          />
-        )}
+        {/* StudioWritingAssistantPanel removed - now integrated into WritingTabInline via RightChatPanel */}
       </StudioMainContent>
 
       <StudioOverlayManager

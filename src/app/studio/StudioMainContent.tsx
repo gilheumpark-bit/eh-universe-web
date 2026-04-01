@@ -6,7 +6,7 @@
 import { type RefObject } from 'react';
 import { useState } from 'react';
 import {
-  Send, Menu, X, StopCircle,
+  Menu, X,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key, Sparkles, Palette,
 } from 'lucide-react';
@@ -15,7 +15,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import type {
   ChatSession, StoryConfig, AppTab, AppLanguage, Message,
-  Project,
+  Project, ProactiveSuggestion, PipelineStageResult,
 } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
@@ -115,7 +115,6 @@ function ColorThemePicker({
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HostedAiAvailability = Record<string, boolean>;
 
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
@@ -259,6 +258,11 @@ export interface StudioMainContentProps {
   handleNextEpisode: () => void;
   handlePrint: () => void;
 
+  // External control props for sidebar integration
+  suggestions: ProactiveSuggestion[];
+  setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
+  pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
+
   // Versioned backups
   versionedBackups: VersionedBackup[];
   doRestoreVersionedBackup: (timestamp: number) => Promise<boolean>;
@@ -294,18 +298,18 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     promptDirective, setPromptDirective,
     advancedSettings, setAdvancedSettings,
     isGenerating, lastReport, directorReport,
-    handleSend, doHandleSend, handleCancel, handleRegenerate,
+    doHandleSend, handleCancel, handleRegenerate,
     handleVersionSwitch, handleTypoFix, hfcpState,
     input, setInput,
     showDashboard, setShowDashboard,
     rightPanelOpen, setRightPanelOpen,
     showAiLock, hasAiAccess, aiCapabilitiesLoaded,
     bannerDismissed, setBannerDismissed,
-    showApiKeyModal, setShowApiKeyModal,
+    setShowApiKeyModal,
     showQuickStartLock, hostedProviders,
-    saveFlash, lastSaveTime, triggerSave,
+    saveFlash, triggerSave,
     setUxError, messagesEndRef, filteredMessages, searchMatchesEditDraft,
-    writingColumnShell, writingInputDockOffset,
+    writingColumnShell,
     apiBannerMessage, apiSetupLabel,
     language, isKO,
     archiveScope, setArchiveScope, archiveFilter, setArchiveFilter,
@@ -316,6 +320,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     moveSessionToProject, deleteSession, handleNextEpisode, handlePrint,
     versionedBackups, doRestoreVersionedBackup, refreshBackupList,
     clearAllSessions,
+    suggestions, setSuggestions, pipelineResult,
     children,
   } = props;
 
@@ -325,7 +330,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
-          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-[family-name:var(--font-mono)] opacity-30 hover:opacity-100"
+          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
           title="F11">
           <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
         </button>
@@ -337,21 +342,21 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors" aria-label="Toggle sidebar" title={isKO ? '\uC0AC\uC774\uB4DC\uBC14 \uD1A0\uAE00' : 'Toggle sidebar'}>
             <Menu className="w-5 h-5 text-text-tertiary" />
           </button>
-          <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-[family-name:var(--font-mono)]">
+          <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-(family-name:--font-mono)">
             <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
             <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
-            {currentSessionId && <span className={`text-[10px] font-[family-name:var(--font-mono)] transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+            {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
           {currentSession && (
             <div className="flex gap-2 md:gap-4">
-              <div className="px-3 py-1 bg-bg-secondary rounded-full text-[10px] font-bold text-text-tertiary border border-border hidden sm:block font-[family-name:var(--font-mono)]">
+              <div className="px-3 py-1 bg-bg-secondary rounded-full text-[10px] font-bold text-text-tertiary border border-border hidden sm:block font-(family-name:--font-mono)">
                 {currentSession.config.genre}
               </div>
               <button
                 onClick={() => setShowDashboard(!showDashboard)}
-                className={`px-3 py-1 rounded-full text-[10px] font-black border transition-all font-[family-name:var(--font-mono)] ${
+                className={`px-3 py-1 rounded-full text-[10px] font-black border transition-all font-(family-name:--font-mono) ${
                   showDashboard
                     ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30'
                     : 'bg-accent-purple/10 text-accent-purple border-accent-purple/20 hover:bg-accent-purple/20'
@@ -367,11 +372,11 @@ export default function StudioMainContent(props: StudioMainContentProps) {
             <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
             {/* Premium Theme Controls - Brightness + Color */}
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/[0.04]">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/4">
               {/* Brightness Dial */}
               <button 
                 onClick={toggleTheme} 
-                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
                 title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
                 aria-label={t('ui.toggleThemeLabel')}
               >
@@ -407,7 +412,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('ui.searchMessages')} autoFocus
             className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
           {searchMatchesEditDraft && (
-            <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-[family-name:var(--font-mono)] shrink-0">
+            <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-(family-name:--font-mono) shrink-0">
               {t('ui.foundInDraft')}
             </button>
           )}
@@ -455,11 +460,11 @@ export default function StudioMainContent(props: StudioMainContentProps) {
 
           {/* No session selected — Onboarding */}
           {!currentSessionId && !['settings', 'history', 'rulebook', 'style', 'docs'].includes(activeTab) ? (
-            <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+            <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden z-1">
               <div className="absolute inset-0 z-0">
                 <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill priority={true} className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
               </div>
-              <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+              <div className="absolute inset-0 z-1 pointer-events-none opacity-4" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
               <div className="relative z-10 flex flex-col items-center w-full">
                 <OnboardingGuide
                   lang={language}
@@ -500,6 +505,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
                 renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}
                 renameValue={renameValue} setRenameValue={setRenameValue} confirmRename={confirmRename}
                 moveSessionToProject={moveSessionToProject} handlePrint={handlePrint} deleteSession={deleteSession}
+                suggestions={suggestions} setSuggestions={setSuggestions} pipelineResult={pipelineResult}
               />
           )}
         </div>
