@@ -4,13 +4,21 @@
 // PART 1 — Types, constants, and planet loader
 // ============================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Share2, X, Globe, Lock, Users as UsersIcon, Check, AlertCircle, ChevronDown } from 'lucide-react';
 import type { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import { listPlanetsByOwner, createBoardPost } from '@/lib/network-firestore';
 import type { PlanetRecord, BoardType } from '@/lib/network-types';
+import { useNetworkAgent } from '@/lib/hooks/useNetworkAgent';
+import { logger } from '@/lib/logger';
+import {
+  buildShareCharacterSheet,
+  buildShareEpisodeContent,
+  buildShareStyleProfile,
+  buildShareWorldBible,
+} from '@/lib/studio-share-serialize';
 
 interface Props {
   language: AppLanguage;
@@ -56,11 +64,14 @@ const VISIBILITIES: { value: Visibility; ko: string; en: string; icon: React.Ele
 export default function ShareToNetwork({ language, config, messages, onClose, onShare }: Props) {
   const isKO = language === 'KO';
   const { user } = useAuth();
+  const { ingestAgent } = useNetworkAgent();
+  const publishInFlight = useRef(false);
   const [shareType, setShareType] = useState<ShareType>('episode');
   const [visibility, setVisibility] = useState<Visibility>('members');
   const [title, setTitle] = useState(config.title || '');
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [ingestWarning, setIngestWarning] = useState<string | null>(null);
 
   // Planet selection for network publish
   const [planets, setPlanets] = useState<PlanetRecord[]>([]);
@@ -98,21 +109,13 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   const buildContent = (): string => {
     switch (shareType) {
       case 'episode':
-        return episodes.map((m, i) => `## ${isKO ? '에피소드' : 'Episode'} ${i + 1}\n\n${m.content}`).join('\n\n---\n\n');
+        return buildShareEpisodeContent(messages, config, isKO);
       case 'character_sheet':
-        return config.characters.map(c =>
-          `### ${c.name} (${c.role})\n${c.traits}\n${c.appearance ? `외형: ${c.appearance}` : ''}`
-        ).join('\n\n');
+        return buildShareCharacterSheet(config, isKO);
       case 'world_bible':
-        return [
-          config.corePremise && `## ${isKO ? '핵심 전제' : 'Core Premise'}\n${config.corePremise}`,
-          config.powerStructure && `## ${isKO ? '권력 구조' : 'Power Structure'}\n${config.powerStructure}`,
-          config.currentConflict && `## ${isKO ? '현재 갈등' : 'Current Conflict'}\n${config.currentConflict}`,
-        ].filter(Boolean).join('\n\n');
+        return buildShareWorldBible(config, isKO);
       case 'style_profile':
-        const sp = config.styleProfile;
-        if (!sp) return isKO ? '스타일 프로필이 설정되지 않았습니다.' : 'No style profile configured.';
-        return Object.entries(sp.sliders).map(([k, v]) => `${k}: ${v}/5`).join('\n');
+        return buildShareStyleProfile(config, isKO);
       default:
         return '';
     }
@@ -120,9 +123,12 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
 
   const handlePublishToNetwork = async () => {
     if (!user) return;
+    if (publishInFlight.current || publishStatus === 'loading') return;
 
     setPublishStatus('loading');
     setPublishError(null);
+    setIngestWarning(null);
+    publishInFlight.current = true;
 
     const content = buildContent();
     const matchedType = SHARE_TYPES.find(st => st.value === shareType);
@@ -142,7 +148,27 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
       setPublishStatus('success');
       onShare?.({ type: shareType, title, content, visibility, publishedPostId: postRecord.id });
 
-      // Auto-close after 2s on success
+      const idToken = await user.getIdToken();
+      void ingestAgent(
+        {
+          documentId: postRecord.id,
+          title: title.trim(),
+          content,
+          planetId: selectedPlanetId || undefined,
+          isPublic: visibility === 'public',
+        },
+        idToken,
+      ).then((ok) => {
+        if (!ok) {
+          logger.warn('ShareToNetwork', 'network-agent ingest failed after publish; post kept');
+          setIngestWarning(
+            isKO
+              ? '게시는 완료되었으나 AI 검색 인덱싱에 실패했습니다. 네트워크 설정을 확인하세요.'
+              : 'Published, but AI search indexing failed. Check Network Agent configuration.',
+          );
+        }
+      });
+
       setTimeout(() => onClose(), 2000);
     } catch (caught) {
       setPublishStatus('error');
@@ -151,6 +177,8 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           ? caught.message
           : isKO ? '게시에 실패했습니다.' : 'Failed to publish.',
       );
+    } finally {
+      publishInFlight.current = false;
     }
   };
 
@@ -302,6 +330,12 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
         </div>
 
         {/* Publish status feedback */}
+        {ingestWarning && (
+          <div className="flex items-center gap-2 text-[11px] text-amber-300 bg-amber-900/25 border border-amber-800/40 rounded-xl px-4 py-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {ingestWarning}
+          </div>
+        )}
         {publishStatus === 'success' && (
           <div className="flex items-center gap-2 text-[11px] text-green-400 bg-green-900/20 border border-green-800/40 rounded-xl px-4 py-2.5">
             <Check className="w-4 h-4" />

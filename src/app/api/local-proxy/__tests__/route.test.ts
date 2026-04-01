@@ -81,16 +81,17 @@ function makePostReq(body: Record<string, unknown>) {
 }
 
 describe("local-proxy security", () => {
-  const origEnv = process.env.NODE_ENV;
+  const nodeEnv = process.env as Record<string, string | undefined>;
+  const origEnv = nodeEnv.NODE_ENV;
   let savedFetch: typeof global.fetch;
 
   beforeEach(() => {
     savedFetch = global.fetch;
-    Object.defineProperty(process.env, 'NODE_ENV', { value: "development", configurable: true });
+    nodeEnv.NODE_ENV = "development";
   });
 
   afterEach(() => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: origEnv, configurable: true });
+    nodeEnv.NODE_ENV = origEnv;
     global.fetch = savedFetch;
     jest.clearAllMocks();
   });
@@ -108,7 +109,7 @@ describe("local-proxy security", () => {
   });
 
   it("blocks in production (GET)", async () => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: "production", configurable: true });
+    nodeEnv.NODE_ENV = "production";
     const res = await GET(makeGetReq("http://localhost:1234"));
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -116,7 +117,7 @@ describe("local-proxy security", () => {
   });
 
   it("blocks in production (POST)", async () => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: "production", configurable: true });
+    nodeEnv.NODE_ENV = "production";
     const res = await POST(makePostReq({ baseUrl: "http://localhost:1234" }));
     expect(res.status).toBe(403);
   });
@@ -143,7 +144,7 @@ describe("local-proxy security", () => {
   });
 
   it("allows private IP 192.168.x.x in development (POST)", async () => {
-    Object.defineProperty(process.env, 'NODE_ENV', { value: "development", configurable: true });
+    nodeEnv.NODE_ENV = "development";
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ choices: [{ message: { content: "ok" } }] }),

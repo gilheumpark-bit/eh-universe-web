@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
-import { WebVitalsReporter } from "@/components/WebVitalsReporter";
+import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import "@/lib/env"; // validate environment variables at startup
 import { IBM_Plex_Mono, IBM_Plex_Sans, JetBrains_Mono, Space_Grotesk, Noto_Sans_KR } from "next/font/google";
 
@@ -14,11 +13,12 @@ import "./globals-studio.css";
 import "./globals-animations.css";
 import "./globals-utilities.css";
 
-const ibmPlexMono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin"], variable: "--font-ibm-plex-mono", display: "swap" });
-const ibmPlexSans = IBM_Plex_Sans({ weight: ["300", "400", "500", "600", "700"], subsets: ["latin"], variable: "--font-ibm-plex-sans", display: "swap" });
-const jetbrainsMono = JetBrains_Mono({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap" });
-const spaceGrotesk = Space_Grotesk({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
-const notoSansKr = Noto_Sans_KR({ weight: ["300", "400", "500", "700"], subsets: ["latin"], variable: "--font-noto-sans-kr", display: "swap", preload: false });
+/** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt). */
+const ibmPlexMono = IBM_Plex_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-ibm-plex-mono", display: "swap" });
+const ibmPlexSans = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-ibm-plex-sans", display: "swap" });
+const jetbrainsMono = JetBrains_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ weight: ["500", "600", "700"], subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
+const notoSansKr = Noto_Sans_KR({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-noto-sans-kr", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   title: {
@@ -74,9 +74,7 @@ export default function RootLayout({
         <AuthProvider><LangProvider><div id="main-content">{children}</div></LangProvider></AuthProvider>
         <ErrorReporterInit />
         <ApiKeyHydrator />
-        <WebVitalsReporter />
-        {/* Analytics is allowed by the central CSP in src/proxy.ts */}
-        <Analytics />
+        <DeferredClientMetrics />
       </body>
     </html>
   );

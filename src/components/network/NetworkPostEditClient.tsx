@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { useNetworkAgent } from "@/lib/hooks/useNetworkAgent";
+import { logger } from "@/lib/logger";
 import { LogComposer, type LogComposerValue } from "@/components/network/LogComposer";
 import { updatePost, getPostById, getPlanetById } from "@/lib/network-firestore";
 import type { ReportType, PostRecord, PlanetRecord } from "@/lib/network-types";
@@ -108,13 +109,16 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
       });
 
       // 구글 Agent Builder 엔진에 덮어쓰기 (같은 documentId이므로 업데이트됨)
+      const idToken = await user.getIdToken();
       ingestAgent({
         documentId: post.id,
         title: `게시글: ${value.title}`,
         content: `분류: ${value.reportType}\n사건 유형: ${value.eventCategory}\n\n${value.content}`,
         planetId: value.planetId,
         isPublic: true,
-      }, user.uid).catch(console.error);
+      }, idToken).catch((err: unknown) => {
+        logger.warn('NetworkPostEditClient', 'ingestAgent failed', err);
+      });
 
       router.push(`/network/posts/${post.id}`);
     } catch (caught) {

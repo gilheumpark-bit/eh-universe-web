@@ -71,10 +71,13 @@ export default function CollabPanel({ onClose }: Props) {
   const [showUsers, setShowUsers] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const managerRef = useRef<CollaborationManager | null>(null);
+  /** Resolves chat display names for remote userIds (BroadcastChannel has no built-in name on chat events). */
+  const peerNamesRef = useRef<Record<string, string>>({});
 
   /** Wire CollaborationManager event listeners onto React state. */
   const attachListeners = useCallback((mgr: CollaborationManager) => {
     mgr.onUserJoin((user: ManagerCollabUser) => {
+      peerNamesRef.current[user.id] = user.name;
       setRemoteUsers((prev) =>
         prev.some((u) => u.id === user.id)
           ? prev
@@ -89,14 +92,18 @@ export default function CollabPanel({ onClose }: Props) {
       );
     });
     mgr.onUserLeave((userId: string) => {
+      delete peerNamesRef.current[userId];
       setRemoteUsers((prev) => prev.filter((u) => u.id !== userId));
     });
     mgr.onChatReceived((userId: string, message: string) => {
+      const resolvedName = peerNamesRef.current[userId] ?? `Peer ${userId.slice(0, 6)}`;
+      const hue = userId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+      const color = `hsl(${hue}, 65%, 65%)`;
       setChatMessages((prev) => [...prev, {
         id: crypto.randomUUID(),
         userId,
-        userName: "Peer",
-        color: "#888",
+        userName: resolvedName,
+        color,
         message,
         timestamp: Date.now(),
       }]);
@@ -241,6 +248,9 @@ export default function CollabPanel({ onClose }: Props) {
         <div className="text-[10px] text-white/30 mt-1 flex items-center gap-1">
           <Link size={10} /> {typeof window !== "undefined" ? window.location.origin : ""}/code-studio?room={roomId}
         </div>
+        <p className="text-[10px] text-amber-200/70 mt-2 leading-snug">
+          같은 브라우저의 탭 간만 동기화됩니다(BroadcastChannel). 다른 기기·브라우저와는 연결되지 않습니다.
+        </p>
       </div>
 
       <div className="p-3 border-b border-white/8">

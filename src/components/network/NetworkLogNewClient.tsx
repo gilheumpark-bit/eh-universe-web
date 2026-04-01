@@ -11,6 +11,7 @@ import { LogComposer, type LogComposerValue } from "@/components/network/LogComp
 import { createPost, ensureNetworkUserRecord, listPlanetsByOwner } from "@/lib/network-firestore";
 import { REPORT_TYPE_TEMPLATES } from "@/lib/network-labels";
 import type { PlanetRecord, ReportType } from "@/lib/network-types";
+import { logger } from "@/lib/logger";
 
 const LOG_REPORT_TYPES: ReportType[] = ["observation", "incident", "testimony", "recovered"];
 
@@ -112,13 +113,16 @@ export function NetworkLogNewClient() {
       });
 
       // 구글 Agent Builder 엔진에 방금 쓴 로그 밀어넣기!
+      const idToken = await user.getIdToken();
       ingestAgent({
         documentId: post.id,
         title: `게시글: ${value.title}`,
         content: `분류: ${value.reportType}\n사건 유형: ${value.eventCategory}\n\n${value.content}`,
         planetId: value.planetId,
         isPublic: true,
-      }, user.uid).catch(console.error);
+      }, idToken).catch((err: unknown) => {
+        logger.warn('NetworkLogNewClient', 'ingestAgent failed', err);
+      });
 
       router.push(`/network/planets/${post.planetId}`);
     } catch (caught) {

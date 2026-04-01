@@ -5,6 +5,7 @@
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
+import { lazyFirebaseAuth } from '@/lib/firebase';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -659,9 +660,23 @@ async function streamViaProxy(
     return streamLocalDirect(apiKey, model, opts);
   }
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    try {
+      const auth = await lazyFirebaseAuth();
+      const u = auth?.currentUser;
+      if (u) {
+        const idToken = await u.getIdToken();
+        headers.Authorization = `Bearer ${idToken}`;
+      }
+    } catch {
+      /* ignore — BYOK-only flow still works */
+    }
+  }
+
   const res = await fetch('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       provider,
       model,

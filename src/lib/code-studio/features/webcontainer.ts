@@ -158,11 +158,11 @@ function createSimulatedContainer(): WebContainerInstance {
 
   // Seed some default files
   fs.set("/package.json", JSON.stringify({
-    name: "simulated-project",
+    name: "eh-code-studio-demo",
     version: "1.0.0",
     scripts: { dev: "next dev", build: "next build" },
   }, null, 2));
-  fs.set("/index.js", "console.log('Hello from simulated container');");
+  fs.set("/index.js", "console.log('Hello from EH Code Studio');");
 
   return {
     isAvailable: false,

@@ -37,6 +37,20 @@ export default function AboutPage() {
               </p>
             </section>
 
+            <section id="privacy" className="mb-10 scroll-mt-28">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+                {T({ ko: "개인정보", en: "Privacy", jp: "プライバシー", cn: "隐私" })}
+              </h2>
+              <p className="text-text-secondary leading-relaxed text-sm">
+                {T({
+                  ko: "본 사이트는 계정·서비스 제공을 위해 필요한 범위에서 정보만 처리합니다. API 키 등 민감 설정은 브라우저 저장 정책에 따릅니다. 상세는 프로젝트 정책 갱신 시 이 문단을 확장합니다.",
+                  en: "We process only what is needed to run accounts and services. Sensitive settings such as API keys follow browser storage policies. This section will be expanded when the project policy is updated.",
+                  jp: "アカウントとサービスに必要な範囲でのみ情報を処理します。APIキーなどの設定はブラウザの保存方針に従います。",
+                  cn: "仅在运行账户与服务所需的范围内处理信息。API 密钥等遵循浏览器存储策略。",
+                })}
+              </p>
+            </section>
+
             <section className="mb-10">
               <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 EH Rulebook v1.0
@@ -49,7 +63,7 @@ export default function AboutPage() {
               </p>
             </section>
 
-            <section className="mb-10">
+            <section id="license" className="mb-10 scroll-mt-28">
               <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {T({ ko: "라이선스", en: "License", jp: "ライセンス", cn: "许可证" })}
               </h2>

@@ -14,6 +14,7 @@ import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { runNoa } from '@/lib/noa';
 import type { DomainType } from '@/lib/noa/types';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 
 // ── Input validation helper (#13) ──
 function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
@@ -292,12 +293,16 @@ export async function POST(req: NextRequest) {
     if (!extracted.ok) return extracted.response;
     const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode, isChatMode } = extracted.fields;
 
-        // TODO: Connect with actual Client Auth headers later.
     let userTier: UserTier = 'none';
     const authHeader = req.headers.get('Authorization') || '';
     if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      userTier = token === 'PRO_LOCKED' ? 'pro' : 'free'; // 로그인 기본(free), 프로는 예약(lock)
+      const token = authHeader.split(' ')[1]?.trim() ?? '';
+      if (token === 'PRO_LOCKED') {
+        userTier = 'pro';
+      } else {
+        const verified = await verifyFirebaseIdToken(token);
+        if (verified) userTier = 'free';
+      }
     }
 
     const authResult = resolveAuth(provider, clientKey, ip, requestId, userTier);

@@ -6,6 +6,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase";
+import { TOOL_LINKS } from "@/lib/tool-links";
 
 export default function Header() {
   const pathname = usePathname();
@@ -29,12 +30,15 @@ export default function Header() {
   ], [lang]);
 
   const toolItems = useMemo(() => [
-    { href: "/tools/soundtrack", label: L4(lang, { ko: "사운드트랙", en: "SOUNDTRACK", jp: "サウンドトラック", cn: "原声带" }) },
-    { href: "/tools/neka-sound", label: L4(lang, { ko: "네카 사운드", en: "NEKA SOUND", jp: "ネカサウンド", cn: "音效" }) },
-    { href: "/tools/galaxy-map", label: L4(lang, { ko: "은하 지도", en: "GALAXY MAP", jp: "銀河マップ", cn: "银河地图" }) },
-    { href: "/tools/vessel", label: L4(lang, { ko: "함선 제원", en: "VESSEL CLASS", jp: "艦船クラス", cn: "舰船分类" }) },
-    { href: "/tools/warp-gate", label: L4(lang, { ko: "워프 게이트", en: "WARP GATE", jp: "ワープゲート", cn: "跃迁门" }) },
-    { href: "/tools/noa-tower", label: L4(lang, { ko: "노아 타워", en: "NOA TOWER", jp: "ノアタワー", cn: "诺亚塔" }) },
+    ...TOOL_LINKS.map((t) => ({
+      href: t.href,
+      label: L4(lang, {
+        ko: t.ko,
+        en: t.en,
+        jp: t.jp ?? t.en,
+        cn: t.cn ?? t.en,
+      }),
+    })),
     { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", jp: "紹介", cn: "关于" }) },
   ], [lang]);
 

@@ -1,11 +1,5 @@
 import { expect, test } from "@playwright/test";
-
-async function dismissOnboarding(page: import("@playwright/test").Page) {
-  const closeBtn = page.locator("button", { hasText: /온보딩 닫기|Close/ }).first();
-  if (await closeBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await closeBtn.click();
-  }
-}
+import { dismissOnboarding } from "./helpers/studio-flow";
 
 test.describe("Critical regressions", () => {
   test("network does not stay stuck in loading state", async ({ page }) => {

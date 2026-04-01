@@ -38,7 +38,12 @@ export function NetworkAgentSearchClient() {
     setQuery("");
 
     // Start search
-    const result = await searchAgent(queryText, { onlyPublic: false, token: user.uid });
+    const idToken = await user.getIdToken();
+    const result = await searchAgent(queryText, {
+      onlyPublic: false,
+      idToken,
+      userKey: user.uid,
+    });
 
     if (result) {
       setMessages((prev) => [

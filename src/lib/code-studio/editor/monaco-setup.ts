@@ -118,8 +118,10 @@ export function configureTypeScript(monaco: typeof Monaco): void {
     paths: { '@/*': ['./src/*'] },
   });
 
+  // In production, skip full semantic TS checks in-browser (smaller worker CPU; still syntax-highlight).
+  const prod = process.env.NODE_ENV === "production";
   tsDefaults.setDiagnosticsOptions({
-    noSemanticValidation: false,
+    noSemanticValidation: prod,
     noSyntaxValidation: false,
   });
 

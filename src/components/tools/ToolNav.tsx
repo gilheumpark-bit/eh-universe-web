@@ -7,6 +7,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, PenTool, ArrowRightLeft } from 'lucide-react';
+import { TOOL_LINKS } from '@/lib/tool-links';
 
 interface Props {
   /** Current tool's display name */
@@ -16,16 +17,6 @@ interface Props {
   /** Language */
   isKO?: boolean;
 }
-
-const TOOL_LINKS: { href: string; ko: string; en: string }[] = [
-  { href: '/tools/galaxy-map', ko: '은하 지도', en: 'Galaxy Map' },
-  { href: '/tools/vessel', ko: '함선 비교', en: 'Vessel' },
-  { href: '/tools/neka-sound', ko: '네카 사운드', en: 'NEKA Sound' },
-  { href: '/tools/noa-tower', ko: 'NOA 타워', en: 'NOA Tower' },
-  { href: '/tools/warp-gate', ko: '워프 게이트', en: 'Warp Gate' },
-  { href: '/tools/soundtrack', ko: '사운드트랙', en: 'Soundtrack' },
-  { href: '/tools/style-studio', ko: '문체 스튜디오', en: 'Style Studio' },
-];
 
 export default function ToolNav({ toolName, relatedTools, isKO = true }: Props) {
   return (
@@ -75,4 +66,4 @@ export default function ToolNav({ toolName, relatedTools, isKO = true }: Props) 
   );
 }
 
-export { TOOL_LINKS };
+export { TOOL_LINKS } from '@/lib/tool-links';

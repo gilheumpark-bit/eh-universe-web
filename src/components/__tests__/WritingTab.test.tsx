@@ -4,6 +4,8 @@
  * We verify the module exports correctly and test with message-populated session.
  */
 import "@testing-library/jest-dom";
+import type { ComponentProps, RefObject } from "react";
+import { createRef } from "react";
 import { render } from "@testing-library/react";
 
 // Must mock dynamic before importing the component
@@ -37,8 +39,22 @@ jest.mock("@/lib/studio-translations", () => ({
 }));
 
 import WritingTab from "../studio/tabs/WritingTab";
+import { INITIAL_CONFIG } from "@/hooks/useProjectManager";
+import { Genre } from "@/lib/studio-types";
+import { DEFAULT_SETTINGS } from "@/components/studio/AdvancedWritingPanel";
+import type { HFCPState } from "@/engine/hfcp";
 
 const noop = () => {};
+
+const defaultHfcp: HFCPState = {
+  score: 0,
+  momentumK: 1,
+  lastDelta: 0,
+  turns: 0,
+  verdict: "normal_free",
+  nrgStrategy: "normal",
+  lastQuestionHash: "",
+};
 
 describe("WritingTab", () => {
   it("exports a valid React component", () => {
@@ -47,33 +63,32 @@ describe("WritingTab", () => {
   });
 
   it("renders with messages-populated session (bypasses empty-state presets)", () => {
+    const messagesEndRef = createRef<HTMLDivElement>();
+    const el = document.createElement("div");
+    messagesEndRef.current = el;
+    const messagesEndRefTyped = messagesEndRef as RefObject<HTMLDivElement>;
+
     const propsWithMessages = {
       language: "KO" as const,
       currentSession: {
         id: "test-session",
         title: "Test",
-        config: {
-          genre: "SF",
-          characters: [],
-          worldSetting: "",
-          plotOutline: "",
-        },
+        config: { ...INITIAL_CONFIG, genre: Genre.SF },
         messages: [
           {
             id: "m1",
-            role: "user",
+            role: "user" as const,
             content: "Hello",
-            createdAt: Date.now(),
+            timestamp: Date.now(),
             versions: [],
           },
         ],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        lastUpdate: Date.now(),
       },
       currentSessionId: "test-session",
       updateCurrentSession: noop,
       setConfig: noop,
-      writingMode: "edit" as const, // skip AI empty-state which uses presets
+      writingMode: "edit" as const,
       setWritingMode: noop,
       editDraft: "some text",
       setEditDraft: noop,
@@ -90,21 +105,24 @@ describe("WritingTab", () => {
       handleRegenerate: noop,
       handleVersionSwitch: noop,
       handleTypoFix: noop,
-      messagesEndRef: { current: null },
+      messagesEndRef: messagesEndRefTyped,
       searchQuery: "",
       filteredMessages: [],
       searchMatchesEditDraft: false,
       hasApiKey: false,
       setShowApiKeyModal: noop,
       setActiveTab: noop,
-      advancedSettings: { temperature: 0.7, maxTokens: 4096 },
+      advancedSettings: DEFAULT_SETTINGS,
       setAdvancedSettings: noop,
       input: "",
       setInput: noop,
       showDashboard: false,
       rightPanelOpen: false,
       setRightPanelOpen: noop,
-    } as unknown as React.ComponentProps<typeof WritingTab>;
+      directorReport: null,
+      hfcpState: defaultHfcp,
+      handleNextEpisode: noop,
+    } satisfies ComponentProps<typeof WritingTab>;
 
     const { container } = render(
       <WritingTab {...propsWithMessages} />,

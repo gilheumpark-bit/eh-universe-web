@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // ============================================================
 // PART 1 — Composer Mode Types & Transition Map
 // ============================================================
@@ -59,8 +61,9 @@ export function createModeTransition(
 ) {
   return (nextMode: ComposerMode): boolean => {
     if (!canTransition(currentMode, nextMode)) {
-      console.warn(
-        `[Composer] Invalid transition: ${currentMode} → ${nextMode}`,
+      logger.warn(
+        'codeStudio:composer',
+        `Invalid transition: ${currentMode} → ${nextMode}`,
       );
       return false;
     }

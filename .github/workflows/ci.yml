@@ -41,7 +41,7 @@ jobs:
         run: npx tsc --noEmit --strict
 
       - name: Critical path tests
-        run: npx jest --testPathPatterns="verification|composer-state|panel-registry|rate-limit|safe-fix" --no-coverage
+        run: npx jest --testPathPatterns="verification|composer-state|panel-registry|rate-limit|safe-fix|logger|server-ai" --no-coverage
 
       - name: Run tests with coverage
         run: npx jest --coverage --coverageThreshold='{"global":{"branches":15,"functions":15,"lines":20,"statements":20}}'

@@ -40,10 +40,18 @@ const nextConfig: NextConfig = {
   experimental: {
     // Prefetch links in viewport for faster navigation
     optimisticClientCache: true,
+    /** Tree-shake barrel imports (smaller client chunks for icon / UI libs). */
+    optimizePackageImports: [
+      "lucide-react",
+      "@xterm/xterm",
+      "@xterm/addon-fit",
+      "@monaco-editor/react",
+      "react-markdown",
+      "rehype-sanitize",
+    ],
   },
   async redirects() {
     return [
-      { source: '/tools', destination: '/', permanent: false },
       { source: '/games/:path*', destination: '/', permanent: false },
       { source: '/code', destination: '/code-studio', permanent: true },
     ];

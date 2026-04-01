@@ -20,6 +20,14 @@ interface CommandPaletteProps {
   onClose: () => void;
   onExecute: (commandId: string) => void;
   commands: Command[];
+  /** Search field placeholder (pass L4 from parent for i18n) */
+  searchPlaceholder?: string;
+  /** Empty state when no commands match the filter */
+  noResultsText?: string;
+  /** Localized count label, e.g. (n) => `${n} found` */
+  formatFoundCount?: (count: number) => string;
+  /** Accessible dialog label */
+  ariaLabel?: string;
 }
 
 // ============================================================
@@ -82,6 +90,10 @@ export default function CommandPalette({
   onClose,
   onExecute,
   commands,
+  searchPlaceholder = "Type a command...",
+  noResultsText = "No matching commands",
+  formatFoundCount = (n: number) => `${n} found`,
+  ariaLabel = "Command Palette",
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -208,7 +220,7 @@ export default function CommandPalette({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Command Palette"
+      aria-label={ariaLabel}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -231,14 +243,14 @@ export default function CommandPalette({
               setActiveIndex(0);
               if (e.target.value) setCollapsedGroups(new Set()); // 검색 시 모든 그룹 펼침
             }}
-            placeholder="Type a command..."
+            placeholder={searchPlaceholder}
             className="w-full bg-transparent font-mono text-[13px] text-text-primary placeholder-text-tertiary outline-none"
             spellCheck={false}
             autoComplete="off"
           />
           {query && (
             <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-text-tertiary">
-              {filtered.length} found
+              {formatFoundCount(filtered.length)}
             </span>
           )}
         </div>
@@ -251,7 +263,7 @@ export default function CommandPalette({
         >
           {grouped.size === 0 ? (
             <div className="px-4 py-6 text-center font-mono text-[12px] text-text-tertiary">
-              No matching commands
+              {noResultsText}
             </div>
           ) : (
             Array.from(grouped.entries()).map(([category, cmds]) => (

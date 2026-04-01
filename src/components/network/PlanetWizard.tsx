@@ -24,6 +24,9 @@ import {
 } from "@/lib/network-labels";
 import { TagInput } from "@/components/network/TagInput";
 import { useNetworkAgent } from "@/lib/hooks/useNetworkAgent";
+import { logger } from "@/lib/logger";
+import { useAuth } from "@/lib/AuthContext";
+
 interface PlanetWizardProps {
   ownerId: string;
   ownerName?: string | null;
@@ -58,6 +61,7 @@ const TRANSCENDENCE_COST_OPTIONS: { value: string; ko: string; en: string }[] = 
 // ============================================================
 
 export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTags = [] }: PlanetWizardProps) {
+  const { user } = useAuth();
   const { ingestAgent } = useNetworkAgent();
   const [step, setStep] = useState(0);
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
@@ -214,13 +218,20 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
         `핵심 규칙:\n${coreRules.join('\n')}`,
       ].join('\n\n');
 
-      ingestAgent({
-        documentId: createdPlanet.id,
-        title: `행성: ${planet.name}`,
-        content: contentString,
-        planetId: createdPlanet.id,
-        isPublic: true,
-      }, ownerId).catch(console.error);
+      const idToken = user ? await user.getIdToken() : null;
+      if (idToken) {
+        ingestAgent({
+          documentId: createdPlanet.id,
+          title: `행성: ${planet.name}`,
+          content: contentString,
+          planetId: createdPlanet.id,
+          isPublic: true,
+        }, idToken).catch((err: unknown) => {
+          logger.warn('PlanetWizard', 'ingestAgent failed', err);
+        });
+      } else {
+        logger.warn('PlanetWizard', 'ingestAgent skipped: no Firebase session');
+      }
 
       onCreated(createdPlanet.id);
     } catch (caught) {

@@ -17,6 +17,8 @@
   --color-surface-soft: rgba(17, 21, 30, 0.72);
   --shadow-luxury: 0 22px 80px rgba(0, 0, 0, 0.34);
   --shadow-panel: 0 14px 40px rgba(0, 0, 0, 0.26);
+  /* Manuscript / long-form panels — warm lift without harsh edges */
+  --shadow-manuscript: 0 18px 56px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(202, 161, 92, 0.06);
   /* Transition scale — 3 tiers only */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;

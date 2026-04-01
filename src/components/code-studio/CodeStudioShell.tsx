@@ -508,8 +508,16 @@ function CodeStudioShellInner() {
       term.loadAddon(fit);
       term.open(termRef.current);
       fit.fit();
-      term.writeln("\x1b[32m== EH Code Studio Console v1.0 (simulated) ==\x1b[0m");
-      term.writeln("  Type \x1b[36mhelp\x1b[0m for commands");
+      const bannerTitle = L4(lang, {
+        ko: "== EH Code Studio 콘솔 v1.0 (브라우저 내장) ==",
+        en: "== EH Code Studio Console v1.0 (in-browser) ==",
+      });
+      const bannerHint = L4(lang, {
+        ko: "  \x1b[36mhelp\x1b[0m 입력으로 명령 목록",
+        en: "  Type \x1b[36mhelp\x1b[0m for commands",
+      });
+      term.writeln("\x1b[32m" + bannerTitle + "\x1b[0m");
+      term.writeln(bannerHint);
       term.write("\x1b[32m$ \x1b[0m");
       term.onData((data) => {
         if (!term) return;
@@ -524,7 +532,7 @@ function CodeStudioShellInner() {
       if (termRef.current) ro.observe(termRef.current);
     })();
     return () => { mounted = false; term?.dispose(); };
-  }, [showTerminal, files, openFiles, activeFileId]);
+  }, [showTerminal, files, openFiles, activeFileId, lang]);
 
   // Pipeline analysis on file change
   useEffect(() => {
@@ -985,6 +993,10 @@ function CodeStudioShellInner() {
         {showCommandPalette && (
           <CommandPalette
             open={showCommandPalette}
+            searchPlaceholder={L4(lang, { ko: "명령어 검색…", en: "Search commands…" })}
+            noResultsText={L4(lang, { ko: "일치하는 명령이 없습니다", en: "No matching commands" })}
+            formatFoundCount={(n) => L4(lang, { ko: `${n}개`, en: `${n} found` })}
+            ariaLabel={L4(lang, { ko: "명령 팔레트", en: "Command palette" })}
             onClose={() => setShowCommandPalette(false)}
             onExecute={(cmdId) => {
               setShowCommandPalette(false);

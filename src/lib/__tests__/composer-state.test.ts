@@ -3,6 +3,16 @@
  * Covers: canTransition, createModeTransition, all valid/invalid state transitions
  */
 
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
+import { logger } from '@/lib/logger';
 import {
   canTransition,
   createModeTransition,
@@ -151,26 +161,25 @@ describe('ComposerState', () => {
       expect(mode).toBe('staged');
     });
 
-    test('logs a console.warn on invalid transition', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    test('logs a logger.warn on invalid transition', () => {
+      jest.mocked(logger.warn).mockClear();
       const transition = createModeTransition('applied', jest.fn());
 
       transition('generating');
 
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
+        'codeStudio:composer',
         expect.stringContaining('Invalid transition'),
       );
-      warnSpy.mockRestore();
     });
 
     test('does NOT warn on valid transition', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.mocked(logger.warn).mockClear();
       const transition = createModeTransition('idle', jest.fn());
 
       transition('generating');
 
-      expect(warnSpy).not.toHaveBeenCalled();
-      warnSpy.mockRestore();
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     test('captures currentMode at creation time (closure snapshot)', () => {

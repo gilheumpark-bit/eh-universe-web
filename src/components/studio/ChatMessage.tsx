@@ -1,10 +1,13 @@
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeSanitize from 'rehype-sanitize';
+import dynamic from 'next/dynamic';
 import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 
+const ChatMarkdownBlock = dynamic(
+  () => import('./ChatMarkdownBlock').then((m) => m.ChatMarkdownBlock),
+  { ssr: false, loading: () => <span className="text-text-tertiary text-xs">…</span> },
+);
 interface ChatMessageProps {
   message: Message;
   language?: AppLanguage;
@@ -91,20 +94,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             <p className={`${isCompact ? 'text-[11px]' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>{mainContent}</p>
           ) : (
             <div className={`prose ${isCompact ? 'prose-xs' : 'prose-sm sm:prose-base'} prose-invert max-w-none break-words prose-p:font-serif prose-p:text-text-secondary prose-p:leading-[1.8]`}>
-              <ReactMarkdown
-                skipHtml
-                rehypePlugins={[rehypeSanitize]}
-                disallowedElements={['script', 'iframe', 'object', 'embed', 'form']}
-                components={{
-                  p: (props) => <p className={isCompact ? "mb-2 last:mb-0" : "mb-6 last:mb-0"} {...props} />,
-                  h1: (props) => <h1 className={isCompact ? "text-sm font-black text-white mt-4 mb-2 border-l border-blue-600 pl-2 uppercase" : "text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase"} {...props} />,
-                  hr: () => <div className={isCompact ? "my-4 h-px bg-border" : "my-10 h-px bg-border"}></div>,
-                  pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-bg-primary/70 p-4 text-xs text-text-secondary" {...props} />,
-                  code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
-                }}
-              >
-                {mainContent}
-              </ReactMarkdown>
+              <ChatMarkdownBlock mainContent={mainContent} isCompact={isCompact} />
             </div>
           )}
 

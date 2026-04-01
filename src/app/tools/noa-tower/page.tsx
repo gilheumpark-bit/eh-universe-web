@@ -56,9 +56,9 @@ export default function NoaTowerPage() {
   const { lang } = useLang();
   const [payload, setPayload] = useState<GamePayload>(() => {
     try {
-      if (typeof window === "undefined") return bootstrap(lang);
+      if (typeof window === "undefined") return bootstrap("ko");
       const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (!saved) return bootstrap(lang);
+      if (!saved) return bootstrap("ko");
       const parsed = JSON.parse(saved) as unknown;
       if (parsed && typeof parsed === "object") {
         const maybe = parsed as Partial<GamePayload>;

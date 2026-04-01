@@ -4,6 +4,8 @@
 // WebContainer 기반 또는 API 호출을 통한 Git 작업 래퍼.
 // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
 
+import { logger } from '@/lib/logger';
+
 // ============================================================
 // PART 1 — Types
 // ============================================================
@@ -83,8 +85,8 @@ export function setGitRunner(runner: GitCommandRunner): void {
 
 async function run(args: string[]): Promise<string> {
   if (!_runner) {
-    // Fallback simulated git response instead of throwing
-    console.warn('[Git] Using simulated fallback for git', args.join(' '));
+    // Fallback when no runner is registered (e.g. WebContainer not wired)
+    logger.warn('code-studio/git', 'fallbackRunner', args.join(' '));
     const cmd = args[0] ?? '';
     
     if (cmd === 'status') {

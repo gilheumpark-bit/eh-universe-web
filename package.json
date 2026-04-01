@@ -6,12 +6,19 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:webpack": "next build --webpack",
+    "build:analyze": "cross-env ANALYZE=true next build --webpack",
+    "build:report": "node scripts/print-build-stats.mjs",
+    "build:with-report": "npm run build && npm run build:report",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:static": "npm run lint && npx tsc --noEmit --strict && npx jest --testPathPatterns=\"verification|composer-state|panel-registry|rate-limit|safe-fix|logger|server-ai\" --no-coverage",
+    "verify:build": "npm run verify:static && npm run build",
+    "verify": "npm run verify:build && npm run test:e2e"
   },
   "dependencies": {
     "@google-cloud/discoveryengine": "^2.6.0",
@@ -23,6 +30,8 @@
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "firebase": "^12.11.0",
+    "google-auth-library": "^10.6.2",
+    "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "next": "16.2.1",
     "react": "19.2.4",
@@ -40,6 +49,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "jest": "^30.3.0",
