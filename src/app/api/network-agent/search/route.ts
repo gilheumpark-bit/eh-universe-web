@@ -2,61 +2,100 @@
 // Network Agent Search API (멀티 테넌트 검색용)
 // ============================================================
 // POST /api/network-agent/search
-// Body: { query: string, planetId?: string, onlyPublic?: boolean }
-// Headers: Authorization (식별용 토큰)
+// Body: { query, planetId?, onlyPublic?, narrowDocumentType?, translationProjectId? }
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import { searchNetworkAgent, isNetworkAgentConfigured } from '@/lib/vertex-network-agent';
 import { getClientIp, checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { logger } from '@/lib/logger';
+import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: getNetworkAgentCorsHeaders(req) });
+}
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
+  const cors = getNetworkAgentCorsHeaders(req);
 
   try {
     const rl = checkRateLimit(ip, 'network-search', RATE_LIMITS.chat);
     if (!rl.allowed) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: cors });
     }
 
-    // 1. 보안 인증 (실제 프로덕션에서는 Firebase Auth VerifyToken 등을 사용)
     const authHeader = req.headers.get('authorization') || '';
-    const userId = authHeader.replace('Bearer ', '').trim();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized: User session required for personal agent.' }, { status: 401 });
+    const raw = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const verified = await verifyFirebaseIdToken(raw);
+    if (!verified) {
+      return NextResponse.json(
+        { error: 'Unauthorized: User session required for personal agent.' },
+        { status: 401, headers: cors },
+      );
     }
+    const userId = verified.uid;
 
     if (!isNetworkAgentConfigured()) {
-      return NextResponse.json({ error: 'Network Agent Engine is not configured in .env.local.' }, { status: 503 });
+      return NextResponse.json(
+        { error: 'Network Agent Engine is not configured in .env.local.' },
+        { status: 503, headers: cors },
+      );
     }
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body.query !== 'string') {
-      return NextResponse.json({ error: 'Invalid query' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid query' }, { status: 400, headers: cors });
     }
 
-    const { query, planetId, onlyPublic } = body;
+    const { query, planetId, onlyPublic, narrowDocumentType, translationProjectId } = body as {
+      query: string;
+      planetId?: string;
+      onlyPublic?: boolean;
+      narrowDocumentType?: string;
+      translationProjectId?: string;
+    };
 
-    // 2. 멀티 테넌트 필터링 
-    // - onlyPublic이 true면 집단 지성 검색 (다른 사람의 공개 데이터)
-    // - 그 외에는 무조건 이메일/ID 기준 내(userId) 것만 검색!
+    const narrow =
+      narrowDocumentType === 'translation'
+        ? ('translation' as const)
+        : narrowDocumentType === 'universe'
+          ? ('universe' as const)
+          : undefined;
+    const tp =
+      typeof translationProjectId === 'string' ? translationProjectId.trim() : undefined;
+    if (narrow === 'translation' && !tp) {
+      return NextResponse.json(
+        { error: 'translationProjectId is required when narrowDocumentType is translation' },
+        { status: 400, headers: cors },
+      );
+    }
+
     const filters = {
       userId: onlyPublic ? undefined : userId,
       planetId: planetId,
       onlyPublic: onlyPublic === true,
+      narrowDocumentType: narrow,
+      translationProjectId: tp,
     };
 
-    // 3. 구글 클라우드(142만 원 크레딧)에 검색 요청
     const searchResult = await searchNetworkAgent(query, filters);
 
-    return NextResponse.json({
-      ok: true,
-      summary: searchResult.summary,
-      results: searchResult.results,
-      debugFilterInfo: searchResult.filterApplied, // 개발 중 필터 확인용
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        summary: searchResult.summary,
+        results: searchResult.results,
+        debugFilterInfo: searchResult.filterApplied,
+      },
+      { headers: cors },
+    );
   } catch (error: unknown) {
-    console.error('[NetworkAgent API Error]', error);
-    return NextResponse.json({ error: 'Failed to search network agent.' }, { status: 500 });
+    logger.error('network-agent/search', error);
+    return NextResponse.json(
+      { error: 'Failed to search network agent.' },
+      { status: 500, headers: cors },
+    );
   }
 }

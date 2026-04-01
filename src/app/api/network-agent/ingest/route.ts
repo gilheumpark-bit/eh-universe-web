@@ -2,49 +2,77 @@
 // Network Agent Ingest API (멀티 테넌트 저장용)
 // ============================================================
 // POST /api/network-agent/ingest
-// Body: { documentId: string, title: string, content: string, planetId?: string, isPublic?: boolean }
+// Body: { documentId, title, content, planetId?, isPublic?, documentType?, translationProjectId? }
 // Headers: Authorization (식별용 토큰)
-// 기능: 프론트엔드에서 행성을 만들거나 글을 쓸 때 백엔드 엔진에도 동기화
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestNetworkDocument, isNetworkAgentConfigured } from '@/lib/vertex-network-agent';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { logger } from '@/lib/logger';
+import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: getNetworkAgentCorsHeaders(req) });
+}
 
 export async function POST(req: NextRequest) {
+  const cors = getNetworkAgentCorsHeaders(req);
   try {
-    // 1. 유저 인증 (본인 글만 저장/수정 가능하게 방어)
     const authHeader = req.headers.get('authorization') || '';
-    const userId = authHeader.replace('Bearer ', '').trim();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const raw = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const verified = await verifyFirebaseIdToken(raw);
+    if (!verified) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: cors });
     }
+    const userId = verified.uid;
 
     if (!isNetworkAgentConfigured()) {
-      return NextResponse.json({ error: 'Network Agent Engine is not configured yet.' }, { status: 503 });
+      return NextResponse.json({ error: 'Network Agent Engine is not configured yet.' }, { status: 503, headers: cors });
     }
 
     const body = await req.json().catch(() => null);
     if (!body || !body.documentId || !body.title || !body.content) {
-      return NextResponse.json({ error: 'Missing required fields: documentId, title, content' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields: documentId, title, content' },
+        { status: 400, headers: cors },
+      );
     }
 
-    // 2. 서버 엔진(Agent Builder)에 데이터 직접 밀어넣기
+    const documentType =
+      body.documentType === 'translation' ? 'translation' : 'universe';
+    const translationProjectId =
+      typeof body.translationProjectId === 'string' ? body.translationProjectId.trim() : undefined;
+    if (documentType === 'translation' && !translationProjectId) {
+      return NextResponse.json(
+        { error: 'translationProjectId is required when documentType is translation' },
+        { status: 400, headers: cors },
+      );
+    }
+
     const success = await ingestNetworkDocument({
-      documentId: body.documentId,
-      title: body.title,
-      content: body.content,
-      userId: userId, // 세션에서 추출한 진짜 ID
+      documentId: String(body.documentId),
+      title: String(body.title),
+      content: String(body.content),
+      userId,
       planetId: body.planetId,
       isPublic: body.isPublic === true,
+      documentType,
+      translationProjectId,
     });
 
     if (success) {
-      return NextResponse.json({ ok: true, message: 'Document synced to Agent Builder successfully.' });
-    } else {
-      return NextResponse.json({ error: 'Failed to ingest document into Google Cloud.' }, { status: 500 });
+      return NextResponse.json(
+        { ok: true, message: 'Document synced to Agent Builder successfully.' },
+        { headers: cors },
+      );
     }
+    return NextResponse.json(
+      { error: 'Failed to ingest document into Google Cloud.' },
+      { status: 500, headers: cors },
+    );
   } catch (error) {
-    console.error('[Network Ingest API Error]', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    logger.error('network-agent/ingest', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: cors });
   }
 }

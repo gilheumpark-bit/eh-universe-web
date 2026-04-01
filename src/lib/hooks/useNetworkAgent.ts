@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getDb, collectionName } from '@/lib/firebase';
+import { logger } from '@/lib/logger';
 // 1. searchAgent: 내 데이터(또는 공개 데이터) 검색 시 사용
 // 2. ingestAgent: 새 행성, 새 설정, 새 글을 저장할 때 동시에 Agent Builder로 전송
 
@@ -10,6 +11,8 @@ export interface NetworkSearchResult {
   snippet: string;
   userId: string;
   planetId?: string;
+  documentType?: string;
+  translationProjectId?: string;
 }
 
 export function useNetworkAgent() {
@@ -20,15 +23,27 @@ export function useNetworkAgent() {
   // 멀티테넌트 검색 (내 데이터 또는 공개 데이터)
   const searchAgent = useCallback(async (
     query: string,
-    options?: { planetId?: string; onlyPublic?: boolean; token?: string }
+    options?: {
+      planetId?: string;
+      onlyPublic?: boolean;
+      idToken?: string;
+      userKey?: string;
+      narrowDocumentType?: 'universe' | 'translation';
+      translationProjectId?: string;
+    }
   ) => {
+    const idToken = options?.idToken?.trim();
+    if (!idToken) {
+      logger.warn('useNetworkAgent', 'searchAgent skipped: no Firebase ID token');
+      setError('Unauthorized');
+      return null;
+    }
+
     setIsSearching(true);
     setError(null);
     try {
-      // 1. 캐시 검사 (동일 질문 방어선)
-      const tokenStr = options?.token || 'user';
-      // 간단한 고유키 생성 (영문/숫자만 남기거나 base64 활용, 여기서는 단순화하여 50자 제한)
-      const rawKey = `${tokenStr}_${options?.planetId || 'all'}_${query}`;
+      const cacheSeg = options?.userKey ?? '';
+      const rawKey = `${cacheSeg}_${options?.planetId || 'all'}_${query}`;
       let safeKey = '';
       for (let i = 0; i < rawKey.length; i++) safeKey += rawKey.charCodeAt(i).toString(16);
       safeKey = safeKey.slice(0, 100);
@@ -41,37 +56,35 @@ export function useNetworkAgent() {
         cachedDoc = await getDoc(cachedRef).catch(() => null);
         if (cachedDoc && cachedDoc.exists()) {
           const cachedData = cachedDoc.data();
-          // 보관 기한 24시간 설정
           const isFresh = Date.now() - (cachedData.timestamp || 0) < 24 * 60 * 60 * 1000;
           if (isFresh) {
             return {
               summary: cachedData.summary,
               results: cachedData.results,
-              cached: true // 캐시 적중 여부 로깅 가능
+              cached: true,
             };
           }
         }
       }
 
-      // 2. 구글 클라우드 탐색 (크레딧 사용)
       const res = await fetch('/api/network-agent/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Note: 실제로는 auth context 또는 Firebase token을 가져와서 넣어주어야 함
-          'Authorization': `Bearer ${options?.token || 'test-session-user123'}`,
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           query,
           planetId: options?.planetId,
           onlyPublic: options?.onlyPublic,
+          narrowDocumentType: options?.narrowDocumentType,
+          translationProjectId: options?.translationProjectId,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Search failed');
 
-      // 3. 캐시 저장
       let summaryText = data.summary as string;
       if (summaryText.includes('<SILENCE>')) {
         summaryText = '[SYSTEM] ⚠️ 의미 없는 요청 혹은 세계관과 무관한 트롤링으로 판단되어 AI가 응답을 거부합니다. (HSE - 침묵할 권리 행사)';
@@ -83,16 +96,15 @@ export function useNetworkAgent() {
       };
 
       if (db && cachedRef && finalResult.summary) {
-        // 캐시 비동기 저장 (결과 반환 블로킹 안 함)
         setDoc(cachedRef, {
           ...finalResult,
           timestamp: Date.now(),
-        }).catch(err => console.warn('Cache write failed:', err));
+        }).catch((err: unknown) => logger.warn('useNetworkAgent', 'Cache write failed', err));
       }
 
       return finalResult;
     } catch (err) {
-      console.error(err);
+      logger.error('useNetworkAgent/search', err);
       setError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
@@ -100,11 +112,25 @@ export function useNetworkAgent() {
     }
   }, []);
 
-  // 세계관/소설 저장 시 Agent Builder 동기화
   const ingestAgent = useCallback(async (
-    doc: { documentId: string; title: string; content: string; planetId?: string; isPublic?: boolean },
-    token?: string
+    payload: {
+      documentId: string;
+      title: string;
+      content: string;
+      planetId?: string;
+      isPublic?: boolean;
+      documentType?: 'universe' | 'translation';
+      translationProjectId?: string;
+    },
+    idToken?: string
   ) => {
+    const tok = idToken?.trim();
+    if (!tok) {
+      logger.warn('useNetworkAgent', 'ingestAgent skipped: no Firebase ID token');
+      setError('Unauthorized');
+      return false;
+    }
+
     setIsIngesting(true);
     setError(null);
     try {
@@ -112,9 +138,9 @@ export function useNetworkAgent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || 'test-session-user123'}`,
+          'Authorization': `Bearer ${tok}`,
         },
-        body: JSON.stringify(doc),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -122,7 +148,7 @@ export function useNetworkAgent() {
 
       return true;
     } catch (err) {
-      console.error(err);
+      logger.error('useNetworkAgent/ingest', err);
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
