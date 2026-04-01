@@ -21,7 +21,7 @@ export default function NetworkError({
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
       <div className="text-center space-y-4 p-8 max-w-md" role="alert">
-        <h2 className="text-lg font-black tracking-tighter uppercase font-[family-name:var(--font-mono)] text-red-400">
+        <h2 className="text-lg font-black tracking-tighter uppercase font-mono text-red-400">
           {L4(lang, {
             ko: '네트워크 오류',
             en: 'Network Error',
@@ -47,7 +47,7 @@ export default function NetworkError({
         </p>
         <button
           onClick={reset}
-          className="px-6 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
+          className="px-6 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity"
         >
           {L4(lang, {
             ko: '다시 시도',

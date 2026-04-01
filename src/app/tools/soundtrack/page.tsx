@@ -206,7 +206,7 @@ export default function SoundtrackPage() {
             <h1 className="site-title text-2xl font-bold tracking-tight mb-2">
               {T({ ko: "EH Universe — 사운드트랙", en: "EH Universe — Soundtrack", jp: "EH Universe — サウンドトラック", cn: "EH Universe — 原声带" })}
             </h1>
-            <p className="text-text-tertiary text-sm mb-10 font-[family-name:var(--font-mono)]">
+            <p className="text-text-tertiary text-sm mb-10 font-mono">
               {T({ ko: "은하 전역에서 수신된 음향 파편", en: "Intercepted audio fragments from across the galaxy" })}
             </p>
 
@@ -229,7 +229,7 @@ export default function SoundtrackPage() {
                   >
                     {/* Category bar */}
                     <div
-                      className="px-4 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase font-[family-name:var(--font-mono)]"
+                      className="px-4 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase font-mono"
                       style={{ background: track.theme, color: "#ffffff90" }}
                     >
                       {L2(track.category, lang)}
@@ -259,10 +259,10 @@ export default function SoundtrackPage() {
                         </button>
 
                         <div className="flex-1 min-w-0">
-                          <h2 className="font-[family-name:var(--font-mono)] text-base font-bold tracking-tight leading-tight">
+                          <h2 className="font-mono text-base font-bold tracking-tight leading-tight">
                             {L2(track.title, lang)}
                           </h2>
-                          <p className="text-text-tertiary text-xs mt-1 font-[family-name:var(--font-mono)]">
+                          <p className="text-text-tertiary text-xs mt-1 font-mono">
                             {L2(track.subtitle, lang)}
                           </p>
                         </div>
@@ -270,7 +270,7 @@ export default function SoundtrackPage() {
 
                       {/* Progress bar */}
                       <div className="mt-4 flex items-center gap-3">
-                        <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] w-8 text-right">
+                        <span className="text-[10px] text-text-tertiary font-mono w-8 text-right">
                           {fmt(cur)}
                         </span>
                         <div
@@ -292,7 +292,7 @@ export default function SoundtrackPage() {
                             }}
                           />
                         </div>
-                        <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] w-8">
+                        <span className="text-[10px] text-text-tertiary font-mono w-8">
                           {dur ? fmt(dur) : "--:--"}
                         </span>
                       </div>

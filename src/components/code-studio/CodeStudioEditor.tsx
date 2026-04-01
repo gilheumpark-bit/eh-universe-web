@@ -16,6 +16,7 @@ import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai
 import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
 import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";
 import { registerCrossFileProviders } from "@/lib/code-studio/core/cross-file";
+import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import * as PI from "@/components/code-studio/PanelImports";
 
@@ -166,9 +167,10 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         </div>
       );
     }
+    const panePath = toMonacoModelPath(findFilePathById(files, paneFile.id), paneFile.id, paneFile.name);
     return (
       <MonacoEditor
-        height="100%" language={paneFile.language} value={paneFile.content}
+        height="100%" language={paneFile.language} path={panePath} value={paneFile.content}
         onChange={(value: string | undefined) => {
           if (value === undefined) return;
           onOpenFiles((prev) => prev.map((f) => f.id === paneFile.id ? { ...f, content: value, isDirty: true } : f));
@@ -192,7 +194,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         } : undefined}
       />
     );
-  }, [settings.fontSize, settings.tabSize, settings.wordWrap, settings.minimap, fsUpdateContent, onOpenFiles, tcs.selectFile]);
+  }, [files, settings.fontSize, settings.tabSize, settings.wordWrap, settings.minimap, fsUpdateContent, onOpenFiles, tcs.selectFile]);
 
   const handleMountDesktopEditor = useCallback((editor: unknown, monaco: unknown) => {
     editorRef.current = editor;
@@ -238,6 +240,10 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       </div>
     </div>
   );
+
+  const activeFilePath = activeFile
+    ? toMonacoModelPath(findFilePathById(files, activeFile.id), activeFile.id, activeFile.name)
+    : undefined;
 
   return (
     <div className="flex flex-1 flex-col min-w-0">
@@ -340,7 +346,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           ) : (
             activeFile ? (
               <MonacoEditor
-                height="100%" language={activeFile.language} value={activeFile.content}
+                height="100%" language={activeFile.language} path={activeFilePath} value={activeFile.content}
                 onChange={onEditorChange} theme="vs-dark"
                 options={{
                   fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,

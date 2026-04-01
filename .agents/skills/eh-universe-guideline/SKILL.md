@@ -56,7 +56,7 @@ description: "웹 프로젝트(eh-universe-web) 공식 운영 및 적용 지침 
   
 ### B. 기술 및 정책 (UI/UX)
 * **로깅 (Logging)**: `console.log` 등 브라우저 기본 로거는 엄격히 금지합니다. 대신 `import { logger } from '@/lib/logger'` 를 씁니다.
-* **보안 (CSP 미들웨어)**: 모든 보안 헤더는 `src/middleware.ts` 중앙 관제소에서 통합합니다. 분산 적용은 스파게티의 원흉이므로 피합니다.
+* **보안 (CSP / 헤더)**: 모든 보안 헤더는 `src/proxy.ts`에서 통합합니다. (Next.js 16 이 저장소는 `middleware.ts`와 `proxy.ts`를 동시에 두지 않습니다.) 분산 적용은 피합니다.
 * **로딩 시스템**: 스켈레톤 로딩은 `SkeletonLoader`(공용) 및 `code-studio/SkeletonLoader.tsx`(특수)로 관리합니다 (shimmer 이펙트 등 다크 테마 완벽 호환 보장).
 * **에러 제어 (ErrorBoundary)**: `src/components/ErrorBoundary.tsx` 최상단을 사용하고 옵션(variant)은 `'full-page' | 'section' | 'panel'` 중 하나로 통일합니다.
 

@@ -78,12 +78,12 @@ export function StudioSaveSlotPanel({
 
   return (
     <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-64' : 'w-8'}`}>
-      <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)]">
+      <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-mono">
         {rightPanelOpen ? '\u25B6' : '\u25C0'}
       </button>
       {!rightPanelOpen ? null : (
       <div className="p-4 space-y-3">
-        <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+        <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-mono">
           {'\uD83D\uDCC2'} {t('saveSlot.savedVersions')}
         </div>
 
@@ -92,7 +92,7 @@ export function StudioSaveSlotPanel({
           setSaveSlotName('');
           setSaveSlotModalOpen(true);
         }}
-          className="w-full py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity active:scale-95">
+          className="w-full py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity active:scale-95">
           {'\uD83D\uDCBE'} {t('saveSlot.saveCurrent')}
         </button>
 
@@ -177,7 +177,7 @@ export function StudioWritingAssistantPanel({
   return (
     <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
       {/* Toggle button */}
-      <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-[family-name:var(--font-mono)]">
+      <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-mono">
         {rightPanelOpen ? '\u25B6' : '\u25C0'}
       </button>
 
@@ -186,7 +186,7 @@ export function StudioWritingAssistantPanel({
           {/* Chat history (previous messages excluding latest) */}
           {currentSession.messages.length > 2 && (
             <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">
-              <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)] mb-2">
+              <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-mono mb-2">
                 {'\uD83D\uDCAC'} {language === 'KO' ? '\uB300\uD654 \uD788\uC2A4\uD1A0\uB9AC' : 'Chat History'} ({currentSession.messages.length - 2})
               </div>
               <div className="space-y-2">
@@ -204,7 +204,7 @@ export function StudioWritingAssistantPanel({
 
           {/* Reference section */}
           <div className="p-4 space-y-3 border-b border-border min-w-0">
-            <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-[family-name:var(--font-mono)]">
+            <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest font-mono">
               {t('panel.reference')}
             </div>
 
@@ -332,7 +332,7 @@ export function StudioWritingAssistantPanel({
 
           {/* AI Chat section */}
           <div className="p-4 space-y-3">
-            <div className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-[family-name:var(--font-mono)]">
+            <div className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-mono">
               {'\uD83D\uDCAC'} {t('panel.aiChat')}
             </div>
             <div className="space-y-3 max-h-[40vh] overflow-y-auto">

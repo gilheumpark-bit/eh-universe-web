@@ -5,6 +5,7 @@ const OPENAI_COMPAT_URLS: Record<string, string> = {
   groq: 'https://api.groq.com/openai/v1/chat/completions',
   mistral: 'https://api.mistral.ai/v1/chat/completions',
 };
+const STRUCTURED_PROVIDER_TIMEOUT_MS = 60_000;
 
 export async function generateJsonOpenAICompat(
   provider: string,
@@ -31,7 +32,7 @@ export async function generateJsonOpenAICompat(
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(STRUCTURED_PROVIDER_TIMEOUT_MS),
         body: JSON.stringify({
           model,
           messages: [
@@ -87,7 +88,7 @@ export async function generateJsonClaude(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(STRUCTURED_PROVIDER_TIMEOUT_MS),
     body: JSON.stringify({
       model: model || 'claude-sonnet-4-20250514',
       max_tokens: 4096,
@@ -129,7 +130,7 @@ export async function generateJsonGemini(
         config: {
           responseMimeType: 'application/json',
           responseSchema,
-          abortSignal: AbortSignal.timeout(30_000),
+          abortSignal: AbortSignal.timeout(STRUCTURED_PROVIDER_TIMEOUT_MS),
         },
       });
 

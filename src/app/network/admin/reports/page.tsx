@@ -76,7 +76,7 @@ export default function ReportsAdminPage() {
     <main className="min-h-screen bg-bg-primary text-text-primary px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-[family-name:var(--font-mono)] text-2xl font-black tracking-tight">
+          <h1 className="font-mono text-2xl font-black tracking-tight">
             신고 관리
           </h1>
           <button onClick={() => { if (window.history.length > 1) router.back(); else router.push("/"); }} className="text-text-tertiary text-xs hover:text-text-primary">
@@ -88,7 +88,7 @@ export default function ReportsAdminPage() {
         <div className="flex gap-2 mb-6">
           {(["pending", "reviewed", "all"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider border transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider border transition-all ${
                 filter === f ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-secondary text-text-tertiary border-border hover:text-text-primary"
               }`}>
               {f === "pending" ? "대기 중" : f === "reviewed" ? "처리됨" : "전체"} {filter === f && `(${reports.length})`}
@@ -111,12 +111,12 @@ export default function ReportsAdminPage() {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${STATUS_COLORS[r.status] || STATUS_COLORS.pending}`}>
                         {r.status}
                       </span>
-                      <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+                      <span className="text-[10px] text-text-tertiary font-mono">
                         {r.targetType} · {r.reason}
                       </span>
                     </div>
                     <p className="text-sm text-text-secondary line-clamp-2">{r.detail || "상세 내용 없음"}</p>
-                    <p className="text-[9px] text-text-tertiary mt-1 font-[family-name:var(--font-mono)]">
+                    <p className="text-[9px] text-text-tertiary mt-1 font-mono">
                       ID: {r.targetId?.slice(0, 12)}... · {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}
                     </p>
                   </div>

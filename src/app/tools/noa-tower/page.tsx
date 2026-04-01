@@ -7,7 +7,6 @@ import { L4 } from "@/lib/i18n";
 import ToolNav from "@/components/tools/ToolNav";
 import { logger } from "@/lib/logger";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { SkeletonLoader } from "@/components/SkeletonLoader";
 
 import { GamePayload, GameState, ReplyPayload } from "@/lib/tools/noa-tower/types";
 import { bootstrap, respond } from "@/lib/tools/noa-tower/engine";
@@ -55,38 +54,25 @@ const STORAGE_KEY = "noa-tower-state-v1";
 
 export default function NoaTowerPage() {
   const { lang } = useLang();
-  // Safe initial state for SSR
-  const [payload, setPayload] = useState<GamePayload | null>(null);
-  const [prevLang, setPrevLang] = useState(lang);
+  const [payload, setPayload] = useState<GamePayload>(() => {
+    try {
+      if (typeof window === "undefined") return null;
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as unknown;
+      if (parsed && typeof parsed === "object") {
+        const maybe = parsed as Partial<GamePayload>;
+        if (maybe.state && maybe.reply && maybe.case) return maybe as GamePayload;
+      }
+    } catch {
+      // ignore — fallback to bootstrap in effect
+    }
+    return bootstrap(lang);
+  });
   const [input, setInput] = useState("");
   const [sidePanel, setSidePanel] = useState<"status" | "case">("status");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // --- Hydration: Load state or bootstrap on mount ---
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as GamePayload;
-        if (parsed?.state && parsed?.reply && parsed?.case) {
-          setPayload(parsed);
-          logger.info("NoaTower", "State loaded from storage");
-          return;
-        }
-      } catch (e) {
-        logger.warn("NoaTower", "Failed to parse storage", e);
-      }
-    }
-    setPayload(bootstrap(lang));
-    logger.info("NoaTower", "Engine bootstrapped");
-  }, [lang]);
-
-  // --- Reinit on explicit user lang change ---
-  if (prevLang !== lang) {
-    setPrevLang(lang);
-    setPayload(bootstrap(lang));
-  }
 
   // --- Persistence ---
   useEffect(() => {
@@ -126,18 +112,6 @@ export default function NoaTowerPage() {
     [doAction, input]
   );
 
-  // --- Loading State ---
-  if (!payload) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-bg-primary gap-4">
-        <SkeletonLoader variant="panel" width={400} height={300} />
-        <p className="font-[--font-mono] text-sm text-text-tertiary animate-pulse">
-          {t("loading", lang)}
-        </p>
-      </div>
-    );
-  }
-
   const { reply, state } = payload;
   const caseData = payload.case;
   const isEnded = state.gameStatus !== "active";
@@ -168,7 +142,7 @@ export default function NoaTowerPage() {
           <div className="mb-4 lg:hidden">
             <button
               onClick={() => setSidePanel(sidePanel === "status" ? "case" : "status")}
-              className="w-full rounded-xl border border-white/8 bg-white/2 px-3 py-2 font-[--font-mono] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
+              className="w-full rounded-xl border bg-white/2 px-3 py-2 font-[--font-mono] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
             >
               {sidePanel === "status" ? L4(lang, { ko: "▲ 대시보드 닫기", en: "▲ Hide Dashboard" }) : L4(lang, { ko: "▼ 대시보드 보기", en: "▼ Show Dashboard" })}
             </button>
@@ -213,7 +187,7 @@ interface SubComponentProps {
   lang: Lang;
   state: GameState;
   reply: ReplyPayload;
-  caseData: any;
+  caseData: GamePayload["case"];
   doAction: (action: string, msg?: string) => void;
   isEnded: boolean;
 }
@@ -312,7 +286,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
       <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3">
         <h3 className="mb-2.5 font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("objectives", lang)}</h3>
         <div className="space-y-1.5">
-          {caseData.objectives.map((obj: any) => (
+          {caseData.objectives.map((obj) => (
             <div key={obj.id} className="flex items-start gap-2">
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${obj.complete ? "bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" : obj.active ? "bg-accent-amber animate-pulse" : "bg-white/10"}`} />
               <span className={`font-[--font-mono] text-[11px] leading-relaxed transition-all ${obj.complete ? "text-cyan-400/50 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/40"}`}>
@@ -330,13 +304,13 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
           <span className="text-white/20 transition-transform group-open:rotate-180">↓</span>
         </summary>
         <div className="px-3 pb-3 space-y-2">
-          {caseData.clues.filter((c: any) => c.unlocked).map((clue: any) => (
+          {caseData.clues.filter((c) => c.unlocked).map((clue) => (
             <div key={clue.id} className="rounded-lg border border-white/10 bg-white/2 p-2 hover:bg-white/5 transition-colors">
               <p className="font-[--font-mono] text-[11px] font-bold text-text-secondary">{clue.title}</p>
               {clue.body && <p className="font-[--font-mono] text-[10px] text-text-tertiary mt-1 leading-relaxed">{clue.body}</p>}
             </div>
           ))}
-          {caseData.fragments.filter((f: any) => f.unlocked).map((frag: any) => (
+          {caseData.fragments.filter((f) => f.unlocked).map((frag) => (
             <div key={frag.id} className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 shadow-inner">
               <p className="font-[--font-mono] text-[11px] font-bold text-purple-300/80">{frag.title}</p>
               {frag.body && <p className="font-[--font-mono] text-[10px] text-text-tertiary mt-1 leading-relaxed">{frag.body}</p>}
@@ -419,7 +393,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
       {/* Suggested Input Seeds */}
       {!isEnded && caseData.promptSeeds.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2 transition-all">
-          {caseData.promptSeeds.map((seed: any) => (
+          {caseData.promptSeeds.map((seed) => (
             <button
               key={seed.id}
               onClick={() => {

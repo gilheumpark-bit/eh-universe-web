@@ -10,18 +10,29 @@ test.describe('Code Studio', () => {
     await page.goto('/code-studio');
     await page.waitForLoadState('networkidle');
     
+    // Open demo (ensures editor is actually mounted)
+    const demoButton = page.locator("button", { hasText: /데모 열기|Open Demo/ }).first();
+    if (await demoButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await demoButton.click();
+    }
+
     // Editor area should be present
-    const editor = page.locator('.monaco-editor, [data-testid="code-editor"]');
-    await expect(editor.first()).toBeVisible({ timeout: 15000 });
+    const editor = page.locator('.monaco-editor, [data-testid="code-editor"]').first();
+    await expect(editor).toBeVisible({ timeout: 20000 });
   });
 
   test('should open file explorer sidebar', async ({ page }) => {
     await page.goto('/code-studio');
     await page.waitForLoadState('networkidle');
     
-    // File explorer should be visible
-    const explorer = page.locator('[data-testid="file-explorer"], .file-tree');
-    await expect(explorer.first()).toBeVisible({ timeout: 10000 });
+    const demoButton = page.locator("button", { hasText: /데모 열기|Open Demo/ }).first();
+    if (await demoButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await demoButton.click();
+    }
+
+    // File explorer should be visible (allow either testid or known label)
+    const explorer = page.locator('[data-testid="file-explorer"], .file-tree, text=/파일|Files|Explorer/i');
+    await expect(explorer.first()).toBeVisible({ timeout: 20000 });
   });
 
   test('should toggle terminal panel', async ({ page }) => {

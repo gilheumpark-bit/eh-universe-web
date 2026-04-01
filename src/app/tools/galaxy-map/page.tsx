@@ -196,10 +196,10 @@ export default function GalaxyMapPage() {
 
             {/* ═══ SECTION 1: GALAXY ZONES ═══ */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
+              <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "I. GALAXY ZONE CLASSIFICATION" : "I. 은하 구역 분류 체계"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
+              <p className="text-text-tertiary text-xs mb-6 font-mono">
                 {en ? "Area-based concentric zones (10% increments) \u00b7 Bureau Internal Code" : "면적 기준 10% 단위 동심원 분류 \u00b7 비밀조사국 내부 구역 코드"}
               </p>
 
@@ -212,24 +212,24 @@ export default function GalaxyMapPage() {
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "ZONE" : "구역"}</th>
-                      <th className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "RANGE" : "범위"}</th>
-                      <th className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary tracking-wider text-left p-2">NET</th>
-                      <th className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary tracking-wider text-left p-2">GATE</th>
-                      <th className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "CHARACTERISTICS" : "특성"}</th>
+                      <th className="font-mono text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "ZONE" : "구역"}</th>
+                      <th className="font-mono text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "RANGE" : "범위"}</th>
+                      <th className="font-mono text-[10px] text-text-tertiary tracking-wider text-left p-2">NET</th>
+                      <th className="font-mono text-[10px] text-text-tertiary tracking-wider text-left p-2">GATE</th>
+                      <th className="font-mono text-[10px] text-text-tertiary tracking-wider text-left p-2">{en ? "CHARACTERISTICS" : "특성"}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ZONES.map((z) => (
                       <tr key={z.id} className="border-b border-border/50">
                         <td className="p-2">
-                          <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wider text-white font-[family-name:var(--font-mono)]" style={{ background: z.color }}>
+                          <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wider text-white font-mono" style={{ background: z.color }}>
                             {z.id}
                           </span>
                         </td>
-                        <td className="p-2 text-text-secondary font-[family-name:var(--font-mono)]">{z.range}</td>
-                        <td className="p-2 text-text-secondary font-[family-name:var(--font-mono)]">{z.net}</td>
-                        <td className="p-2 text-text-secondary font-[family-name:var(--font-mono)]">{z.gate}</td>
+                        <td className="p-2 text-text-secondary font-mono">{z.range}</td>
+                        <td className="p-2 text-text-secondary font-mono">{z.net}</td>
+                        <td className="p-2 text-text-secondary font-mono">{z.gate}</td>
                         <td className="p-2 text-text-secondary">{en ? z.en : z.ko}</td>
                       </tr>
                     ))}
@@ -248,17 +248,17 @@ export default function GalaxyMapPage() {
 
             {/* ═══ SECTION 2: GATE TIERS ═══ */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
+              <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "II. GATE INFRASTRUCTURE \u2014 TIER SYSTEM" : "II. GATE 인프라 \u2014 계층 체계"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
+              <p className="text-text-tertiary text-xs mb-6 font-mono">
                 {en ? "Inward → Outward \u00b7 Denser inside, sparser outside" : "안에서 밖으로 \u00b7 안쪽일수록 촘촘, 바깥일수록 희소"}
               </p>
 
               <div className="space-y-4">
                 {TIERS.map((t) => (
                   <div key={t.tier} className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: t.color }}>
-                    <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: t.color }}>
+                    <div className="font-mono text-[10px] tracking-wider mb-1" style={{ color: t.color }}>
                       {t.tier} / {t.zone}
                     </div>
                     <div className="font-bold text-base mb-2" style={{ color: t.color }}>
@@ -270,7 +270,7 @@ export default function GalaxyMapPage() {
                     <div className="flex flex-wrap gap-2">
                       {t.specs.map((s, i) => (
                         <div key={i} className="border border-border rounded px-3 py-2 text-center bg-bg-secondary min-w-[80px]">
-                          <div className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: t.color }}>{s.val}</div>
+                          <div className="font-mono text-sm font-bold" style={{ color: t.color }}>{s.val}</div>
                           <div className="text-[9px] text-text-tertiary tracking-wider mt-0.5">{L2(s.label, lang)}</div>
                         </div>
                       ))}
@@ -280,7 +280,7 @@ export default function GalaxyMapPage() {
 
                 {/* RED - No Gate */}
                 <div className="premium-link-card p-5" style={{ borderLeftWidth: 3, borderLeftColor: "#cc2222" }}>
-                  <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-1" style={{ color: "#cc2222" }}>
+                  <div className="font-mono text-[10px] tracking-wider mb-1" style={{ color: "#cc2222" }}>
                     RED ZONE
                   </div>
                   <div className="font-bold text-base mb-2" style={{ color: "#cc2222" }}>
@@ -296,7 +296,7 @@ export default function GalaxyMapPage() {
 
               {/* Neka Strategy Box */}
               <div className="mt-4 rounded-md border p-4 text-center" style={{ borderColor: "rgba(204,68,34,0.3)", background: "rgba(204,68,34,0.05)" }}>
-                <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-wider mb-2" style={{ color: "#cc4422" }}>
+                <div className="font-mono text-[10px] tracking-wider mb-2" style={{ color: "#cc4422" }}>
                   {en ? "NEKA OPTIMAL STRATEGY" : "네카의 최적 전략"}
                 </div>
                 <p className="text-xs text-text-tertiary">
@@ -325,10 +325,10 @@ export default function GalaxyMapPage() {
 
             {/* ═══ SECTION 3: WARZONE CALC ═══ */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
+              <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "III. WARZONE \u2014 OUTER 3% RING" : "III. 전장 \u2014 은하 외곽 3% 구역"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
+              <p className="text-text-tertiary text-xs mb-6 font-mono">
                 {en ? "The war exists in the outermost 3%. 97% of humanity is unaware." : "전쟁은 은하 가장 바깥 3%에서 벌어진다. 97%의 인류는 모른다."}
               </p>
 
@@ -337,7 +337,7 @@ export default function GalaxyMapPage() {
               </div>
 
               <div className="text-center mb-6">
-                <span className="inline-block px-6 py-1.5 rounded text-xs font-bold tracking-wider text-white font-[family-name:var(--font-mono)]" style={{ background: "#cc2222" }}>
+                <span className="inline-block px-6 py-1.5 rounded text-xs font-bold tracking-wider text-white font-mono" style={{ background: "#cc2222" }}>
                   {en ? "WARZONE = Outer 3% Ring" : "전장 = 은하 외곽 끝 3% 링 구역"}
                 </span>
               </div>
@@ -346,7 +346,7 @@ export default function GalaxyMapPage() {
                 {CALCS.map((c, i) => (
                   <div key={i} className="flex justify-between items-center border border-border rounded px-4 py-3 bg-bg-primary">
                     <span className="text-xs text-text-tertiary">{L2(c.label, lang)}</span>
-                    <span className="font-[family-name:var(--font-mono)] text-sm font-bold" style={{ color: c.color }}>{c.val}</span>
+                    <span className="font-mono text-sm font-bold" style={{ color: c.color }}>{c.val}</span>
                   </div>
                 ))}
               </div>
@@ -364,10 +364,10 @@ export default function GalaxyMapPage() {
 
             {/* ═══ SECTION 4: INSTALLATION PRINCIPLE ═══ */}
             <section className="mb-8">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
+              <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "IV. GATE INSTALLATION PRINCIPLE" : "IV. GATE 설치 원칙"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-[family-name:var(--font-mono)]">
+              <p className="text-text-tertiary text-xs mb-6 font-mono">
                 {en ? "Inward → Outward. Dense at heart, sparse at edge." : "방향: 안에서 밖으로. 안쪽일수록 촘촘, 바깥일수록 희소."}
               </p>
 

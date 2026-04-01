@@ -224,13 +224,13 @@ export default function ArchiveClient() {
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5H17M3 10H12M3 15H17" /></svg>
         </button>
 
-        <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-[24px] border border-white/8 bg-[rgba(15,20,28,0.92)] p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">{t('archivePage.archiveLabel', 'Archive')}</h2>
+        <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-3xl border bg-bg-secondary/95 p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">{t('archivePage.archiveLabel', 'Archive')}</h2>
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={L4(lang, { ko: "🔍 문서 검색...", en: "🔍 Search...", jp: "🔍 文書検索...", cn: "🔍 搜索文档..." })}
-            className="w-full mb-3 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-[family-name:var(--font-mono)]"
+            className="w-full mb-3 px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-mono"
           />
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
             {categories.map((cat) => (
@@ -239,33 +239,33 @@ export default function ArchiveClient() {
                 aria-current={activeCategory === cat.id ? "true" : undefined}
                 className={`w-full text-left flex items-center gap-2 py-2 px-3 rounded text-sm transition-colors ${activeCategory === cat.id ? "bg-bg-tertiary text-accent-purple" : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"}`}>
                 <span aria-hidden="true">{cat.icon}</span>
-                <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider">{L2(cat.sublabel, lang)}</span>
+                <span className="font-mono text-xs font-medium tracking-wider">{L2(cat.sublabel, lang)}</span>
               </button>
             ))}
           </nav>
 
           <div className="mt-6 pt-4 border-t border-border">
-            <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
+            <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
               {t('archivePage.tools')}
             </h2>
             <Link href="/tools/neka-sound"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🔧</span>
-              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
                 {t('archivePage.nekaSoundInterface')}
               </span>
             </Link>
             <Link href="/tools/soundtrack"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🎵</span>
-              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
                 {t('archivePage.soundtrack')}
               </span>
             </Link>
             <Link href="/tools/galaxy-map"
               className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
               <span>🌌</span>
-              <span className="font-[family-name:var(--font-mono)] text-xs font-medium tracking-wider group-hover:text-accent-purple">
+              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
                 {t('archivePage.galaxyZoneGateMap')}
               </span>
             </Link>
@@ -275,12 +275,12 @@ export default function ArchiveClient() {
         <div className="flex-1 p-6 md:p-10 md:pl-[19rem]">
           <div className="mx-auto max-w-4xl">
             <ArchiveReportsTabs active="archive" />
-            <div className="doc-header rounded-t-[24px] mb-0">
+            <div className="doc-header rounded-t-3xl mb-0">
               <span className="badge badge-blue mr-2">ARCHIVE</span>
               {t('archivePage.category', 'Category')}: {L2(currentCategory.sublabel, lang)}
             </div>
 
-            <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-8">
+            <div className="premium-panel rounded-b-3xl rounded-t-none border-t-0 p-6 sm:p-8">
               <h1 className="site-title text-2xl font-bold tracking-tight mb-6">
                 {currentCategory.icon} {L2(currentCategory.sublabel, lang)}
               </h1>
@@ -288,14 +288,14 @@ export default function ArchiveClient() {
               <div className="space-y-3">
                 {searchResults ? (
                   <>
-                    <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase mb-2">
+                    <p className="text-[10px] text-text-tertiary font-mono uppercase mb-2">
                       🔍 {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", jp: "件の結果", cn: "条结果" })} — &quot;{searchQuery}&quot;
                     </p>
                     {searchResults.map((article) => (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
                         className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
                         <div className="flex items-center gap-3">
-                          <span className="font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">{article.categoryLabel}</span>
+                          <span className="font-mono text-[9px] text-text-tertiary">{article.categoryLabel}</span>
                           <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
                         </div>
                         <BadgeLevel level={article.level} />
@@ -313,7 +313,7 @@ export default function ArchiveClient() {
                       aria-label={`${L2(article.title, lang)} — ${article.level}`}
                       className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
                       <div className="flex items-center gap-3">
-                        <span className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">▸</span>
+                        <span className="font-mono text-xs text-text-tertiary">▸</span>
                         <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
                       </div>
                       <BadgeLevel level={article.level} />

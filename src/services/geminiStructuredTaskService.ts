@@ -8,6 +8,7 @@ export type WorldContext = { corePremise?: string; powerStructure?: string; curr
 export type SceneTierContext = { charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[]; corePremise?: string; powerStructure?: string; currentConflict?: string; };
 
 const LANGUAGE_NAMES: Record<AppLanguage, string> = { KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese' };
+const STRUCTURED_GENERATION_TIMEOUT_MS = 60_000;
 
 export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
   const ai = createServerGeminiClient(apiKey);
@@ -17,7 +18,7 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(30_000) },
+        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS) },
       });
       try { return JSON.parse(response.text || JSON.stringify(fallback)) as T; } catch { return fallback; }
     } catch (err: unknown) {

@@ -90,7 +90,7 @@ Fallback: JP/CN → EN → KO.
 
 - **ErrorBoundary**: 통합 컴포넌트, variant prop (`full-page` | `section` | `panel`)
 - **SkeletonLoader**: 5 variants (`text` | `card` | `panel` | `editor` | `sidebar`) — shimmer 기반
-- **CSP Middleware**: `src/middleware.ts` — nonce 기반 보안 헤더 통합 관리
+- **CSP / Security headers**: `src/proxy.ts` — CSP 및 보안 헤더 통합 관리 (Next.js 16)
 - **Logger**: `@/lib/logger` — `console.*` 대신 logger.info/warn/error 사용
 - **Streaming**: fetch 120s + AI 180s + 구조화 60s + 동시실행 lock
 - **Storage**: localStorage try/catch + IndexedDB 백업 + 용량 감지

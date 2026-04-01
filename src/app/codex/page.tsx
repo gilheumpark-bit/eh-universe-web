@@ -31,10 +31,10 @@ export default function CodexPage() {
         <div className="mx-auto max-w-6xl px-4 py-12">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="font-[family-name:var(--font-mono)] text-3xl font-black tracking-tight text-text-primary mb-2">
+            <h1 className="font-mono text-3xl font-black tracking-tight text-text-primary mb-2">
               CODEX
             </h1>
-            <p className="text-text-tertiary text-sm font-[family-name:var(--font-mono)]">
+            <p className="text-text-tertiary text-sm font-mono">
               {T({ ko: "EH Universe 통합 지식 허브", en: "The complete knowledge base of EH Universe", jp: "EH Universe 統合ナレッジベース", cn: "EH Universe 综合知识库" })}
             </p>
           </div>
@@ -47,7 +47,7 @@ export default function CodexPage() {
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`px-5 py-3 font-[family-name:var(--font-mono)] text-xs font-bold tracking-widest uppercase transition-all border-b-2 -mb-[1px] ${
+                  className={`px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase transition-all border-b-2 -mb-[1px] ${
                     active
                       ? "border-accent-purple text-accent-purple"
                       : "border-transparent text-text-tertiary hover:text-text-secondary"
@@ -60,7 +60,7 @@ export default function CodexPage() {
           </div>
 
           {/* Tab description */}
-          <p className="text-text-tertiary text-xs font-[family-name:var(--font-mono)] mb-6 tracking-wider">
+          <p className="text-text-tertiary text-xs font-mono mb-6 tracking-wider">
             {(() => { const d = TABS.find(t => t.id === tab)?.desc; return d ? T(d) : ""; })()}
           </p>
 

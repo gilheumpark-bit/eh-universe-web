@@ -12,13 +12,23 @@ async function dismissOnboarding(page: import('@playwright/test').Page) {
   }
 }
 
+async function dismissApiKeyModal(page: import('@playwright/test').Page) {
+  const apiModal = page.locator('[role="dialog"]').filter({ hasText: /Gemini|OpenAI|Claude|API/i }).first();
+  if (await apiModal.isVisible({ timeout: 800 }).catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await expect(apiModal).toBeHidden({ timeout: 5000 });
+  }
+}
+
 async function ensureSession(page: import('@playwright/test').Page) {
   await dismissOnboarding(page);
+  await dismissApiKeyModal(page);
 
   // 온보딩 버튼 클릭 → 새 세션 생성 (Quick Start / Manual Setup / Try Demo)
   const newBtn = page.locator('button', { hasText: /Quick Start|Manual Setup|Try Demo|쾌속 시작|직접 설정|데모 체험/ }).first();
   await expect(newBtn).toBeVisible({ timeout: 10000 });
   await newBtn.click();
+  await dismissApiKeyModal(page);
 
   // 세션 생성 확인: 세계관 설계 헤딩 또는 사이드바 탭이 보이면 성공
   await expect(
@@ -27,6 +37,7 @@ async function ensureSession(page: import('@playwright/test').Page) {
 }
 
 async function switchToFreeMode(page: import('@playwright/test').Page) {
+  await dismissApiKeyModal(page);
   // 가이드 모드 → 자유 모드 전환 (토글 클릭)
   const modeToggle = page.locator('button[aria-label="모드 전환"], button[aria-label="Toggle mode"]').first();
   if (await modeToggle.isVisible({ timeout: 3000 }).catch(() => false)) {

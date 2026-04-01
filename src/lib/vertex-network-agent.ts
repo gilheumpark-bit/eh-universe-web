@@ -12,6 +12,10 @@ function getLocation() { return process.env.AGENT_BUILDER_LOCATION || 'global'; 
 function getEngineId() { return process.env.AGENT_BUILDER_NETWORK_ID?.trim(); }
 function getDataStoreId() { return process.env.AGENT_BUILDER_NETWORK_ID?.trim(); }
 
+type CreateDocumentRequest = Parameters<DocumentServiceClient["createDocument"]>[0];
+type UpdateDocumentRequest = Parameters<DocumentServiceClient["updateDocument"]>[0];
+type SearchRequest = Parameters<SearchServiceClient["search"]>[0];
+
 export function isNetworkAgentConfigured(): boolean {
   return Boolean(getEngineId());
 }
@@ -74,15 +78,16 @@ export async function ingestNetworkDocument(data: {
 
   try {
     // 문서 생성 또는 덮어쓰기
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const request: any = {
+    const request: CreateDocumentRequest = {
       parent: branchName,
       document,
       documentId: data.documentId,
     };
-    await client.createDocument(request).catch(async (e: any) => {
-      if (e?.code === 6) { // ALREADY_EXISTS
-        await (client as any).updateDocument({ document });
+    await client.createDocument(request).catch(async (e: unknown) => {
+      const code = typeof e === "object" && e !== null && "code" in e ? (e as { code?: unknown }).code : undefined;
+      if (code === 6) { // ALREADY_EXISTS
+        const updateReq: UpdateDocumentRequest = { document };
+        await client.updateDocument(updateReq);
       } else {
         throw e;
       }
@@ -128,8 +133,7 @@ export async function searchNetworkAgent(
 
   const filterString = filterParts.join(' AND ');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const requestBody: any = {
+  const requestBody: SearchRequest = {
     servingConfig,
     query,
     pageSize,

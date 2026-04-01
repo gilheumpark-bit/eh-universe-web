@@ -4,6 +4,9 @@ const { TextEncoder, TextDecoder } = require('util');
 
 Object.assign(global, { TextEncoder, TextDecoder });
 
+// React 19: enable concurrent act() environment in Jest
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
 // Mock IntersectionObserver (not available in jsdom)
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}

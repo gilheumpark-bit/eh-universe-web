@@ -6,7 +6,7 @@ export default function Loading() {
           className="inline-block w-6 h-6 border-2 border-t-transparent rounded-full animate-spin mb-4"
           style={{ borderColor: "var(--color-accent-purple)", borderTopColor: "transparent" }}
         />
-        <p className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-wider uppercase">
+        <p className="font-mono text-xs text-text-tertiary tracking-wider uppercase">
           LOADING...
         </p>
       </div>

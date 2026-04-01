@@ -596,10 +596,10 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 - variant prop: `'full-page'` | `'section'` | `'panel'`
 - 기존 개별 ErrorBoundary (studio/, code-studio/) 는 래퍼로 유지
 
-## CSP 미들웨어
+## CSP / 보안 헤더 (Next.js 16)
 
-- `src/middleware.ts`가 모든 보안 헤더 (CSP nonce, X-Frame-Options 등) 통합 관리
-- 보안 헤더를 다른 파일에서 분산 설정하지 않음
+- `src/proxy.ts`가 CSP 및 보안 헤더(X-Frame-Options, HSTS 등)를 **통합** 관리한다. 이 프로젝트의 Next.js 16 구성에서는 미들웨어 진입이 `proxy.ts`이며, **`src/middleware.ts`를 추가로 두면 빌드가 실패**할 수 있으니 중복 생성하지 않는다.
+- 보안 헤더를 라우트/API별로 흩뿌리지 않는다. 상세는 `next.config.ts` 주석 참고.
 
 ## SkeletonLoader
 

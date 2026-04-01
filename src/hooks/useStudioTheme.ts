@@ -11,7 +11,7 @@ export const THEME_NAMES = ['다크', '딤', '라이트', '최대'] as const;
 export const THEME_NAMES_EN = ['Dark', 'Dim', 'Light', 'Max'] as const;
 
 // Color themes
-export type ColorTheme = 'default' | 'beige' | 'ocean' | 'forest' | 'rose' | 'midnight';
+export type ColorTheme = 'default' | 'beige' | 'ocean' | 'forest' | 'rose' | 'midnight' | 'violet' | 'sapphire' | 'emerald';
 export const COLOR_THEMES: { id: ColorTheme; name: string; nameEn: string; preview: string }[] = [
   { id: 'default', name: '기본', nameEn: 'Default', preview: '#07090d' },
   { id: 'beige', name: '베이지', nameEn: 'Beige', preview: '#f5f0e8' },
@@ -19,6 +19,9 @@ export const COLOR_THEMES: { id: ColorTheme; name: string; nameEn: string; previ
   { id: 'forest', name: '포레스트', nameEn: 'Forest', preview: '#0d1a14' },
   { id: 'rose', name: '로즈', nameEn: 'Rose', preview: '#1a0d14' },
   { id: 'midnight', name: '미드나잇', nameEn: 'Midnight', preview: '#0d0d1a' },
+  { id: 'violet', name: '바이올렛', nameEn: 'Violet', preview: '#8B5CF6' },
+  { id: 'sapphire', name: '사파이어', nameEn: 'Sapphire', preview: '#3B82F6' },
+  { id: 'emerald', name: '에메랄드', nameEn: 'Emerald', preview: '#10B981' },
 ];
 
 /** Manages 4-level theme (dark/dim/light/max), color theme, focus mode, search overlay, and shortcuts panel */
@@ -30,7 +33,7 @@ export function useStudioTheme() {
       // 마이그레이션: 기존 noa_light_theme 호환
       if (localStorage.getItem('noa_light_theme') === '1') return 2;
     }
-    return 0;
+    return 2; // 아카이브형 미래감: 밝은 모드 기본. 기존 저장값 있으면 영향 없음
   });
   
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {

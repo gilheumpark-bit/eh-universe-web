@@ -243,7 +243,7 @@ function ShipCard({ ship, accent }: { ship: Ship; accent: string }) {
       className="bg-bg-secondary border border-border p-5 transition-colors hover:shadow-lg"
       style={{ borderTopWidth: 2, borderTopColor: accent }}
     >
-      <div className="font-[family-name:var(--font-mono)] text-sm font-bold tracking-widest flex items-center gap-2" style={{ color: accent }}>
+      <div className="font-mono text-sm font-bold tracking-widest flex items-center gap-2" style={{ color: accent }}>
         {ship.name}
         {ship.badge && (
           <span className="text-[9px] px-1.5 py-0.5 font-bold" style={{ background: accent, color: "#05050d" }}>{ship.badge}</span>
@@ -279,18 +279,18 @@ function FlagshipCard({ flagship, accent }: { flagship: Flagship; accent: string
       style={{ borderColor: accent, background: `linear-gradient(135deg, var(--color-bg-secondary) 0%, ${accent}08 100%)` }}
     >
       <span
-        className="absolute -top-2 right-4 font-[family-name:var(--font-mono)] text-[9px] tracking-[3px] px-2.5 py-0.5"
+        className="absolute -top-2 right-4 font-mono text-[9px] tracking-[3px] px-2.5 py-0.5"
         style={{ background: accent, color: "#05050d" }}
       >
         FLAGSHIP
       </span>
-      <div className="font-[family-name:var(--font-mono)] text-sm font-bold tracking-widest mb-3" style={{ color: accent }}>
+      <div className="font-mono text-sm font-bold tracking-widest mb-3" style={{ color: accent }}>
         {flagship.name}
       </div>
       <div className="flex flex-wrap gap-8">
         {flagship.specs.map((s) => (
           <div key={s.label} className="flex flex-col gap-0.5">
-            <span className="font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">{s.label}</span>
+            <span className="font-mono text-[9px] tracking-widest text-text-tertiary">{s.label}</span>
             <span className="text-xl font-bold" style={{ color: accent }}>{s.value}</span>
           </div>
         ))}
@@ -362,7 +362,7 @@ export default function VesselPage() {
             <h1 className="site-title text-2xl font-bold tracking-tight mb-1">
               {en ? "VESSEL CLASSIFICATION FULL REFERENCE" : "\uD568\uAE09 \uBD84\uB958 \uC804\uCCB4 \uCC38\uC870"}
             </h1>
-            <p className="text-text-tertiary text-sm mb-8 font-[family-name:var(--font-mono)]">
+            <p className="text-text-tertiary text-sm mb-8 font-mono">
               {en ? "All classes / Type -1 Strike / -2 Guard / -3 Support variants" : "\uC804\uCCB4 \uD568\uAE09 / -1 \uD0C0\uACA9 / -2 \uBC29\uC5B4 / -3 \uC9C0\uC6D0 \uBCC0\uD615"}
             </p>
 
@@ -375,7 +375,7 @@ export default function VesselPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className="px-5 py-2.5 font-[family-name:var(--font-mono)] text-[11px] tracking-widest whitespace-nowrap transition-colors -mb-px border-b-2"
+                    className="px-5 py-2.5 font-mono text-[11px] tracking-widest whitespace-nowrap transition-colors -mb-px border-b-2"
                     style={{
                       color: isActive ? color : "var(--color-text-tertiary)",
                       borderColor: isActive ? color : "transparent",
@@ -429,7 +429,7 @@ function NekaEnergyStates() {
         <div key={s.name} className="border border-border bg-bg-secondary p-4 text-center">
           <div className="w-full h-2 rounded-sm mb-2.5" style={{ background: s.swatch, border: `1px solid ${s.swatchBorder}` }} />
           <div
-            className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest mb-2 inline-block"
+            className="font-mono text-[10px] tracking-widest mb-2 inline-block"
             style={{ color: s.nameText ?? s.nameColor, background: s.nameBg, padding: s.nameBg ? "2px 6px" : undefined }}
           >
             {s.name}
@@ -456,7 +456,7 @@ function ComparePanel() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {(["council", "neka", "lib"] as const).map((f) => (
           <div key={f} className="border p-5 text-center" style={{ borderColor: FACTION_COLORS[f].dim }}>
-            <div className="font-[family-name:var(--font-mono)] text-[11px] tracking-[3px] mb-3" style={{ color: FACTION_COLORS[f].accent }}>
+            <div className="font-mono text-[11px] tracking-[3px] mb-3" style={{ color: FACTION_COLORS[f].accent }}>
               {f === "council" ? "COUNCIL" : f === "neka" ? "NEKA EMPIRE" : "LIBERATION FRONT"}
             </div>
             <div className="text-lg font-semibold italic" style={{ color: FACTION_COLORS[f].accent }}>{FACTIONS[f].motto}</div>
@@ -469,10 +469,10 @@ function ComparePanel() {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="border-b-2 border-border">
-              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">{"\uC124\uACC4 \uC5B8\uC5B4"}</th>
-              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">COUNCIL</th>
-              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">NEKA</th>
-              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">LIBERATION</th>
+              <th className="p-3 text-left font-mono text-[9px] tracking-widest text-text-tertiary">{"\uC124\uACC4 \uC5B8\uC5B4"}</th>
+              <th className="p-3 text-left font-mono text-[9px] tracking-widest text-text-tertiary">COUNCIL</th>
+              <th className="p-3 text-left font-mono text-[9px] tracking-widest text-text-tertiary">NEKA</th>
+              <th className="p-3 text-left font-mono text-[9px] tracking-widest text-text-tertiary">LIBERATION</th>
             </tr>
           </thead>
           <tbody>
@@ -489,7 +489,7 @@ function ComparePanel() {
       </div>
 
       {/* Size bars */}
-      <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest text-text-tertiary mb-4">SIZE COMPARISON</div>
+      <div className="font-mono text-[10px] tracking-widest text-text-tertiary mb-4">SIZE COMPARISON</div>
       <div className="space-y-2.5 mb-8">
         {SIZE_BARS.map((bar) => (
           <div key={bar.name} className="flex items-center gap-3">
@@ -622,13 +622,13 @@ function ShipDetailPanel({ en }: { en: boolean }) {
       {/* Selectors */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div>
-          <label className="font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary block mb-2">
+          <label className="font-mono text-[9px] tracking-widest text-text-tertiary block mb-2">
             {en ? "SHIP A (Primary)" : "함선 A (주)"}
           </label>
           <select
             value={selA}
             onChange={e => setSelA(e.target.value)}
-            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-[family-name:var(--font-mono)]"
+            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-mono"
           >
             {ALL_SHIPS.map(s => (
               <option key={s.key} value={s.key}>
@@ -638,13 +638,13 @@ function ShipDetailPanel({ en }: { en: boolean }) {
           </select>
         </div>
         <div>
-          <label className="font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary block mb-2">
+          <label className="font-mono text-[9px] tracking-widest text-text-tertiary block mb-2">
             {en ? "SHIP B (Compare)" : "함선 B (비교)"}
           </label>
           <select
             value={selB}
             onChange={e => setSelB(e.target.value)}
-            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-[family-name:var(--font-mono)]"
+            className="w-full bg-bg-secondary border border-border text-text-primary text-xs p-2.5 rounded font-mono"
           >
             <option value="">{en ? "— None —" : "— 없음 —"}</option>
             {ALL_SHIPS.filter(s => s.key !== selA).map(s => (
@@ -658,7 +658,7 @@ function ShipDetailPanel({ en }: { en: boolean }) {
 
       {/* Radar Chart */}
       <div className="mb-8">
-        <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest text-text-tertiary mb-3">
+        <div className="font-mono text-[10px] tracking-widest text-text-tertiary mb-3">
           {en ? "STAT RADAR" : "스탯 레이더"}
         </div>
         <div className="border border-border bg-bg-secondary p-4 rounded flex justify-center">
@@ -683,10 +683,10 @@ function ShipDetailPanel({ en }: { en: boolean }) {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="border-b-2 border-border">
-              <th className="p-3 text-left font-[family-name:var(--font-mono)] text-[9px] tracking-widest text-text-tertiary">STAT</th>
-              <th className="p-3 text-center font-[family-name:var(--font-mono)] text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipA.faction].accent }}>{shipA.name}</th>
+              <th className="p-3 text-left font-mono text-[9px] tracking-widest text-text-tertiary">STAT</th>
+              <th className="p-3 text-center font-mono text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipA.faction].accent }}>{shipA.name}</th>
               {shipB && (
-                <th className="p-3 text-center font-[family-name:var(--font-mono)] text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipB.faction].accent }}>{shipB.name}</th>
+                <th className="p-3 text-center font-mono text-[9px] tracking-widest" style={{ color: FACTION_COLORS[shipB.faction].accent }}>{shipB.name}</th>
               )}
             </tr>
           </thead>
@@ -716,7 +716,7 @@ function ShipDetailPanel({ en }: { en: boolean }) {
       </div>
 
       {/* Silhouettes */}
-      <div className="font-[family-name:var(--font-mono)] text-[10px] tracking-widest text-text-tertiary mb-3">
+      <div className="font-mono text-[10px] tracking-widest text-text-tertiary mb-3">
         {en ? "SILHOUETTE (Log Scale)" : "실루엣 (로그 스케일)"}
       </div>
       <div className="border border-border bg-bg-secondary p-4 rounded space-y-4">

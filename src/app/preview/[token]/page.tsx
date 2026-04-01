@@ -86,13 +86,13 @@ function FeedbackPanel({
           className="flex items-center gap-2 px-4 py-2.5 bg-accent-purple/90 hover:bg-accent-purple text-white rounded-full shadow-luxury backdrop-blur-sm transition-colors"
         >
           <MessageSquare className="h-4 w-4" />
-          <span className="text-xs font-[family-name:var(--font-mono)]">피드백 {feedbacks.length > 0 ? `(${feedbacks.length})` : ""}</span>
+          <span className="text-xs font-mono">피드백 {feedbacks.length > 0 ? `(${feedbacks.length})` : ""}</span>
         </button>
       ) : (
         <div className="w-80 bg-bg-primary/95 backdrop-blur-md border border-border/40 rounded-2xl shadow-luxury overflow-hidden">
           {/* 헤더 */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
-            <span className="text-xs font-[family-name:var(--font-mono)] font-semibold text-text-primary">피드백</span>
+            <span className="text-xs font-mono font-semibold text-text-primary">피드백</span>
             <button onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text-primary text-xs">닫기</button>
           </div>
 
@@ -188,7 +188,7 @@ export default function PreviewPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-accent-purple" />
-        <p className="text-sm text-text-secondary font-[family-name:var(--font-mono)]">로딩 중...</p>
+        <p className="text-sm text-text-secondary font-mono">로딩 중...</p>
       </div>
     );
   }
@@ -244,7 +244,7 @@ export default function PreviewPage() {
           />
           <button
             onClick={handlePasswordSubmit}
-            className="px-5 py-2.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-xl text-sm font-[family-name:var(--font-mono)] transition-colors"
+            className="px-5 py-2.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-xl text-sm font-mono transition-colors"
           >
             확인
           </button>
@@ -279,7 +279,7 @@ export default function PreviewPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-8">
         <div className="text-center space-y-2">
-          <h1 className="text-xl font-[family-name:var(--font-display)] font-bold text-text-primary">{data.title}</h1>
+          <h1 className="text-xl font-display font-bold text-text-primary">{data.title}</h1>
           {data.authorName && <p className="text-sm text-text-secondary">by {data.authorName}</p>}
         </div>
         <p className="text-sm text-text-tertiary">감상 방식을 선택하세요</p>
@@ -289,7 +289,7 @@ export default function PreviewPage() {
             className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-purple/10 border border-border/30 hover:border-accent-purple/40 rounded-2xl transition-all group"
           >
             <Headphones className="h-10 w-10 text-accent-purple group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-[family-name:var(--font-mono)] text-text-primary">🎧 라디오 드라마</span>
+            <span className="text-sm font-mono text-text-primary">🎧 라디오 드라마</span>
             <span className="text-[10px] text-text-tertiary">눈을 감고 들어보세요</span>
           </button>
           <button
@@ -297,7 +297,7 @@ export default function PreviewPage() {
             className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-amber/10 border border-border/30 hover:border-accent-amber/40 rounded-2xl transition-all group"
           >
             <Film className="h-10 w-10 text-accent-amber group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-[family-name:var(--font-mono)] text-text-primary">🎬 비주얼 노벨</span>
+            <span className="text-sm font-mono text-text-primary">🎬 비주얼 노벨</span>
             <span className="text-[10px] text-text-tertiary">그 세계에 들어가세요</span>
           </button>
         </div>
@@ -322,7 +322,7 @@ export default function PreviewPage() {
       {/* 하단 크레딧 */}
       <div className="fixed top-4 left-4 z-40">
         <div className="bg-bg-primary/40 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border/20">
-          <p className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
+          <p className="text-[10px] text-text-tertiary font-mono">
             {data.title} {data.authorName ? `· ${data.authorName}` : ""}
           </p>
         </div>

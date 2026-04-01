@@ -36,6 +36,7 @@ import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import * as PI from "@/components/code-studio/PanelImports";
 import { useStudioTheme } from "@/hooks/useStudioTheme";
+import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
 
 // Extracted components
 import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
@@ -274,6 +275,9 @@ function CodeStudioShellInner() {
 
   // ── Computed ──
   const activeFile = openFiles.find((f) => f.id === activeFileId) ?? null;
+  const activeMobileEditorPath = activeFile
+    ? toMonacoModelPath(findFilePathById(files, activeFile.id), activeFile.id, activeFile.name)
+    : undefined;
   const pipelineScore = pipelineStages.length > 0
     ? Math.round(pipelineStages.reduce((sum, s) => sum + (s.score ?? 0), 0) / pipelineStages.length)
     : null;
@@ -785,7 +789,7 @@ function CodeStudioShellInner() {
       {activeFile && <BreadcrumbComponent path={["project", "src", activeFile.name]} isModified={activeFile.isDirty} />}
       <div className="flex-1 min-h-0">
         {activeFile ? (
-          <MonacoEditor height="100%" language={activeFile.language} value={activeFile.content} onChange={handleEditorChange} theme="vs-dark"
+          <MonacoEditor height="100%" language={activeFile.language} path={activeMobileEditorPath} value={activeFile.content} onChange={handleEditorChange} theme="vs-dark"
             options={{ fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize, wordWrap: isMobile ? "on" as const : settings.wordWrap, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 }, fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", lineNumbers: isMobile ? "off" as const : "on" as const, renderLineHighlight: "line" as const, bracketPairColorization: { enabled: true }, smoothScrolling: true, cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const }}
             onMount={(editor, monaco) => {
               import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco, editor, { theme: "dark" }));

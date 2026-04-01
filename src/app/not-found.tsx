@@ -15,12 +15,12 @@ export default function NotFound() {
       <main className="pt-14 flex-1 flex items-center justify-center">
         <div className="text-center px-4 py-20">
           <p
-            className="font-[family-name:var(--font-mono)] text-6xl font-bold tracking-tighter mb-4"
+            className="font-mono text-6xl font-bold tracking-tighter mb-4"
             style={{ color: "var(--color-accent-purple)" }}
           >
             404
           </p>
-          <p className="font-[family-name:var(--font-mono)] text-sm text-text-tertiary tracking-wider uppercase mb-2">
+          <p className="font-mono text-sm text-text-tertiary tracking-wider uppercase mb-2">
             {T({ ko: "신호 유실", en: "SIGNAL LOST", jp: "信号消失", cn: "信号丢失" })}
           </p>
           <p className="text-text-secondary text-sm mb-8 max-w-md mx-auto">
@@ -35,14 +35,14 @@ export default function NotFound() {
             <Link
               href="/"
               aria-label={T({ ko: "홈으로 돌아가기", en: "Return to home page", jp: "ホームに戻る", cn: "返回首页" })}
-              className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+              className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >
               {T({ ko: "기지로 귀환", en: "RETURN TO BASE", jp: "基地へ帰還", cn: "返回基地" })}
             </Link>
             <Link
               href="/studio"
               aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", jp: "スタジオへ", cn: "前往工作室" })}
-              className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+              className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >
               {T({ ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" })}
             </Link>

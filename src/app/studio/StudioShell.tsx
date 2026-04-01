@@ -107,6 +107,12 @@ export default function StudioShell() {
   const [input, setInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKeyVersion, setApiKeyVersion] = useState(0);
+  // Listen for key changes dispatched by setApiKey() in ai-providers.ts
+  useEffect(() => {
+    const bump = () => setApiKeyVersion(v => v + 1);
+    window.addEventListener('noa-keys-changed', bump);
+    return () => window.removeEventListener('noa-keys-changed', bump);
+  }, []);
   const [bannerDismissed, setBannerDismissed] = useState(() => typeof window !== 'undefined' && localStorage.getItem('noa_api_banner_dismissed') === '1');
   const [showDashboard, setShowDashboard] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
@@ -116,19 +122,22 @@ export default function StudioShell() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = createT(language);
   const isKO = language === 'KO';
+  const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   const activeProviderId = getActiveProvider();
   const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(activeProviderId);
-  const hasAiAccess = hydrated && (hasLocalApiKey || Boolean(hostedProviders[activeProviderId]));
-  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || Boolean(hostedProviders.gemini));
+  const hasHostedAiAccess = hydrated && Boolean(user) && Boolean(hostedProviders[activeProviderId]);
+  const hasHostedQuickStartAccess = hydrated && Boolean(user) && Boolean(hostedProviders.gemini);
+  const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess);
+  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || hasHostedQuickStartAccess);
   const showAiLock = aiCapabilitiesLoaded && !hasAiAccess;
   const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
-  const apiBannerMessage = Boolean(hostedProviders[activeProviderId])
+  const apiBannerMessage = hasHostedAiAccess
     ? (isKO
       ? '\uAE30\uBCF8 AI\uAC00 \uC900\uBE44\uB418\uC5B4 \uC788\uC5B4\uC694. \uBC14\uB85C \uC368\uBCF4\uACE0, \uC6D0\uD558\uBA74 \uAC1C\uC778 \uD0A4\uB97C \uCD94\uAC00\uD558\uC138\uC694.'
       : 'Base AI is ready. Start now, and add your own key anytime.')
     : t('ui.apiKeyBanner');
-  const apiSetupLabel = Boolean(hostedProviders[activeProviderId])
+  const apiSetupLabel = hasHostedAiAccess
     ? (isKO ? '\uAC1C\uC778 \uD0A4 \uCD94\uAC00' : 'Add Key')
     : t('ui.apiKeySetUp');
 
@@ -179,8 +188,6 @@ export default function StudioShell() {
   const setSaveSlotName = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ saveSlotName: typeof v === 'function' ? v(s.saveSlotName) : v })), []);
   const setShowGlobalSearch = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ showGlobalSearch: typeof v === 'function' ? v(s.showGlobalSearch) : v })), []);
   const setGlobalSearchQuery = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ globalSearchQuery: typeof v === 'function' ? v(s.globalSearchQuery) : v })), []);
-
-  const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   useEffect(() => {
     if (user?.uid) setDriveEncryptionKey(user.uid);

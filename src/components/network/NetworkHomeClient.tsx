@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { netT } from "@/lib/network-translations";
+import { logger } from "@/lib/logger";
 import {
   getAllUniqueTags,
   getNetworkUserRecord,
@@ -86,6 +87,27 @@ const SAMPLE_PLANETS = [
   },
 ];
 
+const NETWORK_LOAD_TIMEOUT_MS = 25_000;
+
+function withTimeout<T>(promise: Promise<T>, label: string, timeoutMs = NETWORK_LOAD_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error(`NETWORK_LOAD_TIMEOUT:${label}`));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 function relativeTime(isoDate: string, lang: Lang): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
@@ -146,7 +168,8 @@ export function NetworkHomeClient() {
 
   // Sync filter state to URL query params
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const currentSearch = searchParams.toString();
+    const params = new URLSearchParams(currentSearch);
     if (boardFilter !== "all") params.set("board", boardFilter);
     else params.delete("board");
     if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
@@ -154,6 +177,7 @@ export function NetworkHomeClient() {
     if (showBookmarksOnly) params.set("bookmarks", "1");
     else params.delete("bookmarks");
     const qs = params.toString();
+    if (qs === currentSearch) return;
     const target = qs ? `?${qs}` : "/network";
     router.replace(target, { scroll: false });
   }, [boardFilter, selectedTags, showBookmarksOnly, router, searchParams]);
@@ -166,42 +190,82 @@ export function NetworkHomeClient() {
         setLoading(true);
         setError(null);
 
-        const [planets, posts, settlements, bookmarks, allTags] = await Promise.all([
-          listLatestPlanets(6),
-          listLatestPosts(30),
-          listLatestSettlements(6),
-          user ? listBookmarks(user.uid) : Promise.resolve([] as BookmarkRecord[]),
-          getAllUniqueTags(50),
+        const [planetResult, postResult, settlementResult, bookmarkResult, tagResult] = await Promise.allSettled([
+          withTimeout(listLatestPlanets(6), "planets"),
+          withTimeout(listLatestPosts(30), "posts"),
+          withTimeout(listLatestSettlements(6), "settlements"),
+          withTimeout(user ? listBookmarks(user.uid) : Promise.resolve([] as BookmarkRecord[]), "bookmarks"),
+          withTimeout(getAllUniqueTags(50), "tags"),
         ]);
+
+        const planets = planetResult.status === "fulfilled" ? planetResult.value : [];
+        const posts = postResult.status === "fulfilled" ? postResult.value : [];
+        const settlements = settlementResult.status === "fulfilled" ? settlementResult.value : [];
+        const bookmarks = bookmarkResult.status === "fulfilled" ? bookmarkResult.value : [];
+        const allTags = tagResult.status === "fulfilled" ? tagResult.value : [];
+
+        const rejectedLoads = [
+          planetResult,
+          postResult,
+          settlementResult,
+          bookmarkResult,
+          tagResult,
+        ].filter((result): result is PromiseRejectedResult => result.status === "rejected");
+
+        if (rejectedLoads.length > 0) {
+          logger.warn("NetworkHome", "Partial dashboard load failure", rejectedLoads.map((result) => result.reason));
+        }
 
         const planetIds = [
           ...planets.map((planet) => planet.id),
           ...posts.map((post) => post.planetId).filter(Boolean),
           ...settlements.map((settlement) => settlement.planetId),
         ];
-        const planetMap = await getPlanetsByIds(planetIds);
+        // Skip downstream fetches when no primary data loaded — prevents cascading timeouts
+        const planetMap = planetIds.length > 0
+          ? await withTimeout(getPlanetsByIds(planetIds), "planetMap").catch(() => ({} as Record<string, PlanetRecord>))
+          : {} as Record<string, PlanetRecord>;
 
         const uniqueAuthorIds = Array.from(new Set(posts.map((p) => p.authorId)));
-        const authorEntries = await Promise.all(
-          uniqueAuthorIds.map(async (uid) => {
-            const record = await getNetworkUserRecord(uid);
-            return [uid, record] as const;
-          }),
-        );
         const authorMap: Record<string, UserRecord> = {};
-        for (const [uid, record] of authorEntries) {
-          if (record) authorMap[uid] = record;
+        if (uniqueAuthorIds.length > 0) {
+          try {
+            const authorEntries = await withTimeout(Promise.all(
+              uniqueAuthorIds.map(async (uid) => {
+                const record = await getNetworkUserRecord(uid);
+                return [uid, record] as const;
+              }),
+            ), "authors");
+            for (const [uid, record] of authorEntries) {
+              if (record) authorMap[uid] = record;
+            }
+          } catch {
+            logger.warn("NetworkHome", "Author lookup timed out — using fallback names");
+          }
         }
 
         if (!cancelled) {
           setState({ planets, posts, settlements, planetMap, authorMap, allTags });
           setBookmarkedIds(new Set(bookmarks.map((b) => b.planetId)));
+          if (rejectedLoads.length > 0) {
+            setError(L4(lang, {
+              ko: "일부 데이터를 불러오지 못했습니다. 다시 시도하면 최신 상태로 갱신됩니다.",
+              en: "Some dashboard data could not be loaded. Retry to refresh the latest state.",
+            }));
+          }
         }
       } catch (caught) {
         if (!cancelled) {
           const msg = caught instanceof Error ? caught.message : "";
+          // Graceful fallback: show sample planets when Firestore is completely unreachable
+          setShowSamples(true);
           if (msg.includes("Firestore is not available")) {
-            setError(L4(lang, { ko: "데이터베이스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.", en: "Unable to connect to the database. Please try again later." }));
+            setError(L4(lang, { ko: "데이터베이스에 연결할 수 없습니다. 샘플 데이터를 표시합니다.", en: "Unable to connect to the database. Showing sample data." }));
+          } else if (msg.startsWith("NETWORK_LOAD_TIMEOUT:")) {
+            setError(L4(lang, {
+              ko: "응답이 지연되어 샘플 데이터를 표시합니다. 다시 시도하면 최신 데이터로 갱신됩니다.",
+              en: "Response was slow. Showing sample data. Retry to fetch the latest.",
+            }));
           } else {
             setError(msg || (L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load." })));
           }

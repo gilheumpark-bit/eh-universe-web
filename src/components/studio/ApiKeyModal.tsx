@@ -303,10 +303,15 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
           </button>
           <button
             onClick={() => {
+              // 1. localStorage에서 키 제거 (storageKey + timestamp + legacy)
               setApiKey(activeId, '');
+              if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
+              // 2. 모달 내부 state 초기화
               setKeys(prev => ({ ...prev, [activeId]: '' }));
               setTestStatus(prev => ({ ...prev, [activeId]: 'idle' }));
-              if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
+              // 3. 부모 컴포넌트에 알림 → apiKeyVersion 증가 → hasLocalApiKey 재평가
+              onSave('');
+              onClose();
             }}
             disabled={!currentKey.trim()}
             aria-label={t('ui.deleteApiKey')}

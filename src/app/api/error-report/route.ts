@@ -12,7 +12,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for error report ingestion
 void REQUEST_TIMEOUT;
 
-const MAX_REQUEST_SIZE = 4096; // body size limit
+const MAX_REQUEST_SIZE = 16_384; // body size limit (16 KB — allows stack traces)
 
 export async function POST(req: NextRequest) {
   // Same-origin validation

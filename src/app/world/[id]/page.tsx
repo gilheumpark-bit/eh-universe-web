@@ -256,7 +256,7 @@ function encodeWorldDataForStudio(data: SharedWorldData): string {
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="premium-panel-soft p-5 md:p-7 space-y-3">
-      <h3 className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.22em] text-accent-amber uppercase">
+      <h3 className="font-mono text-[10px] font-bold tracking-[0.22em] text-accent-amber uppercase">
         {title}
       </h3>
       <div className="text-text-secondary text-sm leading-relaxed">
@@ -271,15 +271,15 @@ function CharacterCard({ char, t }: { char: Character; t: typeof T["ko"] }) {
     <div className="premium-panel-soft p-5 space-y-3 hover:border-accent-purple/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="font-[family-name:var(--font-display)] text-base font-semibold text-text-primary tracking-tight">
+          <h4 className="font-display text-base font-semibold text-text-primary tracking-tight">
             {char.name}
           </h4>
-          <span className="font-[family-name:var(--font-mono)] text-[10px] text-accent-purple tracking-wider uppercase">
+          <span className="font-mono text-[10px] text-accent-purple tracking-wider uppercase">
             {char.role}
           </span>
         </div>
         {char.dna != null && (
-          <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-accent-purple/30 bg-accent-purple/10 font-[family-name:var(--font-mono)] text-[10px] font-bold text-accent-purple">
+          <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-accent-purple/30 bg-accent-purple/10 font-mono text-[10px] font-bold text-accent-purple">
             {char.dna}
           </span>
         )}
@@ -290,7 +290,7 @@ function CharacterCard({ char, t }: { char: Character; t: typeof T["ko"] }) {
           {char.traits.split(",").map((trait, i) => (
             <span
               key={i}
-              className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary"
+              className="rounded-full border bg-white/[0.03] px-2.5 py-1 font-mono text-[10px] text-text-tertiary"
             >
               {trait.trim()}
             </span>
@@ -331,14 +331,14 @@ function TensionCurvePreview({ data, episodeLabel }: { data: { position: number;
                 className="absolute bottom-0 w-full rounded-t-sm bg-gradient-to-t from-accent-purple/60 to-accent-blue/40 transition-all duration-300"
                 style={{ height: `${height}%` }}
               />
-              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[8px] px-1.5 py-0.5 rounded whitespace-nowrap border border-white/8">
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[8px] px-1.5 py-0.5 rounded whitespace-nowrap border border-border">
                 {point.label}: {point.level}
               </div>
             </div>
           );
         })}
       </div>
-      <div className="flex justify-between font-[family-name:var(--font-mono)] text-[9px] text-text-tertiary">
+      <div className="flex justify-between font-mono text-[9px] text-text-tertiary">
         <span>{episodeLabel} 1</span>
         <span>{episodeLabel} {data.length}</span>
       </div>
@@ -356,7 +356,7 @@ function WorldRuleItem({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
     <div className="space-y-1.5">
-      <dt className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.18em] text-text-tertiary uppercase">
+      <dt className="font-mono text-[10px] font-bold tracking-[0.18em] text-text-tertiary uppercase">
         {label}
       </dt>
       <dd className="text-text-secondary text-sm leading-relaxed">{value}</dd>
@@ -423,7 +423,7 @@ export default function WorldSharePage() {
         <main className="flex-1 flex items-center justify-center pt-28">
           <div className="text-center space-y-4">
             <div className="w-8 h-8 border-2 border-accent-amber/40 border-t-accent-amber rounded-full animate-spin mx-auto" />
-            <p className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-wider">{t.loading}</p>
+            <p className="font-mono text-xs text-text-tertiary tracking-wider">{t.loading}</p>
           </div>
         </main>
       </div>
@@ -442,13 +442,13 @@ export default function WorldSharePage() {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={() => router.push("/")}
-                className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
+                className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-mono text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
               >
                 {L4(lang, { ko: "홈으로", en: "Home", jp: "ホームへ", cn: "回到首页" })}
               </button>
               <button
                 onClick={() => router.push("/studio")}
-                className="inline-block rounded-full border border-accent-purple/30 bg-accent-purple/10 px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:bg-accent-purple/20 transition-colors cursor-pointer"
+                className="inline-block rounded-full border border-accent-purple/30 bg-accent-purple/10 px-5 py-2.5 font-mono text-xs text-accent-purple hover:bg-accent-purple/20 transition-colors cursor-pointer"
               >
                 {L4(lang, { ko: "스튜디오로", en: "Studio", jp: "スタジオへ", cn: "去工作室" })}
               </button>
@@ -471,13 +471,13 @@ export default function WorldSharePage() {
         <div className="absolute top-32 right-1/4 w-80 h-80 bg-accent-blue/[0.04] rounded-full blur-[100px] pointer-events-none" />
 
         <div className="site-shell relative z-10 text-center space-y-5">
-          <p className="font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.3em] text-accent-amber uppercase">
+          <p className="font-mono text-[10px] font-bold tracking-[0.3em] text-accent-amber uppercase">
             {t.sharedWorld}
           </p>
-          <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary leading-[1.1]">
+          <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary leading-[1.1]">
             {worldData.title}
           </h1>
-          <div className="flex items-center justify-center gap-4 font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-wider">
+          <div className="flex items-center justify-center gap-4 font-mono text-xs text-text-tertiary tracking-wider">
             <span className="rounded-full border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-accent-purple text-[10px] font-bold uppercase">
               {genreLabel}
             </span>
@@ -520,7 +520,7 @@ export default function WorldSharePage() {
 
           {/* Characters */}
           <section className="space-y-5">
-            <h2 className="font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
+            <h2 className="font-mono text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
               {t.characters}
             </h2>
             {worldData.characters.length > 0 ? (
@@ -530,14 +530,14 @@ export default function WorldSharePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-text-tertiary text-xs font-[family-name:var(--font-mono)]">{t.noCharacters}</p>
+              <p className="text-text-tertiary text-xs font-mono">{t.noCharacters}</p>
             )}
           </section>
 
           {/* World Rules */}
           {worldRules.length > 0 && (
             <section className="space-y-5">
-              <h2 className="font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
+              <h2 className="font-mono text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
                 {t.worldRules}
               </h2>
               <div className="premium-panel-soft p-5 md:p-8">
@@ -553,7 +553,7 @@ export default function WorldSharePage() {
           {/* Tension Curve */}
           {worldData.tensionCurve && worldData.tensionCurve.length > 0 && (
             <section className="space-y-5">
-              <h2 className="font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
+              <h2 className="font-mono text-[11px] font-bold tracking-[0.22em] text-text-tertiary uppercase">
                 {t.tensionCurve}
               </h2>
               <div className="premium-panel-soft p-5 md:p-8">

@@ -112,15 +112,15 @@ export default function SplashScreen({
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-sm mb-6">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-amber/20 font-[family-name:var(--font-mono)] text-[8px] font-bold tracking-wider text-accent-amber">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-bg-secondary/60 backdrop-blur-sm mb-6">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-amber/20 font-mono text-[8px] font-bold tracking-wider text-accent-amber">
               EH
             </span>
-            <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
               UNIVERSE
             </span>
           </div>
-          <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
             {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", jp: "どこへ向かいますか？", cn: "您要去哪里？" })}
           </h1>
           <p className="mt-4 text-sm sm:text-base text-text-secondary max-w-md mx-auto">
@@ -146,11 +146,11 @@ export default function SplashScreen({
                 onMouseEnter={() => setHovered(card.id)}
                 onMouseLeave={() => setHovered(null)}
                 className={`
-                  group relative overflow-hidden rounded-[24px] sm:rounded-[28px]
-                  border bg-[linear-gradient(135deg,rgba(14,18,27,0.95),rgba(7,9,13,0.85))]
+                  group relative overflow-hidden rounded-xl sm:rounded-[28px]
+                  border bg-bg-secondary/95
                   backdrop-blur-xl px-5 py-7 sm:px-7 sm:py-9 text-left
-                  transition-all duration-300 ease-out
-                  ${isHovered ? `${c.border} ${c.shadow} scale-[1.02] -translate-y-1` : 'border-white/[0.08]'}
+                  transition-all duration-200 ease-out
+                  ${isHovered ? `${c.border} shadow-panel scale-[1.02] -translate-y-1` : 'border-border/50'}
                   active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary
                   ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                 `}
@@ -172,7 +172,7 @@ export default function SplashScreen({
                 {/* Animated border gradient on hover */}
                 <div 
                   className={`
-                    absolute inset-0 rounded-[inherit] p-[1px] overflow-hidden
+                    absolute inset-0 rounded-[inherit] p-px overflow-hidden
                     transition-opacity duration-300
                     ${isHovered ? 'opacity-100' : 'opacity-0'}
                   `}
@@ -190,13 +190,13 @@ export default function SplashScreen({
                 <div className="relative z-10">
                   {/* Kicker with badge */}
                   <div className="flex items-center gap-2 mb-4">
-                    <p className={`font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] ${c.text}`}>
+                    <p className={`font-mono text-[10px] uppercase tracking-[0.2em] ${c.text}`}>
                       {L4(lang, card.kicker)}
                     </p>
                     {card.badge && (
                       <span className={`
                         inline-flex items-center gap-1 rounded-full px-2 py-0.5
-                        font-[family-name:var(--font-mono)] text-[9px] font-bold uppercase
+                        font-mono text-[9px] font-bold uppercase
                         ${card.badge === 'NEW' 
                           ? 'bg-accent-green/20 text-accent-green animate-pulse' 
                           : `${c.bg}/15 ${c.text}`
@@ -208,7 +208,7 @@ export default function SplashScreen({
                   </div>
 
                   {/* Title with icon */}
-                  <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-[1.75rem] font-bold text-text-primary mb-3 flex items-center gap-3">
+                  <h2 className="font-display text-2xl sm:text-[1.75rem] font-bold text-text-primary mb-3 flex items-center gap-3">
                     <span className={`
                       flex h-10 w-10 items-center justify-center rounded-xl
                       ${c.bg}/15 border border-current/20 ${c.text}
@@ -221,13 +221,13 @@ export default function SplashScreen({
                   </h2>
 
                   {/* Description */}
-                  <p className="text-sm leading-7 text-text-secondary mb-6 min-h-[3.5rem]">
+                  <p className="text-sm leading-7 text-text-secondary mb-6 min-h-14">
                     {L4(lang, card.desc)}
                   </p>
 
                   {/* CTA */}
                   <div className={`
-                    flex items-center gap-2 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.12em]
+                    flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]
                     transition-all duration-300
                     ${isHovered ? c.text : 'text-text-tertiary'}
                   `}>
@@ -252,7 +252,7 @@ export default function SplashScreen({
           `}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span className="font-[family-name:var(--font-mono)] tracking-wide">
+          <span className="font-mono tracking-wide">
             {L4(lang, { 
               ko: "CC-BY-NC-4.0 라이선스로 자유롭게 활용하세요", 
               en: "Free to use under CC-BY-NC-4.0 license", 

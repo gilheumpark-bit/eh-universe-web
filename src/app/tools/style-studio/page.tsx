@@ -87,7 +87,7 @@ export default function StyleStudioPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowImportTip(prev => !prev)}
-                  className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-accent-purple hover:text-accent-purple transition-all rounded"
+                  className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-accent-purple hover:text-accent-purple transition-all rounded"
                 >
                   {en ? "IMPORT FROM STUDIO" : "스튜디오에서 가져오기"}
                 </button>
@@ -109,12 +109,12 @@ export default function StyleStudioPage() {
               {/* Export JSON */}
               <button
                 onClick={handleExport}
-                className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded"
+                className="px-4 py-2 border border-accent-purple text-accent-purple font-mono text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded"
               >
                 {en ? "EXPORT JSON" : "JSON 내보내기"}
               </button>
               {exportMsg && (
-                <span className="self-center text-[10px] text-accent-purple font-[family-name:var(--font-mono)]">
+                <span className="self-center text-[10px] text-accent-purple font-mono">
                   {exportMsg}
                 </span>
               )}

@@ -445,12 +445,12 @@ function buildCampaignChecks(s: GameState, campaign: Campaign, metrics: Metrics)
 
 const panelCls = "border border-border rounded-2xl bg-bg-secondary/80 backdrop-blur-sm p-4 shadow-lg";
 const cardCls = "border border-white/[0.06] rounded-2xl bg-white/[0.03] p-3.5";
-const btnCls = "rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary cursor-pointer transition-all hover:border-accent-blue/40 hover:bg-accent-blue/10 hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none font-[family-name:var(--font-mono)]";
+const btnCls = "rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary cursor-pointer transition-all hover:border-accent-blue/40 hover:bg-accent-blue/10 hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none font-mono";
 const btnPrimary = `${btnCls} !bg-gradient-to-b from-accent-blue/25 to-accent-blue/15 !border-accent-blue/40`;
 const btnAlt = `${btnCls} !bg-gradient-to-b from-accent-amber/15 to-accent-amber/8 !border-accent-amber/35`;
 const btnDanger = `${btnCls} !border-red-400/30 !bg-red-400/10`;
-const pillCls = "inline-flex items-center rounded-full border border-border px-3 py-1.5 bg-accent-blue/10 text-accent-blue text-sm font-[family-name:var(--font-mono)]";
-const kickerCls = "text-accent-blue text-sm tracking-[0.18em] uppercase font-[family-name:var(--font-mono)]";
+const pillCls = "inline-flex items-center rounded-full border border-border px-3 py-1.5 bg-accent-blue/10 text-accent-blue text-sm font-mono";
+const kickerCls = "text-accent-blue text-sm tracking-[0.18em] uppercase font-mono";
 const mutedCls = "text-text-tertiary text-sm";
 
 function ResourceStrip({ s, metrics, en }: { s: GameState; metrics: Metrics; en: boolean }) {
@@ -650,7 +650,7 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
             <div className={cardCls}><span className={mutedCls + " !text-xs"}>{en ? "Hold Timer" : "홀드 타이머"}</span><strong className="block mt-1 text-sm text-text-primary">{fixed(s.terminal.holdTimeRemaining || 0, 1)} s</strong></div>
             <div className={cardCls}><span className={mutedCls + " !text-xs"}>{en ? "Campaign" : "캠페인"}</span><strong className="block mt-1 text-sm text-text-primary">{campaign.title}</strong></div>
           </div>
-          <pre className={`min-h-[200px] p-4 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap overflow-auto font-[family-name:var(--font-mono)] text-sky-100 ${s.terminal.mode === "ALLOW" ? "border-green-400/35 shadow-[inset_0_0_0_1px_rgba(134,240,183,0.08)]" : s.terminal.mode === "DENY" ? "border-red-400/35 shadow-[inset_0_0_0_1px_rgba(255,141,125,0.08)]" : "border-amber-400/25"} bg-gradient-to-b from-[rgba(0,8,14,0.94)] to-[rgba(4,10,21,0.96)]`}>
+          <pre className={`min-h-[200px] p-4 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap overflow-auto font-mono text-sky-100 ${s.terminal.mode === "ALLOW" ? "border-green-400/35 shadow-[inset_0_0_0_1px_rgba(134,240,183,0.08)]" : s.terminal.mode === "DENY" ? "border-red-400/35 shadow-[inset_0_0_0_1px_rgba(255,141,125,0.08)]" : "border-amber-400/25"} bg-gradient-to-b from-[rgba(0,8,14,0.94)] to-[rgba(4,10,21,0.96)]`}>
             {s.terminal.lines.join("\n") || `> ${en ? "Awaiting evaluation for" : "평가 대기 중:"} ${campaign.title}.`}
           </pre>
           <div className="flex gap-2 flex-wrap">
@@ -1286,7 +1286,7 @@ export default function WarpGatePage() {
               <div className="flex gap-1 rounded-xl border border-white/6 bg-white/[0.02] p-1">
                 {(["ship", "struct", "upgrade"] as const).map(tab => (
                   <button key={tab} onClick={() => setSideTab(tab)}
-                    className={`flex-1 rounded-lg px-2 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-wider uppercase transition-all ${
+                    className={`flex-1 rounded-lg px-2 py-1.5 font-mono text-[10px] font-bold tracking-wider uppercase transition-all ${
                       sideTab === tab ? "bg-white/[0.08] text-text-primary" : "text-text-tertiary hover:text-text-secondary"
                     }`}>
                     {tab === "ship" ? (en ? "Ship" : "함선") : tab === "struct" ? (en ? "Build" : "건설") : (en ? "Upgrade" : "강화")}
@@ -1301,7 +1301,7 @@ export default function WarpGatePage() {
             {/* Main Column — 전부 접기식 */}
             <div className="space-y-3">
               <details open className="group">
-                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-mono text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
                   {en ? "▾ Campaign Layer" : "▾ 캠페인 레이어"}
                 </summary>
                 <div className="mt-2">
@@ -1309,7 +1309,7 @@ export default function WarpGatePage() {
                 </div>
               </details>
               <details open className="group">
-                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-mono text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary transition-colors">
                   {en ? "▾ Gate Chamber" : "▾ 게이트 챔버"}
                 </summary>
                 <div className="mt-2">
@@ -1317,7 +1317,7 @@ export default function WarpGatePage() {
                 </div>
               </details>
               <details className="group">
-                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary">
+                <summary className="cursor-pointer rounded-xl border border-white/6 bg-white/[0.02] px-4 py-3 font-mono text-[11px] font-bold tracking-wider text-text-tertiary uppercase hover:text-text-secondary">
                   {en ? "▸ Zone Map & Mission Archive" : "▸ 구역 지도 & 임무 아카이브"}
                 </summary>
                 <div className="mt-2 space-y-4">

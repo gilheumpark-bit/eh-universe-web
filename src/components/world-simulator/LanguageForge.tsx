@@ -187,7 +187,7 @@ export function LanguageForge({
     const preset = GENRE_PHONEME_PRESETS[presetKey];
     if (!preset) return;
     setPhonemes(preset.phonemes.map((p, i) => ({ ...p, id: `ph-${presetKey}-${i}-${Date.now()}` })));
-  }, []);
+  }, [setPhonemes]);
 
   // IDENTITY_SEAL: PART-2 | role=phoneme-playback | inputs=CustomPhoneme | outputs=audio-signal
 

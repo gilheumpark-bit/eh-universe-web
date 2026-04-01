@@ -5,6 +5,11 @@ import { generateWorldDesign, generateCharacters } from '@/services/geminiServic
 import { logger } from '@/lib/logger';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
+type PendingQuickStart = {
+  prompt: string;
+  sessionId: string;
+};
+
 export function useStudioQuickStart({
   language,
   showQuickStartLock,
@@ -40,7 +45,7 @@ export function useStudioQuickStart({
 }) {
   const [showQuickStartModal, setShowQuickStartModal] = useState(false);
   const [isQuickGenerating, setIsQuickGenerating] = useState(false);
-  const [pendingQuickStartPrompt, setPendingQuickStartPrompt] = useState<string | null>(null);
+  const [pendingQuickStart, setPendingQuickStart] = useState<PendingQuickStart | null>(null);
   const inFlightRef = useRef(false);
 
   const handleQuickStart = async (genre: Genre, userPrompt: string) => {
@@ -50,10 +55,8 @@ export function useStudioQuickStart({
     setIsQuickGenerating(true);
     try {
       const tempConfig = { genre, synopsis: userPrompt } as StoryConfig;
-      const [world, characters] = await Promise.all([
-        generateWorldDesign(genre, language, { synopsis: userPrompt }),
-        generateCharacters(tempConfig, language)
-      ]);
+      const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
+      const characters = await generateCharacters(tempConfig, language);
 
       const qsConfig: StoryConfig = {
         ...INITIAL_CONFIG,
@@ -91,11 +94,25 @@ export function useStudioQuickStart({
         ],
         finalStatus: 'running',
       });
-      setPendingQuickStartPrompt(`${userPrompt}\n\n\\uCCAB \\uC7A5\\uBA74\\uC744 \\uC368\\uC918.`);
+      setPendingQuickStart({
+        prompt: `${userPrompt}\n\n\\uCCAB \\uC7A5\\uBA74\\uC744 \\uC368\\uC918.`,
+        sessionId: newSessionId,
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '';
       if (/401|api key|not configured/i.test(errorMessage)) {
         setShowApiKeyModal(true);
+      } else if (/aborted|timeout|timed out/i.test(errorMessage)) {
+        setUxError({
+          error: new Error(
+            language === 'KO'
+              ? '쾌속 시작 생성이 시간 초과로 중단되었습니다. 잠시 후 다시 시도해 주세요.'
+              : 'Quick Start timed out. Please try again in a moment.',
+          ),
+          retry: () => {
+            void handleQuickStart(genre, userPrompt);
+          },
+        });
       } else {
         logger.error("Studio", "Quick Start Failed:", err);
         setUxError({ error: err });
@@ -107,15 +124,16 @@ export function useStudioQuickStart({
   };
 
   useEffect(() => {
-    if (pendingQuickStartPrompt && currentSessionId && currentSession) {
-      doHandleSend(pendingQuickStartPrompt, '', () => {
+    if (!pendingQuickStart) return;
+    if (currentSessionId !== pendingQuickStart.sessionId) return;
+    if (!currentSession || currentSession.id !== pendingQuickStart.sessionId) return;
+
+    doHandleSend(pendingQuickStart.prompt, '', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPipelineResult((prev: any) => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map((s: any) => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
-      });
-      setPendingQuickStartPrompt(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingQuickStartPrompt, currentSessionId, currentSession]);
+    });
+    setPendingQuickStart(null);
+  }, [currentSession, currentSessionId, doHandleSend, pendingQuickStart, setPipelineResult]);
 
   const openQuickStart = useCallback(() => {
     if (showQuickStartLock) { setShowApiKeyModal(true); return; }

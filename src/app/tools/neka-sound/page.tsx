@@ -370,7 +370,7 @@ export default function NekaSoundPage() {
         }`}
     >
       <span className="text-xl text-[#d4a017] font-serif leading-none mb-1">{c.sym}</span>
-      <span className="font-[family-name:var(--font-mono)] text-[11px] text-text-primary">{c.roman}</span>
+      <span className="font-mono text-[11px] text-text-primary">{c.roman}</span>
       <span className="text-[9px] text-text-tertiary">{c.ko}</span>
       <span className="text-[8px] text-text-tertiary/50 tracking-wider mt-0.5">{c.id}</span>
       <span className={`text-[7px] px-1.5 py-0.5 rounded mt-1 border ${SIG_COLORS[c.sig]}`}>
@@ -391,7 +391,7 @@ export default function NekaSoundPage() {
         }`}
     >
       <span className="text-xl text-[#d4a017] font-serif leading-none mb-1">{v.sym}</span>
-      <span className="font-[family-name:var(--font-mono)] text-[11px] text-text-primary">{v.roman}</span>
+      <span className="font-mono text-[11px] text-text-primary">{v.roman}</span>
       <span className="text-[9px] text-text-tertiary">{v.axis}</span>
       <span className="text-[8px] text-text-tertiary/50 tracking-wider mt-0.5">{v.id}</span>
     </button>
@@ -421,13 +421,13 @@ export default function NekaSoundPage() {
           <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             {/* Title */}
             <div className="text-center mb-10">
-              <p className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.4em] text-text-tertiary uppercase mb-2">
+              <p className="font-mono text-[9px] tracking-[0.4em] text-text-tertiary uppercase mb-2">
                 EH UNIVERSE — NEKA LANGUAGE SYSTEM
               </p>
-              <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold tracking-tight text-[#d4a017] mb-2">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#d4a017] mb-2">
                 {en ? "NEKA CHEMICAL SIGNAL — SOUND INTERFACE" : "네카 화학신호 — 음향 인터페이스"}
               </h1>
-              <p className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary">
+              <p className="font-mono text-xs text-text-tertiary">
                 {en ? "Consonants 18 · Vowels 12 / Sichor Origin / Chemical Signal → Sound" : "자음 18자 · 모음 12자 / Sichor 기원 / 화학신호 → 음향 변환"}
               </p>
             </div>
@@ -439,7 +439,7 @@ export default function NekaSoundPage() {
                 aria-label={en ? "TTS Pronunciation tab" : "TTS 발음 탭"}
                 aria-selected={tab === "tts"}
                 role="tab"
-                className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
+                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "tts" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
               >
@@ -450,7 +450,7 @@ export default function NekaSoundPage() {
                 aria-label={en ? "Signal Sound tab" : "신호음 탭"}
                 aria-selected={tab === "sig"}
                 role="tab"
-                className={`px-6 py-3 font-[family-name:var(--font-mono)] text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
+                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
                   tab === "sig" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
               >
@@ -473,7 +473,7 @@ export default function NekaSoundPage() {
 
                 {/* Consonants Grid */}
                 <div>
-                  <h2 className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
+                  <h2 className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
                     {en ? "CONSONANTS (18)" : "자음 — CONSONANTS (18)"}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-2">
@@ -489,7 +489,7 @@ export default function NekaSoundPage() {
 
                 {/* Vowels Grid */}
                 <div>
-                  <h2 className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
+                  <h2 className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
                     {en ? "VOWELS (12)" : "모음 — VOWELS (12)"}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -505,7 +505,7 @@ export default function NekaSoundPage() {
 
                 {/* Composer */}
                 <div>
-                  <h2 className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
+                  <h2 className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
                     {en ? "COMPOSER" : "조합기 — COMPOSER"}
                   </h2>
                   <div className="border border-border bg-bg-tertiary rounded-lg p-5 space-y-4">
@@ -540,24 +540,24 @@ export default function NekaSoundPage() {
                     {/* Buttons */}
                     {/* TTS Mini Visualizer */}
                     <div className="border border-border border-t-2 border-t-[#d4a017] bg-bg-primary rounded overflow-hidden relative">
-                      <span className="absolute top-1 left-2.5 font-[family-name:var(--font-mono)] text-[7px] tracking-widest text-[#d4a017]/50">
+                      <span className="absolute top-1 left-2.5 font-mono text-[7px] tracking-widest text-[#d4a017]/50">
                         SYNTH OUTPUT
                       </span>
                       <canvas ref={ttsCanvasRef} className="block w-full h-14" />
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
+                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-mono text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
                         ▶ {en ? "TTS SPEAK" : "TTS 발음"}
                       </button>
                       <button
                         onClick={synthAll}
                         disabled={isSynthPlaying || syllables.length === 0}
                         aria-label={en ? "Synthesize all syllables" : "음향 합성 재생"}
-                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-all rounded disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-mono text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-all rounded disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         ♫ {en ? "SYNTH PLAY" : "음향 합성"}
                       </button>
-                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
+                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
                         SPACE
                       </button>
                       <button
@@ -566,14 +566,14 @@ export default function NekaSoundPage() {
                           else setSyllables(prev => prev.slice(0, -1));
                         }}
                         aria-label={en ? "Delete last syllable" : "마지막 음절 삭제"}
-                        className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded"
+                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded"
                       >
                         ← DEL
                       </button>
                       <button
                         onClick={() => { setSyllables([]); setSelectedCons(null); }}
                         aria-label={en ? "Clear all syllables" : "전체 삭제"}
-                        className="px-4 py-2 border border-border text-text-tertiary font-[family-name:var(--font-mono)] text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-all rounded"
+                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-all rounded"
                       >
                         CLEAR
                       </button>
@@ -626,7 +626,7 @@ export default function NekaSoundPage() {
 
                 {/* Visualizer */}
                 <div className="border border-border border-t-2 border-t-accent-purple bg-bg-primary rounded overflow-hidden relative">
-                  <span className="absolute top-1.5 left-3 font-[family-name:var(--font-mono)] text-[8px] tracking-widest text-accent-purple/60">
+                  <span className="absolute top-1.5 left-3 font-mono text-[8px] tracking-widest text-accent-purple/60">
                     SIGNAL OUTPUT
                   </span>
                   <canvas ref={canvasRef} className="block w-full h-20" />
@@ -642,7 +642,7 @@ export default function NekaSoundPage() {
 
                 {/* Consonants Grid */}
                 <div>
-                  <h2 className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
+                  <h2 className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
                     {en ? "CONSONANTS (18) / SIGNAL-TYPE SOUND" : "자음 — CONSONANTS (18) / 신호 유형별 음향"}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-2">
@@ -658,7 +658,7 @@ export default function NekaSoundPage() {
 
                 {/* Vowels Grid */}
                 <div>
-                  <h2 className="font-[family-name:var(--font-mono)] text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
+                  <h2 className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase mb-3">
                     {en ? "VOWELS (12) / AXIS-BASED FREQUENCY" : "모음 — VOWELS (12) / 축 기반 주파수"}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -692,7 +692,7 @@ export default function NekaSoundPage() {
             <Link
               href="/archive/neka-language"
               aria-label={en ? "Back to Neka language article" : "네카 언어 문서로 돌아가기"}
-              className="font-[family-name:var(--font-mono)] text-xs text-accent-purple hover:underline tracking-wider"
+              className="font-mono text-xs text-accent-purple hover:underline tracking-wider"
             >
               ← {en ? "BACK TO NEKA LANGUAGE ARTICLE" : "네카 언어 문서로 돌아가기"}
             </Link>

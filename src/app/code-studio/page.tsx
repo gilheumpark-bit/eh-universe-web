@@ -17,7 +17,7 @@ function CodeStudioLoading() {
           className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-t-transparent mb-4"
           style={{ borderColor: "var(--color-accent-green)", borderTopColor: "transparent" }}
         />
-        <p className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-wider text-text-tertiary">
+        <p className="font-mono text-xs uppercase tracking-wider text-text-tertiary">
           {tcs.loading}
         </p>
       </div>

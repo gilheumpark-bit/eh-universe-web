@@ -64,7 +64,7 @@ function GuidelineSection({
 
   return (
     <div className={`rounded-2xl border ${borderColor} bg-white/[0.02] p-5`}>
-      <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber">
+      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent-amber">
         {L2(title, lang as "ko" | "en")}
       </div>
       <ul className="mt-4 space-y-2">
@@ -87,7 +87,7 @@ export default function GuidelinesPage() {
       <div className="site-shell space-y-8 py-8 md:space-y-10 md:py-10">
         <Link
           href="/network"
-          className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
+          className="inline-block font-mono text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
         >
           &larr; NETWORK
         </Link>
@@ -130,7 +130,7 @@ export default function GuidelinesPage() {
         </div>
 
         <section className="premium-panel p-6 md:p-8">
-          <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-amber">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent-amber">
             {L2({ ko: "최종 선언", en: "Final Declaration" }, lang)}
           </div>
           <blockquote className="mt-4 whitespace-pre-line text-lg font-medium leading-8 text-text-primary">

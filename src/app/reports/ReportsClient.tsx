@@ -139,7 +139,7 @@ function SubcategoryBadge({
   const cat = REPORT_CATEGORIES.find((c) => c.id === subcategory);
   if (!cat || cat.id === "all") return null;
   return (
-    <span className="font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-[0.14em] text-text-tertiary/60 border border-white/6 rounded px-1.5 py-0.5">
+    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-text-tertiary/60 border border-white/6 rounded px-1.5 py-0.5">
       {(lang === "ko" || lang === "jp" || lang === "cn") ? cat.label : cat.labelEn}
     </span>
   );
@@ -157,10 +157,10 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
     <div className="flex gap-2 mb-6">
       <Link
         href="/archive"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
           active === "archive"
             ? "bg-accent-amber/15 border border-accent-amber/30 text-accent-amber"
-            : "border border-white/8 text-text-tertiary hover:text-text-secondary hover:border-white/12"
+            : "border text-text-tertiary hover:text-text-secondary hover:border-white/12"
         }`}
       >
         <span aria-hidden="true">📁</span>
@@ -173,10 +173,10 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
       </Link>
       <Link
         href="/reports"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
           active === "reports"
             ? "bg-accent-red/15 border border-accent-red/30 text-accent-red"
-            : "border border-white/8 text-text-tertiary hover:text-text-secondary hover:border-white/12"
+            : "border text-text-tertiary hover:text-text-secondary hover:border-white/12"
         }`}
       >
         <span aria-hidden="true">📋</span>
@@ -232,7 +232,7 @@ export default function ReportsClient() {
 
   const classFilterColor = (f: ClassificationFilter, active: boolean) => {
     if (!active)
-      return "border border-white/8 text-text-tertiary hover:text-text-secondary hover:border-white/12";
+      return "border text-text-tertiary hover:text-text-secondary hover:border-white/12";
     switch (f) {
       case "CLASSIFIED":
         return "bg-accent-red/15 border border-accent-red/30 text-accent-red";
@@ -272,7 +272,7 @@ export default function ReportsClient() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveSubcategory(cat.id)}
-                    className={`rounded-full px-3.5 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] transition-all ${
+                    className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-all ${
                       activeSubcategory === cat.id
                         ? "bg-white/10 border border-white/20 text-text-primary"
                         : "border border-white/6 text-text-tertiary hover:text-text-secondary hover:border-white/10"
@@ -285,7 +285,7 @@ export default function ReportsClient() {
 
               {/* Classification filter */}
               <div className="flex flex-wrap items-center gap-1.5 mb-6">
-                <span className="font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-[0.18em] text-text-tertiary mr-2">
+                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-text-tertiary mr-2">
                   {L4(lang, {
                     ko: "등급",
                     en: "CLASS",
@@ -297,7 +297,7 @@ export default function ReportsClient() {
                   <button
                     key={f}
                     onClick={() => setClassFilter(f)}
-                    className={`rounded-full px-3 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] transition-all ${classFilterColor(f, classFilter === f)}`}
+                    className={`rounded-full px-3 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-all ${classFilterColor(f, classFilter === f)}`}
                   >
                     {f}{" "}
                     <span className="opacity-50">({levelCounts[f]})</span>
@@ -306,7 +306,7 @@ export default function ReportsClient() {
               </div>
 
               {/* Report count */}
-              <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-4">
                 {filtered.length}{" "}
                 {L4(lang, {
                   ko: "건",

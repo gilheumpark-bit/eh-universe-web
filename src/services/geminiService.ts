@@ -40,6 +40,7 @@ function getStructuredModel(): string {
 // 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
 const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+const STRUCTURED_FETCH_TIMEOUT_MS = 65_000;
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
   const payload = JSON.stringify({
@@ -62,7 +63,7 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     response = await fetch('/api/gemini-structured', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(35_000),
+      signal: AbortSignal.timeout(STRUCTURED_FETCH_TIMEOUT_MS),
       body: payload,
     });
   } catch (err) {

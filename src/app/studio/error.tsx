@@ -18,7 +18,7 @@ export default function StudioError({
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
       <div className="text-center space-y-4 p-8 max-w-md">
         <div className="text-4xl">⚠️</div>
-        <h2 className="text-lg font-black tracking-tighter uppercase font-[family-name:var(--font-mono)] text-text-primary">
+        <h2 className="text-lg font-black tracking-tighter uppercase font-mono text-text-primary">
           Studio Error
         </h2>
         <p className="text-sm text-text-secondary">
@@ -26,7 +26,7 @@ export default function StudioError({
         </p>
         <button
           onClick={reset}
-          className="px-6 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity"
+          className="px-6 py-2 bg-accent-purple text-white rounded-lg text-xs font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-opacity"
         >
           Retry
         </button>

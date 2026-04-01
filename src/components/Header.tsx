@@ -55,6 +55,8 @@ export default function Header() {
     setToolsFocusIdx(-1);
   }, []);
 
+  const toolItemCount = toolItems.length;
+
   useEffect(() => {
     if (toolsOpen && toolsFocusIdx >= 0 && toolItemRefs.current[toolsFocusIdx]) {
       toolItemRefs.current[toolsFocusIdx]?.focus();
@@ -66,11 +68,11 @@ export default function Header() {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setToolsFocusIdx(prev => (prev + 1) % toolItems.length);
+        setToolsFocusIdx(prev => (prev + 1) % toolItemCount);
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setToolsFocusIdx(prev => (prev - 1 + toolItems.length) % toolItems.length);
+        setToolsFocusIdx(prev => (prev - 1 + toolItemCount) % toolItemCount);
         break;
       case 'Escape':
         e.preventDefault();
@@ -82,10 +84,10 @@ export default function Header() {
         break;
       case 'End':
         e.preventDefault();
-        setToolsFocusIdx(toolItems.length - 1);
+        setToolsFocusIdx(toolItemCount - 1);
         break;
     }
-  }, [toolsOpen, closeToolsMenu]);
+  }, [toolsOpen, closeToolsMenu, toolItemCount]);
 
   const closeExploreMenu = useCallback(() => {
     setExploreOpen(false);

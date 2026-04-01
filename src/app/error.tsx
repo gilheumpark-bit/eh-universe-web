@@ -26,12 +26,12 @@ export default function Error({
       <main className="pt-14 flex-1 flex items-center justify-center">
         <div className="text-center px-4 py-20">
           <p
-            className="font-[family-name:var(--font-mono)] text-6xl font-bold tracking-tighter mb-4"
+            className="font-mono text-6xl font-bold tracking-tighter mb-4"
             style={{ color: "var(--color-accent-red)" }}
           >
             ERROR
           </p>
-          <p className="font-[family-name:var(--font-mono)] text-sm text-text-tertiary tracking-wider uppercase mb-2">
+          <p className="font-mono text-sm text-text-tertiary tracking-wider uppercase mb-2">
             {T({ ko: "시스템 오작동", en: "SYSTEM MALFUNCTION", jp: "システム障害", cn: "系统故障" })}
           </p>
           <p className="text-text-secondary text-sm mb-8 max-w-md mx-auto">
@@ -45,7 +45,7 @@ export default function Error({
           <button
             onClick={reset}
             aria-label={T({ ko: "재시도", en: "Retry — reset the page after error", jp: "リトライ", cn: "重试" })}
-            className="inline-block font-[family-name:var(--font-mono)] text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
+            className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
           >
             {T({ ko: "재시도", en: "RETRY", jp: "リトライ", cn: "重试" })}
           </button>

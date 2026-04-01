@@ -13,7 +13,7 @@ export default function StudioLoading() {
           className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4"
           style={{ borderColor: "var(--color-accent-purple)", borderTopColor: "transparent" }}
         />
-        <p className="font-[family-name:var(--font-mono)] text-xs text-text-tertiary tracking-wider uppercase">
+        <p className="font-mono text-xs text-text-tertiary tracking-wider uppercase">
           {L4(lang, {
             ko: '스튜디오 초기화 중...',
             en: 'INITIALIZING STUDIO...',
