@@ -78,3 +78,18 @@ scripts/migrate-*.mjs
 # Claude Code
 .claude/worktrees/
 .env*.local
+
+# Local IDE / agent state (do not commit)
+.gemini/settings.local.json
+.noa/sessions/
+
+# Root scratch outputs (regenerate locally)
+lint_output.txt
+ts_errors.txt
+diff.txt
+split-out.txt
+build_log.txt
+build-analyze-log.txt
+build-webpack-analyze-log.txt
+build-webpack-analyze.txt
+lint_report.json

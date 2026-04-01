@@ -29,12 +29,6 @@ const eslintConfig = defineConfig([
     // Test artifacts (may not exist locally)
     "test-results/**",
     "playwright-report/**",
-    // One-off local scripts (not shipped)
-    "fix_dow.js",
-    "replace_rule.js",
-    "split.ts",
-    "tier_patch.js",
-    "tmp-articles.cjs",
   ]),
 ]);
 

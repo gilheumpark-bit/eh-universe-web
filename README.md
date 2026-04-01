@@ -45,6 +45,8 @@ npm test             # Jest unit tests
 npm run test:e2e     # Playwright E2E
 ```
 
+서버 API·라우트 명세는 [`docs/API.md`](docs/API.md)를 본문으로 둡니다.
+
 ## EH Universe 포털
 
 세계관 탐색 포털 — 홈에서 스플래시 후 허브로 진입.
