@@ -5,8 +5,10 @@
 // ============================================================
 
 import { useState } from "react";
-import { Cpu, ToggleLeft, ToggleRight, BarChart3, Settings, Zap, Shield, Bot, Code2 } from "lucide-react";
+import { Cpu, ToggleLeft, ToggleRight, BarChart3, Settings } from "lucide-react";
 import { PROVIDERS, PROVIDER_LIST_UI, getApiKey, type ProviderId } from "@/lib/ai-providers";
+import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 export interface AIFeature {
   id: string;
@@ -33,20 +35,22 @@ interface AIHubProps {
 function ProviderCard({
   providerId,
   onConfigure,
+  lang,
 }: {
   providerId: ProviderId;
   onConfigure?: () => void;
+  lang: string;
 }) {
   const provider = PROVIDERS[providerId];
   const hasKey = !!getApiKey(providerId);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+    <div className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/2 px-3 py-2">
       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: provider.color }} />
       <div className="flex-1">
         <div className="text-sm text-white">{provider.name}</div>
         <div className="text-[10px] text-gray-500">
-          {hasKey ? "Configured" : "Not configured"} | {provider.capabilities.costTier}
+          {hasKey ? L4(lang, { ko: "설정됨", en: "Configured" }) : L4(lang, { ko: "미설정", en: "Not configured" })} | {provider.capabilities.costTier}
         </div>
       </div>
       <span className={`h-2 w-2 rounded-full ${hasKey ? "bg-green-400" : "bg-gray-600"}`} />
@@ -75,12 +79,14 @@ const CATEGORY_COLORS: Record<AIFeature["category"], string> = {
 function FeatureCard({
   feature,
   onToggle,
+  lang,
 }: {
   feature: AIFeature;
   onToggle: () => void;
+  lang: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-3">
+    <div className="flex items-start gap-3 rounded-lg border border-white/5 bg-white/2 p-3">
       <span className={CATEGORY_COLORS[feature.category]}>{feature.icon}</span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -90,7 +96,7 @@ function FeatureCard({
         <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{feature.description}</p>
         {feature.usageCount > 0 && (
           <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-gray-600">
-            <BarChart3 size={10} /> {feature.usageCount} uses
+            <BarChart3 size={10} /> {feature.usageCount} {L4(lang, { ko: "회 사용", en: "uses" })}
           </span>
         )}
       </div>
@@ -112,6 +118,7 @@ function FeatureCard({
 // ============================================================
 
 export default function AIHub({ features, onToggleFeature, onConfigureProvider }: AIHubProps) {
+  const { lang } = useLang();
   const [categoryFilter, setCategoryFilter] = useState<AIFeature["category"] | "all">("all");
 
   const categories: Array<AIFeature["category"] | "all"> = ["all", "generation", "analysis", "automation", "security"];
@@ -127,23 +134,24 @@ export default function AIHub({ features, onToggleFeature, onConfigureProvider }
       <div className="border-b border-white/5 px-4 py-3">
         <div className="flex items-center gap-2 text-white">
           <Cpu size={18} />
-          <h2 className="text-lg font-semibold">AI Hub</h2>
+          <h2 className="text-lg font-semibold">{L4(lang, { ko: "AI 허브", en: "AI Hub" })}</h2>
         </div>
         <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-          <span>{totalEnabled}/{features.length} features enabled</span>
-          <span>{totalUsage} total uses</span>
+          <span>{totalEnabled}/{features.length} {L4(lang, { ko: "개 기능 활성화됨", en: "features enabled" })}</span>
+          <span>{totalUsage} {L4(lang, { ko: "회 누적 사용", en: "total uses" })}</span>
         </div>
       </div>
 
       {/* Providers */}
       <div className="border-b border-white/5 p-4">
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Providers</h3>
+        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">{L4(lang, { ko: "제공자", en: "Providers" })}</h3>
         <div className="grid grid-cols-2 gap-2">
           {PROVIDER_LIST_UI.map((p) => (
             <ProviderCard
               key={p.id}
               providerId={p.id as ProviderId}
               onConfigure={onConfigureProvider ? () => onConfigureProvider(p.id as ProviderId) : undefined}
+              lang={lang}
             />
           ))}
         </div>
@@ -173,6 +181,7 @@ export default function AIHub({ features, onToggleFeature, onConfigureProvider }
             key={f.id}
             feature={f}
             onToggle={() => onToggleFeature(f.id, !f.enabled)}
+            lang={lang}
           />
         ))}
       </div>

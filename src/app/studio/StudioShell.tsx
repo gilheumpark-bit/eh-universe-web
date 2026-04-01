@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports
 // ============================================================
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useReducer } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { AppLanguage, AppTab, Project } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
@@ -92,7 +92,7 @@ export default function StudioShell() {
   const [charSubTab, setCharSubTab] = useState<'characters' | 'items'>('characters');
   // Use fixed initial value to prevent hydration mismatch, then sync from localStorage
   const [studioMode, setStudioMode] = useState<'guided' | 'free'>('guided');
-  const [studioModeHydrated, setStudioModeHydrated] = useState(false);
+  const [, setStudioModeHydrated] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // Hydrate studioMode from localStorage after mount
@@ -141,9 +141,45 @@ export default function StudioShell() {
     searchQuery, setSearchQuery,
   } = useStudioTheme();
 
-  const [archiveFilter, setArchiveFilter] = useState<string>('ALL');
-  const [archiveScope, setArchiveScope] = useState<'project' | 'all'>('project');
-  const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
+  // ── Combined UI State ──
+  type UiState = {
+    archiveFilter: string;
+    archiveScope: 'project' | 'all';
+    moveModal: { sessionId: string; others: Project[] } | null;
+    rightPanelOpen: boolean;
+    mobileDrawerOpen: boolean;
+    saveSlotModalOpen: boolean;
+    saveSlotName: string;
+    showGlobalSearch: boolean;
+    globalSearchQuery: string;
+  };
+  type UiAction = Partial<UiState> | ((prev: UiState) => Partial<UiState>);
+  const [uiState, dispatchUi] = useReducer((state: UiState, action: UiAction) => {
+    const next = typeof action === 'function' ? action(state) : action;
+    return { ...state, ...next };
+  }, {
+    archiveFilter: 'ALL',
+    archiveScope: 'project',
+    moveModal: null,
+    rightPanelOpen: true,
+    mobileDrawerOpen: false,
+    saveSlotModalOpen: false,
+    saveSlotName: '',
+    showGlobalSearch: false,
+    globalSearchQuery: '',
+  });
+  const { archiveFilter, archiveScope, moveModal, rightPanelOpen, mobileDrawerOpen, saveSlotModalOpen, showGlobalSearch, globalSearchQuery } = uiState;
+
+  const setArchiveFilter = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ archiveFilter: typeof v === 'function' ? v(s.archiveFilter) : v })), []);
+  const setArchiveScope = useCallback((v: 'project' | 'all' | ((prev: 'project' | 'all') => 'project' | 'all')) => dispatchUi((s: UiState) => ({ archiveScope: typeof v === 'function' ? v(s.archiveScope) : v })), []);
+  const setMoveModal = useCallback((v: { sessionId: string; others: Project[] } | null | ((prev: { sessionId: string; others: Project[] } | null) => { sessionId: string; others: Project[] } | null)) => dispatchUi((s: UiState) => ({ moveModal: typeof v === 'function' ? v(s.moveModal) : v })), []);
+  const setRightPanelOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ rightPanelOpen: typeof v === 'function' ? v(s.rightPanelOpen) : v })), []);
+  const setMobileDrawerOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ mobileDrawerOpen: typeof v === 'function' ? v(s.mobileDrawerOpen) : v })), []);
+  const setSaveSlotModalOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ saveSlotModalOpen: typeof v === 'function' ? v(s.saveSlotModalOpen) : v })), []);
+  const setSaveSlotName = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ saveSlotName: typeof v === 'function' ? v(s.saveSlotName) : v })), []);
+  const setShowGlobalSearch = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ showGlobalSearch: typeof v === 'function' ? v(s.showGlobalSearch) : v })), []);
+  const setGlobalSearchQuery = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ globalSearchQuery: typeof v === 'function' ? v(s.globalSearchQuery) : v })), []);
+
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   useEffect(() => {
@@ -294,10 +330,7 @@ export default function StudioShell() {
       localStorage.setItem('noa_writing_access', 'manual');
     }
   }, [hasAiAccess, aiCapabilitiesLoaded, setWritingMode]);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [saveSlotModalOpen, setSaveSlotModalOpen] = useState(false);
-  const [saveSlotName, setSaveSlotName] = useState('');
+
 
 
 
@@ -395,8 +428,7 @@ export default function StudioShell() {
   ) || [];
   const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
-  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
 
   useStudioKeyboard({
     onTabChange: handleTabChange,
@@ -417,12 +449,12 @@ export default function StudioShell() {
       if (showShortcuts) { setShowShortcuts(false); return; }
       if (showApiKeyModal) { setShowApiKeyModal(false); return; }
       if (confirmState.open) { closeConfirm(); return; }
-      if (saveSlotModalOpen) { setSaveSlotModalOpen(false); return; }
-      if (moveModal) { setMoveModal(null); return; }
+      if (saveSlotModalOpen) { dispatchUi({ saveSlotModalOpen: false }); return; }
+      if (moveModal) { dispatchUi({ moveModal: null }); return; }
       if (showQuickStartModal) { setShowQuickStartModal(false); return; }
-      if (showGlobalSearch) { setShowGlobalSearch(false); setGlobalSearchQuery(''); return; }
+      if (showGlobalSearch) { dispatchUi({ showGlobalSearch: false, globalSearchQuery: '' }); return; }
     },
-    onGlobalSearch: () => setShowGlobalSearch(prev => !prev),
+    onGlobalSearch: () => dispatchUi((s: UiState) => ({ showGlobalSearch: !s.showGlobalSearch })),
     disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 

@@ -28,10 +28,10 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
   --gradient-page: radial-gradient(circle at top left, rgba(92, 143, 214, 0.14), transparent 28%), radial-gradient(circle at top right, rgba(202, 161, 92, 0.16), transparent 32%), linear-gradient(180deg, #07090d 0%, #090d13 42%, #07090d 100%);
-  --font-sans: 'IBM Plex Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Hiragino Kaku Gothic ProN', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-document: 'IBM Plex Mono', monospace;
+  --font-sans: var(--font-ibm-plex-sans), var(--font-noto-sans-kr), 'Noto Sans JP', 'Noto Sans SC', 'Hiragino Kaku Gothic ProN', 'Microsoft YaHei', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'Fira Code', monospace;
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-document: var(--font-ibm-plex-mono), monospace;
 }
 
 /* ============================================================

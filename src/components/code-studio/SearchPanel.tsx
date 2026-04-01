@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useCallback, useRef, useDeferredValue } from "react";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import {
   Search, X, FileCode, ChevronDown, ChevronRight,
   Replace, History, Filter,
@@ -103,14 +104,8 @@ function escapeRegex(str: string): string {
 // ============================================================
 
 function FileGroup({
-  filePath, results, onOpenFile, showReplace, onReplace,
-}: {
-  filePath: string;
-  results: SearchResult[];
-  onOpenFile: (name: string, line?: number) => void;
-  showReplace?: boolean;
-  onReplace?: (fileName: string, line: number) => void;
-}) {
+  filePath, results, onOpenFile, showReplace, onReplace, lang
+}: FileGroupProps) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -135,10 +130,9 @@ function FileGroup({
             {showReplace && r.line && (
               <span
                 onClick={(e) => { e.stopPropagation(); onReplace?.(r.fileName, r.line); }}
-                className="text-[8px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400 opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0 cursor-pointer hover:bg-purple-500/30"
+                className="text-[8px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400 opacity-0 group-hover:opacity-100 ml-1 shrink-0 cursor-pointer hover:bg-purple-500/30"
               >
-                Replace
-              </span>
+                {L4(lang, { ko: "바꾸기", en: "Replace" })}</span>
             )}
           </button>
         </div>
@@ -153,6 +147,15 @@ function FileGroup({
 // PART 4 — SearchPanel Main Component
 // ============================================================
 
+interface FileGroupProps {
+  lang: string;
+  filePath: string;
+  results: SearchResult[];
+  onOpenFile: (name: string, line?: number) => void;
+  showReplace?: boolean;
+  onReplace?: (fileName: string, line: number) => void;
+}
+
 interface Props {
   files: FileNode[];
   onOpenFile: (name: string, line?: number) => void;
@@ -163,7 +166,6 @@ interface Props {
 
 export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onReplaceAll }: Props) {
   const { lang } = useLang();
-  const ko = lang === "ko";
   const [query, setQuery] = useState("");
   const [replaceText, setReplaceText] = useState("");
   const [showReplace, setShowReplace] = useState(false);
@@ -215,8 +217,8 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
   const matchSummary = useMemo(() => {
     const total = results.length;
     const fileCount = new Set(results.map((r) => r.filePath)).size;
-    return `${total} result${total !== 1 ? "s" : ""} in ${fileCount} file${fileCount !== 1 ? "s" : ""}`;
-  }, [results]);
+    return L4(lang, { ko: `${total}개의 결과 (${fileCount}개 파일)`, en: `${total} result${total !== 1 ? "s" : ""} in ${fileCount} file${fileCount !== 1 ? "s" : ""}` });
+  }, [results, lang]);
 
   // Group by file
   const grouped = useMemo(() => {
@@ -234,9 +236,8 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="text-xs font-semibold flex items-center gap-1 text-text-primary">
-          <Search size={12} /> Search
-        </span>
-        <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label="Close search">
+          <Search size={12} />{L4(lang, { ko: "검색", en: "Search" })}</span>
+        <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label={L4(lang, { ko: "검색 닫기", en: "Close search" })}>
           <X size={12} />
         </button>
       </div>
@@ -253,21 +254,21 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
               onKeyDown={handleSearchKeyDown}
               onFocus={() => searchHistory.length > 0 && setShowHistory(true)}
               onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-              placeholder="Search..."
+              placeholder={L4(lang, { ko: "검색...", en: "Search..." })}
               className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
               autoFocus
             />
             <button
               onClick={() => setShowHistory((v) => !v)}
               className="text-text-tertiary hover:text-text-primary"
-              title="Search history"
+              title={L4(lang, { ko: "검색 기록", en: "Search history" })}
             >
               <History size={10} />
             </button>
             <button
               onClick={() => setShowReplace((v) => !v)}
               className={`text-text-tertiary hover:text-text-primary ${showReplace ? "text-purple-400" : ""}`}
-              title="Toggle replace"
+              title={L4(lang, { ko: "바꾸기 전환", en: "Toggle replace" })}
             >
               <Replace size={10} />
             </button>
@@ -282,7 +283,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
                   onMouseDown={() => handleSelectHistory(item)}
                   className="w-full text-left px-2 py-1 text-xs hover:bg-white/5 truncate flex items-center gap-1 text-text-primary"
                 >
-                  <History size={8} className="text-text-tertiary flex-shrink-0" />
+                  <History size={8} className="text-text-tertiary shrink-0" />
                   {item}
                 </button>
               ))}
@@ -297,15 +298,13 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
             <input
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
-              placeholder="Replace with..."
+              placeholder={L4(lang, { ko: "바꿀 내용...", en: "Replace with..." })}
               className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
             />
             <button
               onClick={handleReplaceAll}
               className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
-            >
-              Replace All
-            </button>
+            >{L4(lang, { ko: "모두 바꾸기", en: "Replace All" })}</button>
           </div>
         )}
 
@@ -331,9 +330,9 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
               onClick={() => setShowFileTypeDropdown((v) => !v)}
               className={`flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded transition-colors
                 ${fileTypeFilter ? "bg-amber-500/20 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
-              title="File type filter"
+              title={L4(lang, { ko: "파일 형식 필터", en: "File type filter" })}
             >
-              <Filter size={8} /> {fileTypeFilter || "All Files"}
+              <Filter size={8} /> {fileTypeFilter || L4(lang, { ko: "모든 파일", en: "All Files" })}
             </button>
             {showFileTypeDropdown && (
               <div className="absolute right-0 top-full z-50 bg-bg-primary border border-white/8 rounded mt-0.5 shadow-lg">
@@ -343,7 +342,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
                     onClick={() => { setFileTypeFilter(ft.value); setShowFileTypeDropdown(false); }}
                     className={`w-full text-left px-3 py-1 text-[9px] hover:bg-white/5 ${fileTypeFilter === ft.value ? "text-purple-400" : "text-text-primary"}`}
                   >
-                    {ft.label}
+                    {ft.value === "" ? L4(lang, { ko: "모든 파일", en: "All Files" }) : ft.label}
                   </button>
                 ))}
               </div>
@@ -359,13 +358,14 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
       {/* Results */}
       <div className="flex-1 overflow-y-auto text-xs">
         {query.length < 2 ? (
-          <p className="text-center text-text-tertiary py-8">Type at least 2 characters</p>
+          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "2글자 이상 입력하세요", en: "Type at least 2 characters" })}</p>
         ) : results.length === 0 ? (
-          <p className="text-center text-text-tertiary py-8">{ko ? "일치하는 결과 없음" : "No matching results"}</p>
+          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "일치하는 결과 없음", en: "No matching results" })}</p>
         ) : (
           Array.from(grouped).map(([filePath, items]) => (
             <FileGroup
               key={filePath}
+              lang={lang}
               filePath={filePath}
               results={items}
               onOpenFile={onOpenFile}

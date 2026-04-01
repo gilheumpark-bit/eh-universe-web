@@ -147,28 +147,12 @@ describe('fetchStructuredGemini', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('retries on 5xx errors up to MAX_RETRIES then throws', async () => {
+  it('throws immediately on 5xx errors without client-side retry', async () => {
     const genre = uniqueGenre('5xx');
-    mockFetch
-      .mockResolvedValueOnce(errResponse(502))
-      .mockResolvedValueOnce(errResponse(503))
-      .mockResolvedValueOnce(errResponse(500, { error: 'Server down' }));
+    mockFetch.mockResolvedValueOnce(errResponse(500, { error: 'Server down' }));
 
     await expect(generateWorldDesign(genre)).rejects.toThrow('Server down');
-    // initial + 2 retries = 3 calls
-    expect(mockFetch).toHaveBeenCalledTimes(3);
-  });
-
-  it('recovers on retry when second attempt succeeds', async () => {
-    const genre = uniqueGenre('recover');
-    const data = { title: 'T', povCharacter: 'P', setting: 'S', primaryEmotion: 'E', synopsis: 'Syn' };
-    mockFetch
-      .mockResolvedValueOnce(errResponse(500))
-      .mockResolvedValueOnce(okJson(data));
-
-    const result = await generateWorldDesign(genre);
-    expect(result).toEqual(data);
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it('uses generic error message when response body parse fails', async () => {

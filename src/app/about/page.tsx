@@ -14,7 +14,7 @@ export default function AboutPage() {
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
           <div className="mx-auto max-w-3xl">
-            <div className="doc-header rounded-t-[24px] mb-0">
+            <div className="doc-header rounded-t-xl mb-0">
             <span className="badge badge-allow mr-2">ALLOW</span>
             {T({ ko: "문서 등급: PUBLIC — Level 0", en: "Document Level: PUBLIC — Level 0", jp: "文書等級: PUBLIC — Level 0", cn: "文档等级: PUBLIC — Level 0" })}
             </div>
@@ -23,7 +23,7 @@ export default function AboutPage() {
               <h1 className="site-title text-3xl font-bold tracking-tight mb-8">ABOUT</h1>
 
             <section className="mb-10">
-              <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {T({ ko: "프로젝트", en: "Project", jp: "プロジェクト", cn: "项目" })}
               </h2>
               <p className="text-text-secondary leading-relaxed mb-4">
@@ -32,13 +32,13 @@ export default function AboutPage() {
                   en: "EH Universe is a project that provides 66 million years of verified SF universe + an open-source narrative engine. Through the lore archive, rulebook, and world-building wiki, it helps creators build stories without narrative collapse.",
                 })}
               </p>
-              <p className="font-[family-name:var(--font-document)] text-sm text-text-tertiary italic">
+              <p className="font-[--font-document] text-sm text-text-tertiary italic">
                 &ldquo;{T({ ko: "이것을 사용하거나, 거짓말을 하거나. 셋째는 없다.", en: "Use this, or tell a lie. There is no third option." })}&rdquo;
               </p>
             </section>
 
             <section className="mb-10">
-              <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 EH Rulebook v1.0
               </h2>
               <p className="text-text-secondary leading-relaxed">
@@ -50,7 +50,7 @@ export default function AboutPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {T({ ko: "라이선스", en: "License", jp: "ライセンス", cn: "许可证" })}
               </h2>
               <div className="space-y-3 text-text-secondary text-sm">
@@ -68,25 +68,25 @@ export default function AboutPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {T({ ko: "링크", en: "Links", jp: "リンク", cn: "链接" })}
               </h2>
               <div className="space-y-3">
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer"
                   aria-label="GitHub Repository (opens in new tab)"
                   className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-amber hover:border-accent-amber/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200 text-sm border border-transparent">
-                  <span className="font-[family-name:var(--font-mono)] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> GitHub Repository
+                  <span className="font-[--font-mono] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> GitHub Repository
                 </a>
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web/issues/new" target="_blank" rel="noopener noreferrer"
                   aria-label="Report a bug (opens in new tab)"
                   className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-red hover:border-accent-red/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200 text-sm border border-transparent">
-                  <span className="font-[family-name:var(--font-mono)] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> Bug Report / 문제 제보
+                  <span className="font-[--font-mono] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> Bug Report / 문제 제보
                 </a>
               </div>
             </section>
 
             <section>
-              <h2 className="font-[family-name:var(--font-mono)] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
+              <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
                 {T({ ko: "연락처", en: "Contact", jp: "お問い合わせ", cn: "联系方式" })}
               </h2>
               <p className="text-text-secondary text-sm">
@@ -105,14 +105,14 @@ export default function AboutPage() {
                 { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open License" }) },
               ].map(({ value, label }) => (
                 <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center border border-transparent hover:border-accent-purple/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200">
-                  <div className="font-[family-name:var(--font-mono)] text-xl font-black text-accent-purple mb-1">{value}</div>
-                  <div className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">{label}</div>
+                  <div className="font-[--font-mono] text-xl font-black text-accent-purple mb-1">{value}</div>
+                  <div className="text-[11px] text-text-tertiary font-[--font-mono] uppercase tracking-wider">{label}</div>
                 </div>
               ))}
             </div>
 
             <div className="mt-8 border-t border-border pt-6">
-              <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
+              <p className="font-[--font-document] text-xs text-text-tertiary italic text-center">
                 &ldquo;{T({ ko: "삭제된 인원의 기록은 오타로 처리된다.", en: "Records of deleted personnel are processed as typos." })}&rdquo;
               </p>
             </div>

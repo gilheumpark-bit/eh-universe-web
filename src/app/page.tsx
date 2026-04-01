@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Globe, PenTool, Code2 } from "lucide-react";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
 import { useLang } from "@/lib/LangContext";
@@ -197,10 +196,10 @@ export default function Home() {
                 <h1 className="site-title mt-5 text-5xl font-bold leading-[0.94] sm:text-6xl md:text-7xl xl:text-[5.4rem]">
                   EH UNIVERSE
                 </h1>
-                <p className="mt-6 font-[family-name:var(--font-document)] text-lg leading-[1.95] text-text-secondary md:text-[1.24rem]">
+                <p className="mt-6 font-document text-lg leading-[1.95] text-text-secondary md:text-[1.24rem]">
                   {T({ ko: "은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색합니다.", en: "Explore the history, factions, technology, and geography of 200,000 planetary systems under the Galactic Central Council.", jp: "銀河中央評議会が管轄する20万惑星系の歴史、勢力、技術、地理をアーカイブで探索します。", cn: "探索银河中央议会管辖的20万星系的历史、派系、技术和地理档案。" })}
                 </p>
-                <p className="mt-5 font-[family-name:var(--font-mono)] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
+                <p className="mt-5 font-[--font-mono] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
                   {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", jp: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", cn: "档案库 · 网络 · 知识库 · 设定手册 · 参考" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -216,11 +215,11 @@ export default function Home() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 lg:w-80 lg:shrink-0">
                 {universeStats.map((item) => (
-                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/[0.06] hover:border-accent-amber/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
-                    <div className="font-[family-name:var(--font-display)] text-[2.4rem] font-bold leading-none text-text-primary">
+                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/6 hover:border-accent-amber/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
+                    <div className="font-display text-[2.4rem] font-bold leading-none text-text-primary">
                       {item.value}
                     </div>
-                    <p className="mt-3 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
+                    <p className="mt-3 font-[--font-mono] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
                       {item.label}
                     </p>
                   </div>
@@ -244,7 +243,7 @@ export default function Home() {
                   {T({ ko: "6개 분류, 109개 문서", en: "6 categories, 109 documents", jp: "6カテゴリ、109文書", cn: "6个分类，109个文档" })}
                 </h2>
               </div>
-              <Link href="/archive" className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
+              <Link href="/archive" className="font-[--font-mono] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
                 {T({ ko: "전체 보기 →", en: "View all →", jp: "全て見る →", cn: "查看全部 →" })}
               </Link>
             </div>
@@ -252,12 +251,12 @@ export default function Home() {
               {categories.map((cat) => (
                 <Link key={cat.id} href={`/archive?cat=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
                   <div>
-                    <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
-                    <h3 className="mt-1 font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors group-hover:text-accent-amber">
+                    <p className="font-[--font-mono] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
+                    <h3 className="mt-1 font-[--font-mono] text-sm font-semibold uppercase tracking-widest text-text-primary transition-colors group-hover:text-accent-amber">
                       {cat.label}
                     </h3>
                   </div>
-                  <span className="font-[family-name:var(--font-display)] text-2xl font-bold text-text-tertiary group-hover:text-accent-amber transition-colors">
+                  <span className="font-display text-2xl font-bold text-text-tertiary group-hover:text-accent-amber transition-colors">
                     {cat.count}
                   </span>
                 </Link>
@@ -287,16 +286,16 @@ export default function Home() {
                   <div className="pointer-events-none absolute inset-0">
                     <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
                   </div>
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-full border ${c.border} ${c.bg} font-[family-name:var(--font-mono)] text-xs tracking-[0.14em] ${c.text}`}>
+                  <span className={`flex h-11 w-11 items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] text-xs tracking-[0.14em] ${c.text}`}>
                     {hub.badge}
                   </span>
                   <div className="mt-4">
-                    <h3 className={`font-[family-name:var(--font-mono)] text-sm font-semibold uppercase tracking-[0.1em] text-text-primary transition-colors ${c.hoverText}`}>
+                    <h3 className={`font-[--font-mono] text-sm font-semibold uppercase tracking-widest text-text-primary transition-colors ${c.hoverText}`}>
                       {hub.title}
                     </h3>
                     <p className="mt-2 text-sm leading-7 text-text-secondary">{hub.desc}</p>
                   </div>
-                  <div className={`mt-4 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
+                  <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
                     {hub.meta} →
                   </div>
                 </>
@@ -348,16 +347,16 @@ export default function Home() {
         <div className="site-shell">
           {/* gradient divider */}
           <div className="mx-auto mb-8 h-px w-2/3 bg-[linear-gradient(90deg,transparent,rgba(202,161,92,0.22),transparent)]" />
-          <div className="premium-panel-soft flex flex-col items-center gap-5 rounded-[24px] px-6 py-7 sm:flex-row sm:justify-between">
+          <div className="premium-panel-soft flex flex-col items-center gap-5 rounded-xl px-6 py-7 sm:flex-row sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 font-[--font-mono] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
                 EH
               </span>
-              <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.16em] text-text-tertiary">
+              <p className="font-[--font-mono] text-xs tracking-[0.16em] text-text-tertiary">
                 EH UNIVERSE · CC-BY-NC-4.0
               </p>
             </div>
-            <p className="font-[family-name:var(--font-document)] text-xs italic text-text-tertiary">
+            <p className="font-document text-xs italic text-text-tertiary">
               {T({ ko: "세계관을 탐색하고, 이야기를 만든다.", en: "Explore the universe. Build the story.", jp: "世界観を探索し、物語を作る。", cn: "探索世界观，创造故事。" })}
             </p>
           </div>

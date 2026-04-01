@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -160,7 +161,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         setSubmitting(false);
       }
     },
-    [editDraft, lang],
+    [editDraft, lang, user],
   );
 
   const handleDelete = useCallback(
@@ -173,7 +174,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment." }));
       }
     },
-    [lang],
+    [lang, user],
   );
 
   const sortedComments = useMemo(
@@ -183,7 +184,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
 
   return (
     <section className="space-y-4">
-      <h3 className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-accent-purple">
+      <h3 className="font-[--font-mono] text-[10px] uppercase tracking-[0.2em] text-accent-purple">
         {L2(LABELS.title, lang)} ({comments.length})
       </h3>
 
@@ -194,7 +195,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       {user ? (
         <div className="space-y-2">
           <textarea
-            className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none"
+            className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none"
             rows={3}
             maxLength={2000}
             placeholder={L2(LABELS.placeholder, lang)}
@@ -233,12 +234,17 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         <p className="text-sm text-text-tertiary">{L2(LABELS.noComments, lang)}</p>
       ) : (
         <div className="space-y-3">
-          {sortedComments.map((comment, idx) => (
+          {sortedComments.map((comment) => (
             <div key={comment.id} className="premium-panel-soft p-4">
               <div className="flex items-center gap-2">
                 {comment.authorPhoto ? (
-                  /* eslint-disable-next-line @next/next/no-img-element -- external user avatar URL */
-                  <img src={comment.authorPhoto} alt={`${comment.authorName} 프로필`} className="h-5 w-5 rounded-full" />
+                  <Image
+                    src={comment.authorPhoto}
+                    alt={`${comment.authorName} 프로필`}
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 rounded-full object-cover"
+                  />
                 ) : null}
                 <span className="text-xs font-medium text-text-primary">{comment.authorName}</span>
                 <span className="text-xs text-text-tertiary">
@@ -252,7 +258,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
               {editingId === comment.id ? (
                 <div className="mt-2 space-y-2">
                   <textarea
-                    className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary focus:border-accent-purple/40 focus:outline-none"
+                    className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-2 text-sm text-text-primary focus:border-accent-purple/40 focus:outline-none"
                     rows={2}
                     maxLength={2000}
                     value={editDraft}

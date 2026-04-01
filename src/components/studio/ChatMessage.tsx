@@ -10,9 +10,12 @@ interface ChatMessageProps {
   language?: AppLanguage;
   onRegenerate?: (messageId: string) => void;
   onAutoFix?: (messageId: string) => void;
+  isCompact?: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onRegenerate, onAutoFix }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, language = 'KO', onRegenerate, onAutoFix, isCompact 
+}) => {
   const isUser = message.role === 'user';
   const [showDetail, setShowDetail] = React.useState(false);
 
@@ -66,11 +69,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
   const displayCritique = analysisData?.critique ?? null;
 
   return (
-    <div className={`flex w-full gap-3 md:gap-4 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border shadow-lg ${
-        isUser ? 'bg-bg-tertiary border-border' : 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-500'
+    <div className={`flex w-full ${isCompact ? 'gap-2' : 'gap-3 md:gap-4'} group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`shrink-0 ${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg flex items-center justify-center border shadow-lg ${
+        isUser ? 'bg-bg-tertiary border-border' : 'bg-linear-to-br from-blue-600 to-blue-800 border-blue-500'
       }`}>
-        {isUser ? <User className="w-4 h-4 text-text-tertiary" /> : <Bot className="w-4 h-4 text-white" />}
+        {isUser ? <User className={isCompact ? 'w-3 h-3 text-text-tertiary' : 'w-4 h-4 text-text-tertiary'} /> : <Bot className={isCompact ? 'w-3 h-3 text-white' : 'w-4 h-4 text-white'} />}
       </div>
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
@@ -85,17 +88,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             : 'bg-transparent text-zinc-200'
         }`}>
           {isUser ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{mainContent}</p>
+            <p className={`${isCompact ? 'text-[11px]' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>{mainContent}</p>
           ) : (
-            <div className="prose prose-sm sm:prose-base prose-invert max-w-none break-words prose-p:font-serif prose-p:text-text-secondary prose-p:leading-[1.8]">
+            <div className={`prose ${isCompact ? 'prose-xs' : 'prose-sm sm:prose-base'} prose-invert max-w-none break-words prose-p:font-serif prose-p:text-text-secondary prose-p:leading-[1.8]`}>
               <ReactMarkdown
                 skipHtml
                 rehypePlugins={[rehypeSanitize]}
                 disallowedElements={['script', 'iframe', 'object', 'embed', 'form']}
                 components={{
-                  p: (props) => <p className="mb-6 last:mb-0" {...props} />,
-                  h1: (props) => <h1 className="text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase" {...props} />,
-                  hr: () => <div className="my-10 h-px bg-border"></div>,
+                  p: (props) => <p className={isCompact ? "mb-2 last:mb-0" : "mb-6 last:mb-0"} {...props} />,
+                  h1: (props) => <h1 className={isCompact ? "text-sm font-black text-white mt-4 mb-2 border-l border-blue-600 pl-2 uppercase" : "text-xl font-black text-white mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase"} {...props} />,
+                  hr: () => <div className={isCompact ? "my-4 h-px bg-border" : "my-10 h-px bg-border"}></div>,
                   pre: (props) => <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-2xl border border-border bg-bg-primary/70 p-4 text-xs text-text-secondary" {...props} />,
                   code: (props) => <code className="break-words whitespace-pre-wrap" {...props} />
                 }}
@@ -105,8 +108,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             </div>
           )}
 
-          {/* Engine Report Badges (from structured report) */}
-          {!isUser && report && (
+          {/* Engine Report Badges — Hide in compact mode */}
+          {!isUser && report && !isCompact && (
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600/10 border border-blue-500/20 rounded-lg text-[9px] font-black text-blue-400">
                 {report.grade}
@@ -214,8 +217,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, language = 'KO', onR
             </div>
           )}
 
-          {/* Analysis Report (from structured report OR JSON fallback) */}
-          {!isUser && (displayGrade || displayMetrics) && (
+          {/* Analysis Report — Hide in compact mode */}
+          {!isUser && (displayGrade || displayMetrics) && !isCompact && (
             <div className="mt-8 p-4 md:p-6 bg-bg-secondary/50 border border-border rounded-2xl space-y-4 animate-in fade-in duration-500">
               <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
                 <div className="flex items-center gap-2"><Activity className="w-3 h-3 text-blue-500" /> Engine Report</div>

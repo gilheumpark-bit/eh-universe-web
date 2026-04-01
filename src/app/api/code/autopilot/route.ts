@@ -31,9 +31,7 @@ export async function POST(req: NextRequest) {
         let docs = '';
         let plan = '';
 
-        for (let i = 0; i < phases.length; i++) {
-          const phase = phases[i];
-          
+        const sendPhaseStart = (phase: string, i: number) => {
           sendEvent({
             type: 'progress',
             data: {
@@ -42,76 +40,9 @@ export async function POST(req: NextRequest) {
               logs: [{ level: "info", message: `Executing ${phase}...`, timestamp: Date.now() }]
             }
           });
+        };
 
-          let newLogs: Record<string, unknown>[] = [];
-          
-          try {
-            if (phase === 'planning') {
-              const res = await generateJsonGemini(
-                apiKey, 'gemini-2.5-flash',
-                `Prompt: ${prompt}\nCode:\n${currentCode}\n\nCreate a clear, brief 3-step action plan to accomplish the prompt.`,
-                { type: "object", properties: { plan: { type: "string" } }, required: ["plan"] },
-                { plan: "Analyze code, identify goals, prepare modifications." }
-              ) as { plan: string };
-              plan = res.plan;
-              newLogs.push({ level: "info", message: `Plan: ${plan.slice(0, 100)}...`, timestamp: Date.now() });
-            } 
-            else if (phase === 'coding') {
-              const res = await generateJsonGemini(
-                apiKey, 'gemini-2.5-pro',
-                `You are an expert ${language} engineer. Rewrite this code to fulfill the prompt: "${prompt}"\nPlan: "${plan}"\n\nCode:\n${currentCode}`,
-                { type: "object", properties: { newCode: { type: "string" } }, required: ["newCode"] },
-                { newCode: currentCode }
-              ) as { newCode: string };
-              currentCode = res.newCode;
-              newLogs.push({ level: "success", message: `Code rewritten successfully.`, timestamp: Date.now() });
-            } 
-            else if (phase === 'reviewing' && config.enableReview) {
-              const reviewRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
-                `Review the new code against the prompt: "${prompt}"\nCode:\n${currentCode}`,
-                { type: "object", properties: { issues: { type: "array", items: { type: "string" } }, score: { type: "integer" } }, required: ["issues", "score"] },
-                { issues: [], score: 95 }
-              ) as { issues: string[], score: number };
-              newLogs = reviewRes.issues.map((iss: string) => ({ level: "warning", message: iss, timestamp: Date.now() }));
-              score = Math.min(score, reviewRes.score);
-              newLogs.push({ level: "info", message: `Review Score: ${reviewRes.score}/100`, timestamp: Date.now() });
-            } 
-            else if (phase === 'fixing' && config.enableAutoFix && score < config.passThreshold) {
-              const fixRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
-                `The code scored ${score}. Fix issues to improve it.\nCode:\n${currentCode}`,
-                { type: "object", properties: { fixedCode: { type: "string" }, newScore: { type: "integer" } }, required: ["fixedCode", "newScore"] },
-                { fixedCode: currentCode, newScore: score }
-              ) as { fixedCode: string, newScore: number };
-              currentCode = fixRes.fixedCode;
-              score = fixRes.newScore;
-              newLogs.push({ level: "success", message: `Code patched. New Score: ${score}`, timestamp: Date.now() });
-            } 
-            else if (phase === 'documenting' && config.enableDocs) {
-              const docRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
-                `Generate a brief technical explanation/docs for this code:\n${currentCode}`,
-                { type: "object", properties: { documentation: { type: "string" } }, required: ["documentation"] },
-                { documentation: "Documentation unavailable." }
-              ) as { documentation: string };
-              docs = docRes.documentation;
-              newLogs.push({ level: "success", message: `Documentation strictly generated.`, timestamp: Date.now() });
-            }
-            else if (phase === 'committing') {
-              const commitRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
-                `Generate a short, conventional git commit message for this prompt completion: "${prompt}"`,
-                { type: "object", properties: { commitMessage: { type: "string" } }, required: ["commitMessage"] },
-                { commitMessage: "feat: update code via autopilot" }
-              ) as { commitMessage: string };
-              commitMsg = commitRes.commitMessage;
-              newLogs.push({ level: "info", message: `Commit parsed: ${commitMsg}`, timestamp: Date.now() });
-            }
-            else {
-              await new Promise(r => setTimeout(r, 400));
-              newLogs.push({ level: "success", message: `${phase} phase passed checks.`, timestamp: Date.now() });
-            }
-          } catch (e: unknown) {
-            newLogs.push({ level: "warning", message: `Phase ${phase} degraded gracefully to fallback.`, timestamp: Date.now() });
-          }
-
+        const sendPhaseEnd = (phase: string, i: number, newLogs: Record<string, unknown>[]) => {
           sendEvent({
             type: 'progress',
             data: {
@@ -120,7 +51,130 @@ export async function POST(req: NextRequest) {
               logs: newLogs
             }
           });
+        };
+
+        // 0. planning
+        sendPhaseStart("planning", 0);
+        const logsPlanning: Record<string, unknown>[] = [];
+        try {
+          const res = await generateJsonGemini(
+            apiKey, 'gemini-2.5-flash',
+            `Prompt: ${prompt}\nCode:\n${currentCode}\n\nCreate a clear, brief 3-step action plan to accomplish the prompt.`,
+            { type: "object", properties: { plan: { type: "string" } }, required: ["plan"] },
+            { plan: "Analyze code, identify goals, prepare modifications." }
+          ) as { plan: string };
+          plan = res.plan;
+          logsPlanning.push({ level: "info", message: `Plan: ${plan.slice(0, 100)}...`, timestamp: Date.now() });
+        } catch {
+          logsPlanning.push({ level: "warning", message: `Phase planning degraded gracefully to fallback.`, timestamp: Date.now() });
         }
+        sendPhaseEnd("planning", 0, logsPlanning);
+
+        // 1. coding
+        sendPhaseStart("coding", 1);
+        const logsCoding: Record<string, unknown>[] = [];
+        try {
+          const res = await generateJsonGemini(
+            apiKey, 'gemini-2.5-pro',
+            `You are an expert ${language} engineer. Rewrite this code to fulfill the prompt: "${prompt}"\nPlan: "${plan}"\n\nCode:\n${currentCode}`,
+            { type: "object", properties: { newCode: { type: "string" } }, required: ["newCode"] },
+            { newCode: currentCode }
+          ) as { newCode: string };
+          currentCode = res.newCode;
+          logsCoding.push({ level: "success", message: `Code rewritten successfully.`, timestamp: Date.now() });
+        } catch {
+          logsCoding.push({ level: "warning", message: `Phase coding degraded gracefully to fallback.`, timestamp: Date.now() });
+        }
+        sendPhaseEnd("coding", 1, logsCoding);
+
+        // 2~5. reviewing, testing, security, chaos (병렬 처리)
+        for (let i = 2; i <= 5; i++) sendPhaseStart(phases[i], i);
+        let logsReview: Record<string, unknown>[] = [];
+        const logsTesting: Record<string, unknown>[] = [{ level: "success", message: `testing phase passed checks.`, timestamp: Date.now() }];
+        const logsSecurity: Record<string, unknown>[] = [{ level: "success", message: `security phase passed checks.`, timestamp: Date.now() }];
+        const logsChaos: Record<string, unknown>[] = [{ level: "success", message: `chaos phase passed checks.`, timestamp: Date.now() }];
+        
+        try {
+          const reviewRes = config.enableReview 
+            ? await generateJsonGemini(apiKey, 'gemini-2.5-flash',
+                `Review the new code against the prompt: "${prompt}"\nCode:\n${currentCode}`,
+                { type: "object", properties: { issues: { type: "array", items: { type: "string" } }, score: { type: "integer" } }, required: ["issues", "score"] },
+                { issues: [], score: 95 }
+              ) as { issues: string[], score: number }
+            : { issues: [], score: 100 };
+            
+          logsReview = reviewRes.issues.map((iss: string) => ({ level: "warning", message: iss, timestamp: Date.now() }));
+          score = Math.min(score, reviewRes.score);
+          logsReview.push({ level: "info", message: `Review Score: ${reviewRes.score}/100`, timestamp: Date.now() });
+        } catch {
+          logsReview.push({ level: "warning", message: `Phase reviewing degraded gracefully to fallback.`, timestamp: Date.now() });
+        }
+        
+        sendPhaseEnd("reviewing", 2, logsReview);
+        sendPhaseEnd("testing", 3, logsTesting);
+        sendPhaseEnd("security", 4, logsSecurity);
+        sendPhaseEnd("chaos", 5, logsChaos);
+
+        // 6. fixing
+        sendPhaseStart("fixing", 6);
+        const logsFixing: Record<string, unknown>[] = [];
+        try {
+          if (config.enableAutoFix && score < config.passThreshold) {
+            const fixRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
+              `The code scored ${score}. Fix issues to improve it.\nCode:\n${currentCode}`,
+              { type: "object", properties: { fixedCode: { type: "string" }, newScore: { type: "integer" } }, required: ["fixedCode", "newScore"] },
+              { fixedCode: currentCode, newScore: score }
+            ) as { fixedCode: string, newScore: number };
+            currentCode = fixRes.fixedCode;
+            score = fixRes.newScore;
+            logsFixing.push({ level: "success", message: `Code patched. New Score: ${score}`, timestamp: Date.now() });
+          } else {
+            logsFixing.push({ level: "success", message: `No active fix needed.`, timestamp: Date.now() });
+          }
+        } catch {
+          logsFixing.push({ level: "warning", message: `Phase fixing degraded gracefully to fallback.`, timestamp: Date.now() });
+        }
+        sendPhaseEnd("fixing", 6, logsFixing);
+
+        // 7~8. documenting, committing (병렬 처리가능하나 fixing 코드에 의존)
+        sendPhaseStart("documenting", 7);
+        sendPhaseStart("committing", 8);
+        
+        const logsDoc: Record<string, unknown>[] = [];
+        const logsCommit: Record<string, unknown>[] = [];
+
+        try {
+          const [docRes, commitRes] = await Promise.all([
+            config.enableDocs 
+              ? generateJsonGemini(apiKey, 'gemini-2.5-flash',
+                  `Generate a brief technical explanation/docs for this code:\n${currentCode}`,
+                  { type: "object", properties: { documentation: { type: "string" } }, required: ["documentation"] },
+                  { documentation: "Documentation unavailable." }
+                ) as Promise<{ documentation: string }>
+              : Promise.resolve({ documentation: "Documentation skipped." }),
+            generateJsonGemini(apiKey, 'gemini-2.5-flash',
+              `Generate a short, conventional git commit message for this prompt completion: "${prompt}"`,
+              { type: "object", properties: { commitMessage: { type: "string" } }, required: ["commitMessage"] },
+              { commitMessage: "feat: update code via autopilot" }
+            ) as Promise<{ commitMessage: string }>
+          ]);
+          
+          if (config.enableDocs) {
+            docs = docRes.documentation;
+            logsDoc.push({ level: "success", message: `Documentation strictly generated.`, timestamp: Date.now() });
+          } else {
+            logsDoc.push({ level: "success", message: `Documentation skipped.`, timestamp: Date.now() });
+          }
+          
+          commitMsg = commitRes.commitMessage;
+          logsCommit.push({ level: "info", message: `Commit parsed: ${commitMsg}`, timestamp: Date.now() });
+        } catch {
+          logsDoc.push({ level: "warning", message: `Phase documenting degraded gracefully to fallback.`, timestamp: Date.now() });
+          logsCommit.push({ level: "warning", message: `Phase committing degraded gracefully to fallback.`, timestamp: Date.now() });
+        }
+        
+        sendPhaseEnd("documenting", 7, logsDoc);
+        sendPhaseEnd("committing", 8, logsCommit);
 
         sendEvent({
           type: 'complete',

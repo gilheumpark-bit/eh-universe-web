@@ -11,6 +11,8 @@ import {
   Settings, RotateCcw, Shield, Zap, Bug, Wrench, BookOpen,
   GitCommit, BrainCircuit, Eye, FlaskConical,
 } from "lucide-react";
+import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 export interface AutopilotConfig {
   enableReview: boolean;
@@ -71,16 +73,16 @@ interface Props {
 // PART 2 — Phase Metadata & Helpers
 // ============================================================
 
-const PHASE_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  planning:    { label: "Director",   icon: <BrainCircuit size={14} />, color: "#58a6ff" },
-  coding:      { label: "Coding",     icon: <Zap size={14} />,          color: "#3fb950" },
-  reviewing:   { label: "Review",     icon: <Eye size={14} />,          color: "#d29922" },
-  testing:     { label: "Testing",    icon: <FlaskConical size={14} />, color: "#bc8cff" },
-  security:    { label: "Security",   icon: <Shield size={14} />,       color: "#f85149" },
-  chaos:       { label: "Chaos",      icon: <Bug size={14} />,          color: "#f85149" },
-  fixing:      { label: "Fixing",     icon: <Wrench size={14} />,       color: "#58a6ff" },
-  documenting: { label: "Docs",       icon: <BookOpen size={14} />,     color: "#3fb950" },
-  committing:  { label: "Commit",     icon: <GitCommit size={14} />,    color: "#bc8cff" },
+const PHASE_META: Record<string, { ko: string; en: string; icon: React.ReactNode; color: string }> = {
+  planning:    { ko: "디렉터",   en: "Director",   icon: <BrainCircuit size={14} />, color: "#58a6ff" },
+  coding:      { ko: "코딩",     en: "Coding",     icon: <Zap size={14} />,          color: "#3fb950" },
+  reviewing:   { ko: "리뷰",     en: "Review",     icon: <Eye size={14} />,          color: "#d29922" },
+  testing:     { ko: "테스트",   en: "Testing",    icon: <FlaskConical size={14} />, color: "#bc8cff" },
+  security:    { ko: "보안",     en: "Security",   icon: <Shield size={14} />,       color: "#f85149" },
+  chaos:       { ko: "카오스",   en: "Chaos",      icon: <Bug size={14} />,          color: "#f85149" },
+  fixing:      { ko: "수정",     en: "Fixing",     icon: <Wrench size={14} />,       color: "#58a6ff" },
+  documenting: { ko: "문서화",   en: "Docs",       icon: <BookOpen size={14} />,     color: "#3fb950" },
+  committing:  { ko: "커밋",     en: "Commit",     icon: <GitCommit size={14} />,    color: "#bc8cff" },
 };
 
 const PHASE_ORDER: AutopilotPhase[] = [
@@ -158,6 +160,7 @@ function ScoreCard({ label, score, icon }: { label: string; score: number; icon:
 // ============================================================
 
 export function AutopilotPanel({ code, language, fileName, onComplete, onClose }: Props) {
+  const { lang } = useLang();
   const [prompt, setPrompt] = useState("");
   const [config, setConfig] = useState<AutopilotConfig>(getDefaultConfig());
   const [showConfig, setShowConfig] = useState(false);
@@ -211,12 +214,14 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                   setRunning(false);
                   onComplete(payload.data);
                 }
-              } catch (e) {}
+              } catch {
+                // Ignore parse errors
+              }
             }
           }
         }
       }
-    } catch (e) {
+    } catch {
       setRunning(false);
     }
   }, [prompt, running, config, code, language, fileName, onComplete]);
@@ -235,8 +240,8 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
-          <Rocket size={14} className="text-purple-400" /> Full Autopilot
-          {running && <span className="flex items-center gap-1 text-blue-400"><Loader2 size={10} className="animate-spin" />Running</span>}
+          <Rocket size={14} className="text-purple-400" /> {L4(lang, { ko: "풀 오토파일럿", en: "Full Autopilot" })}
+          {running && <span className="flex items-center gap-1 text-blue-400"><Loader2 size={10} className="animate-spin" />{L4(lang, { ko: "실행 중", en: "Running" })}</span>}
           {result?.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/15 text-green-400">PASSED</span>}
           {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400">BELOW</span>}
         </span>
@@ -252,27 +257,27 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
         {!running && !result && (
           <div className="p-3 space-y-3">
             <textarea className="w-full h-24 px-3 py-2 text-xs bg-[#010409] border border-[#30363d] rounded-lg resize-none focus:outline-none focus:border-blue-500 text-[#e6edf3] placeholder:text-[#8b949e]"
-              placeholder="Describe what you want to build or fix..." value={prompt}
+              placeholder={L4(lang, { ko: "만들거나 수정할 내용을 설명하세요...", en: "Describe what you want to build or fix..." })} value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleStart(); }}
             />
             <div className="flex items-center justify-between">
               <button onClick={() => setShowConfig(!showConfig)} className="flex items-center gap-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]">
-                <Settings size={10} /> {showConfig ? "Hide Config" : "Config"} {showConfig ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                <Settings size={10} /> {showConfig ? L4(lang, { ko: "설정 숨기기", en: "Hide Config" }) : L4(lang, { ko: "설정", en: "Config" })} {showConfig ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
               </button>
               <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500 text-white hover:opacity-90 disabled:opacity-40 transition-opacity">
-                <Play size={12} /> Start Autopilot
+                <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot" })}
               </button>
             </div>
             {showConfig && (
               <div className="grid grid-cols-2 gap-2 p-2 bg-[#010409] rounded-lg border border-[#30363d]">
-                <ConfigToggle label="Consensus Review" checked={config.enableReview} onChange={(v) => setConfig({ ...config, enableReview: v })} />
-                <ConfigToggle label="Stress Test" checked={config.enableStressTest} onChange={(v) => setConfig({ ...config, enableStressTest: v })} />
-                <ConfigToggle label="Chaos Analysis" checked={config.enableChaos} onChange={(v) => setConfig({ ...config, enableChaos: v })} />
-                <ConfigToggle label="Auto Fix" checked={config.enableAutoFix} onChange={(v) => setConfig({ ...config, enableAutoFix: v })} />
-                <ConfigToggle label="Documentation" checked={config.enableDocs} onChange={(v) => setConfig({ ...config, enableDocs: v })} />
+                <ConfigToggle label={L4(lang, { ko: "합의 리뷰", en: "Consensus Review" })} checked={config.enableReview} onChange={(v) => setConfig({ ...config, enableReview: v })} />
+                <ConfigToggle label={L4(lang, { ko: "스트레스 테스트", en: "Stress Test" })} checked={config.enableStressTest} onChange={(v) => setConfig({ ...config, enableStressTest: v })} />
+                <ConfigToggle label={L4(lang, { ko: "카오스 분석", en: "Chaos Analysis" })} checked={config.enableChaos} onChange={(v) => setConfig({ ...config, enableChaos: v })} />
+                <ConfigToggle label={L4(lang, { ko: "자동 수정", en: "Auto Fix" })} checked={config.enableAutoFix} onChange={(v) => setConfig({ ...config, enableAutoFix: v })} />
+                <ConfigToggle label={L4(lang, { ko: "문서화", en: "Documentation" })} checked={config.enableDocs} onChange={(v) => setConfig({ ...config, enableDocs: v })} />
                 <div className="flex items-center gap-2 text-[10px] text-[#8b949e]">
-                  <span>Threshold</span>
+                  <span>{L4(lang, { ko: "기준점", en: "Threshold" })}</span>
                   <input type="number" min={0} max={100} value={config.passThreshold}
                     onChange={(e) => setConfig({ ...config, passThreshold: Number(e.target.value) })}
                     className="w-12 px-1 py-0.5 bg-[#0d1117] border border-[#30363d] rounded text-[10px] text-center text-[#e6edf3]" />
@@ -291,9 +296,9 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                 const isCurrent = progress.phaseIndex === i;
                 const isDone = progress.phaseIndex > i || progress.phase === "complete";
                 return (
-                  <div key={phase} className="flex-1 flex flex-col items-center gap-1" title={meta.label}>
+                  <div key={phase} className="flex-1 flex flex-col items-center gap-1" title={L4(lang, { ko: meta.ko, en: meta.en })}>
                     <div className={`w-full h-1 rounded-full transition-all ${isDone ? "bg-green-400" : isCurrent ? "bg-blue-400" : "bg-[#30363d]"}`} />
-                    <span className={`text-[8px] ${isCurrent ? "text-[#e6edf3] font-semibold" : "text-[#8b949e]"}`}>{meta.label.slice(0, 4)}</span>
+                    <span className={`text-[8px] ${isCurrent ? "text-[#e6edf3] font-semibold" : "text-[#8b949e] truncate overflow-hidden"}`}>{L4(lang, { ko: meta.ko, en: meta.en }).slice(0, 4)}</span>
                   </div>
                 );
               })}
@@ -323,17 +328,17 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
         {result && (
           <div className="p-3 space-y-3 border-t border-[#30363d]">
             <div className="grid grid-cols-4 gap-2">
-              <ScoreCard label="Pipeline" score={result.pipelineScore} icon={<Shield size={12} />} />
-              {result.reviewConsensus && <ScoreCard label="Review" score={result.reviewConsensus.score} icon={<Eye size={12} />} />}
-              {result.stressTestScore != null && <ScoreCard label="Stress" score={result.stressTestScore} icon={<FlaskConical size={12} />} />}
-              {result.chaosResilience != null && <ScoreCard label="Chaos" score={result.chaosResilience} icon={<Bug size={12} />} />}
+              <ScoreCard label={L4(lang, { ko: "파이프라인", en: "Pipeline" })} score={result.pipelineScore} icon={<Shield size={12} />} />
+              {result.reviewConsensus && <ScoreCard label={L4(lang, { ko: "리뷰", en: "Review" })} score={result.reviewConsensus.score} icon={<Eye size={12} />} />}
+              {result.stressTestScore != null && <ScoreCard label={L4(lang, { ko: "스트레스", en: "Stress" })} score={result.stressTestScore} icon={<FlaskConical size={12} />} />}
+              {result.chaosResilience != null && <ScoreCard label={L4(lang, { ko: "카오스", en: "Chaos" })} score={result.chaosResilience} icon={<Bug size={12} />} />}
             </div>
             {result.files.length > 0 && (
               <div className="bg-[#010409] rounded-lg border border-[#30363d]">
                 <button onClick={() => setExpandedFiles(!expandedFiles)}
                   className="flex items-center gap-2 w-full px-2 py-1.5 text-[10px] text-[#e6edf3] hover:bg-[#21262d]">
                   {expandedFiles ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                  {result.files.length} file(s) changed
+                  {result.files.length} {L4(lang, { ko: "개 파일 변경됨", en: "file(s) changed" })}
                 </button>
                 {expandedFiles && (
                   <div className="px-2 pb-2 space-y-1">
@@ -362,16 +367,16 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
             )}
             <div className="flex items-center gap-2">
               <button onClick={() => onComplete(result)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-500 text-white hover:opacity-90">
-                <CheckCircle size={12} /> Apply
+                <CheckCircle size={12} /> {L4(lang, { ko: "적용", en: "Apply" })}
               </button>
               {result.documentation && (
                 <button onClick={() => setShowReport(!showReport)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[#30363d] text-[#e6edf3] hover:bg-[#21262d]">
-                  <BookOpen size={12} /> {showReport ? "Hide" : "Report"}
+                  <BookOpen size={12} /> {showReport ? L4(lang, { ko: "숨기기", en: "Hide" }) : L4(lang, { ko: "보고서", en: "Report" })}
                 </button>
               )}
-              <button onClick={handleCopyReport} className="p-1.5 rounded-lg border border-[#30363d] text-[#8b949e] hover:bg-[#21262d]" title="Copy report" aria-label="보고서 복사"><Clipboard size={12} /></button>
+              <button onClick={handleCopyReport} className="p-1.5 rounded-lg border border-[#30363d] text-[#8b949e] hover:bg-[#21262d]" title={L4(lang, { ko: "보고서 복사", en: "Copy report" })} aria-label={L4(lang, { ko: "보고서 복사", en: "Copy report" })}><Clipboard size={12} /></button>
               <div className="flex-1" />
-              <span className="text-[9px] text-[#8b949e]">{formatMs(result.totalTimeMs)} | {result.files.length} files | {result.iterations} iter</span>
+              <span className="text-[9px] text-[#8b949e]">{formatMs(result.totalTimeMs)} | {result.files.length} {L4(lang, { ko: "개 파일", en: "files" })} | {result.iterations} {L4(lang, { ko: "회 반복", en: "iter" })}</span>
             </div>
           </div>
         )}

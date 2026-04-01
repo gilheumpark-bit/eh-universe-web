@@ -1,10 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-// Firebase Auth — static import for auth context (loaded once at app init).
-// Dynamic alternative: import('firebase/auth') for lazy-loaded paths
-import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, reauthenticateWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from './firebase';
+import type { User, Auth } from 'firebase/auth';
+import { app, lazyFirebaseAuth } from './firebase';
 import { logger } from '@/lib/logger';
 
 interface AuthContextType {
@@ -32,47 +30,55 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(auth !== null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const isConfigured = auth !== null;
+  const isConfigured = app !== null;
 
   // Mutex for token refresh — prevents concurrent refresh popups
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-      // Clear token when user logs out or session expires
-      if (!u) setAccessToken(null);
+    let unsubscribe: (() => void) | undefined;
+    lazyFirebaseAuth().then((resolvedAuth) => {
+      if (!resolvedAuth) {
+        setLoading(false);
+        return;
+      }
+      import('firebase/auth').then(({ onAuthStateChanged }) => {
+        unsubscribe = onAuthStateChanged(resolvedAuth, (u) => {
+          setUser(u);
+          setLoading(false);
+          if (!u) setAccessToken(null);
+        });
+      });
     });
-    return () => unsubscribe();
+    return () => { if (unsubscribe) unsubscribe(); };
   }, []);
 
   const signInWithGoogle = async () => {
-    if (!auth) {
+    const resolvedAuth = await lazyFirebaseAuth();
+    if (!resolvedAuth) {
       logger.error('Auth', 'Firebase auth is null — not initialized');
       setError('Firebase가 초기화되지 않았습니다. 환경변수를 확인해주세요.');
       return;
     }
-    logger.info('Auth', 'signInWithGoogle called, auth:', !!auth);
+    logger.info('Auth', 'signInWithGoogle called');
     setError(null);
     try {
+      const { signInWithPopup, signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ 
         prompt: 'select_account consent',
         access_type: 'offline' 
       });
       provider.addScope('https://www.googleapis.com/auth/drive.file');
-      // #25: Mobile browsers often block popups — use redirect flow instead
       const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        await signInWithRedirect(auth, provider);
-        return; // Redirect will reload the page; onAuthStateChanged handles the rest
+        await signInWithRedirect(resolvedAuth, provider);
+        return; 
       }
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(resolvedAuth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       setAccessToken(credential?.accessToken ?? null);
     } catch (err: unknown) {
@@ -85,36 +91,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    if (!auth) return null;
+    const resolvedAuth = await lazyFirebaseAuth();
+    if (!resolvedAuth) return null;
 
     // Mutex: if a refresh is already in progress, await the same promise
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
     }
 
-    const authInstance = auth; // Narrow type — auth is non-null here (checked above)
     const doRefresh = async (): Promise<string | null> => {
-      // Firebase OAuth에서 Drive 토큰 갱신은 재인증이 필요합니다.
-      // reauthenticateWithPopup을 먼저 시도하고, 실패 시 signInWithPopup으로 폴백합니다.
       try {
+        const { GoogleAuthProvider, reauthenticateWithPopup, signInWithPopup } = await import('firebase/auth');
+        
         const provider = new GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/drive.file');
 
         let credential: import('firebase/auth').OAuthCredential | null = null;
-        const currentUser = authInstance.currentUser;
+        const currentUser = resolvedAuth.currentUser;
 
         if (currentUser) {
-          // 이미 로그인된 상태 → reauthenticate (팝업 최소화)
           try {
             const result = await reauthenticateWithPopup(currentUser, provider);
             credential = GoogleAuthProvider.credentialFromResult(result);
           } catch {
-            // reauthenticate 실패 → 전체 로그인으로 폴백
-            const result = await signInWithPopup(authInstance, provider);
+            const result = await signInWithPopup(resolvedAuth, provider);
             credential = GoogleAuthProvider.credentialFromResult(result);
           }
         } else {
-          const result = await signInWithPopup(authInstance, provider);
+          const result = await signInWithPopup(resolvedAuth, provider);
           credential = GoogleAuthProvider.credentialFromResult(result);
         }
 
@@ -136,12 +140,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    if (!auth) return;
+    const resolvedAuth = await lazyFirebaseAuth();
+    if (!resolvedAuth) return;
     setAccessToken(null);
-    // Clear all stored API keys on logout
     const API_KEY_STORAGE_KEYS = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
     API_KEY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
-    await firebaseSignOut(auth);
+    const { signOut: firebaseSignOut } = await import('firebase/auth');
+    await firebaseSignOut(resolvedAuth);
   };
 
   return (

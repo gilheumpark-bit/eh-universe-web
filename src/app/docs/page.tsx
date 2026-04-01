@@ -320,8 +320,8 @@ export default function DocsPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar TOC */}
             <aside className="lg:w-56 shrink-0">
-              <div className="premium-panel-soft motion-rise rounded-[24px] p-4 lg:sticky lg:top-24">
-                <h2 className="font-[family-name:var(--font-mono)] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
+              <div className="premium-panel-soft motion-rise rounded-xl p-4 lg:sticky lg:top-24">
+                <h2 className="font-[--font-mono] text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
                   {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
                 </h2>
                 <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
@@ -331,10 +331,10 @@ export default function DocsPage() {
                       href={`#${s.id}`}
                       aria-label={s.title}
                       aria-current={activeId === s.id ? "location" : undefined}
-                      className={`block py-1.5 px-3 rounded text-xs transition-colors font-[family-name:var(--font-mono)] ${
+                      className={`block py-1.5 px-3 rounded text-xs transition-colors font-[--font-mono] ${
                         activeId === s.id
                           ? "text-accent-amber bg-accent-amber/10 font-bold"
-                          : "text-text-secondary hover:text-text-primary hover:bg-white/[0.04]"
+                          : "text-text-secondary hover:text-text-primary hover:bg-white/4"
                       }`}
                     >
                       {s.title}
@@ -346,7 +346,7 @@ export default function DocsPage() {
 
             {/* Main content */}
             <div className="flex-1 min-w-0">
-              <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
+              <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-xl mb-0">
                 <span className="badge badge-classified mr-2">PUBLIC</span>
                 {T({ ko: "문서 등급: PUBLIC | 버전: 2.0 | NOA Studio 사용자 매뉴얼", en: "Document Level: PUBLIC | Version: 2.0 | NOA Studio User Manual" })}
               </div>
@@ -354,13 +354,13 @@ export default function DocsPage() {
                 <h1 className="site-title text-3xl font-bold tracking-tight mb-2">
                   NOA STUDIO MANUAL
                 </h1>
-                <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
+                <p className="text-text-tertiary text-sm font-[--font-document] mb-12">
                   {T({ ko: "AI 기반 소설 집필 플랫폼 — 전체 기능 가이드", en: "AI-Powered Novel Writing Platform \u2014 Complete Feature Guide" })}
                 </p>
 
                 {secs.map((s) => (
                   <section key={s.id} id={s.id} className="mb-12 scroll-mt-24">
-                    <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold text-accent-purple tracking-wider uppercase mb-4 pb-2 border-b border-border">
+                    <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-4 pb-2 border-b border-border">
                       {s.title}
                     </h2>
                     <div className="whitespace-pre-line text-text-secondary leading-relaxed text-sm">
@@ -370,7 +370,7 @@ export default function DocsPage() {
                 ))}
 
                 <div className="mt-16 border-t border-border pt-6">
-                  <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
+                  <p className="font-[--font-document] text-xs text-text-tertiary italic text-center">
                     {T({ ko: "NOA Studio는 오픈소스 AI 소설 집필 플랫폼입니다. GitHub에서 기여를 환영합니다.", en: "NOA Studio is an open-source AI novel writing platform. Contributions welcome on GitHub." })}
                   </p>
                 </div>

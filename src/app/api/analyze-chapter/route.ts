@@ -189,28 +189,37 @@ const MUSIC_PROMPT_SCHEMA = {
   required: ['mood', 'emotionFlow', 'soundKeywords', 'musicStyle'],
 };
 
-const FULL_ANALYSIS_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    characterState:  CHARACTER_STATE_SCHEMA,
-    backgroundState: BACKGROUND_STATE_SCHEMA,
-    sceneState:      SCENE_STATE_SCHEMA,
-    soundState:      SOUND_STATE_SCHEMA,
-    imagePromptPack: IMAGE_PROMPT_SCHEMA,
-    musicPromptPack: MUSIC_PROMPT_SCHEMA,
-  },
-  required: ['characterState', 'backgroundState', 'sceneState', 'soundState', 'imagePromptPack', 'musicPromptPack'],
-};
-
 // ============================================================
-// PART 3 — 분석 프롬프트 생성 및 실행
+// PART 3 — 분석 프롬프트 생성 및 실행 (분할 병렬화)
 // ============================================================
 
 const LANG_NAMES: Record<AppLanguage, string> = {
   KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese',
 };
 
-function buildAnalysisPrompt(content: string, language: AppLanguage): string {
+
+
+const SCHEMA_PART_1 = {
+  type: Type.OBJECT,
+  properties: {
+    characterState:  CHARACTER_STATE_SCHEMA,
+    sceneState:      SCENE_STATE_SCHEMA,
+  },
+  required: ['characterState', 'sceneState'],
+};
+
+const SCHEMA_PART_2 = {
+  type: Type.OBJECT,
+  properties: {
+    backgroundState: BACKGROUND_STATE_SCHEMA,
+    soundState:      SOUND_STATE_SCHEMA,
+    imagePromptPack: IMAGE_PROMPT_SCHEMA,
+    musicPromptPack: MUSIC_PROMPT_SCHEMA,
+  },
+  required: ['backgroundState', 'soundState', 'imagePromptPack', 'musicPromptPack'],
+};
+
+function buildAnalysisPromptPart1(content: string, language: AppLanguage): string {
   const lang = LANG_NAMES[language];
   const excerpt = content.slice(0, MAX_CONTENT_CHARS);
   const truncated = content.length > MAX_CONTENT_CHARS ? ' [truncated for analysis]' : '';
@@ -239,17 +248,7 @@ Extract ALL of the following data in ${lang}:
    - relationContext: Relationship dynamic with other characters present
    - aura: Atmospheric impression tags (e.g. ["cold", "authoritative", "desperate"])
 
-2. backgroundState — The scene's setting:
-   - location: Specific place name or description
-   - spaceType: Type of space (indoor/outdoor, building type, etc.)
-   - time: Time of day and/or season
-   - weather: Weather conditions
-   - lighting: Lighting description
-   - mood: Atmosphere tags (3-5 words/phrases)
-   - keyObjects: Important objects present in scene
-   - environmentCondition: Environmental conditions (e.g. ["silent", "crowded", "smoky"])
-
-3. sceneState — Scene structure:
+2. sceneState — Scene structure:
    - summary: 1-2 sentence scene summary
    - phase: Narrative phase (e.g. "confrontation", "revelation", "escape", "reconciliation")
    - tension: Overall tension level — "low"|"mid"|"high"|"extreme"
@@ -259,20 +258,47 @@ Extract ALL of the following data in ${lang}:
    - turningPoint: The pivotal moment or beat of change
    - symbolicTags: Symbolic or thematic elements
 
-4. soundState — Auditory landscape:
+Be specific, detailed, and extract everything directly from the text. Do not invent information not present in the manuscript.`;
+}
+
+function buildAnalysisPromptPart2(content: string, language: AppLanguage): string {
+  const lang = LANG_NAMES[language];
+  const excerpt = content.slice(0, MAX_CONTENT_CHARS);
+  const truncated = content.length > MAX_CONTENT_CHARS ? ' [truncated for analysis]' : '';
+
+  return `You are a professional novel scene analyst. Analyze the following manuscript excerpt and extract environment/media data in ${lang}.
+
+MANUSCRIPT:
+---
+${excerpt}${truncated}
+---
+
+Extract ALL of the following data in ${lang}:
+
+1. backgroundState — The scene's setting:
+   - location: Specific place name or description
+   - spaceType: Type of space (indoor/outdoor, building type, etc.)
+   - time: Time of day and/or season
+   - weather: Weather conditions
+   - lighting: Lighting description
+   - mood: Atmosphere tags (3-5 words/phrases)
+   - keyObjects: Important objects present in scene
+   - environmentCondition: Environmental conditions (e.g. ["silent", "crowded", "smoky"])
+
+2. soundState — Auditory landscape:
    - ambient: Background/environmental sounds
    - effects: Specific sound effects
    - voiceTone: How characters sound when speaking
    - audioMood: Overall audio atmosphere tags
    - bgmTags: Music mood tags for a soundtrack (e.g. ["tense strings", "low drone", "silence"])
 
-5. imagePromptPack — For AI image generation:
+3. imagePromptPack — For AI image generation:
    - characterFocus: Concise prompt describing the main character's appearance and state
    - backgroundFocus: Concise prompt describing the scene environment
    - sceneFocus: Concise prompt describing the overall scene composition
    - styleHints: Visual style keywords (e.g. ["cinematic lighting", "manhwa style", "dramatic angle"])
 
-6. musicPromptPack — For AI music generation:
+4. musicPromptPack — For AI music generation:
    - mood: Primary emotional mood
    - emotionFlow: How the emotion changes through the scene
    - soundKeywords: Specific sound descriptors
@@ -348,9 +374,35 @@ export async function POST(req: NextRequest) {
 
     const language = getLanguage(body.language);
     const model = getModel(body.model);
-    const prompt = buildAnalysisPrompt(content, language);
+    const prompt1 = buildAnalysisPromptPart1(content, language);
+    const prompt2 = buildAnalysisPromptPart2(content, language);
 
-    const result = await generateJson(apiKey, model, prompt, FULL_ANALYSIS_SCHEMA, EMPTY_FALLBACK);
+    const [part1, part2] = await Promise.all([
+      generateJson(
+        apiKey,
+        model,
+        prompt1,
+        SCHEMA_PART_1,
+        { characterState: EMPTY_FALLBACK.characterState, sceneState: EMPTY_FALLBACK.sceneState }
+      ),
+      generateJson(
+        apiKey,
+        model,
+        prompt2,
+        SCHEMA_PART_2,
+        {
+          backgroundState: EMPTY_FALLBACK.backgroundState,
+          soundState: EMPTY_FALLBACK.soundState,
+          imagePromptPack: EMPTY_FALLBACK.imagePromptPack,
+          musicPromptPack: EMPTY_FALLBACK.musicPromptPack,
+        }
+      ),
+    ]);
+
+    const result = {
+      ...part1,
+      ...part2,
+    } as AnalysisFallback;
 
     // tension / emotion intensity 값 정규화 (Gemini가 가끔 다른 문자열을 반환)
     const validIntensity = new Set(['low', 'mid', 'high', 'extreme']);

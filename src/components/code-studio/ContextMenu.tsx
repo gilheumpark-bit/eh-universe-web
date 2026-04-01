@@ -4,11 +4,12 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FilePlus, FolderPlus, Pencil, Trash2, Copy, Clipboard,
   Columns2, ChevronRight,
 } from "lucide-react";
+import { L4 } from "@/lib/i18n";
 
 /** Single menu item definition */
 export interface ContextMenuItem {
@@ -53,7 +54,7 @@ function Submenu({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="absolute left-full top-0 ml-0.5 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[160px] z-[101]">
+    <div className="absolute left-full top-0 ml-0.5 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[160px] z-101">
       {items.map((item) =>
         item.separator ? (
           <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
@@ -77,7 +78,7 @@ function Submenu({
                 ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/5"}
                 ${item.danger ? "text-red-400" : "text-text-primary"}`}
             >
-              {item.icon && <span className="w-3 flex-shrink-0">{item.icon}</span>}
+              {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
               <span className="flex-1 text-left">{item.label}</span>
               {item.shortcut && (
                 <span className="text-[9px] text-text-tertiary ml-2">{item.shortcut}</span>
@@ -151,10 +152,10 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
     <div
       ref={ref}
       role="menu"
-      className="fixed z-[100] bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[180px]"
+      className="fixed z-100 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[180px]"
       style={style}
     >
-      {items.map((item, idx) =>
+      {items.map((item) =>
         item.separator ? (
           <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
         ) : (
@@ -178,7 +179,7 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
                 ${item.danger ? "text-red-400" : "text-text-primary"}
                 ${focusIdx === visibleItems.indexOf(item) ? "bg-white/5" : ""}`}
             >
-              {item.icon && <span className="w-3 flex-shrink-0">{item.icon}</span>}
+              {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
               <span className="flex-1 text-left">{item.label}</span>
               {item.shortcut && (
                 <span className="text-[9px] text-text-tertiary ml-2">{item.shortcut}</span>
@@ -202,17 +203,17 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
 // ============================================================
 
 /** Build context menu items for the file explorer */
-export function buildFileExplorerMenu(isFolder: boolean): ContextMenuItem[] {
+export function buildFileExplorerMenu(isFolder: boolean, lang: string): ContextMenuItem[] {
   return [
-    { id: "new-file", label: "New File", icon: <FilePlus size={12} /> },
-    { id: "new-folder", label: "New Folder", icon: <FolderPlus size={12} /> },
+    { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File" }), icon: <FilePlus size={12} /> },
+    { id: "new-folder", label: L4(lang, { ko: "새 폴더", en: "New Folder" }), icon: <FolderPlus size={12} /> },
     { id: "sep-1", label: "", separator: true },
-    { id: "rename", label: "Rename", icon: <Pencil size={12} />, shortcut: "F2" },
-    { id: "duplicate", label: "Duplicate", icon: <Copy size={12} />, disabled: isFolder },
-    { id: "open-in-split", label: "Open in Split", icon: <Columns2 size={12} />, disabled: isFolder },
-    { id: "copy-path", label: "Copy Path", icon: <Clipboard size={12} /> },
+    { id: "rename", label: L4(lang, { ko: "이름 바꾸기", en: "Rename" }), icon: <Pencil size={12} />, shortcut: "F2" },
+    { id: "duplicate", label: L4(lang, { ko: "복제", en: "Duplicate" }), icon: <Copy size={12} />, disabled: isFolder },
+    { id: "open-in-split", label: L4(lang, { ko: "분할 화면으로 열기", en: "Open in Split" }), icon: <Columns2 size={12} />, disabled: isFolder },
+    { id: "copy-path", label: L4(lang, { ko: "경로 복사", en: "Copy Path" }), icon: <Clipboard size={12} /> },
     { id: "sep-2", label: "", separator: true },
-    { id: "delete", label: "Delete", icon: <Trash2 size={12} />, danger: true },
+    { id: "delete", label: L4(lang, { ko: "삭제", en: "Delete" }), icon: <Trash2 size={12} />, danger: true },
   ];
 }
 

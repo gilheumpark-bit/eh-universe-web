@@ -218,6 +218,7 @@ export function useTranslation({
   });
   const [isTranslating, setIsTranslating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const inFlightRef = useRef(false);
   const progressRef = useRef(progress); // 클로저에서 최신 progress 접근용
   progressRef.current = progress;
 
@@ -297,8 +298,13 @@ export function useTranslation({
   const translateEpisode = useCallback(async (
     manuscript: EpisodeManuscript,
     configOverride?: Partial<TranslationConfig>,
-    externalSignal?: AbortSignal
+    externalSignal?: AbortSignal,
+    _isInternal?: boolean
   ): Promise<TranslatedEpisode | null> => {
+    if (!_isInternal) {
+      if (inFlightRef.current) return null;
+      inFlightRef.current = true;
+    }
 
     const mode: TranslationMode = configOverride?.mode ?? 'fidelity';
     const config: TranslationConfig = { ...getDefaultConfig(mode), ...configOverride };
@@ -325,15 +331,28 @@ export function useTranslation({
 
       const systemPrompt = buildTranslationSystemPrompt(config);
 
-      const chunks: TranslationChunk[] = [];
+      const chunks: TranslationChunk[] = new Array(sourceChunks.length);
       const tracker = createConsistencyTracker();
-      for (let i = 0; i < sourceChunks.length; i++) {
+      const BATCH_SIZE = 3;
+
+      let completedCount = 0;
+      for (let i = 0; i < sourceChunks.length; i += BATCH_SIZE) {
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-        const chunk = await translateChunk(sourceChunks[i], i, config, systemPrompt, signal);
-        chunks.push(chunk);
-        // 청크간 용어 일관성 추적
-        updateConsistencyTracker(tracker, i, chunk.translatedText, config.glossary);
-        updateProgress({ completedChunks: i + 1 });
+        const batch = sourceChunks.slice(i, i + BATCH_SIZE);
+        
+        const batchResults = await Promise.all(
+          batch.map((chunkText, batchIdx) => 
+            translateChunk(chunkText, i + batchIdx, config, systemPrompt, signal)
+          )
+        );
+
+        batchResults.forEach((chunk, batchIdx) => {
+          chunks[i + batchIdx] = chunk;
+          updateConsistencyTracker(tracker, i + batchIdx, chunk.translatedText, config.glossary);
+        });
+
+        completedCount += batchResults.length;
+        updateProgress({ completedChunks: completedCount });
       }
 
       const translatedText = chunks.map(c => c.translatedText).join('\n\n');
@@ -403,6 +422,7 @@ export function useTranslation({
     } finally {
       setIsTranslating(false);
       abortRef.current = null;
+      if (!_isInternal) inFlightRef.current = false;
       if (externalSignal) externalSignal.removeEventListener('abort', onExternalAbort);
     }
   }, [translateChunk, updateProgress, onError, onSave, onProfileUpdate]);
@@ -413,17 +433,20 @@ export function useTranslation({
     configOverride?: Partial<TranslationConfig>,
     externalSignal?: AbortSignal
   ): Promise<TranslatedEpisode[]> => {
-    const results: TranslatedEpisode[] = [];
-    const mode: TranslationMode = configOverride?.mode ?? 'fidelity';
-    const baseConfig: TranslationConfig = { ...getDefaultConfig(mode), ...configOverride };
+    if (inFlightRef.current) return [];
+    inFlightRef.current = true;
+    try {
+      const results: TranslatedEpisode[] = [];
+      const mode: TranslationMode = configOverride?.mode ?? 'fidelity';
+      const baseConfig: TranslationConfig = { ...getDefaultConfig(mode), ...configOverride };
 
-    const updateBatch = (patch: Partial<BatchProgress>) => {
-      setBatchProgress(prev => {
-        const next = { ...prev, ...patch };
-        onBatchProgress?.(next);
-        return next;
-      });
-    };
+      const updateBatch = (patch: Partial<BatchProgress>) => {
+        setBatchProgress(prev => {
+          const next = { ...prev, ...patch };
+          onBatchProgress?.(next);
+          return next;
+        });
+      };
 
     updateBatch({ totalEpisodes: manuscripts.length, completedEpisodes: 0, currentEpisode: 0 });
 
@@ -438,13 +461,16 @@ export function useTranslation({
         episodeConfig.contextBridge = buildAutoBridge(results[results.length - 1], baseConfig.glossary);
       }
 
-      const result = await translateEpisode(manuscripts[i], episodeConfig, externalSignal);
+      const result = await translateEpisode(manuscripts[i], episodeConfig, externalSignal, true);
       if (result) {
         results.push(result);
         updateBatch({ completedEpisodes: i + 1 });
       }
     }
     return results;
+    } finally {
+      inFlightRef.current = false;
+    }
   }, [translateEpisode, onBatchProgress]);
 
   const abort = useCallback(() => { abortRef.current?.abort(); }, []);

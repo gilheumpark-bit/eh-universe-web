@@ -5,6 +5,7 @@
 // ============================================================
 
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import {
   Plus, Image as ImageIcon, Settings, Star, Trash2,
   Play, Loader2, Grid, ChevronDown,
@@ -152,11 +153,13 @@ function SceneGallery({
               </span>
               <div className="flex -space-x-1.5">
                 {imgs.slice(0, 3).map(img => (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <Image
                     key={img.id}
                     src={img.imageUrl}
                     alt=""
+                    width={24}
+                    height={24}
+                    unoptimized
                     className="w-6 h-6 rounded-md border border-black/50 object-cover"
                   />
                 ))}
@@ -207,8 +210,8 @@ function SceneGallery({
         {filtered.map(img => (
           <div key={img.id} className="break-inside-avoid rounded-xl overflow-hidden border border-border/40 bg-black/30 group">
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.imageUrl} alt={img.cardTitle} className="w-full object-cover" />
+              {/* dynamic AI-generated URL, unoptimized for lazy load */}
+              <Image src={img.imageUrl} alt={img.cardTitle} unoptimized fill className="object-cover" />
               {/* Overlay actions */}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end gap-1 p-2">
                 <button
@@ -548,7 +551,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   onClick={batch.start}
                   disabled={cardsWithoutImages === 0}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-gradient-to-r from-blue-600/80 to-purple-600/80 text-white disabled:opacity-30 transition-all active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600/80 to-purple-600/80 text-white disabled:opacity-30 transition-all active:scale-[0.98]"
                 >
                   <Play className="w-3 h-3" />
                   {isKO ? `이미지 없는 카드 전체 생성 (${cardsWithoutImages})` : `Generate All (${cardsWithoutImages} pending)`}

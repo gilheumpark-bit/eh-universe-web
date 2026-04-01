@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { TeamResult, Finding } from "@/lib/code-studio/pipeline/pipeline-teams";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { generateReport } from "@/lib/code-studio/pipeline/pipeline-utils";
 
 interface PipelineResultData {
@@ -55,13 +56,18 @@ function TeamStatusIcon({ status }: { status: string }) {
   return <div className="w-3 h-3 rounded-full bg-border animate-pulse" aria-label="Pending" />;
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, lang }: { status: string; lang: string }) {
   const icon = status === "pass" ? <CheckCircle size={10} /> : status === "warn" ? <AlertTriangle size={10} /> : <XCircle size={10} />;
   const colors =
     status === "pass" ? "bg-accent-green/15 text-accent-green" :
     status === "warn" ? "bg-accent-amber/15 text-accent-amber" :
     "bg-accent-red/15 text-accent-red";
-  return <span className={`text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 ${colors}`}>{icon}{status.toUpperCase()}</span>;
+  
+  const text = status === "pass" ? L4(lang, { ko: "통과", en: "PASS" }) :
+               status === "warn" ? L4(lang, { ko: "경고", en: "WARN" }) :
+               L4(lang, { ko: "실패", en: "FAIL" });
+
+  return <span className={`text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 ${colors}`}>{icon}{text}</span>;
 }
 
 // IDENTITY_SEAL: PART-2 | role=TeamConfig | inputs=none | outputs=TEAM_CONFIG
@@ -72,7 +78,6 @@ function StatusBadge({ status }: { status: string }) {
 
 export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimestamp }: Props) {
   const { lang } = useLang();
-  const ko = lang === "ko";
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
   const handleCopyReport = useCallback(() => {
@@ -98,14 +103,14 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Shield size={32} className="text-text-tertiary opacity-30" />
-        <p className="text-xs text-text-tertiary">{ko ? "파이프라인 결과 없음" : "No pipeline results yet"}</p>
+        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 결과 없음", en: "No pipeline results yet" })}</p>
         {onRun && (
           <button onClick={onRun} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-purple-500 text-white hover:opacity-90 transition-opacity">
-            <Play size={12} /> Run Pipeline
+            <Play size={12} /> {L4(lang, { ko: "파이프라인 실행", en: "Run Pipeline" })}
           </button>
         )}
         {lastRunTimestamp && (
-          <span className="text-[9px] text-text-tertiary">Last run: {new Date(lastRunTimestamp).toLocaleString()}</span>
+          <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "최근 실행:", en: "Last run:" })} {new Date(lastRunTimestamp).toLocaleString()}</span>
         )}
       </div>
     );
@@ -116,10 +121,10 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Loader2 size={32} className="animate-spin text-purple-400" />
-        <p className="text-xs text-text-tertiary">{ko ? "파이프라인 실행 중..." : "Pipeline running..."}</p>
+        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 실행 중...", en: "Pipeline running..." })}</p>
         {onAbort && (
           <button onClick={onAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-yellow-400 hover:bg-bg-tertiary">
-            <Square size={12} /> Abort
+            <Square size={12} /> {L4(lang, { ko: "중단", en: "Abort" })}
           </button>
         )}
       </div>
@@ -133,16 +138,16 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
         <span className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-          <Shield size={12} className="text-purple-400" /> Pipeline Results
-          <StatusBadge status={result.overallStatus} />
+          <Shield size={12} className="text-purple-400" /> {L4(lang, { ko: "파이프라인 결과", en: "Pipeline Results" })}
+          <StatusBadge status={result.overallStatus} lang={lang} />
           <span className="text-text-tertiary font-mono">{result.overallScore}/100</span>
         </span>
         <span className="flex items-center gap-1">
           {onRun && (
-            <button onClick={onRun} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title="Re-run" aria-label="다시 실행"><Play size={12} /></button>
+            <button onClick={onRun} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title={L4(lang, { ko: "다시 실행", en: "Re-run" })} aria-label={L4(lang, { ko: "다시 실행", en: "Re-run" })}><Play size={12} /></button>
           )}
-          <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Copy report" aria-label="보고서 복사"><Copy size={12} /></button>
-          <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Download report" aria-label="보고서 다운로드"><Download size={12} /></button>
+          <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 복사", en: "Copy report" })} aria-label={L4(lang, { ko: "보고서 복사", en: "Copy report" })}><Copy size={12} /></button>
+          <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 다운로드", en: "Download report" })} aria-label={L4(lang, { ko: "보고서 다운로드", en: "Download report" })}><Download size={12} /></button>
         </span>
       </div>
 
@@ -152,6 +157,19 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
           {result.stages.map((stage) => {
             const stageKey = stage.stage;
             const config = TEAM_CONFIG[stageKey] ?? { label: stageKey, icon: <Shield size={14} />, colorClass: "text-text-tertiary" };
+            const getTeamLabel = (key: string) => {
+              const labels: Record<string, string> = {
+                simulation:     L4(lang, { ko: "시뮬레이션", en: "Simulation" }),
+                generation:     L4(lang, { ko: "생성", en: "Generation" }),
+                validation:     L4(lang, { ko: "검증", en: "Validation" }),
+                "size-density": L4(lang, { ko: "크기/밀도", en: "Size/Density" }),
+                "asset-trace":  L4(lang, { ko: "자산 추적", en: "Asset Trace" }),
+                stability:      L4(lang, { ko: "안정성", en: "Stability" }),
+                "release-ip":   L4(lang, { ko: "릴리스/IP", en: "Release/IP" }),
+                governance:     L4(lang, { ko: "거버넌스", en: "Governance" }),
+              };
+              return labels[key] || config.label;
+            };
             const isExpanded = expandedTeam === stageKey;
 
             return (
@@ -167,7 +185,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                 >
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <span className={config.colorClass}>{config.icon}</span>
-                    <span className="text-[10px] font-semibold flex-1 text-left text-text-primary">{config.label}</span>
+                    <span className="text-[10px] font-semibold flex-1 text-left text-text-primary">{getTeamLabel(stageKey)}</span>
                     <TeamStatusIcon status={stage.status} />
                   </div>
                   <div className="w-full h-1.5 bg-bg-secondary rounded-full overflow-hidden mb-1">
@@ -180,7 +198,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                   {stage.findings.length > 0 && (
                     <div className="flex items-center gap-1 mt-1 text-[9px] text-text-tertiary">
                       {isExpanded ? <ChevronDown size={8} /> : <ChevronRight size={8} />}
-                      {stage.findings.length} findings
+                      {stage.findings.length} {L4(lang, { ko: "개 항목", en: "findings" })}
                     </div>
                   )}
                 </button>

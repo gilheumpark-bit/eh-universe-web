@@ -42,7 +42,6 @@ const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
-  const MAX_RETRIES = 2;
   const payload = JSON.stringify({
     ...body,
     provider: 'gemini',
@@ -51,38 +50,36 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
   });
 
   // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
-  const cacheable = body.task === 'worldDesign' || body.task === 'worldSim';
+  const cacheable = body.task === 'worldDesign' || body.task === 'worldSim' || body.task === 'sceneDirection';
   const cacheKey = cacheable ? payload : '';
   if (cacheable) {
     const cached = structuredCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
   }
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const response = await fetch('/api/gemini-structured', {
+  let response;
+  try {
+    response = await fetch('/api/gemini-structured', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(35_000),
       body: payload,
     });
-
-    const data = await response.json().catch(() => null);
-    if (response.ok) {
-      if (cacheable && cacheKey) structuredCache.set(cacheKey, { data, ts: Date.now() });
-      return data as T;
-    }
-
-    const errorMessage = data && typeof data.error === 'string'
-      ? data.error
-      : `Structured Gemini error ${response.status}`;
-
-    // 500/502/503/504 → retry, 그 외(401/400 등) → 즉시 에러
-    const isRetryable = response.status >= 500 && response.status < 600;
-    if (!isRetryable || attempt === MAX_RETRIES) throw new Error(errorMessage);
-    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  } catch (err) {
+    throw err;
   }
 
-  throw new Error('Structured Gemini: max retries exceeded');
+  const data = await response.json().catch(() => null);
+  if (response.ok) {
+    if (cacheable && cacheKey) structuredCache.set(cacheKey, { data, ts: Date.now() });
+    return data as T;
+  }
+
+  const errorMessage = data && typeof data.error === 'string'
+    ? data.error
+    : `Structured Gemini error ${response.status}`;
+
+  throw new Error(errorMessage);
 }
 
 // ============================================================

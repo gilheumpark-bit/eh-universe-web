@@ -76,14 +76,14 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
         <div className="text-center">
           <div className="mb-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20">
             <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-            <span className="font-[family-name:var(--font-mono)] text-[10px] font-bold uppercase tracking-widest text-accent-green">
-              Code Studio
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
+              {L4(lang, { ko: "코드 스튜디오", en: "Code Studio" })}
             </span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
+          <h1 className="text-4xl font-bold tracking-tight bg-linear-to-b from-text-primary to-text-secondary bg-clip-text text-transparent" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
             {t.title}
           </h1>
-          <p className="mt-4 font-[family-name:var(--font-mono)] text-sm text-text-tertiary max-w-md leading-relaxed">
+          <p className="mt-4 font-mono text-sm text-text-tertiary max-w-md leading-relaxed">
             {t.subtitle}
           </p>
         </div>
@@ -93,16 +93,16 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {/* Primary CTA */}
           <button
             onClick={primaryAction}
-            className="group relative flex w-full items-center gap-5 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-8 py-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/[0.15] hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
+            className="group relative flex w-full items-center gap-5 rounded-2xl border border-white/8 bg-linear-to-b from-white/6 to-white/2 px-8 py-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/15 hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
           >
-            <div className={`rounded-2xl border border-white/[0.08] p-4 ${primaryAccent} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`rounded-2xl border border-white/8 p-4 ${primaryAccent} group-hover:scale-110 transition-transform duration-300`}>
               {primaryIcon}
             </div>
             <div className="text-left flex-1">
-              <div className="font-[family-name:var(--font-mono)] text-lg font-bold text-text-primary">
+              <div className="font-mono text-lg font-bold text-text-primary">
                 {primaryLabel}
               </div>
-              <div className="mt-1 font-[family-name:var(--font-mono)] text-xs text-text-tertiary">
+              <div className="mt-1 font-mono text-xs text-text-tertiary">
                 {primaryDesc}
               </div>
             </div>
@@ -114,14 +114,14 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {/* Secondary CTA */}
           <button
             onClick={onNewFile}
-            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-white/6 bg-white/2 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
           >
             <div className="p-2 rounded-xl bg-accent-green/10 group-hover:bg-accent-green/20 transition-colors">
               <Code2 className="h-5 w-5 text-accent-green" />
             </div>
             <div className="text-left">
-              <div className="font-[family-name:var(--font-mono)] text-sm font-bold text-text-primary">{t.newFile}</div>
-              <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary">{t.newFileDesc}</div>
+              <div className="font-mono text-sm font-bold text-text-primary">{t.newFile}</div>
+              <div className="font-mono text-[10px] text-text-tertiary">{t.newFileDesc}</div>
             </div>
           </button>
         </div>
@@ -130,7 +130,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={() => setShowExtras(!showExtras)}
-            className="flex items-center gap-1 font-[family-name:var(--font-mono)] text-[11px] text-text-tertiary/60 transition-colors hover:text-text-tertiary"
+            className="flex items-center gap-1 font-mono text-[11px] text-text-tertiary/60 transition-colors hover:text-text-tertiary"
           >
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
             {showExtras
@@ -141,7 +141,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {showExtras && (
             <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
               {/* Tertiary links */}
-              <div className="flex items-center gap-4 font-[family-name:var(--font-mono)] text-[11px]">
+              <div className="flex items-center gap-4 font-mono text-[11px]">
                 {onBlankProject && (
                   <button onClick={onBlankProject} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
                     {t.blankProject}
@@ -162,15 +162,15 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               </div>
 
               {/* Keyboard shortcuts */}
-              <div className="font-[family-name:var(--font-mono)] text-[10px] text-text-tertiary/50">
-                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+N</span>
-                <span className="mx-1.5">New File</span>
+              <div className="font-mono text-[10px] text-text-tertiary/50">
+                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+N</span>
+                <span className="mx-1.5">{L4(lang, { ko: "새 파일", en: "New File" })}</span>
                 <span className="mx-2 text-white/10">|</span>
-                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+Shift+P</span>
-                <span className="mx-1.5">Commands</span>
+                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+Shift+P</span>
+                <span className="mx-1.5">{L4(lang, { ko: "명령 팔레트", en: "Commands" })}</span>
                 <span className="mx-2 text-white/10">|</span>
-                <span className="rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5">Ctrl+`</span>
-                <span className="mx-1.5">Terminal</span>
+                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+`</span>
+                <span className="mx-1.5">{L4(lang, { ko: "터미널", en: "Terminal" })}</span>
               </div>
             </div>
           )}

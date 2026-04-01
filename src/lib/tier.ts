@@ -83,6 +83,7 @@ export function getGenerationCount(): number {
 
 /** Increment and return the current month's AI generation count */
 export function incrementGenerationCount(): number {
+  if (typeof window === 'undefined') return 0;
   const month = getCurrentMonth();
   if (localStorage.getItem(GEN_MONTH_KEY) !== month) {
     localStorage.setItem(GEN_MONTH_KEY, month);

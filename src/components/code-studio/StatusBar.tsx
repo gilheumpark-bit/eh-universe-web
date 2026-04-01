@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio/core/types";
 import { LanguageSwitch } from "./LanguageSwitch";
+import { L4 } from "@/lib/i18n";
 
 interface StatusBarProps {
   activeFile: OpenFile | null;
@@ -98,8 +99,8 @@ export function StatusBar({
         <button
           onClick={onSwitchProvider}
           className={`flex items-center gap-1 ${CLICKABLE}`}
-          title="AI 모델 변경"
-          aria-label="AI 모델 변경"
+          title={L4(lang || "en", { ko: "AI 모델 변경", en: "Change AI Model" })}
+          aria-label={L4(lang || "en", { ko: "AI 모델 변경", en: "Change AI Model" })}
         >
           <Cpu size={10} />
           <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />
@@ -128,8 +129,8 @@ export function StatusBar({
           <span className={`w-1.5 h-1.5 rounded-full ${isDirty ? 'bg-amber-400 animate-pulse' : 'bg-green-400'}`} />
           <span className="text-[10px]">
             {isDirty
-              ? (lang === 'ko' ? '미저장' : 'Unsaved')
-              : (lang === 'ko' ? '저장됨' : 'Saved')}
+              ? L4(lang || "en", { ko: '미저장', en: 'Unsaved' })
+              : L4(lang || "en", { ko: '저장됨', en: 'Saved' })}
           </span>
         </div>
 
@@ -168,25 +169,25 @@ export function StatusBar({
           <>
             {/* Cursor position */}
             {cursorLine != null && cursorColumn != null && (
-              <span title={`줄 ${cursorLine}, 열 ${cursorColumn}`}>
-                Ln {cursorLine}, Col {cursorColumn}
+              <span title={L4(lang || "en", { ko: `줄 ${cursorLine}, 열 ${cursorColumn}`, en: `Ln ${cursorLine}, Col ${cursorColumn}` })}>
+                {L4(lang || "en", { ko: `Ln ${cursorLine}, Col ${cursorColumn}`, en: `Ln ${cursorLine}, Col ${cursorColumn}` })}
               </span>
             )}
 
             {SEPARATOR}
 
             {/* Language */}
-            <span title={`언어: ${activeFile.language}`}>
+            <span title={L4(lang || "en", { ko: `언어: ${activeFile.language}`, en: `Language: ${activeFile.language}` })}>
               {activeFile.language}
             </span>
 
             {/* Line count */}
-            <span className="hidden md:inline" title="총 줄 수">
-              {activeFile.content.split("\n").length} lines
+            <span className="hidden md:inline" title={L4(lang || "en", { ko: "총 줄 수", en: "Total Lines" })}>
+              {activeFile.content.split("\n").length} {L4(lang || "en", { ko: "줄", en: "lines" })}
             </span>
 
             {/* File size */}
-            <span className="hidden md:inline" title="파일 크기">
+            <span className="hidden md:inline" title={L4(lang || "en", { ko: "파일 크기", en: "File Size" })}>
               {computeFileSize(activeFile.content)}
             </span>
           </>

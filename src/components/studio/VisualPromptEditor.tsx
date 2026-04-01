@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { Copy, Trash2, Sparkles, Image, Loader2, Download } from 'lucide-react';
+import Image from 'next/image';
+import { Copy, Trash2, Sparkles, Image as ImageIcon, Loader2, Download } from 'lucide-react';
 import { VisualPromptCard, VisualShotType, VisualLevelPack, Character, GeneratedVisualAsset } from '@/lib/studio-types';
 import { generateImage, ImageGenProvider, ImageGenResult } from '@/services/imageGenerationService';
 import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
@@ -286,9 +287,9 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             <button
               onClick={handleGenerate}
               disabled={genLoading || !finalPrompt}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white disabled:opacity-40 transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600 to-purple-600 text-white disabled:opacity-40 transition-all active:scale-95"
             >
-              {genLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Image className="w-3 h-3" />}
+              {genLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
               {genLoading ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '이미지 생성' : 'Generate')}
             </button>
           </div>
@@ -303,8 +304,14 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             <div className="grid grid-cols-2 gap-2">
               {genImages.map((img, i) => (
                 <div key={i} className="relative group rounded-xl overflow-hidden border border-border/30 bg-black/30">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt={`Generated ${i + 1}`} className="w-full aspect-square object-cover" />
+                  <Image
+                    src={img.url}
+                    alt={`Generated ${i + 1}`}
+                    width={400}
+                    height={400}
+                    unoptimized
+                    className="w-full aspect-square object-cover"
+                  />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <a href={img.url} download={`noi-${card.title || 'image'}-${i + 1}.png`} target="_blank" rel="noopener noreferrer"
                       className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">

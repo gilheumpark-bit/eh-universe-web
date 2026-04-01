@@ -7,6 +7,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { X } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio/core/types";
+import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 export interface EditorTabsProps {
   openFiles: OpenFile[];
@@ -42,6 +44,7 @@ function TabContextMenu({
   onCloseOtherTabs: (keepId: string) => void;
   onCloseAllTabs: () => void;
 }) {
+  const { lang } = useLang();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +70,7 @@ function TabContextMenu({
         }}
         className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10 flex items-center gap-2"
       >
-        <X size={10} /> Close
+        <X size={10} /> {L4(lang, { ko: "닫기", en: "Close" })}
       </button>
       <button
         onClick={() => {
@@ -76,7 +79,7 @@ function TabContextMenu({
         }}
         className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10"
       >
-        Close Other Tabs
+        {L4(lang, { ko: "다른 탭 닫기", en: "Close Other Tabs" })}
       </button>
       <div className="h-px bg-white/10 my-1" />
       <button
@@ -86,7 +89,7 @@ function TabContextMenu({
         }}
         className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-white/10"
       >
-        Close All Tabs
+        {L4(lang, { ko: "모든 탭 닫기", en: "Close All Tabs" })}
       </button>
     </div>
   );
@@ -106,6 +109,7 @@ export function EditorTabs({
   onCloseOtherFiles,
   onCloseAllFiles,
 }: EditorTabsProps) {
+  const { lang } = useLang();
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [draggedFileId, setDraggedFileId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
@@ -199,7 +203,7 @@ export function EditorTabs({
     return (
       <div className="flex items-center h-9 px-3 bg-[#0d1220] border-b border-white/8">
         <span className="text-xs text-text-tertiary italic">
-          No open files
+          {L4(lang, { ko: "열린 파일 없음", en: "No open files" })}
         </span>
       </div>
     );
@@ -247,7 +251,7 @@ export function EditorTabs({
 
               {/* Modified indicator (yellow dot) */}
               {file.isDirty && (
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
               )}
 
               <span className="truncate max-w-[120px]">{file.name}</span>
@@ -258,7 +262,7 @@ export function EditorTabs({
                   e.stopPropagation();
                   onCloseFile(file.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 hover:text-red-400 cursor-pointer flex-shrink-0 transition-opacity"
+                className="opacity-0 group-hover:opacity-100 hover:text-red-400 cursor-pointer shrink-0 transition-opacity"
               >
                 <X size={12} />
               </span>

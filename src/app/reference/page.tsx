@@ -14,20 +14,20 @@ export default function ReferencePage() {
       <Header />
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
-          <div className="doc-header rounded-t-[24px] mb-0">
+          <div className="doc-header rounded-t-xl mb-0">
             <span className="badge badge-allow mr-2">PUBLIC</span>
             {T({ ko: "문서 등급: PUBLIC — Level 0 | 최종 갱신: 7000년대 | 작성: 비밀조사국", en: "Document Level: PUBLIC — Level 0 | Last Updated: 7000s | Author: Bureau of Investigation" })}
           </div>
 
           <div className="premium-panel rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             <h1 className="site-title text-3xl font-bold tracking-tight mb-2">EH OPEN REFERENCE</h1>
-            <p className="text-text-tertiary text-sm font-[family-name:var(--font-document)] mb-12">
+            <p className="text-text-tertiary text-sm font-[--font-document] mb-12">
               A Narrative Engine That Prevents Story Collapse — {en ? "4-Page Summary" : "4-Page Summary"}
             </p>
 
             {/* Page 1 */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
+              <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
                 01 — {en ? "What is EH?" : "EH란 무엇인가"}
               </h2>
               <div className="space-y-4 text-text-secondary leading-relaxed">
@@ -48,15 +48,15 @@ export default function ReferencePage() {
                 </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="zone-card zone-red">
-                    <h4 className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-red">TYPE A</h4>
+                    <h4 className="font-[--font-mono] text-xs font-bold text-accent-red">TYPE A</h4>
                     <p className="text-xs text-text-secondary mt-1">{en ? "Pure Emotional — 1,000~100,000 Hart" : "순수 감정형 — 1,000~100,000 Hart"}</p>
                   </div>
                   <div className="zone-card zone-amber">
-                    <h4 className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-amber">TYPE B</h4>
+                    <h4 className="font-[--font-mono] text-xs font-bold text-accent-amber">TYPE B</h4>
                     <p className="text-xs text-text-secondary mt-1">{en ? "Ethical — 500~50,000 Hart" : "윤리적 — 500~50,000 Hart"}</p>
                   </div>
                   <div className="zone-card zone-blue">
-                    <h4 className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-blue">TYPE C</h4>
+                    <h4 className="font-[--font-mono] text-xs font-bold text-accent-blue">TYPE C</h4>
                     <p className="text-xs text-text-secondary mt-1">{en ? "Existential — 100~∞ Hart" : "존재형 — 100~∞ Hart"}</p>
                   </div>
                 </div>
@@ -65,7 +65,7 @@ export default function ReferencePage() {
 
             {/* Page 2 */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
+              <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
                 02 — {en ? "Five Human Types" : "인류 5유형"}
               </h2>
               <div className="space-y-3">
@@ -86,9 +86,9 @@ export default function ReferencePage() {
                     ]
                 ).map((item) => (
                   <div key={item.type} className="premium-panel-soft flex items-center gap-4 rounded-[20px] p-4">
-                    <span className="font-[family-name:var(--font-mono)] text-xs font-bold text-accent-purple w-16">{item.type}</span>
+                    <span className="font-[--font-mono] text-xs font-bold text-accent-purple w-16">{item.type}</span>
                     <span className="font-semibold text-text-primary text-sm w-20">{item.name}</span>
-                    <span className="font-[family-name:var(--font-mono)] text-xs text-accent-amber w-10">{item.pct}</span>
+                    <span className="font-[--font-mono] text-xs text-accent-amber w-10">{item.pct}</span>
                     <span className="text-text-secondary text-xs">{item.desc}</span>
                   </div>
                 ))}
@@ -97,7 +97,7 @@ export default function ReferencePage() {
 
             {/* Page 3 */}
             <section className="mb-16">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
+              <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
                 03 — {en ? "Non-Intervention Principle & HPP" : "비개입 원칙과 HPP"}
               </h2>
               <div className="space-y-4 text-text-secondary leading-relaxed">
@@ -123,7 +123,7 @@ export default function ReferencePage() {
 
             {/* Page 4 */}
             <section className="mb-8">
-              <h2 className="font-[family-name:var(--font-mono)] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
+              <h2 className="font-[--font-mono] text-lg font-bold text-accent-purple tracking-wider uppercase mb-6">
                 04 — {en ? "Deity Structure" : "신격 구조"}
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -143,10 +143,10 @@ export default function ReferencePage() {
                 ).map((g) => (
                   <div key={g.name} className="premium-link-card card-glow p-5">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-[family-name:var(--font-mono)] text-sm font-bold text-text-primary">{g.name}</span>
+                      <span className="font-[--font-mono] text-sm font-bold text-text-primary">{g.name}</span>
                       <span className="badge badge-classified">{g.title}</span>
                     </div>
-                    <p className="font-[family-name:var(--font-mono)] text-xs text-accent-purple mb-1">{g.role}</p>
+                    <p className="font-[--font-mono] text-xs text-accent-purple mb-1">{g.role}</p>
                     <p className="text-xs text-text-secondary italic">{g.desc}</p>
                   </div>
                 ))}
@@ -154,7 +154,7 @@ export default function ReferencePage() {
             </section>
 
             <div className="mt-16 border-t border-border pt-6">
-              <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
+              <p className="font-[--font-document] text-xs text-text-tertiary italic text-center">
                 {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only." })}<br />
                 {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo." })}
               </p>

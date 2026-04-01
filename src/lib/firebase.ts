@@ -1,5 +1,5 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import type { Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { logger } from '@/lib/logger';
 
@@ -67,7 +67,8 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
     logger.warn('EH Universe', `Firebase config incomplete — missing: ${missing.join(', ')}. Auth features disabled.`);
   } else {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    auth = getAuth(app);
+    
+    // Auth is no longer eagerly initialized to save bundle size
     db = getFirestore(app);
 
     if (isTestEnvironment) {
@@ -77,6 +78,15 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
 }
 
 export { auth, app, db };
+
+/** Safe getter for Firebase Auth — cleanly lazy loads the auth module */
+export async function lazyFirebaseAuth(): Promise<Auth | null> {
+  if (auth) return auth;
+  if (!app) return null;
+  const { getAuth } = await import('firebase/auth');
+  auth = getAuth(app);
+  return auth;
+}
 
 /** Safe getter for Firestore — avoids Turbopack tree-shaking issues */
 export function getDb(): Firestore | null {

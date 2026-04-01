@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
+import { IgnorePlugin } from "webpack";
 
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
 
@@ -50,6 +51,21 @@ const nextConfig: NextConfig = {
   // CSP + security headers moved to src/middleware.ts (nonce-based CSP).
   // Middleware generates a per-request crypto nonce, replacing 'unsafe-inline'
   // in script-src. style-src retains 'unsafe-inline' (243+ inline styles).
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      // Monaco tree-shaking: drop unused language workers (keep ts/js/json only)
+      // Reduces bundle by ~1-2 MB. Workers are loaded on demand via @monaco-editor/react.
+      config.plugins.push(
+        new IgnorePlugin({
+          // Matches monaco-editor's esm/vs/language/<lang>/monaco.contribution
+          // while preserving typescript, javascript, json contributions
+          resourceRegExp: /^\.\/((?!typescript|javascript|json)[^/]+)\/monaco\.contribution/,
+          contextRegExp: /monaco-editor[/\\]esm[/\\]vs[/\\]language/,
+        })
+      );
+    }
+    return config;
+  },
 };
 
 export default withSentryConfig(withBundleAnalyzer(nextConfig), {

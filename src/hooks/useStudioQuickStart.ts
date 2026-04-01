@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { StoryConfig, ChatSession, Project, AppLanguage } from '@/lib/studio-types';
 import { Genre } from '@/lib/studio-types';
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
@@ -41,12 +41,20 @@ export function useStudioQuickStart({
   const [showQuickStartModal, setShowQuickStartModal] = useState(false);
   const [isQuickGenerating, setIsQuickGenerating] = useState(false);
   const [pendingQuickStartPrompt, setPendingQuickStartPrompt] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
 
   const handleQuickStart = async (genre: Genre, userPrompt: string) => {
     if (showQuickStartLock) { setShowApiKeyModal(true); return; }
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setIsQuickGenerating(true);
     try {
-      const world = await generateWorldDesign(genre, language, { synopsis: userPrompt });
+      const tempConfig = { genre, synopsis: userPrompt } as StoryConfig;
+      const [world, characters] = await Promise.all([
+        generateWorldDesign(genre, language, { synopsis: userPrompt }),
+        generateCharacters(tempConfig, language)
+      ]);
+
       const qsConfig: StoryConfig = {
         ...INITIAL_CONFIG,
         title: world.title, genre, synopsis: world.synopsis,
@@ -60,9 +68,9 @@ export function useStudioQuickStart({
         education: world.education || '', lawOrder: world.lawOrder || '',
         taboo: world.taboo || '', dailyLife: world.dailyLife || '',
         travelComm: world.travelComm || '', truthVsBeliefs: world.truthVsBeliefs || '',
+        characters,
       };
-      const characters = await generateCharacters(qsConfig, language);
-      qsConfig.characters = characters;
+      
       const targetProjectId = currentProjectId || createNewProject();
       const newSessionId = `s-${Date.now()}`;
       const newSession: ChatSession = { id: newSessionId, title: qsConfig.title, config: qsConfig, messages: [], lastUpdate: Date.now() };
@@ -94,6 +102,7 @@ export function useStudioQuickStart({
       }
     } finally {
       setIsQuickGenerating(false);
+      inFlightRef.current = false;
     }
   };
 

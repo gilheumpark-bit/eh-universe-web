@@ -1,0 +1,12 @@
+{
+  "title": {
+    "ko": "NHDC 긴급 상황 가이드 No. 001",
+    "en": "NHDC Emergency Situation Guide No. 001"
+  },
+  "level": "CLASSIFIED",
+  "category": "REPORTS",
+  "content": {
+    "ko": "# NHDC 긴급 상황 가이드 No. 001\n## NHDC Emergency Situation Guide No. 001\n\n**문서 등급: CLASSIFIED**\n**작성: 국가인적자원관리본부(NHDC) 위기대응실**\n**일자: [전산 마비 +0h]**\n\n---\n\n### 상태\n\n국가 행정망(NHDC) 완전 마비.\n전산 복구 예정 시간: 미정.\n\n### 대응 지침\n\n1. 전 개체에 대한 디지털 식별값 정지.\n2. 수동 기록 체계(타자기/갱지)로 즉시 전환.\n3. **[개인 고유명] 사용을 엄격히 금지함.** 모든 대상은 상의 좌측에 부착된 [임시 수용 번호]로만 호칭할 것.\n\n### 등급별 처리 기준\n\n| 등급 | 정의 | 처리 |\n|------|------|------|\n| A-B | 핵심 자산 | 시스템 유지보수 인력으로 강제 배정 |\n| C-D | 일반 자산 | 노동 및 번식 데이터 생성용 |\n| E | 가용 한계점 | EH-알파 소체 후보군 또는 소모품으로 즉시 전환 |\n| 측정 불능 | 하한선 미달 | 자산 회수 비용 초과 — 행정적 살처분 대상 |\n\n### 비고\n\n- 규격 외 개체(하한선 미달자) 발견 시, 즉시 별도 격리 후 EH-알파 팀에 인계할 것.\n- 1954년 협약에 따른 특수 예약 개체는 별도 관리할 것.\n\n---\n\n*본 문서는 국가 행정망 비상 전환 시에만 유효하며, 전산 정상화 이후 자동 파기됨.*\n*무단 열람 시 해당 인원은 등급 외 자산으로 즉시 분류됨.*",
+    "en": "# NHDC Emergency Situation Guide No. 001\n\n**Classification: CLASSIFIED**\n**Author: NHDC Crisis Response Division**\n**Date: [System Failure +0h]**\n\n---\n\n### Status\n\nNational Human Resource Administration Network (NHDC) — total system failure.\nEstimated restoration time: UNDETERMINED.\n\n### Response Directives\n\n1. Suspend all digital identification values for every registered entity.\n2. Immediately transition to manual recording systems (typewriters / mimeograph paper).\n3. **Use of [Personal Given Names] is strictly prohibited.** All subjects shall be addressed solely by the [Temporary Custody Number] affixed to the upper-left of their garment.\n\n### Processing Standards by Grade\n\n| Grade | Definition | Processing |\n|-------|-----------|-----------|\n| A-B | Core Assets | Forcibly reassigned as system maintenance personnel |\n| C-D | General Assets | Labor and breeding data-generation use |\n| E | Utility Threshold | Immediate conversion to EH-Alpha host candidates or expendable materiel |\n| Unmeasurable | Below Baseline | Asset recovery cost exceeded — subject to administrative culling |\n\n### Notes\n\n- Upon discovery of non-standard entities (those below Baseline), immediately isolate and transfer to the EH-Alpha team.\n- Special reserved entities per the 1954 Agreement shall be managed separately.\n\n---\n\n*This document is valid only during national network emergency transition and will be automatically destroyed upon system normalization.*\n*Unauthorized access will result in immediate reclassification of the reader as an ungraded asset.*"
+  }
+}

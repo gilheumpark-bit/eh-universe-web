@@ -512,63 +512,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
         {children}
       </div>
 
-      {/* Writing Input dock */}
-      {activeTab === 'writing' && currentSessionId && !showAiLock && (
-        <div className={`pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0 transition-[padding] duration-300 ${writingInputDockOffset}`}>
-          <div className={`${writingColumnShell} relative`}>
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-              <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }}
-                className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
-                title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                {t('engine.nextChapter')}{showAiLock && ' \uD83D\uDD12'}
-              </button>
-              <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }}
-                className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
-                title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                {t('engine.plotTwist')}{showAiLock && ' \uD83D\uDD12'}
-              </button>
-              {currentSession && currentSession.config.episode < currentSession.config.totalEpisodes && (
-                <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple hover:bg-accent-purple/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)]">
-                  EP.{currentSession.config.episode} {'\u2192'} {currentSession.config.episode + 1}
-                </button>
-              )}
-              <span className="text-border">|</span>
-                <button onClick={() => { if (showAiLock) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); setCanvasContent(''); setCanvasPass(0); }}
-                  className={`px-3 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-all whitespace-nowrap font-[family-name:var(--font-mono)] ${showAiLock ? 'opacity-50' : ''}`}
-                  title={showAiLock ? (t('ui.apiKeyRequired')) : ''}>
-                  {showAiLock ? '\uD83D\uDD12' : '\uD83C\uDFA8'} {t('writingMode.openCanvas')}
-                </button>
-            </div>
-            <div className="relative bg-bg-secondary border border-border rounded-2xl md:rounded-[2rem] shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 md:pl-6 flex items-end">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={showAiLock
-                  ? t('writingMode.apiKeyPlaceholder')
-                  : t('writing.inputPlaceholder')}
-                className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${showAiLock ? 'cursor-not-allowed opacity-60' : ''}`}
-                rows={1}
-                disabled={isGenerating || showAiLock}
-              />
-              {input.length > 0 && (
-                <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] shrink-0 self-center mr-1">
-                  {input.length}
-                </span>
-              )}
-              {isGenerating ? (
-                <button onClick={handleCancel} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-accent-red text-white transition-all shrink-0 hover:opacity-80">
-                  <StopCircle className="w-5 h-5" />
-                </button>
-              ) : (
-                <button onClick={() => handleSend()} disabled={!input.trim()} className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shrink-0 ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}>
-                  <Send className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Writing Input dock - Removed (Moved into WritingTabInline for split layout) */}
     </main>
   );
 }

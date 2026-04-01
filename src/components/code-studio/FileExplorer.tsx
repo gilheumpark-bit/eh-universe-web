@@ -9,7 +9,9 @@ import {
   ChevronRight, ChevronDown, FileCode, Folder, FolderOpen,
   Plus, FoldVertical, GripVertical,
 } from "lucide-react";
-import { ContextMenu, buildFileExplorerMenu, type ContextMenuAction } from "./ContextMenu";
+import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
+import { ContextMenu, buildFileExplorerMenu } from "./ContextMenu";
 import { InputDialog } from "./InputDialog";
 import type { FileNode } from "@/lib/code-studio/core/types";
 import { fileIconColor } from "@/lib/code-studio/core/types";
@@ -94,6 +96,7 @@ function TreeNode({
   dragOverFolderId: string | null;
   onRenameFile?: (id: string, newName: string) => void;
 }) {
+  const { lang } = useLang();
   const [expanded, setExpanded] = useState(depth < 2);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(node.name);
@@ -177,11 +180,11 @@ function TreeNode({
         onDragLeave={() => onDragLeave()}
         className={`w-full flex items-center gap-1 px-2 py-[3px] hover:bg-white/5 transition-colors text-xs
           ${isActive ? "bg-white/5 text-purple-400" : "text-text-primary"}
-          ${isSelected ? "bg-purple-500/15 outline outline-1 outline-purple-500/30" : ""}
+          ${isSelected ? "bg-purple-500/15 outline outline-purple-500/30" : ""}
           ${isDragTarget ? "bg-amber-500/10 outline-dashed outline-1 outline-amber-400" : ""}`}
         style={{ paddingLeft: 8 + depth * 12 }}
       >
-        <GripVertical size={10} className="text-text-tertiary opacity-0 group-hover:opacity-50 flex-shrink-0 cursor-grab" />
+        <GripVertical size={10} className="text-text-tertiary opacity-0 group-hover:opacity-50 shrink-0 cursor-grab" />
         {isFolder ? (
           expanded ? <ChevronDown size={14} className="text-text-tertiary" /> : <ChevronRight size={14} className="text-text-tertiary" />
         ) : (
@@ -193,7 +196,7 @@ function TreeNode({
           <FileCode size={14} className={iconColorClass || "text-purple-400"} />
         )}
         {isModified && (
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" title="Modified" />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title={L4(lang, { ko: "수정됨", en: "Modified" })} />
         )}
         {isRenaming ? (
           <input
@@ -209,10 +212,10 @@ function TreeNode({
           <span className="truncate flex-1 text-left">{node.name}</span>
         )}
         {isFolder && folderFileCount > 0 && (
-          <span className="text-[8px] text-text-tertiary flex-shrink-0 ml-1 opacity-60">({folderFileCount})</span>
+          <span className="text-[8px] text-text-tertiary shrink-0 ml-1 opacity-60">({folderFileCount})</span>
         )}
         {fileSize && (
-          <span className="text-[8px] text-text-tertiary flex-shrink-0 ml-1 opacity-60">{fileSize}</span>
+          <span className="text-[8px] text-text-tertiary shrink-0 ml-1 opacity-60">{fileSize}</span>
         )}
       </button>
       {showPreview && filePreview && (
@@ -243,6 +246,7 @@ export function FileExplorer({
   files, onOpen, activeId, onCreateFile, onRenameFile, onDeleteFile,
   onDuplicateFile, onOpenInSplit, onMoveFile, onBulkDelete, modifiedFileIds,
 }: Props) {
+  const { lang } = useLang();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode | null } | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -251,7 +255,11 @@ export function FileExplorer({
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [sortMethod, setSortMethod] = useState<SortMethod>("name-asc");
 
-  const sortLabels: Record<SortMethod, string> = { "name-asc": "Name", type: "Type", size: "Size" };
+  const sortLabels: Record<SortMethod, string> = {
+    "name-asc": L4(lang, { ko: "이름", en: "Name" }),
+    type: L4(lang, { ko: "유형", en: "Type" }),
+    size: L4(lang, { ko: "크기", en: "Size" })
+  };
 
   // Flat file ID list for shift-select range
   const flatFileIds = useMemo(() => {
@@ -349,36 +357,36 @@ export function FileExplorer({
     <div className="text-xs" onContextMenu={(e) => handleContextMenu(e, null)}>
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
-          Explorer
+          {L4(lang, { ko: "탐색기", en: "EXPLORER" })}
         </span>
         <div className="flex items-center gap-0.5">
           {selectedIds.size > 0 && (
             <button
               onClick={handleBulkDelete}
               className="px-1.5 py-0.5 text-[9px] bg-red-500/20 text-red-400 rounded hover:bg-red-500/30"
-              title={`Delete ${selectedIds.size} selected`}
+              title={L4(lang, { ko: `${selectedIds.size}개 선택 항목 삭제`, en: `Delete ${selectedIds.size} selected` })}
             >
-              Delete ({selectedIds.size})
+              {L4(lang, { ko: "삭제", en: "Delete" })} ({selectedIds.size})
             </button>
           )}
           <button
             onClick={() => setSortMethod((m) => m === "name-asc" ? "type" : m === "type" ? "size" : "name-asc")}
             className="px-1 py-0.5 text-[9px] bg-white/5 text-text-tertiary rounded hover:text-text-primary"
-            title={`Sort: ${sortLabels[sortMethod]}`}
+            title={`${L4(lang, { ko: "정렬", en: "Sort" })}: ${sortLabels[sortMethod]}`}
           >
             {sortLabels[sortMethod]}
           </button>
           <button
             onClick={() => setCollapseAllTrigger((v) => v + 1)}
             className="p-0.5 hover:bg-white/5 rounded text-text-tertiary hover:text-text-primary"
-            title="Collapse all"
+            title={L4(lang, { ko: "모두 접기", en: "Collapse all" })}
           >
             <FoldVertical size={12} />
           </button>
           <button
             onClick={() => setDialog({ type: "new-file", parentId: null })}
             className="p-0.5 hover:bg-white/5 rounded text-text-tertiary hover:text-text-primary"
-            title="New file"
+            title={L4(lang, { ko: "새 파일", en: "New file" })}
           >
             <Plus size={12} />
           </button>
@@ -386,13 +394,13 @@ export function FileExplorer({
       </div>
       {selectedIds.size > 0 && (
         <div className="text-[9px] text-text-tertiary px-3 mb-1">
-          {selectedIds.size} selected (Shift+Click for range)
+          {selectedIds.size} {L4(lang, { ko: "개 선택됨 (Shift+클릭으로 범위 선택)", en: "selected (Shift+Click for range)" })}
         </div>
       )}
       {sortedFiles.length === 0 && (
         <div className="mx-3 my-4 px-3 py-8 text-center text-xs text-text-tertiary rounded-lg border-2 border-dashed border-white/8">
           <Folder size={20} className="mx-auto mb-2 opacity-40" />
-          <p>No files yet. Create one to get started.</p>
+          <p>{L4(lang, { ko: "아직 파일이 없습니다. 파일을 생성하여 시작하세요.", en: "No files yet. Create one to get started." })}</p>
         </div>
       )}
       {sortedFiles.map((node) => (
@@ -409,7 +417,7 @@ export function FileExplorer({
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          items={buildFileExplorerMenu(contextMenu.node?.type === "folder")}
+          items={buildFileExplorerMenu(contextMenu.node?.type === "folder", lang)}
           onSelect={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
@@ -417,8 +425,8 @@ export function FileExplorer({
 
       {dialog && (
         <InputDialog
-          title={dialog.type === "rename" ? "Rename" : dialog.type === "new-folder" ? "New Folder" : "New File"}
-          placeholder={dialog.type === "rename" ? "Enter new name" : dialog.type === "new-folder" ? "Folder name" : "File name"}
+          title={dialog.type === "rename" ? L4(lang, { ko: "이름 바꾸기", en: "Rename" }) : dialog.type === "new-folder" ? L4(lang, { ko: "새 폴더", en: "New Folder" }) : L4(lang, { ko: "새 파일", en: "New File" })}
+          placeholder={dialog.type === "rename" ? L4(lang, { ko: "새 이름 입력", en: "Enter new name" }) : dialog.type === "new-folder" ? L4(lang, { ko: "폴더 이름", en: "Folder name" }) : L4(lang, { ko: "파일 이름", en: "File name" })}
           defaultValue={dialog.defaultValue}
           onConfirm={handleDialogConfirm}
           onCancel={() => setDialog(null)}

@@ -8,8 +8,8 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  Files, Plus, X, FileText, FolderOpen, Folder,
-  Edit3, Trash2, AlertTriangle, Home, Loader2,
+  Files, Plus, FileText, FolderOpen, Folder,
+  Edit3, Trash2, Home, Loader2,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
 import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio/core/types";
@@ -19,7 +19,7 @@ import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfi
 import { runStressReport, type StressReport } from "@/lib/code-studio/pipeline/stress-test";
 import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
 import { parseErrors, type ParsedError } from "@/lib/code-studio/pipeline/error-parser";
-import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
+import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
@@ -129,7 +129,7 @@ function FileTreeItem({
   return (
     <div>
       <div
-        className={`group flex w-full items-center gap-1.5 px-2 py-1 text-[12px] transition-colors hover:bg-white/[0.06] ${
+        className={`group flex w-full items-center gap-1.5 px-2 py-1 text-[12px] transition-colors hover:bg-white/6 ${
           isActive ? "bg-accent-green/10 text-accent-green" : "text-text-secondary"
         }`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
@@ -149,12 +149,12 @@ function FileTreeItem({
               onChange={(e) => setEditName(e.target.value)}
               onBlur={() => { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); }}
               onKeyDown={(e) => { if (e.key === "Enter") { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); } }}
-              className="w-full bg-transparent text-[12px] font-[family-name:var(--font-mono)] outline-none border-b border-accent-green"
+              className="w-full bg-transparent text-[12px] font-mono outline-none border-b border-accent-green"
               autoFocus
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <span className="truncate font-[family-name:var(--font-mono)]">{node.name}</span>
+            <span className="truncate font-mono">{node.name}</span>
           )}
         </button>
         {!isFolder && node.id !== "root" && (
@@ -197,10 +197,10 @@ function CodeStudioShellInner() {
   const isTablet = useIsTablet();
   
   // Apply theme system (same as novel studio)
-  const { themeLevel, colorTheme } = useStudioTheme();
+  useStudioTheme();
 
   // ── File System ──
-  const { tree: files, setTree: setFiles, createFile: fsCreateFile, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
+  const { tree: files, setTree: setFiles, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
 
   // ── Core State ──
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
@@ -231,15 +231,34 @@ function CodeStudioShellInner() {
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   // ── Analysis/Verification State ──
-  const [bugReports, setBugReports] = useState<BugReport[]>([]);
-  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
-  const [parsedErrors, setParsedErrors] = useState<ParsedError[]>([]);
-  const [stressReport, setStressReport] = useState<StressReport | null>(null);
-  const [isStressTesting, setIsStressTesting] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationScore, setVerificationScore] = useState<number | null>(null);
-  const [currentVerifyRound, setCurrentVerifyRound] = useState(0);
+  type VerifyState = {
+    bugReports: BugReport[];
+    pipelineStages: PipelineStage[];
+    stressReport: StressReport | null;
+    isStressTesting: boolean;
+    verificationResult: VerificationResult | null;
+    isVerifying: boolean;
+    verificationScore: number | null;
+    currentVerifyRound: number;
+  };
+  type VerifyAction = Partial<VerifyState> | ((prev: VerifyState) => Partial<VerifyState>);
+  const [verifyState, dispatchVerify] = React.useReducer(
+    (state: VerifyState, action: VerifyAction) => {
+      const next = typeof action === "function" ? action(state) : action;
+      return { ...state, ...next };
+    },
+    {
+      bugReports: [],
+      pipelineStages: [],
+      stressReport: null,
+      isStressTesting: false,
+      verificationResult: null,
+      isVerifying: false,
+      verificationScore: null,
+      currentVerifyRound: 0,
+    }
+  );
+  const { bugReports, pipelineStages, stressReport, isStressTesting, verificationResult, isVerifying, verificationScore, currentVerifyRound } = verifyState;
 
   // ── Staging/Rollback State ──
   const [stagedFiles, setStagedFiles] = useState<Record<string, string>>({});
@@ -268,7 +287,7 @@ function CodeStudioShellInner() {
     activeFileLanguage: activeFile?.language ?? null,
   });
 
-  const keyboard = useCodeStudioKeyboard({
+  useCodeStudioKeyboard({
     modalOpen: !!confirmState || showCommandPalette || showShortcuts,
     bindings: [
       { keys: "ctrl+shift+p", handler: () => setShowCommandPalette(v => !v), description: "Command Palette" },
@@ -320,7 +339,7 @@ function CodeStudioShellInner() {
     if (!loaded) return;
     const t = setTimeout(() => { fsPersist(); }, 1000);
     return () => clearTimeout(t);
-  }, [files, loaded]);
+  }, [files, fsPersist, loaded]);
 
   // Auto-save settings
   useEffect(() => {
@@ -349,7 +368,6 @@ function CodeStudioShellInner() {
         if (state.sidebarWidth) setSidebarWidth(state.sidebarWidth);
       }
     } catch { /* corrupt data — skip */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
   // Keyboard shortcuts
@@ -378,21 +396,21 @@ function CodeStudioShellInner() {
         e.preventDefault();
         if (activeFileId) {
           const af = openFiles.find((f) => f.id === activeFileId);
-          if (af?.isDirty && !window.confirm("Unsaved changes will be lost. Close anyway?")) return;
+          if (af?.isDirty && !window.confirm(L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }))) return;
           setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; });
         }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [activeFileId, files, openFiles, toast]);
+  }, [activeFileId, files, fsCanRedo, fsCanUndo, fsPersist, fsRedo, fsUndo, openFiles, tcs.savedLocally, toast, lang]);
 
   // Bug analysis on file change
   useEffect(() => {
     if (!activeFile?.isDirty) return;
     const t = setTimeout(() => {
       const bugs = findBugsStatic(activeFile.content, activeFile.language);
-      setBugReports(bugs);
+      dispatchVerify({ bugReports: bugs });
     }, 1500);
     return () => clearTimeout(t);
   }, [activeFile?.isDirty, activeFile?.content, activeFile?.language]);
@@ -463,8 +481,7 @@ function CodeStudioShellInner() {
             });
             t.writeln(`  \x1b[36mOverall: ${result.overallScore}/100 (${result.overallStatus})\x1b[0m`);
             const errors = parseErrors(outputLines.join("\n"));
-            if (errors.length > 0) { setParsedErrors(errors); setBuildError({ message: `${errors.length} error(s) found`, file: errors[0].file, line: errors[0].line }); }
-            else { setParsedErrors([]); }
+            if (errors.length > 0) { setBuildError({ message: `${errors.length} error(s) found`, file: errors[0].file, line: errors[0].line }); }
           } else t.writeln("  \x1b[31mNo file open\x1b[0m");
           break;
         }
@@ -510,12 +527,12 @@ function CodeStudioShellInner() {
     if (!activeFile?.isDirty) return;
     const timer = setTimeout(() => {
       const result = runStaticPipeline(activeFile.content, activeFile.language);
-      setPipelineStages(result.stages);
+      dispatchVerify({ pipelineStages: result.stages });
       const passed = result.stages.filter((s) => s.status === "pass").length;
       toast(`Pipeline: ${passed}/${result.stages.length} passed`, passed === result.stages.length ? "success" : "info");
     }, 1000);
     return () => clearTimeout(timer);
-  }, [activeFile?.isDirty, activeFile?.content, toast]);
+  }, [activeFile?.isDirty, activeFile?.content, activeFile?.language, toast]);
 
   // Ensure terminal mounts on mobile/tablet
   useEffect(() => {
@@ -532,23 +549,23 @@ function CodeStudioShellInner() {
     setActiveFileId(node.id);
     setHasEverOpened(true);
     panels.trackFileOpen(node.id, node.name);
-  }, [openFiles, panels.trackFileOpen]);
+  }, [openFiles, panels]);
 
   const handleCloseTab = useCallback((id: string) => {
     const file = openFiles.find((f) => f.id === id);
-    if (file?.isDirty) { if (!window.confirm("Unsaved changes will be lost. Close anyway?")) return; }
+    if (file?.isDirty) { if (!window.confirm(L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }))) return; }
     setOpenFiles((prev) => {
       const next = prev.filter((f) => f.id !== id);
       if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null);
       return next;
     });
-  }, [activeFileId, openFiles]);
+  }, [activeFileId, openFiles, lang]);
 
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (!activeFileId || value === undefined) return;
     setOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content: value, isDirty: true } : f));
     fsUpdateContent(activeFileId, value);
-  }, [activeFileId]);
+  }, [activeFileId, fsUpdateContent]);
 
   const handleNewFile = useCallback(() => {
     if (!newFileName.trim()) { setShowNewFile(true); return; }
@@ -566,7 +583,7 @@ function CodeStudioShellInner() {
     setActiveFileId(id);
     setHasEverOpened(true);
     toast(tcs.fileCreated, "success");
-  }, [newFileName, toast, tcs]);
+  }, [newFileName, setFiles, toast, tcs.fileCreated]);
 
   const handleDelete = useCallback((id: string) => {
     const node = files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.id === id);
@@ -582,12 +599,12 @@ function CodeStudioShellInner() {
         setConfirmState(null);
       },
     });
-  }, [activeFileId, toast, tcs, files, lang]);
+  }, [activeFileId, files, fsDeleteNode, lang, tcs.fileDeleted, toast]);
 
   const handleRename = useCallback((id: string, name: string) => {
     fsRenameNode(id, name);
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
-  }, []);
+  }, [fsRenameNode]);
 
   const handleApplyCode = useCallback((code: string, fileName?: string) => {
     const targetFileId = fileName 
@@ -625,16 +642,21 @@ function CodeStudioShellInner() {
     setActiveFileId(indexFile.id);
     setHasEverOpened(true);
     toast(tcs.demoLoaded, "success");
-  }, [toast, tcs]);
+  }, [setFiles, toast, tcs.demoLoaded]);
 
   const handleBlankProject = useCallback(() => {
-    const blankFiles: FileNode[] = [{ id: "root", name: "project", type: "folder", children: [{ id: "readme", name: "README.md", type: "file", content: "# New Project\n\nDescribe your project here.\n" }] }];
+    const projectName = L4(lang, { ko: "프로젝트", en: "project" });
+    const newProjectStr = L4(lang, { ko: "새 프로젝트", en: "New Project" });
+    const describeStr = L4(lang, { ko: "프로젝트 설명을 작성하세요.", en: "Describe your project here." });
+    const mdContent = `# ${newProjectStr}\n\n${describeStr}\n`;
+    
+    const blankFiles: FileNode[] = [{ id: "root", name: projectName, type: "folder", children: [{ id: "readme", name: "README.md", type: "file", content: mdContent }] }];
     setFiles(blankFiles);
-    setOpenFiles([{ id: "readme", name: "README.md", content: "# New Project\n\nDescribe your project here.\n", language: "markdown" }]);
+    setOpenFiles([{ id: "readme", name: "README.md", content: mdContent, language: "markdown" }]);
     setActiveFileId("readme");
     setHasEverOpened(true);
     toast(tcs.blankCreated, "success");
-  }, [toast, tcs]);
+  }, [lang, setFiles, setOpenFiles, setActiveFileId, setHasEverOpened, toast, tcs]);
 
   const handleResumeProject = useCallback(async () => {
     try {
@@ -650,37 +672,38 @@ function CodeStudioShellInner() {
         toast(L4(lang, { ko: "프로젝트 복원됨", en: "Project resumed" }), "success");
       } else { handleOpenDemo(); }
     } catch { handleOpenDemo(); }
-  }, [handleOpenDemo, toast, lang]);
+  }, [handleOpenDemo, lang, setFiles, toast]);
 
   const handleWelcomeNewFile = useCallback(() => { setShowNewFile(true); setHasEverOpened(true); }, []);
 
   // Stress test
   const handleRunStressTest = useCallback(async () => {
     if (!activeFile || isStressTesting) return;
-    setIsStressTesting(true);
+    dispatchVerify({ isStressTesting: true });
     try {
       const report = await runStressReport(activeFile.content, activeFile.name);
-      setStressReport(report);
+      dispatchVerify({ stressReport: report });
       toast(`Stress Test: ${report.grade} (${report.overallScore}/100)`, report.grade === "F" ? "error" : "success");
     } catch { toast("Stress test failed", "error"); }
-    finally { setIsStressTesting(false); }
+    finally { dispatchVerify({ isStressTesting: false }); }
   }, [activeFile, isStressTesting, toast]);
 
   // Verification
   const handleRunVerification = useCallback(async () => {
     if (!activeFile || isVerifying) return;
-    setIsVerifying(true);
-    setCurrentVerifyRound(0);
-    setVerificationResult(null);
+    dispatchVerify({
+      isVerifying: true, currentVerifyRound: 0, verificationResult: null, verificationScore: null, bugReports: [], pipelineStages: [], stressReport: null
+    });
     setRightPanel("progress");
     try {
       const result = await runVerificationLoop(activeFile.content, activeFile.language, activeFile.name, files, { enableStress: false }, (iteration) => {
-        setCurrentVerifyRound(iteration.round);
-        setVerificationScore(iteration.combinedScore);
-        setPipelineStages((prev) => prev.map((s, i) => ({ ...s, status: i === 0 ? iteration.pipelineStatus : s.status })));
+        dispatchVerify((prev) => ({
+          currentVerifyRound: iteration.round,
+          verificationScore: iteration.combinedScore,
+          pipelineStages: prev.pipelineStages.map((s, i) => ({ ...s, status: i === 0 ? iteration.pipelineStatus : s.status }))
+        }));
       });
-      setVerificationResult(result);
-      setVerificationScore(result.finalScore);
+      dispatchVerify({ verificationResult: result, verificationScore: result.finalScore });
       if (result.totalFixesApplied > 0 && result.finalCode !== result.originalCode) {
         setStagedFiles(prev => ({ ...prev, [activeFile.name]: result.finalCode }));
         setRightPanel("review");
@@ -689,7 +712,7 @@ function CodeStudioShellInner() {
         toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.stopReason}`, result.finalStatus === "pass" ? "success" : result.finalStatus === "warn" ? "info" : "error");
       }
     } catch { toast(tcs.verificationFailed, "error"); }
-    finally { setIsVerifying(false); }
+    finally { dispatchVerify({ isVerifying: false }); }
   }, [activeFile, isVerifying, files, toast, tcs]);
 
   // Staging flow
@@ -704,13 +727,13 @@ function CodeStudioShellInner() {
       setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: code, isDirty: true } : f));
     }
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-    toast(`Approved fixes for ${fileName}`, "success");
-  }, [stagedFiles, openFiles, files, fsUpdateContent, toast]);
+    toast(L4(lang, { ko: `${fileName}의 변경사항을 승인했습니다`, en: `Approved fixes for ${fileName}` }), "success");
+  }, [stagedFiles, openFiles, files, fsUpdateContent, toast, lang]);
 
   const handleRejectFile = useCallback((fileName: string) => {
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-    toast(`Rejected fixes for ${fileName}`, "info");
-  }, [toast]);
+    toast(L4(lang, { ko: `${fileName}의 변경사항을 거절했습니다`, en: `Rejected fixes for ${fileName}` }), "info");
+  }, [lang, toast]);
 
   const handleRollback = useCallback((fileName: string) => {
     const snapshot = preApplySnapshot[fileName];
@@ -721,9 +744,9 @@ function CodeStudioShellInner() {
       fsUpdateContent(targetFileId, snapshot);
       setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: snapshot, isDirty: true } : f));
       setPreApplySnapshot(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-      toast(`Rolled back ${fileName} to pre-verification state`, "info");
+      toast(L4(lang, { ko: `${fileName}을(를) 검증 이전 상태로 되돌렸습니다`, en: `Rolled back ${fileName} to pre-verification state` }), "info");
     }
-  }, [preApplySnapshot, openFiles, files, fsUpdateContent, toast]);
+  }, [preApplySnapshot, openFiles, files, fsUpdateContent, lang, toast]);
 
   // Editor navigate-to-line callback (for outline/symbol navigation)
   const editorNavigateToLine = useCallback((line: number) => {
@@ -736,7 +759,7 @@ function CodeStudioShellInner() {
       <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
         <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Home"><Home className="h-3.5 w-3.5" /></Link>
         <Files className="h-4 w-4 text-accent-green" />
-        <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Explorer</span>
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{L4(lang, { ko: "탐색기", en: "Explorer" })}</span>
         <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File"><Plus className="h-3.5 w-3.5" /></button>
       </div>
       {showNewFile && (
@@ -744,7 +767,7 @@ function CodeStudioShellInner() {
           <input value={newFileName} onChange={(e) => setNewFileName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
             placeholder="filename.ts"
-            className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] text-text-primary outline-none focus:border-accent-green"
+            className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-mono text-[11px] text-text-primary outline-none focus:border-accent-green"
             autoFocus
           />
         </div>
@@ -775,7 +798,7 @@ function CodeStudioShellInner() {
         ) : !hasEverOpened ? (
           <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
         ) : (
-          <div className="flex h-full items-center justify-center"><div className="text-center"><div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div><p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p></div></div>
+          <div className="flex h-full items-center justify-center"><div className="text-center"><div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div><p className="font-mono text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p></div></div>
         )}
       </div>
     </div>
@@ -896,7 +919,7 @@ function CodeStudioShellInner() {
           onZoomOut={() => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) }))}
           onZoomReset={() => setSettings(s => ({ ...s, fontSize: 14 }))}
           onSaveToast={() => toast(tcs.savedLocally, "success")}
-          onSettingsSaved={() => toast("Settings saved", "success")}
+          onSettingsSaved={() => toast(L4(lang, { ko: "설정 저장됨", en: "Settings saved" }), "success")}
           fsUpdateContent={fsUpdateContent}
           tcs={tcs}
         >
@@ -928,8 +951,8 @@ function CodeStudioShellInner() {
         {/* Rollback Banner */}
         {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (
           <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
-            <span className="font-[family-name:var(--font-mono)] text-[11px] text-accent-purple">Verification fixes applied — Rollback available</span>
-            <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">Rollback All</button>
+            <span className="font-mono text-[11px] text-accent-purple">{L4(lang, { ko: "검증 수정 사항 적용됨 — 롤백 가능", en: "Verification fixes applied — Rollback available" })}</span>
+            <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">{L4(lang, { ko: "모두 롤백", en: "Rollback All" })}</button>
           </div>
         )}
 

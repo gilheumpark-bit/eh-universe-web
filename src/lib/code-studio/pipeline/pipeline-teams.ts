@@ -580,7 +580,15 @@ export function runTeam5AssetTrace(code: string, _language: string, _fileName: s
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter((f) => f.severity === 'major').length * 15 - findings.filter((f) => f.severity === 'minor').length * 5);
+  const { majors: fMajors, minors: fMinors } = findings.reduce(
+    (acc, f) => {
+      if (f.severity === 'major') acc.majors++;
+      else if (f.severity === 'minor') acc.minors++;
+      return acc;
+    },
+    { majors: 0, minors: 0 },
+  );
+  const score = Math.max(0, 100 - fMajors * 15 - fMinors * 5);
 
   return {
     stage: 'asset-trace',
@@ -713,10 +721,16 @@ export function runTeam6Stability(code: string, _language: string, _fileName: st
     }
   }
 
-  const score = Math.max(0, 100
-    - findings.filter((f) => f.severity === 'critical').length * 30
-    - findings.filter((f) => f.severity === 'major').length * 15
-    - findings.filter((f) => f.severity === 'minor').length * 5);
+  const { criticals: sCrits, majors: sMajors, minors: sMinors } = findings.reduce(
+    (acc, f) => {
+      if (f.severity === 'critical') acc.criticals++;
+      else if (f.severity === 'major') acc.majors++;
+      else if (f.severity === 'minor') acc.minors++;
+      return acc;
+    },
+    { criticals: 0, majors: 0, minors: 0 },
+  );
+  const score = Math.max(0, 100 - sCrits * 30 - sMajors * 15 - sMinors * 5);
 
   return {
     stage: 'stability',

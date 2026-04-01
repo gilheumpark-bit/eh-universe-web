@@ -27,6 +27,7 @@ import {
 } from "@/lib/code-studio/features/webcontainer";
 import { generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -162,9 +163,10 @@ function flattenFilesWithPaths(
 
 interface DiffPreviewProps {
   snapshot: FileSnapshot;
+  lang: string;
 }
 
-function DiffPreview({ snapshot }: DiffPreviewProps) {
+function DiffPreview({ snapshot, lang }: DiffPreviewProps) {
   const added = Math.max(0, snapshot.linesAfter - snapshot.linesBefore);
   const removed = Math.max(0, snapshot.linesBefore - snapshot.linesAfter);
   const unchanged = Math.min(snapshot.linesBefore, snapshot.linesAfter);
@@ -176,17 +178,17 @@ function DiffPreview({ snapshot }: DiffPreviewProps) {
       </div>
       <div className="flex gap-3">
         <span className="text-text-tertiary">
-          {unchanged} unchanged
+          {unchanged} {L4(lang, { ko: "줄 변경 없음", en: "unchanged" })}
         </span>
         {added > 0 && (
-          <span className="text-accent-green">+{added} lines</span>
+          <span className="text-accent-green">+{added} {L4(lang, { ko: "줄", en: "lines" })}</span>
         )}
         {removed > 0 && (
-          <span className="text-accent-red">-{removed} lines</span>
+          <span className="text-accent-red">-{removed} {L4(lang, { ko: "줄", en: "lines" })}</span>
         )}
       </div>
       <div className="mt-1 text-text-tertiary">
-        {snapshot.linesBefore} lines → {snapshot.linesAfter} lines
+        {snapshot.linesBefore} {L4(lang, { ko: "줄", en: "lines" })} → {snapshot.linesAfter} {L4(lang, { ko: "줄", en: "lines" })}
       </div>
     </div>
   );
@@ -214,7 +216,6 @@ function ChangesTab({
   fileTree,
 }: ChangesTabProps) {
   const { lang: cLang } = useLang();
-  const ko = cLang === "ko";
   const flatFiles = useMemo(() => flattenFiles(fileTree), [fileTree]);
 
   const selectedSnapshot = useMemo(() => {
@@ -235,7 +236,7 @@ function ChangesTab({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <Check size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">{ko ? "변경 사항 없음" : "No pending changes"}</span>
+        <span className="text-sm">{L4(cLang, { ko: "변경 사항 없음", en: "No pending changes" })}</span>
       </div>
     );
   }
@@ -266,7 +267,7 @@ function ChangesTab({
       </div>
 
       {/* Diff preview */}
-      {selectedSnapshot && <DiffPreview snapshot={selectedSnapshot} />}
+      {selectedSnapshot && <DiffPreview snapshot={selectedSnapshot} lang={cLang} />}
 
       {/* Commit button */}
       <button
@@ -274,7 +275,7 @@ function ChangesTab({
         className="mt-1 flex items-center justify-center gap-2 rounded bg-accent-green/15 px-3 py-1.5 text-sm font-medium text-accent-green transition-colors hover:bg-accent-green/25"
       >
         <GitCommit size={14} />
-        Commit {dirtyFiles.length} file{dirtyFiles.length > 1 ? "s" : ""}
+        {L4(cLang, { ko: `커밋 (${dirtyFiles.length}개 파일)`, en: `Commit ${dirtyFiles.length} file` })}{L4(cLang, { ko: "", en: dirtyFiles.length > 1 ? "s" : "" })}
       </button>
     </div>
   );
@@ -304,7 +305,7 @@ function HistoryTab({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <History size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">{hLang === "ko" ? "커밋 기록 없음" : "No commit history"}</span>
+        <span className="text-sm">{L4(hLang, { ko: "커밋 기록 없음", en: "No commit history" })}</span>
       </div>
     );
   }
@@ -350,16 +351,14 @@ function HistoryTab({
               <div className="border-t border-border/20 px-2 py-2">
                 <div className="space-y-1">
                   {commit.files.map((snap) => (
-                    <DiffPreview key={snap.fileId} snapshot={snap} />
+                    <DiffPreview key={snap.fileId} snapshot={snap} lang={hLang} />
                   ))}
                 </div>
                 <button
                   onClick={() => onRestore(commit)}
                   className="mt-2 flex items-center gap-1.5 rounded bg-accent-amber/15 px-2.5 py-1 text-xs font-medium text-accent-amber transition-colors hover:bg-accent-amber/25"
                 >
-                  <RotateCcw size={12} />
-                  Restore this version
-                </button>
+                  <RotateCcw size={12} />{L4(hLang, { ko: "이 버전으로 복원", en: "Restore this version" })}</button>
               </div>
             )}
           </div>
@@ -590,13 +589,13 @@ export default function GitPanel({
   const tabs: { id: TabId; label: string; icon: React.ReactNode; count?: number }[] = [
     {
       id: "changes",
-      label: "Changes",
+      label: L4(lang, { ko: "변경 사항", en: "Changes" }),
       icon: <GitBranch size={14} />,
       count: dirtyFiles.length > 0 ? dirtyFiles.length : undefined,
     },
     {
       id: "history",
-      label: "History",
+      label: L4(lang, { ko: "실행 기록", en: "History" }),
       icon: <History size={14} />,
       count: commits.length > 0 ? commits.length : undefined,
     },
@@ -607,12 +606,10 @@ export default function GitPanel({
       {/* Mode notice */}
       <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08] flex items-center gap-2">
         <span>
-          {gitAvailable
-            ? `Git runner connected — ${gitBackendLabel}`
-            : "Local simulation — changes are saved in browser only"}
+          {gitAvailable ? L4(lang, { ko: `Git 러너 연결됨 — ${gitBackendLabel}`, en: `Git runner connected — ${gitBackendLabel}` }) : L4(lang, { ko: "로컬 시뮬레이션 — 변경 사항은 브라우저에만 저장됩니다", en: "Local simulation — changes are saved in browser only" })}
         </span>
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
-          {gitAvailable ? gitBackendLabel : "Simulation"}
+          {gitAvailable ? gitBackendLabel : L4(lang, { ko: "시뮬레이션", en: "Simulation" })}
         </span>
       </div>
       {/* Branch selector */}
@@ -636,19 +633,17 @@ export default function GitPanel({
                 if (e.key === "Enter") handleNewBranch();
                 if (e.key === "Escape") { setShowNewBranch(false); setNewBranchName(""); }
               }}
-              placeholder="branch-name"
+              placeholder={L4(lang, { ko: "브랜치-이름", en: "branch-name" })}
               className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-text-primary outline-none"
               autoFocus
             />
-            <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">
-              OK
-            </button>
+            <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">{L4(lang, { ko: "확인", en: "OK" })}</button>
           </div>
         ) : (
           <button
             onClick={() => setShowNewBranch(true)}
             className="rounded p-1 text-text-tertiary hover:bg-bg-primary/50 hover:text-text-primary"
-            title="New Branch"
+            title={L4(lang, { ko: "새 브랜치", en: "New Branch" })}
           >
             <Plus size={14} />
           </button>
