@@ -44,40 +44,19 @@ export default function Home() {
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
-  
+
   useEffect(() => {
-    try {
-      const seen = typeof window !== "undefined" && sessionStorage.getItem("eh-splash-seen");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSplashState(seen ? "hide" : "show");
-    } catch {
-      // Storage access blocked or failed — fallback to show splash for safety
-      setSplashState("show");
-    }
+    queueMicrotask(() => setSplashState("show"));
   }, []);
 
   const showSplash = splashState === "show";
   const setShowSplash = (v: boolean) => {
     setSplashState(v ? "show" : "hide");
-    if (!v) {
-      try {
-        sessionStorage.setItem("eh-splash-seen", "1");
-      } catch {
-        /* ignore */
-      }
-    }
+    // No longer store the "seen" state to ensure it always shows on refresh.
   };
 
-  // Auto-dismiss: desktop 2.5s, mobile needs more time to read & tap
-  useEffect(() => {
-    if (!showSplash) return;
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const delay = isMobile ? 6500 : 2800;
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [showSplash]);
+  // Auto-dismiss is removed as requested by the user so they can choose a path.
+  // The splash screen will now wait for explicit user action.
 
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
     L4(lang, v as unknown as { ko: string; en: string; jp?: string; cn?: string }) as unknown as V;
