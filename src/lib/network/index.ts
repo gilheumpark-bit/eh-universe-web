@@ -5,7 +5,7 @@
 export { requireDb, normalizeText, COLLECTIONS, nowIso } from "./helpers";
 export { ensureNetworkUserRecord, getNetworkUserRecord } from "./users";
 export {
-  createPlanetWithFirstLog, createPost, createSettlement, createBoardPost,
+  createPlanetWithFirstLog, createPost, updatePost, createSettlement, createBoardPost,
 } from "./writes";
 export {
   getPlanetById, getPostById, listLatestPlanets, listPlanetPosts,

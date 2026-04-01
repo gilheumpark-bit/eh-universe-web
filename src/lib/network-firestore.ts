@@ -2,7 +2,7 @@
 export {
   requireDb, normalizeText, COLLECTIONS, nowIso,
   ensureNetworkUserRecord, getNetworkUserRecord,
-  createPlanetWithFirstLog, createPost, createSettlement, createBoardPost,
+  createPlanetWithFirstLog, createPost, updatePost, createSettlement, createBoardPost,
   getPlanetById, getPostById, listLatestPlanets, listPlanetPosts, getPlanetsByIds,
   listLatestPosts, listCommentsForPost, getAllUniqueTags,
   listLatestSettlements, listPlanetSettlements, listPlanetsByOwner,

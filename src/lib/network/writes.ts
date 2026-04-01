@@ -7,7 +7,7 @@ import {
 import { auth } from "@/lib/firebase";
 import {
   type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
-  type CreatePostInput, type CreateSettlementInput,
+  type CreatePostInput, type CreateSettlementInput, type UpdatePostInput,
   type PlanetRecord, type PostRecord,
   type SettlementRecord,
   REPORT_TYPE_TO_BOARD_TYPE,
@@ -199,6 +199,54 @@ export async function createPost(input: CreatePostInput) {
   await batch.commit();
 
   return postRecord;
+}
+
+export async function updatePost(input: UpdatePostInput) {
+  const database = requireDb();
+  const timestamp = nowIso();
+  const postRef = doc(database, COLLECTIONS.posts, input.postId);
+
+  const postSnap = await getDoc(postRef);
+  if (!postSnap.exists()) {
+    throw new Error('Post not found');
+  }
+  const postData = postSnap.data() as PostRecord;
+
+  const currentUser = auth?.currentUser;
+  // 게시물 작성자만 수정 가능 (향후 관리자 확대 가능)
+  if (!currentUser || currentUser.uid !== input.updaterId || postData.authorId !== input.updaterId) {
+    throw new Error('Unauthorized: only author can edit');
+  }
+
+  const updates: Partial<PostRecord> = {
+    updatedAt: timestamp,
+  };
+
+  if (input.title !== undefined) updates.title = sanitizeTitle(input.title);
+  if (input.content !== undefined) {
+    updates.content = sanitizeContent(input.content);
+    updates.summary = summarizeContent(updates.content);
+  }
+  if (input.reportType !== undefined) {
+    updates.reportType = input.reportType;
+    updates.boardType = REPORT_TYPE_TO_BOARD_TYPE[input.reportType];
+  }
+  if (input.eventCategory !== undefined) updates.eventCategory = normalizeOptionalText(input.eventCategory);
+  if (input.region !== undefined) updates.region = normalizeOptionalText(input.region);
+  if (input.intervention !== undefined) updates.intervention = input.intervention;
+  if (input.ehImpact !== undefined) updates.ehImpact = clampNullable(input.ehImpact, -100, 100);
+  if (input.followupStatus !== undefined) updates.followupStatus = input.followupStatus ?? undefined;
+  if (input.visibility !== undefined) updates.visibility = input.visibility;
+
+  const baseReportType = updates.reportType ?? postData.reportType;
+  const baseFollowupStatus = updates.followupStatus ?? postData.followupStatus;
+  const baseTags = input.tags ?? postData.tags ?? [];
+  const tagsSource = [baseReportType, baseFollowupStatus, ...baseTags].filter(Boolean) as string[];
+  updates.tags = normalizeStringArray(tagsSource, 8);
+
+  await setDoc(postRef, updates, { merge: true });
+
+  return { ...postData, ...updates };
 }
 
 export async function createSettlement(input: CreateSettlementInput) {

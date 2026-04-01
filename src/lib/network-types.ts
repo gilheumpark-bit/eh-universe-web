@@ -262,6 +262,21 @@ export interface CreatePostInput {
   visibility?: Visibility;
 }
 
+export interface UpdatePostInput {
+  postId: string;
+  updaterId: string; // 작성자 또는 관리자 검증용
+  title?: string;
+  content?: string;
+  reportType?: ReportType;
+  eventCategory?: string;
+  region?: string;
+  intervention?: boolean;
+  ehImpact?: number | null;
+  followupStatus?: PlanetStatus | null;
+  tags?: string[];
+  visibility?: Visibility;
+}
+
 export interface CreateSettlementInput {
   operatorId: string;
   planetId: string;

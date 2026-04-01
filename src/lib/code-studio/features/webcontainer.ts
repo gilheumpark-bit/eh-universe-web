@@ -201,6 +201,29 @@ function createSimulatedContainer(): WebContainerInstance {
       if (disposed) return "";
       devServerRunning = true;
       await delay(300);
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: monospace; background: #0d1117; color: #58a6ff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+            .box { padding: 2rem; border: 1px dashed rgba(88, 166, 255, 0.4); border-radius: 8px; background: rgba(88, 166, 255, 0.05); }
+            h1 { font-size: 1.2rem; color: #fff; margin-top: 0; }
+            p { font-size: 0.9rem; margin-bottom: 0; color: #8b949e; }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h1>⚙️ Simulated WebContainer</h1>
+            <p>Dev server simulating on port ${port}</p>
+            <p style="margin-top:0.5rem;font-size:0.75rem;color:#6e7681;">(Cross-Origin isolation not enabled for native container)</p>
+          </div>
+        </body>
+        </html>
+      `;
+      if (typeof Blob !== "undefined") {
+        return URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      }
       return `http://localhost:${port}`;
     },
 

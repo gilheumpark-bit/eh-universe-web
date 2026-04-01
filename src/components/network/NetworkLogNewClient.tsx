@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { useNetworkAgent } from "@/lib/hooks/useNetworkAgent";
 import { LogComposer, type LogComposerValue } from "@/components/network/LogComposer";
 import { createPost, ensureNetworkUserRecord, listPlanetsByOwner } from "@/lib/network-firestore";
 import { REPORT_TYPE_TEMPLATES } from "@/lib/network-labels";
@@ -20,6 +21,7 @@ const LOG_REPORT_TYPES: ReportType[] = ["observation", "incident", "testimony", 
 export function NetworkLogNewClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { ingestAgent } = useNetworkAgent();
   const { lang } = useLang();
   const { user, signInWithGoogle } = useAuth();
   const [planets, setPlanets] = useState<PlanetRecord[]>([]);
@@ -108,6 +110,15 @@ export function NetworkLogNewClient() {
         ehImpact: value.ehImpact,
         followupStatus: value.followupStatus,
       });
+
+      // 구글 Agent Builder 엔진에 방금 쓴 로그 밀어넣기!
+      ingestAgent({
+        documentId: post.id,
+        title: `게시글: ${value.title}`,
+        content: `분류: ${value.reportType}\n사건 유형: ${value.eventCategory}\n\n${value.content}`,
+        planetId: value.planetId,
+        isPublic: true,
+      }, user.uid).catch(console.error);
 
       router.push(`/network/planets/${post.planetId}`);
     } catch (caught) {

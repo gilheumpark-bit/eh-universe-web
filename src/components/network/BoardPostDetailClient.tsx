@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { CommentSection } from "@/components/network/CommentSection";
@@ -45,6 +46,7 @@ interface BoardPostDetailClientProps {
 
 export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
   const { lang } = useLang();
+  const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,9 +182,19 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
             <span>{L4(lang, { ko: `조회 ${post.metrics.viewCount}`, en: `${post.metrics.viewCount} views` })}</span>
             <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments` })}</span>
             <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions` })}</span>
-            <button
-              type="button"
-              onClick={() => {
+            
+            <div className="ml-auto flex gap-2">
+              {user?.uid === post.authorId && (
+                <Link
+                  href={`/network/posts/${post.id}/edit`}
+                  className="rounded-full border border-white/20 bg-white/5 px-4 py-1.5 font-mono text-[10px] font-medium tracking-widest text-text-tertiary transition hover:bg-white/10 hover:text-white"
+                >
+                  {L4(lang, { ko: "수정", en: "Edit" })}
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => {
                 const payload = {
                   title: post.title,
                   content: post.content,
@@ -196,8 +208,9 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
               }}
               className="ml-auto rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
             >
-              {L4(lang, { ko: "Studio에서 열기", en: "Open in Studio" })}
-            </button>
+                {L4(lang, { ko: "Studio에서 열기", en: "Open in Studio" })}
+              </button>
+            </div>
           </div>
         </article>
 

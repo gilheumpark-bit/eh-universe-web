@@ -23,7 +23,7 @@ import {
   pickNetworkLabel,
 } from "@/lib/network-labels";
 import { TagInput } from "@/components/network/TagInput";
-
+import { useNetworkAgent } from "@/lib/hooks/useNetworkAgent";
 interface PlanetWizardProps {
   ownerId: string;
   ownerName?: string | null;
@@ -58,6 +58,7 @@ const TRANSCENDENCE_COST_OPTIONS: { value: string; ko: string; en: string }[] = 
 // ============================================================
 
 export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTags = [] }: PlanetWizardProps) {
+  const { ingestAgent } = useNetworkAgent();
   const [step, setStep] = useState(0);
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -204,6 +205,22 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
         },
         firstLog,
       });
+
+      // 구글 Agent Builder 엔진에 방금 만든 행성 정보 밀어넣기!
+      const contentString = [
+        `장르: ${planet.genre}`,
+        `문명 단계: ${planet.civilizationLevel}`,
+        `한 줄 소개: ${planet.summary}`,
+        `핵심 규칙:\n${coreRules.join('\n')}`,
+      ].join('\n\n');
+
+      ingestAgent({
+        documentId: createdPlanet.id,
+        title: `행성: ${planet.name}`,
+        content: contentString,
+        planetId: createdPlanet.id,
+        isPublic: true,
+      }, ownerId).catch(console.error);
 
       onCreated(createdPlanet.id);
     } catch (caught) {
