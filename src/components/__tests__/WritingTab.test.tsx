@@ -104,7 +104,7 @@ describe("WritingTab", () => {
       showDashboard: false,
       rightPanelOpen: false,
       setRightPanelOpen: noop,
-    } satisfies React.ComponentProps<typeof WritingTab>;
+    } as unknown as React.ComponentProps<typeof WritingTab>;
 
     const { container } = render(
       <WritingTab {...propsWithMessages} />,

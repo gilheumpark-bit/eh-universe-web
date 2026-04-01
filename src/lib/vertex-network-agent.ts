@@ -80,13 +80,15 @@ export async function ingestNetworkDocument(data: {
     // 문서 생성 또는 덮어쓰기
     const request: CreateDocumentRequest = {
       parent: branchName,
-      document,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      document: document as any,
       documentId: data.documentId,
     };
     await client.createDocument(request).catch(async (e: unknown) => {
       const code = typeof e === "object" && e !== null && "code" in e ? (e as { code?: unknown }).code : undefined;
       if (code === 6) { // ALREADY_EXISTS
-        const updateReq: UpdateDocumentRequest = { document };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updateReq: UpdateDocumentRequest = { document: document as any };
         await client.updateDocument(updateReq);
       } else {
         throw e;

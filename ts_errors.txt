@@ -1,103 +1,20 @@
-src/app/api/local-proxy/__tests__/route.test.ts(82,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
 src/app/api/local-proxy/__tests__/route.test.ts(89,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(95,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(101,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(109,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(115,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(123,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/app/api/local-proxy/__tests__/route.test.ts(138,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-src/components/__tests__/CodeStudioPanelManager.test.tsx(46,9): error TS2322: Type '{ rightPanel: null; onSetRightPanel: Mock<any, any, any>; bugReports: never[]; showAdvancedPanels: false; onToggleAdvancedPanels: Mock<any, any, any>; showSettings: false; onToggleSettings: Mock<...>; language: string; lang: string; }' is not assignable to type 'IntrinsicAttributes & { rightPanel: RightPanel; onSetRightPanel: (panel: RightPanel) => void; bugReports: BugReport[]; ... 4 more ...; lang: string; }'.
-  Property 'language' does not exist on type 'IntrinsicAttributes & { rightPanel: RightPanel; onSetRightPanel: (panel: RightPanel) => void; bugReports: BugReport[]; ... 4 more ...; lang: string; }'.
-src/components/__tests__/CodeStudioPanelManager.test.tsx(63,9): error TS2322: Type '{ rightPanel: null; onSetRightPanel: Mock<any, any, any>; bugReports: never[]; showAdvancedPanels: false; onToggleAdvancedPanels: Mock<any, any, any>; showSettings: false; onToggleSettings: Mock<...>; language: string; lang: string; }' is not assignable to type 'IntrinsicAttributes & { rightPanel: RightPanel; onSetRightPanel: (panel: RightPanel) => void; bugReports: BugReport[]; ... 4 more ...; lang: string; }'.
-  Property 'language' does not exist on type 'IntrinsicAttributes & { rightPanel: RightPanel; onSetRightPanel: (panel: RightPanel) => void; bugReports: BugReport[]; ... 4 more ...; lang: string; }'.
-src/components/__tests__/CodeStudioShell.test.tsx(140,44): error TS2339: Property 'displayName' does not exist on type '() => Element'.
-src/components/__tests__/HistoryTab.test.tsx(57,50): error TS2698: Spread types may only be created from object types.
-src/components/__tests__/HistoryTab.test.tsx(62,50): error TS2698: Spread types may only be created from object types.
-src/components/__tests__/SectionErrorBoundary.test.tsx(47,10): error TS2786: 'BrokenChild' cannot be used as a JSX component.
-  Its type '() => void' is not a valid JSX element type.
-    Type '() => void' is not assignable to type '(props: any) => ReactNode | Promise<ReactNode>'.
-      Type 'void' is not assignable to type 'ReactNode | Promise<ReactNode>'.
-src/components/__tests__/SectionErrorBoundary.test.tsx(57,10): error TS2786: 'BrokenChild' cannot be used as a JSX component.
-  Its type '() => void' is not a valid JSX element type.
-    Type '() => void' is not assignable to type '(props: any) => ReactNode | Promise<ReactNode>'.
-      Type 'void' is not assignable to type 'ReactNode | Promise<ReactNode>'.
-src/components/__tests__/StudioSidebar.test.tsx(51,3): error TS2322: Type '(tab: "writing") => void' is not assignable to type '(tab: AppTab) => void'.
-  Types of parameters 'tab' and 'tab' are incompatible.
-    Type 'AppTab' is not assignable to type '"writing"'.
-      Type '"world"' is not assignable to type '"writing"'.
-src/components/__tests__/WritingTab.test.tsx(99,50): error TS2698: Spread types may only be created from object types.
-src/hooks/__tests__/toManuscriptEntry.test.ts(25,5): error TS2322: Type 'string' is not assignable to type 'number'.
-src/hooks/__tests__/toManuscriptEntry.test.ts(58,12): error TS18048: 'entry.glossarySnapshot' is possibly 'undefined'.
-src/hooks/__tests__/toManuscriptEntry.test.ts(59,12): error TS18048: 'entry.glossarySnapshot' is possibly 'undefined'.
-src/hooks/__tests__/toManuscriptEntry.test.ts(97,24): error TS18048: 'entry.glossarySnapshot' is possibly 'undefined'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(122,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(144,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(160,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(175,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(196,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useCodeStudioComposer.test.tsx(215,39): error TS2345: Argument of type '(opts: any) => Promise<void>' is not assignable to parameter of type '(opts: StreamOptions) => Promise<string>'.
-  Type 'Promise<void>' is not assignable to type 'Promise<string>'.
-    Type 'void' is not assignable to type 'string'.
-src/hooks/__tests__/useStudioSession.test.tsx(115,21): error TS2352: Conversion of type '{ id: string; title: string; messages: Message[]; config: StoryConfig; createdAt: number; updatedAt: number; }' to type 'ChatSession' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Property 'lastUpdate' is missing in type '{ id: string; title: string; messages: Message[]; config: StoryConfig; createdAt: number; updatedAt: number; }' but required in type 'ChatSession'.
-src/hooks/__tests__/useStudioSync.test.tsx(91,35): error TS2345: Argument of type '{ merged: never[]; failedCount: number; }' is not assignable to parameter of type 'SyncResult | Promise<SyncResult>'.
-  Type '{ merged: never[]; failedCount: number; }' is missing the following properties from type 'SyncResult': uploaded, downloaded, conflicts
-src/hooks/__tests__/useStudioSync.test.tsx(104,35): error TS2345: Argument of type '{ merged: never[]; failedCount: number; }' is not assignable to parameter of type 'SyncResult | Promise<SyncResult>'.
-  Type '{ merged: never[]; failedCount: number; }' is missing the following properties from type 'SyncResult': uploaded, downloaded, conflicts
-src/hooks/__tests__/useStudioSync.test.tsx(147,41): error TS2740: Type '{ id: string; }' is missing the following properties from type 'Project': name, description, genre, createdAt, and 2 more.
-src/lib/__tests__/safe-fix-filtering.test.ts(124,25): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(145,25): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(167,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(188,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(208,25): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(228,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(248,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(267,25): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(286,25): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(305,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(324,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(344,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/safe-fix-filtering.test.ts(364,19): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(138,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(172,45): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(189,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(210,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(231,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(268,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(283,51): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(299,43): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(412,47): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
-src/lib/__tests__/verification-integration.test.ts(448,47): error TS2345: Argument of type '{ name: string; type: "file"; content: string; }[]' is not assignable to parameter of type 'FileNode[]'.
-  Property 'id' is missing in type '{ name: string; type: "file"; content: string; }' but required in type 'FileNode'.
+src/app/api/local-proxy/__tests__/route.test.ts(93,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+src/app/api/local-proxy/__tests__/route.test.ts(111,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+src/app/api/local-proxy/__tests__/route.test.ts(119,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+src/app/api/local-proxy/__tests__/route.test.ts(146,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+src/app/tools/noa-tower/page.tsx(57,55): error TS2345: Argument of type '() => GamePayload | null' is not assignable to parameter of type 'GamePayload | (() => GamePayload)'.
+  Type '() => GamePayload | null' is not assignable to type '() => GamePayload'.
+    Type 'GamePayload | null' is not assignable to type 'GamePayload'.
+      Type 'null' is not assignable to type 'GamePayload'.
+src/components/__tests__/WritingTab.test.tsx(56,11): error TS2322: Type '"SF"' is not assignable to type 'Genre'.
+src/components/__tests__/WritingTab.test.tsx(66,13): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'Message'.
+src/components/__tests__/WritingTab.test.tsx(93,25): error TS2322: Type 'null' is not assignable to type 'HTMLDivElement'.
+src/components/__tests__/WritingTab.test.tsx(100,27): error TS2353: Object literal may only specify known properties, and 'temperature' does not exist in type 'AdvancedWritingSettings'.
+src/components/__tests__/WritingTab.test.tsx(110,8): error TS2739: Type '{ language: "KO"; currentSession: { id: string; title: string; config: { genre: "SF"; characters: never[]; worldSetting: string; plotOutline: string; }; messages: { id: string; role: "user"; content: string; createdAt: number; versions: never[]; }[]; createdAt: number; updatedAt: number; }; ... 33 more ...; setRight...' is missing the following properties from type 'WritingTabProps': directorReport, hfcpState, handleNextEpisode
+src/lib/vertex-network-agent.ts(83,7): error TS2322: Type '{ name: string; id: string; structData: { title: string; content: string; userId: string; planetId: string; isPublic: string; }; }' is not assignable to type 'IDocument'.
+  Types of property 'structData' are incompatible.
+    Type '{ title: string; content: string; userId: string; planetId: string; isPublic: string; }' has no properties in common with type 'IStruct'.
+src/lib/vertex-network-agent.ts(89,52): error TS2322: Type '{ name: string; id: string; structData: { title: string; content: string; userId: string; planetId: string; isPublic: string; }; }' is not assignable to type 'IDocument'.
+  Types of property 'structData' are incompatible.
+    Type '{ title: string; content: string; userId: string; planetId: string; isPublic: string; }' has no properties in common with type 'IStruct'.
