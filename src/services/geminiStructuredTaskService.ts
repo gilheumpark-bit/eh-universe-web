@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
+import { createServerGeminiClient } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
@@ -9,7 +10,7 @@ export type SceneTierContext = { charProfiles?: { name: string; desire?: string;
 const LANGUAGE_NAMES: Record<AppLanguage, string> = { KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese' };
 
 export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createServerGeminiClient(apiKey);
   const MAX_RETRIES = 2;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {

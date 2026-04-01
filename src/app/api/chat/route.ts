@@ -2,13 +2,14 @@
 // PART 0: API Route — Server-side AI proxy
 // ============================================================
 // Accepts POST { provider, model, systemInstruction, messages, temperature, apiKey? }
-// If apiKey is provided (BYOK mode), uses it.
-// Otherwise falls back to server environment variables.
+// Gemini uses hosted server allocation first, then falls back to the user's key if quota is exhausted.
+// Other providers keep the existing BYOK-first behavior when a client key is present.
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isServerProviderId, resolveServerProviderKey, SERVER_ENV_KEYS, type ServerProviderId } from '@/lib/server-ai';
+import { hasServerProviderCredentials, isServerProviderId, resolveServerProviderKey, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
+import { isGeminiAllocationExhaustedError, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -117,21 +118,78 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   return { ok: true, fields: { provider: validProvider, model, systemInstruction: systemInstruction || '', messages, temperature, clientKey, maxTokens, prismMode } };
 }
 
-/** Auth gate: enforce BYOK, check token budget, resolve API key */
-function resolveAuth(provider: ServerProviderId, clientKey: string | undefined, ip: string, requestId: string): { ok: true; apiKey: string; isByok: boolean } | { ok: false; response: NextResponse } {
-  const isByok = typeof clientKey === 'string' && clientKey.trim().length > 0;
-  if (!isByok && SERVER_ENV_KEYS[provider]) {
-    return { ok: false, response: NextResponse.json({ error: 'API key required. Please enter your own API key in Settings (BYOK mode).' }, { status: 401 }) };
+type ResolvedAuth = {
+  apiKey: string;
+  isByok: boolean;
+  userApiKey: string;
+  canFallbackToUserKey: boolean;
+};
+
+/** Auth gate: prefer hosted Gemini allocation, then fall back to BYOK when needed */
+function resolveAuth(provider: ServerProviderId, clientKey: string | undefined, ip: string, requestId: string): { ok: true; auth: ResolvedAuth } | { ok: false; response: NextResponse } {
+  const userApiKey = normalizeUserApiKey(clientKey);
+  const isByok = userApiKey.length > 0;
+  const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
+
+  if (provider === 'gemini') {
+    if (!hostedGeminiEnabled && !isByok) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: 'Gemini is not configured. Enter your own API key in Settings or configure server-side Vertex AI.', requestId },
+          { status: 401 },
+        ),
+      };
+    }
+
+    if (hostedGeminiEnabled) {
+      const budget = checkTokenBudget(ip, false);
+      if (!budget.allowed) {
+        if (isByok) {
+          return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
+        }
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' },
+            { status: 429 },
+          ),
+        };
+      }
+
+      return { ok: true, auth: { apiKey: '', isByok: false, userApiKey, canFallbackToUserKey: isByok } };
+    }
+
+    return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
   }
+
+  if (!isByok && !hasServerProviderCredentials(provider)) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'API key required. Please enter your own API key in Settings (BYOK mode).', requestId },
+        { status: 401 },
+      ),
+    };
+  }
+
   const budget = checkTokenBudget(ip, isByok);
   if (!budget.allowed) {
-    return { ok: false, response: NextResponse.json({ error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' }, { status: 429 }) };
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' }, { status: 429 }),
+    };
   }
-  const apiKey = resolveServerProviderKey(provider, clientKey);
+
+  const apiKey = isByok ? userApiKey : (resolveServerProviderKey(provider, clientKey) || '');
   if (!apiKey) {
-    return { ok: false, response: NextResponse.json({ error: 'API key not configured. Set via BYOK or server environment variable.' }, { status: 401 }) };
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'API key not configured. Set via BYOK or server environment variable.' }, { status: 401 }),
+    };
   }
-  return { ok: true, apiKey, isByok };
+
+  return { ok: true, auth: { apiKey, isByok, userApiKey: '', canFallbackToUserKey: false } };
 }
 
 /** Build final system instruction with optional PRISM guard */
@@ -143,7 +201,8 @@ function buildSystemInstruction(base: string, prismMode?: string): string {
 }
 
 /** Wrap stream with output token tracking */
-function wrapStreamWithTracking(stream: ReadableStream, ip: string): ReadableStream {
+function wrapStreamWithTracking(stream: ReadableStream, ip: string, shouldTrack: boolean): ReadableStream {
+  if (!shouldTrack) return stream;
   let totalOutputChars = 0;
   return stream.pipeThrough(new TransformStream({
     transform(chunk, controller) {
@@ -200,20 +259,31 @@ export async function POST(req: NextRequest) {
     if (!extracted.ok) return extracted.response;
     const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode } = extracted.fields;
 
-    const auth = resolveAuth(provider, clientKey, ip, requestId);
-    if (!auth.ok) return auth.response;
+    const authResult = resolveAuth(provider, clientKey, ip, requestId);
+    if (!authResult.ok) return authResult.response;
+    let auth = authResult.auth;
 
     const finalSystem = buildSystemInstruction(systemInstruction, prismMode);
 
-    const dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    let dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    if (
+      !dispatched.ok
+      && provider === 'gemini'
+      && !auth.isByok
+      && auth.canFallbackToUserKey
+      && isGeminiAllocationExhaustedError(dispatched.error)
+    ) {
+      auth = { apiKey: auth.userApiKey, isByok: true, userApiKey: auth.userApiKey, canFallbackToUserKey: false };
+      dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    }
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 
     const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
-    recordTokenUsage(ip, inputEstimate);
+    if (!auth.isByok) recordTokenUsage(ip, inputEstimate);
 
     apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider, model, requestId, durationMs: timer.elapsed() });
 
-    const trackingStream = wrapStreamWithTracking(dispatched.stream, ip);
+    const trackingStream = wrapStreamWithTracking(dispatched.stream, ip, !auth.isByok);
 
     return new NextResponse(trackingStream, {
       headers: {

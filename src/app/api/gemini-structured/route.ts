@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
-import { resolveServerProviderKey } from '@/lib/server-ai';
+import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
+import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import {
   handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
@@ -161,10 +162,10 @@ export async function POST(req: NextRequest) {
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
-    const apiKey = resolveServerProviderKey('gemini', body.apiKey);
-    if (!apiKey) {
+    const userApiKey = normalizeUserApiKey(body.apiKey);
+    if (!userApiKey && !hasServerProviderCredentials('gemini')) {
       return NextResponse.json(
-        { error: 'Gemini API key not configured. Set a personal key or configure GEMINI_API_KEY on the server.' },
+        { error: 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.' },
         { status: 401 },
       );
     }
@@ -172,10 +173,13 @@ export async function POST(req: NextRequest) {
     if (!validateTask(body.task)) {
       return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
     }
+    const task = body.task;
 
-    const result = await dispatchTask(body.task, body, apiKey, getModel(body.model), getLanguage(body.language));
-    if (!result.ok) return result.response;
-    return NextResponse.json(result.data);
+    const execution = await executeGeminiHostedFirst(body.apiKey, (effectiveApiKey) =>
+      dispatchTask(task, body, effectiveApiKey, getModel(body.model), getLanguage(body.language)),
+    );
+    if (!execution.result.ok) return execution.result.response;
+    return NextResponse.json(execution.result.data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:gemini-structured', error instanceof Error ? error.message : error);

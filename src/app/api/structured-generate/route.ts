@@ -8,7 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
+import { hasServerProviderCredentials, resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
+import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import type { AppLanguage } from '@/lib/studio-types';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { dispatchStructuredGeneration } from '@/services/aiProvidersStructured';
@@ -63,6 +64,7 @@ const DEFAULT_MODELS: Record<string, string> = {
 type ValidatedInput = {
   provider: string;
   apiKey: string;
+  clientApiKey: string;
   prompt: string;
   model: string;
   language: AppLanguage;
@@ -77,9 +79,16 @@ function validateInput(body: Record<string, unknown>): { ok: true; input: Valida
     return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
   }
 
-  const apiKey = resolveServerProviderKey(provider, body.apiKey);
-  if (!apiKey) {
-    return { ok: false, response: NextResponse.json({ error: `API key not configured for ${provider}.` }, { status: 401 }) };
+  const clientApiKey = normalizeUserApiKey(body.apiKey);
+  const apiKey = provider === 'gemini'
+    ? ''
+    : (resolveServerProviderKey(provider, body.apiKey) || '');
+
+  if (!(provider === 'gemini' ? clientApiKey : apiKey) && !hasServerProviderCredentials(provider)) {
+    const error = provider === 'gemini'
+      ? 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.'
+      : `API key not configured for ${provider}.`;
+    return { ok: false, response: NextResponse.json({ error }, { status: 401 }) };
   }
 
   const prompt = typeof body.prompt === 'string' ? body.prompt : '';
@@ -96,6 +105,7 @@ function validateInput(body: Record<string, unknown>): { ok: true; input: Valida
     input: {
       provider,
       apiKey,
+      clientApiKey,
       prompt,
       model,
       language: getLanguage(body.language),
@@ -136,7 +146,25 @@ export async function POST(req: NextRequest) {
     const validated = validateInput(body);
     if (!validated.ok) return validated.response;
 
-    const dispatched = await dispatchStructuredGeneration(validated.input.provider, validated.input.apiKey, validated.input.model, validated.input.prompt, validated.input.schema, validated.input.fallback);
+    const dispatched = validated.input.provider === 'gemini'
+      ? (await executeGeminiHostedFirst(validated.input.clientApiKey, (effectiveApiKey) =>
+          dispatchStructuredGeneration(
+            validated.input.provider,
+            effectiveApiKey,
+            validated.input.model,
+            validated.input.prompt,
+            validated.input.schema,
+            validated.input.fallback,
+          ),
+        )).result
+      : await dispatchStructuredGeneration(
+          validated.input.provider,
+          validated.input.apiKey,
+          validated.input.model,
+          validated.input.prompt,
+          validated.input.schema,
+          validated.input.fallback,
+        );
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

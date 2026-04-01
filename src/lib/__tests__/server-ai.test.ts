@@ -125,6 +125,49 @@ describe('resolveServerProviderKey', () => {
 });
 
 // ============================================================
+// PART 3 — hasServerProviderCredentials
+// ============================================================
+
+describe('hasServerProviderCredentials', () => {
+  const ENV_BACKUP = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...ENV_BACKUP };
+    jest.resetModules();
+  });
+
+  function loadModule() {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('@/lib/server-ai') as typeof import('@/lib/server-ai');
+  }
+
+  it('returns true for Gemini when Vertex AI env is configured', () => {
+    delete process.env.GEMINI_API_KEY;
+    process.env.USE_VERTEX_AI = 'true';
+    process.env.GCP_PROJECT_ID = 'eh-universe';
+    process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
+    const { hasServerProviderCredentials } = loadModule();
+    expect(hasServerProviderCredentials('gemini')).toBe(true);
+  });
+
+  it('returns false for Gemini when neither API key nor Vertex AI is configured', () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const { hasServerProviderCredentials } = loadModule();
+    expect(hasServerProviderCredentials('gemini')).toBe(false);
+  });
+
+  it('returns true for non-Gemini providers when server env exists', () => {
+    process.env.OPENAI_API_KEY = 'openai-env';
+    const { hasServerProviderCredentials } = loadModule();
+    expect(hasServerProviderCredentials('openai')).toBe(true);
+  });
+});
+
+// ============================================================
 // PART 3 — getHostedProviderAvailability
 // ============================================================
 
@@ -149,6 +192,10 @@ describe('getHostedProviderAvailability', () => {
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     expect(result).toEqual({
@@ -170,6 +217,10 @@ describe('getHostedProviderAvailability', () => {
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     expect(result.openai).toBe(true);
@@ -189,10 +240,20 @@ describe('getHostedProviderAvailability', () => {
       ['claude', 'gemini', 'groq', 'lmstudio', 'mistral', 'ollama', 'openai'],
     );
   });
+
+  it('marks Gemini as hosted when Vertex AI env is configured', () => {
+    delete process.env.GEMINI_API_KEY;
+    process.env.USE_VERTEX_AI = 'true';
+    process.env.GCP_PROJECT_ID = 'eh-universe';
+    process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
+    const { getHostedProviderAvailability } = loadModule();
+    const result = getHostedProviderAvailability();
+    expect(result.gemini).toBe(true);
+  });
 });
 
 // ============================================================
-// PART 4 — getFirstHostedProvider
+// PART 5 — getFirstHostedProvider
 // ============================================================
 
 describe('getFirstHostedProvider', () => {
@@ -216,6 +277,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
     expect(getFirstHostedProvider()).toBeNull();
   });
@@ -228,6 +293,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
     expect(getFirstHostedProvider()).toBe('gemini');
   });
@@ -240,6 +309,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
     expect(getFirstHostedProvider()).toBe('claude');
   });
@@ -252,7 +325,26 @@ describe('getFirstHostedProvider', () => {
     delete process.env.MISTRAL_API_KEY;
     process.env.OLLAMA_API_URL = 'http://localhost:11434';
     delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
     expect(getFirstHostedProvider()).toBe('ollama');
+  });
+
+  it('returns Gemini first when Vertex AI is the only hosted config', () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.CLAUDE_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.MISTRAL_API_KEY;
+    delete process.env.OLLAMA_API_URL;
+    delete process.env.LMSTUDIO_API_URL;
+    process.env.USE_VERTEX_AI = 'true';
+    process.env.GCP_PROJECT_ID = 'eh-universe';
+    process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
+    const { getFirstHostedProvider } = loadModule();
+    expect(getFirstHostedProvider()).toBe('gemini');
   });
 });

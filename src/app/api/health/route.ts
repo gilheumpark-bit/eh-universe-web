@@ -18,8 +18,16 @@ export async function GET() {
   const checks: Record<string, 'ok' | 'warn' | 'fail'> = {};
 
   // 1. Server-side AI provider keys availability
-  const providers = ['GEMINI_API_KEY', 'OPENAI_API_KEY', 'CLAUDE_API_KEY', 'GROQ_API_KEY', 'MISTRAL_API_KEY'];
-  let keyCount = 0;
+  const hasGeminiServer = Boolean(
+    process.env.GEMINI_API_KEY
+    || (
+      process.env.USE_VERTEX_AI === 'true'
+      && (process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
+      && (process.env.VERTEX_AI_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS)
+    ),
+  );
+  const providers = ['OPENAI_API_KEY', 'CLAUDE_API_KEY', 'GROQ_API_KEY', 'MISTRAL_API_KEY'];
+  let keyCount = hasGeminiServer ? 1 : 0;
   for (const key of providers) {
     if (process.env[key]) keyCount++;
   }
@@ -42,7 +50,7 @@ export async function GET() {
     version: process.env.APP_VERSION || '1.0.0',
     uptimeMs,
     checks,
-    providers: { configured: keyCount, total: providers.length },
+    providers: { configured: keyCount, total: providers.length + 1 },
     timestamp: new Date().toISOString(),
   }, {
     status: hasFail ? 503 : 200,

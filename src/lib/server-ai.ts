@@ -17,6 +17,20 @@ export const SERVER_ENV_KEYS: Record<ServerProviderId, string | undefined> = {
 const SERVER_PROVIDERS = Object.keys(SERVER_ENV_KEYS) as ServerProviderId[];
 const LOCAL_PROVIDERS: ReadonlySet<ServerProviderId> = new Set(['ollama', 'lmstudio']);
 
+function hasGeminiServerCredentials(): boolean {
+  return Boolean(
+    process.env.GEMINI_API_KEY?.trim()
+    || (
+      process.env.USE_VERTEX_AI === 'true'
+      && (process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
+      && (
+        process.env.VERTEX_AI_CREDENTIALS?.trim()
+        || process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
+      )
+    ),
+  );
+}
+
 export function isServerProviderId(value: unknown): value is ServerProviderId {
   return typeof value === 'string' && SERVER_PROVIDERS.includes(value as ServerProviderId);
 }
@@ -37,17 +51,24 @@ export function resolveServerProviderKey(
   return SERVER_ENV_KEYS[provider];
 }
 
+export function hasServerProviderCredentials(provider: ServerProviderId): boolean {
+  if (provider === 'gemini') {
+    return hasGeminiServerCredentials();
+  }
+  return Boolean(SERVER_ENV_KEYS[provider]);
+}
+
 export function getHostedProviderAvailability(): Record<ServerProviderId, boolean> {
   const result: Record<string, boolean> = {};
   for (const key of SERVER_PROVIDERS) {
-    result[key] = Boolean(SERVER_ENV_KEYS[key]);
+    result[key] = hasServerProviderCredentials(key);
   }
   return result as Record<ServerProviderId, boolean>;
 }
 
 export function getFirstHostedProvider(): ServerProviderId | null {
   for (const provider of SERVER_PROVIDERS) {
-    if (SERVER_ENV_KEYS[provider]) {
+    if (hasServerProviderCredentials(provider)) {
       return provider;
     }
   }

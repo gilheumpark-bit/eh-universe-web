@@ -9,7 +9,7 @@ import { logger } from "@/lib/logger";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 
-import { GamePayload, GameState, GameResponse } from "@/lib/tools/noa-tower/types";
+import { GamePayload, GameState, ReplyPayload } from "@/lib/tools/noa-tower/types";
 import { bootstrap, respond } from "@/lib/tools/noa-tower/engine";
 import { ConditionBadge } from "@/components/tools/noa-tower/ConditionBadge";
 
@@ -212,7 +212,7 @@ export default function NoaTowerPage() {
 interface SubComponentProps {
   lang: Lang;
   state: GameState;
-  reply: GameResponse;
+  reply: ReplyPayload;
   caseData: any;
   doAction: (action: string, msg?: string) => void;
   isEnded: boolean;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { hasServerProviderCredentials } from '@/lib/server-ai';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +15,22 @@ void REQUEST_TIMEOUT;
  * This prevents attackers from discovering which server keys are available.
  */
 export async function GET() {
-  // Only expose whether BYOK mode is required (always true now)
+  const hosted = {
+    gemini: hasServerProviderCredentials('gemini'),
+    openai: false,
+    claude: false,
+    groq: false,
+    mistral: false,
+    ollama: false,
+    lmstudio: false,
+  };
+
   return NextResponse.json({
-    byokRequired: true,
+    byokRequired: !hosted.gemini,
+    hosted,
     supportedProviders: ['gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'],
-    message: 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
+    message: hosted.gemini
+      ? 'Server-hosted Gemini is available.'
+      : 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
   });
 }

@@ -1,3 +1,5 @@
+import { createServerGeminiClient } from '@/lib/google-genai-server';
+
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai: 'https://api.openai.com/v1/chat/completions',
   groq: 'https://api.groq.com/openai/v1/chat/completions',
@@ -115,19 +117,25 @@ export async function generateJsonGemini(
   fallback: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
-  const { GoogleGenAI } = await import('@google/genai');
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createServerGeminiClient(apiKey);
+
   const MAX_RETRIES = 2;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await ai.models.generateContent({
+      const result = await ai.models.generateContent({
         model,
         contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(30_000) },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+          abortSignal: AbortSignal.timeout(30_000),
+        },
       });
+
+      const text = result.text;
       try {
-        return JSON.parse(response.text || JSON.stringify(fallback));
+        return JSON.parse(text || JSON.stringify(fallback));
       } catch { return fallback; }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
@@ -138,6 +146,8 @@ export async function generateJsonGemini(
   }
   return fallback;
 }
+
+
 
 export async function dispatchStructuredGeneration(
   provider: string, apiKey: string, model: string, prompt: string, schema: object | undefined, fallback: unknown

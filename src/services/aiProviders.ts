@@ -1,3 +1,5 @@
+import { createServerGeminiClient } from '@/lib/google-genai-server';
+
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai:  'https://api.openai.com/v1/chat/completions',
   groq:    'https://api.groq.com/openai/v1/chat/completions',
@@ -67,32 +69,52 @@ export async function streamGemini(
   apiKey: string, model: string,
   system: string, messages: { role: string; content: string }[], temperature: number
 ): Promise<ReadableStream> {
+  const ai = createServerGeminiClient(apiKey);
   const contents = messages.map(m => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }],
   }));
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({
-      contents,
-      systemInstruction: { parts: [{ text: system }] },
-      generationConfig: { temperature, topP: 0.95 },
-    }),
+  const stream = await ai.models.generateContentStream({
+    model,
+    contents,
+    config: {
+      systemInstruction: system,
+      temperature,
+      topP: 0.95,
+      abortSignal: AbortSignal.timeout(120_000),
+    },
   });
 
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    throw new Error(`Gemini API ${res.status}: ${err}`);
-  }
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      let emittedText = '';
+      try {
+        for await (const chunk of stream) {
+          const rawText = chunk.text ?? '';
+          if (!rawText) continue;
 
-  if (!res.body) throw new Error('Empty response body');
-  return res.body;
+          const text = rawText.startsWith(emittedText)
+            ? rawText.slice(emittedText.length)
+            : rawText;
+
+          if (!text) continue;
+
+          emittedText += text;
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            candidates: [{ content: { parts: [{ text }] } }],
+          })}\n\n`));
+        }
+
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
 }
+
 
 export async function dispatchStream(
   provider: string, apiKey: string, model: string,

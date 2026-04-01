@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { generateJsonGemini } from '@/services/aiProvidersStructured';
 
 export const runtime = 'nodejs';
@@ -8,9 +9,9 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, config, code, language, fileName } = await req.json();
 
-    const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY || '' : '';
-    if (!apiKey) {
-      return NextResponse.json({ error: 'No API Key' }, { status: 400 });
+    const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY?.trim() || '' : '';
+    if (!apiKey && !hasServerProviderCredentials('gemini')) {
+      return NextResponse.json({ error: 'Gemini server credentials are not configured.' }, { status: 400 });
     }
 
     const encoder = new TextEncoder();

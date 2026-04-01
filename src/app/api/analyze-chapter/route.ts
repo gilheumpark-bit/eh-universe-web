@@ -1,8 +1,9 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import type { AppLanguage } from '@/lib/studio-types';
-import { resolveServerProviderKey } from '@/lib/server-ai';
+import { createServerGeminiClient, executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
+import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -59,7 +60,7 @@ async function generateJson<T>(
   responseSchema: object,
   fallback: T,
 ): Promise<T> {
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createServerGeminiClient(apiKey);
   const MAX_RETRIES = 2;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -359,10 +360,10 @@ export async function POST(req: NextRequest) {
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
-    const apiKey = resolveServerProviderKey('gemini', body.apiKey);
-    if (!apiKey) {
+    const userApiKey = normalizeUserApiKey(body.apiKey);
+    if (!userApiKey && !hasServerProviderCredentials('gemini')) {
       return NextResponse.json(
-        { error: 'Gemini API key not configured. Add your key in Settings.' },
+        { error: 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.' },
         { status: 401 },
       );
     }
@@ -377,27 +378,31 @@ export async function POST(req: NextRequest) {
     const prompt1 = buildAnalysisPromptPart1(content, language);
     const prompt2 = buildAnalysisPromptPart2(content, language);
 
-    const [part1, part2] = await Promise.all([
-      generateJson(
-        apiKey,
-        model,
-        prompt1,
-        SCHEMA_PART_1,
-        { characterState: EMPTY_FALLBACK.characterState, sceneState: EMPTY_FALLBACK.sceneState }
-      ),
-      generateJson(
-        apiKey,
-        model,
-        prompt2,
-        SCHEMA_PART_2,
-        {
-          backgroundState: EMPTY_FALLBACK.backgroundState,
-          soundState: EMPTY_FALLBACK.soundState,
-          imagePromptPack: EMPTY_FALLBACK.imagePromptPack,
-          musicPromptPack: EMPTY_FALLBACK.musicPromptPack,
-        }
-      ),
-    ]);
+    const execution = await executeGeminiHostedFirst(body.apiKey, (effectiveApiKey) =>
+      Promise.all([
+        generateJson(
+          effectiveApiKey,
+          model,
+          prompt1,
+          SCHEMA_PART_1,
+          { characterState: EMPTY_FALLBACK.characterState, sceneState: EMPTY_FALLBACK.sceneState },
+        ),
+        generateJson(
+          effectiveApiKey,
+          model,
+          prompt2,
+          SCHEMA_PART_2,
+          {
+            backgroundState: EMPTY_FALLBACK.backgroundState,
+            soundState: EMPTY_FALLBACK.soundState,
+            imagePromptPack: EMPTY_FALLBACK.imagePromptPack,
+            musicPromptPack: EMPTY_FALLBACK.musicPromptPack,
+          },
+        ),
+      ]),
+    );
+
+    const [part1, part2] = execution.result;
 
     const result = {
       ...part1,
