@@ -44,21 +44,37 @@ export default function Home() {
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
+  
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSplashState(sessionStorage.getItem("eh-splash-seen") ? "hide" : "show");
+    try {
+      const seen = typeof window !== "undefined" && sessionStorage.getItem("eh-splash-seen");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSplashState(seen ? "hide" : "show");
+    } catch {
+      // Storage access blocked or failed — fallback to show splash for safety
+      setSplashState("show");
+    }
   }, []);
+
   const showSplash = splashState === "show";
-  const setShowSplash = (v: boolean) => setSplashState(v ? "show" : "hide");
+  const setShowSplash = (v: boolean) => {
+    setSplashState(v ? "show" : "hide");
+    if (!v) {
+      try {
+        sessionStorage.setItem("eh-splash-seen", "1");
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   // Auto-dismiss: desktop 2.5s, mobile needs more time to read & tap
   useEffect(() => {
     if (!showSplash) return;
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const delay = isMobile ? 6000 : 2500;
+    const delay = isMobile ? 6500 : 2800;
     const timer = setTimeout(() => {
       setShowSplash(false);
-      sessionStorage.setItem("eh-splash-seen", "1");
     }, delay);
     return () => clearTimeout(timer);
   }, [showSplash]);
@@ -153,26 +169,33 @@ export default function Home() {
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
 
-  // SSR → hydration 전까지 빈 화면 (깜빡임 방지)
+  // SSR → hydration 전까지 최소한의 배경과 초기화 메시지 표시 (검은 화면 방지)
   if (splashState === "loading") {
-    return <div className="min-h-screen bg-bg-primary" />;
+    return (
+      <div className="relative min-h-screen bg-bg-primary overflow-hidden flex items-center justify-center">
+        <StarField />
+        <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
+          <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
+            EH
+          </div>
+          <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
+            Initializing Lore Engine...
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (showSplash) {
     return (
       <SplashScreen
-        onUniverse={() => {
-          setShowSplash(false);
-          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
-        }}
+        onUniverse={() => setShowSplash(false)}
         onStudio={() => {
           setShowSplash(false);
-          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
           router.push("/studio");
         }}
         onCodeStudio={() => {
           setShowSplash(false);
-          if (typeof window !== "undefined") sessionStorage.setItem("eh-splash-seen", "1");
           router.push("/code-studio");
         }}
       />
