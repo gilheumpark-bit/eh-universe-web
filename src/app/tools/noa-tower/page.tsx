@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -9,9 +9,8 @@ import { logger } from "@/lib/logger";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 
-import { GamePayload } from "@/lib/tools/noa-tower/types";
+import { GamePayload, GameState, GameResponse } from "@/lib/tools/noa-tower/types";
 import { bootstrap, respond } from "@/lib/tools/noa-tower/engine";
-import { CLUES, FRAGMENTS } from "@/lib/tools/noa-tower/scenario";
 import { ConditionBadge } from "@/components/tools/noa-tower/ConditionBadge";
 
 // ============================================================
@@ -21,7 +20,7 @@ import { ConditionBadge } from "@/components/tools/noa-tower/ConditionBadge";
 const T: Record<string, { ko: string; en: string; jp: string; cn: string }> = {
   pageTitle: { ko: "NOA TOWER", en: "NOA TOWER", jp: "NOA TOWER", cn: "NOA TOWER" },
   pageSubtitle: { ko: "텍스트 추리 게임", en: "Text Investigation Game", jp: "テキスト推理ゲーム", cn: "文本推理解谜" },
-  progress: { ko: "진행도", en: "Progress", jp: "進行度", cn: "进度" },
+  progress: { ko: "진행도", en: "Progress", jp: "進行도", cn: "进度" },
   vectorAnalysis: { ko: "벡터 분석", en: "Vector Analysis", jp: "ベクトル分析", cn: "向量分析" },
   floorSense: { ko: "층 감각", en: "Floor Sense", jp: "階層感覚", cn: "楼层感官" },
   recordStatus: { ko: "기록 상태", en: "Record Status", jp: "記録状態", cn: "记录状态" },
@@ -36,7 +35,7 @@ const T: Record<string, { ko: string; en: string; jp: string; cn: string }> = {
   hardMode: { ko: "하드 모드", en: "Hard Mode", jp: "ハードモード", cn: "硬核模式" },
   giveUp: { ko: "포기 선언", en: "Give Up", jp: "放棄宣言", cn: "宣告放弃" },
   restart: { ko: "재시작", en: "Restart", jp: "再起動", cn: "重新开始" },
-  loading: { ko: "NOA 타워 초기화 중...", en: "NOA TOWER initializing...", jp: "NOAタワー初期化중...", cn: "NOA 塔正在初始化..." },
+  loading: { ko: "NOA 타워 초기화 중...", en: "NOA TOWER initializing...", jp: "NOAタワー初期化中...", cn: "NOA 塔正在初始化..." },
   noClues: { ko: "아직 발견된 단서가 없습니다", en: "No clues discovered yet", jp: "まだ手がかりが見つかっていません", cn: "尚未发现线索" },
 };
 
@@ -66,18 +65,18 @@ export default function NoaTowerPage() {
 
   // --- Hydration: Load state or bootstrap on mount ---
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
         const parsed = JSON.parse(saved) as GamePayload;
         if (parsed?.state && parsed?.reply && parsed?.case) {
           setPayload(parsed);
           logger.info("NoaTower", "State loaded from storage");
           return;
         }
+      } catch (e) {
+        logger.warn("NoaTower", "Failed to parse storage", e);
       }
-    } catch (e) {
-      logger.warn("NoaTower", "Failed to load storage", e);
     }
     setPayload(bootstrap(lang));
     logger.info("NoaTower", "Engine bootstrapped");
@@ -127,7 +126,7 @@ export default function NoaTowerPage() {
     [doAction, input]
   );
 
-  // --- Loading State (Cycle 1-2 Fix) ---
+  // --- Loading State ---
   if (!payload) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg-primary gap-4">
@@ -147,7 +146,7 @@ export default function NoaTowerPage() {
   return (
     <ErrorBoundary variant="full-page">
       <Header />
-      <main className={`min-h-screen bg-bg-primary pt-28 pb-8 transition-colors duration-1000 bg-gradient-to-b ${conditionColor} to-transparent`}>
+      <main className={`min-h-screen bg-bg-primary pt-28 pb-8 transition-colors duration-1000 bg-linear-to-b ${conditionColor} to-transparent`}>
         <div className="mx-auto max-w-7xl px-4">
           <ToolNav
             toolName={L4(lang, { ko: "NOA 타워", en: "NOA Tower" })}
@@ -169,7 +168,7 @@ export default function NoaTowerPage() {
           <div className="mb-4 lg:hidden">
             <button
               onClick={() => setSidePanel(sidePanel === "status" ? "case" : "status")}
-              className="w-full rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2 font-[--font-mono] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
+              className="w-full rounded-xl border border-white/8 bg-white/2 px-3 py-2 font-[--font-mono] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
             >
               {sidePanel === "status" ? L4(lang, { ko: "▲ 대시보드 닫기", en: "▲ Hide Dashboard" }) : L4(lang, { ko: "▼ 대시보드 보기", en: "▼ Show Dashboard" })}
             </button>
@@ -210,11 +209,20 @@ export default function NoaTowerPage() {
 // PART 3 — UI Sub-Component: Top Header
 // ============================================================
 
-function PART3_Header({ lang, isEnded, caseData, doAction }: any) {
+interface SubComponentProps {
+  lang: Lang;
+  state: GameState;
+  reply: GameResponse;
+  caseData: any;
+  doAction: (action: string, msg?: string) => void;
+  isEnded: boolean;
+}
+
+function PART3_Header({ lang, isEnded, caseData, doAction }: Pick<SubComponentProps, "lang" | "isEnded" | "caseData" | "doAction">) {
   return (
     <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-[0.15em] text-text-primary drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+        <h1 className="font-display text-3xl font-bold tracking-[0.15em] text-text-primary drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
           {t("pageTitle", lang)}
         </h1>
         <p className="font-[--font-mono] text-[12px] tracking-[0.3em] text-text-tertiary uppercase mt-1">
@@ -242,18 +250,22 @@ function PART3_Header({ lang, isEnded, caseData, doAction }: any) {
 // PART 4 — UI Sub-Component: Compact Dashboard
 // ============================================================
 
-function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
+interface SidebarProps extends Pick<SubComponentProps, "lang" | "state" | "caseData" | "reply"> {
+  sidePanel: "status" | "case";
+}
+
+function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps) {
   return (
     <aside className={`space-y-3 ${sidePanel !== "status" ? "hidden lg:block transition-all" : ""}`}>
       {/* Progress & Persistence */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3 shadow-inner">
+      <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3 shadow-inner">
         <div className="flex items-center justify-between mb-2">
           <span className="font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("progress", lang)}</span>
           <span className="font-[--font-mono] text-[10px] text-accent-amber">{state.hardMode ? "HARD_INIT" : "NORMAL_STABLE"}</span>
         </div>
         <div className="relative h-2 overflow-hidden rounded-full bg-white/5">
           <div 
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent-amber/60 to-accent-amber shadow-[0_0_10px_rgba(245,158,11,0.3)] transition-all duration-1000" 
+            className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-accent-amber/60 to-accent-amber shadow-[0_0_10px_rgba(245,158,11,0.3)] transition-all duration-1000" 
             style={{ width: `${Math.min(caseData.progress * 100, 100)}%` }} 
           />
         </div>
@@ -264,7 +276,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
       </div>
 
       {/* Vectors Panel */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3">
+      <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3">
         <h3 className="mb-3 font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("vectorAnalysis", lang)}</h3>
         {(["insight", "consistency", "delusion", "risk"] as const).map(k => (
           <div key={k} className="flex items-center gap-2 mb-2">
@@ -284,7 +296,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
       </div>
 
       {/* Sensory & Records */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3 space-y-3">
+      <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3 space-y-3">
         <section>
           <span className="font-[--font-mono] text-[9px] font-bold tracking-[0.15em] text-text-tertiary uppercase">{t("floorSense", lang)}</span>
           <p className="font-[--font-mono] text-[11px] leading-snug text-text-secondary mt-1">{reply.floorHint}</p>
@@ -297,7 +309,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
       </div>
 
       {/* Objectives */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3">
+      <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3">
         <h3 className="mb-2.5 font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase">{t("objectives", lang)}</h3>
         <div className="space-y-1.5">
           {caseData.objectives.map((obj: any) => (
@@ -312,14 +324,14 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
       </div>
 
       {/* Clues & Fragments */}
-      <details className="group rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md transition-all open:bg-white/[0.05]">
+      <details className="group rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md transition-all open:bg-white/5">
         <summary className="p-3 cursor-pointer font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase flex items-center justify-between group-hover:text-text-secondary transition-colors">
           <span>{t("clues", lang)} ({caseData.clueCount})</span>
           <span className="text-white/20 transition-transform group-open:rotate-180">↓</span>
         </summary>
         <div className="px-3 pb-3 space-y-2">
           {caseData.clues.filter((c: any) => c.unlocked).map((clue: any) => (
-            <div key={clue.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-2 hover:bg-white/[0.05] transition-colors">
+            <div key={clue.id} className="rounded-lg border border-white/10 bg-white/2 p-2 hover:bg-white/5 transition-colors">
               <p className="font-[--font-mono] text-[11px] font-bold text-text-secondary">{clue.title}</p>
               {clue.body && <p className="font-[--font-mono] text-[10px] text-text-tertiary mt-1 leading-relaxed">{clue.body}</p>}
             </div>
@@ -345,19 +357,27 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: any) {
 // PART 5 — UI Sub-Component: Chat & Interactive Flow
 // ============================================================
 
-function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef, chatEndRef, isEnded, doAction, handleSubmit }: any) {
+interface ContentProps extends SubComponentProps {
+  input: string;
+  setInput: (val: string) => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  chatEndRef: React.RefObject<HTMLDivElement | null>;
+  handleSubmit: (e: React.FormEvent) => void;
+}
+
+function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef, chatEndRef, isEnded, doAction, handleSubmit }: ContentProps) {
   return (
     <section className="flex flex-col min-w-0">
       {/* Dialogue Stream */}
       <div 
-        className="mb-4 flex-1 overflow-y-auto rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 scrollbar-thin scrollbar-thumb-white/10" 
+        className="mb-4 flex-1 overflow-y-auto rounded-2xl border border-white/10 bg-white/2 backdrop-blur-sm p-4 scrollbar-thin scrollbar-thumb-white/10" 
         style={{ maxHeight: "calc(100vh - 360px)", minHeight: "450px" }}
       >
         <div className="space-y-6">
-          {state.history.map((entry: any, i: number) => (
+          {state.history.map((entry, i) => (
             <div key={i} className={`flex ${entry.role === "player" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
               {entry.role === "player" ? (
-                <div className="max-w-[80%] rounded-2xl rounded-br-sm border border-accent-amber/20 bg-accent-amber/[0.08] px-4 py-3 shadow-[0_4px_15px_-3px_rgba(245,158,11,0.1)]">
+                <div className="max-w-[80%] rounded-2xl rounded-br-sm border border-accent-amber/20 bg-accent-amber/8 px-4 py-3 shadow-[0_4px_15px_-3px_rgba(245,158,11,0.1)]">
                   <p className="whitespace-pre-wrap font-[--font-mono] text-sm leading-relaxed text-accent-amber/90">
                     {entry.text}
                   </p>
@@ -369,14 +389,14 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
                       [{entry.code}] {entry.title}
                     </span>
                   </div>
-                  <div className="rounded-2xl rounded-bl-sm border border-cyan-400/20 bg-cyan-400/[0.05] px-4 py-3 shadow-[0_4px_15px_-3px_rgba(34,211,238,0.1)]">
+                  <div className="rounded-2xl rounded-bl-sm border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 shadow-[0_4px_15px_-3px_rgba(34,211,238,0.1)]">
                     <p className="whitespace-pre-wrap font-[--font-mono] text-sm leading-relaxed text-text-secondary selection:bg-cyan-400/30">
                       {entry.text}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="mx-auto max-w-[85%] rounded-xl border border-white/5 bg-white/[0.03] px-6 py-2.5">
+                <div className="mx-auto max-w-[85%] rounded-xl border border-white/5 bg-white/3 px-6 py-2.5">
                   <p className="whitespace-pre-wrap text-center font-[--font-mono] text-[12px] leading-relaxed text-text-tertiary/70 italic">
                     {entry.text}
                   </p>
@@ -406,7 +426,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
                 setInput(seed.body);
                 inputRef.current?.focus();
               }}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 font-[--font-mono] text-[12px] text-text-tertiary transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-text-secondary active:scale-95"
+              className="rounded-full border border-white/10 bg-white/3 px-3 py-1.5 font-[--font-mono] text-[12px] text-text-tertiary transition-all hover:border-white/20 hover:bg-white/8 hover:text-text-secondary active:scale-95"
               title={seed.body}
             >
               # {seed.title}
@@ -417,7 +437,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
 
       {/* Input Module */}
       <div className="relative group">
-        <form onSubmit={handleSubmit} className="relative flex gap-3 p-1 rounded-2xl border border-white/10 bg-white/[0.03] focus-within:border-accent-amber/30 transition-all duration-300 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]">
+        <form onSubmit={handleSubmit} className="relative flex gap-3 p-1 rounded-2xl border border-white/10 bg-white/3 focus-within:border-accent-amber/30 transition-all duration-300 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]">
           <textarea
             ref={inputRef}
             value={input}
@@ -476,11 +496,18 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
   );
 }
 
-function QuickActionBtn({ children, onClick, className = "" }: any) {
+interface QuickActionProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  active: boolean; // Reserved for stateful actions
+  className?: string;
+}
+
+function QuickActionBtn({ children, onClick, className = "" }: QuickActionProps) {
   return (
     <button 
       onClick={onClick}
-      className={`rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 font-[--font-mono] text-[11px] font-medium tracking-wide text-text-tertiary transition-all hover:border-white/30 hover:bg-white/[0.08] hover:text-text-secondary active:translate-y-0.5 ${className}`}
+      className={`rounded-xl border border-white/10 bg-white/2 px-4 py-2 font-[--font-mono] text-[11px] font-medium tracking-wide text-text-tertiary transition-all hover:border-white/30 hover:bg-white/8 hover:text-text-secondary active:translate-y-0.5 ${className}`}
     >
       {children}
     </button>

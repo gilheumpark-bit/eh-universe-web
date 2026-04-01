@@ -142,6 +142,11 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const lastSyncLabel = lastSyncTime
     ? new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
+  const canUseGoogleAuth = hydrated && authConfigured;
+  const storageUsageBytes = hydrated ? getStorageUsageBytes() : 0;
+  const storageUsageMb = storageUsageBytes / 1024 / 1024;
+  const storageUsagePct = Math.min(100, (storageUsageMb / 5) * 100);
+  const storageUsageColor = storageUsageMb > 4 ? 'bg-red-500' : storageUsageMb > 2 ? 'bg-yellow-500' : 'bg-green-500';
 
   // Sessions in chronological order (ep #1 = first created)
   const orderedSessions = [...sessions].sort((a, b) => a.lastUpdate - b.lastUpdate);
@@ -642,14 +647,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               ) : (
                 <button
                   onClick={() => {
-                    if (!authConfigured) {
+                    if (!canUseGoogleAuth) {
                       showAlert(t('confirm.firebaseRequired'));
                       return;
                     }
                     signInWithGoogle();
                   }}
-                  aria-disabled={!authConfigured}
-                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary ${!authConfigured ? 'opacity-35 cursor-not-allowed' : ''}`}
+                  aria-disabled={!canUseGoogleAuth}
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all ${canUseGoogleAuth ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary' : 'cursor-not-allowed opacity-35'}`}
                 >
                   <Cloud className="h-4 w-4" /> {t('auth.googleLogin')}
                 </button>
@@ -782,22 +787,15 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             </div>
 
             {/* Storage usage bar */}
-            {(() => {
-              const mb = getStorageUsageBytes() / 1024 / 1024;
-              const pct = Math.min(100, (mb / 5) * 100);
-              const color = mb > 4 ? 'bg-red-500' : mb > 2 ? 'bg-yellow-500' : 'bg-green-500';
-              return (
-                <div className="mt-2">
-                  <div className="flex justify-between text-[9px] font-mono text-text-tertiary mb-1">
-                    <span>{mb.toFixed(1)} MB / 5 MB</span>
-                    {mb > 3 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
-                  </div>
-                  <div className="h-1 bg-white/8 rounded-full overflow-hidden">
-                    <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })()}
+            <div className="mt-2">
+              <div className="mb-1 flex justify-between text-[9px] font-mono text-text-tertiary">
+                <span>{storageUsageMb.toFixed(1)} MB / 5 MB</span>
+                {storageUsageMb > 3 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
+              </div>
+              <div className="h-1 overflow-hidden rounded-full bg-white/8">
+                <div className={`h-full ${storageUsageColor} rounded-full transition-all`} style={{ width: `${storageUsagePct}%` }} />
+              </div>
+            </div>
           </div>
 
           {/* IDENTITY_SEAL: PART-3 | role=footer (exports, auth, sync, language, settings) | inputs=user,syncStatus,language | outputs=UI actions */}

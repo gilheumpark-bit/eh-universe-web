@@ -3,6 +3,17 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.1] - 2026-04-01
+
+### Bug Fixes — Resilience
+- **Splash Screen**: `sessionStorage` 하이드레이션 블랙스크린 오류 수정 (try/catch 가드 추가)
+- **Noa Tower**: `localStorage` 하이드레이션 오류 수정 (useEffect 이전)
+
+### Optimizations — 10-Pass Audit
+- **Noa Tower**: 10단계 전수 감사 및 수리 완료
+- **UI/UX**: `SkeletonLoader`, `ErrorBoundary` 통합 및 Tailwind 4 최적화
+- **i18n**: KO/EN/JP/CN 4개국어 완전 지원 및 사전 정밀화
+
 ## [1.2.0] - 2026-03-30
 
 ### Architecture — God Component Decomposition

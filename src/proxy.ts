@@ -1,39 +1,23 @@
 // ============================================================
-// CSP Nonce Middleware — generates per-request nonce for script-src
+// CSP Proxy — static-compatible security headers
 // ============================================================
-// Next.js middleware runs on every request. We generate a crypto
-// nonce and inject it into the Content-Security-Policy header,
-// replacing 'unsafe-inline' for script-src.
-//
-// style-src retains 'unsafe-inline' because the project uses
-// 243+ inline styles (Tailwind + dynamic style props). Removing
-// it requires a CSS-in-JS nonce strategy or full refactor.
-// [Future] Migrate inline styles to CSS variables/classes to allow
-//          nonce-based style-src and remove 'unsafe-inline' for styles.
+// Next.js 16 nonce-based CSP requires fully dynamic rendering.
+// This project relies on static generation for most pages, so
+// production uses a static-compatible CSP that still keeps the
+// rest of the hardening headers centralized here.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-/** Generate a base64-encoded 128-bit nonce from crypto.getRandomValues */
-function generateNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  // Convert to base64 — Edge Runtime supports btoa
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
 
 // ============================================================
 // CSP Directives
 // ============================================================
 
-function buildCSPHeader(nonce: string, isCodeStudio: boolean): string {
-  const scriptSrc = isCodeStudio
-    ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`
-    : `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`;
+function buildCSPHeader(isCodeStudio: boolean, isDevelopment: boolean): string {
+  const allowUnsafeEval = isCodeStudio || isDevelopment;
+  const scriptSrc = allowUnsafeEval
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`
+    : `script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`;
 
   // style-src: 'unsafe-inline' retained — see TODO above
   const styleSrc = "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net";
@@ -55,23 +39,17 @@ function buildCSPHeader(nonce: string, isCodeStudio: boolean): string {
 }
 
 // ============================================================
-// Middleware
+// Proxy
 // ============================================================
 
-export function middleware(request: NextRequest) {
-  const nonce = generateNonce();
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isCodeStudio = pathname.startsWith('/code-studio');
+  const isDevelopment = process.env.NODE_ENV !== 'production';
 
-  const cspHeader = buildCSPHeader(nonce, isCodeStudio);
+  const cspHeader = buildCSPHeader(isCodeStudio, isDevelopment);
 
-  // Clone request headers, inject nonce for Server Components to read
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
-
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  const response = NextResponse.next();
 
   // Set CSP header on the response
   response.headers.set('Content-Security-Policy', cspHeader);
