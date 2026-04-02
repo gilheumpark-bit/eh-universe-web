@@ -15,6 +15,7 @@ export const supabase = createClient(
 /**
  * 챕터, 스토리 요약, 캐릭터 프로필 등 작업 내역 전체를 클라우드에 영구 저장합니다.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function saveProjectToCloud(userId: string, projectId: string, state: any) {
   if (!supabaseUrl || !supabaseAnonKey) {
     logger.warn('EH Translator', 'Supabase DB credentials missing. Skipping cloud save.');
@@ -65,6 +66,7 @@ export async function listUserProjects(userId: string) {
   if (error || !data) return [];
   
   // project_data 내부의 projectName을 추출하여 메타데이터만 반환
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.map((row: any) => ({
     id: row.id,
     updatedAt: row.updated_at,
@@ -86,5 +88,6 @@ export async function getProjectsForReference(userId: string, referenceIds: stri
     .in('id', referenceIds);
 
   if (error || !data) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.map((row: any) => row.project_data);
 }

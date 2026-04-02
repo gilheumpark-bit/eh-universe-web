@@ -235,7 +235,7 @@ export default function TranslatorStudioApp() {
       if (parsed.projectName !== undefined) setProjectName(parsed.projectName);
       if (restoredProjects.length) setProjectList(restoredProjects);
       if (parsed.chapters !== undefined && Array.isArray(parsed.chapters)) {
-        setChapters(parsed.chapters.map((chapter: any, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
+        setChapters(parsed.chapters.map((chapter: unknown, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
       }
       if (parsed.activeChapterIndex !== undefined) setActiveChapterIndex(parsed.activeChapterIndex);
       if (parsed.source !== undefined) setSource(parsed.source);
@@ -402,7 +402,7 @@ export default function TranslatorStudioApp() {
         if (!metadata.length || cancelled) return;
 
         const loadedProjects = await Promise.all(
-          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: any) => {
+          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: { id: string; projectName?: string; updatedAt?: string }) => {
             const projectData = await loadProjectFromCloud(userId, projectMeta.id);
             if (!projectData) return null;
 
@@ -1126,21 +1126,21 @@ export default function TranslatorStudioApp() {
     let mimeType = 'text/plain';
 
     if (format === 'md') {
-      content = chapters.map((chapter: any) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
+      content = chapters.map((chapter) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
       mimeType = 'text/markdown';
     } else if (format === 'txt') {
-      content = chapters.map((chapter: any) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
+      content = chapters.map((chapter) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
       mimeType = 'text/plain';
     } else if (format === 'json') {
-      content = JSON.stringify(chapters.map((c: any) => ({ title: c.name, content: c.result || '' })), null, 2);
+      content = JSON.stringify(chapters.map((c) => ({ title: c.name, content: c.result || '' })), null, 2);
       mimeType = 'application/json';
     } else if (format === 'html') {
       content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Translation Results</title></head><body style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: sans-serif;">` + 
-        chapters.map((c: any) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') + 
+        chapters.map((c) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') +
         `</body></html>`;
       mimeType = 'text/html';
     } else if (format === 'csv') {
-      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c: any) => `"${c.name.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
+      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c) => `"${c.name.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
       mimeType = 'text/csv';
     }
 
@@ -1700,7 +1700,7 @@ export default function TranslatorStudioApp() {
                   <div>
                     <label className="theme-kicker mb-2 block">이전 프로젝트 참조 (Cross-Reference)</label>
                     <div className="flex flex-wrap gap-2 text-white">
-                       {projectList.filter((p:any) => p.id !== projectId).map((p:any) => (
+                       {projectList.filter((p) => p.id !== projectId).map((p) => (
                           <button key={p.id} onClick={() => setReferenceIds(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
                              className={`rounded-full border px-3 py-1 text-[10px] transition-all ${referenceIds.includes(p.id) ? 'bg-indigo-600 border-indigo-500 text-white' : 'theme-pill hover:brightness-105'}`}>
                              {p.project_name || p.id.slice(0,4)}

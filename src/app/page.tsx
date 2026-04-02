@@ -165,6 +165,7 @@ export default function Home() {
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
     },
   ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [lang, translatorStudioHref],
   );
 

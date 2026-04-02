@@ -116,33 +116,37 @@ export async function POST(req: NextRequest) {
     } 
     // PDF PARSING
     else if (fileName.endsWith('.pdf')) {
-      const pdfParse = require('pdf-parse');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfParseModule = await import('pdf-parse') as any;
+      const pdfParse = pdfParseModule.default || pdfParseModule;
       // Create a blob/buffer for pdf-parse
       const data = await pdfParse(buffer);
       content = data.text;
     } 
     // EPUB PARSING
     else if (fileName.endsWith('.epub')) {
-      const EPub = require('epub2');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const EPubModule = await import('epub2') as any;
+      const EPub = EPubModule.default || EPubModule;
       // epub2 usually expects a file path, to use buffer, we might need a temp file or memfs.
       // But let's fallback to rudimentary regex extraction if epub2 requires file path.
       // Actually epub2 supports parsing from buffer via EPub constructor if we hack the prototype, but the easiest way in a NextJS edge/serverless is using a tmp directory or just basic AdmZip parsing.
       // For now, let's write the buffer to /tmp (Vercel allows write to /tmp)
-      const fs = require('fs');
-      const os = require('os');
-      const path = require('path');
+      const fs = await import('fs');
+      const os = await import('os');
+      const path = await import('path');
       const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
       fs.writeFileSync(tempPath, buffer);
       
-      const epubData = await new Promise<any[]>((resolve, reject) => {
+      const epubData = await new Promise<unknown[]>((resolve, _reject) => {
         const epub = new EPub(tempPath, '/images/', '/links/');
         epub.on('end', () => {
-          const chaptersData: any[] = [];
+          const chaptersData: unknown[] = [];
           const flow = epub.flow || [];
           let processed = 0;
           if (flow.length === 0) return resolve([]);
-          flow.forEach((chapter: any, index: number) => {
-            epub.getChapter(chapter.id || '', (err: any, text: string) => {
+          flow.forEach((chapter: { id?: string; title?: string }, index: number) => {
+            epub.getChapter(chapter.id || '', (err: unknown, text: string) => {
               if (!err && text) {
                 const plain = text.replace(/<[^>]+>/g, '\n').trim();
                 if (plain.length > 50) chaptersData[index] = { title: chapter.title || `Chapter ${index+1}`, content: plain };
