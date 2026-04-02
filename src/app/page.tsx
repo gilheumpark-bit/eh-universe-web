@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -37,6 +37,7 @@ function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
 
 
 import SplashScreen from "@/components/home/SplashScreen";
+import { getTranslatorStudioHref, STYLE_STUDIO_PATH } from "@/lib/studio-entry-links";
 
 export default function Home() {
   const { lang } = useLang();
@@ -61,6 +62,8 @@ export default function Home() {
   const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
     L4(lang, v as unknown as { ko: string; en: string; jp?: string; cn?: string }) as unknown as V;
 
+  const translatorStudioHref = useMemo(() => getTranslatorStudioHref(), []);
+
   const universeStats = [
     { value: "173", label: T({ ko: "문서 + 보고서", en: "Docs + reports", jp: "文書+報告書", cn: "文档+报告" }) },
     { value: "6", label: T({ ko: "세계관 카테고리", en: "Lore categories", jp: "世界観カテゴリ", cn: "世界观类别" }) },
@@ -68,7 +71,39 @@ export default function Home() {
     { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", jp: "オープンライセンス", cn: "开放许可" }) },
   ];
 
-  const universeHubs = [
+  const universeHubs = useMemo(
+    () => [
+    {
+      href: STYLE_STUDIO_PATH,
+      badge: "ST",
+      color: "purple" as const,
+      title: T({ ko: "문체 스튜디오", en: "Style Studio", jp: "文体スタジオ", cn: "文体工作室" }),
+      desc: T({
+        ko: "DNA·슬라이더·프리셋으로 문체 프로필을 설계합니다. (독립 도구)",
+        en: "Define style DNA, sliders, and presets as a standalone tool.",
+        jp: "DNAとスライダーで文体プロファイルを設計します。",
+        cn: "用 DNA 与滑块设计文体档案（独立工具）。",
+      }),
+      meta: T({ ko: "문체 도구 열기", en: "Open style tool", jp: "文体ツールへ", cn: "打开文体工具" }),
+    },
+    {
+      href: translatorStudioHref,
+      badge: "TR",
+      color: "green" as const,
+      title: T({ ko: "번역 스튜디오", en: "Translation Studio", jp: "翻訳スタジオ", cn: "翻译工作室" }),
+      desc: T({
+        ko: translatorStudioHref.startsWith("http")
+          ? "EH Translator 웹앱에서 장편·용어·맥락 중심 번역 워크플로를 사용합니다."
+          : "NOA 스튜디오 원고 탭에서 에피소드 단위 번역·품질 게이트를 사용합니다. (배포 URL을 넣으면 외부 앱으로 연결)",
+        en: translatorStudioHref.startsWith("http")
+          ? "EH Translator — long-form and glossary-focused workflow."
+          : "In NOA Studio Manuscript tab: episode translation and quality gates. Set NEXT_PUBLIC_EH_TRANSLATOR_ORIGIN for the web app.",
+        jp: "長編翻訳ワークフロー（設定により外部アプリへ）。",
+        cn: "长篇翻译工作流；可配置环境变量指向独立应用。",
+      }),
+      meta: T({ ko: "번역 열기", en: "Open translation", jp: "翻訳へ", cn: "打开翻译" }),
+      external: translatorStudioHref.startsWith("http"),
+    },
     {
       href: "/archive",
       badge: "AR",
@@ -125,7 +160,9 @@ export default function Home() {
       desc: T({ ko: "오픈소스 진행 상황과 코드베이스를 확인합니다.", en: "See the open-source code and current progress.", jp: "オープンソースの進行状況とコードベースを確認します。", cn: "查看开源进展和代码库。" }),
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
     },
-  ];
+  ],
+    [lang, translatorStudioHref],
+  );
 
   const categories = [
     { id: "CORE", label: T({ ko: "핵심 법칙", en: "Core Laws", jp: "核心法則", cn: "核心法则" }), count: 5 },
@@ -177,6 +214,15 @@ export default function Home() {
           setShowSplash(false);
           router.push("/code-studio");
         }}
+        onTranslationStudio={() => {
+          setShowSplash(false);
+          const href = getTranslatorStudioHref();
+          if (href.startsWith("http")) {
+            window.open(href, "_blank", "noopener,noreferrer");
+          } else {
+            router.push(href);
+          }
+        }}
       />
     );
   }
@@ -211,6 +257,23 @@ export default function Home() {
                   <Link href="/network" className="premium-button secondary">
                     {T({ ko: "네트워크 진입", en: "Enter Network", jp: "ネットワークへ", cn: "进入网络" })}
                   </Link>
+                  <Link href={STYLE_STUDIO_PATH} className="premium-button secondary">
+                    {T({ ko: "문체 스튜디오", en: "Style Studio", jp: "文体スタジオ", cn: "文体工作室" })}
+                  </Link>
+                  {translatorStudioHref.startsWith("http") ? (
+                    <a
+                      href={translatorStudioHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="premium-button secondary"
+                    >
+                      {T({ ko: "번역 스튜디오", en: "Translation", jp: "翻訳", cn: "翻译" })}
+                    </a>
+                  ) : (
+                    <Link href={translatorStudioHref} className="premium-button secondary">
+                      {T({ ko: "번역 스튜디오", en: "Translation", jp: "翻訳", cn: "翻译" })}
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -282,7 +345,9 @@ export default function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {universeHubs.map((hub) => {
               const c = colorMap[hub.color];
-              const isExternal = hub.href.startsWith("http");
+              const isExternal = Boolean(
+                (hub as { external?: boolean }).external || hub.href.startsWith("http"),
+              );
               const inner = (
                 <>
                   <div className="pointer-events-none absolute inset-0">

@@ -3,17 +3,20 @@
 import { useState, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { Globe, PenTool, Code2, ArrowRight, Sparkles } from "lucide-react";
+import { Globe, PenTool, Code2, Languages, ArrowRight, Sparkles } from "lucide-react";
 import StarField from "@/components/StarField";
 
 export default function SplashScreen({
   onUniverse,
   onStudio,
   onCodeStudio,
+  onTranslationStudio,
 }: {
   onUniverse: () => void;
   onStudio: () => void;
   onCodeStudio: () => void;
+  /** 전문 번역(EH Translator) — 소설 스튜디오와 별도 */
+  onTranslationStudio: () => void;
 }) {
   const { lang } = useLang();
   const [mounted, setMounted] = useState(false);
@@ -58,6 +61,22 @@ export default function SplashScreen({
       cta: { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" },
       badge: "NEW",
     },
+    {
+      id: "translate",
+      onClick: onTranslationStudio,
+      color: "blue",
+      Icon: Languages,
+      kicker: { ko: "전문 번역", en: "Translate", jp: "翻訳", cn: "翻译" },
+      title: "TRANSLATE",
+      desc: {
+        ko: "장편·챕터·용어 중심 EH Translator 워크스페이스입니다. (소설 스튜디오와 별도)",
+        en: "EH Translator — long-form and glossary workflow. Separate from the novel studio.",
+        jp: "EH Translator — 長編・用語重視。小説スタジオとは別。",
+        cn: "EH Translator 长篇与术语工作流，与小说工作室分开。",
+      },
+      cta: { ko: "번역 스튜디오", en: "Open Translator", jp: "翻訳へ", cn: "打开翻译" },
+      badge: { ko: "전문", en: "Pro", jp: "専門", cn: "专业" },
+    },
   ];
 
   const colorMap: Record<string, { border: string; bg: string; text: string; glow: string; shadow: string }> = {
@@ -82,6 +101,13 @@ export default function SplashScreen({
       glow: "bg-accent-green/20",
       shadow: "shadow-[0_0_60px_rgba(47,155,131,0.3)]"
     },
+    blue: {
+      border: "border-accent-blue/50",
+      bg: "bg-accent-blue",
+      text: "text-accent-blue",
+      glow: "bg-accent-blue/20",
+      shadow: "shadow-[0_0_60px_rgba(59,130,246,0.28)]",
+    },
   };
 
   return (
@@ -103,9 +129,12 @@ export default function SplashScreen({
         {hovered === 'code' && (
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-green/8 blur-[120px]" />
         )}
+        {hovered === 'translate' && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-blue/8 blur-[120px]" />
+        )}
       </div>
 
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-10 sm:gap-14">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-10 sm:gap-14">
         {/* Header */}
         <div 
           className={`text-center transition-all duration-700 ${
@@ -134,7 +163,7 @@ export default function SplashScreen({
         </div>
 
         {/* Cards Grid */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 max-w-6xl mx-auto">
           {cards.map((card, index) => {
             const c = colorMap[card.color];
             const isHovered = hovered === card.id;
@@ -180,7 +209,15 @@ export default function SplashScreen({
                   <div 
                     className={`absolute inset-[-200%] ${c.bg}/30`}
                     style={{
-                      background: `conic-gradient(from 0deg, transparent, ${card.color === 'amber' ? 'rgba(202,161,92,0.4)' : card.color === 'purple' ? 'rgba(141,123,195,0.4)' : 'rgba(47,155,131,0.4)'}, transparent)`,
+                      background: `conic-gradient(from 0deg, transparent, ${
+                        card.color === "amber"
+                          ? "rgba(202,161,92,0.4)"
+                          : card.color === "purple"
+                            ? "rgba(141,123,195,0.4)"
+                            : card.color === "green"
+                              ? "rgba(47,155,131,0.4)"
+                              : "rgba(59,130,246,0.4)"
+                      }, transparent)`,
                       animation: isHovered ? 'spin 4s linear infinite' : 'none',
                     }}
                   />
