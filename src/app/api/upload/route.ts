@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mammoth from 'mammoth';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 // For multipart form body parsing, we do not need body parser false in Next.js App Router.
@@ -99,9 +100,32 @@ function splitNarrativeContent(content: string, maxChunkChars: number) {
 const DEFAULT_PARAGRAPH_CHUNK = 4000;
 /** EH Translator 클라이언트가 보낼 때만 — 번역 스튜디오 업로드 한정 */
 const TRANSLATOR_PARAGRAPH_CHUNK = 9500;
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (!origin) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    try {
+      if (host && new URL(origin).host !== host) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const ip = getClientIp(req.headers);
+    const rl = checkRateLimit(ip, 'upload', RATE_LIMITS.upload);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: '업로드 요청이 너무 많습니다.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     if (!file) {
@@ -113,6 +137,9 @@ export async function POST(req: NextRequest) {
       clientSource === 'eh-translator' ? TRANSLATOR_PARAGRAPH_CHUNK : DEFAULT_PARAGRAPH_CHUNK;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.length > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File too large' }, { status: 413 });
+    }
     const fileName = file.name.toLowerCase();
     
     let content = '';

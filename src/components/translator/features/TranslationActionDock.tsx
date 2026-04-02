@@ -16,6 +16,7 @@ import {
   Upload,
   Cloud,
   Key,
+  HardDrive,
 } from 'lucide-react';
 
 export function TranslationActionDock() {
@@ -36,6 +37,8 @@ export function TranslationActionDock() {
     cloudSyncDetail,
     exportData,
     importData,
+    chapters,
+    downloadAllResults,
     authUser,
     isAuthLoaded,
     openApiKeyModal,
@@ -43,6 +46,8 @@ export function TranslationActionDock() {
 
   const stage = activeChapter?.stageProgress ?? 0;
   const stageLabel = loading ? `${Math.min(stage, 5)}/5` : '—/5';
+  const hasChapters = chapters.length > 0;
+  const exportFive = ['txt', 'md', 'json', 'html', 'csv'] as const;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -85,14 +90,32 @@ export function TranslationActionDock() {
                 : 'Cloud: Supabase or sign-in not active'}
           </span>
         </div>
-        <div className="flex gap-2 pt-1">
+        <div className="pt-1">
+          <div className="mb-1.5 text-[9px] font-mono font-semibold uppercase tracking-wider text-accent-amber/80">
+            {lang === 'ko' ? '보내기 · 대표 5형식' : 'Export · 5 formats'}
+          </div>
+          <div className="grid grid-cols-5 gap-1">
+            {exportFive.map((fmt) => (
+              <button
+                key={fmt}
+                type="button"
+                disabled={!hasChapters}
+                onClick={() => downloadAllResults(fmt)}
+                className="rounded-md border border-white/10 bg-black/50 py-1.5 text-[8px] font-black uppercase tracking-wide text-text-secondary hover:border-accent-amber/35 hover:bg-accent-amber/10 hover:text-accent-amber disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                {fmt}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-2 border-t border-white/5 pt-2">
           <button
             type="button"
             onClick={() => void exportData()}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[10px] text-text-secondary hover:bg-white/10"
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[9px] text-text-tertiary hover:bg-white/10"
           >
             <Download className="h-3 w-3" />
-            JSON
+            {lang === 'ko' ? '전체 JSON' : 'Full JSON'}
           </button>
           <input
             ref={importRef}
@@ -104,12 +127,20 @@ export function TranslationActionDock() {
           <button
             type="button"
             onClick={() => importRef.current?.click()}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[10px] text-text-secondary hover:bg-white/10"
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[9px] text-text-tertiary hover:bg-white/10"
           >
             <Upload className="h-3 w-3" />
-            {lang === 'ko' ? '불러오기' : 'Import'}
+            {lang === 'ko' ? 'JSON 불러오기' : 'Import JSON'}
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setActiveLeftPanel('backup')}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-accent-amber/25 bg-accent-amber/10 py-2 text-[10px] font-medium text-accent-amber hover:bg-accent-amber/20"
+        >
+          <HardDrive className="h-3.5 w-3.5" />
+          {lang === 'ko' ? '저장·백업 (전체 도구)' : 'Save & backup (all tools)'}
+        </button>
       </div>
 
       <div className="flex flex-col gap-2">

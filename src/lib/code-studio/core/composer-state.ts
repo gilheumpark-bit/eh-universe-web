@@ -9,8 +9,8 @@ import { logger } from '@/lib/logger';
  *
  * Allowed transitions:
  *   idle       → generating
- *   generating → verifying | error
- *   verifying  → review | error
+ *   generating → verifying | error | idle   (idle = user cancel)
+ *   verifying  → review | error | idle   (idle = user cancel)
  *   review     → staged | generating | idle
  *   staged     → applied | review
  *   applied    → idle
@@ -28,8 +28,8 @@ export type ComposerMode =
 
 export const ALLOWED_TRANSITIONS: Record<ComposerMode, ComposerMode[]> = {
   idle: ['generating'],
-  generating: ['verifying', 'error'],
-  verifying: ['review', 'error'],
+  generating: ['verifying', 'error', 'idle'],
+  verifying: ['review', 'error', 'idle'],
   review: ['staged', 'generating', 'idle'],
   staged: ['applied', 'review'],
   applied: ['idle'],

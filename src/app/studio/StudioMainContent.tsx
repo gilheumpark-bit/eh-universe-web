@@ -263,10 +263,10 @@ export interface StudioMainContentProps {
   setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
   pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
 
-  // Versioned backups
-  versionedBackups: VersionedBackup[];
-  doRestoreVersionedBackup: (timestamp: number) => Promise<boolean>;
-  refreshBackupList: () => void;
+  // Versioned backups (OFFLINE_CACHE 꺼지면 undefined)
+  versionedBackups?: VersionedBackup[];
+  doRestoreVersionedBackup?: (timestamp: number) => Promise<boolean>;
+  refreshBackupList?: () => void;
 
   // Modals/actions
   clearAllSessions: () => void;

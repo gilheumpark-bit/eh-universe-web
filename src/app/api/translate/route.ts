@@ -19,6 +19,7 @@ import {
 } from '@/lib/google-genai-server';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { logger } from '@/lib/logger';
+import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -127,6 +128,28 @@ async function runGeminiViaGoogleGenAI(params: {
 
 export async function POST(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host');
+    if (!origin) {
+      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
+    }
+    try {
+      if (host && new URL(origin).host !== host) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const ip = getClientIp(req.headers);
+    const rl = sharedCheckRateLimit(ip, 'translate', RATE_LIMITS.translate);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
+    }
+
     const body = (await req.json()) as BuildPromptParams & {
       provider?: string;
       apiKey?: string;

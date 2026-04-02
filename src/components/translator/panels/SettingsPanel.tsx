@@ -1,6 +1,7 @@
 import React, { useRef, type ChangeEvent } from 'react';
 import { Settings, Cloud, Sliders, User, Save, Download, Upload, LogOut, LogIn, Key } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { useAuth } from '@/lib/AuthContext';
 import { EnvStatusBar } from '../EnvStatusBar';
 
@@ -25,6 +26,7 @@ export function SettingsPanel() {
     aiCapabilitiesLoaded,
     hostedGemini,
   } = useTranslator();
+  const layout = useTranslatorLayout();
   const { isConfigured, error: authError } = useAuth();
 
   const syncLabel =
@@ -173,9 +175,17 @@ export function SettingsPanel() {
             </div>
             <p className="text-[11px] text-text-tertiary leading-relaxed">
               {langKo
-                ? '편집 내용은 이 브라우저의 localStorage에 자동 저장됩니다. 별도 저장 버튼은 없습니다.'
-                : 'Edits autosave to this browser’s localStorage. There is no manual Save button.'}
+                ? '편집 내용은 이 브라우저의 localStorage에 자동 저장됩니다. JSON 백업·일괄보내기는 왼쪽 활동 바의 디스크 아이콘(저장·백업)에서 하세요.'
+                : 'Edits autosave to localStorage. JSON backup and batch export live in the left activity bar (hard drive icon: Save & backup).'}
             </p>
+            <button
+              type="button"
+              onClick={() => layout.setActiveLeftPanel('backup')}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 py-2 text-[11px] font-medium text-emerald-300/90 transition-colors hover:bg-emerald-500/20"
+            >
+              <Download className="w-3.5 h-3.5" />
+              {langKo ? '저장·백업 패널 열기' : 'Open save & backup panel'}
+            </button>
           </div>
         </section>
 
@@ -228,6 +238,11 @@ export function SettingsPanel() {
             <Download className="w-3 h-3" />
             {langKo ? '백업 / 복원' : 'Backup / Restore'}
           </h3>
+          <p className="text-[10px] text-text-tertiary leading-relaxed">
+            {langKo
+              ? 'JSON·일괄보내기·문서 가져오기는「저장·백업」패널에 모여 있습니다. 왼쪽 디스크 아이콘으로 바로 열 수 있습니다.'
+              : 'JSON export, batch download, and document import are grouped in Save & backup (left hard-drive icon).'}
+          </p>
           <div className="flex flex-col gap-2">
             <button
               type="button"

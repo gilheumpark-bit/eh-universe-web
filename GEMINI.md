@@ -580,14 +580,30 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 
 - **Shell 3파일 분리**: CodeStudioShell (레이아웃) + CodeStudioEditor (에디터) + CodeStudioPanelManager (패널 렌더)
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
-- **Panel Registry**: 37개 패널을 `core/panel-registry.ts` + `PanelImports.ts`로 관리
+- **Panel Registry**: 37개 패널을 `core/panel-registry.ts` + `PanelImports.ts`로 관리 (코드 스튜디오 전용)
+- 번역 스튜디오 패널은 `src/components/translator/core/panel-registry.ts` — 경로 혼동 금지
 - 새 패널 추가 = 레지스트리 1줄 + PanelImports 1줄 + panelPropsMap 1항목
 - 하드코딩 패널 금지 — 반드시 레지스트리 경유
 
+## 코드 스튜디오 정적 파이프라인 (8팀 실행 모델)
+
+- `runFullPipeline` 기준: **non-blocking** 팀은 병렬, **blocking** 팀은 순차 (`validation`, `release-ip`)
+- 단일 정의: `src/lib/code-studio/core/pipeline-execution-model.ts`의 `PIPELINE_TEAM_STAGES` — `pipeline/pipeline.ts`의 `FULL_TEAMS`와 동기화 유지
+
+## 자동 수정 금지 구역
+
+- 검증 루프의 안전 분류는 `src/lib/code-studio/core/autofix-policy.ts`가 단일 소스 (`UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS`, `classifyFixDescription`)
+- 프롬프트/문서에 동일 규칙을 복붙하지 말고 이 모듈·`CODE_STUDIO_ARCHITECTURE_APPENDIX`를 참조
+
+## Next.js / 런타임 경계
+
+- 코드 생성·수정 전 이 저장소의 **Next.js 메이저**는 `AGENTS.md` 및 `node_modules/next/dist/docs/`를 우선 확인
+- Code Studio: 브라우저 UI, 서버 라우트, WebContainer/샌드박스 경계를 구분 — 클라이언트 번들에 Node 전용 API 금지
+
 ## 로깅 정책
 
-- `console.log` / `console.warn` / `console.error` 직접 사용 금지
-- `import { logger } from '@/lib/logger'` 사용 필수
+- **신규 코드**: `console.log` / `console.warn` / `console.error` 직접 사용 금지 — `import { logger } from '@/lib/logger'` 필수
+- **검증 단계**: 기존/생성 코드의 `console` 제거는 `safe-fix` 카테고리 `console-remove`로 자동 제안될 수 있음 (이중 정책)
 - logger.info() / logger.warn() / logger.error() / logger.debug()
 
 ## ErrorBoundary
@@ -610,10 +626,10 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 ## Verification-First 원칙
 
 - 생성 후 검증은 필수, 선택이 아님
-- Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) = 통합 점수
+- **가중치·임계값 단일 소스**: 실제 수치는 `verification-loop.ts`의 `VerificationConfig` / `calculateCombinedScore`를 따른다. 문서의 50/20/30은 개념 설명용이며 구현과 어긋나면 코드가 우선이다.
 - Hard Gate: critical bugs > 0 OR stress F → 점수 무관 FAIL
 - 3회 검증 루프: no-progress/no-fixes 시 조기 종료
-- Safe fix allowlist만 자동 적용 (함수 시그니처/비즈니스 로직 변경 금지)
+- Safe fix allowlist만 자동 적용 — 금지 구역은 `autofix-policy.ts` 참조
 
 ## Composer State Machine
 
@@ -621,8 +637,11 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 
 ```
 idle → generating → verifying → review → staged → applied → idle
+generating → idle | verifying → idle   (사용자 취소)
 error → idle | generating
 ```
+
+- 장시간 생성/검증은 `AbortSignal`로 중단 가능해야 하며, UI는 취소 시 위 전이로 `idle` 복귀를 허용한다.
 
 ## Staging/Rollback
 

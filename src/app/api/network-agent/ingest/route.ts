@@ -11,6 +11,7 @@ import { ingestNetworkDocument, isNetworkAgentConfigured } from '@/lib/vertex-ne
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { logger } from '@/lib/logger';
 import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: getNetworkAgentCorsHeaders(req) });
@@ -18,6 +19,14 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const cors = getNetworkAgentCorsHeaders(req);
+  const ip = getClientIp(req.headers);
+  const rl = checkRateLimit(ip, 'network-agent-ingest', RATE_LIMITS.default);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { ...cors, 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
   try {
     const authHeader = req.headers.get('authorization') || '';
     const raw = authHeader.replace(/^Bearer\s+/i, '').trim();

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
-import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen } from 'lucide-react';
+import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive } from 'lucide-react';
 
 export function BilateralEditor() {
   const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel } = useTranslator();
@@ -103,13 +103,26 @@ export function BilateralEditor() {
 
       {/* Editor Header */}
       <div className="h-14 w-full border-b border-white/3 flex items-center px-5 justify-between shrink-0 z-10 bg-[#11100e]/60 backdrop-blur-xl shadow-sm">
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
           <span
-            className="hidden sm:block max-w-[140px] md:max-w-[200px] truncate text-[10px] font-mono text-text-tertiary/90"
+            className="hidden sm:block max-w-[120px] md:max-w-[180px] truncate text-[10px] font-mono text-text-tertiary/90"
             title={autoSaveLabel}
           >
             {autoSaveLabel}
           </span>
+          <button
+            type="button"
+            title={langKo ? '저장·백업 패널 열기 (JSON·일괄보내기)' : 'Open save & backup panel'}
+            onClick={() => layout.setActiveLeftPanel('backup')}
+            className={`hidden sm:flex shrink-0 items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-semibold transition-all ${
+              layout.activeLeftPanel === 'backup'
+                ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber'
+                : 'border-white/10 bg-white/5 text-text-tertiary hover:border-accent-amber/25 hover:text-accent-amber'
+            }`}
+          >
+            <HardDrive className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">{langKo ? '저장' : 'Save'}</span>
+          </button>
           <div className="flex items-center bg-white/2 rounded-xl p-1 border border-white/5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.5)] shrink-0">
             <select
               value={from}
@@ -145,7 +158,7 @@ export function BilateralEditor() {
           {(
             [
               { id: 'actions' as const, icon: Zap, title: 'Translate / Pipeline' },
-              { id: 'chat' as const, icon: MessageSquare, title: 'AI Copilot' },
+              { id: 'chat' as const, icon: MessageSquare, title: 'Copilot' },
               { id: 'audit' as const, icon: Shield, title: 'Quality audit' },
               { id: 'reference' as const, icon: BookOpen, title: 'References' },
             ] as const

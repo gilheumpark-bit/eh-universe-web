@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
 import { Hash, FileText, X, Search } from "lucide-react";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface SymbolEntry {
   name: string;
@@ -70,6 +71,7 @@ function fuzzyScore(query: string, target: string): number {
 // ============================================================
 
 export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPaletteProps) {
+  const t = useCodeStudioT();
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +132,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search symbols... (functions, classes, variables)"
+            placeholder={t.symSearchPlaceholder}
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-600"
           />
           <button onClick={onClose} className="text-gray-500 hover:text-white">
@@ -139,7 +141,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
         </div>
         <div ref={listRef} className="max-h-[340px] overflow-y-auto">
           {filtered.length === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-gray-500">No symbols found</div>
+            <div className="px-4 py-6 text-center text-sm text-gray-500">{t.symNoSymbols}</div>
           )}
           {filtered.map((sym, i) => (
             <button

@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect, type MouseEvent as ReactMouseEvent, useMemo } from "react";
 import { ZoomIn, ZoomOut, Maximize2, Download, Plus, Trash2, Move } from "lucide-react";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface CanvasNode {
   id: string;
@@ -228,6 +229,7 @@ export default function CanvasPanel({
   onConnectionsChange,
   onExportImage,
 }: CanvasPanelProps) {
+  const t = useCodeStudioT();
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -279,7 +281,7 @@ export default function CanvasPanel({
   const addNode = () => {
     const newNode: CanvasNode = {
       id: `node-${Date.now()}`,
-      label: "New Node",
+      label: t.canvasNewNode,
       x: snapToGrid(-offset.x / zoom + 200),
       y: snapToGrid(-offset.y / zoom + 200),
       width: 140,
@@ -321,27 +323,27 @@ export default function CanvasPanel({
     <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#12121a]">
       {/* Toolbar */}
       <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-white/10 bg-[#1e1e2e] p-1">
-        <button onClick={() => setZoom((z) => Math.min(z + 0.2, MAX_ZOOM))} className="p-1 text-gray-400 hover:text-white" title="Zoom in">
+        <button onClick={() => setZoom((z) => Math.min(z + 0.2, MAX_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomIn}>
           <ZoomIn size={14} />
         </button>
         <span className="px-1 text-[10px] text-gray-500">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom((z) => Math.max(z - 0.2, MIN_ZOOM))} className="p-1 text-gray-400 hover:text-white" title="Zoom out">
+        <button onClick={() => setZoom((z) => Math.max(z - 0.2, MIN_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomOut}>
           <ZoomOut size={14} />
         </button>
         <div className="mx-1 h-4 w-px bg-white/10" />
-        <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="p-1 text-gray-400 hover:text-white" title="Reset view">
+        <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="p-1 text-gray-400 hover:text-white" title={t.canvasResetView}>
           <Maximize2 size={14} />
         </button>
-        <button onClick={addNode} className="p-1 text-gray-400 hover:text-white" title="Add node">
+        <button onClick={addNode} className="p-1 text-gray-400 hover:text-white" title={t.canvasAddNode}>
           <Plus size={14} />
         </button>
         {selectedId && (
-          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title="Delete node">
+          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title={t.canvasDeleteNode}>
             <Trash2 size={14} />
           </button>
         )}
         {onExportImage && (
-          <button onClick={onExportImage} className="p-1 text-gray-400 hover:text-white" title="Export image">
+          <button onClick={onExportImage} className="p-1 text-gray-400 hover:text-white" title={t.canvasExportImage}>
             <Download size={14} />
           </button>
         )}

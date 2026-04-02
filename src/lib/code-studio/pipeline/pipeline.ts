@@ -984,6 +984,7 @@ export interface FullPipelineResult {
 
 type TeamFn = (code: string, language: string, fileName: string) => FullTeamResult;
 
+/** Keep stage order / blocking flags in sync with `core/pipeline-execution-model.ts` (`PIPELINE_TEAM_STAGES`). */
 const FULL_TEAMS: { stage: string; run: TeamFn; blocking: boolean }[] = [
   { stage: 'simulation',   run: runTeam1Simulation,   blocking: false },
   { stage: 'generation',   run: runTeam2Generation,   blocking: false },

@@ -40,17 +40,17 @@ export function useWritingChat() {
         id: `chat-a-${Date.now()}`,
         role: 'assistant',
         content: language === 'KO' 
-          ? `[AI 답변]: "${text}"에 대한 분석 및 조언입니다. 소설의 맥락을 고려할 때 다음 전개가 기대됩니다.`
-          : `[AI Response]: Advice for "${text}". Considering the context, I suggest focusing on the character's internal conflict.`,
+          ? `[NOW]: "${text}"에 대한 분석 및 조언입니다. 소설의 맥락을 고려할 때 다음 전개가 기대됩니다.`
+          : `[NOW]: Advice for "${text}". Considering the context, I suggest focusing on the character's internal conflict.`,
         timestamp: Date.now(),
       };
 
       setChatMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        logger.warn('AI Chat Aborted');
+        logger.warn('Writing chat aborted');
       } else {
-        logger.error('AI Chat Error:', err);
+        logger.error('Writing chat error:', err);
       }
     } finally {
       setChatLoading(false);

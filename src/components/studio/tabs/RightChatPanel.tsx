@@ -6,6 +6,7 @@ import type {
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { DirectorReport } from '@/engine/director';
 import { createT } from '@/lib/i18n';
+import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 import { Send, StopCircle, RefreshCcw, BookOpen, ChevronDown, User, Clapperboard, Layers, ClipboardList } from 'lucide-react';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 
@@ -31,6 +32,7 @@ interface RightChatPanelProps {
   pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
   setConfig: (config: ChatSession['config']) => void;
   setActiveTab: (tab: AppTab) => void;
+  hostedProviders?: Partial<Record<string, boolean>>;
 }
 
 /**
@@ -40,10 +42,11 @@ interface RightChatPanelProps {
 export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({ 
   language, currentSession, messages, loading, onSend, onAbort, onClear,
   directorReport, hfcpState, suggestions, setSuggestions, pipelineResult,
-  setConfig, setActiveTab
+  setConfig, setActiveTab, hostedProviders = {},
 }) => {
   const t = createT(language);
   const isKO = language === 'KO';
+  const backendLabel = useStudioBackendLabel(language, hostedProviders);
   const [input, setInput] = useState('');
   const [refOpen, setRefOpen] = useState(true);
   const scrollEndRef = useRef<HTMLDivElement>(null);
@@ -65,8 +68,16 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
       <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-bg-primary/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-accent-purple" />
-          <h3 className="text-[11px] font-black text-text-primary uppercase tracking-widest font-mono">
-            {t('writingMode.writingAiAssistant')}
+          <h3
+            className="text-[10px] font-black text-text-primary uppercase tracking-widest font-mono leading-tight max-w-[min(100%,240px)]"
+            title={backendLabel ? `${t('writingMode.nowWriterBadge')} · ${backendLabel}` : t('writingMode.nowWriterBadge')}
+          >
+            <span className="block truncate">{t('writingMode.nowWriterBadge')}</span>
+            {backendLabel ? (
+              <span className="block text-[9px] font-mono text-text-tertiary normal-case tracking-normal truncate mt-0.5">
+                · {backendLabel}
+              </span>
+            ) : null}
           </h3>
         </div>
         <button 
@@ -236,7 +247,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
             <div className="space-y-6">
               {messages.map((msg) => (
                 <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-400">
-                  <ChatMessage message={msg} language={language} isCompact />
+                  <ChatMessage message={msg} language={language} isCompact hostedProviders={hostedProviders} />
                 </div>
               ))}
             </div>

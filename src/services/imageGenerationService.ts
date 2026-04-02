@@ -1,3 +1,5 @@
+import { isFeatureEnabled } from '@/lib/feature-flags';
+
 // ============================================================
 // PART 1 — Provider Interface & Types
 // ============================================================
@@ -40,6 +42,9 @@ export async function generateImage(
   options: ImageGenOptions = {},
   signal?: AbortSignal
 ): Promise<{ images: ImageGenResult[]; error?: string }> {
+  if (typeof window !== 'undefined' && !isFeatureEnabled('IMAGE_GENERATION')) {
+    return { images: [], error: 'Image generation is disabled.' };
+  }
   try {
     const res = await fetch('/api/image-gen', {
       method: 'POST',

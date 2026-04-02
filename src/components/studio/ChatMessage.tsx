@@ -3,6 +3,8 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
+import { getStudioBackendDisplayLabel } from '@/lib/studio-ai-backend-label';
 
 const ChatMarkdownBlock = dynamic(
   () => import('./ChatMarkdownBlock').then((m) => m.ChatMarkdownBlock),
@@ -14,11 +16,17 @@ interface ChatMessageProps {
   onRegenerate?: (messageId: string) => void;
   onAutoFix?: (messageId: string) => void;
   isCompact?: boolean;
+  /** 집필 스트림: 호스팅 백엔드면「자동」, 아니면 프로바이더·모델 표기 */
+  hostedProviders?: Partial<Record<string, boolean>>;
+  /** 어시스턴트 상단 라벨(미지정 시 NOW 페르소나) */
+  assistantPersonaLine?: string;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ 
-  message, language = 'KO', onRegenerate, onAutoFix, isCompact 
+  message, language = 'KO', onRegenerate, onAutoFix, isCompact,
+  hostedProviders = {}, assistantPersonaLine,
 }) => {
+  const t = createT(language);
   const isUser = message.role === 'user';
   const [showDetail, setShowDetail] = React.useState(false);
 
@@ -71,6 +79,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const displayMetrics = report?.metrics ?? analysisData?.metrics;
   const displayCritique = analysisData?.critique ?? null;
 
+  const personaLine = assistantPersonaLine ?? t('writingMode.nowWriterBadge');
+  const backendLine = getStudioBackendDisplayLabel(language, hostedProviders);
+
   return (
     <div className={`flex w-full ${isCompact ? 'gap-2' : 'gap-3 md:gap-4'} group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 ${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg flex items-center justify-center border shadow-lg ${
@@ -81,8 +92,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
         {!isUser && (
-          <span className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-mono">
-            NOW — Narrative Origin Writer
+          <span
+            className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-mono max-w-full truncate"
+            title={backendLine ? `${personaLine} · ${backendLine}` : personaLine}
+          >
+            {backendLine ? `${personaLine} · ${backendLine}` : personaLine}
           </span>
         )}
         <div className={`overflow-hidden transition-all ${

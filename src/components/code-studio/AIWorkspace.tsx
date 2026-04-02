@@ -5,8 +5,9 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Bot, Send, Plus, Trash2, MessageSquare, Brain, Users, Loader2, X } from "lucide-react";
-import type { AgentRole } from "@/lib/code-studio/ai/agents";
+import { Send, Plus, Brain, Users, Loader2, X } from "lucide-react";
+import { type AgentRole, AGENT_REGISTRY, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface WorkspaceThread {
   id: string;
@@ -45,13 +46,17 @@ interface AIWorkspaceProps {
 // PART 2 — Thread List Sidebar
 // ============================================================
 
-const PERSONA_COLORS: Record<AgentRole, string> = {
-  architect: "#3b82f6",
-  developer: "#10b981",
-  reviewer: "#f59e0b",
-  tester: "#b8955c",
-  documenter: "#ec4899",
+const CATEGORY_COLORS: Record<string, string> = {
+  leadership: "#f59e0b", // amber
+  generation: "#3b82f6", // blue
+  verification: "#eab308", // yellow
+  repair: "#10b981", // green
 };
+
+function getPersonaColor(role: AgentRole) {
+  const meta = AGENT_REGISTRY[role];
+  return meta ? CATEGORY_COLORS[meta.category] : "#ec4899";
+}
 
 function ThreadList({
   threads,
@@ -66,11 +71,12 @@ function ThreadList({
   onDelete: (id: string) => void;
   onCreate: () => void;
 }) {
+  const t = useCodeStudioT();
   return (
     <div className="w-48 shrink-0 border-r border-white/5 bg-[#12121a] flex flex-col">
       <div className="flex items-center justify-between border-b border-white/5 px-2 py-2">
-        <span className="text-xs font-bold text-gray-500 uppercase">Threads</span>
-        <button onClick={onCreate} className="text-gray-500 hover:text-white" title="New thread">
+        <span className="text-xs font-bold text-gray-500 uppercase">{t.aiThreads}</span>
+        <button onClick={onCreate} className="text-gray-500 hover:text-white" title={t.aiNewThread}>
           <Plus size={14} />
         </button>
       </div>
@@ -83,7 +89,7 @@ function ThreadList({
               t.id === activeId ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5"
             }`}
           >
-            <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PERSONA_COLORS[t.persona] }} />
+            <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getPersonaColor(t.persona) }} />
             <span className="flex-1 truncate">{t.title}</span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
@@ -113,6 +119,7 @@ function ChatArea({
   onSend: (msg: string) => void;
   sending: boolean;
 }) {
+  const t = useCodeStudioT();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -131,7 +138,7 @@ function ChatArea({
       <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
         <div className="text-center">
           <Users size={32} className="mx-auto mb-2 text-gray-600" />
-          <p>Select or create a thread to begin</p>
+          <p>{t.aiSelectThread}</p>
         </div>
       </div>
     );
@@ -141,9 +148,11 @@ function ChatArea({
     <div className="flex flex-1 flex-col min-h-0">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2">
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PERSONA_COLORS[thread.persona] }} />
+        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getPersonaColor(thread.persona) }} />
         <span className="text-sm font-medium text-white">{thread.title}</span>
-        <span className="text-[10px] text-gray-500 capitalize">{thread.persona}</span>
+        <span className="text-[10px] text-gray-500">
+          {AGENT_REGISTRY[thread.persona]?.name || thread.persona}
+        </span>
       </div>
 
       {/* Messages */}
@@ -163,7 +172,7 @@ function ChatArea({
         ))}
         {sending && (
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Loader2 size={12} className="animate-spin" /> Thinking...
+            <Loader2 size={12} className="animate-spin" /> {t.aiThinking}
           </div>
         )}
         <div ref={bottomRef} />
@@ -176,7 +185,7 @@ function ChatArea({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit()}
-            placeholder="Type a message..."
+            placeholder={t.aiMsgPlaceholder}
             className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-gray-600"
           />
           <button
@@ -199,18 +208,19 @@ function ChatArea({
 // ============================================================
 
 function SharedMemoryPanel({ entries }: { entries: SharedMemoryEntry[] }) {
+  const t = useCodeStudioT();
   if (entries.length === 0) return null;
   return (
     <div className="w-44 shrink-0 border-l border-white/5 bg-[#12121a] overflow-y-auto">
       <div className="border-b border-white/5 px-2 py-2">
         <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-          <Brain size={12} /> Shared Memory
+          <Brain size={12} /> {t.aiSharedMemory}
         </span>
       </div>
       {entries.map((e) => (
         <div key={e.key} className="border-b border-white/5 px-2 py-1.5">
           <div className="flex items-center gap-1 text-[10px] text-gray-500">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: PERSONA_COLORS[e.source] }} />
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: getPersonaColor(e.source) }} />
             <span>{e.key}</span>
           </div>
           <div className="text-xs text-gray-400 mt-0.5 line-clamp-2">{e.value}</div>
@@ -233,6 +243,7 @@ export default function AIWorkspace({
   onCreateThread,
   onDeleteThread,
 }: AIWorkspaceProps) {
+  const t = useCodeStudioT();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(threads[0]?.id ?? null);
   const [sending, setSending] = useState(false);
   const [showNewThread, setShowNewThread] = useState(false);
@@ -252,7 +263,9 @@ export default function AIWorkspace({
     [activeThreadId, onSendMessage],
   );
 
-  const roles: AgentRole[] = ["architect", "developer", "reviewer", "tester", "documenter"];
+  const roles: AgentRole[] = ALL_AGENT_ROLES;
+
+  const personaLabel = (r: AgentRole) => AGENT_REGISTRY[r].name;
 
   return (
     <div className="flex h-full bg-[#16161e]">
@@ -270,16 +283,16 @@ export default function AIWorkspace({
       {showNewThread && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowNewThread(false)}>
           <div className="w-64 rounded-xl border border-white/10 bg-[#1e1e2e] p-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-3 text-sm font-medium text-white">Select Persona</h3>
+            <h3 className="mb-3 text-sm font-medium text-white">{t.aiSelectPersona}</h3>
             <div className="space-y-1">
               {roles.map((r) => (
                 <button
                   key={r}
                   onClick={() => { onCreateThread(r); setShowNewThread(false); }}
-                  className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 capitalize transition-colors"
+                  className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10 transition-colors"
                 >
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PERSONA_COLORS[r] }} />
-                  {r}
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getPersonaColor(r) }} />
+                  {personaLabel(r)}
                 </button>
               ))}
             </div>

@@ -1,0 +1,3 @@
+Snapshot before archive editorial redesign (2026-04-03).
+Sources: src/app/globals.css, layout.tsx, translation-studio/translator-studio.css.
+Reference copy: sibling folder "eh-universe-web - 복사본" (Cormorant + Noto Serif tokens).

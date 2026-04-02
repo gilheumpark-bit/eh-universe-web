@@ -11,6 +11,7 @@ import {
 } from "@/lib/code-studio/features/webcontainer";
 import { createHMRBridge, type HMRBridge, type HMREvent } from "@/lib/code-studio/features/preview-hmr";
 import type { FileNode } from "@/lib/code-studio/core/types";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 type PreviewState = "idle" | "booting" | "installing" | "starting" | "ready" | "error";
 type DeviceMode = "responsive" | "mobile" | "tablet" | "desktop";
@@ -27,10 +28,10 @@ interface PreviewPanelProps {
   visible: boolean;
 }
 
-const DEVICE_SIZES: Record<Exclude<DeviceMode, "responsive">, { width: number; label: string }> = {
-  mobile: { width: 375, label: "Mobile 375px" },
-  tablet: { width: 768, label: "Tablet 768px" },
-  desktop: { width: 1280, label: "Desktop 1280px" },
+const DEVICE_WIDTHS: Record<Exclude<DeviceMode, "responsive">, number> = {
+  mobile: 375,
+  tablet: 768,
+  desktop: 1280,
 };
 
 // IDENTITY_SEAL: PART-1 | role=타입 정의 | inputs=none | outputs=PreviewState, DeviceMode, PreviewPanelProps
@@ -57,6 +58,7 @@ function findFile(nodes: FileNode[], name: string): FileNode | null {
 // ============================================================
 
 export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
+  const t = useCodeStudioT();
   const [state, setState] = useState<PreviewState>("idle");
   const [previewUrl, setPreviewUrl] = useState("");
   const [displayUrl, setDisplayUrl] = useState("");
@@ -250,19 +252,19 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
     <div className="flex flex-col h-full bg-[#0a0e17] text-text-secondary">
       {/* Toolbar Row 1 — URL Bar */}
       <div className="flex items-center gap-1.5 px-2 py-1 border-b border-white/8 bg-[#0d1117] min-h-[36px]">
-        <ToolbarBtn onClick={handleNavBack} disabled={navIndex <= 0} title="Back">&larr;</ToolbarBtn>
-        <ToolbarBtn onClick={handleNavForward} disabled={navIndex >= navHistory.length - 1} title="Forward">&rarr;</ToolbarBtn>
-        <ToolbarBtn onClick={handleRefresh} disabled={state !== "ready"} title="Refresh">&#x21bb;</ToolbarBtn>
+        <ToolbarBtn onClick={handleNavBack} disabled={navIndex <= 0} title={t.previewBack}>&larr;</ToolbarBtn>
+        <ToolbarBtn onClick={handleNavForward} disabled={navIndex >= navHistory.length - 1} title={t.previewForward}>&rarr;</ToolbarBtn>
+        <ToolbarBtn onClick={handleRefresh} disabled={state !== "ready"} title={t.previewRefresh}>&#x21bb;</ToolbarBtn>
 
         {isLoading && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-amber-500 rounded-full animate-spin shrink-0" />}
 
         <input
           type="text" value={displayUrl} readOnly
           className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-0.5 text-xs font-mono text-text-secondary"
-          placeholder="URL"
+          placeholder={t.previewUrlPlaceholder}
         />
 
-        <ToolbarBtn onClick={handleOpenExternal} disabled={state !== "ready"} title="Open in new tab">&#x2197;</ToolbarBtn>
+        <ToolbarBtn onClick={handleOpenExternal} disabled={state !== "ready"} title={t.previewOpenNewTab}>&#x2197;</ToolbarBtn>
       </div>
 
       {/* Toolbar Row 2 — Device simulation, console toggle */}
@@ -274,7 +276,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         )}
         {errorCount > 0 && (
           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-red-500/40 bg-red-500/10 text-red-400">
-            {errorCount} error{errorCount > 1 ? "s" : ""}
+            {t.previewErrors.replace("{n}", String(errorCount))}
           </span>
         )}
 
@@ -290,7 +292,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
                 : "border-white/10 bg-transparent text-text-tertiary hover:bg-white/5"
             }`}
           >
-            {mode === "responsive" ? "Responsive" : `${DEVICE_SIZES[mode].width}px`}
+            {mode === "responsive" ? t.previewResponsive : `${DEVICE_WIDTHS[mode]}px`}
           </button>
         ))}
 
@@ -302,7 +304,8 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
             showConsole ? "border-white/20 bg-white/10 text-text-primary" : "border-white/10 bg-transparent text-text-tertiary"
           }`}
         >
-          Console {consoleEntries.length > 0 && <span className="ml-1 bg-white/10 rounded-full px-1">{consoleEntries.length}</span>}
+          {t.previewConsoleHeader}{" "}
+          {consoleEntries.length > 0 && <span className="ml-1 bg-white/10 rounded-full px-1">{consoleEntries.length}</span>}
         </button>
       </div>
 
@@ -313,10 +316,10 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-[#0a0e17]">
             <div className="w-8 h-8 border-3 border-white/20 border-t-amber-500 rounded-full animate-spin" />
             <span className="text-xs text-text-secondary">
-              {state === "idle" && "Preparing..."}
-              {state === "booting" && "Booting WebContainer..."}
-              {state === "installing" && "Installing packages..."}
-              {state === "starting" && "Starting dev server..."}
+              {state === "idle" && t.previewIdle}
+              {state === "booting" && t.previewBooting}
+              {state === "installing" && t.previewInstalling}
+              {state === "starting" && t.previewStarting}
             </span>
           </div>
         )}
@@ -330,7 +333,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
               onClick={() => { setState("idle"); setErrorMsg(""); startPreview(); }}
               className="mt-2 px-4 py-1.5 text-xs rounded border border-white/20 bg-white/5 hover:bg-white/10 text-text-primary"
             >
-              Retry
+              {t.previewRetry}
             </button>
           </div>
         )}
@@ -341,9 +344,9 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         } min-h-0`}>
           {previewUrl && (
             <iframe
-              ref={iframeRef} src={previewUrl} title="Live Preview"
+              ref={iframeRef} src={previewUrl} title={t.previewLivePreview}
               style={{
-                width: deviceMode === "responsive" ? "100%" : DEVICE_SIZES[deviceMode].width,
+                width: deviceMode === "responsive" ? "100%" : DEVICE_WIDTHS[deviceMode],
                 maxWidth: "100%", height: "100%",
                 border: deviceMode === "responsive" ? "none" : "1px solid rgba(255,255,255,0.08)",
                 borderRadius: deviceMode === "responsive" ? 0 : 6,
@@ -357,7 +360,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         {/* Device mode indicator */}
         {deviceMode !== "responsive" && state === "ready" && (
           <div className="absolute top-2 right-2 bg-[#0d1117]/90 border border-white/10 rounded px-2 py-0.5 text-[10px] text-text-tertiary z-5">
-            {DEVICE_SIZES[deviceMode].label}
+            {deviceMode === "mobile" ? t.previewDeviceMobile : deviceMode === "tablet" ? t.previewDeviceTablet : t.previewDeviceDesktop}
           </div>
         )}
 
@@ -365,17 +368,19 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         {showConsole && (
           <div className="flex-[0_0_35%] min-h-[80px] max-h-[250px] border-t border-white/8 bg-[#060a12] flex flex-col">
             <div className="flex items-center justify-between px-2 py-1 bg-[#0d1117] border-b border-white/8 text-[11px] text-text-tertiary">
-              <span>Console ({consoleEntries.length})</span>
+              <span>
+                {t.previewConsoleHeader} ({consoleEntries.length})
+              </span>
               <button
                 onClick={() => setConsoleEntries([])}
                 className="px-1.5 py-0.5 text-[10px] rounded border border-white/10 hover:bg-white/5"
               >
-                Clear
+                {t.previewConsoleClear}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-2 py-1 font-mono text-[11px]">
               {consoleEntries.length === 0 && (
-                <div className="text-text-tertiary text-center py-4">Console output appears here.</div>
+                <div className="text-text-tertiary text-center py-4">{t.previewConsoleEmpty}</div>
               )}
               {consoleEntries.map((entry) => (
                 <div key={entry.id} className="py-px border-b border-white/5" style={{

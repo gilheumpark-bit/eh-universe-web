@@ -87,7 +87,8 @@ const WritingTab: React.FC<WritingTabProps> = ({
   showDashboard,
   rightPanelOpen, setRightPanelOpen,
   directorReport, hfcpState: _hfcpState,
-  handleNextEpisode
+  handleNextEpisode,
+  hostedProviders = {},
 }: WritingTabProps) => {
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
@@ -307,7 +308,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 ) : (
                   (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
                     <div key={msg.id}>
-                      <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} />
+                      <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} hostedProviders={hostedProviders} />
                       {msg.role === 'assistant' && msg.versions && msg.versions.length > 1 && (
                         <div className="ml-11 md:ml-12"><VersionDiff versions={msg.versions} currentIndex={msg.currentVersionIndex ?? msg.versions.length - 1} language={language} onSwitch={(idx) => handleVersionSwitch(msg.id, idx)} /></div>
                       )}

@@ -4,7 +4,8 @@
 // PART 1 — Author Dashboard: 회차별 엔진 메트릭 추세 시각화
 // ============================================================
 
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useEffect } from 'react';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { L4 } from '@/lib/i18n';
@@ -87,8 +88,21 @@ type DashSubTab = 'overview' | 'compare';
 
 function AuthorDashboard({ messages, language }: Props) {
   const isKO = language === 'KO';
+  const flags = useFeatureFlags();
   const metrics = useMemo(() => extractMetrics(messages), [messages]);
   const [subTab, setSubTab] = useState<DashSubTab>('overview');
+
+  useEffect(() => {
+    if (!flags.EPISODE_COMPARE && subTab === 'compare') setSubTab('overview');
+  }, [flags.EPISODE_COMPARE, subTab]);
+
+  const subTabEntries = useMemo(() => {
+    const rows: [DashSubTab, string][] = [['overview', isKO ? '개요' : 'Overview']];
+    if (flags.EPISODE_COMPARE && metrics.length >= 2) {
+      rows.push(['compare', isKO ? '비교 분석' : 'Compare']);
+    }
+    return rows;
+  }, [isKO, flags.EPISODE_COMPARE, metrics.length]);
 
   if (metrics.length === 0) {
     return (
@@ -111,12 +125,9 @@ function AuthorDashboard({ messages, language }: Props) {
   return (
     <div className="space-y-4">
       {/* Sub-tab navigation */}
-      {metrics.length >= 2 && (
+      {subTabEntries.length > 1 && (
         <div className="flex gap-1 bg-bg-secondary/50 border border-border rounded-xl p-1">
-          {([
-            ['overview', isKO ? '개요' : 'Overview'],
-            ['compare', isKO ? '비교 분석' : 'Compare'],
-          ] as [DashSubTab, string][]).map(([key, label]) => (
+          {subTabEntries.map(([key, label]) => (
             <button
               key={key}
               onClick={() => setSubTab(key)}
@@ -131,7 +142,7 @@ function AuthorDashboard({ messages, language }: Props) {
       )}
 
       {/* Compare tab */}
-      {subTab === 'compare' && metrics.length >= 2 && (
+      {subTab === 'compare' && flags.EPISODE_COMPARE && metrics.length >= 2 && (
         <EpisodeCompare messages={messages} language={language} />
       )}
 

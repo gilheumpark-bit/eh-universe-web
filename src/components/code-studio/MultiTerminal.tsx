@@ -4,8 +4,9 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Plus, X, Terminal as TerminalIcon, Pencil } from "lucide-react";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 interface TerminalTab {
   id: string;
@@ -26,32 +27,40 @@ const MAX_TERMINALS = 5;
 // ============================================================
 
 export function MultiTerminal({ renderTerminal }: Props) {
+  const t = useCodeStudioT();
   const [tabs, setTabs] = useState<TerminalTab[]>([{ id: "term-1", name: "Terminal 1" }]);
   const [activeTab, setActiveTab] = useState("term-1");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const didLocalizeTabs = useRef(false);
+
+  useEffect(() => {
+    if (didLocalizeTabs.current) return;
+    didLocalizeTabs.current = true;
+    setTabs([{ id: "term-1", name: `${t.termShellLabel} 1` }]);
+  }, [t.termShellLabel]);
 
   const addTab = useCallback(() => {
     if (tabs.length >= MAX_TERMINALS) return;
     const id = `term-${Date.now()}`;
     const num = tabs.length + 1;
-    setTabs((prev) => [...prev, { id, name: `Terminal ${num}` }]);
+    setTabs((prev) => [...prev, { id, name: `${t.termShellLabel} ${num}` }]);
     setActiveTab(id);
-  }, [tabs.length]);
+  }, [tabs.length, t.termShellLabel]);
 
   const closeTab = useCallback((id: string) => {
     setTabs((prev) => {
       const next = prev.filter((t) => t.id !== id);
       if (next.length === 0) {
-        const fallback = { id: "term-1", name: "Terminal 1" };
+        const fallback = { id: "term-1", name: `${t.termShellLabel} 1` };
         setActiveTab(fallback.id);
         return [fallback];
       }
       if (activeTab === id) setActiveTab(next[next.length - 1].id);
       return next;
     });
-  }, [activeTab]);
+  }, [activeTab, t.termShellLabel]);
 
   const startRename = useCallback((id: string, currentName: string) => {
     setRenamingId(id);
@@ -122,7 +131,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
           <button
             onClick={addTab}
             className="p-1 text-text-tertiary hover:text-text-primary hover:bg-white/5 rounded"
-            title="New terminal"
+            title={t.termNew}
           >
             <Plus size={10} />
           </button>
@@ -141,7 +150,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
             ) : (
               <div className="h-full flex items-center justify-center text-text-tertiary text-xs">
                 <TerminalIcon size={16} className="mr-2 opacity-40" />
-                Terminal: {tab.name}
+                {t.termShellLabel}: {tab.name}
               </div>
             )}
           </div>

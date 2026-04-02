@@ -21,6 +21,7 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
       case 'glossary': return <PI.GlossaryPanel />;
       case 'settings': return <PI.SettingsPanel />;
       case 'history': return <PI.HistoryPanel />;
+      case 'backup': return <PI.SaveBackupPanel />;
       
       // Right
       case 'actions': return <TranslationActionDock />;

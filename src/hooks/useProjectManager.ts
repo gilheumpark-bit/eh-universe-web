@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger';
 import { PlatformType } from '@/engine/types';
 import { trackStudioSessionStart } from '@/lib/analytics';
 import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -76,7 +77,7 @@ export function useProjectManager(language: AppLanguage) {
   useEffect(() => {
     (async () => {
       let loaded = loadProjects();
-      if (loaded.length === 0) {
+      if (loaded.length === 0 && isFeatureEnabled('OFFLINE_CACHE')) {
         try {
           const restored = await restoreFromIndexedDB();
           if (restored && restored.length > 0) loaded = restored;
@@ -114,7 +115,9 @@ export function useProjectManager(language: AppLanguage) {
           detail: { usageMB: mb },
         }));
       }
-      backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
+      if (isFeatureEnabled('OFFLINE_CACHE')) {
+        backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
+      }
       if (ok) window.dispatchEvent(new CustomEvent('noa:auto-saved'));
     }, 500);
     return () => clearTimeout(timer);
@@ -151,13 +154,13 @@ export function useProjectManager(language: AppLanguage) {
 
   // Load backup list on hydration
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !isFeatureEnabled('OFFLINE_CACHE')) return;
     listVersionedBackups().then(setVersionedBackups).catch(() => {});
   }, [hydrated]);
 
   // Auto-backup every 10 minutes
   useEffect(() => {
-    if (!hydrated || projects.length === 0) return;
+    if (!hydrated || projects.length === 0 || !isFeatureEnabled('OFFLINE_CACHE')) return;
     const BACKUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
     const interval = setInterval(() => {
       const current = projectsRef.current;
@@ -325,7 +328,9 @@ export function useProjectManager(language: AppLanguage) {
     // Session ops
     createNewSession, deleteSession, clearAllSessions,
     updateCurrentSession, setConfig,
-    // Versioned backup
-    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
+    // Versioned backup (플래그 꺼지면 설정 탭에 섹션 미표시)
+    versionedBackups: isFeatureEnabled('OFFLINE_CACHE') ? versionedBackups : undefined,
+    doRestoreVersionedBackup,
+    refreshBackupList,
   };
 }

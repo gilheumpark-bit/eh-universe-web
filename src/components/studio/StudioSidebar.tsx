@@ -15,6 +15,10 @@ import {
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { getStorageUsageBytes } from '@/lib/project-migration';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
+
+const PROJECT_EXPORT_FIVE: ProjectManuscriptFormat[] = ['txt', 'md', 'json', 'html', 'csv'];
 
 type ConfirmOpts = {
   title: string;
@@ -52,8 +56,8 @@ interface StudioSidebarProps {
   handleExportDOCX: () => void;
   handleImportTextFiles: (e: React.ChangeEvent<HTMLInputElement>) => void;
   exportProjectJSON?: () => void;
-  exportAllEpisodesTXT?: () => void;
-  exportMarkdown?: () => void;
+  /** 현재 프로젝트 전 회차 원고 — 번역 스튜디오와 동일 5형식 */
+  exportProjectManuscripts?: (format: ProjectManuscriptFormat) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
   signInWithGoogle: () => void;
@@ -102,8 +106,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   handleExportEPUB,
   handleExportDOCX,
   exportProjectJSON,
-  exportAllEpisodesTXT,
-  exportMarkdown,
+  exportProjectManuscripts,
   fileInputRef,
   user,
   signInWithGoogle,
@@ -118,6 +121,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   closeConfirm,
   onReorderSessions,
 }) => {
+  const flags = useFeatureFlags();
   const t = createT(language);
   const [showSessionList, setShowSessionList] = useState(false);
   const [jumpValue, setJumpValue] = useState('');
@@ -134,6 +138,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
+
+  const projectManuscriptExportEnabled = (currentProject?.sessions?.length ?? 0) > 0;
 
   const exportButtonClass =
     'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
@@ -638,7 +644,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               PART 3 — FOOTER: exports, auth, sync, language, settings
               ============================================================ */}
           <div className="border-t border-white/8 px-4 py-2 space-y-2">
-            {/* Auth + Sync — 항상 노출 */}
+            {/* Auth + Sync — GOOGLE_DRIVE_BACKUP 플래그 */}
+            {flags.GOOGLE_DRIVE_BACKUP && (
             <div className="rounded-xl border border-white/8 bg-black/20 p-3">
               {user ? (
                 <div className="flex items-center gap-2">
@@ -723,6 +730,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 </>
               )}
             </div>
+            )}
 
             <details className="group">
               <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
@@ -732,6 +740,32 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
               </summary>
             <div className="space-y-2 pt-2">
+            {exportProjectManuscripts && (
+              <div className="rounded-xl border border-[rgba(202,161,92,0.22)] bg-[rgba(202,161,92,0.06)] p-2.5 space-y-2">
+                <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[rgba(246,226,188,0.75)]">
+                  {language === 'KO' ? '보내기 · 대표 5형식 (전 회차 원고)' : 'Export · 5 formats (all episodes)'}
+                </div>
+                <p className="text-[9px] text-text-tertiary leading-snug">
+                  {language === 'KO'
+                    ? '번역 스튜디오와 같이 TXT·MD·JSON·HTML·CSV로 프로젝트 전체 회차를 한 파일로 받습니다.'
+                    : 'Same five formats as Translator Studio: one file for all episodes in this project.'}
+                </p>
+                <div className="grid grid-cols-5 gap-1">
+                  {PROJECT_EXPORT_FIVE.map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      disabled={!projectManuscriptExportEnabled}
+                      onClick={() => exportProjectManuscripts(fmt)}
+                      className="rounded-lg border border-white/12 bg-black/35 py-2 text-[8px] font-black uppercase tracking-wide text-text-secondary transition-colors hover:border-[rgba(202,161,92,0.35)] hover:bg-[rgba(202,161,92,0.12)] hover:text-[rgba(246,226,188,0.95)] disabled:cursor-not-allowed disabled:opacity-30"
+                      title={fmt.toUpperCase()}
+                    >
+                      {fmt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Export buttons */}
             <div className="grid grid-cols-2 gap-2">
               <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
@@ -760,16 +794,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   <Download className="h-3.5 w-3.5" /> Config
                 </button>
               )}
-              {exportAllEpisodesTXT && (
-                <button onClick={exportAllEpisodesTXT} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '전체 에피소드 텍스트' : 'All episodes as text'}>
-                  <Download className="h-3.5 w-3.5" /> All TXT
-                </button>
-              )}
-              {exportMarkdown && (
-                <button onClick={exportMarkdown} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '마크다운 내보내기' : 'Export as Markdown'}>
-                  <Download className="h-3.5 w-3.5" /> MD
-                </button>
-              )}
+              
               <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
               <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
             </div>

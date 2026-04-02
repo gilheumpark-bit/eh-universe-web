@@ -11,7 +11,7 @@ import {
   User, Shield, Cpu, Trash2,
   ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
 } from 'lucide-react';
-import { getActiveProvider, getActiveModel, getApiKey, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge } from '@/lib/ai-providers';
+import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 
 interface VersionedBackup {
@@ -59,15 +59,39 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const activeModel = typeof window !== 'undefined' ? getActiveModel() : '';
   const providerName = PROVIDERS[activeProvider]?.name ?? activeProvider;
 
-  const [apiKeyStatus, setApiKeyStatus] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return !!getApiKey(activeProvider) || !!hostedProviders[activeProvider];
-  });
+  const [apiKeyRefresh, setApiKeyRefresh] = useState(0);
 
   const checkApiKeys = useCallback(() => {
-    const currentProvider = getActiveProvider();
-    setApiKeyStatus(!!getApiKey(currentProvider) || !!hostedProviders[currentProvider]);
-  }, [hostedProviders]);
+    setApiKeyRefresh((n) => n + 1);
+  }, []);
+
+  const apiProvider = typeof window !== 'undefined' ? getActiveProvider() : activeProvider;
+  void apiKeyRefresh;
+  const hasPersonalApiKey = typeof window !== 'undefined' && hasStoredApiKey(apiProvider);
+  const hasHostedApi = Boolean(hostedProviders[apiProvider]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // #region agent log
+    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
+      body: JSON.stringify({
+        sessionId: '783f48',
+        location: 'SettingsView.tsx:apiKeyRefresh',
+        message: 'badge state',
+        data: {
+          hypothesisId: 'H1',
+          apiKeyRefresh,
+          hasPersonalApiKey,
+          hasHostedApi,
+          apiProvider,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [apiKeyRefresh, hasPersonalApiKey, hasHostedApi, apiProvider]);
 
   useEffect(() => {
     window.addEventListener('storage', checkApiKeys);
@@ -135,6 +159,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
           <div className="space-y-2">
             <div
+              data-testid="settings-api-key-row"
               onClick={onManageApiKey}
               className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
@@ -146,14 +171,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 </div>
               </div>
               <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <div className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
-                  {apiKeyStatus ? t('settings.apiKeySet') : t('settings.apiKeyNotSet')}
+                <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
+                  {hasPersonalApiKey
+                    ? t('settings.apiKeySet')
+                    : hasHostedApi
+                      ? t('settings.apiKeyPlatformOnly')
+                      : t('settings.apiKeyNotSet')}
                 </div>
-                {apiKeyStatus && isKeyExpiringSoon(activeProvider) && (
+                {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
                   <div className="text-[8px] md:text-[9px] text-yellow-400">
                     {language === 'KO'
-                      ? `키 갱신 권장 (${getKeyAge(activeProvider)}일)`
-                      : `Rotate key (${getKeyAge(activeProvider)}d old)`}
+                      ? `키 갱신 권장 (${getKeyAge(apiProvider)}일)`
+                      : `Rotate key (${getKeyAge(apiProvider)}d old)`}
                   </div>
                 )}
               </div>

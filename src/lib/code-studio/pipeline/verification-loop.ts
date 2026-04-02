@@ -18,19 +18,17 @@ import type { ChaosReport } from '@/lib/code-studio/pipeline/chaos-engineering';
 import { scanProject } from '@/lib/code-studio/features/patent-scanner';
 import type { IPReport } from '@/lib/code-studio/features/patent-scanner';
 import type { FileNode } from '@/lib/code-studio/core/types';
+import {
+  type SafeFixCategory,
+  classifyFixDescription,
+} from '@/lib/code-studio/core/autofix-policy';
+
+// Re-export for existing consumers (`SafeFixCategory` was defined here).
+export type { SafeFixCategory } from '@/lib/code-studio/core/autofix-policy';
 
 // ============================================================
 // PART 1 — Types & Configuration
 // ============================================================
-
-/** Categories safe for automatic fix without human review */
-export type SafeFixCategory =
-  | 'unused-import'
-  | 'console-remove'
-  | 'missing-semicolon'
-  | 'formatting'
-  | 'null-guard'
-  | 'type-import';
 
 export interface VerificationConfig {
   maxIterations: number;
@@ -97,42 +95,11 @@ const DEFAULT_CONFIG: VerificationConfig = {
 // IDENTITY_SEAL: PART-1 | role=types-and-config | inputs=none | outputs=types,DEFAULT_CONFIG
 
 // ============================================================
-// PART 2 — Safe Fix Classification
+// PART 2 — Safe Fix Classification (delegates to autofix-policy.ts)
 // ============================================================
 
-/** Patterns that map fix descriptions to safe categories */
-const SAFE_FIX_PATTERNS: Array<{ pattern: RegExp; category: SafeFixCategory }> = [
-  { pattern: /unused\s+import|remove\s+import|unreferenced\s+import/i, category: 'unused-import' },
-  { pattern: /console\.\w+|remove\s+console/i, category: 'console-remove' },
-  { pattern: /missing\s+semicolon|add\s+semicolon/i, category: 'missing-semicolon' },
-  { pattern: /whitespace|indentation|formatting|trailing\s+space/i, category: 'formatting' },
-  { pattern: /null\s+(check|guard)|undefined\s+(check|guard)|optional\s+chain|nullish/i, category: 'null-guard' },
-  { pattern: /type\s+import|import\s+type|missing\s+type/i, category: 'type-import' },
-];
-
-/** Never auto-apply anything that touches these areas */
-const UNSAFE_PATTERNS: RegExp[] = [
-  /function\s+signature/i,
-  /business\s+logic/i,
-  /api\s+(call|endpoint|route)/i,
-  /network|fetch|axios|http/i,
-  /auth(entication|orization)?/i,
-  /state\s+machine|transition/i,
-  /return\s+type\s+change/i,
-];
-
 function classifyFix(fix: FixSuggestion): SafeFixCategory | null {
-  const desc = fix.description;
-
-  for (const unsafe of UNSAFE_PATTERNS) {
-    if (unsafe.test(desc)) return null;
-  }
-
-  for (const { pattern, category } of SAFE_FIX_PATTERNS) {
-    if (pattern.test(desc)) return category;
-  }
-
-  return null;
+  return classifyFixDescription(fix.description);
 }
 
 function isSafeToApply(

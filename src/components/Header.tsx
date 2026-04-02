@@ -8,6 +8,7 @@ import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
 import { getTranslatorStudioHref, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 type NavKey = "home" | "network" | "studio" | "translate" | "code";
 
@@ -45,7 +46,9 @@ function usePrimaryNavActive(
   };
 }
 
-function HeaderInner() {
+type HeaderInnerProps = { stellarWhite?: boolean };
+
+function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,9 +59,10 @@ function HeaderInner() {
 
   const translatorHref = useMemo(() => getTranslatorStudioHref(), []);
   const translatorExternal = translatorHref.startsWith("http");
+  const flags = useFeatureFlags();
 
-  const navItems: NavEntry[] = useMemo(
-    () => [
+  const navItems = useMemo((): NavEntry[] => {
+    const all: NavEntry[] = [
       { key: "home", href: "/", label: L4(lang, { ko: "홈", en: "HOME", jp: "ホーム", cn: "首页" }) },
       { key: "network", href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", jp: "ネットワーク", cn: "网络" }) },
       { key: "studio", href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" }) },
@@ -69,9 +73,13 @@ function HeaderInner() {
         external: translatorExternal,
       },
       { key: "code", href: "/code-studio", label: L4(lang, { ko: "코드", en: "CODE", jp: "コード", cn: "代码" }) },
-    ],
-    [lang, translatorHref, translatorExternal],
-  );
+    ];
+    return all.filter((item) => {
+      if (item.key === "network" && !flags.NETWORK_COMMUNITY) return false;
+      if (item.key === "code" && !flags.CODE_STUDIO) return false;
+      return true;
+    });
+  }, [lang, translatorHref, translatorExternal, flags.NETWORK_COMMUNITY, flags.CODE_STUDIO]);
 
   const isNavActive = usePrimaryNavActive(pathname, searchParams);
 
@@ -161,11 +169,17 @@ function HeaderInner() {
   }, []);
 
   const navLinkClass = (active: boolean) =>
-    `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
-      active
-        ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
-        : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
-    }`;
+    stellarWhite
+      ? `rounded-none border-0 border-b-2 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+          active
+            ? "border-amber-200 font-bold text-amber-200"
+            : "border-transparent font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
+        }`
+      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+          active
+            ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
+            : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+        }`;
 
   const renderDesktopNavItem = (item: NavEntry) => {
     const active = isNavActive(item);
@@ -197,21 +211,58 @@ function HeaderInner() {
     );
   };
 
+  const barShell = stellarWhite
+    ? "flex w-full min-h-16 items-center justify-between border-b border-white/10 bg-stone-950/75 px-5 py-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl md:px-8"
+    : "premium-panel-soft flex min-h-16 items-center justify-between px-4 py-3 md:px-5";
+
+  const exploreBtnClass = (active: boolean) =>
+    stellarWhite
+      ? `rounded-full border-0 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+          active
+            ? "font-bold text-amber-200 underline decoration-amber-200/80 decoration-2 underline-offset-8"
+            : "font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
+        }`
+      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+          active
+            ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
+            : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+        }`;
+
+  const toolsBtnClass = stellarWhite
+    ? "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-stone-400 transition-all hover:bg-white/5 hover:text-stone-200"
+    : "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
+
   return (
-    <header data-testid="home-header" className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
-      <div className="site-shell">
-        <div className="premium-panel-soft flex min-h-16 items-center justify-between px-4 py-3 md:px-5">
+    <header
+      data-testid="home-header"
+      data-stellar-white={stellarWhite ? "true" : undefined}
+      className={`fixed inset-x-0 top-0 z-50 ${stellarWhite ? "px-0 pt-0" : "px-3 pt-3 md:px-5"}`}
+    >
+      <div className={stellarWhite ? "w-full" : "site-shell"}>
+        <div className={barShell}>
           <Link
             href="/"
             aria-label="EH Universe — Home"
             className="group flex items-center gap-3 rounded-full pr-2"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber transition-transform group-hover:scale-[1.04]">
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-full border font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] transition-transform group-hover:scale-[1.04] ${
+                stellarWhite
+                  ? "border-amber-200/35 bg-amber-200/10 text-amber-200"
+                  : "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
+              }`}
+            >
               EH
             </span>
             <span className="flex flex-col">
               <span className="flex items-center gap-2">
-                <span className="font-[family-name:var(--font-display)] text-[1.02rem] font-semibold tracking-[0.16em] text-text-primary transition-colors group-hover:text-accent-amber">
+                <span
+                  className={`font-[family-name:var(--font-display)] text-[1.02rem] font-semibold tracking-[0.16em] transition-colors ${
+                    stellarWhite
+                      ? "text-amber-200 group-hover:text-amber-100"
+                      : "text-text-primary group-hover:text-accent-amber"
+                  }`}
+                >
                   EH UNIVERSE
                 </span>
                 {isTestEnvironment && (
@@ -220,7 +271,11 @@ function HeaderInner() {
                   </span>
                 )}
               </span>
-              <span className="font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] text-text-tertiary uppercase">
+              <span
+                className={`font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] uppercase ${
+                  stellarWhite ? "text-stone-500" : "text-text-tertiary"
+                }`}
+              >
                 Narrative Engine
               </span>
             </span>
@@ -239,11 +294,7 @@ function HeaderInner() {
                 aria-expanded={exploreOpen}
                 aria-haspopup="menu"
                 aria-label="Explore menu"
-                className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
-                  ["/archive", "/reports", "/codex"].some((p) => pathname.startsWith(p))
-                    ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
-                    : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
-                }`}
+                className={exploreBtnClass(["/archive", "/reports", "/codex"].some((p) => pathname.startsWith(p)))}
               >
                 {L4(lang, { ko: "탐색", en: "EXPLORE", jp: "探索", cn: "探索" })}
               </button>
@@ -292,7 +343,7 @@ function HeaderInner() {
                 aria-expanded={toolsOpen}
                 aria-haspopup="menu"
                 aria-label="Tools menu"
-                className="rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
+                className={toolsBtnClass}
               >
                 {L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}
               </button>
@@ -321,7 +372,11 @@ function HeaderInner() {
             <button
               type="button"
               onClick={toggleLang}
-              className="rounded-full border border-accent-amber/20 bg-accent-amber/10 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber transition-colors hover:bg-accent-amber/15"
+              className={`rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] transition-colors ${
+                stellarWhite
+                  ? "border-amber-200/40 bg-amber-200/10 text-amber-200 hover:bg-amber-200/15"
+                  : "border-accent-amber/20 bg-accent-amber/10 text-accent-amber hover:bg-accent-amber/15"
+              }`}
               aria-label="Toggle language"
             >
               {lang.toUpperCase()}
@@ -334,13 +389,21 @@ function HeaderInner() {
               type="button"
               onClick={toggleLang}
               aria-label="Toggle language"
-              className="rounded-full border border-accent-amber/20 bg-accent-amber/10 px-3 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] text-accent-amber"
+              className={`rounded-full border px-3 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] ${
+                stellarWhite
+                  ? "border-amber-200/40 bg-amber-200/10 text-amber-200"
+                  : "border-accent-amber/20 bg-accent-amber/10 text-accent-amber"
+              }`}
             >
               {lang.toUpperCase()}
             </button>
             <button
               type="button"
-              className="rounded-full border border-white/8 bg-white/[0.03] p-2.5 text-text-secondary"
+              className={`rounded-full border p-2.5 ${
+                stellarWhite
+                  ? "border-white/15 bg-white/5 text-stone-300"
+                  : "border-white/8 bg-white/[0.03] text-text-secondary"
+              }`}
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
@@ -448,10 +511,13 @@ function HeaderFallback() {
   );
 }
 
-export default function Header() {
+export type HeaderProps = { stellarWhite?: boolean };
+
+export default function Header(props: HeaderProps = {}) {
+  const { stellarWhite } = props;
   return (
     <Suspense fallback={<HeaderFallback />}>
-      <HeaderInner />
+      <HeaderInner stellarWhite={stellarWhite} />
     </Suspense>
   );
 }

@@ -30,7 +30,7 @@ function buildCSPHeader(isCodeStudio: boolean, isDevelopment: boolean): string {
     "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
     "worker-src 'self' blob:",
     `connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.groq.com https://api.mistral.ai https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.firebaseapp.com https://apis.google.com https://cdn.jsdelivr.net https://firestore.googleapis.com https://*.googleapis.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.us.sentry.io${isCodeStudio ? ' https://*.webcontainer.io wss://*.webcontainer.io' : ''}`,
-    `frame-src 'self' https://accounts.google.com https://*.firebaseapp.com${isCodeStudio ? ' https://*.webcontainer.io' : ''}`,
+    `frame-src 'self' https://accounts.google.com https://*.firebaseapp.com${isCodeStudio ? ' https://*.webcontainer.io https://*.webcontainer.app http://localhost:*' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
   ];
@@ -56,7 +56,7 @@ export function proxy(request: NextRequest) {
 
   // Security headers (previously in next.config.ts headers())
   response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Frame-Options', isCodeStudio ? 'SAMEORIGIN' : 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');

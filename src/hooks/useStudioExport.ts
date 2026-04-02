@@ -12,6 +12,30 @@ import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
+/** 번역 스튜디오 `downloadAllResults`와 동일한 대표 5형식 — 현재 프로젝트 전체 회차 원고 */
+export type ProjectManuscriptFormat = 'txt' | 'md' | 'json' | 'html' | 'csv';
+
+function manuscriptRowsFromProject(project: Project | null | undefined): { title: string; content: string }[] {
+  if (!project?.sessions?.length) return [];
+  return project.sessions.map((session, i) => {
+    const title = session.config?.title || session.title || `Episode ${i + 1}`;
+    const manuscripts = session.config?.manuscripts ?? [];
+    let content: string;
+    if (manuscripts.length > 0) {
+      content = manuscripts
+        .sort((a, b) => a.episode - b.episode)
+        .map(m => m.content)
+        .join('\n\n');
+    } else {
+      content = session.messages
+        .filter(m => m.role === 'assistant')
+        .map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim())
+        .join('\n\n');
+    }
+    return { title, content };
+  });
+}
+
 interface UseStudioExportParams {
   currentSession: ChatSession | null;
   sessions: ChatSession[];
@@ -49,7 +73,7 @@ const isValidProject = (p: unknown): p is Project => {
 // PART 3 — Hook implementation
 // ============================================================
 
-/** Provides export functions (TXT, EPUB, DOCX, JSON, HTML) and project import/delete/duplicate operations */
+/** Export: per-session TXT/JSON/EPUB/DOCX, print HTML, project-wide manuscripts in 5 formats (txt/md/json/html/csv), full backup JSON, imports */
 export function useStudioExport({
   currentSession,
   sessions: _sessions,
@@ -400,97 +424,102 @@ export function useStudioExport({
     trackExport('project-json');
   }, [currentSession, projects, currentProjectId, showExportToast]);
 
-  // Export all episodes concatenated as plain text
+  // 프로젝트 전체 회차 원고 — TXT/MD/JSON/HTML/CSV (번역 스튜디오 5형식과 대응)
+  const exportProjectManuscripts = useCallback(
+    (format: ProjectManuscriptFormat) => {
+      const project = projects.find(p => p.id === currentProjectId);
+      const rows = manuscriptRowsFromProject(project);
+      if (!project || rows.length === 0) return;
+
+      const date = new Date().toISOString().slice(0, 10);
+      const safeName = (project.name || 'noa-project').replace(/[/\\?%*:|"<>]/g, '-');
+      let blob: Blob;
+      let ext: string;
+
+      if (format === 'txt') {
+        const total = rows.length;
+        const parts: string[] = [];
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const title = r.title || `Episode ${i + 1}`;
+          parts.push(`${'='.repeat(60)}\n${title}\n${'='.repeat(60)}\n\n${r.content}`);
+          if (total > 5) {
+            window.dispatchEvent(new CustomEvent('noa:export-progress', {
+              detail: { current: i + 1, total, format: 'TXT' },
+            }));
+          }
+        }
+        blob = new Blob([parts.join('\n\n\n')], { type: 'text/plain;charset=utf-8' });
+        ext = 'txt';
+        showExportToast('All Episodes TXT');
+        trackExport('all-episodes-txt');
+      } else if (format === 'md') {
+        const mdParts: string[] = [`# ${project.name}\n`];
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          mdParts.push(`## ${r.title || `Episode ${i + 1}`}\n\n${r.content}`);
+          if (rows.length > 5) {
+            window.dispatchEvent(new CustomEvent('noa:export-progress', {
+              detail: { current: i + 1, total: rows.length, format: 'MD' },
+            }));
+          }
+        }
+        blob = new Blob([mdParts.join('\n\n---\n\n')], { type: 'text/markdown;charset=utf-8' });
+        ext = 'md';
+        showExportToast('Markdown');
+        trackExport('markdown');
+      } else if (format === 'json') {
+        blob = new Blob(
+          [JSON.stringify(rows.map(r => ({ title: r.title, content: r.content })), null, 2)],
+          { type: 'application/json;charset=utf-8' },
+        );
+        ext = 'json';
+        showExportToast('JSON');
+        trackExport('project-manuscripts-json');
+      } else if (format === 'html') {
+        const escHtml = (s: string) =>
+          s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const body = rows
+          .map(
+            r =>
+              `<section><h2>${escHtml(r.title)}</h2><div style="white-space:pre-wrap;font-family:serif;line-height:1.7;">${escHtml(r.content)}</div></section>`,
+          )
+          .join('<hr style="border:none;border-top:1px solid #ddd;margin:24px 0;">');
+        const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"/><title>${escHtml(project.name)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333}</style></head><body><h1>${escHtml(project.name)}</h1><p style="color:#888">${escHtml(date)}</p><hr/>${body}</body></html>`;
+        blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        ext = 'html';
+        showExportToast('HTML');
+        trackExport('project-manuscripts-html');
+      } else {
+        const q = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+        const csv =
+          '\uFEFF' +
+          ['Episode', 'Content'].map(q).join(',') +
+          '\n' +
+          rows.map(r => `${q(r.title)},${q(r.content)}`).join('\n');
+        blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        ext = 'csv';
+        showExportToast('CSV');
+        trackExport('project-manuscripts-csv');
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}-manuscripts-${date}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    [projects, currentProjectId, showExportToast],
+  );
+
   const exportAllEpisodesTXT = useCallback(() => {
-    const project = projects.find(p => p.id === currentProjectId);
-    if (!project) return;
-    const allSessions = project.sessions;
-    if (allSessions.length === 0) return;
+    exportProjectManuscripts('txt');
+  }, [exportProjectManuscripts]);
 
-    let progress = 0;
-    const total = allSessions.length;
-    const parts: string[] = [];
-
-    for (const session of allSessions) {
-      progress++;
-      const title = session.config?.title || session.title || `Episode ${progress}`;
-      const manuscripts = session.config?.manuscripts ?? [];
-      let content: string;
-      if (manuscripts.length > 0) {
-        content = manuscripts
-          .sort((a, b) => a.episode - b.episode)
-          .map(m => m.content)
-          .join('\n\n');
-      } else {
-        content = session.messages
-          .filter(m => m.role === 'assistant')
-          .map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim())
-          .join('\n\n');
-      }
-      parts.push(`${'='.repeat(60)}\n${title}\n${'='.repeat(60)}\n\n${content}`);
-      // Dispatch progress event for large projects
-      if (total > 5) {
-        window.dispatchEvent(new CustomEvent('noa:export-progress', {
-          detail: { current: progress, total, format: 'TXT' },
-        }));
-      }
-    }
-
-    const blob = new Blob([parts.join('\n\n\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${project.name || 'all-episodes'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showExportToast('All Episodes TXT');
-    trackExport('all-episodes-txt');
-  }, [projects, currentProjectId, showExportToast]);
-
-  // Export all episodes as Markdown
   const exportMarkdown = useCallback(() => {
-    const project = projects.find(p => p.id === currentProjectId);
-    if (!project) return;
-    const allSessions = project.sessions;
-    if (allSessions.length === 0) return;
-
-    const parts: string[] = [`# ${project.name}\n`];
-
-    for (let i = 0; i < allSessions.length; i++) {
-      const session = allSessions[i];
-      const title = session.config?.title || session.title || `Episode ${i + 1}`;
-      const manuscripts = session.config?.manuscripts ?? [];
-      let content: string;
-      if (manuscripts.length > 0) {
-        content = manuscripts
-          .sort((a, b) => a.episode - b.episode)
-          .map(m => m.content)
-          .join('\n\n');
-      } else {
-        content = session.messages
-          .filter(m => m.role === 'assistant')
-          .map(m => m.content.replace(/```json[\s\S]*?```/g, '').trim())
-          .join('\n\n');
-      }
-      parts.push(`## ${title}\n\n${content}`);
-      // Progress for large projects
-      if (allSessions.length > 5) {
-        window.dispatchEvent(new CustomEvent('noa:export-progress', {
-          detail: { current: i + 1, total: allSessions.length, format: 'MD' },
-        }));
-      }
-    }
-
-    const blob = new Blob([parts.join('\n\n---\n\n')], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${project.name || 'project'}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showExportToast('Markdown');
-    trackExport('markdown');
-  }, [projects, currentProjectId, showExportToast]);
+    exportProjectManuscripts('md');
+  }, [exportProjectManuscripts]);
 
   return {
     exportTXT,
@@ -502,6 +531,7 @@ export function useStudioExport({
     handleExportEPUB,
     handleExportDOCX,
     exportProjectJSON,
+    exportProjectManuscripts,
     exportAllEpisodesTXT,
     exportMarkdown,
   };

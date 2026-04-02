@@ -98,6 +98,8 @@ type ParsedChatFields = {
   temperature: number; clientKey?: string; maxTokens?: number;
   prismMode?: string;
   isChatMode?: boolean;
+  /** true: 설정 화면「연결 테스트」— 호스팅 우회하고 전달된 BYOK만 사용 */
+  keyVerification?: boolean;
 };
 
 /** Validate & extract typed fields from raw body. Returns error response or parsed fields. */
@@ -106,11 +108,12 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   if (!validation.valid) {
     return { ok: false, response: NextResponse.json({ error: validation.error, requestId }, { status: 400 }) };
   }
-  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode, isChatMode } = validation.data as {
+  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode, isChatMode, keyVerification } = validation.data as {
     provider: string; model?: string; systemInstruction?: string;
     messages: { role: string; content: string }[];
     temperature?: number; apiKey?: string; maxTokens?: number;
     prismMode?: string; isChatMode?: boolean;
+    keyVerification?: boolean;
   };
   if (!isServerProviderId(provider)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 }) };
@@ -120,7 +123,21 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 }) };
   }
-  return { ok: true, fields: { provider: validProvider, model, systemInstruction: systemInstruction || '', messages, temperature, clientKey, maxTokens, prismMode, isChatMode } };
+  return {
+    ok: true,
+    fields: {
+      provider: validProvider,
+      model,
+      systemInstruction: systemInstruction || '',
+      messages,
+      temperature,
+      clientKey,
+      maxTokens,
+      prismMode,
+      isChatMode,
+      keyVerification: keyVerification === true,
+    },
+  };
 }
 
 type ResolvedAuth = {
@@ -134,7 +151,14 @@ type ResolvedAuth = {
 export type UserTier = 'none' | 'free' | 'pro';
 
 /** Auth gate: handle user tiers, reject unauthenticated users without BYOK */
-function resolveAuth(provider: ServerProviderId, clientKey: string | undefined, ip: string, requestId: string, userTier: UserTier): { ok: true; auth: ResolvedAuth } | { ok: false; response: NextResponse } {
+function resolveAuth(
+  provider: ServerProviderId,
+  clientKey: string | undefined,
+  ip: string,
+  requestId: string,
+  userTier: UserTier,
+  keyVerification: boolean,
+): { ok: true; auth: ResolvedAuth } | { ok: false; response: NextResponse } {
   const userApiKey = normalizeUserApiKey(clientKey);
   const isByok = userApiKey.length > 0;
 
@@ -146,6 +170,19 @@ function resolveAuth(provider: ServerProviderId, clientKey: string | undefined, 
         { error: '비로그인 사용자는 개인 API 키(수동 모드)를 설정해야 사용할 수 있습니다. 로그인 후 기본 무료 할당량을 이용하세요.', requestId },
         { status: 401 }
       )
+    };
+  }
+
+  /** 설정 창「연결 테스트」: 전달된 BYOK만 사용 (호스팅/일일 할당 경로 우회) */
+  if (keyVerification && isByok) {
+    return {
+      ok: true,
+      auth: {
+        apiKey: userApiKey,
+        isByok: true,
+        userApiKey,
+        canFallbackToUserKey: false,
+      },
     };
   }
 
@@ -291,7 +328,7 @@ export async function POST(req: NextRequest) {
 
     const extracted = extractChatFields(parsed.body, requestId);
     if (!extracted.ok) return extracted.response;
-    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode, isChatMode } = extracted.fields;
+    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode, isChatMode, keyVerification } = extracted.fields;
 
     let userTier: UserTier = 'none';
     const authHeader = req.headers.get('Authorization') || '';
@@ -305,7 +342,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const authResult = resolveAuth(provider, clientKey, ip, requestId, userTier);
+    const authResult = resolveAuth(provider, clientKey, ip, requestId, userTier, Boolean(keyVerification));
+    // #region agent log
+    void fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
+      body: JSON.stringify({
+        sessionId: '783f48',
+        location: 'route.ts:POST:afterAuth',
+        message: 'auth resolved',
+        data: {
+          hypothesisId: 'H2',
+          ok: authResult.ok,
+          keyVerification: Boolean(keyVerification),
+          tier: userTier,
+          provider,
+          isByok: authResult.ok ? authResult.auth.isByok : false,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (!authResult.ok) return authResult.response;
     let auth = authResult.auth;
 

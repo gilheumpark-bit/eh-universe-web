@@ -15,7 +15,20 @@ export function trackAIGeneration(provider: string, model: string, mode: string)
 }
 
 /** Track manuscript export event by format type */
-export function trackExport(format: 'epub' | 'docx' | 'txt' | 'json' | 'html' | 'project-json' | 'all-episodes-txt' | 'markdown') {
+export function trackExport(
+  format:
+    | 'epub'
+    | 'docx'
+    | 'txt'
+    | 'json'
+    | 'html'
+    | 'project-json'
+    | 'all-episodes-txt'
+    | 'markdown'
+    | 'project-manuscripts-json'
+    | 'project-manuscripts-html'
+    | 'project-manuscripts-csv',
+) {
   track('export', { format });
 }
 

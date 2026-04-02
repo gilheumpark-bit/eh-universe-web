@@ -10,6 +10,7 @@ import {
   ChevronDown, ChevronRight, Terminal,
 } from "lucide-react";
 import type { FileNode } from "@/lib/code-studio/core/types";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 interface PackageInfo { name: string; version: string; description: string }
 
@@ -40,12 +41,16 @@ function parsePackageJson(content: string): { deps: Record<string, string>; devD
 }
 
 async function searchNpm(query: string): Promise<PackageInfo[]> {
-  await new Promise((r) => setTimeout(r, 500));
-  const mockResults: PackageInfo[] = [
-    { name: query, version: "1.0.0", description: `Package: ${query}` },
-    { name: `${query}-utils`, version: "2.1.0", description: `Utilities for ${query}` },
-  ];
-  return mockResults;
+  const res = await fetch(`/api/npm-search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) return [];
+  const data = (await res.json()) as {
+    objects?: Array<{ package: { name: string; version: string; description?: string } }>;
+  };
+  return (data.objects ?? []).map((o) => ({
+    name: o.package.name,
+    version: o.package.version,
+    description: (o.package.description ?? "").slice(0, 160),
+  }));
 }
 
 // IDENTITY_SEAL: PART-2 | role=Helpers | inputs=FileNode[] | outputs=PackageInfo[]
@@ -55,6 +60,7 @@ async function searchNpm(query: string): Promise<PackageInfo[]> {
 // ============================================================
 
 export function PackagePanel({ files, onFilesChange }: Props) {
+  const t = useCodeStudioT();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PackageInfo[]>([]);
   const [searching, setSearching] = useState(false);
@@ -193,8 +199,8 @@ export function PackagePanel({ files, onFilesChange }: Props) {
       {showTerminal && (
         <div className="border-t border-white/8">
           <div className="flex items-center justify-between px-2 py-1 bg-white/3">
-            <span className="text-[10px] text-white/40 flex items-center gap-1"><Terminal size={10} /> Output</span>
-            <button onClick={() => setTerminalOutput([])} className="text-[9px] text-white/30 hover:text-white">지우기</button>
+            <span className="text-[10px] text-white/40 flex items-center gap-1"><Terminal size={10} /> {t.pkgOutput}</span>
+            <button onClick={() => setTerminalOutput([])} className="text-[9px] text-white/30 hover:text-white">{t.pkgClear}</button>
           </div>
           <div ref={terminalRef} className="h-32 overflow-y-auto p-2 bg-[#0a0e17] font-mono text-[10px] text-green-400">
             {terminalOutput.map((line, i) => <div key={i} className="whitespace-pre-wrap leading-4">{line}</div>)}

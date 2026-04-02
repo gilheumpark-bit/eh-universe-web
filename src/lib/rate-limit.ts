@@ -70,6 +70,10 @@ export const RATE_LIMITS = {
   chat:     { windowMs: 60_000, maxRequests: 30 },  // 30/min (was 60)
   imageGen: { windowMs: 60_000, maxRequests: 10 },  // 10/min (was 30)
   default:  { windowMs: 60_000, maxRequests: 60 },   // 60/min (was 120)
+  /** /api/translate — 번역 엔진 프록시 */
+  translate: { windowMs: 60_000, maxRequests: 30 },
+  /** /api/upload — 문서 파싱 */
+  upload: { windowMs: 60_000, maxRequests: 24 },
 } as const;
 
 /**

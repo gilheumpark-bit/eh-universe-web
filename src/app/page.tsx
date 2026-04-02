@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import StarField from "@/components/StarField";
@@ -87,17 +87,50 @@ function useHeroScrollShrink(
 
 import SplashScreen from "@/components/home/SplashScreen";
 import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
-export default function Home() {
+function HomePageFallback() {
+  return (
+    <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
+      <StarField />
+      <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
+        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
+          EH
+        </div>
+        <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
+          Initializing Lore Engine...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomePageContent() {
   const { lang } = useLang();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const flags = useFeatureFlags();
+  const stellarWhite = flags.HOME_STELLAR_WHITE || searchParams.get("skin") === "white";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
 
   useEffect(() => {
-    queueMicrotask(() => setSplashState("show"));
-  }, []);
+    if (stellarWhite) {
+      setSplashState("hide");
+    } else {
+      queueMicrotask(() => setSplashState("show"));
+    }
+  }, [stellarWhite]);
+
+  useEffect(() => {
+    if (!stellarWhite) return;
+    const prev = document.title;
+    document.title = "Universe Studio | Stellar White";
+    return () => {
+      document.title = prev;
+    };
+  }, [stellarWhite]);
 
   const showSplash = splashState === "show";
   const setShowSplash = (v: boolean) => {
@@ -121,7 +154,8 @@ export default function Home() {
   ];
 
   const universeHubs = useMemo(
-    () => [
+    () => {
+    const hubs = [
     {
       href: NOVEL_STUDIO_PATH,
       badge: "NS",
@@ -213,8 +247,13 @@ export default function Home() {
       desc: T({ ko: "오픈소스 진행 상황과 코드베이스를 확인합니다.", en: "See the open-source code and current progress.", jp: "オープンソースの進行状況とコードベースを確認します。", cn: "查看开源进展和代码库。" }),
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
     },
-  ],
-    [translatorStudioHref, T],
+  ];
+    return hubs.filter((h) => {
+      if (!flags.NETWORK_COMMUNITY && h.href === "/network") return false;
+      return true;
+    });
+    },
+    [translatorStudioHref, T, flags.NETWORK_COMMUNITY],
   );
 
   const categories = [
@@ -282,13 +321,13 @@ export default function Home() {
     );
   }
 
-  return (
+  const homeInner = (
     <>
-      <Header />
+      <Header stellarWhite={stellarWhite} />
 
       {/* HERO */}
       <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
-        <StarField />
+        {!stellarWhite ? <StarField /> : null}
         <div className="site-shell relative z-10">
           <div
             ref={heroPanelRef}
@@ -488,5 +527,23 @@ export default function Home() {
         </div>
       </footer>
     </>
+  );
+
+  if (stellarWhite) {
+    return (
+      <div className="home-skin-stellar-white relative min-h-dvh w-full eh-page-canvas overflow-x-hidden">
+        {homeInner}
+      </div>
+    );
+  }
+
+  return homeInner;
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<HomePageFallback />}>
+      <HomePageContent />
+    </Suspense>
   );
 }

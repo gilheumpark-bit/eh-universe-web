@@ -122,20 +122,28 @@ function ConfidenceBar({ value }: { value: number }) {
 // PART 3 — Agent Roles Display
 // ============================================================
 
-const AGENT_ROLES: Array<{ role: AgentRole; ko: string; en: string; color: string }> = [
-  { role: "architect", ko: "아키텍트", en: "Architect", color: "text-amber-400" },
-  { role: "developer", ko: "개발자", en: "Developer", color: "text-blue-400" },
-  { role: "reviewer", ko: "리뷰어", en: "Reviewer", color: "text-yellow-400" },
-  { role: "tester", ko: "테스터", en: "Tester", color: "text-green-400" },
-  { role: "documenter", ko: "문서화", en: "Documenter", color: "text-cyan-400" },
-];
+import { AGENT_REGISTRY, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
 
-const ROLE_PRIORITY: Record<AgentRole, number> = {
-  developer: 5,
-  reviewer: 4,
-  tester: 3,
-  documenter: 2,
-  architect: 1,
+const CATEGORY_COLORS: Record<string, string> = {
+  leadership: "text-amber-400",
+  generation: "text-blue-400",
+  verification: "text-yellow-400",
+  repair: "text-green-400",
+};
+
+const AGENT_ROLES = ALL_AGENT_ROLES.map((role) => ({
+  role,
+  ko: AGENT_REGISTRY[role].name,
+  en: AGENT_REGISTRY[role].name, // Fallback to ko for now
+  color: CATEGORY_COLORS[AGENT_REGISTRY[role].category] || "text-cyan-400",
+}));
+
+// Priority for extracting code: Repair > Generation > Verification > Leadership
+const CATEGORY_PRIORITY: Record<string, number> = {
+  repair: 4,
+  generation: 3,
+  verification: 2,
+  leadership: 1,
 };
 
 function extractCodeBlocks(content: string): Array<{ code: string; language: string; fileName?: string }> {
@@ -170,7 +178,7 @@ export function pickAgentApplyCandidate(session: AgentSession | null): AgentAppl
     extractCodeBlocks(message.content).map((block, blockIndex) => ({
       ...block,
       sourceRole: message.role,
-      score: ROLE_PRIORITY[message.role] * 10_000 + messageIndex * 100 + blockIndex,
+      score: (CATEGORY_PRIORITY[AGENT_REGISTRY[message.role].category] || 0) * 10_000 + messageIndex * 100 + blockIndex,
     })),
   );
 
@@ -223,7 +231,10 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
 
   // Derive confidences from agent.messages
   const confidences = useMemo<Record<AgentRole, number>>(() => {
-    const base: Record<AgentRole, number> = { architect: 0, developer: 0, reviewer: 0, tester: 0, documenter: 0 };
+    const base = {} as Record<AgentRole, number>;
+    for (const role of ALL_AGENT_ROLES) {
+      base[role] = 0;
+    }
     for (const m of agent.messages) {
       base[m.role] = m.confidence;
     }

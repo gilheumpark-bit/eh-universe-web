@@ -3,12 +3,15 @@
 // ============================================================
 
 import { streamChat } from '@/lib/ai-providers';
+import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
-/** Agent role identifiers for the multi-agent pipeline. */
-export type AgentRole = 'architect' | 'developer' | 'reviewer' | 'tester' | 'documenter';
+import { type AgentRole, AGENT_REGISTRY } from '@/types/code-studio-agent';
+
+// Re-export for consumers that need the new 19-agent types
+export type { AgentRole };
 
 /** A single message produced by an agent during a session. */
 export interface AgentMessage {
@@ -58,53 +61,42 @@ export interface AgentSession {
  * Each prompt constrains the agent to its specific responsibility
  * so that the sequential pipeline produces coherent, layered output.
  */
-export const AGENT_PROMPTS: Record<AgentRole, string> = {
-  architect: [
-    'You are a software architect agent.',
-    'Your responsibility: design the overall structure of the solution.',
-    'Define modules, interfaces, data flow, and key architectural decisions.',
-    'Output a clear design document that a developer can implement from.',
-    'Do NOT write implementation code — only interfaces, type signatures, and structural diagrams (pseudo or textual).',
-    'Be explicit about trade-offs and assumptions.',
+export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
+  // Leadership
+  'team-leader': 'You are the Chief Coordinator. Validate the overall lifecycle state.',
+  'frontend-lead': 'You are the Frontend Lead. Ensure UI/UX integrity and ErrorBoundary wrapping.',
+  'backend-lead': 'You are the Backend Lead. Ensure API integrity and Proxy headers.',
+
+  // Pipeline 1: 건축 설계 (Architecture)
+  'domain-analyst': [
+    'You are the Domain Analyst (A1) agent.',
+    'Your responsibility: Analyze the task against business rules and the architecture specification.',
+    'Identify domain models and constraints.',
+    'Output a clear, high-level structural document.',
   ].join('\n'),
 
-  developer: [
-    'You are a developer agent.',
-    'You receive an architectural design and implement it as production-quality code.',
-    'Follow the interfaces and structure defined by the architect exactly.',
-    'Write clean, typed, well-structured code.',
-    'Include inline comments only where logic is non-obvious.',
-    'Do NOT add tests or documentation — other agents handle those.',
+  'state-designer': [
+    'You are the State Schema Designer (A2) agent.',
+    'Your responsibility: Design the state transitions (idle -> generating -> ...).',
+    'Map out React Context or Redux providers needed.',
+    'Identify all state mutation paths.',
   ].join('\n'),
 
-  reviewer: [
-    'You are a code reviewer agent.',
-    'Inspect the code for bugs, security vulnerabilities, performance issues, and best-practice violations.',
-    'Return a structured review with:',
-    '  - severity (critical / warning / info)',
-    '  - location (file or function name)',
-    '  - description of the issue',
-    '  - suggested fix',
-    'If the code is clean, state that explicitly with brief reasoning.',
-  ].join('\n'),
-
-  tester: [
-    'You are a test engineer agent.',
-    'Write comprehensive test cases for the provided code.',
-    'Cover: happy path, edge cases, error handling, and boundary conditions.',
-    'Use the testing conventions already present in the codebase (Jest / Vitest style preferred).',
-    'Each test should have a clear description of what it verifies.',
-  ].join('\n'),
-
-  documenter: [
-    'You are a documentation agent.',
-    'Write JSDoc comments for all exported functions, types, and classes in the provided code.',
-    'Also produce a concise README section covering:',
-    '  - Purpose',
-    '  - Usage example',
-    '  - API reference (brief)',
-    'Keep documentation accurate and tightly coupled to the actual implementation.',
-  ].join('\n'),
+  // Pipeline 2~8 placeholders
+  'css-layout': 'You are the CSS/Layout (A3) agent. Scaffold Tailwind v4 UI.',
+  'interaction-motion': 'You are the Interaction/Motion (A4) agent. Guard against unlinked components.',
+  'core-engine': 'You are the Core Engine (A5) agent. Implement performance-critical logic.',
+  'api-binding': 'You are the API Binding (A6) agent. Handle async fetch loading leaks.',
+  'overflow-guard': 'You are the Overflow Guard (A7) agent. Catch nulls and boundaries.',
+  'security-auth': 'You are the Security/Auth Guard (A8) agent. Catch unsafe evals and auth risks.',
+  'memory-cache': 'You are the Memory/Cache Guard (A9) agent. Prevent N+1 queries.',
+  'render-optimizer': 'You are the Render Optimizer (A10) agent. Stop unnecessary re-renders.',
+  'deadcode-scanner': 'You are the Deadcode Scanner (A11) agent. Prune unused imports and functions.',
+  'coding-convention': 'You are the Coding Convention (A12) agent. Ensure PART definitions and seals.',
+  'stress-tester': 'You are the Stress Tester (A13) agent. Produce high-load usage scenarios.',
+  'dependency-linker': 'You are the Dependency Linker (A14) agent. Resolve circular dependencies.',
+  'progressive-repair': 'You are the Progressive Repair (A15) agent. Fix issues returned by verifiers using L1/L2/L3 strategy.',
+  'snapshot-manager': 'You are the Snapshot Manager (A16) agent. Rollback / Stage code properly.',
 };
 
 // IDENTITY_SEAL: PART-2 | role=AgentPrompts | inputs=none | outputs=AGENT_PROMPTS
@@ -114,10 +106,20 @@ export const AGENT_PROMPTS: Record<AgentRole, string> = {
 // ============================================================
 
 /** Default agent pipeline order when no custom roles are provided. */
-const DEFAULT_ROLES: AgentRole[] = ['architect', 'developer', 'reviewer'];
+const DEFAULT_ROLES: AgentRole[] = ['domain-analyst', 'state-designer', 'css-layout', 'interaction-motion'];
 
 /** Execution order — agents run in this sequence regardless of input order. */
-const ROLE_ORDER: AgentRole[] = ['architect', 'developer', 'reviewer', 'tester', 'documenter'];
+const ROLE_ORDER: AgentRole[] = [
+  'team-leader', 'frontend-lead', 'backend-lead',
+  'domain-analyst', 'state-designer',
+  'css-layout', 'interaction-motion',
+  'core-engine', 'api-binding',
+  'overflow-guard', 'security-auth',
+  'memory-cache', 'render-optimizer',
+  'deadcode-scanner', 'coding-convention',
+  'stress-tester', 'dependency-linker',
+  'progressive-repair', 'snapshot-manager',
+];
 
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -241,10 +243,9 @@ function detectTestFailure(content: string): boolean {
 // ============================================================
 
 /**
- * 리뷰어가 아키텍트 설계와 충돌하는지 검사한다.
- * 리뷰어 출력에서 아키텍처 관련 이슈가 언급되면 충돌로 기록한다.
+ * 검증 에이전트가 설계 에이전트와 충돌하는지 검사한다.
  */
-function detectArchitectReviewerConflict(reviewerContent: string): string | null {
+function detectDesignConflict(reviewerContent: string): string | null {
   const patterns = [
     /architect.*wrong/i,
     /design.*flaw/i,
@@ -263,7 +264,7 @@ function detectArchitectReviewerConflict(reviewerContent: string): string | null
 /**
  * 테스터가 개발자가 놓친 버그를 발견했는지 검사한다.
  */
-function detectTesterDeveloperConflict(testerContent: string): string | null {
+function detectImplementationConflict(testerContent: string): string | null {
   if (detectTestFailure(testerContent)) {
     return 'Tester found failures in developer implementation';
   }
@@ -318,9 +319,9 @@ async function runSingleAgent(
   };
 
   await streamChat({
-    systemInstruction: AGENT_PROMPTS[role],
+    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}`,
     messages: [{ role: 'user', content: userInput }],
-    temperature: role === 'reviewer' ? 0.2 : 0.4,
+    temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,
     onChunk(text: string) {
       accumulated += text;
@@ -336,9 +337,10 @@ async function runSingleAgent(
 }
 
 /**
- * 피드백을 포함해서 developer를 재실행한다.
+ * 피드백을 포함해서 targetAgent를 재실행한다.
  */
-async function rerunDeveloperWithFeedback(
+async function rerunAgentWithFeedback(
+  targetRole: AgentRole,
   task: string,
   codeContext: string,
   priorMessages: AgentMessage[],
@@ -355,17 +357,16 @@ async function rerunDeveloperWithFeedback(
     feedback,
   ].join('\n');
 
-  return runSingleAgent('developer', enhancedInput, onMessage, signal);
+  return runSingleAgent(targetRole, enhancedInput, onMessage, signal);
 }
 
 /**
  * Run the multi-agent pipeline sequentially.
  *
- * Agents execute in canonical order (architect -> developer -> reviewer -> tester -> documenter),
- * filtered to only those present in `roles`.
+ * Agents execute in canonical order, filtered to only those present in `roles`.
  * Each agent receives the accumulated output of all previous agents.
  *
- * **Feedback loop**: After reviewer/tester, if issues detected, developer re-runs once
+ * **Feedback loop**: If verification fails, progressive-repair re-runs once
  * with the feedback incorporated.
  */
 export async function runAgentPipeline(
@@ -391,54 +392,32 @@ export async function runAgentPipeline(
       const agentMsg = await runSingleAgent(role, userInput, onMessage, signal);
       session.messages.push(agentMsg);
 
-      // --- Feedback loop: reviewer -> developer ---
-      if (role === 'reviewer' && detectRejection(agentMsg.content)) {
-        // 충돌 기록
-        const archConflict = detectArchitectReviewerConflict(agentMsg.content);
-        if (archConflict) {
-          session.conflicts.push({
-            between: ['architect', 'reviewer'],
-            description: archConflict,
-            resolved: false,
-          });
-        }
+      // --- Feedback loop: verification -> repair ---
+      if (AGENT_REGISTRY[role].category === 'verification') {
+        const isRejection = detectRejection(agentMsg.content);
+        const isTestFailure = detectTestFailure(agentMsg.content);
 
-        // developer 재실행 (1회)
-        if (roles.includes('developer')) {
-          const fixMsg = await rerunDeveloperWithFeedback(
-            task, codeContext, session.messages, agentMsg.content, 'reviewer', onMessage, signal,
-          );
-          session.messages.push(fixMsg);
-
-          // 충돌을 resolved로 마킹 (developer가 수정 시도했으므로)
-          for (const c of session.conflicts) {
-            if (!c.resolved && c.between.includes('reviewer')) {
-              c.resolved = true;
-            }
+        if (isRejection || isTestFailure) {
+          const conflictDesc = isRejection ? detectDesignConflict(agentMsg.content) : detectImplementationConflict(agentMsg.content);
+          
+          if (conflictDesc) {
+            session.conflicts.push({
+              between: ['progressive-repair', role],
+              description: conflictDesc,
+              resolved: false,
+            });
           }
-        }
-      }
 
-      // --- Feedback loop: tester -> developer ---
-      if (role === 'tester' && detectTestFailure(agentMsg.content)) {
-        const testerConflict = detectTesterDeveloperConflict(agentMsg.content);
-        if (testerConflict) {
-          session.conflicts.push({
-            between: ['developer', 'tester'],
-            description: testerConflict,
-            resolved: false,
-          });
-        }
+          if (roles.includes('progressive-repair')) {
+            const fixMsg = await rerunAgentWithFeedback(
+              'progressive-repair', task, codeContext, session.messages, agentMsg.content, role, onMessage, signal,
+            );
+            session.messages.push(fixMsg);
 
-        if (roles.includes('developer')) {
-          const fixMsg = await rerunDeveloperWithFeedback(
-            task, codeContext, session.messages, agentMsg.content, 'tester', onMessage, signal,
-          );
-          session.messages.push(fixMsg);
-
-          for (const c of session.conflicts) {
-            if (!c.resolved && c.between.includes('tester')) {
-              c.resolved = true;
+            for (const c of session.conflicts) {
+              if (!c.resolved && c.between.includes(role)) {
+                c.resolved = true;
+              }
             }
           }
         }

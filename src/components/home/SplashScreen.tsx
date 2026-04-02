@@ -5,6 +5,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { Globe, PenTool, Code2, Languages, ArrowRight, Sparkles } from "lucide-react";
 import StarField from "@/components/StarField";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 export default function SplashScreen({
   onUniverse,
@@ -19,6 +20,7 @@ export default function SplashScreen({
   onTranslationStudio: () => void;
 }) {
   const { lang } = useLang();
+  const flags = useFeatureFlags();
   const [mounted, setMounted] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -27,7 +29,7 @@ export default function SplashScreen({
     setMounted(true);
   }, []);
 
-  const cards = [
+  const allCards = [
     {
       id: "universe",
       onClick: onUniverse,
@@ -78,6 +80,8 @@ export default function SplashScreen({
       badge: { ko: "전문", en: "Pro", jp: "専門", cn: "专业" },
     },
   ];
+
+  const cards = flags.CODE_STUDIO ? allCards : allCards.filter((c) => c.id !== "code");
 
   const colorMap: Record<string, { border: string; bg: string; text: string; glow: string; shadow: string }> = {
     amber: { 

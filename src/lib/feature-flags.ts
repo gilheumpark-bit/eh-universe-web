@@ -16,6 +16,8 @@ export interface FeatureFlags {
   CODE_STUDIO: boolean;
   /** 에피소드 간 비교 분석 */
   EPISODE_COMPARE: boolean;
+  /** 홈 에디토리얼 “Stellar White” 스킨 (크림 배경·다크 글래스 헤더). `/?skin=white`로도 동일 */
+  HOME_STELLAR_WHITE: boolean;
 }
 
 // ============================================================
@@ -25,9 +27,11 @@ const FLAGS: FeatureFlags = {
   IMAGE_GENERATION: true,
   GOOGLE_DRIVE_BACKUP: true,
   NETWORK_COMMUNITY: true,
-  OFFLINE_CACHE: false,
+  /** IndexedDB 백업/복원·버전 백업 — useProjectManager에서 분기 */
+  OFFLINE_CACHE: true,
   CODE_STUDIO: true,
   EPISODE_COMPARE: true,
+  HOME_STELLAR_WHITE: false,
 };
 
 /**
@@ -49,6 +53,15 @@ export function isFeatureEnabled(flag: keyof FeatureFlags): boolean {
   if (envVal === 'true') return true;
   if (envVal === 'false') return false;
 
+  return FLAGS[flag];
+}
+
+/** 서버 컴포넌트·Route Handler용 (localStorage 없음, env + 기본값만) */
+export function isFeatureEnabledServer(flag: keyof FeatureFlags): boolean {
+  const envKey = `NEXT_PUBLIC_FF_${flag}`;
+  const envVal = typeof process !== "undefined" ? process.env[envKey] : undefined;
+  if (envVal === "true") return true;
+  if (envVal === "false") return false;
   return FLAGS[flag];
 }
 

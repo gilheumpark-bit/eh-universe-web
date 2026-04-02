@@ -436,6 +436,13 @@ export function setActiveProvider(id: ProviderId): void {
  * v4 AES-GCM keys are decoded via cached CryptoKey when available;
  * if the key hasn't been cached yet, falls back to '' (use getApiKeyAsync).
  */
+/** localStorage에 값이 있는지(암호문 포함) — v4는 getApiKey 동기 호출이 빈 문자열일 수 있음 */
+export function hasStoredApiKey(providerId: ProviderId): boolean {
+  if (typeof window === "undefined") return false;
+  const raw = localStorage.getItem(PROVIDERS[providerId].storageKey);
+  return typeof raw === "string" && raw.trim().length > 0;
+}
+
 export function getApiKey(providerId: ProviderId): string {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
@@ -885,9 +892,26 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
         model: def.defaultModel,
         messages: [{ role: "user", content: def.testPrompt }],
         maxTokens: 16,
+        temperature: 0.2,
         apiKey: key,
+        /** 서버가 호스팅 할당 대신 반드시 이 키로만 검증 */
+        keyVerification: true,
+        isChatMode: true,
       }),
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
+      body: JSON.stringify({
+        sessionId: '783f48',
+        location: 'ai-providers.ts:testApiKey',
+        message: 'chat probe',
+        data: { hypothesisId: 'H3', providerId, status: res.status, ok: res.ok },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return res.ok;
   } catch {
     return false;

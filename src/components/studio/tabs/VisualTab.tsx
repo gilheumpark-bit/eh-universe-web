@@ -18,6 +18,7 @@ import { createVisualCard, createCardFromAnalysis } from '@/lib/visual-defaults'
 import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
 import { generateImage } from '@/services/imageGenerationService';
 import VisualPromptEditor from '../VisualPromptEditor';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import type { ImageGenProvider } from '@/services/imageGenerationService';
 
 interface VisualTabProps {
@@ -331,6 +332,7 @@ function useBatchGeneration(
 // ============================================================
 
 export default function VisualTab({ config, setConfig, currentSession: _session, language }: VisualTabProps) {
+  const { IMAGE_GENERATION: imageGenEnabled } = useFeatureFlags();
   const isKO = language === 'KO';
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<TabView>('editor');
@@ -520,7 +522,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
         </div>
 
         {/* Batch Generation */}
-        {imgApiKey && cards.length > 0 && (
+        {imageGenEnabled && imgApiKey && cards.length > 0 && (
           <div className="ds-card space-y-2">
             <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
               {isKO ? '일괄 생성' : 'Batch Generation'}
@@ -581,6 +583,13 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </span>
             <span>{showImgSettings ? '▲' : '▼'}</span>
           </button>
+          {!imageGenEnabled && (
+            <p className="mt-2 text-[9px] text-amber-400/90">
+              {isKO
+                ? '이미지 생성이 비활성화되어 API 키를 사용할 수 없습니다.'
+                : 'Image generation is disabled; API keys are not used.'}
+            </p>
+          )}
           {showImgSettings && (
             <div className="mt-3 space-y-2">
               <select value={imgProvider} onChange={e => setImgProvider(e.target.value as ImageGenProvider)}

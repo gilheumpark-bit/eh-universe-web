@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isFeatureEnabledServer } from '@/lib/feature-flags';
 
 const MAX_REQUEST_BYTES = 1_048_576;
 
@@ -15,6 +16,10 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isFeatureEnabledServer('IMAGE_GENERATION')) {
+      return NextResponse.json({ error: 'Image generation is disabled.' }, { status: 403 });
+    }
+
     // Origin 검증 — BYOK 포함 모든 요청에 적용
     const origin = req.headers.get('origin');
     const host = req.headers.get('host');

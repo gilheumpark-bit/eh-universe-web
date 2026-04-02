@@ -1,15 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { checkRateLimit, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
 
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for vitals ingestion
 void REQUEST_TIMEOUT;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // CSRF: Origin header validation
-    const origin = req.headers.get('origin');
-    if (!origin || !origin.includes(req.headers.get('host') || '')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host") || "";
+    if (!origin || !host) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    try {
+      if (new URL(origin).host !== host) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const ip = getClientIp(req.headers);
+    const rl = checkRateLimit(ip, "vitals", RATE_LIMITS.default);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      );
     }
 
     // body size check: Web Vitals payloads are small JSON (<2KB typical)

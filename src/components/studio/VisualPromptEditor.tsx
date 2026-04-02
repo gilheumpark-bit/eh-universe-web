@@ -8,6 +8,7 @@ import { generateImage, ImageGenProvider, ImageGenResult } from '@/services/imag
 import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
 import { VISUAL_PRESETS } from '@/lib/visual-defaults';
 import { extractConsistencyTags } from '@/lib/noi-auto-tags';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -53,6 +54,7 @@ const LEVEL_LABELS = ['OFF', 'LOW', 'MID', 'HIGH'];
 // ============================================================
 
 export default function VisualPromptEditor({ card, onChange, onDelete, isKO, characters, imageApiKey, imageProvider, onImageGenerated }: VisualPromptEditorProps) {
+  const { IMAGE_GENERATION: imageGenEnabled } = useFeatureFlags();
   const update = React.useCallback((patch: Partial<VisualPromptCard>) => {
     onChange({ ...card, ...patch, updatedAt: Date.now() });
   }, [card, onChange]);
@@ -277,8 +279,16 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         )}
       </div>
 
+      {!imageGenEnabled && (
+        <div className="text-[9px] text-text-tertiary bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2">
+          {isKO
+            ? '이미지 생성 기능이 비활성화되어 있습니다. (관리자 플래그 IMAGE_GENERATION)'
+            : 'Image generation is disabled (IMAGE_GENERATION feature flag).'}
+        </div>
+      )}
+
       {/* Image Generation Preview */}
-      {imageApiKey && imageProvider && (
+      {imageGenEnabled && imageApiKey && imageProvider && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
@@ -336,7 +346,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         </div>
       )}
 
-      {!imageApiKey && (
+      {imageGenEnabled && !imageApiKey && (
         <div className="text-[9px] text-text-tertiary bg-bg-secondary/30 border border-border/30 rounded-lg px-3 py-2">
           {isKO ? '설정에서 이미지 생성 API 키를 등록하면 프리뷰를 생성할 수 있습니다.' : 'Add an image generation API key in Settings to enable previews.'}
         </div>

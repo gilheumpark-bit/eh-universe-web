@@ -27,13 +27,12 @@ test.describe('Landing Page', () => {
   });
 
   test('should have working header navigation', async ({ page }) => {
-    await page.goto('/');
-    
-    // Header should be visible
-    const header = page.locator('header, nav').first();
-    await expect(header).toBeVisible();
-    
-    // Should have navigation links
+    // Splash hides main header on `/`; Stellar White skin skips splash (?skin=white)
+    await page.goto('/?skin=white');
+
+    const header = page.getByTestId('home-header');
+    await expect(header).toBeVisible({ timeout: 15_000 });
+
     const links = header.locator('a');
     expect(await links.count()).toBeGreaterThan(0);
   });

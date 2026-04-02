@@ -12,6 +12,7 @@ import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
 import { classifyError } from './UXHelpers';
+import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 
 interface TabMessage {
   id: string;
@@ -248,6 +249,13 @@ Evaluate text on 5 metrics:
 - Quote problem sentences with improvements side by side
 - Give specific alternatives: "Change this sentence to..."`,
   },
+  writing: {
+    ko: 'NOW — Narrative Origin Writer',
+    en: 'NOW — Narrative Origin Writer',
+    temperature: 0.85,
+    systemKo: `당신은 소설 집필 파트너(NOW)입니다. 작가의 의도를 존중하고 장면·대사·서사 전개를 돕습니다. 구체적이고 실행 가능한 제안을 하세요. 한국어로 답하세요.`,
+    systemEn: `You are NOW, a fiction writing partner. Respect the author's intent; help with scenes, dialogue, and pacing. Give concrete, actionable suggestions.`,
+  },
 };
 
 // ============================================================
@@ -314,6 +322,18 @@ const TAB_PRESETS: Record<string, { ko: string; en: string }[]> = {
     { ko: "문장을 더 간결하게 압축하는 방법은?", en: "How can I compress sentences to be more concise?" },
     { ko: "하드보일드 문체로 변환 연습을 해보자", en: "Let's practice converting to hardboiled style" },
     { ko: "5가지 지표로 내 문체를 종합 평가해줘", en: "Give me a comprehensive 5-metric style evaluation" },
+  ],
+  writing: [
+    { ko: "다음 장면 전개를 세 가지 방향으로 제안해줘", en: "Suggest three directions to continue the next scene" },
+    { ko: "지금 대사의 말투를 캐릭터에 맞게 다듬어줘", en: "Polish the dialogue to match each character's voice" },
+    { ko: "이 구간의 템포가 느려지는 이유를 짚어줘", en: "Explain why this section feels slow in pacing" },
+    { ko: "클리프행어 후킹을 한 줄로 제안해줘", en: "Propose a one-line cliffhanger hook" },
+    { ko: "독자 시점에서 지금 감정선이 어떻게 느껴질지 말해줘", en: "How would readers feel about the emotional arc here?" },
+    { ko: "복선을 자연스럽게 심을 위치를 추천해줘", en: "Where should I plant foreshadowing more naturally?" },
+    { ko: "장면 목표(정보·감정·전환)를 한 줄로 정리해줘", en: "Summarize this scene's goal in one line (info/emotion/pivot)" },
+    { ko: "서술 시점이 흔들리는 문장이 있으면 짚어줘", en: "Flag any sentences where POV or narration wobbles" },
+    { ko: "이 대목을 더 몰입감 있게 바꾸는 한 문단 예시를 줘", en: "Give a sample paragraph that increases immersion here" },
+    { ko: "원고와 설정 사이에 어긋나는 점이 있으면 알려줘", en: "Flag any mismatch between the draft and established setting" },
   ],
 };
 
@@ -407,6 +427,15 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
       }
       break;
 
+    case 'writing':
+      if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 400)}`);
+      if (config.episode) parts.push(`에피소드: ${config.episode}/${config.totalEpisodes}`);
+      if (config.characters?.length) {
+        parts.push(`캐릭터: ${config.characters.map(c => `${c.name}(${c.role})`).join(', ')}`);
+      }
+      if (config.setting) parts.push(`배경: ${config.setting}`);
+      break;
+
     case 'style':
       if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 150)}`);
       if (config.styleProfile) {
@@ -439,6 +468,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   const ctx = TAB_CONTEXT[tab];
   const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const tl = createT(language);
+  const backendLabel = useStudioBackendLabel(language, hostedProviders);
 
   // Check AI access: local key OR hosted provider
   const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()]);
@@ -548,9 +578,16 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
         aria-label="Toggle tab assistant"
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-secondary/80 transition-colors"
       >
-        <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-accent-purple font-mono">
-          <Sparkles className="w-3.5 h-3.5" />
-          {ctx[lk]}
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-black uppercase tracking-widest text-accent-purple font-mono min-w-0 text-left">
+          <span className="inline-flex items-center gap-2 shrink-0">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            {ctx[lk]}
+          </span>
+          {backendLabel ? (
+            <span className="text-[10px] font-mono font-bold text-text-tertiary normal-case tracking-normal truncate max-w-[min(100%,14rem)]" title={backendLabel}>
+              · {backendLabel}
+            </span>
+          ) : null}
         </span>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (

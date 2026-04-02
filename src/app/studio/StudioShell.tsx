@@ -422,7 +422,7 @@ export default function StudioShell() {
     exportTXT, exportJSON, exportAllJSON, handleImportJSON,
     handleImportTextFiles,
     handlePrint, handleExportEPUB, handleExportDOCX,
-    exportProjectJSON, exportAllEpisodesTXT, exportMarkdown,
+    exportProjectJSON, exportProjectManuscripts,
   } = useStudioExport({
     currentSession, sessions, currentSessionId,
     currentProjectId, projects, setProjects, setCurrentProjectId,
@@ -582,8 +582,7 @@ export default function StudioShell() {
         handleExportEPUB={handleExportEPUB}
         handleExportDOCX={handleExportDOCX}
         exportProjectJSON={exportProjectJSON}
-        exportAllEpisodesTXT={exportAllEpisodesTXT}
-        exportMarkdown={exportMarkdown}
+        exportProjectManuscripts={exportProjectManuscripts}
         fileInputRef={fileInputRef}
         user={user}
         signInWithGoogle={signInWithGoogle}

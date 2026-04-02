@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Key, X, Loader2, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import {
   PROVIDER_LIST_UI, ProviderId, PROVIDERS,
   getActiveProvider, setActiveProvider,
-  getApiKey, setApiKey,
+  getApiKey, getApiKeyAsync, setApiKey, hasStoredApiKey,
   getActiveModel, setActiveModel,
   testApiKey, isPreviewModel, getModelWarning,
 } from '@/lib/ai-providers';
@@ -50,6 +50,21 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
   });
   const [showModels, setShowModels] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const next = {} as Record<ProviderId, string>;
+      for (const p of PROVIDER_LIST_UI) {
+        const pid = p.id as ProviderId;
+        next[pid] = await getApiKeyAsync(pid);
+      }
+      if (!cancelled) setKeys(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const currentProvider = PROVIDERS[activeId];
   const currentKey = keys[activeId] || '';
   const hostedReady = Boolean(hostedProviders?.[activeId]);
@@ -77,22 +92,44 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
   };
 
   const handleTest = async () => {
-    if (!currentKey.trim()) return;
+    const fromInput = currentKey.trim();
+    const fromStore = fromInput ? '' : (await getApiKeyAsync(activeId)).trim();
+    const raw = fromInput || fromStore;
+    if (!raw) return;
     setTestStatus(prev => ({ ...prev, [activeId]: 'testing' }));
-    const ok = await testApiKey(activeId, currentKey.trim());
+    const ok = await testApiKey(activeId, raw);
     setTestStatus(prev => ({ ...prev, [activeId]: ok ? 'success' : 'error' }));
   };
 
   const handleSave = () => {
-    if (!currentKey.trim()) return;
-    setApiKey(activeId, currentKey.trim());
+    const trimmed = currentKey.trim();
+    if (!trimmed && !hasStoredApiKey(activeId)) return;
+    // #region agent log
+    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
+      body: JSON.stringify({
+        sessionId: '783f48',
+        location: 'ApiKeyModal.tsx:handleSave',
+        message: 'persist key',
+        data: {
+          hypothesisId: 'H4',
+          provider: activeId,
+          emptyClear: !trimmed,
+          hadStored: hasStoredApiKey(activeId),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    setApiKey(activeId, trimmed);
     setActiveProvider(activeId);
     setActiveModel(selectedModel);
-    // setApiKey already saves to the correct storageKey (noa_api_key for gemini)
-    // with proper obfuscation — no plaintext override needed
-    onSave(currentKey.trim());
+    onSave(trimmed);
     onClose();
   };
+
+  const canPersist = Boolean(currentKey.trim()) || hasStoredApiKey(activeId);
 
   const status = testStatus[activeId] || 'idle';
 
@@ -135,7 +172,8 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
         {/* Provider selector */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {PROVIDER_LIST_UI.map(p => {
-            const hasKey = !!(keys[p.id]?.trim());
+            const pid = p.id as ProviderId;
+            const hasKey = !!(keys[pid]?.trim()) || hasStoredApiKey(pid);
             const isActive = activeId === p.id;
             return (
               <button
@@ -170,6 +208,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
               : `${currentProvider.name} API Key`}
           </label>
           <input
+            data-testid="api-key-modal-secret-input"
             type={currentProvider.isUrlBased ? 'text' : 'password'}
             value={currentKey}
             onChange={e => handleKeyChange(e.target.value)}
@@ -285,8 +324,9 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
         {/* Actions */}
         <div className="flex gap-2">
           <button
+            data-testid="api-key-modal-test"
             onClick={handleTest}
-            disabled={!currentKey.trim() || status === 'testing'}
+            disabled={(!currentKey.trim() && !hasStoredApiKey(activeId)) || status === 'testing'}
             aria-label={t('ui.testApiKey')}
             className="flex-1 py-3 bg-bg-secondary border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all disabled:opacity-30 flex items-center justify-center gap-2 font-mono"
           >
@@ -294,18 +334,19 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             {t('apiKeyModal.test')}
           </button>
           <button
+            data-testid="api-key-modal-save"
             onClick={handleSave}
-            disabled={!currentKey.trim()}
+            disabled={!canPersist}
             aria-label={t('ui.saveApiKey')}
             className="flex-1 py-3 bg-accent-purple text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-30 font-mono"
           >
             {t('apiKeyModal.save')}
           </button>
           <button
+            data-testid="api-key-modal-delete"
             onClick={() => {
               // 1. localStorage에서 키 제거 (storageKey + timestamp + legacy)
               setApiKey(activeId, '');
-              if (activeId === 'gemini') localStorage.removeItem('noa_api_key');
               // 2. 모달 내부 state 초기화
               setKeys(prev => ({ ...prev, [activeId]: '' }));
               setTestStatus(prev => ({ ...prev, [activeId]: 'idle' }));
@@ -313,7 +354,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
               onSave('');
               onClose();
             }}
-            disabled={!currentKey.trim()}
+            disabled={!canPersist}
             aria-label={t('ui.deleteApiKey')}
             className="py-3 px-4 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent-red/20 transition-all disabled:opacity-30 font-mono"
           >
@@ -327,8 +368,14 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
             {t('apiKeyModal.savedKeys')}
           </div>
           {PROVIDER_LIST_UI.map(p => {
-            const hasKey = !!(keys[p.id]?.trim());
+            const pid = p.id as ProviderId;
+            const hasKey = !!(keys[pid]?.trim()) || hasStoredApiKey(pid);
             const isCurrentActive = getActiveProvider() === p.id;
+            const preview = keys[pid]?.trim()
+              ? `${keys[pid].slice(0, 6)}...`
+              : hasKey
+                ? '······'
+                : '';
             return (
               <div key={p.id} className="flex items-center justify-between text-[10px]">
                 <div className="flex items-center gap-2">
@@ -343,7 +390,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
                   )}
                 </div>
                 <span className="text-text-tertiary font-mono">
-                  {hasKey ? `${keys[p.id].slice(0, 6)}...` : t('apiKeyModal.notSet')}
+                  {hasKey ? preview : t('apiKeyModal.notSet')}
                 </span>
               </div>
             );

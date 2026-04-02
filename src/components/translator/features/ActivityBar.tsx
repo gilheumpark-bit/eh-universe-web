@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslatorLayout, LeftPanelType } from '../core/TranslatorLayoutContext';
-import { Files, BookA, Settings, History, Menu, Layers } from 'lucide-react';
+import { Files, BookA, Settings, History, Menu, Layers, HardDrive } from 'lucide-react';
 import { useLang } from '@/lib/LangContext';
 
 interface IconWrapperProps {
@@ -95,9 +95,16 @@ export function ActivityBar() {
           isActive={layout.activeLeftPanel === 'glossary'}
           onClick={() => handleToggle('glossary')}
         />
+        <IconWrapper
+          type="backup"
+          icon={HardDrive}
+          title={lang === 'ko' ? '저장 · 백업 · 보내기' : 'Save, backup & export'}
+          isActive={layout.activeLeftPanel === 'backup'}
+          onClick={() => handleToggle('backup')}
+        />
       </div>
       
-      <div className="flex flex-col items-center py-2 pb-6 gap-2 w-full">
+      <div className="flex flex-col items-center py-2 pb-10 gap-2 w-full">
         <div className="w-8 mx-auto h-px bg-linear-to-r from-transparent via-white/10 to-transparent mb-2" />
         <IconWrapper
           type="settings"

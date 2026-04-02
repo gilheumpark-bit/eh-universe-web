@@ -42,9 +42,9 @@ interface StudioTabRouterProps {
   setUxError: (err: { error: unknown } | null) => void;
   clearAllSessions: () => void;
   setShowApiKeyModal: (v: boolean) => void;
-  versionedBackups: VersionedBackup[];
-  doRestoreVersionedBackup: (timestamp: number) => Promise<boolean>;
-  refreshBackupList: () => void;
+  versionedBackups?: VersionedBackup[];
+  doRestoreVersionedBackup?: (timestamp: number) => Promise<boolean>;
+  refreshBackupList?: () => void;
   writingMode: string;
   setWritingMode: (mode: string) => void;
   editDraft: string;

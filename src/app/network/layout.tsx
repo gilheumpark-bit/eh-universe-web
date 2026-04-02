@@ -1,17 +1,10 @@
-'use client';
+import { notFound } from "next/navigation";
+import { isFeatureEnabledServer } from "@/lib/feature-flags";
+import NetworkClientLayout from "./NetworkClientLayout";
 
-import Header from '@/components/Header';
-import { RouteErrorBoundary } from '@/components/ErrorBoundary';
-
-export default function NetworkLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <RouteErrorBoundary section="Network">
-      <Header />
-      {children}
-    </RouteErrorBoundary>
-  );
+export default function NetworkLayout({ children }: { children: React.ReactNode }) {
+  if (!isFeatureEnabledServer("NETWORK_COMMUNITY")) {
+    notFound();
+  }
+  return <NetworkClientLayout>{children}</NetworkClientLayout>;
 }

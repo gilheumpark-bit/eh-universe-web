@@ -12,6 +12,7 @@ import {
   type AgentSession,
   type AgentRole,
 } from '@/lib/code-studio/ai/agents';
+import { ALL_AGENT_ROLES } from '@/types/code-studio-agent';
 
 export interface AgentProgress {
   currentRole: AgentRole | null;
@@ -31,9 +32,7 @@ interface UseCodeStudioAgentReturn {
   reset: () => void;
 }
 
-const ALL_ROLES: AgentRole[] = ['architect', 'developer', 'reviewer', 'tester', 'documenter'];
-
-/** Runs the multi-role agent pipeline (architect/developer/reviewer/tester/documenter) with progress tracking and abort */
+/** Runs the multi-role agent pipeline with progress tracking and abort */
 export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
   const [running, setRunning] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
@@ -41,7 +40,7 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
   const [progress, setProgress] = useState<AgentProgress>({
     currentRole: null,
     completedRoles: [],
-    totalRoles: ALL_ROLES.length,
+    totalRoles: ALL_AGENT_ROLES.length,
     percent: 0,
   });
   const abortRef = useRef<AbortController | null>(null);
@@ -51,12 +50,12 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
 
     setRunning(true);
     setMessages([]);
-    setProgress({ currentRole: null, completedRoles: [], totalRoles: ALL_ROLES.length, percent: 0 });
+    setProgress({ currentRole: null, completedRoles: [], totalRoles: ALL_AGENT_ROLES.length, percent: 0 });
 
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const newSession = createAgentSession(instruction, ALL_ROLES);
+    const newSession = createAgentSession(instruction, ALL_AGENT_ROLES);
     setSession(newSession);
 
     try {
@@ -68,8 +67,8 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
           return {
             currentRole: msg.role,
             completedRoles: completed,
-            totalRoles: ALL_ROLES.length,
-            percent: Math.round((completed.length / ALL_ROLES.length) * 100),
+            totalRoles: ALL_AGENT_ROLES.length,
+            percent: Math.round((completed.length / ALL_AGENT_ROLES.length) * 100),
           };
         });
       };
@@ -77,7 +76,7 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
       const result = await runAgentPipeline(
         instruction,
         context ?? '',
-        ALL_ROLES,
+        ALL_AGENT_ROLES,
         onMessage,
         controller.signal,
       );
@@ -103,7 +102,7 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
     setRunning(false);
     setMessages([]);
     setSession(null);
-    setProgress({ currentRole: null, completedRoles: [], totalRoles: ALL_ROLES.length, percent: 0 });
+    setProgress({ currentRole: null, completedRoles: [], totalRoles: ALL_AGENT_ROLES.length, percent: 0 });
     abortRef.current?.abort();
     abortRef.current = null;
   }, []);

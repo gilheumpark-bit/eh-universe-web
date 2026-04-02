@@ -16,6 +16,7 @@ import {
   type CollabUser as ManagerCollabUser,
   type CollaborationManager,
 } from "@/lib/code-studio/features/collaboration";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 interface CollabUser {
   id: string;
@@ -58,6 +59,7 @@ function generateColor(): string {
 // ============================================================
 
 export default function CollabPanel({ onClose }: Props) {
+  const t = useCodeStudioT();
   const [connected, setConnected] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [roomInput, setRoomInput] = useState("");
@@ -210,7 +212,7 @@ export default function CollabPanel({ onClose }: Props) {
         <div className="p-3 border-b border-white/8">
           <label className="text-[11px] text-white/50 mb-1 block">방 참가</label>
           <div className="flex gap-1">
-            <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder="Room ID..."
+            <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder={t.collabRoomPlaceholder}
               onKeyDown={(e) => e.key === "Enter" && joinRoom()}
               className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none" />
             <button onClick={joinRoom} className="flex items-center gap-1 px-3 py-1.5 bg-amber-800 text-stone-100 text-xs rounded hover:bg-amber-700">
@@ -234,7 +236,7 @@ export default function CollabPanel({ onClose }: Props) {
 
       <div className="p-3 border-b border-white/8">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] text-white/50">Room ID</span>
+          <span className="text-[11px] text-white/50">{t.collabRoomIdLabel}</span>
           <button onClick={leaveRoom} className="flex items-center gap-1 text-[10px] text-white/50 hover:text-red-400 border border-white/10 rounded px-2 py-0.5">
             <LogOut size={12} /> 나가기
           </button>

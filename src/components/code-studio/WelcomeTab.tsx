@@ -4,8 +4,9 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FileText, FolderOpen, GitBranch, Lightbulb, Clock, Plus } from "lucide-react";
+import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 interface RecentFileInfo {
   fileId: string;
@@ -23,21 +24,7 @@ interface WelcomeTabProps {
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=RecentFileInfo
 
-// ============================================================
-// PART 2 — Tips
-// ============================================================
-
-const TIPS = [
-  "Press Ctrl+P to quickly open any file",
-  "Use @filename in chat to reference a file",
-  "Ctrl+Shift+P opens the command palette",
-  "Type @ to search symbols across your project",
-  "F1-F8 switches between open tabs",
-  "Ctrl+I triggers AI inline suggestions",
-  "Use the agent pipeline for multi-step code generation",
-];
-
-// IDENTITY_SEAL: PART-2 | role=Tips | inputs=none | outputs=string[]
+// IDENTITY_SEAL: PART-2 | role=Tips | inputs=useCodeStudioT | outputs=string[]
 
 // ============================================================
 // PART 3 — Component
@@ -50,27 +37,35 @@ export default function WelcomeTab({
   onOpenFolder,
   onCloneRepo,
 }: WelcomeTabProps) {
-  const [tipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
+  const t = useCodeStudioT();
+  const tips = useMemo(
+    () => [t.welcomeTip1, t.welcomeTip2, t.welcomeTip3, t.welcomeTip4, t.welcomeTip5, t.welcomeTip6, t.welcomeTip7],
+    [t],
+  );
+  const [tipIndex] = useState(() => Math.floor(Math.random() * 7));
 
   const actions = [
-    { icon: <Plus size={16} />, label: "New File", onClick: onNewFile, accent: "text-green-400" },
-    { icon: <FolderOpen size={16} />, label: "Open Folder", onClick: onOpenFolder, accent: "text-blue-400" },
-    { icon: <GitBranch size={16} />, label: "Clone Repository", onClick: onCloneRepo, accent: "text-amber-400" },
+    { icon: <Plus size={16} />, label: t.welcomeActionNewFile, onClick: onNewFile, accent: "text-green-400" },
+    { icon: <FolderOpen size={16} />, label: t.welcomeActionOpenFolder, onClick: onOpenFolder, accent: "text-blue-400" },
+    { icon: <GitBranch size={16} />, label: t.welcomeActionCloneRepo, onClick: onCloneRepo, accent: "text-amber-400" },
   ].filter((a) => a.onClick);
 
   const [now] = useState(() => Date.now());
-  const formatTime = useCallback((ts: number) => {
-    const diff = now - ts;
-    if (diff < 60_000) return "just now";
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-    return `${Math.floor(diff / 86_400_000)}d ago`;
-  }, [now]);
+  const formatTime = useCallback(
+    (ts: number) => {
+      const diff = now - ts;
+      if (diff < 60_000) return t.timeJustNow;
+      if (diff < 3_600_000) return t.timeMinAgo.replace("{n}", String(Math.floor(diff / 60_000)));
+      if (diff < 86_400_000) return t.timeHourAgo.replace("{n}", String(Math.floor(diff / 3_600_000)));
+      return t.timeDayAgo.replace("{n}", String(Math.floor(diff / 86_400_000)));
+    },
+    [now, t.timeJustNow, t.timeMinAgo, t.timeHourAgo, t.timeDayAgo],
+  );
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-      <h1 className="mb-2 text-2xl font-bold text-white">Code Studio</h1>
-      <p className="mb-8 text-sm text-gray-500">AI-powered development environment</p>
+      <h1 className="mb-2 text-2xl font-bold text-white">{t.title}</h1>
+      <p className="mb-8 text-sm text-gray-500">{t.subtitle}</p>
 
       {/* Quick actions */}
       <div className="mb-8 flex gap-4">
@@ -90,7 +85,7 @@ export default function WelcomeTab({
       {recentFiles.length > 0 && (
         <div className="mb-8 w-full max-w-md">
           <h3 className="mb-2 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-500">
-            <Clock size={12} /> Recent Files
+            <Clock size={12} /> {t.welcomeRecentFiles}
           </h3>
           <div className="space-y-1">
             {recentFiles.slice(0, 8).map((f) => (
@@ -111,7 +106,7 @@ export default function WelcomeTab({
       {/* Tip */}
       <div className="flex items-center gap-2 text-xs text-gray-600">
         <Lightbulb size={12} className="text-yellow-500" />
-        <span>{TIPS[tipIndex]}</span>
+        <span>{tips[tipIndex]}</span>
       </div>
     </div>
   );

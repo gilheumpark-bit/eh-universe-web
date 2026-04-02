@@ -177,7 +177,8 @@ export default function WritingTabInline(props: Props) {
                         <ChatMessage 
                           message={msg} 
                           language={language} 
-                          onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} 
+                          onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined}
+                          hostedProviders={props.hostedProviders}
                         />
                       </div>
                     ))}
@@ -246,6 +247,7 @@ export default function WritingTabInline(props: Props) {
         pipelineResult={pipelineResult}
         setConfig={setConfig}
         setActiveTab={setActiveTab}
+        hostedProviders={props.hostedProviders}
       />
     </div>
   );

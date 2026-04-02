@@ -17,8 +17,8 @@ describe('feature-flags', () => {
       expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
     });
 
-    test('returns default value for OFFLINE_CACHE (false)', () => {
-      expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(false);
+    test('returns default value for OFFLINE_CACHE (true)', () => {
+      expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(true);
     });
 
     test('env override true takes precedence over default false', () => {
@@ -44,7 +44,7 @@ describe('feature-flags', () => {
 
     test('ignores non-boolean localStorage values and falls through', () => {
       localStorage.setItem('ff_OFFLINE_CACHE', 'maybe');
-      expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(false);
+      expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(true);
     });
   });
 

@@ -10,6 +10,7 @@ import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
 import { TRANSLATIONS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
+import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
@@ -171,6 +172,7 @@ export function StudioWritingAssistantPanel({
 }: StudioWritingAssistantPanelProps) {
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
+  const backendLabel = useStudioBackendLabel(language, hostedProviders);
 
   // NOTE: visibility check (writing/ai mode, dashboard closed) is done by parent
 
@@ -330,10 +332,18 @@ export function StudioWritingAssistantPanel({
             </div>
           </div>
 
-          {/* AI Chat section */}
+          {/* 집필 대화 미리보기 */}
           <div className="p-4 space-y-3">
-            <div className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-mono">
+            <div
+              className="text-[10px] font-black text-accent-purple uppercase tracking-widest font-mono truncate"
+              title={backendLabel ? `${t('writingMode.nowWriterBadge')} · ${backendLabel}` : t('writingMode.nowWriterBadge')}
+            >
               {'\uD83D\uDCAC'} {t('panel.aiChat')}
+              {backendLabel ? (
+                <span className="block text-[9px] text-text-tertiary font-mono normal-case tracking-normal mt-0.5 truncate">
+                  · {backendLabel}
+                </span>
+              ) : null}
             </div>
             <div className="space-y-3 max-h-[40vh] overflow-y-auto">
               {currentSession.messages.filter(m => {

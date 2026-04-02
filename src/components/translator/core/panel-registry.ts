@@ -1,4 +1,4 @@
-export type LeftPanelType = 'explorer' | 'glossary' | 'settings' | 'history' | null;
+export type LeftPanelType = 'explorer' | 'glossary' | 'settings' | 'history' | 'backup' | null;
 export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | null;
 
 export interface PanelDef {
@@ -12,6 +12,7 @@ export const LEFT_PANELS: Record<string, PanelDef> = {
   glossary: { id: 'glossary', labelEn: 'Glossary', labelKo: '용어집' },
   settings: { id: 'settings', labelEn: 'Settings', labelKo: '설정' },
   history: { id: 'history', labelEn: 'History', labelKo: '히스토리' },
+  backup: { id: 'backup', labelEn: 'Save & backup', labelKo: '저장·백업' },
 };
 
 export const RIGHT_PANELS: Record<string, PanelDef> = {

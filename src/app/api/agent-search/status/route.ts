@@ -5,10 +5,19 @@
 // 각 스튜디오별 Agent Builder 연동 상태를 반환합니다.
 // ============================================================
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAgentBuilderStatus } from '@/lib/vertex-app-builder';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const rl = checkRateLimit(ip, 'agent-search-status', RATE_LIMITS.default);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
   const status = getAgentBuilderStatus();
 
   return NextResponse.json({

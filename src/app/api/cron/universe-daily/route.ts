@@ -15,10 +15,16 @@ function stringField(fields: any, key: string): string {
 export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET) {
-      if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const secret = process.env.CRON_SECRET?.trim();
+    if (process.env.NODE_ENV === 'production') {
+      if (!secret) {
+        return NextResponse.json({ error: 'Cron secret not configured' }, { status: 503 });
+      }
+      if (authHeader !== `Bearer ${secret}`) {
         return new NextResponse('Unauthorized', { status: 401 });
       }
+    } else if (secret && authHeader !== `Bearer ${secret}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;

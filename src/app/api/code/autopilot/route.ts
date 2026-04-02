@@ -1,11 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { generateJsonGemini } from '@/services/aiProvidersStructured';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Autopilot demo API is disabled in production.' }, { status: 403 });
+  }
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
+  if (!origin || !host) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  try {
+    if (new URL(origin).host !== host) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  const ip = getClientIp(req.headers);
+  const rl = checkRateLimit(ip, 'code-autopilot', RATE_LIMITS.default);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
   try {
     const { prompt, config, code, language, fileName } = await req.json();
 
