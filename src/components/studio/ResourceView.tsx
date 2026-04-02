@@ -96,14 +96,14 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
     <div className="max-w-[1400px] mx-auto w-full p-4 md:p-10 space-y-8 lg:space-y-12 animate-in fade-in duration-500">
 
       {/* Header Section */}
-      <div className="flex items-center justify-between bg-bg-secondary/20 p-4 md:p-0 rounded-3xl md:bg-transparent">
+      <div className="flex items-center justify-between bg-[linear-gradient(to_right,rgba(141,123,195,0.1),transparent)] border border-[rgba(141,123,195,0.2)] backdrop-blur-sm p-4 rounded-3xl md:bg-[linear-gradient(to_right,rgba(141,123,195,0.1),transparent)] shadow-[0_0_20px_rgba(141,123,195,0.05)]">
         <div className="flex items-center gap-4 md:gap-6 w-full">
-          <div className="p-4 md:p-5 bg-blue-600/10 border border-blue-500/20 rounded-2xl md:rounded-3xl shrink-0">
-            <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
+          <div className="p-4 md:p-5 bg-[rgba(141,123,195,0.15)] border border-[rgba(141,123,195,0.4)] shadow-[0_0_15px_rgba(141,123,195,0.2)] rounded-2xl md:rounded-3xl shrink-0">
+            <Fingerprint className="w-6 h-6 md:w-8 md:h-8 text-[rgba(200,180,255,0.9)]" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase truncate">{t.title}</h2>
-            <p className="text-text-tertiary text-[10px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
+            <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase truncate text-[rgba(230,220,255,0.9)] drop-shadow-[0_0_8px_rgba(141,123,195,0.5)]">{t.title}</h2>
+            <p className="text-[rgba(141,123,195,0.8)] text-[10px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.4em] uppercase truncate">{t.subtitle}</p>
           </div>
         </div>
       </div>
@@ -248,22 +248,26 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 isPanelOpen ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               }`}>
                 {paginatedCharacters.map(char => (
-                  <div key={char.id} className="ds-card-lg md:rounded-[2.5rem] hover:border-blue-500/30 transition-all group relative overflow-hidden backdrop-blur-sm">
-                    {/* Visual DNA Bar */}
-                    <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 opacity-20 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
+                  <div key={char.id} className="relative group overflow-hidden bg-[linear-gradient(to_bottom,rgba(141,123,195,0.05),rgba(0,0,0,0.4))] backdrop-blur-xl border border-[rgba(141,123,195,0.2)] hover:border-[rgba(141,123,195,0.5)] md:rounded-[2.5rem] rounded-2xl p-6 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(141,123,195,0.02)]">
+                    {/* Grid overlay for vital sign / holographic feel */}
+                    <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(141,123,195,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(141,123,195,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30"></div>
+                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(141,123,195,0.1),transparent_50%)]"></div>
+
+                    {/* Visual DNA Bar - Vital Sign ECG effect */}
+                    <div className="absolute top-0 left-0 h-1 bg-[linear-gradient(90deg,rgba(141,123,195,0.8),rgba(202,161,92,0.8))] shadow-[0_0_10px_rgba(141,123,195,0.8)] opacity-30 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
                     
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex justify-between items-start mb-6 relative z-10">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-bg-tertiary to-bg-secondary rounded-2xl flex items-center justify-center text-text-tertiary font-black border border-white/5 text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                        <div className="w-14 h-14 bg-[linear-gradient(135deg,rgba(141,123,195,0.2),rgba(0,0,0,0.5))] rounded-2xl flex items-center justify-center text-[rgba(220,200,250,0.9)] font-black border border-[rgba(141,123,195,0.4)] text-xl shadow-[inset_0_0_15px_rgba(141,123,195,0.2)] group-hover:scale-110 transition-transform duration-500">
                           {char.name[0]}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-base font-black text-white truncate mb-0.5">{char.name}</div>
+                          <div className="text-base font-black text-white truncate mb-0.5 group-hover:text-[rgba(230,220,255,1)] transition-colors drop-shadow-[0_0_5px_rgba(141,123,195,0.5)]">{char.name}</div>
                           <div className="flex items-center gap-1">
                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                               char.role === 'hero' ? 'bg-blue-500' :
-                               char.role === 'villain' ? 'bg-red-500' :
-                               char.role === 'ally' ? 'bg-green-500' : 'bg-text-tertiary'
+                               char.role === 'hero' ? 'bg-[rgba(141,123,195,0.9)] shadow-[0_0_5px_rgba(141,123,195,0.8)]' :
+                               char.role === 'villain' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' :
+                               char.role === 'ally' ? 'bg-[rgba(202,161,92,0.9)] shadow-[0_0_5px_rgba(202,161,92,0.8)]' : 'bg-text-tertiary'
                              }`}></div>
                              <select
                                value={char.role}
@@ -290,9 +294,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       </button>
                     </div>
 
-                    <div className="ds-card mb-4 relative group/traits">
-                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-text-tertiary opacity-50" />
-                      <p className="text-[11px] text-text-secondary font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
+                    <div className="bg-[linear-gradient(to_right,rgba(141,123,195,0.05),transparent)] border-l-2 border-[rgba(141,123,195,0.4)] rounded-r-xl p-4 mb-4 relative group/traits z-10">
+                      <ScrollText className="absolute top-4 right-4 w-3.5 h-3.5 text-[rgba(141,123,195,0.5)]" />
+                      <p className="text-[11px] text-[rgba(230,220,255,0.8)] font-serif leading-relaxed italic line-clamp-4 min-h-[4rem]">
                         {char.traits}
                       </p>
                     </div>

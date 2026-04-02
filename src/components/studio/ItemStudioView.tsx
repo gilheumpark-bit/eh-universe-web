@@ -457,7 +457,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // PART 6 — RENDER
   // ============================================================
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+    <div className="relative max-w-[1400px] mx-auto px-4 py-6 space-y-6 min-h-full rounded-[24px] bg-[#050508] bg-[linear-gradient(rgba(202,161,92,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(202,161,92,0.03)_1px,transparent_1px)] bg-[size:40px_40px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] box-border">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -522,7 +522,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               subTab === key
                 ? 'bg-accent-purple/20 text-accent-purple'
-                : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'
+                : 'bg-[rgba(255,255,255,0.03)] border border-white/5 text-text-tertiary hover:text-[rgba(246,226,188,0.94)] hover:border-[rgba(202,161,92,0.3)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
@@ -668,25 +668,25 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           </div>
 
           {/* Add Item Form */}
-          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+          <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.1)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
             <h4 className="text-xs font-bold">{t('itemStudio.addNewItem')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs">
                 {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => (
                   <option key={cat} value={cat}>{t(CATEGORY_CONFIG[cat].tKey)}</option>
                 ))}
               </select>
-              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs">
                 {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => (
                   <option key={r} value={r}>{t(RARITY_CONFIG[r].tKey)}</option>
                 ))}
               </select>
-              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
               <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
@@ -701,7 +701,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           {/* Skill Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {skills.map(skill => (
-              <div key={skill.id} className="bg-bg-secondary border border-border rounded-xl p-4 space-y-2">
+              <div key={skill.id} className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.15)] p-4 space-y-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)] transition-all hover:bg-[rgba(255,255,255,0.04)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-amber-400' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
@@ -732,19 +732,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           </div>
 
           {/* Add Skill Form */}
-          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+          <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.1)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
             <h4 className="text-xs font-bold">{t('itemStudio.addNewSkill')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.skillNamePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs">
+              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.skillNamePlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+              <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs">
                 {SKILL_TYPES.map(st => <option key={st.value} value={st.value}>{t(st.tKey)}</option>)}
               </select>
-              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={t('itemStudio.ownerPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={t('itemStudio.rankPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={t('itemStudio.ownerPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={t('itemStudio.rankPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs col-span-2" />
-              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs col-span-2" />
+              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
               <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
@@ -772,15 +772,15 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           ))}
 
           {/* Add Magic System Form */}
-          <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+          <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.1)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
             <h4 className="text-xs font-bold">{t('itemStudio.addMagicSystem')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.magicNamePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
-              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={t('itemStudio.magicSourcePlaceholder')} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs" />
+              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.magicNamePlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={t('itemStudio.magicSourcePlaceholder')} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
-              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs resize-none" />
+              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs resize-none" />
+              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs resize-none" />
             </div>
             <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-purple text-white rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40 hover:opacity-80">
               <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
@@ -807,7 +807,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               )}
 
               {/* Rarity Distribution */}
-              <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+              <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.1)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
                 <h4 className="text-xs font-bold">{t('itemStudio.rarityDistribution')}</h4>
                 <div className="space-y-2">
                   {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => {
@@ -828,7 +828,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
               {/* Skill Type Distribution */}
               {skills.length > 0 && (
-                <div className="bg-bg-secondary rounded-xl p-4 space-y-3">
+                <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.1)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
                   <h4 className="text-xs font-bold">{t('itemStudio.skillTypeDistribution')}</h4>
                   <div className="flex gap-4">
                     {SKILL_TYPES.map(st => {
@@ -882,7 +882,7 @@ const MagicSystemCard: React.FC<{
   const [rankInput, setRankInput] = useState('');
 
   return (
-    <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
+    <div className="relative overflow-hidden rounded-xl bg-[rgba(255,255,255,0.02)] backdrop-blur-md border border-[rgba(202,161,92,0.15)] p-4 space-y-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)] transition-all hover:bg-[rgba(255,255,255,0.04)]">
       <div className="flex items-center justify-between">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-accent-purple" />
@@ -923,7 +923,7 @@ const MagicSystemCard: React.FC<{
                 onChange={e => setRankInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
                 placeholder={t('itemStudio.addRankPlaceholder')}
-                className="bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[10px] flex-1"
+                className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] flex-1"
               />
             </div>
           </div>

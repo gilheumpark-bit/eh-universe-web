@@ -131,21 +131,22 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
+        <h3 className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest font-mono drop-shadow-[0_0_5px_rgba(255,200,50,0.3)] flex items-center gap-2">
+          <MapIcon className="w-3 h-3 text-[rgba(255,200,50,0.8)]" />
           {L4(language, { ko: '영토 지도', en: 'Territory Map', jp: '領土マップ', cn: '领土地图' })}
         </h3>
         <div className="flex gap-2">
           <button
             onClick={() => { setLinkMode(!linkMode); setLinkFrom(null); }}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
-              linkMode ? 'bg-blue-600 text-white border-blue-500' : 'text-text-tertiary border-border hover:border-white/20 hover:text-text-secondary'
+              linkMode ? 'bg-[linear-gradient(135deg,rgba(255,100,50,0.2),rgba(200,50,20,0.1))] text-[rgba(255,150,100,0.9)] border-[rgba(255,100,50,0.5)] shadow-[0_0_15px_rgba(255,100,50,0.2)]' : 'bg-[rgba(255,200,50,0.05)] text-[rgba(255,220,100,0.7)] border-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:text-[rgba(255,220,100,0.95)]'
             }`}
           >
             <Link className="w-3.5 h-3.5" />
             {isKO ? '연결 모드' : 'Link Mode'}
           </button>
           <button onClick={addTerritory}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-accent-purple text-white transition-all active:scale-95 hover:opacity-80">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-[rgba(255,220,100,0.6)] shadow-[0_5px_15px_rgba(255,200,50,0.2)] transition-all active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,200,50,0.4)]">
             <Plus className="w-3.5 h-3.5" />
             {isKO ? '영역 추가' : 'Add Region'}
           </button>
@@ -153,12 +154,12 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       </div>
 
       {linkMode && (
-        <div className="flex gap-1 items-center">
-          <span className="text-[9px] text-text-tertiary">{isKO ? '연결 유형:' : 'Link type:'}</span>
+        <div className="flex flex-wrap gap-1 items-center bg-[rgba(255,200,50,0.02)] border border-[rgba(255,200,50,0.15)] rounded-xl p-2 backdrop-blur-sm">
+          <span className="text-[9px] text-[rgba(255,200,50,0.6)] font-mono px-1">{isKO ? '연결 유형:' : 'Link type:'}</span>
           {(Object.keys(LINK_COLORS) as TerritoryLink['type'][]).map(type => (
             <button key={type} onClick={() => setLinkType(type)}
               className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
-                linkType === type ? 'text-white' : 'text-text-tertiary border-border hover:text-text-secondary'
+                linkType === type ? 'text-white border-transparent' : 'text-[rgba(255,200,50,0.5)] border-[rgba(255,200,50,0.2)] hover:text-[rgba(255,200,50,0.8)] hover:bg-[rgba(255,200,50,0.05)]'
               }`}
               style={linkType === type ? { background: LINK_COLORS[type], borderColor: LINK_COLORS[type] } : undefined}
             >
@@ -174,8 +175,8 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       )}
 
       {/* SVG Map Canvas */}
-      <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full border border-border/30 rounded-xl"
-        style={{ touchAction: 'none', background: 'var(--color-bg-secondary, #0f141c)', fontFamily: 'var(--font-mono, monospace)' }}
+      <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full border border-[rgba(255,200,50,0.3)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(255,200,50,0.05)]"
+        style={{ touchAction: 'none', background: 'rgba(15,10,0,0.6)', fontFamily: 'var(--font-mono, monospace)' }}
         onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}
         role="img" aria-label={isKO ? '세계관 영토 지도' : 'World territory map'}
       >
@@ -244,12 +245,12 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
         {/* Empty state */}
         {territories.length === 0 && (
           <g>
-            <rect x={MAP_W / 2 - 24} y={MAP_H / 2 - 50} width="48" height="48" rx="24" fill="rgba(255,255,255,0.04)" />
-            <text x={MAP_W / 2} y={MAP_H / 2 - 20} fill="rgba(255,255,255,0.15)" fontSize="22" textAnchor="middle" dominantBaseline="middle">&#x1F5FA;</text>
-            <text x={MAP_W / 2} y={MAP_H / 2 + 16} fill="rgba(255,255,255,0.3)" fontSize="10" textAnchor="middle" fontWeight="bold" letterSpacing="0.15em">
+            <rect x={MAP_W / 2 - 24} y={MAP_H / 2 - 50} width="48" height="48" rx="24" fill="rgba(255,200,50,0.05)" stroke="rgba(255,200,50,0.2)" strokeWidth="1" />
+            <text x={MAP_W / 2} y={MAP_H / 2 - 20} fill="rgba(255,200,50,0.6)" fontSize="22" textAnchor="middle" dominantBaseline="middle">&#x1F5FA;</text>
+            <text x={MAP_W / 2} y={MAP_H / 2 + 16} fill="rgba(255,200,50,0.8)" fontSize="10" textAnchor="middle" fontWeight="bold" letterSpacing="0.15em">
               {isKO ? '지도 없음' : 'NO REGIONS'}
             </text>
-            <text x={MAP_W / 2} y={MAP_H / 2 + 34} fill="rgba(255,255,255,0.15)" fontSize="9" textAnchor="middle">
+            <text x={MAP_W / 2} y={MAP_H / 2 + 34} fill="rgba(255,200,50,0.5)" fontSize="9" textAnchor="middle" fontFamily="var(--font-mono, monospace)">
               {isKO ? '"영역 추가" 버튼을 눌러 지도를 구성하세요' : 'Click "Add Region" to build your map'}
             </text>
           </g>
@@ -260,25 +261,25 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       {territories.length > 0 && (
         <div className="space-y-1">
           {territories.map(t => (
-            <div key={t.id} className="flex items-center gap-2 bg-black/20 border border-border/30 rounded-lg px-3 py-1.5">
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: t.color || civColors[t.civName] || '#6b7280' }} />
+            <div key={t.id} className="flex items-center gap-2 bg-[linear-gradient(135deg,rgba(255,200,50,0.02),rgba(0,0,0,0.3))] border border-[rgba(255,200,50,0.15)] rounded-lg px-3 py-1.5 backdrop-blur-sm transition-all hover:bg-[rgba(255,200,50,0.05)] hover:border-[rgba(255,200,50,0.3)]">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_5px_currentColor]" style={{ background: t.color || civColors[t.civName] || '#6b7280', color: t.color || civColors[t.civName] || '#6b7280' }} />
               <input
                 value={t.name}
                 onChange={e => updateTerritory(t.id, { name: e.target.value })}
-                className="flex-1 bg-transparent text-[10px] font-bold text-white outline-none"
+                className="flex-1 bg-transparent text-[10px] font-bold text-[rgba(255,220,100,0.9)] outline-none placeholder:text-[rgba(255,200,50,0.3)]"
                 maxLength={30}
               />
               <select
                 value={t.civName}
                 onChange={e => updateTerritory(t.id, { civName: e.target.value, color: civColors[e.target.value] })}
-                className="bg-black border border-border rounded px-2 py-0.5 text-[9px] outline-none"
+                className="bg-black/50 border border-[rgba(255,200,50,0.2)] rounded px-2 py-0.5 text-[9px] text-[rgba(255,200,50,0.8)] font-mono outline-none focus:border-[rgba(255,200,50,0.6)]"
               >
                 <option value="">{isKO ? '소속 없음' : 'Unassigned'}</option>
                 {civNames.map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-              <button onClick={() => removeTerritory(t.id)} className="text-text-tertiary hover:text-red-400 transition-colors">
+              <button onClick={() => removeTerritory(t.id)} className="text-[rgba(255,200,50,0.5)] hover:text-red-400 hover:drop-shadow-[0_0_5px_rgba(255,50,50,0.5)] transition-all">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>
@@ -287,11 +288,11 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       )}
 
       {/* Link legend */}
-      <div className="flex flex-wrap gap-3 text-[9px]">
+      <div className="flex flex-wrap gap-3 text-[9px] bg-[rgba(255,200,50,0.02)] border border-[rgba(255,200,50,0.1)] p-2 rounded-lg backdrop-blur-sm">
         {(Object.entries(LINK_COLORS) as [TerritoryLink['type'], string][]).map(([type, color]) => (
-          <span key={type} className="flex items-center gap-1">
-            <span className="w-4 h-0.5 inline-block rounded" style={{ background: color }} />
-            <span className="text-text-tertiary">{type}</span>
+          <span key={type} className="flex items-center gap-1.5">
+            <span className="w-4 h-0.5 inline-block rounded shadow-[0_0_5px_currentColor]" style={{ background: color, color: color }} />
+            <span className="text-[rgba(230,220,180,0.8)] font-mono">{type}</span>
           </span>
         ))}
       </div>

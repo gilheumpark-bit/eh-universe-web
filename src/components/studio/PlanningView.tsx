@@ -1,8 +1,7 @@
 
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useMemo } from 'react';
-import { StoryConfig, Genre, AppLanguage, PlatformType, PublishPlatform } from '@/lib/studio-types';
-import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
+import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
 import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Globe } from 'lucide-react';
@@ -54,13 +53,13 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
       {/* Current tags */}
       <div className="flex flex-wrap gap-1.5">
         {subGenres.map(tag => (
-          <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[11px] font-bold text-blue-400">
+          <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-[rgba(255,200,50,0.1)] border border-[rgba(255,200,50,0.2)] rounded-full text-[11px] font-bold text-[rgba(255,220,100,0.9)]">
             #{tag}
-            <button onClick={() => onChange(subGenres.filter(t => t !== tag))} className="text-blue-400/50 hover:text-blue-300 text-xs">&times;</button>
+            <button onClick={() => onChange(subGenres.filter(t => t !== tag))} className="text-[rgba(255,200,50,0.5)] hover:text-[rgba(255,200,50,0.9)] text-xs">&times;</button>
           </span>
         ))}
         {subGenres.length === 0 && (
-          <span className="text-[11px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 프롬프트에 반영됩니다' : 'Tags will be injected into AI prompts'}</span>
+          <span className="text-[11px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into AI prompts'}</span>
         )}
       </div>
       {/* Input */}
@@ -82,7 +81,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
             <button
               key={s}
               onClick={() => addTag(s)}
-              className="px-2 py-0.5 text-[10px] font-bold text-text-tertiary bg-bg-secondary border border-border rounded-full hover:border-blue-500/30 hover:text-blue-400 transition-colors"
+              className="px-2 py-0.5 text-[10px] font-bold text-text-tertiary bg-bg-secondary border border-border rounded-full hover:border-[rgba(255,200,50,0.3)] hover:text-[rgba(255,200,50,0.9)] transition-colors"
             >
               +{s}
             </button>
@@ -217,11 +216,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             ))}
           </select>
           <div className="relative">
-            <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-95">
+            <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-[rgba(255,200,50,0.1)] text-[rgba(255,200,50,0.9)] border border-[rgba(255,200,50,0.4)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[rgba(255,200,50,0.2)] transition-all active:scale-95 shadow-[0_0_10px_rgba(255,200,50,0.1)]">
               <Shuffle className="w-3.5 h-3.5" /> {tl('planningExtra.preset')}
             </button>
             {showPresetMenu && (
-              <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
+              <div className="absolute top-full mt-1 right-0 bg-[#0a0a0c] border border-[rgba(255,200,50,0.2)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_15px_rgba(255,200,50,0.1)] z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
                 {(AUTO_PRESETS[autoGenGenre] || []).map((preset, i) => {
                   const data = isKO ? preset.ko : preset.en;
                   return (
@@ -233,8 +232,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                       }));
                       setShowPresetMenu(false);
                     }}
-                      className="w-full text-left px-4 py-3 text-[11px] text-text-secondary hover:bg-blue-600/20 hover:text-white transition-colors border-b border-border last:border-0">
-                      <div className="font-bold text-zinc-200">{data.title}</div>
+                      className="w-full text-left px-4 py-3 text-[11px] text-[rgba(255,200,50,0.6)] hover:bg-[rgba(255,200,50,0.1)] hover:text-[rgba(255,220,100,0.9)] transition-colors border-b border-[rgba(255,200,50,0.1)] last:border-0">
+                      <div className="font-bold text-[rgba(255,255,255,0.9)]">{data.title}</div>
                       <div className="text-[9px] mt-0.5 opacity-70">{data.pov} · {data.emotion}</div>
                     </button>
                   );
@@ -246,7 +245,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             )}
           </div>
           <button onClick={handleAIGenerate} disabled={aiGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-[rgba(255,200,50,0.6)] shadow-[0_5px_15px_rgba(255,200,50,0.2)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-50">
             {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
             {aiGenerating ? tl('planningExtra.aiGenerating') : tl('planningExtra.aiGenerate')}
           </button>
@@ -258,7 +257,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.projectTitle}</label>
             <input
-              className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all"
+              className="w-full bg-black/60 border border-[rgba(255,200,50,0.15)] rounded-xl p-4 text-sm font-bold focus:border-[rgba(255,200,50,0.6)] focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none transition-all"
               aria-label={t.projectTitle}
               maxLength={200}
               value={config.title}
@@ -268,7 +267,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.primaryGenre}</label>
             <select
-              className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none cursor-pointer"
+              className="w-full bg-black/60 border border-[rgba(255,200,50,0.15)] rounded-xl p-4 text-sm font-bold focus:border-[rgba(255,200,50,0.6)] focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none cursor-pointer"
               aria-label={t.primaryGenre}
               value={config.genre}
               onChange={e => setConfig({ ...config, genre: e.target.value as Genre })}
@@ -290,8 +289,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border ${
               advancedMode
-                ? 'border-blue-500/30 bg-blue-600/10 text-blue-400'
-                : 'border-border bg-bg-secondary text-text-tertiary hover:text-text-secondary'
+                ? 'border-[rgba(255,200,50,0.3)] bg-[rgba(255,200,50,0.1)] text-[rgba(255,220,100,0.9)] shadow-[0_0_10px_rgba(255,200,50,0.1)]'
+                : 'border-[rgba(255,200,50,0.1)] bg-bg-secondary text-text-tertiary hover:border-[rgba(255,200,50,0.3)] hover:text-[rgba(255,200,50,0.8)]'
             }`}
           >
             {advancedMode
@@ -345,8 +344,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 onClick={() => setConfig({ ...config, platform: PlatformType.MOBILE })}
                 className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                   config.platform === PlatformType.MOBILE
-                    ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
-                    : 'bg-black border-border text-text-tertiary hover:text-text-secondary'
+                    ? 'bg-[rgba(255,200,50,0.1)] border-[rgba(255,200,50,0.5)] text-[rgba(255,220,100,0.9)] shadow-[inset_0_0_10px_rgba(255,200,50,0.1)]'
+                    : 'bg-black border-[rgba(255,200,50,0.1)] text-text-tertiary hover:text-text-secondary'
                 }`}
               >
                 <Smartphone className="w-4 h-4" /> {te.mobile}
@@ -355,8 +354,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                 onClick={() => setConfig({ ...config, platform: PlatformType.WEB })}
                 className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                   config.platform === PlatformType.WEB
-                    ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
-                    : 'bg-black border-border text-text-tertiary hover:text-text-secondary'
+                    ? 'bg-[rgba(255,200,50,0.1)] border-[rgba(255,200,50,0.5)] text-[rgba(255,220,100,0.9)] shadow-[inset_0_0_10px_rgba(255,200,50,0.1)]'
+                    : 'bg-black border-[rgba(255,200,50,0.1)] text-text-tertiary hover:text-text-secondary'
                 }`}
               >
                 <Monitor className="w-4 h-4" /> {te.web}
@@ -393,8 +392,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
       )}
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-        <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-white text-black rounded-2xl font-black hover:scale-105 active:scale-95 transition-all shadow-2xl">
-          <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+        <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-[linear-gradient(45deg,rgba(180,120,20,0.8),rgba(255,200,50,1))] text-white border border-[rgba(255,220,100,0.6)] rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,200,50,0.3)]">
+          <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
           {startLabel ?? t.commence}
         </button>
         <button

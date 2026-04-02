@@ -271,10 +271,10 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
     <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-10 space-y-8 animate-in fade-in duration-700 pb-32">
       {/* Header */}
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
+        <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-[rgba(255,220,100,0.95)] drop-shadow-[0_0_10px_rgba(255,200,50,0.3)]">
           {t('worldAnalysis.title')}
         </h2>
-        <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">
+        <p className="text-[rgba(255,200,50,0.6)] text-[10px] font-bold tracking-widest uppercase">
           WORLDBUILDING REVERSE ENGINEER
         </p>
       </div>
@@ -282,39 +282,42 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       {/* Input */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+          <label className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,200,50,0.3)]">
             {t('worldAnalysis.inputLabel')}
           </label>
           {config && (
             <button
               onClick={loadFromConfig}
-              className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-xs font-bold text-accent-purple hover:bg-accent-purple/20 transition-colors font-mono"
+              className="px-3 py-1.5 bg-[linear-gradient(45deg,rgba(255,200,50,0.1),transparent)] border border-[rgba(255,200,50,0.3)] rounded-lg text-xs font-bold text-[rgba(255,220,100,0.9)] hover:bg-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:shadow-[0_0_15px_rgba(255,200,50,0.2)] transition-all font-mono"
             >
               📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
             </button>
           )}
         </div>
-        <textarea
-          className="w-full bg-black border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed"
-          placeholder={t('worldAnalysis.inputPlaceholder')}
-          value={inputText}
-          onChange={e => setInputText(e.target.value)}
-        />
+        <div className="relative group">
+          <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50 z-10 transition-opacity group-focus-within:opacity-100"></div>
+          <textarea
+            className="w-full bg-[linear-gradient(to_bottom,rgba(255,200,50,0.02),rgba(0,0,0,0.4))] border border-[rgba(255,200,50,0.2)] rounded-2xl p-6 text-sm h-64 resize-none focus:border-[rgba(255,200,50,0.6)] focus:shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_20px_rgba(255,200,50,0.05)] outline-none font-serif leading-relaxed text-[rgba(240,230,200,0.9)] placeholder-[rgba(255,200,50,0.3)] relative z-20 backdrop-blur-md transition-all"
+            placeholder={t('worldAnalysis.inputPlaceholder')}
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+          />
+        </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-tertiary font-mono">
+          <span className="text-[10px] text-[rgba(255,200,50,0.5)] font-mono tracking-wider">
             {inputText.length.toLocaleString()}{t('worldAnalysis.chars')}
           </span>
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-bg-tertiary text-text-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-bg-tertiary transition-all">
+                className="px-4 py-2 bg-[rgba(255,100,50,0.1)] border border-[rgba(255,100,50,0.3)] text-[rgba(255,100,50,0.9)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[rgba(255,100,50,0.2)] transition-all">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}
             <button
               onClick={handleAnalyze}
               disabled={analyzing || !inputText.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-accent-purple text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all active:scale-95 disabled:opacity-40"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] transition-all active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_15px_rgba(255,200,50,0.2)]"
             >
               {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               {analyzing ? t('worldAnalysis.analyzing') : t('worldAnalysis.analyze')}
@@ -325,7 +328,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold">
+        <div className="p-4 bg-[rgba(255,50,50,0.1)] border border-[rgba(255,50,50,0.3)] rounded-xl text-[rgba(255,100,100,0.9)] text-xs font-bold drop-shadow-[0_0_5px_rgba(255,50,50,0.2)]">
           {error}
         </div>
       )}
@@ -334,11 +337,12 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       {result && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+            <h3 className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[rgba(255,200,50,0.8)] shadow-[0_0_8px_rgba(255,200,50,0.8)] animate-pulse" />
               {t('worldAnalysis.results')}
             </h3>
             <button onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[9px] font-bold text-text-secondary hover:text-white transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(255,200,50,0.05)] border border-[rgba(255,200,50,0.2)] rounded-lg text-[9px] font-bold text-[rgba(255,200,50,0.7)] hover:text-[rgba(255,220,100,0.95)] hover:bg-[rgba(255,200,50,0.1)] transition-colors">
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
               {copied ? t('worldAnalysis.copied') : t('worldAnalysis.copyAll')}
             </button>
@@ -350,22 +354,41 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
               const label = SECTION_LABELS[language][key] ?? key;
               const value = result[key];
               const isWarning = key === 'inconsistencies';
+              
+              // Stellar Atlas Theme Card Variants
+              let cardBg = 'bg-[linear-gradient(135deg,rgba(255,200,50,0.05),rgba(0,0,0,0.4))]';
+              let cardBorder = 'border-[rgba(255,200,50,0.15)]';
+              let cardShadow = 'hover:shadow-[0_10px_30px_rgba(255,200,50,0.1),inset_0_0_15px_rgba(255,200,50,0.05)]';
+              let iconColor = 'text-[rgba(255,200,50,0.8)]';
+              let titleColor = 'text-[rgba(255,220,100,0.9)]';
+
+              if (key === 'summary') {
+                cardBg = 'bg-[linear-gradient(135deg,rgba(255,200,50,0.1),rgba(255,150,0,0.05))]';
+                cardBorder = 'border-[rgba(255,200,50,0.4)]';
+                cardShadow = 'shadow-[0_10px_30px_rgba(255,200,50,0.1),inset_0_0_20px_rgba(255,200,50,0.05)]';
+                iconColor = 'text-[rgba(255,220,100,1)] drop-shadow-[0_0_8px_rgba(255,200,50,0.8)]';
+                titleColor = 'text-[rgba(255,220,100,1)] drop-shadow-[0_0_5px_rgba(255,200,50,0.5)]';
+              } else if (isWarning) {
+                cardBg = 'bg-[linear-gradient(135deg,rgba(255,50,50,0.05),rgba(0,0,0,0.4))]';
+                cardBorder = 'border-[rgba(255,50,50,0.3)]';
+                iconColor = 'text-[rgba(255,100,100,0.9)] drop-shadow-[0_0_5px_rgba(255,50,50,0.5)]';
+                titleColor = 'text-[rgba(255,100,100,0.9)]';
+                cardShadow = 'hover:shadow-[0_10px_30px_rgba(255,50,50,0.1),inset_0_0_15px_rgba(255,50,50,0.05)]';
+              }
 
               return (
                 <div key={key}
-                  className={`p-5 rounded-2xl border space-y-2 ${
-                    key === 'summary'
-                      ? 'md:col-span-2 bg-accent-purple/5 border-accent-purple/20'
-                      : isWarning
-                        ? 'bg-amber-500/5 border-amber-500/20'
-                        : 'bg-bg-secondary/30 border-border'
-                  }`}
+                  className={`relative p-5 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${cardBg} ${cardBorder} ${cardShadow} ${key === 'summary' ? 'md:col-span-2' : ''} group overflow-hidden`}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={`w-4 h-4 ${isWarning ? 'text-amber-400' : key === 'summary' ? 'text-accent-purple' : 'text-blue-400'}`} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">{label}</span>
+                  <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[20px_20px] mix-blend-screen opacity-10"></div>
+                  <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                    <Icon className={`w-12 h-12 ${iconColor} opacity-20`} />
                   </div>
-                  <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{value}</p>
+                  <div className="relative z-10 flex items-center gap-2 mb-3">
+                    <Icon className={`w-4 h-4 ${iconColor}`} />
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${titleColor}`}>{label}</span>
+                  </div>
+                  <p className="relative z-10 text-sm leading-relaxed whitespace-pre-wrap text-[rgba(230,220,200,0.9)] font-serif">{value}</p>
                 </div>
               );
             })}
