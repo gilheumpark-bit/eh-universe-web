@@ -7,7 +7,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
-import { getTranslatorStudioHref, STYLE_STUDIO_PATH } from "@/lib/studio-entry-links";
+import { getTranslatorStudioHref, STYLE_STUDIO_PATH, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
 
 type NavKey = "home" | "network" | "studio" | "style" | "translate" | "code";
 
@@ -35,7 +35,10 @@ function usePrimaryNavActive(
         return pathname.startsWith(STYLE_STUDIO_PATH);
       case "translate":
         if (item.external) return false;
-        return pathname.startsWith("/studio") && tab === "manuscript";
+        return (
+          pathname.startsWith(TRANSLATION_STUDIO_PATH) ||
+          (pathname.startsWith("/studio") && tab === "manuscript")
+        );
       case "code":
         return pathname.startsWith("/code-studio");
       default:
