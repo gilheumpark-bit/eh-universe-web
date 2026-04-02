@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { TranslatorStudioBodyMount } from "./TranslatorStudioBodyMount";
 import "./translator-studio.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 
 export default function TranslationStudioLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`translation-studio-root ${inter.variable} ${manrope.variable}`}>{children}</div>
+    <div className={`translation-studio-root ${inter.variable} ${manrope.variable}`}>
+      <TranslatorStudioBodyMount />
+      {children}
+    </div>
   );
 }

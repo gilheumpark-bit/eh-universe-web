@@ -24,7 +24,7 @@ export function MobileWorkspaceDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="워크스페이스 패널">
+    <div className="fixed inset-0 z-[100] lg:hidden" role="dialog" aria-modal="true" aria-label="워크스페이스 패널">
       <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-label="닫기" onClick={onClose} />
       <div
         className={`theme-${backgroundMode} absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-hidden rounded-t-3xl border border-white/10 bg-sidebar shadow-2xl flex flex-col`}

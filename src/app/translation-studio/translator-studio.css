@@ -1,5 +1,11 @@
 /* 번역 스튜디오 전용 — 루트 tailwind와 중복 import 하지 않음 */
 
+/* TranslatorStudioBodyMount: 전역 body 노이즈 레이어 비활성 (globals z~90 vs 고정 헤더 충돌 방지) */
+body[data-eh-translator-studio='1']::before,
+body[data-eh-translator-studio='1']::after {
+  content: none !important;
+}
+
 /* 고정 탭 바: 본문 스크롤 레이어와 겹칠 때 클릭이 본문으로 새지 않도록 */
 .workspace-tab-dock {
   pointer-events: auto;

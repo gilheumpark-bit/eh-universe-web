@@ -1313,7 +1313,8 @@ export default function TranslatorStudioApp() {
 
   return (
     <div className={`min-h-screen min-w-0 theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
-      <header className="fixed left-0 right-0 top-0 z-50 flex h-20 items-center justify-between px-4 lg:px-6 glass-panel border-t-0 border-x-0 rounded-none">
+      {/* globals.css body::before/::after z-[89–90] 위에 두어 노이즈 레이어 아래로 클릭이 새지 않게 함. AppDialog z-[100]보다는 낮게 유지 */}
+      <header className="pointer-events-auto relative z-[95] flex h-20 shrink-0 items-center justify-between border-x-0 border-t-0 glass-panel px-4 lg:px-6 fixed left-0 right-0 top-0 rounded-none">
         <div className="flex min-w-0 items-center gap-4">
           {!isZenMode && (
             <button
@@ -1435,7 +1436,7 @@ export default function TranslatorStudioApp() {
       </header>
 
       {!isZenMode && (
-        <div className="workspace-tab-dock fixed left-0 right-0 top-20 z-[45] border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+        <div className="workspace-tab-dock pointer-events-auto relative z-[94] fixed left-0 right-0 top-20 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
           <WorkspaceTabBar active={workspaceTab} onChange={handleWorkspaceTabChange} langKo={langKo} />
         </div>
       )}
@@ -1485,7 +1486,7 @@ export default function TranslatorStudioApp() {
       />
 
       <main
-        className="relative z-0 flex min-h-0 min-w-0 w-full overflow-hidden"
+        className="relative isolate z-0 flex min-h-0 min-w-0 w-full overflow-hidden"
         style={
           isZenMode
             ? { paddingTop: '5rem', height: 'calc(100vh - 5rem)' }
@@ -1498,7 +1499,7 @@ export default function TranslatorStudioApp() {
         {!isZenMode && (
           <aside
             ref={chapterAsideRef}
-            className={`hidden w-64 shrink-0 overflow-y-auto border-r border-gray-900/50 bg-sidebar p-4 lg:block glass-panel border-y-0 border-l-0 rounded-none transition-shadow ${
+            className={`pointer-events-auto relative z-30 hidden w-64 shrink-0 overflow-y-auto border-r border-gray-900/50 bg-sidebar p-4 lg:block glass-panel border-y-0 border-l-0 rounded-none transition-shadow ${
               workspaceTab === 'chapters' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
             }`}
           >
@@ -1519,7 +1520,7 @@ export default function TranslatorStudioApp() {
 
         {/* Center: Editor Area — min-w-0: flex 자식 폭 붕괴(한 글자 세로줄) 방지 */}
         <section
-          className={`flex-1 min-h-0 min-w-0 overflow-y-auto px-6 pb-20 transition-all ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
+          className={`relative z-10 flex min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-20 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
         >
           {!isZenMode && workspaceTab === 'network' && (
             <div ref={networkSectionRef} className="mb-6 min-w-0">
@@ -1910,7 +1911,7 @@ export default function TranslatorStudioApp() {
         {!isZenMode && (
           <aside
             ref={contextAsideRef}
-            className={`hidden w-80 shrink-0 overflow-y-auto border-y-0 border-r-0 rounded-none glass-panel p-6 lg:block space-y-10 bg-sidebar transition-shadow ${
+            className={`pointer-events-auto relative z-30 hidden w-80 shrink-0 overflow-y-auto border-y-0 border-r-0 rounded-none glass-panel p-6 lg:block space-y-10 bg-sidebar transition-shadow ${
               workspaceTab === 'context' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
             }`}
           >
@@ -1936,7 +1937,7 @@ export default function TranslatorStudioApp() {
       </main>
 
       {backResult && (
-        <div className="fixed bottom-10 right-10 z-50 w-96 glass-panel p-6 animate-in fade-in slide-in-from-bottom-5 max-h-[70vh] flex flex-col">
+        <div className="fixed bottom-10 right-10 z-[96] w-96 glass-panel p-6 animate-in fade-in slide-in-from-bottom-5 max-h-[70vh] flex flex-col">
           <h4 className="theme-kicker mb-2" style={{ color: '#10b981' }}>
             Integrity Check
           </h4>
