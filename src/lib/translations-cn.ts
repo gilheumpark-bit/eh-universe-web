@@ -237,7 +237,9 @@ const translations = {
     "toggleThemeLabel": "切换主题",
     "firstStoryPrompt": "准备好写你的第一个故事了吗？",
     "setupManually": "✍️ 手动设置",
-    "workflowOverview": "世界观设计 → 角色 → 演出 → AI写作 → EPUB导出"
+    "workflowOverview": "世界观设计 → 角色 → 演出 → AI写作 → EPUB导出",
+    "askAnything": "有什么可以帮您的吗？",
+    "clearChat": "清空聊天"
   },
   "shortcuts": {
     "worldDesign": "世界观设计",
@@ -283,7 +285,8 @@ const translations = {
     "preciseInstruction": "🎯 精密指令（配置的约束条件将自动应用）",
     "advancedGuide": "※ 场景目标·叙述约束·参考范围·固定规则将自动组合到提示中。",
     "apiKeyPlaceholder": "🔒 AI生成需要API密钥。请使用手动编辑模式(✏️)。",
-    "openCanvas": "启动画布"
+    "openCanvas": "启动画布",
+    "writingAiAssistant": "AI 写作助手"
   },
   "canvas": {
     "skeleton": "骨架",

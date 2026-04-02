@@ -1823,86 +1823,91 @@ export default function TranslatorStudioApp() {
               })}
             </div>
           ) : (
-            <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="min-w-0 space-y-3">
-                <div className="flex items-center gap-3 mb-2">
-                  <select value={from} onChange={(e) => setFrom(e.target.value)} className="theme-pill rounded-full px-3 py-2 text-xs font-bold outline-none">
+            <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <div className="flex min-w-0 flex-col space-y-3">
+                <div className="flex items-center gap-2 mb-1 px-1">
+                  <select value={from} onChange={(e) => setFrom(e.target.value)} className="theme-pill rounded-xl px-4 py-2 text-[11px] font-semibold tracking-wide outline-none shadow-sm transition-all hover:brightness-105 cursor-pointer">
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
-                  <span className="theme-text-secondary">→</span>
-                  <select value={to} onChange={(e) => setTo(e.target.value)} className="theme-pill rounded-full px-3 py-2 text-xs font-bold outline-none" style={{ color: accentTextColor }}>
+                  <span className="theme-text-secondary text-[10px] font-bold px-1 tracking-widest">→</span>
+                  <select value={to} onChange={(e) => setTo(e.target.value)} className="theme-pill rounded-xl px-4 py-2 text-[11px] font-semibold tracking-wide outline-none shadow-sm transition-all hover:brightness-105 cursor-pointer" style={{ color: accentTextColor }}>
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
                 </div>
-                <div className="relative min-w-0">
+                <div className="relative min-w-0 flex-1 group">
                   <textarea value={source} onChange={(e) => setSource(e.target.value)} placeholder="원고 입력..."
-                    className="editor-pane h-[65vh] w-full min-w-0 glass-panel rounded-4xl p-8 text-sm leading-loose font-headline resize-none outline-none transition-all scrollbar-hide focus:ring-2 focus:ring-blue-500/20" />
-                  <div className="theme-text-secondary absolute bottom-4 right-6 text-[9px] font-mono">{source.length} chars</div>
+                    className="editor-pane h-[60vh] w-full min-w-0 glass-panel rounded-3xl p-6 text-sm lg:text-[15px] leading-loose font-headline resize-none outline-none transition-all scrollbar-hide focus:ring-2 focus:ring-blue-500/30 group-hover:shadow-md" />
+                  <div className="theme-field absolute bottom-4 right-6 rounded-md px-2 py-1 text-[9px] font-mono font-medium shadow-sm opacity-60 transition-opacity group-hover:opacity-100">{source.length} chars</div>
                 </div>
               </div>
-              <div className="min-w-0 space-y-3">
-                <div className="h-7 mb-2 flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentTextColor }}>Result Draft</span>
+              <div className="flex min-w-0 flex-col space-y-3">
+                <div className="flex h-8 items-center justify-between px-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: accentTextColor }}>
+                    Result Draft
+                    {result.length > 0 && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>}
+                  </span>
                 </div>
-                <div className="relative min-w-0">
-                  <textarea value={result} readOnly className="result-pane h-[65vh] w-full min-w-0 glass-panel rounded-4xl p-8 text-sm leading-loose font-headline resize-none outline-none transition-all scrollbar-hide" />
-                  <div className="theme-text-secondary absolute bottom-4 right-6 text-[9px] font-mono">{result.length} chars</div>
+                <div className="relative min-w-0 flex-1 group">
+                  <textarea value={result} readOnly className="result-pane h-[60vh] w-full min-w-0 glass-panel rounded-3xl p-6 text-sm lg:text-[15px] leading-loose font-headline resize-none outline-none transition-all scrollbar-hide group-hover:shadow-md focus:ring-2 focus:ring-emerald-500/30" />
+                  <div className="theme-field absolute bottom-4 right-6 rounded-md px-2 py-1 text-[9px] font-mono font-medium shadow-sm opacity-60 transition-opacity group-hover:opacity-100">{result.length} chars</div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Action Bar */}
-          <div className="mt-8 max-w-4xl mx-auto space-y-3">
-            <div className="flex items-center gap-2 p-1 glass-panel rounded-2xl">
-              <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📖 NOVEL WORKSPACE</button>
-              <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📄 GENERAL ASSIST</button>
+          <div className="mt-8 max-w-4xl mx-auto space-y-4">
+            <div className="flex items-center gap-2 p-1.5 glass-panel rounded-2xl shadow-sm">
+              <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📖 NOVEL WORKSPACE</button>
+              <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📄 GENERAL ASSIST</button>
             </div>
 
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className="theme-pill px-4 py-3 rounded-xl text-[10px] font-bold">🌐 웹 회차 가져오기</button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className={`shrink-0 rounded-2xl px-5 py-3.5 text-[11px] font-bold transition-all duration-300 shadow-sm ${showUrlImport ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-black' : 'theme-pill hover:brightness-105'}`}>🌐 웹 회차 불러오기</button>
               {showUrlImport && (
-                <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
-                  <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 연재 페이지 URL" className="theme-field flex-1 rounded-xl px-4 py-2 text-xs outline-none" />
-                  <button type="button" onClick={importUrl} disabled={loading} className="px-6 py-2 bg-emerald-600 rounded-xl text-[10px] font-bold text-white">FETCH</button>
+                <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-4 transition-all duration-300">
+                  <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 웹소설 URL 입력" className="theme-field flex-1 rounded-2xl px-5 py-3.5 text-xs outline-none shadow-inner border border-transparent focus:border-blue-500/30 transition-colors" />
+                  <button type="button" onClick={importUrl} disabled={loading} className="px-8 py-3.5 bg-linear-to-r from-slate-800 to-slate-900 dark:from-slate-200 dark:to-slate-100 rounded-2xl text-[11px] font-bold text-white dark:text-slate-900 shadow-lg hover:shadow-xl transition-all disabled:opacity-50">가져오기</button>
                 </div>
               )}
             </div>
-            {showUrlImport && (
-              <p className="px-1 text-[11px] leading-relaxed theme-text-secondary">
-                범용 웹 번역이 아니라 공개 웹소설/연재 회차의 본문을 가져오는 보조 기능으로 두었습니다.
-              </p>
-            )}
 
-            <div className="flex gap-4">
-              <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill flex-1 rounded-2xl py-5 text-[11px] font-black tracking-widest transition-all hover:brightness-105">FAST DRAFT</button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill sm:w-1/3 rounded-[20px] py-5 text-[12px] font-black tracking-widest transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 shadow-sm disabled:opacity-40 disabled:hover:translate-y-0">FAST DRAFT</button>
               <button type="button" onClick={() => void deepTranslate()} disabled={loading || !source.trim()} 
-                 className={`flex-2 py-5 rounded-2xl text-[11px] font-black tracking-widest text-white shadow-2xl transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-purple-600 to-indigo-600' : 'bg-linear-to-r from-emerald-600 to-teal-600'}`}>
+                 className={`flex-1 py-5 rounded-[20px] text-[12px] font-black tracking-widest text-white shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl disabled:opacity-40 disabled:hover:translate-y-0 ${translationMode === 'novel' ? 'bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-indigo-500/25' : 'bg-linear-to-r from-emerald-500 via-teal-600 to-cyan-600 shadow-teal-500/25'}`}>
                  {statusMsg || (translationMode === 'novel' ? 'DEEP NOVEL PIPELINE' : 'ACCURATE GENERAL')}
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => void runCompareB()} disabled={!source.trim() || loading} className="theme-pill rounded-xl px-4 py-3 text-[10px] font-bold transition-all hover:brightness-105 disabled:opacity-40">
+            <div className="glass-panel p-2 mt-4 rounded-2xl flex flex-nowrap overflow-x-auto scrollbar-hide gap-2 justify-start md:justify-center px-4 snap-x relative after:content-[''] after:absolute after:right-0 after:top-0 after:w-8 after:h-full after:bg-gradient-to-l after:from-white/50 dark:after:from-slate-950/50 after:to-transparent after:pointer-events-none md:after:hidden">
+              <button type="button" onClick={() => void runCompareB()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
                 비교 B안
               </button>
-              <button type="button" onClick={() => void runChunkedTranslate()} disabled={!source.trim() || loading} className="theme-pill rounded-xl px-4 py-3 text-[10px] font-bold transition-all hover:brightness-105 disabled:opacity-40">
+              <button type="button" onClick={() => void runChunkedTranslate()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
                 분할 번역
               </button>
-              <button type="button" onClick={analyzeStyle} disabled={!source.trim()} className="theme-pill rounded-xl px-4 py-3 text-[10px] font-bold transition-all hover:brightness-105 disabled:opacity-40">문체 분석</button>
-              <button type="button" onClick={() => void refineResult()} disabled={!result.trim() || loading} className="theme-pill rounded-xl px-4 py-3 text-[10px] font-bold transition-all hover:brightness-105 disabled:opacity-40">최종 다듬기</button>
-              <button type="button" onClick={() => void backTranslate()} disabled={!result.trim() || loading} className="theme-pill rounded-xl px-4 py-3 text-[10px] font-bold transition-all hover:brightness-105 disabled:opacity-40">역검수</button>
-              <button type="button" onClick={() => setIsCatMode((previous) => !previous)} className={`rounded-xl px-4 py-3 text-[10px] font-bold transition-all ${isCatMode ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-pill hover:brightness-105'}`}>
-                {isCatMode ? '통합 보기' : '라인 비교'}
+              <button type="button" onClick={analyzeStyle} disabled={!source.trim()} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
+                문체 분석
+              </button>
+              <button type="button" onClick={() => void refineResult()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
+                최종 다듬기
+              </button>
+              <button type="button" onClick={() => void backTranslate()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
+                역검수
+              </button>
+              <button type="button" onClick={() => setIsCatMode((previous) => !previous)} className={`snap-start shrink-0 rounded-xl px-5 py-3 text-[11px] font-bold transition-all lg:ml-auto ${isCatMode ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/30' : 'theme-pill hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                {isCatMode ? '통합 보기 중' : '라인 비교'}
               </button>
             </div>
+
             {compareResultB.trim() ? (
-              <div className="mt-4 rounded-3xl glass-panel p-4">
-                <div className="theme-kicker mb-2">비교 B안 (별도 엔진)</div>
-                <textarea readOnly value={compareResultB} className="result-pane theme-field w-full min-h-[120px] rounded-xl p-3 text-xs" />
-                <button type="button" className="mt-2 text-[10px] theme-text-secondary" onClick={() => setCompareResultB('')}>
-                  B안 지우기
-                </button>
+              <div className="mt-4 rounded-3xl glass-panel p-5 animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="theme-kicker text-indigo-500 dark:text-indigo-400">비교 B안 (별도 엔진)</div>
+                  <button type="button" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={() => setCompareResultB('')}>닫기 ✕</button>
+                </div>
+                <textarea readOnly value={compareResultB} className="result-pane theme-field w-full min-h-[120px] rounded-2xl p-4 text-xs lg:text-sm leading-relaxed outline-none focus:ring-1 focus:ring-indigo-500/30" />
               </div>
             ) : null}
           </div>

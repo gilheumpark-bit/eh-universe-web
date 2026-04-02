@@ -1,5 +1,5 @@
 // Auto-generated
-export default {
+const translations = {
   "sidebar": {
     "newProject": "Start New Novel",
     "settings": "Settings",
@@ -237,7 +237,9 @@ export default {
     "toggleThemeLabel": "Toggle theme",
     "firstStoryPrompt": "Ready to write your first story?",
     "setupManually": "✍️ Set Up Manually",
-    "workflowOverview": "World Design → Characters → Direction → AI Writing → EPUB Export"
+    "workflowOverview": "World Design → Characters → Direction → AI Writing → EPUB Export",
+    "askAnything": "Ask me anything...",
+    "clearChat": "Clear Chat"
   },
   "shortcuts": {
     "worldDesign": "World Design",
@@ -283,7 +285,8 @@ export default {
     "preciseInstruction": "🎯 Precise instruction (configured constraints auto-applied)",
     "advancedGuide": "※ Scene goals, narrative constraints, references, and locks are auto-combined into the prompt.",
     "apiKeyPlaceholder": "🔒 API key required for AI generation. Use Write (✏️) mode instead.",
-    "openCanvas": "Open Canvas"
+    "openCanvas": "Open Canvas",
+    "writingAiAssistant": "Writing AI Assistant"
   },
   "canvas": {
     "skeleton": "Skeleton",
@@ -1258,3 +1261,5 @@ export default {
     "consoleTooltip": "Browser console — simulated environment"
   }
 };
+
+export default translations;

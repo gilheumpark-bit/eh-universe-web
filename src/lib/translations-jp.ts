@@ -1,5 +1,5 @@
 // Auto-generated
-export default {
+const translations = {
   "sidebar": {
     "newProject": "新しい小説を開始",
     "settings": "設定",
@@ -237,7 +237,9 @@ export default {
     "toggleThemeLabel": "テーマ切替",
     "firstStoryPrompt": "最初の小説を始めましょう！",
     "setupManually": "✍️ 手動で設定",
-    "workflowOverview": "世界観設計 → キャラクター → 演出 → AI執筆 → EPUB出力"
+    "workflowOverview": "世界観設計 → キャラクター → 演出 → AI執筆 → EPUB出力",
+    "askAnything": "何でも聞いてください...",
+    "clearChat": "チャットをクリア"
   },
   "shortcuts": {
     "worldDesign": "世界観設計",
@@ -283,7 +285,8 @@ export default {
     "preciseInstruction": "🎯 精密指示（設定された制約条件が自動反映されます）",
     "advancedGuide": "※ シーン目標・記述制約・参照範囲・固定ルールがプロンプトに自動結合されます。",
     "apiKeyPlaceholder": "🔒 AI生成にはAPIキーが必要です。手動編集モード(✏️)をご利用ください。",
-    "openCanvas": "キャンバス起動"
+    "openCanvas": "キャンバス起動",
+    "writingAiAssistant": "執筆AIアシスタント"
   },
   "canvas": {
     "skeleton": "骨格",
@@ -1258,3 +1261,5 @@ export default {
     "consoleTooltip": "ブラウザコンソール — シミュレーション環境"
   }
 };
+
+export default translations;

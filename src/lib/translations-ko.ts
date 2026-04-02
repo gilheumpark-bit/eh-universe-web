@@ -1,5 +1,5 @@
 // Auto-generated
-export default {
+const translations = {
   "sidebar": {
     "newProject": "새로운 소설 시작",
     "settings": "설정 및 계정",
@@ -237,7 +237,9 @@ export default {
     "toggleThemeLabel": "테마 전환",
     "firstStoryPrompt": "첫 소설을 시작해 볼까요?",
     "setupManually": "✍️ 직접 설정하고 시작",
-    "workflowOverview": "세계관 설계 → 캐릭터 → 연출 → AI 집필 → EPUB 내보내기"
+    "workflowOverview": "세계관 설계 → 캐릭터 → 연출 → AI 집필 → EPUB 내보내기",
+    "askAnything": "무엇이든 물어보세요...",
+    "clearChat": "대화 지우기"
   },
   "shortcuts": {
     "worldDesign": "세계관 설계",
@@ -283,7 +285,8 @@ export default {
     "preciseInstruction": "🎯 정밀 지시 (설정된 제약 조건이 자동 반영됩니다)",
     "advancedGuide": "※ 장면 목표·서술 제약·참조 범위·고정 규칙이 프롬프트에 자동 결합됩니다. \"고급 집필 = 작가가 더 세밀하게 제어하는 모드\"",
     "apiKeyPlaceholder": "🔒 자동 생성에는 API 키가 필요합니다. 글쓰기 모드(✏️)를 이용하세요.",
-    "openCanvas": "캔버스 실행"
+    "openCanvas": "캔버스 실행",
+    "writingAiAssistant": "집필 AI 어시스턴트"
   },
   "canvas": {
     "skeleton": "뼈대",
@@ -1258,3 +1261,5 @@ export default {
     "consoleTooltip": "브라우저 콘솔 — 시뮬레이션 환경"
   }
 };
+
+export default translations;
