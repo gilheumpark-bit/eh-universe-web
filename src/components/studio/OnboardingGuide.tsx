@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Sparkles, Pen, BookOpen, Sword, RotateCcw } from "lucide-react";
 import type { AppLanguage } from "@/lib/studio-types";
-import { createT } from "@/lib/i18n";
+
 import { DEMO_PRESETS } from "@/lib/demo-presets";
 
 // ============================================================
@@ -128,7 +128,7 @@ export default function OnboardingGuide({
       onNavigate("world");
     }
     onComplete();
-  }, [onComplete, onQuickStart, onNavigate, onDemo]);
+  }, [onComplete, onQuickStart, onNavigate]);
 
   const handleDemoSelect = useCallback((presetId: string) => {
     markOnboardingDone();
@@ -150,7 +150,7 @@ export default function OnboardingGuide({
   return (
     <div className={`mx-auto w-full max-w-2xl transition-all duration-700 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
       {/* Premium Glass Container */}
-      <div className="relative rounded-[2rem] border border-white/[0.08] bg-gradient-to-b from-bg-secondary/90 to-bg-primary/80 p-8 shadow-[0_32px_64px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-xl md:p-10">
+      <div className="relative rounded-4xl border border-white/8 bg-linear-to-b from-bg-secondary/90 to-bg-primary/80 p-8 shadow-[0_32px_64px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-xl md:p-10">
         {/* Decorative Glow */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[300px] h-[200px] bg-accent-purple/20 rounded-full blur-[80px] pointer-events-none" />
         
@@ -166,7 +166,7 @@ export default function OnboardingGuide({
           <p className="text-center font-mono text-[11px] uppercase tracking-[0.25em] text-accent-purple font-bold">
             {L.eyebrow}
           </p>
-          <h3 className="mt-5 text-center text-2xl font-black tracking-tight md:text-3xl bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
+          <h3 className="mt-5 text-center text-2xl font-black tracking-tight md:text-3xl bg-linear-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
             {L.title}
           </h3>
           <p className="mt-3 text-center text-sm text-text-tertiary max-w-md mx-auto leading-relaxed">
@@ -183,17 +183,17 @@ export default function OnboardingGuide({
                 type="button"
                 onClick={() => handleAction(key)}
                 style={{ animationDelay: `${idx * 100}ms` }}
-                className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
+              className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
                   accent
-                    ? "border-accent-purple/40 bg-gradient-to-b from-accent-purple/15 to-accent-purple/5 hover:border-accent-purple/60 hover:shadow-[0_8px_32px_rgba(141,123,195,0.2)]"
-                    : "border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent hover:border-white/[0.15] hover:bg-white/[0.06] hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                    ? "border-accent-purple/40 bg-linear-to-b from-accent-purple/15 to-accent-purple/5 hover:border-accent-purple/60 hover:shadow-[0_8px_32px_rgba(141,123,195,0.2)]"
+                    : "border-white/8 bg-linear-to-b from-white/4 to-transparent hover:border-white/15 hover:bg-white/6 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                 }`}
               >
                 {/* Icon Container */}
                 <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 ${
                   accent 
                     ? "bg-accent-purple/20 text-accent-purple group-hover:bg-accent-purple/30 group-hover:shadow-[0_0_24px_rgba(141,123,195,0.3)]" 
-                    : "bg-white/[0.06] text-text-tertiary group-hover:text-text-primary group-hover:bg-white/[0.1]"
+                    : "bg-white/6 text-text-tertiary group-hover:text-text-primary group-hover:bg-white/10"
                 }`}>
                   {icon}
                   {accent && (

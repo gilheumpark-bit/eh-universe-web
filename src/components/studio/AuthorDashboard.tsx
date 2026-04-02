@@ -93,7 +93,7 @@ function AuthorDashboard({ messages, language }: Props) {
   const [subTab, setSubTab] = useState<DashSubTab>('overview');
 
   useEffect(() => {
-    if (!flags.EPISODE_COMPARE && subTab === 'compare') setSubTab('overview');
+    if (!flags.EPISODE_COMPARE && subTab === "compare") queueMicrotask(() => setSubTab("overview"));
   }, [flags.EPISODE_COMPARE, subTab]);
 
   const subTabEntries = useMemo(() => {

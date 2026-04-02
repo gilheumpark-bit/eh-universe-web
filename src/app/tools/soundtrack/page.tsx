@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
-import Link from "next/link";
+
 import { useLang, L2 } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import ToolNav from "@/components/tools/ToolNav";
@@ -118,8 +118,9 @@ export default function SoundtrackPage() {
 
   // Cleanup audio elements on unmount — remove event listeners to prevent memory leaks
   useEffect(() => {
+    const activeRefs = audioRefs.current;
     return () => {
-      Object.values(audioRefs.current).forEach((audio) => {
+      Object.values(activeRefs).forEach((audio) => {
         audio.removeEventListener("loadedmetadata", () => {});
         audio.removeEventListener("ended", () => {});
         audio.pause();
@@ -197,7 +198,7 @@ export default function SoundtrackPage() {
             ]}
           />
 
-          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-[24px] mb-0">
+          <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-xl mb-0">
             <span className="badge badge-classified mr-2">CLASSIFIED</span>
             {T({ ko: "음향 아카이브: 기밀 | 수신: 비밀조사국", en: "Audio Archive: CLASSIFIED | Interception: Bureau of Investigation" })}
           </div>
@@ -220,7 +221,7 @@ export default function SoundtrackPage() {
                 return (
                   <div
                     key={track.id}
-                    className="premium-link-card group overflow-hidden rounded-[24px] transition-all duration-300"
+                    className="premium-link-card group overflow-hidden rounded-xl transition-all duration-300"
                     style={{
                       background: isPlaying
                         ? `linear-gradient(135deg, ${track.theme}40 0%, var(--color-bg-secondary) 100%)`
@@ -241,7 +242,7 @@ export default function SoundtrackPage() {
                         <button
                           onClick={() => toggle(track.id)}
                           aria-label={isPlaying ? `Pause ${L2(track.title, lang)}` : `Play ${L2(track.title, lang)}`}
-                          className="flex-shrink-0 w-12 h-12 rounded-full border border-border flex items-center justify-center hover:border-accent-purple transition-colors mt-0.5"
+                          className="shrink-0 w-12 h-12 rounded-full border border-border flex items-center justify-center hover:border-accent-purple transition-colors mt-0.5"
                           style={{
                             background: isPlaying ? track.theme : "transparent",
                           }}
@@ -309,7 +310,7 @@ export default function SoundtrackPage() {
 
             {/* Footer */}
             <div className="mt-10 border-t border-border pt-6">
-              <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
+              <p className="font-document text-xs text-text-tertiary italic text-center">
                 {en
                   ? "These audio fragments were intercepted across galactic frequencies."
                   : "이 음향 파편은 은하 전역 주파수에서 수신되었다."}

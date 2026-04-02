@@ -11,9 +11,9 @@ export function useFeatureFlags(): FeatureFlags {
   const [flags, setFlags] = useState<FeatureFlags>(() => getAllFlags());
 
   useEffect(() => {
-    setFlags(getAllFlags());
+    queueMicrotask(() => setFlags(getAllFlags()));
     const onStorage = (e: StorageEvent) => {
-      if (e.key?.startsWith("ff_")) setFlags(getAllFlags());
+      if (e.key?.startsWith("ff_")) queueMicrotask(() => setFlags(getAllFlags()));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);

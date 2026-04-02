@@ -85,7 +85,7 @@ function NumberInput({ value, onChange, min, max, step = 1 }: { value: number; o
     <input
       type="number" value={value} min={min} max={max} step={step}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="w-20 rounded-lg border border-white/8 bg-white/[0.02] px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
+      className="w-20 rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
     />
   );
 }
@@ -94,7 +94,7 @@ function SelectInput<T extends string>({ value, options, onChange }: { value: T;
   return (
     <select
       value={value} onChange={(e) => onChange(e.target.value as T)}
-      className="rounded-lg border border-white/8 bg-white/[0.02] px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
+      className="rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
     >
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
@@ -113,7 +113,11 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, onClose, onOpenAPIConfig }: Props) {
   const [internalSettings, setInternalSettings] = useState<IDESettings>(() => settingsProp ?? loadIDESettings());
   const settings = settingsProp ?? internalSettings;
-  const onChange = onChangeProp ?? ((next: IDESettings) => { setInternalSettings(next); saveIDESettings(next); });
+  const defaultOnChange = useCallback((next: IDESettings) => {
+    setInternalSettings(next);
+    saveIDESettings(next);
+  }, []);
+  const onChange = onChangeProp ?? defaultOnChange;
   const [tab, setTab] = useState<SettingsTab>("editor");
 
   const update = useCallback(<K extends keyof IDESettings>(key: K, value: IDESettings[K]) => {

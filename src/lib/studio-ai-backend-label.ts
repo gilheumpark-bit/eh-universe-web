@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { getActiveModel, getActiveProvider, getApiKey, PROVIDERS } from '@/lib/ai-providers';
 
@@ -43,25 +43,24 @@ export function getStudioBackendDisplayLabel(
   return computeLabel(language, hostedProviders);
 }
 
+function subscribe(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('noa-keys-changed', callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    window.removeEventListener('noa-keys-changed', callback);
+    window.removeEventListener('storage', callback);
+  };
+}
+
 export function useStudioBackendLabel(
   language: AppLanguage,
   hostedProviders: Partial<Record<string, boolean>>,
 ): string {
-  const [label, setLabel] = useState('');
-  const refresh = useCallback(() => {
-    setLabel(computeLabel(language, hostedProviders));
-  }, [language, hostedProviders]);
-
-  useEffect(() => {
-    refresh();
-    const onKeys = () => refresh();
-    window.addEventListener('noa-keys-changed', onKeys);
-    window.addEventListener('storage', onKeys);
-    return () => {
-      window.removeEventListener('noa-keys-changed', onKeys);
-      window.removeEventListener('storage', onKeys);
-    };
-  }, [refresh]);
-
-  return label;
+  const getSnapshot = useCallback(
+    () => computeLabel(language, hostedProviders),
+    [language, hostedProviders]
+  );
+  
+  return useSyncExternalStore(subscribe, getSnapshot, () => '');
 }

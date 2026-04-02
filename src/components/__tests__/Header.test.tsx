@@ -18,6 +18,7 @@ jest.mock('next/link', () => ({
 jest.mock('next/navigation', () => ({
   usePathname: () => '/',
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock LangContext

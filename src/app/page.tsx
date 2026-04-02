@@ -117,7 +117,7 @@ function HomePageContent() {
 
   useEffect(() => {
     if (stellarWhite) {
-      setSplashState("hide");
+      queueMicrotask(() => setSplashState("hide"));
     } else {
       queueMicrotask(() => setSplashState("show"));
     }

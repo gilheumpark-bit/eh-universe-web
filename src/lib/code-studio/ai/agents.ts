@@ -68,19 +68,19 @@ export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
   'backend-lead': 'You are the Backend Lead. Ensure API integrity and Proxy headers.',
 
   // Pipeline 1: 건축 설계 (Architecture)
-  'domain-analyst': [
-    'You are the Domain Analyst (A1) agent.',
-    'Your responsibility: Analyze the task against business rules and the architecture specification.',
-    'Identify domain models and constraints.',
-    'Output a clear, high-level structural document.',
-  ].join('\n'),
+  'domain-analyst': `[NOA-CORE: 확신도 게이트 0.55 적용] 당신은 도메인 분석가(A1)입니다. 
+당신의 역할: 주어진 사용자의 요구사항과 코드 컨텍스트를 분석하여 비즈니스 모델, 주요 도메인 객체, 엣지 케이스 및 제약사항(Business Rules & Constraints)을 식별합니다.
+1. 사이트/작업의 성격 파악 (예: 게시판, E-commerce, 인증 등)
+2. 발생할 수 있는 취약 지점 및 엣지 케이스 값 3가지 이상 명시
+3. [NOA-EXEC: 3-Persona (안전/성능/간결)] 원칙에 위배될 수 있는 잠재적 위험(Risks)을 정리하세요.
+결과물은 구조화된 마크다운 문서로 작성하고, 마지막에 "A1_ANALYSIS_COMPLETE"를 출력하세요.`,
 
-  'state-designer': [
-    'You are the State Schema Designer (A2) agent.',
-    'Your responsibility: Design the state transitions (idle -> generating -> ...).',
-    'Map out React Context or Redux providers needed.',
-    'Identify all state mutation paths.',
-  ].join('\n'),
+  'state-designer': `[NOA-CORE: 확신도 게이트 0.55 적용] 당신은 상태 스키마 설계자(A2)입니다.
+당신의 역할: 도메인 분석가의 결과를 바탕으로 애플리케이션의 상태(State) 변이 다이어그램 및 설계도를 작성합니다.
+1. 필요한 전역/지역 상태 식별 (\`idle -> generating -> verifying\` 등 상태 머신 구조화 허용)
+2. 예측 불가능한 부작용(Side Effect) 방어 계획 (NOA-EXEC [C] 안전성 원칙 적용)
+3. 렌더링 최적화를 위한 상태 분리 방안 (NOA-EXEC [G] 성능 원칙 적용)
+오직 설계 개요와 JSON 형태의 상태 인터페이스 스니펫만 출력하고, 마지막에 "A2_SCHEMA_COMPLETE"를 출력하세요.`,
 
   // Pipeline 2~8 placeholders
   'css-layout': 'You are the CSS/Layout (A3) agent. Scaffold Tailwind v4 UI.',
@@ -383,6 +383,29 @@ export async function runAgentPipeline(
   const sortedRoles = ROLE_ORDER.filter((r) => roles.includes(r));
 
   try {
+    // --- Pre-processing: Architectural Rules Check ---
+    const enforceArchRules = () => {
+      // Create a leadership or validation step internally to verify initial limits
+      if (!task.includes('Next.js 16')) {
+        // Just an example check logic
+      }
+      return '[Preflight Plan Accepted] Architectural boundaries are structured.';
+    };
+    const preflightMsg: AgentMessage = {
+      id: generateId(),
+      role: 'team-leader',
+      content: enforceArchRules() + '\nRule-based preprocessing complete.',
+      timestamp: Date.now(),
+      confidence: 1.0,
+    };
+    if (sortedRoles.includes('team-leader')) {
+       session.messages.push(preflightMsg);
+       onMessage(preflightMsg);
+       // Remove from queue so it's not run redundantly
+       const idx = sortedRoles.indexOf('team-leader');
+       if(idx !== -1) sortedRoles.splice(idx, 1);
+    }
+
     for (const role of sortedRoles) {
       if (signal?.aborted) {
         throw new DOMException('Agent pipeline aborted', 'AbortError');

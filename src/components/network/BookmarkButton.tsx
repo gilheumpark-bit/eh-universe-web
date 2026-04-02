@@ -81,7 +81,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
     } finally {
       setLoading(false);
     }
-  }, [loading, planetId, saved, signInWithGoogle, user]);
+  }, [loading, planetId, saved, signInWithGoogle, user, lang]);
 
   const label = saved ? L2(LABELS.bookmarked, lang) : L2(LABELS.bookmark, lang);
 
@@ -96,7 +96,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
           errShake ? "animate-[shake_0.3s_ease-in-out_2] border-accent-red/40" :
           saved
             ? "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
-            : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
+            : "border-white/8 bg-white/2 text-text-secondary hover:border-white/16"
         } disabled:opacity-40`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">

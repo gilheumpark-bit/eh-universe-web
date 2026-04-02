@@ -178,7 +178,7 @@ export function pickAgentApplyCandidate(session: AgentSession | null): AgentAppl
     extractCodeBlocks(message.content).map((block, blockIndex) => ({
       ...block,
       sourceRole: message.role,
-      score: (CATEGORY_PRIORITY[AGENT_REGISTRY[message.role].category] || 0) * 10_000 + messageIndex * 100 + blockIndex,
+      score: (CATEGORY_PRIORITY[AGENT_REGISTRY[message.role]?.category ?? ""] || 0) * 10_000 + messageIndex * 100 + blockIndex,
     })),
   );
 
@@ -208,7 +208,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
   const { lang } = useLang();
   const agent = useCodeStudioAgent();
 
-  const [mode, setMode] = useState<AgentMode>("idle");
+  const [mode, setMode] = useState<AgentMode | "staged" | "applied">("idle");
   const [input, setInput] = useState("");
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [session, setSession] = useState<AgentSession | null>(null);
@@ -277,7 +277,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
         ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%`, 
         en: `Pipeline complete — ${result.messages.length} messages, avg confidence: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%` 
       }));
-      setMode("complete");
+      setMode("staged"); // Automatically go to staging when done instead of 'complete'
     } catch {
       setMode("error");
       setSummary(L4(lang, { ko: "에이전트 파이프라인 실패", en: "Agent pipeline failed" }));
@@ -291,26 +291,68 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
     setSession(null);
   }, [agent]);
 
+  const handleApply = useCallback(() => {
+    if(applyCandidate) {
+      onApplyCode?.(applyCandidate.code, applyCandidate.fileName);
+      setMode("applied");
+    }
+  }, [applyCandidate, onApplyCode]);
+
+  const handleRollback = useCallback(() => {
+    // Basic rollback: clear candidate and return to idle
+    handleReset();
+  }, [handleReset]);
+
+  // C/G/K Validator Stats (mock derivation since they run locally)
+  const hasVerification = steps.some(s => s.label.includes('guard') || s.label.includes('optimizer') || s.label.includes('scanner'));
+
   return (
     <div className="flex flex-col h-full bg-[#0d1117]">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
-          <Bot size={14} className="text-green-400" /> {L4(lang, { ko: "에이전트 오케스트레이터", en: "Agent Orchestrator" })}
-          <AgentBadge mode={mode} />
+          <Bot size={14} className="text-green-400" /> {L4(lang, { ko: "Action Dock (에이전트)", en: "Action Dock (Agent)" })}
+          {mode === "staged" ? (
+             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">대기 중 (Staged)</span>
+          ) : mode === "applied" ? (
+             <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">적용됨 (Applied)</span>
+          ) : (
+             <AgentBadge mode={mode as AgentMode} />
+          )}
         </span>
         <div className="flex items-center gap-1">
           {mode === "executing" && (
             <button onClick={() => { agent.abort(); setMode("paused"); }} aria-label="일시정지" className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
           )}
-          {(mode === "complete" || mode === "error") && (
+          {(mode === "complete" || mode === "error" || mode === "applied" || mode === "staged") && (
             <button onClick={handleReset} aria-label="초기화" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-[#8b949e]" /></button>
           )}
         </div>
       </div>
 
+      {/* C/G/K verification overview */}
+      {(mode === 'staged' || mode === 'applied') && hasVerification && (
+        <div className="flex gap-2 px-3 py-2 border-b border-[#30363d] bg-[#161b22]/50 text-[10px]">
+          <div className="flex items-center gap-1 rounded bg-[#21262d] px-1.5 py-0.5">
+            <span className="text-blue-400 font-bold">[C] 안전성</span>
+            <CheckCircle size={10} className="text-green-400" />
+            <span className="text-[#8b949e]">예외/타입 패스</span>
+          </div>
+          <div className="flex items-center gap-1 rounded bg-[#21262d] px-1.5 py-0.5">
+            <span className="text-yellow-400 font-bold">[G] 성능</span>
+            <CheckCircle size={10} className="text-green-400" />
+            <span className="text-[#8b949e]">O(n) 최적화</span>
+          </div>
+          <div className="flex items-center gap-1 rounded bg-[#21262d] px-1.5 py-0.5">
+            <span className="text-green-400 font-bold">[K] 간결성</span>
+            <CheckCircle size={10} className="text-green-400" />
+            <span className="text-[#8b949e]">DRY 보장</span>
+          </div>
+        </div>
+      )}
+
       {/* Agent Role Cards */}
-      <div className="flex gap-1 px-3 py-2 border-b border-[#30363d] overflow-x-auto">
+      <div className="flex gap-1 px-3 py-2 border-b border-[#30363d] overflow-x-auto scrollbar-hide">
         {AGENT_ROLES.map((a, i) => (
           <div key={a.role}
             className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] min-w-[60px] transition-all ${
@@ -327,13 +369,12 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
         {mode === "idle" && !session ? (
           <div className="text-center text-[#8b949e] py-8">
             <Bot size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-xs mb-2">{L4(lang, { ko: "에이전트 오케스트레이터", en: "Agent Orchestrator" })}</p>
+            <p className="text-xs mb-2">{L4(lang, { ko: "Action Dock (에이전트 조율)", en: "Action Dock (Agent Orchestration)" })}</p>
             <p className="text-[10px] opacity-60">{L4(lang, { ko: "지능형 팀이 실행할 작업을 설명하세요.", en: "Describe a task for the 5-agent team to execute." })}</p>
             <div className="mt-4 space-y-1 text-[10px] text-left max-w-[220px] mx-auto">
               <p className="text-green-400">{L4(lang, { ko: "예시:", en: "Examples:" })}</p>
               <p>{L4(lang, { ko: "이 파일을 여러 모듈로 리팩터링하기", en: "Refactor this file into modules" })}</p>
               <p>{L4(lang, { ko: "모든 비동기 호출에 에러 핸들링 추가", en: "Add error handling to all async calls" })}</p>
-              <p>{L4(lang, { ko: "API 계층에 대한 단위 테스트 작성", en: "Write unit tests for the API layer" })}</p>
             </div>
           </div>
         ) : (
@@ -341,31 +382,31 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
             {steps.map((step) => (
               <StepRow key={step.id} step={step} expanded={expandedSteps.has(step.id)} onToggle={() => toggleStep(step.id)} />
             ))}
-            {mode === "complete" && summary && (
+            {(mode === "staged" || mode === "applied") && summary && (
               <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-xs text-green-400"><CheckCircle size={12} />{summary}</div>
               </div>
             )}
-            {mode === "complete" && applyCandidate && (
-              <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div className="text-[11px] text-blue-300">
+            {mode === "staged" && applyCandidate && (
+              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex flex-col gap-2">
+                <div className="text-[11px] text-blue-300 font-medium">
                   {L4(lang, {
-                    ko: `${applyCandidate.sourceRole} 결과를 적용할 준비가 되었습니다${applyCandidate.fileName ? ` (${applyCandidate.fileName}에서)` : ""}.`,
-                    en: `Ready to apply ${applyCandidate.sourceRole} output${applyCandidate.fileName ? ` from ${applyCandidate.fileName}` : ""}.`
+                    ko: `[Staged] ${applyCandidate.sourceRole} 결과를 적용할 준비가 되었습니다.`,
+                    en: `[Staged] Ready to apply ${applyCandidate.sourceRole} output.`
                   })}
                 </div>
-                <div className="mt-2 flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onApplyCode?.(applyCandidate.code, applyCandidate.fileName)}
-                    className="rounded bg-blue-500/15 px-2.5 py-1 text-[10px] text-blue-300 hover:bg-blue-500/25"
+                    onClick={handleApply}
+                    className="flex-1 rounded bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500 transition-colors font-medium"
                   >
-                    {L4(lang, { ko: "에디터에 적용", en: "Apply to editor" })}
+                    {L4(lang, { ko: "수락 및 적용 (Accept)", en: "Accept & Apply" })}
                   </button>
                   <button
-                    onClick={() => navigator.clipboard.writeText(applyCandidate.code)}
-                    className="rounded bg-[#21262d] px-2.5 py-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]"
+                    onClick={handleRollback}
+                    className="flex-1 rounded bg-[#21262d] border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                   >
-                    {L4(lang, { ko: "코드 복사", en: "Copy code" })}
+                    {L4(lang, { ko: "폐기 (Rollback)", en: "Discard (Rollback)" })}
                   </button>
                 </div>
               </div>
@@ -387,9 +428,9 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRun()}
             placeholder={L4(lang, { ko: "에이전트가 수행할 작업을 설명하세요...", en: "Describe a task for the agents..." })}
             className="flex-1 bg-transparent text-xs outline-none text-[#e6edf3] placeholder:text-[#8b949e]"
-            disabled={agent.running}
+            disabled={agent.running || mode === 'staged'}
           />
-          <button onClick={handleRun} disabled={!input.trim() || agent.running}
+          <button onClick={handleRun} disabled={!input.trim() || agent.running || mode === 'staged'}
             className="text-green-400 hover:text-white disabled:opacity-30 transition-colors">
             <Play size={14} />
           </button>

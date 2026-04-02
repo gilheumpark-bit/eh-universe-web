@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Plus, X, Terminal as TerminalIcon, Pencil } from "lucide-react";
+import { Plus, X, Terminal as TerminalIcon } from "lucide-react";
 import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 interface TerminalTab {
@@ -38,7 +38,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
   useEffect(() => {
     if (didLocalizeTabs.current) return;
     didLocalizeTabs.current = true;
-    setTabs([{ id: "term-1", name: `${t.termShellLabel} 1` }]);
+    queueMicrotask(() => setTabs([{ id: "term-1", name: `${t.termShellLabel} 1` }]));
   }, [t.termShellLabel]);
 
   const addTab = useCallback(() => {
@@ -82,7 +82,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
   return (
     <div className="flex flex-col h-48 border-t border-white/8">
       {/* Tab Bar */}
-      <div className="flex items-center bg-[#0a0e17]/80 border-b border-white/8 px-1 flex-shrink-0">
+      <div className="flex items-center bg-[#0a0e17]/80 border-b border-white/8 px-1 shrink-0">
         {tabs.map((tab) => (
           <div
             key={tab.id}

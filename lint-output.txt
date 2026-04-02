@@ -5,6 +5,36 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\local-proxy\route.ts
   11:7  warning  'MAX_REQUEST_SIZE' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\upload\route.ts
+  154:24  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
+  161:20  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
+  166:18  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
+  167:18  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
+  168:20  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
+  172:42  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  172:59  warning  'reject' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  175:31  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  179:34  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  180:53  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx
+  120:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:120:7
+  118 |   useEffect(() => {
+  119 |     if (stellarWhite) {
+> 120 |       setSplashState("hide");
+      |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  121 |     } else {
+  122 |       queueMicrotask(() => setSplashState("show"));
+  123 |     }  react-hooks/set-state-in-effect
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\studio\StudioRightPanel.tsx
     9:15  warning  'EngineReport' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
   168:3   warning  'writingMode' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
@@ -90,6 +120,25 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   7:20  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
   8:20  warning  'Check' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MultiTerminal.tsx
+   8:45  warning  'Pencil' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  41:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MultiTerminal.tsx:41:5
+  39 |     if (didLocalizeTabs.current) return;
+  40 |     didLocalizeTabs.current = true;
+> 41 |     setTabs([{ id: "term-1", name: `${t.termShellLabel} 1` }]);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  42 |   }, [t.termShellLabel]);
+  43 |
+  44 |   const addTab = useCallback(() => {  react-hooks/set-state-in-effect
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\PreviewNetworkTab.tsx
   7:29  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -113,6 +162,24 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SettingsPanel.tsx
   116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 123) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
   116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 128) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SplitTerminal.tsx
+  32:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SplitTerminal.tsx:32:5
+  30 |     if (didLocalize.current) return;
+  31 |     didLocalize.current = true;
+> 32 |     setPanes([{ id: "t1", name: `${t.termShellLabel} 1` }]);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |   }, [t.termShellLabel]);
+  34 |
+  35 |   const addPane = useCallback(() => {  react-hooks/set-state-in-effect
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SymbolPalette.tsx
   8:10  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -269,6 +336,24 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   404:26  warning  'setWsSharedMemory' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
   431:11  warning  'accumulated' is assigned a value but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useFeatureFlags.ts
+  14:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useFeatureFlags.ts:14:5
+  12 |
+  13 |   useEffect(() => {
+> 14 |     setFlags(getAllFlags());
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |     const onStorage = (e: StorageEvent) => {
+  16 |       if (e.key?.startsWith("ff_")) setFlags(getAllFlags());
+  17 |     };  react-hooks/set-state-in-effect
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useStudioAI.ts
    18:27  warning  'getDefaultThresholds' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                      @typescript-eslint/no-unused-vars
   247:98  warning  'e' is defined but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
@@ -419,6 +504,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\visual-defaults.ts
   8:3  warning  'VisualShotType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-??200 problems (6 errors, 194 warnings)
+??215 problems (19 errors, 196 warnings)
   0 errors and 4 warnings potentially fixable with the `--fix` option.
 

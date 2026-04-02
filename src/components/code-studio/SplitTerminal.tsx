@@ -29,7 +29,7 @@ export function SplitTerminal() {
   useEffect(() => {
     if (didLocalize.current) return;
     didLocalize.current = true;
-    setPanes([{ id: "t1", name: `${t.termShellLabel} 1` }]);
+    queueMicrotask(() => setPanes([{ id: "t1", name: `${t.termShellLabel} 1` }]));
   }, [t.termShellLabel]);
 
   const addPane = useCallback(() => {
@@ -74,7 +74,7 @@ export function SplitTerminal() {
 
   return (
     <div className="flex flex-col h-48 border-t border-white/8">
-      <div className="flex items-center bg-[#0f1419] border-b border-white/8 px-1 flex-shrink-0">
+      <div className="flex items-center bg-[#0f1419] border-b border-white/8 px-1 shrink-0">
         {panes.map((p) => (
           <button key={p.id} onClick={() => setActiveId(p.id)}
             className={`flex items-center gap-1 px-2 py-1 text-[10px] border-r border-white/8 ${p.id === activeId ? "bg-[#0a0e17] text-white" : "text-white/40 hover:bg-white/5"}`}>

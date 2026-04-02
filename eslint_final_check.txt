@@ -1,4 +1,26 @@
 
+> eh-universe-web@1.2.1 lint
+> eslint
+
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\coverage\lcov-report\block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\e2e\studio.spec.ts
+  4:3  warning  'dismissApiKeyModal' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\public\games\warp-gate\app.js
+  1616:12  warning  'formatRequirementValue' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1626:51  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:43  warning  'metrics' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:52  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  2268:14  warning  'error' is defined but never used                                                         @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\scripts\e2e-commercial-stress.mjs
+  27:1  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  32:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  45:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\image-gen\route.ts
   48:79  warning  'referenceImageUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -12,10 +34,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\galaxy-map\page.tsx
   4:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\soundtrack\page.tsx
-    5:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                             @typescript-eslint/no-unused-vars
-  122:31  warning  The ref value 'audioRefs.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'audioRefs.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\vessel\page.tsx
   5:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -110,10 +128,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ReviewCenter.tsx
   10:16  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SettingsPanel.tsx
-  116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 123) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
-  116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 128) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SymbolPalette.tsx
   8:10  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -123,32 +137,11 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\Tooltip.tsx
   14:7  warning  'OFFSET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\BookmarkButton.tsx
-  84:6  warning  React Hook useCallback has a missing dependency: 'lang'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\NetworkPostEditClient.tsx
   98:13  warning  'updated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\PlanetDetailClient.tsx
   9:10  warning  'netT' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\AuthorDashboard.tsx
-  96:57  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\AuthorDashboard.tsx:96:57
-  94 |
-  95 |   useEffect(() => {
-> 96 |     if (!flags.EPISODE_COMPARE && subTab === 'compare') setSubTab('overview');
-     |                                                         ^^^^^^^^^ Avoid calling setState() directly within an effect
-  97 |   }, [flags.EPISODE_COMPARE, subTab]);
-  98 |
-  99 |   const subTabEntries = useMemo(() => {  react-hooks/set-state-in-effect
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\EpisodeCompare.tsx
    10:10  warning  'L4' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -157,10 +150,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\MultiKeyPanel.tsx
   5:8   warning  'Plus' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
   7:27  warning  'Settings2' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\OnboardingGuide.tsx
-    6:10  warning  'createT' is defined but never used. Allowed unused vars must match /^_/u                                         @typescript-eslint/no-unused-vars
-  131:6   warning  React Hook useCallback has an unnecessary dependency: 'onDemo'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\ResourceView.tsx
   30:83  warning  'onError' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
@@ -419,6 +408,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\visual-defaults.ts
   8:3  warning  'VisualShotType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-??200 problems (6 errors, 194 warnings)
-  0 errors and 4 warnings potentially fixable with the `--fix` option.
+??202 problems (5 errors, 197 warnings)
+  0 errors and 8 warnings potentially fixable with the `--fix` option.
 

@@ -1,32 +1,32 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 describe('AgentPanel helpers', () => {
-  it('prefers developer code blocks when picking apply candidate', () => {
+  it('prefers high-priority agent code blocks (repair) over others when picking apply candidate', () => {
     const { pickAgentApplyCandidate } = require('../AgentPanel');
 
     const candidate = pickAgentApplyCandidate({
       id: 'session-1',
       task: 'refactor',
-      agents: ['architect', 'developer', 'documenter'],
+      agents: ['domain-analyst', 'progressive-repair', 'coding-convention'],
       status: 'done',
       conflicts: [],
       messages: [
         {
-          id: 'architect-1',
-          role: 'architect',
+          id: 'analyst-1',
+          role: 'domain-analyst', // generation (priority 3)
           content: 'Outline only',
           timestamp: 1,
           confidence: 0.7,
         },
         {
-          id: 'developer-1',
-          role: 'developer',
+          id: 'repair-1',
+          role: 'progressive-repair', // repair (priority 4)
           content: '```ts\nexport const value = 42;\n```',
           timestamp: 2,
           confidence: 0.9,
         },
         {
-          id: 'documenter-1',
-          role: 'documenter',
+          id: 'convention-1',
+          role: 'coding-convention', // verification (priority 2)
           content: '```md\n# README\n```',
           timestamp: 3,
           confidence: 0.8,
@@ -43,7 +43,7 @@ describe('AgentPanel helpers', () => {
     });
 
     expect(candidate).not.toBeNull();
-    expect(candidate.sourceRole).toBe('developer');
+    expect(candidate.sourceRole).toBe('progressive-repair');
     expect(candidate.code).toContain('value = 42');
   });
 

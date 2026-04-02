@@ -15,7 +15,7 @@ export const supabase = createClient(
 /**
  * 챕터, 스토리 요약, 캐릭터 프로필 등 작업 내역 전체를 클라우드에 영구 저장합니다.
  */
-export async function saveProjectToCloud(userId: string, projectId: string, state: any) {
+export async function saveProjectToCloud(userId: string, projectId: string, state: Record<string, unknown>) {
   if (!supabaseUrl || !supabaseAnonKey) {
     logger.warn('EH Translator', 'Supabase DB credentials missing. Skipping cloud save.');
     return { error: 'DB_DISABLED' };
@@ -65,7 +65,7 @@ export async function listUserProjects(userId: string) {
   if (error || !data) return [];
   
   // project_data 내부의 projectName을 추출하여 메타데이터만 반환
-  return data.map((row: any) => ({
+  return data.map((row: { id: string; updated_at: string; project_data?: { projectName?: string; chapters?: unknown[] } | null }) => ({
     id: row.id,
     updatedAt: row.updated_at,
     projectName: row.project_data?.projectName || row.id,
@@ -86,5 +86,5 @@ export async function getProjectsForReference(userId: string, referenceIds: stri
     .in('id', referenceIds);
 
   if (error || !data) return [];
-  return data.map((row: any) => row.project_data);
+  return data.map((row: { project_data: Record<string, unknown> | null }) => row.project_data);
 }
