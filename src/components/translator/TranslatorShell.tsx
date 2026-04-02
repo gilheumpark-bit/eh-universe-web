@@ -63,7 +63,7 @@ export function TranslatorShellInner() {
 
   return (
     // 메인 무대: 우주 공간의 딥한 블랙/다크 네이비 배경, 미세한 블러
-    <div className="flex h-screen w-full overflow-hidden bg-[#05050A] text-text-primary selection:bg-accent-amber/30">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-[#05050A] text-text-primary selection:bg-accent-amber/30">
       
       {/* 1. Activity Bar */}
       {!isZenMode && (

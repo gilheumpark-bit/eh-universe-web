@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TranslatorStudioBodyMount } from "./TranslatorStudioBodyMount";
 import "./translator-studio.css";
 
@@ -15,7 +16,9 @@ export default function TranslationStudioLayout({ children }: { children: React.
   return (
     <div className={`translation-studio-root ${inter.variable} ${manrope.variable}`}>
       <TranslatorStudioBodyMount />
-      {children}
+      <ErrorBoundary variant="full-page" section="Translation Studio">
+        {children}
+      </ErrorBoundary>
     </div>
   );
 }

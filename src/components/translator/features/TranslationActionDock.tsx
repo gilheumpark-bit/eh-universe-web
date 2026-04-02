@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useRef, type ChangeEvent } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { useLang } from '@/lib/LangContext';
 import { PROVIDERS } from '@/lib/translator-constants';
-import { Sparkles, Zap, Brain, Globe, Settings2, ShieldCheck, ChevronRight } from 'lucide-react';
+import {
+  Sparkles,
+  Zap,
+  Brain,
+  Globe,
+  Settings2,
+  ShieldCheck,
+  ChevronRight,
+  Save,
+  Download,
+  Upload,
+  Cloud,
+  Key,
+} from 'lucide-react';
 
 export function TranslationActionDock() {
   const { lang } = useLang();
+  const importRef = useRef<HTMLInputElement>(null);
   const { setActiveLeftPanel } = useTranslatorLayout();
   const {
     loading,
@@ -16,6 +30,15 @@ export function TranslationActionDock() {
     translate,
     deepTranslate,
     activeChapter,
+    autoSaveLabel,
+    cloudSyncEnabled,
+    cloudSyncStatus,
+    cloudSyncDetail,
+    exportData,
+    importData,
+    authUser,
+    isAuthLoaded,
+    openApiKeyModal,
   } = useTranslator();
 
   const stage = activeChapter?.stageProgress ?? 0;
@@ -39,6 +62,55 @@ export function TranslationActionDock() {
           {lang === 'ko' ? '대기' : 'Ready'}
         </div>
       )}
+
+      <div className="rounded-lg border border-white/8 bg-[#0d0d10] p-3 space-y-2">
+        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+          <Save className="h-3 w-3 text-emerald-400/80" />
+          {lang === 'ko' ? '저장' : 'Save'}
+        </div>
+        <p className="text-[11px] text-text-secondary leading-snug break-words">{autoSaveLabel}</p>
+        <div className="flex items-start gap-2 text-[10px] text-text-tertiary">
+          <Cloud className="h-3 w-3 shrink-0 mt-0.5 text-sky-400/70" />
+          <span className="leading-snug">
+            {cloudSyncEnabled
+              ? isAuthLoaded && authUser
+                ? lang === 'ko'
+                  ? `클라우드: ${cloudSyncStatus === 'saving' ? '저장 중' : cloudSyncStatus === 'ok' ? '동기화됨' : cloudSyncStatus === 'error' ? '오류' : '대기'}${cloudSyncDetail ? ` · ${cloudSyncDetail}` : ''}`
+                  : `Cloud: ${cloudSyncStatus}${cloudSyncDetail ? ` · ${cloudSyncDetail}` : ''}`
+                : lang === 'ko'
+                  ? '클라우드: 로그인하면 자동 업로드됩니다.'
+                  : 'Cloud: sign in to enable upload.'
+              : lang === 'ko'
+                ? '클라우드: Supabase 미설정 또는 미로그인'
+                : 'Cloud: Supabase or sign-in not active'}
+          </span>
+        </div>
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => void exportData()}
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[10px] text-text-secondary hover:bg-white/10"
+          >
+            <Download className="h-3 w-3" />
+            JSON
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => importData(e)}
+          />
+          <button
+            type="button"
+            onClick={() => importRef.current?.click()}
+            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[10px] text-text-secondary hover:bg-white/10"
+          >
+            <Upload className="h-3 w-3" />
+            {lang === 'ko' ? '불러오기' : 'Import'}
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-col gap-2">
         <label className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
@@ -108,7 +180,7 @@ export function TranslationActionDock() {
 
       <div className="my-2 h-px w-full bg-white/5" />
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid grid-cols-3 gap-2">
         <button
           type="button"
           onClick={() => setActiveLeftPanel('glossary')}
@@ -116,6 +188,14 @@ export function TranslationActionDock() {
         >
           <Globe className="h-4 w-4" />
           <span className="text-[10px] font-medium">{lang === 'ko' ? '용어집' : 'Glossary'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={openApiKeyModal}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-[#111113] py-3 text-text-tertiary transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <Key className="h-4 w-4" />
+          <span className="text-[10px] font-medium">{lang === 'ko' ? 'API 키' : 'API keys'}</span>
         </button>
         <button
           type="button"

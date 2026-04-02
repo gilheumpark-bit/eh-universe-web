@@ -1,4 +1,5 @@
 import { createContext, useContext, Dispatch, SetStateAction } from 'react';
+import type { ProviderId } from '@/lib/ai-providers';
 import { ChapterEntry, ProjectSnapshot, HistoryEntry, StyleHeuristicAnalysis, TranslationMode, DomainPreset } from '@/types/translator';
 import { WorkspaceTab } from '@/lib/translator-constants';
 
@@ -10,6 +11,11 @@ export interface TranslatorContextState {
   workspaceTab: WorkspaceTab;
   setWorkspaceTab: Dispatch<SetStateAction<WorkspaceTab>>;
   hostedGemini: boolean;
+  /** `/api/ai-capabilities` — 소설 스튜디오와 동일 BYOK/호스팅 플래그 */
+  hostedProviders: Partial<Record<ProviderId, boolean>>;
+  aiCapabilitiesLoaded: boolean;
+  openApiKeyModal: () => void;
+  dismissApiBanner: () => void;
   projectId: string;
   setProjectId: Dispatch<SetStateAction<string>>;
   projectName: string;

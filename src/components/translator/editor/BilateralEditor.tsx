@@ -2,8 +2,9 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen } from 'lucide-react';
+
 export function BilateralEditor() {
-  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode } = useTranslator();
+  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel } = useTranslator();
   const layout = useTranslatorLayout();
   
   const [syncedScrolling, setSyncedScrolling] = useState(true);
@@ -102,8 +103,14 @@ export function BilateralEditor() {
 
       {/* Editor Header */}
       <div className="h-14 w-full border-b border-white/3 flex items-center px-5 justify-between shrink-0 z-10 bg-[#0A0A0C]/60 backdrop-blur-xl shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-white/2 rounded-xl p-1 border border-white/5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center gap-4 min-w-0">
+          <span
+            className="hidden sm:block max-w-[140px] md:max-w-[200px] truncate text-[10px] font-mono text-text-tertiary/90"
+            title={autoSaveLabel}
+          >
+            {autoSaveLabel}
+          </span>
+          <div className="flex items-center bg-white/2 rounded-xl p-1 border border-white/5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.5)] shrink-0">
             <select
               value={from}
               onChange={(e) => setFrom(e.target.value)}
@@ -175,7 +182,12 @@ export function BilateralEditor() {
           >
             <Focus className="w-4 h-4" />
           </button>
-          <button title="Document Settings" className="p-2 rounded-xl border border-transparent text-text-tertiary hover:text-text-primary hover:bg-white/5 hover:border-white/10 transition-all duration-300">
+          <button
+            type="button"
+            title={langKo ? '설정·로그인·저장/백업' : 'Settings, sign-in, save & backup'}
+            onClick={() => layout.setActiveLeftPanel('settings')}
+            className="p-2 rounded-xl border border-transparent text-text-tertiary hover:text-text-primary hover:bg-white/5 hover:border-white/10 transition-all duration-300"
+          >
             <Settings2 className="w-4 h-4" />
           </button>
         </div>

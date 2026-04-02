@@ -3,9 +3,12 @@
 import { TranslatorContext } from './core/TranslatorContext';
 import { TranslatorShell } from './TranslatorShell';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Key } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
 import { getApiKey, type ProviderId } from '@/lib/ai-providers';
+import type { AppLanguage } from '@/lib/studio-types';
+import ApiKeyModal from '@/components/studio/ApiKeyModal';
 import { logger } from '@/lib/logger';
 import {
   loadProjectFromCloud,
@@ -54,6 +57,8 @@ const AI_STORE_PROVIDER_IDS = new Set<ProviderId>([
   'lmstudio',
 ]);
 
+const TRANSLATOR_API_BANNER_DISMISSED_KEY = 'eh_translator_api_banner_dismissed';
+
 export default function TranslatorStudioApp() {
   const { dialog, alert, confirm, dismiss, confirmYes, alertOk } = useAppDialog();
   const { loading: authLoading, userId, user: authUser, signInWithGoogle, signOut, getIdToken } = useAuth();
@@ -76,7 +81,18 @@ export default function TranslatorStudioApp() {
     return 'translate';
   });
   const [hostedGemini, setHostedGemini] = useState(false);
-  const [, setAiCapabilitiesLoaded] = useState(false);
+  const [hostedProviders, setHostedProviders] = useState<Partial<Record<ProviderId, boolean>>>({});
+  const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyRefresh, setApiKeyRefresh] = useState(0);
+  const [apiBannerDismissed, setApiBannerDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(TRANSLATOR_API_BANNER_DISMISSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   
   // App States
   const [projectId, setProjectId] = useState(() => Date.now().toString());
@@ -158,7 +174,7 @@ export default function TranslatorStudioApp() {
       }
       return '';
     },
-    [apiKeys],
+    [apiKeys, apiKeyRefresh],
   );
 
   const hasTranslatorAiAccess = useMemo(() => {
@@ -166,7 +182,25 @@ export default function TranslatorStudioApp() {
     if (key) return true;
     if (provider === 'gemini' && hostedGemini) return true;
     return false;
-  }, [provider, hostedGemini, getEffectiveApiKeyForProvider]);
+  }, [provider, hostedGemini, getEffectiveApiKeyForProvider, apiKeyRefresh]);
+
+  const studioLanguage: AppLanguage = useMemo(() => {
+    if (lang === 'ko') return 'KO';
+    if (lang === 'jp') return 'JP';
+    if (lang === 'cn') return 'CN';
+    return 'EN';
+  }, [lang]);
+
+  const openApiKeyModal = useCallback(() => setShowApiKeyModal(true), []);
+
+  const dismissApiBanner = useCallback(() => {
+    try {
+      localStorage.setItem(TRANSLATOR_API_BANNER_DISMISSED_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    setApiBannerDismissed(true);
+  }, []);
 
   useEffect(() => {
     try {
@@ -181,9 +215,11 @@ export default function TranslatorStudioApp() {
     void (async () => {
       try {
         const res = await fetch('/api/ai-capabilities', { cache: 'no-store' });
-        const data = (await res.json()) as { hosted?: { gemini?: boolean } };
+        const data = (await res.json()) as { hosted?: Partial<Record<ProviderId, boolean>> };
         if (!cancelled) {
-          setHostedGemini(Boolean(data.hosted?.gemini));
+          const h = data.hosted ?? {};
+          setHostedProviders(h);
+          setHostedGemini(Boolean(h.gemini));
           setAiCapabilitiesLoaded(true);
         }
       } catch (e) {
@@ -274,6 +310,13 @@ export default function TranslatorStudioApp() {
       }
       if (parsed.domainPreset !== undefined) setDomainPreset(parsed.domainPreset);
       if (parsed.preserveDialogueLayout !== undefined) setPreserveDialogueLayout(parsed.preserveDialogueLayout);
+      if (parsed.apiKeys !== undefined && typeof parsed.apiKeys === 'object' && parsed.apiKeys !== null && !Array.isArray(parsed.apiKeys)) {
+        const nextKeys: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed.apiKeys as Record<string, unknown>)) {
+          if (typeof k === 'string' && typeof v === 'string') nextKeys[k] = v;
+        }
+        if (Object.keys(nextKeys).length) setApiKeys(nextKeys);
+      }
     } catch (error) {
       logger.error('TranslatorStudioApp', 'Failed to restore state', error);
     } finally {
@@ -308,12 +351,13 @@ export default function TranslatorStudioApp() {
         glossary,
         domainPreset,
         preserveDialogueLayout,
+        apiKeys,
       }));
       setLastSavedAt(Date.now());
     }, 320);
 
     return () => window.clearTimeout(timeout);
-  }, [projectId, projectName, chapters, activeChapterIndex, source, result, from, to, provider, history, isZenMode, backgroundMode, isCatMode, translationMode, worldContext, characterProfiles, storySummary, referenceIds, glossaryText, glossary, domainPreset, preserveDialogueLayout]);
+  }, [projectId, projectName, chapters, activeChapterIndex, source, result, from, to, provider, history, isZenMode, backgroundMode, isCatMode, translationMode, worldContext, characterProfiles, storySummary, referenceIds, glossaryText, glossary, domainPreset, preserveDialogueLayout, apiKeys]);
 
   useEffect(() => {
     if (!isHydrated.current) return;
@@ -1292,8 +1336,12 @@ export default function TranslatorStudioApp() {
   const providerLabel = PROVIDERS.find((item) => item.id === provider)?.label || provider.toUpperCase();
   const stripeCheckoutEnabled = Boolean(process.env.NEXT_PUBLIC_STRIPE_PRICE_ID?.trim());
   const autoSaveLabel = lastSavedAt
-    ? new Date(lastSavedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    : '준비 완료';
+    ? langKo
+      ? `로컬 저장 ${new Date(lastSavedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+      : `Local saved ${new Date(lastSavedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}`
+    : langKo
+      ? '로컬 저장 대기(편집 시 자동)'
+      : 'Local autosave (on edit)';
   const atmosphereLabel = backgroundMode === 'glacial' ? 'Editorial White' : 'Nebula Depth';
   const pipelineLabel = translationMode === 'novel' ? 'Narrative Pipeline' : 'Auxiliary General';
   const cloudSyncEnabled = Boolean(isAuthLoaded && userId && supabaseUrl && supabaseAnonKey);
@@ -1323,6 +1371,10 @@ export default function TranslatorStudioApp() {
   const contextValue = {
     workspaceTab, setWorkspaceTab,
     hostedGemini,
+    hostedProviders,
+    aiCapabilitiesLoaded,
+    openApiKeyModal,
+    dismissApiBanner,
     projectId, setProjectId,
     projectName, setProjectName,
     projectList, setProjectList,
@@ -1376,7 +1428,44 @@ export default function TranslatorStudioApp() {
 
   return (
     <TranslatorContext.Provider value={contextValue}>
-      <TranslatorShell />
+      <div className="flex h-screen w-full flex-col overflow-hidden bg-[#05050A]">
+        {aiCapabilitiesLoaded && !hasTranslatorAiAccess && !apiBannerDismissed && (
+          <div className="flex shrink-0 items-center gap-3 border-b border-amber-700/40 bg-amber-900/25 px-4 py-2.5 text-amber-100">
+            <Key className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+            <p className="min-w-0 flex-1 text-[11px] leading-snug [word-break:keep-all]">
+              {langKo
+                ? '번역을 실행하려면 BYOK API 키를 등록하거나(아래 버튼·소설 스튜디오와 동일), 호스팅 Gemini가 켜진 배포에서 Gemini 엔진을 선택하세요.'
+                : 'Add a BYOK API key (same panel as Novel Studio) or pick Gemini when server-hosted Gemini is enabled.'}
+            </p>
+            <button
+              type="button"
+              onClick={openApiKeyModal}
+              className="shrink-0 rounded-lg bg-amber-600/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-50 hover:bg-amber-600/55"
+            >
+              {langKo ? 'API 키' : 'API keys'}
+            </button>
+            <button
+              type="button"
+              onClick={dismissApiBanner}
+              className="shrink-0 rounded p-1 text-amber-400/70 hover:bg-amber-800/30 hover:text-amber-200"
+              aria-label={langKo ? '배너 닫기' : 'Dismiss banner'}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        <div className="min-h-0 flex-1">
+          <TranslatorShell />
+        </div>
+      </div>
+      {showApiKeyModal && (
+        <ApiKeyModal
+          language={studioLanguage}
+          hostedProviders={hostedProviders}
+          onClose={() => setShowApiKeyModal(false)}
+          onSave={() => setApiKeyRefresh((n) => n + 1)}
+        />
+      )}
       {dialog && (
         <AppDialog
           open
