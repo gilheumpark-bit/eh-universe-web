@@ -111,7 +111,7 @@ export default function SplashScreen({
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg-primary">
+    <div className="relative min-h-dvh flex w-full items-center justify-center overflow-hidden eh-page-canvas">
       <StarField />
       
       {/* Ambient background glow based on hovered card */}

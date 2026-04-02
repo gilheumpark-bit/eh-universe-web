@@ -66,6 +66,21 @@ body {
   overscroll-behavior-x: none;
 }
 
+/**
+ * 전체 뷰포트 배경을 body와 동일하게 맞출 때 사용 (스플래시 등).
+ * bg-bg-primary 만 주면 --gradient-page / 테마 배경이 가려져 “창 색만 바뀌는” 현상이 난다.
+ */
+.eh-page-canvas {
+  background: var(--gradient-page);
+  background-attachment: fixed;
+}
+
+@media (max-width: 768px) {
+  .eh-page-canvas {
+    background-attachment: scroll;
+  }
+}
+
 button,
 input,
 textarea,
@@ -107,6 +122,13 @@ body[data-theme="dim"],
 body[data-theme="light"],
 body[data-theme="max"] {
   background: var(--color-bg-primary);
+}
+
+body[data-theme="dim"] .eh-page-canvas,
+body[data-theme="light"] .eh-page-canvas,
+body[data-theme="max"] .eh-page-canvas {
+  background: var(--color-bg-primary);
+  background-attachment: scroll;
 }
 
 /* Level 1: 딤 (Dim) — 아카이브용 웜 그레이 */

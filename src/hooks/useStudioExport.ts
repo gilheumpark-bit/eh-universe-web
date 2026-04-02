@@ -4,7 +4,7 @@
 
 import { showAlert } from '@/lib/show-alert';
 import { useCallback } from 'react';
-import { ChatSession, AppLanguage, AppTab, Project, Genre } from '@/lib/studio-types';
+import { ChatSession, AppLanguage, AppTab, Project, Genre, StoryConfig } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
@@ -144,7 +144,19 @@ export function useStudioExport({
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string);
+        let data: unknown = JSON.parse(ev.target?.result as string);
+
+        // Unwrap { projects: Project[] } (일부 백업/외부 도구 형식)
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          const wrap = data as Record<string, unknown>;
+          if (
+            Array.isArray(wrap.projects) &&
+            wrap.projects.length > 0 &&
+            isValidProject(wrap.projects[0])
+          ) {
+            data = wrap.projects;
+          }
+        }
 
         // Case 1: Full backup — Project[] (from exportAllJSON / BACKUP)
         if (Array.isArray(data) && data.length > 0 && isValidProject(data[0])) {
@@ -190,6 +202,59 @@ export function useStudioExport({
           setCurrentProjectId(data.id);
           if (data.sessions.length > 0) setCurrentSessionId(data.sessions[0].id);
         }
+        // Case 5: exportProjectJSON 봉투 { project, config, exportedAt? } — 이전에는 미지원이라 가져오기 실패
+        else if (
+          data &&
+          typeof data === 'object' &&
+          !Array.isArray(data) &&
+          Object.prototype.hasOwnProperty.call(data, 'project') &&
+          Object.prototype.hasOwnProperty.call(data, 'config')
+        ) {
+          const env = data as { project: unknown; config: unknown };
+          if (isValidProject(env.project)) {
+            const proj = env.project;
+            setProjects((prev) => {
+              if (prev.some((p) => p.id === proj.id)) return prev;
+              return [...prev, proj];
+            });
+            setCurrentProjectId(proj.id);
+            if (proj.sessions.length > 0) {
+              let pick = 0;
+              const cfgRaw = env.config;
+              if (cfgRaw && typeof cfgRaw === 'object' && !Array.isArray(cfgRaw)) {
+                const cfg = cfgRaw as Partial<StoryConfig>;
+                const idx = proj.sessions.findIndex(
+                  (s) =>
+                    s.config?.title === cfg.title &&
+                    (cfg.episode === undefined || s.config?.episode === cfg.episode),
+                );
+                if (idx >= 0) pick = idx;
+              }
+              setCurrentSessionId(proj.sessions[pick].id);
+            }
+          } else if (
+            (env.project === null || env.project === undefined) &&
+            env.config &&
+            typeof env.config === 'object' &&
+            !Array.isArray(env.config)
+          ) {
+            ensureProject();
+            const sid = currentSession?.id;
+            if (!sid) {
+              showAlert(t('studioExport.noValidSession'));
+              return;
+            }
+            const patch = env.config as Partial<StoryConfig>;
+            setSessions((prev) =>
+              prev.map((s) =>
+                s.id === sid ? { ...s, config: { ...s.config, ...patch }, lastUpdate: Date.now() } : s,
+              ),
+            );
+          } else {
+            showAlert(t('studioExport.invalidFormat'));
+            return;
+          }
+        }
         else {
           showAlert(t('studioExport.invalidFormat'));
           return;
@@ -201,7 +266,7 @@ export function useStudioExport({
     };
     reader.readAsText(file);
     e.target.value = '';
-  }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab, setProjects, setCurrentProjectId]);
+  }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab, setProjects, setCurrentProjectId, currentSession]);
 
   // Import multiple text/markdown files
   const handleImportTextFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

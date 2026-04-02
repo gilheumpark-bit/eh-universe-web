@@ -35,6 +35,55 @@ function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
   return ref;
 }
 
+/** 홈 히어로 패널 — 스크롤에 따라 살짝 축소·복원 (prefers-reduced-motion 시 비활성) */
+function useHeroScrollShrink(
+  panelRef: React.RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+) {
+  useEffect(() => {
+    if (!enabled) return;
+    const el = panelRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const section = el.closest("section");
+    if (!section) return;
+
+    let raf = 0;
+    const tick = () => {
+      raf = 0;
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const start = Math.min(96, vh * 0.12);
+      const range = Math.max(220, vh * 0.38);
+      const raw = Math.max(0, start - rect.top);
+      const t = Math.min(1, raw / range);
+      const eased = t * (2 - t);
+      const scale = 1 - 0.048 * eased;
+      el.style.transform = `scale(${scale})`;
+      el.style.transformOrigin = "center top";
+      el.style.willChange = t > 0 && t < 1 ? "transform" : "auto";
+    };
+
+    const onScrollOrResize = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize, { passive: true });
+    onScrollOrResize();
+
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      if (raf) cancelAnimationFrame(raf);
+      el.style.transform = "";
+      el.style.transformOrigin = "";
+      el.style.willChange = "";
+    };
+  }, [panelRef, enabled]);
+}
 
 import SplashScreen from "@/components/home/SplashScreen";
 import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
@@ -185,6 +234,8 @@ export default function Home() {
   };
 
   const heroRef = useFadeIn<HTMLElement>();
+  const heroPanelRef = useRef<HTMLDivElement>(null);
+  useHeroScrollShrink(heroPanelRef, splashState === "hide");
   const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
@@ -192,7 +243,7 @@ export default function Home() {
   // SSR → hydration 전까지 최소한의 배경과 초기화 메시지 표시 (검은 화면 방지)
   if (splashState === "loading") {
     return (
-      <div className="relative min-h-screen bg-bg-primary overflow-hidden flex items-center justify-center">
+      <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
         <StarField />
         <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
           <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
@@ -239,7 +290,10 @@ export default function Home() {
       <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
         <StarField />
         <div className="site-shell relative z-10">
-          <div className="premium-panel premium-grid-accent px-6 py-8 md:px-10 md:py-12 xl:px-14">
+          <div
+            ref={heroPanelRef}
+            className="premium-panel premium-grid-accent px-6 py-8 md:px-10 md:py-12 xl:px-14"
+          >
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="relative z-10 max-w-2xl">
                 <p className="site-kicker">
