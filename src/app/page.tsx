@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -59,8 +59,8 @@ export default function Home() {
   // Auto-dismiss is removed as requested by the user so they can choose a path.
   // The splash screen will now wait for explicit user action.
 
-  const T = <V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
-    L4(lang, v as unknown as { ko: string; en: string; jp?: string; cn?: string }) as unknown as V;
+  const T = useCallback(<V,>(v: { ko: V; en: V; jp?: V; cn?: V }): V =>
+    L4(lang, v as unknown as { ko: string; en: string; jp?: string; cn?: string }) as unknown as V, [lang]);
 
   const translatorStudioHref = useMemo(() => getTranslatorStudioHref(), []);
 
@@ -165,7 +165,7 @@ export default function Home() {
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", jp: "GitHubを開く", cn: "打开GitHub" }),
     },
   ],
-    [lang, translatorStudioHref],
+    [translatorStudioHref, T],
   );
 
   const categories = [

@@ -18,8 +18,8 @@ export function TranslatorShellInner() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDraggingLeft.current) {
-        // Activity bar is 48px wide, so left sidebar stops at that point
-        const newWidth = Math.max(200, Math.min(e.clientX - 48, window.innerWidth / 2));
+        // Activity bar is 54px wide, so left sidebar stops at that point
+        const newWidth = Math.max(200, Math.min(e.clientX - 54, window.innerWidth / 2));
         layout.setLeftSidebarWidth(newWidth);
       } else if (isDraggingRight.current) {
         // Calculate based on window width
@@ -62,10 +62,12 @@ export function TranslatorShellInner() {
   }, []);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#0A0A0C] text-text-primary">
+    // 메인 무대: 우주 공간의 딥한 블랙/다크 네이비 배경, 미세한 블러
+    <div className="flex h-screen w-full overflow-hidden bg-[#05050A] text-text-primary selection:bg-accent-amber/30">
+      
       {/* 1. Activity Bar */}
       {!isZenMode && (
-        <div className="hidden lg:flex z-50">
+        <div className="hidden lg:flex z-100 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
           <ActivityBar />
         </div>
       )}
@@ -73,20 +75,25 @@ export function TranslatorShellInner() {
       {/* 2. Left Panel container */}
       {!isZenMode && layout.activeLeftPanel && (
         <>
-          <div className="hidden lg:flex shrink-0 z-40 relative" style={{ width: layout.leftSidebarWidth }}>
+          <div 
+            className="hidden lg:flex shrink-0 z-90 relative border-r border-white/5 bg-black/60 backdrop-blur-2xl transition-all duration-300 ease-out" 
+            style={{ width: layout.leftSidebarWidth }}
+          >
             <TranslatorPanelManager region="left" />
           </div>
           {/* Resizer handles the width of Left Panel */}
           <div
             onMouseDown={onLeftDragStart}
-            className="hidden lg:block w-[4px] cursor-col-resize bg-transparent hover:bg-accent-amber/50 z-50 transition-colors shrink-0"
-            style={{ marginLeft: -2, marginRight: -2 }}
+            className="hidden lg:block w-[6px] cursor-col-resize bg-transparent hover:bg-accent-amber/50 z-95 transition-colors shrink-0"
+            style={{ marginLeft: -3, marginRight: -3 }}
           />
         </>
       )}
 
       {/* 3. Center Area (Editing Region) */}
-      <div className="flex-1 flex flex-col min-w-0 z-10 basis-auto h-full">
+      {/* 그라데이션 광원을 배경에 미세하게 추가하여 프리미엄 느낌 부여 */}
+      <div className="flex-1 flex flex-col min-w-0 z-10 basis-auto h-full relative">
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-indigo-900/10 via-[#05050A]/0 to-transparent" />
         <BilateralEditor />
       </div>
 
@@ -96,16 +103,19 @@ export function TranslatorShellInner() {
           {/* Resizer handles the width of Right Panel */}
           <div
             onMouseDown={onRightDragStart}
-            className="hidden lg:block w-[4px] cursor-col-resize bg-transparent hover:bg-accent-purple/50 z-50 transition-colors shrink-0"
-            style={{ marginLeft: -2, marginRight: -2 }}
+            className="hidden lg:block w-[6px] cursor-col-resize bg-transparent hover:bg-accent-purple/50 z-95 transition-colors shrink-0"
+            style={{ marginLeft: -3, marginRight: -3 }}
           />
-          <div className="hidden lg:flex shrink-0 border-l border-white/5 z-40 bg-[#0A0A0C]" style={{ width: layout.rightSidebarWidth }}>
+          <div 
+            className="hidden lg:flex shrink-0 border-l border-white/5 z-90 bg-black/60 backdrop-blur-2xl transition-all duration-300 ease-out" 
+            style={{ width: layout.rightSidebarWidth }}
+          >
             <TranslatorPanelManager region="right" />
           </div>
         </>
       )}
 
-      {/* Mobile Drawer (Removed) */}
+      {/* Mobile Space - Not needed right now, fallback */}
     </div>
   );
 }

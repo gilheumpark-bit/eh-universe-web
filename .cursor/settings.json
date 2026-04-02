@@ -5,6 +5,12 @@
     },
     "linear": {
       "enabled": true
+    },
+    "cli-for-agent": {
+      "enabled": true
+    },
+    "firebase": {
+      "enabled": true
     }
   }
 }

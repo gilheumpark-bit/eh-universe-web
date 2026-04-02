@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslator } from '../TranslatorContext';
+import { useTranslator } from '../core/TranslatorContext';
 import { useLang } from '@/lib/LangContext';
 import { BookMarked, UserCircle2, ScrollText } from 'lucide-react';
 

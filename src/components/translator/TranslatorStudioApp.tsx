@@ -1,15 +1,12 @@
 'use client';
 
-import { TranslatorContext } from './TranslatorContext';
+import { TranslatorContext } from './core/TranslatorContext';
 import { TranslatorShell } from './TranslatorShell';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
 import { getApiKey, type ProviderId } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
-import { NetworkBridgePanel } from '@/components/translator/NetworkBridgePanel';
-import { WorkspaceTabBar } from '@/components/translator/WorkspaceTabBar';
-import { EnvStatusBar } from '@/components/translator/EnvStatusBar';
 import {
   loadProjectFromCloud,
   saveProjectToCloud,
@@ -19,18 +16,12 @@ import {
 } from '@/lib/supabase';
 import { useAppDialog } from '@/hooks/useAppDialog';
 import { AppDialog } from '@/components/ui/AppDialog';
-import { MobileWorkspaceDrawer } from '@/components/translator/MobileWorkspaceDrawer';
-import { ChapterSidebar } from '@/components/translator/ChapterSidebar';
-import { ContextSidebar } from '@/components/translator/ContextSidebar';
 import {
   PROJECT_LIBRARY_KEY,
   MAX_LOCAL_PROJECTS,
   REFERENCE_TEXT_LIMIT,
   STORY_BIBLE_LIMIT,
-  LANGUAGES,
   PROVIDERS,
-  BACKGROUND_MODES,
-  estimateTokens,
   WORKSPACE_TAB_STORAGE_KEY,
   type WorkspaceTab,
 } from '@/lib/translator-constants';
@@ -63,11 +54,9 @@ const AI_STORE_PROVIDER_IDS = new Set<ProviderId>([
   'lmstudio',
 ]);
 
-const WORKSPACE_TAB_BAR_HEIGHT_REM = 8.5;
-
 export default function TranslatorStudioApp() {
   const { dialog, alert, confirm, dismiss, confirmYes, alertOk } = useAppDialog();
-  const { loading: authLoading, userId, user: authUser, signInWithGoogle, signOut, getIdToken, error: authError } = useAuth();
+  const { loading: authLoading, userId, user: authUser, signInWithGoogle, signOut, getIdToken } = useAuth();
   const { lang } = useLang();
   const langKo = lang === 'ko';
   const isAuthLoaded = !authLoading;
@@ -86,8 +75,8 @@ export default function TranslatorStudioApp() {
     }
     return 'translate';
   });
-  const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
   const [hostedGemini, setHostedGemini] = useState(false);
+  const [, setAiCapabilitiesLoaded] = useState(false);
   
   // App States
   const [projectId, setProjectId] = useState(() => Date.now().toString());
@@ -119,6 +108,7 @@ export default function TranslatorStudioApp() {
   const [urlInput, setUrlInput] = useState('');
   const [translationMode, setTranslationMode] = useState<'novel' | 'general'>('novel');
   const [glossaryText, setGlossaryText] = useState('');
+  const [glossary, setGlossary] = useState<Record<string, string>>({});
   const [domainPreset, setDomainPreset] = useState<DomainPreset>('general');
   const [preserveDialogueLayout, setPreserveDialogueLayout] = useState(true);
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle');
@@ -138,6 +128,26 @@ export default function TranslatorStudioApp() {
   const prevActiveChapterIndex = useRef<number | null>(activeChapterIndex);
   const storyBibleRequestCounter = useRef(0);
   const lastPrimaryTranslateAt = useRef(0);
+
+  const patchChapterAtIndex = useCallback((index: number, patch: Record<string, unknown>) => {
+    setChapters((previous) => {
+      if (!previous[index]) return previous;
+
+      const currentChapter = previous[index];
+      const currentChapterRecord = currentChapter as Record<string, unknown>;
+      const shouldUpdate = Object.entries(patch).some(([key, value]) => currentChapterRecord[key] !== value);
+      if (!shouldUpdate) return previous;
+
+      const next = [...previous];
+      next[index] = { ...currentChapter, ...patch };
+      return next;
+    });
+  }, []);
+
+  const patchActiveChapter = useCallback((patch: Record<string, unknown>) => {
+    if (activeChapterIndex === null) return;
+    patchChapterAtIndex(activeChapterIndex, patch);
+  }, [activeChapterIndex, patchChapterAtIndex]);
 
   const getEffectiveApiKeyForProvider = useCallback(
     (providerId: string) => {
@@ -237,7 +247,7 @@ export default function TranslatorStudioApp() {
       if (parsed.projectName !== undefined) setProjectName(parsed.projectName);
       if (restoredProjects.length) setProjectList(restoredProjects);
       if (parsed.chapters !== undefined && Array.isArray(parsed.chapters)) {
-        setChapters(parsed.chapters.map((chapter: any, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
+        setChapters(parsed.chapters.map((chapter: Partial<ChapterEntry>, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
       }
       if (parsed.activeChapterIndex !== undefined) setActiveChapterIndex(parsed.activeChapterIndex);
       if (parsed.source !== undefined) setSource(parsed.source);
@@ -326,7 +336,7 @@ export default function TranslatorStudioApp() {
     }, 650);
 
     return () => window.clearTimeout(timeout);
-  }, [source, result, activeChapterIndex, chapters]);
+  }, [source, result, activeChapterIndex, chapters, patchActiveChapter]);
 
   useEffect(() => {
     if (!isHydrated.current) return;
@@ -404,7 +414,7 @@ export default function TranslatorStudioApp() {
         if (!metadata.length || cancelled) return;
 
         const loadedProjects = await Promise.all(
-          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: any) => {
+          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: { id: string; projectName?: string; updatedAt?: string }) => {
             const projectData = await loadProjectFromCloud(userId, projectMeta.id);
             if (!projectData) return null;
 
@@ -568,26 +578,6 @@ export default function TranslatorStudioApp() {
     }
 
     return res.text();
-  };
-
-  const patchChapterAtIndex = (index: number, patch: Record<string, unknown>) => {
-    setChapters((previous) => {
-      if (!previous[index]) return previous;
-
-      const currentChapter = previous[index];
-      const currentChapterRecord = currentChapter as Record<string, unknown>;
-      const shouldUpdate = Object.entries(patch).some(([key, value]) => currentChapterRecord[key] !== value);
-      if (!shouldUpdate) return previous;
-
-      const next = [...previous];
-      next[index] = { ...currentChapter, ...patch };
-      return next;
-    });
-  };
-
-  const patchActiveChapter = (patch: Record<string, unknown>) => {
-    if (activeChapterIndex === null) return;
-    patchChapterAtIndex(activeChapterIndex, patch);
   };
 
   const openChapter = (index: number | null, chapterList = chapters) => {
@@ -1128,21 +1118,21 @@ export default function TranslatorStudioApp() {
     let mimeType = 'text/plain';
 
     if (format === 'md') {
-      content = chapters.map((chapter: any) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
+      content = chapters.map((chapter: Partial<ChapterEntry>) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
       mimeType = 'text/markdown';
     } else if (format === 'txt') {
-      content = chapters.map((chapter: any) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
+      content = chapters.map((chapter: Partial<ChapterEntry>) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
       mimeType = 'text/plain';
     } else if (format === 'json') {
-      content = JSON.stringify(chapters.map((c: any) => ({ title: c.name, content: c.result || '' })), null, 2);
+      content = JSON.stringify(chapters.map((c: Partial<ChapterEntry>) => ({ title: c.name, content: c.result || '' })), null, 2);
       mimeType = 'application/json';
     } else if (format === 'html') {
       content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Translation Results</title></head><body style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: sans-serif;">` + 
-        chapters.map((c: any) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') + 
+        chapters.map((c: Partial<ChapterEntry>) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') + 
         `</body></html>`;
       mimeType = 'text/html';
     } else if (format === 'csv') {
-      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c: any) => `"${c.name.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
+      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c: Partial<ChapterEntry>) => `"${c.name?.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
       mimeType = 'text/csv';
     }
 
@@ -1274,10 +1264,6 @@ export default function TranslatorStudioApp() {
     }
   };
 
-  const headerTextColor = backgroundMode === 'glacial' ? '#0f172a' : '#f8fafc';
-  const headerMutedColor = backgroundMode === 'glacial' ? '#64748b' : '#cbd5e1';
-  const headerChipSurface = backgroundMode === 'glacial' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.06)';
-  const accentTextColor = backgroundMode === 'glacial' ? '#2563eb' : '#93c5fd';
   const activeChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   const completedChapters = chapters.filter((chapter) => chapter.isDone).length;
   const completionRate = chapters.length ? Math.round((completedChapters / chapters.length) * 100) : 0;
@@ -1337,6 +1323,7 @@ export default function TranslatorStudioApp() {
     urlInput, setUrlInput,
     translationMode, setTranslationMode,
     glossaryText, setGlossaryText,
+    glossary, setGlossary,
     domainPreset, setDomainPreset,
     preserveDialogueLayout, setPreserveDialogueLayout,
     cloudSyncStatus, setCloudSyncStatus,

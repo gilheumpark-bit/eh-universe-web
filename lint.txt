@@ -1,4 +1,21 @@
 
+> eh-universe-web@1.2.1 lint
+> eslint
+
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\coverage\lcov-report\block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\e2e\studio.spec.ts
+  4:3  warning  'dismissApiKeyModal' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\public\games\warp-gate\app.js
+  1616:12  warning  'formatRequirementValue' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1626:51  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:43  warning  'metrics' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:52  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  2268:14  warning  'error' is defined but never used                                                         @typescript-eslint/no-unused-vars
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\image-gen\route.ts
   43:79  warning  'referenceImageUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -16,6 +33,529 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   140:31  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
   144:34  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
   145:53  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+   75:5  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `T`, but the source dependencies were [lang, translatorStudioHref]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:75:5
+   73 |
+   74 |   const universeHubs = useMemo(
+>  75 |     () => [
+      |     ^^^^^^^
+>  76 |     {
+      | ^^^^^
+>  77 |       href: STYLE_STUDIO_PATH,
+      ??      | ^^^^^
+> 166 |     },
+      | ^^^^^
+> 167 |   ],
+      | ^^^^ Could not preserve existing manual memoization
+  168 |     [lang, translatorStudioHref],
+  169 |   );
+  170 |  react-hooks/preserve-manual-memoization
+  168:5  warning  React Hook useMemo has a missing dependency: 'T'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\studio\StudioRightPanel.tsx
     9:15  warning  'EngineReport' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
@@ -200,6 +740,23 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\tools\ToolNav.tsx
   10:10  warning  'TOOL_LINKS' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\translator\TranslatorContext.tsx
+  4:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\translator\TranslatorStudioApp.tsx
+  24:3  warning  'LANGUAGES' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  26:3  warning  'BACKGROUND_MODES' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  27:3  warning  'estimateTokens' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\translator\core\TranslatorContext.tsx
+   1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+   1:44  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   1:54  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+   2:10  warning  'ChapterEntry' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   2:24  warning  'HistoryEntry' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   2:38  warning  'StyleHeuristicAnalysis' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  10:48  error    Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\world-simulator\WorldSimulatorShell.tsx
   8:8  warning  'Lang' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -399,6 +956,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\visual-defaults.ts
   8:3  warning  'VisualShotType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-??210 problems (13 errors, 197 warnings)
-  0 errors and 4 warnings potentially fixable with the `--fix` option.
+??255 problems (41 errors, 214 warnings)
+  0 errors and 5 warnings potentially fixable with the `--fix` option.
 

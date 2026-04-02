@@ -1,170 +1,157 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
-import { ChapterEntry, HistoryEntry, StyleHeuristicAnalysis } from '@/types/translator';
-
-export type WorkspaceTab = 'translate' | 'review' | 'publish' | string;
+import { createContext, useContext, Dispatch, SetStateAction } from 'react';
+import { ChapterEntry, ProjectSnapshot, HistoryEntry, StyleHeuristicAnalysis, TranslationMode, DomainPreset } from '@/types/translator';
+import { WorkspaceTab } from '@/lib/translator-constants';
 
 // ============================================================
-// PART 1 — Type Definitions
+// PART 1 — Type Definitions & Context
 // ============================================================
-export interface TranslatorState {
-  // Navigation & UI
+
+export interface TranslatorContextState {
   workspaceTab: WorkspaceTab;
-  setWorkspaceTab: (tab: WorkspaceTab) => void;
-  isZenMode: boolean;
-  setIsZenMode: React.Dispatch<React.SetStateAction<boolean>>;
-  backgroundMode: string;
-  setBackgroundMode: React.Dispatch<React.SetStateAction<string>>;
-  showMobileDrawer: boolean;
-  setShowMobileDrawer: React.Dispatch<React.SetStateAction<boolean>>;
-  translationMode: 'novel' | 'general';
-  setTranslationMode: React.Dispatch<React.SetStateAction<'novel' | 'general'>>;
-  isCatMode: boolean;
-  setIsCatMode: React.Dispatch<React.SetStateAction<boolean>>;
-  
-  // Project & Document
+  setWorkspaceTab: Dispatch<SetStateAction<WorkspaceTab>>;
+  hostedGemini: boolean;
   projectId: string;
-  setProjectId: React.Dispatch<React.SetStateAction<string>>;
+  setProjectId: Dispatch<SetStateAction<string>>;
   projectName: string;
-  setProjectName: React.Dispatch<React.SetStateAction<string>>;
+  setProjectName: Dispatch<SetStateAction<string>>;
+  projectList: ProjectSnapshot[];
+  setProjectList: Dispatch<SetStateAction<ProjectSnapshot[]>>;
   chapters: ChapterEntry[];
-  setChapters: React.Dispatch<React.SetStateAction<ChapterEntry[]>>;
+  setChapters: Dispatch<SetStateAction<ChapterEntry[]>>;
   activeChapterIndex: number | null;
-  setActiveChapterIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  
-  // Translation Core
+  setActiveChapterIndex: Dispatch<SetStateAction<number | null>>;
+  referenceIds: string[];
+  setReferenceIds: Dispatch<SetStateAction<string[]>>;
   source: string;
-  setSource: React.Dispatch<React.SetStateAction<string>>;
+  setSource: Dispatch<SetStateAction<string>>;
   result: string;
-  setResult: React.Dispatch<React.SetStateAction<string>>;
+  setResult: Dispatch<SetStateAction<string>>;
   from: string;
-  setFrom: React.Dispatch<React.SetStateAction<string>>;
+  setFrom: Dispatch<SetStateAction<string>>;
   to: string;
-  setTo: React.Dispatch<React.SetStateAction<string>>;
+  setTo: Dispatch<SetStateAction<string>>;
   provider: string;
-  setProvider: React.Dispatch<React.SetStateAction<string>>;
+  setProvider: Dispatch<SetStateAction<string>>;
+  apiKeys: Record<string, string>;
+  setApiKeys: Dispatch<SetStateAction<Record<string, string>>>;
   loading: boolean;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   statusMsg: string;
-  setStatusMsg: React.Dispatch<React.SetStateAction<string>>;
+  setStatusMsg: Dispatch<SetStateAction<string>>;
   history: HistoryEntry[];
-  setHistory: React.Dispatch<React.SetStateAction<HistoryEntry[]>>;
-  
-  // Contexts & Analysis
-  worldContext: string;
-  setWorldContext: React.Dispatch<React.SetStateAction<string>>;
-  characterProfiles: string;
-  setCharacterProfiles: React.Dispatch<React.SetStateAction<string>>;
-  storySummary: string;
-  setStorySummary: React.Dispatch<React.SetStateAction<string>>;
-  styleAnalysis: StyleHeuristicAnalysis | null;
-  setStyleAnalysis: React.Dispatch<React.SetStateAction<StyleHeuristicAnalysis | null>>;
-  compareResultB: string;
-  setCompareResultB: React.Dispatch<React.SetStateAction<string>>;
-  
-  // Extra Utils
+  setHistory: Dispatch<SetStateAction<HistoryEntry[]>>;
+  lastSavedAt: number | null;
+  setLastSavedAt: Dispatch<SetStateAction<number | null>>;
+  isZenMode: boolean;
+  setIsZenMode: Dispatch<SetStateAction<boolean>>;
+  showSettings: boolean;
+  setShowSettings: Dispatch<SetStateAction<boolean>>;
+  backgroundMode: string;
+  setBackgroundMode: Dispatch<SetStateAction<string>>;
+  isCatMode: boolean;
+  setIsCatMode: Dispatch<SetStateAction<boolean>>;
+  showUrlImport: boolean;
+  setShowUrlImport: Dispatch<SetStateAction<boolean>>;
   showCharacters: boolean;
-  setShowCharacters: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowCharacters: Dispatch<SetStateAction<boolean>>;
   showSummary: boolean;
-  setShowSummary: React.Dispatch<React.SetStateAction<boolean>>;
-  accentTextColor: string;
+  setShowSummary: Dispatch<SetStateAction<boolean>>;
+  urlInput: string;
+  setUrlInput: Dispatch<SetStateAction<string>>;
+  translationMode: TranslationMode;
+  setTranslationMode: Dispatch<SetStateAction<TranslationMode>>;
+  glossaryText: string;
+  setGlossaryText: Dispatch<SetStateAction<string>>;
+  glossary: Record<string, string>;
+  setGlossary: Dispatch<SetStateAction<Record<string, string>>>;
+  domainPreset: DomainPreset;
+  setDomainPreset: Dispatch<SetStateAction<DomainPreset>>;
+  preserveDialogueLayout: boolean;
+  setPreserveDialogueLayout: Dispatch<SetStateAction<boolean>>;
+  cloudSyncStatus: 'idle' | 'saving' | 'ok' | 'error';
+  setCloudSyncStatus: Dispatch<SetStateAction<'idle' | 'saving' | 'ok' | 'error'>>;
+  cloudSyncDetail: string;
+  setCloudSyncDetail: Dispatch<SetStateAction<string>>;
+  lastApproxTokens: number | null;
+  setLastApproxTokens: Dispatch<SetStateAction<number | null>>;
+  compareResultB: string;
+  setCompareResultB: Dispatch<SetStateAction<string>>;
+  showMobileDrawer: boolean;
+  setShowMobileDrawer: Dispatch<SetStateAction<boolean>>;
+  mobileTab: 'chapters' | 'context';
+  setMobileTab: Dispatch<SetStateAction<'chapters' | 'context'>>;
+  showExportOptions: boolean;
+  setShowExportOptions: Dispatch<SetStateAction<boolean>>;
+  worldContext: string;
+  setWorldContext: Dispatch<SetStateAction<string>>;
+  characterProfiles: string;
+  setCharacterProfiles: Dispatch<SetStateAction<string>>;
+  storySummary: string;
+  setStorySummary: Dispatch<SetStateAction<string>>;
+  styleAnalysis: StyleHeuristicAnalysis | null;
+  setStyleAnalysis: Dispatch<SetStateAction<StyleHeuristicAnalysis | null>>;
+  backResult: string;
+  setBackResult: Dispatch<SetStateAction<string>>;
+  langKo: boolean;
+  isAuthLoaded: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  userId: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authUser: any;
+  hasTranslatorAiAccess: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  referenceBundle: any;
+  activeChapter: ChapterEntry | null;
+  completedChapters: number;
+  completionRate: number;
+  workspaceName: string;
+  providerLabel: string;
+  stripeCheckoutEnabled: boolean;
+  autoSaveLabel: string;
+  atmosphereLabel: string;
+  pipelineLabel: string;
+  cloudSyncEnabled: boolean;
+  referenceStatusLabel: string;
+  storyBibleStatusLabel: string;
+  
+  getEffectiveApiKeyForProvider: (providerId: string) => string;
+  handleWorkspaceTabChange: (tab: WorkspaceTab) => void;
+  patchChapterAtIndex: (index: number, patch: Record<string, unknown>) => void;
+  patchActiveChapter: (patch: Record<string, unknown>) => void;
+  openChapter: (index: number | null, overrideChapters?: ChapterEntry[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildContinuityBundle: () => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildTranslationPayload: (opts: any) => any;
+  updateStoryBibleAfterTranslation: (options: { translatedText: string; chapterName: string; chapterIndex?: number | null; storySummaryBase?: string; }) => Promise<string>;
+  translate: () => Promise<void>;
+  deepTranslate: () => Promise<void>;
+  runChunkedTranslate: () => Promise<void>;
+  runCompareB: () => Promise<void>;
+  analyzeStyle: () => void;
+  refineResult: () => Promise<void>;
+  backTranslate: () => Promise<void>;
+  batchTranslateAll: () => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  importDocument: (e: any) => void;
+  exportData: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  importData: (e: any) => void;
+  importUrl: () => Promise<void>;
+  downloadAllResults: (format?: 'txt' | 'md' | 'json' | 'html' | 'csv') => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handleChapterRemove: (e: any, idx: number) => void;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  getIdToken: () => Promise<string | null>;
 }
 
-const TranslatorContext = createContext<TranslatorState | null>(null);
+export const TranslatorContext = createContext<TranslatorContextState | null>(null);
 
-// ============================================================
-// PART 2 — Context Provider & Hook
-// ============================================================
-
-export function useTranslator() {
+export function useTranslator(): TranslatorContextState {
   const context = useContext(TranslatorContext);
   if (!context) {
     throw new Error('useTranslator must be used within a TranslatorProvider');
   }
   return context;
 }
-
-export function TranslatorProvider({
-  children,
-  initialState
-}: {
-  children: React.ReactNode;
-  initialState?: Partial<TranslatorState>;
-}) {
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>(initialState?.workspaceTab ?? 'translate');
-  const [isZenMode, setIsZenMode] = useState(initialState?.isZenMode ?? false);
-  const [backgroundMode, setBackgroundMode] = useState(initialState?.backgroundMode ?? 'glacial');
-  const [showMobileDrawer, setShowMobileDrawer] = useState(initialState?.showMobileDrawer ?? false);
-  const [translationMode, setTranslationMode] = useState<'novel' | 'general'>(initialState?.translationMode ?? 'novel');
-  const [isCatMode, setIsCatMode] = useState(initialState?.isCatMode ?? false);
-  
-  const [projectId, setProjectId] = useState(() => initialState?.projectId ?? Date.now().toString());
-  const [projectName, setProjectName] = useState(initialState?.projectName ?? '');
-  const [chapters, setChapters] = useState<ChapterEntry[]>(initialState?.chapters ?? []);
-  const [activeChapterIndex, setActiveChapterIndex] = useState<number | null>(initialState?.activeChapterIndex ?? null);
-  
-  const [source, setSource] = useState(initialState?.source ?? '');
-  const [result, setResult] = useState(initialState?.result ?? '');
-  const [from, setFrom] = useState(initialState?.from ?? 'ja');
-  const [to, setTo] = useState(initialState?.to ?? 'ko');
-  const [provider, setProvider] = useState(initialState?.provider ?? 'openai');
-  const [loading, setLoading] = useState(initialState?.loading ?? false);
-  const [statusMsg, setStatusMsg] = useState(initialState?.statusMsg ?? '');
-  const [history, setHistory] = useState<HistoryEntry[]>(initialState?.history ?? []);
-  
-  const [worldContext, setWorldContext] = useState(initialState?.worldContext ?? '');
-  const [characterProfiles, setCharacterProfiles] = useState(initialState?.characterProfiles ?? '');
-  const [storySummary, setStorySummary] = useState(initialState?.storySummary ?? '');
-  const [styleAnalysis, setStyleAnalysis] = useState<StyleHeuristicAnalysis | null>(initialState?.styleAnalysis ?? null);
-  const [compareResultB, setCompareResultB] = useState(initialState?.compareResultB ?? '');
-  
-  const [showCharacters, setShowCharacters] = useState(initialState?.showCharacters ?? false);
-  const [showSummary, setShowSummary] = useState(initialState?.showSummary ?? false);
-  
-  const accentTextColor = useMemo(() => {
-    switch (backgroundMode) {
-      case 'glacial': return 'text-slate-800 dark:text-slate-200';
-      case 'warm': return 'text-orange-800 dark:text-orange-200';
-      case 'midnight': return 'text-indigo-300';
-      case 'forest': return 'text-emerald-800 dark:text-emerald-200';
-      case 'abyss': return 'text-zinc-300';
-      default: return 'text-slate-800 dark:text-slate-200';
-    }
-  }, [backgroundMode]);
-
-  const value: TranslatorState = {
-    workspaceTab, setWorkspaceTab,
-    isZenMode, setIsZenMode,
-    backgroundMode, setBackgroundMode,
-    showMobileDrawer, setShowMobileDrawer,
-    translationMode, setTranslationMode,
-    isCatMode, setIsCatMode,
-    
-    projectId, setProjectId,
-    projectName, setProjectName,
-    chapters, setChapters,
-    activeChapterIndex, setActiveChapterIndex,
-    
-    source, setSource,
-    result, setResult,
-    from, setFrom,
-    to, setTo,
-    provider, setProvider,
-    loading, setLoading,
-    statusMsg, setStatusMsg,
-    history, setHistory,
-    
-    worldContext, setWorldContext,
-    characterProfiles, setCharacterProfiles,
-    storySummary, setStorySummary,
-    styleAnalysis, setStyleAnalysis,
-    compareResultB, setCompareResultB,
-    
-    showCharacters, setShowCharacters,
-    showSummary, setShowSummary,
-    accentTextColor
-  };
-
-  return <TranslatorContext.Provider value={value}>{children}</TranslatorContext.Provider>;
-}
-
-// IDENTITY_SEAL: PART-2 | role=Context Provider for Translator | inputs=React Tree | outputs=TranslatorState
