@@ -342,21 +342,29 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       active: 'border-accent-amber/30 bg-gradient-to-r from-accent-amber/15 to-accent-amber/5 shadow-[0_0_20px_rgba(202,161,92,0.1)]',
                       icon: 'border-accent-amber/25 bg-accent-amber/15 text-accent-amber',
                       text: 'text-accent-amber',
+                      glow: 'from-accent-amber/10',
+                      indicator: 'bg-accent-amber shadow-[0_0_8px_rgba(202,161,92,0.8)]',
                     },
                     purple: {
                       active: 'border-accent-purple/30 bg-gradient-to-r from-accent-purple/15 to-accent-purple/5 shadow-[0_0_20px_rgba(141,123,195,0.1)]',
                       icon: 'border-accent-purple/25 bg-accent-purple/15 text-accent-purple',
                       text: 'text-accent-purple',
+                      glow: 'from-accent-purple/10',
+                      indicator: 'bg-accent-purple shadow-[0_0_8px_rgba(141,123,195,0.8)]',
                     },
                     blue: {
                       active: 'border-accent-blue/30 bg-gradient-to-r from-accent-blue/15 to-accent-blue/5 shadow-[0_0_20px_rgba(92,143,214,0.1)]',
                       icon: 'border-accent-blue/25 bg-accent-blue/15 text-accent-blue',
                       text: 'text-accent-blue',
+                      glow: 'from-accent-blue/10',
+                      indicator: 'bg-accent-blue shadow-[0_0_8px_rgba(92,143,214,0.8)]',
                     },
                     green: {
                       active: 'border-accent-green/30 bg-gradient-to-r from-accent-green/15 to-accent-green/5 shadow-[0_0_20px_rgba(47,155,131,0.1)]',
                       icon: 'border-accent-green/25 bg-accent-green/15 text-accent-green',
                       text: 'text-accent-green',
+                      glow: 'from-accent-green/10',
+                      indicator: 'bg-accent-green shadow-[0_0_8px_rgba(47,155,131,0.8)]',
                     },
                   };
                   const c = colorClasses[color];
@@ -369,10 +377,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       aria-selected={isActive}
                       onClick={() => handleTabChange(tab)}
                       className={`
-                        group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left
+                        group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left overflow-hidden
                         transition-all duration-200 ease-out
                         ${isActive
-                          ? `border ${c.active}`
+                          ? `border ${c.active} backdrop-blur-sm`
                           : 'border border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary active:scale-[0.98]'
                         }
                       `}
@@ -380,7 +388,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       {/* Active indicator bar */}
                       {isActive && (
                         <span 
-                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${c.icon.replace('border-', 'bg-').replace('/25', '/60').replace('text-', '')}`}
+                          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${c.indicator}`}
                           style={{ animation: 'scale-in-x 200ms ease-out' }}
                         />
                       )}
@@ -404,7 +412,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       
                       {/* Hover glow effect */}
                       {!isActive && (
-                        <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-r from-white/[0.02] to-transparent" />
+                        <span className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-r ${c.glow} to-transparent`} />
                       )}
                     </button>
                   );
@@ -415,6 +423,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               @keyframes scale-in-x {
                 from { transform: translateY(-50%) scaleX(0); }
                 to { transform: translateY(-50%) scaleX(1); }
+              }
+              @keyframes scale-in-y {
+                from { transform: scaleY(0); }
+                to { transform: scaleY(1); }
               }
             `}</style>
 
@@ -554,30 +566,41 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                             setShowSessionList(false);
                           }
                         }}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all ${
+                        className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all border overflow-hidden ${
                           batchMode && selectedSessionIds.has(s.id)
-                            ? 'bg-accent-purple/15 text-accent-purple'
+                            ? 'border-accent-purple/30 bg-accent-purple/15 text-accent-purple shadow-[0_0_15px_rgba(141,123,195,0.1)]'
                             : currentSessionId === s.id
-                            ? 'bg-[rgba(202,161,92,0.12)] text-[rgba(246,226,188,0.92)]'
-                            : 'text-text-tertiary hover:bg-white/4 hover:text-text-secondary'
+                            ? 'border-[rgba(202,161,92,0.3)] bg-gradient-to-r from-[rgba(202,161,92,0.15)] to-[rgba(202,161,92,0.05)] text-[rgba(246,226,188,0.92)] shadow-[0_0_15px_rgba(202,161,92,0.1)] backdrop-blur-md'
+                            : 'border-transparent text-text-tertiary hover:border-white/10 hover:bg-white/[0.04] hover:text-text-secondary hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
                         } ${dragIdx === i ? 'opacity-40' : ''} ${dragOverIdx === i && dragIdx !== i ? 'border-t-2 border-accent-purple' : ''}`}
                         title={batchMode ? (language === 'KO' ? 'Shift+클릭으로 범위 선택' : 'Shift+click for range select') : (language === 'KO' ? '드래그하여 순서 변경' : 'Drag to reorder')}
                       >
+                        {/* Hover Light Sweep Effect */}
+                        {currentSessionId !== s.id && !batchMode && (
+                          <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-r from-[rgba(202,161,92,0.08)] to-transparent" />
+                        )}
+                        {/* Selected Indicator for Episode */}
+                        {currentSessionId === s.id && (
+                          <span 
+                            className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent-amber shadow-[0_0_8px_rgba(202,161,92,0.8)]"
+                            style={{ animation: 'scale-in-y 200ms ease-out' }}
+                          />
+                        )}
                         {batchMode && (
                           <input
                             type="checkbox"
                             checked={selectedSessionIds.has(s.id)}
                             readOnly
-                            className="accent-[rgba(202,161,92,0.8)] shrink-0 pointer-events-none"
+                            className="accent-[rgba(202,161,92,0.8)] shrink-0 pointer-events-none z-10"
                           />
                         )}
                         {!batchMode && onReorderSessions && (
-                          <span className="text-[10px] text-text-tertiary cursor-grab shrink-0" title={language === 'KO' ? '드래그 핸들' : 'Drag handle'}>⠿</span>
+                          <span className="text-[10px] text-text-tertiary cursor-grab shrink-0 z-10 hover:text-text-secondary" title={language === 'KO' ? '드래그 핸들' : 'Drag handle'}>⠿</span>
                         )}
-                        <span className="font-mono text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary">
+                        <span className="font-mono text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary z-10">
                           {i + 1}
                         </span>
-                        <span className="truncate font-mono text-[11px] font-semibold">
+                        <span className="truncate font-mono text-[11px] font-semibold z-10 relative">
                           {s.title}
                         </span>
                       </button>
