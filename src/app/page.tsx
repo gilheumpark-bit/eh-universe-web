@@ -93,13 +93,17 @@ export default function Home() {
       title: T({ ko: "번역 스튜디오", en: "Translation Studio", jp: "翻訳スタジオ", cn: "翻译工作室" }),
       desc: T({
         ko: translatorStudioHref.startsWith("http")
-          ? "EH Translator 웹앱에서 장편·용어·맥락 중심 번역 워크플로를 사용합니다."
-          : "NOA 스튜디오 원고 탭에서 에피소드 단위 번역·품질 게이트를 사용합니다. (배포 URL을 넣으면 외부 앱으로 연결)",
+          ? "별도 배포된 EH Translator에서 장편·용어·맥락 중심 워크플로를 사용합니다."
+          : "이 사이트의 번역 스튜디오(/translation-studio)에서 EH Translator 전체 UI를 사용합니다.",
         en: translatorStudioHref.startsWith("http")
-          ? "EH Translator — long-form and glossary-focused workflow."
-          : "In NOA Studio Manuscript tab: episode translation and quality gates. Set NEXT_PUBLIC_EH_TRANSLATOR_ORIGIN for the web app.",
-        jp: "長編翻訳ワークフロー（設定により外部アプリへ）。",
-        cn: "长篇翻译工作流；可配置环境变量指向独立应用。",
+          ? "Use the separately deployed EH Translator app."
+          : "Open the in-site Translation Studio for the full EH Translator workspace.",
+        jp: translatorStudioHref.startsWith("http")
+          ? "別URLの EH Translator を利用します。"
+          : "同一サイト内の翻訳スタジオで EH Translator を利用します。",
+        cn: translatorStudioHref.startsWith("http")
+          ? "使用单独部署的 EH Translator。"
+          : "在本站的翻译工作室使用完整 EH Translator。",
       }),
       meta: T({ ko: "번역 열기", en: "Open translation", jp: "翻訳へ", cn: "打开翻译" }),
       external: translatorStudioHref.startsWith("http"),

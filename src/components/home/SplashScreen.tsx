@@ -15,7 +15,7 @@ export default function SplashScreen({
   onUniverse: () => void;
   onStudio: () => void;
   onCodeStudio: () => void;
-  /** 전문 번역(EH Translator) — 소설 스튜디오와 별도 */
+  /** 전문 번역(EH Translator) 진입 */
   onTranslationStudio: () => void;
 }) {
   const { lang } = useLang();
@@ -69,10 +69,10 @@ export default function SplashScreen({
       kicker: { ko: "전문 번역", en: "Translate", jp: "翻訳", cn: "翻译" },
       title: "TRANSLATE",
       desc: {
-        ko: "장편·챕터·용어 중심 EH Translator 워크스페이스입니다. (소설 스튜디오와 별도)",
-        en: "EH Translator — long-form and glossary workflow. Separate from the novel studio.",
-        jp: "EH Translator — 長編・用語重視。小説スタジオとは別。",
-        cn: "EH Translator 长篇与术语工作流，与小说工作室分开。",
+        ko: "장편·챕터·용어 중심 EH Translator 워크스페이스입니다.",
+        en: "EH Translator — long-form, chapter, and glossary workflow.",
+        jp: "EH Translator — 長編・チャプター・用語を中心としたワークスペース。",
+        cn: "EH Translator 长篇、章节与术语工作空间。",
       },
       cta: { ko: "번역 스튜디오", en: "Open Translator", jp: "翻訳へ", cn: "打开翻译" },
       badge: { ko: "전문", en: "Pro", jp: "専門", cn: "专业" },

@@ -7,6 +7,8 @@ import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
+  /** Firebase UID — EH Translator·네트워크 API 등에 사용 */
+  userId: string | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -14,11 +16,14 @@ interface AuthContextType {
   error: string | null;
   accessToken: string | null;
   refreshAccessToken: () => Promise<string | null>;
+  /** Firebase ID 토큰 (Bearer API — 네트워크 에이전트 등) */
+  getIdToken: () => Promise<string | null>;
 }
 
 // #22: Default values throw to surface missing AuthProvider early
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userId: null,
   loading: false,
   signInWithGoogle: async () => { throw new Error('AuthProvider not mounted'); },
   signOut: async () => { throw new Error('AuthProvider not mounted'); },
@@ -26,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   error: null,
   accessToken: null,
   refreshAccessToken: async () => { throw new Error('AuthProvider not mounted'); },
+  getIdToken: async () => { throw new Error('AuthProvider not mounted'); },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -45,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
-      import('firebase/auth').then(({ onAuthStateChanged }) => {
+      import('firebase/auth').then(({ onAuthStateChanged, getRedirectResult }) => {
+        getRedirectResult(resolvedAuth).catch(() => {});
         unsubscribe = onAuthStateChanged(resolvedAuth, (u) => {
           setUser(u);
           setLoading(false);
@@ -149,8 +156,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(resolvedAuth);
   };
 
+  const getIdToken = useCallback(async (): Promise<string | null> => {
+    const resolvedAuth = await lazyFirebaseAuth();
+    const u = resolvedAuth?.currentUser;
+    if (!u) return null;
+    return u.getIdToken();
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, isConfigured, error, accessToken, refreshAccessToken }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        userId: user?.uid ?? null,
+        loading,
+        signInWithGoogle,
+        signOut,
+        isConfigured,
+        error,
+        accessToken,
+        refreshAccessToken,
+        getIdToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
