@@ -18,7 +18,7 @@ import { runStaticPipeline } from "@/lib/code-studio/pipeline/pipeline";
 import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfinder";
 import { runStressReport, type StressReport } from "@/lib/code-studio/pipeline/stress-test";
 import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
-import { parseErrors, type ParsedError } from "@/lib/code-studio/pipeline/error-parser";
+import { parseErrors } from "@/lib/code-studio/pipeline/error-parser";
 import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
@@ -881,6 +881,13 @@ function CodeStudioShellInner() {
           bugReports={bugReports} showAdvancedPanels={showAdvancedPanels}
           onToggleAdvancedPanels={() => setShowAdvancedPanels(v => !v)}
           showSettings={showSettings} onToggleSettings={() => setShowSettings(s => !s)} lang={lang}
+          onAction={(actionId) => {
+            if (actionId === "action-demo") {
+              handleOpenDemo();
+            } else if (actionId === "action-new-file") {
+              setShowNewFile(true);
+            }
+          }}
         />
 
         {/* File Explorer Sidebar */}
@@ -962,7 +969,7 @@ function CodeStudioShellInner() {
 
         {/* Global Modal Panels (Not constrained by Right Panel) */}
         {rightPanel === "api-config" && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="fixed inset-0 z-60 flex items-center justify-center">
             <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
           </div>
         )}

@@ -9,15 +9,15 @@ import Link from "next/link";
 import {
   Files, Search, GitBranch, MessageSquare, Activity,
   Edit3, AlertTriangle, Eye, ChevronRight, Settings, X,
-  Home,
+  Home, Plus,
   type LucideIcon,
   Upload, Bug, Play, Shield, List, Layout,
   Package, BarChart3, Users, Wand2,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
-import type { RightPanel, PanelGroup, PanelDef } from "@/lib/code-studio/core/panel-registry";
-import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
+import type { RightPanel } from "@/lib/code-studio/core/panel-registry";
+import { getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
 import { detectLanguage } from "@/lib/code-studio/core/types";
 import type { BugReport } from "@/lib/code-studio/pipeline/bugfinder";
 import type { StressReport } from "@/lib/code-studio/pipeline/stress-test";
@@ -113,6 +113,7 @@ export interface CodeStudioPanelManagerProps {
 function ActivityBar({
   rightPanel, onSetRightPanel, bugReports, showAdvancedPanels,
   onToggleAdvancedPanels, showSettings, onToggleSettings, lang,
+  onAction,
 }: {
   rightPanel: RightPanel | null;
   onSetRightPanel: (panel: RightPanel | null) => void;
@@ -122,11 +123,15 @@ function ActivityBar({
   showSettings: boolean;
   onToggleSettings: () => void;
   lang: string;
+  onAction?: (actionId: string) => void;
 }) {
   const visiblePanels = getVisiblePanels(showAdvancedPanels);
   const coreItems = [
     { id: "files" as const, icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
     { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
+    { id: "action-demo", icon: Play, label: "Open Demo", labelKo: "데모 열기", shortcut: undefined, isAction: true },
+    { id: "action-new-file", icon: Plus, label: "New File", labelKo: "새 파일", shortcut: undefined, isAction: true },
+    { id: "project-spec" as const, icon: Wand2, label: "Project Spec", labelKo: "이지모드 진입", shortcut: undefined },
     { id: "pipeline" as const, icon: Activity, label: "Pipeline", labelKo: "파이프라인", shortcut: undefined },
     { id: "search" as const, icon: Search, label: "Search", labelKo: "파일 검색", shortcut: "Ctrl+Shift+F" },
     { id: "git" as const, icon: GitBranch, label: "Git", labelKo: "Git", shortcut: undefined },
@@ -152,8 +157,14 @@ function ActivityBar({
         return (
           <button
             key={item.id}
-            onClick={() => onSetRightPanel(rightPanel === item.id ? null : item.id as RightPanel)}
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"
+            onClick={() => {
+              if (item.isAction) {
+                onAction?.(item.id);
+              } else {
+                onSetRightPanel(rightPanel === item.id ? null : item.id as RightPanel);
+              }
+            }}
+            className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
             title={`${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`}
           >
             <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
@@ -177,7 +188,7 @@ function ActivityBar({
           const lbl = L4(lang, { ko: p.labelKo, en: p.label });
           return (
             <button key={p.id} onClick={() => onSetRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/[0.06] group"
+              className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
               title={lbl}>
               <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
               {Icon ? <Icon className={`h-[18px] w-[18px] transition-colors ${rightPanel === p.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"}`} /> : <span className="text-[10px] text-text-tertiary">{p.label.substring(0,2)}</span>}
@@ -188,11 +199,11 @@ function ActivityBar({
       <div className="flex-1" />
 
       <button onClick={onToggleAdvancedPanels}
-        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]"
+        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/6"
         title={showAdvancedPanels ? "Hide advanced panels" : "Show all panels"}>
         <ChevronRight className={`h-[18px] w-[18px] text-text-tertiary transition-transform ${showAdvancedPanels ? "rotate-90" : ""}`} />
       </button>
-      <button onClick={onToggleSettings} className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/[0.06]" title="Settings">
+      <button onClick={onToggleSettings} className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/6" title="Settings">
         <Settings className={`h-[18px] w-[18px] ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} />
       </button>
     </div>
@@ -226,7 +237,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
     composerMode, onComposerTransition, panels,
     onFileSelect, onApplyCode, onSetDiffState, fsUpdateContent,
     onSetOpenFiles, onSetFiles, handleRunStressTest, handleRunVerification,
-    editorNavigateToLine, toast, lang, onApproveFile, onRejectFile, stagedFiles,
+    editorNavigateToLine, toast, onApproveFile, onRejectFile, stagedFiles,
   } = props;
 
   if (!rightPanel) return null;
@@ -239,6 +250,15 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
   }));
 
   const panelPropsMap: Record<string, () => React.ReactNode> = {
+    "project-spec": () => (
+      <PI.ProjectSpecFormComponent
+        onComplete={(_spec) => {
+          toast("명세서가 로드되었습니다. 템플릿 또는 코드를 가져옵니다.", "success");
+          onSetRightPanel(null);
+        }}
+        onClose={() => onSetRightPanel(null)}
+      />
+    ),
     "chat": () => (
       <PI.ChatPanelComponent
         activeFileContent={activeFile?.content}
@@ -308,7 +328,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
       <PI.ComposerPanelComponent
         files={files}
         composerMode={composerMode}
-        onCompose={async (fileIds: string[], instruction: string) => {
+        onCompose={async (fileIds: string[], _instruction: string) => {
           onComposerTransition('generating' as ComposerMode);
           const result = fileIds.map((fid) => {
             const f = openFiles.find((of) => of.id === fid);

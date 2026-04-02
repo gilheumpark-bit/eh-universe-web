@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { FileText, ChevronRight, ChevronLeft, Check, Sparkles, Loader2, X } from "lucide-react";
 
 interface SpecQuestion {

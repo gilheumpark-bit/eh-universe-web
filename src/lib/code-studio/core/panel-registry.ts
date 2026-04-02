@@ -61,6 +61,7 @@ export interface PanelDef {
 export const PANEL_REGISTRY: readonly PanelDef[] = [
   // ── editing (편집) ─────────────────────────────────────────
   { id: "chat",           label: "AI Chat",              labelKo: "AI 채팅",         icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
+  { id: "project-spec",   label: "Project Spec",         labelKo: "이지모드(명세서)", icon: "Wand2",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable", isEssential: true },
   { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true },
   { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true },
   { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true },

@@ -451,7 +451,7 @@ function registerGoToLine(editor: Monaco.editor.IStandaloneCodeEditor): void {
     id: "code-studio.goToLine",
     label: "Go to Line...",
     keybindings: [
-      // eslint-disable-next-line no-bitwise
+       
       2048 /* CtrlCmd */ | 27 /* KeyG — Monaco KeyCode.KeyG = 27+ offset; using numeric */,
     ],
     run(ed) {

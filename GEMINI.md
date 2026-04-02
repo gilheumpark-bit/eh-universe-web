@@ -584,6 +584,7 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 - 번역 스튜디오 패널은 `src/components/translator/core/panel-registry.ts` — 경로 혼동 금지
 - 새 패널 추가 = 레지스트리 1줄 + PanelImports 1줄 + panelPropsMap 1항목
 - 하드코딩 패널 금지 — 반드시 레지스트리 경유
+- **이지모드(명세서)**: 패널 id `project-spec` — `ProjectSpecForm.tsx` + `PanelImports` 동적 로드; 명세 완료 시 생성/템플릿 파이프로 넘기는 계약을 깨지 말 것
 
 ## 코드 스튜디오 정적 파이프라인 (8팀 실행 모델)
 
