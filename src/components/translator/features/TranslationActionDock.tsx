@@ -63,7 +63,7 @@ export function TranslationActionDock() {
         </div>
       )}
 
-      <div className="rounded-lg border border-white/8 bg-[#0d0d10] p-3 space-y-2">
+      <div className="rounded-lg border border-white/8 bg-[#1a1816]/90 p-3 space-y-2">
         <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
           <Save className="h-3 w-3 text-emerald-400/80" />
           {lang === 'ko' ? '저장' : 'Save'}

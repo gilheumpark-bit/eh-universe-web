@@ -88,12 +88,12 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
           <input ref={searchRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="템플릿 검색..."
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
           <button onClick={() => setShowAiPrompt(!showAiPrompt)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-purple-500/20 text-purple-400" : "bg-white/5 text-white/40 hover:text-purple-400"}`}>
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-amber-900/30 text-amber-400" : "bg-white/5 text-white/40 hover:text-amber-400"}`}>
             <Sparkles size={12} /> AI로 생성
           </button>
         </div>
         {showAiPrompt && (
-          <div className="px-4 py-3 border-b border-white/8 bg-purple-500/5">
+          <div className="px-4 py-3 border-b border-white/8 bg-amber-800/5">
             <p className="text-xs text-white/40 mb-2">만들고 싶은 앱을 설명하세요</p>
             <textarea ref={aiInputRef} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
               placeholder="예: Todo 앱을 React + Tailwind로 만들어줘"
@@ -101,7 +101,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
             <div className="flex items-center justify-between mt-2">
               <span className="text-[10px] text-white/30">{isGenerating ? "생성 중..." : "Ctrl+Enter로 생성"}</span>
               <button onClick={handleAiGenerate} disabled={!aiPrompt.trim() || isGenerating}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white disabled:opacity-40 hover:bg-purple-700">
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-amber-800 text-stone-100 disabled:opacity-40 hover:bg-amber-700">
                 {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                 {isGenerating ? "생성 중..." : "생성하기"}
               </button>
@@ -111,7 +111,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
         <div className="flex items-center gap-1 px-4 py-2 border-b border-white/8 overflow-x-auto">
           {FRAMEWORK_FILTERS.map((fw) => (
             <button key={fw} onClick={() => setActiveFramework(fw)}
-              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${activeFramework === fw ? "bg-purple-500/15 text-purple-400 font-medium" : "text-white/40 hover:bg-white/5"}`}>{fw}</button>
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${activeFramework === fw ? "bg-amber-900/22 text-amber-400 font-medium" : "text-white/40 hover:bg-white/5"}`}>{fw}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto p-4">
@@ -123,9 +123,9 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               {filtered.map((template) => (
                 <button key={template.id} onClick={() => { onSelectTemplate(template); onClose(); }}
-                  className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-purple-500 hover:bg-purple-500/5 transition-all text-left">
+                  className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-amber-700 hover:bg-amber-800/5 transition-all text-left">
                   <div className="flex items-center gap-3 w-full">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/40 group-hover:text-purple-400 transition-colors">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/40 group-hover:text-amber-400 transition-colors">
                       {getFrameworkIcon(template.framework)}
                     </div>
                     <div className="flex-1 min-w-0">

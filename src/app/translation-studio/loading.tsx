@@ -7,7 +7,7 @@ export default function TranslationStudioLoading() {
   const { lang } = useLang();
 
   return (
-    <div className="flex min-h-screen flex-1 items-center justify-center bg-[#05050A]">
+    <div className="flex min-h-screen flex-1 items-center justify-center bg-[var(--color-bg-primary)]">
       <div className="text-center">
         <div
           className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"

@@ -97,7 +97,7 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
           <Filter size={10} className="text-white/30 mr-0.5" />
           {FILTER_OPTIONS.map((opt) => (
             <button key={opt.value} onClick={() => setFilterType(opt.value)}
-              className={`px-1.5 py-0.5 rounded text-[10px] ${filterType === opt.value ? "bg-purple-500/20 text-purple-400" : "hover:bg-white/5 text-white/40"}`}>{opt.label}</button>
+              className={`px-1.5 py-0.5 rounded text-[10px] ${filterType === opt.value ? "bg-amber-900/30 text-amber-400" : "hover:bg-white/5 text-white/40"}`}>{opt.label}</button>
           ))}
         </div>
       </div>
@@ -155,7 +155,7 @@ function DetailSection({ title, children }: { title: string; children: React.Rea
   const [open, setOpen] = useState(true);
   return (
     <div>
-      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1 text-[10px] font-semibold text-white mb-1 hover:text-purple-400">
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1 text-[10px] font-semibold text-white mb-1 hover:text-amber-400">
         {open ? <ChevronDown size={10} /> : <ChevronRight size={10} />}{title}
       </button>
       {open && <div className="ml-3 space-y-0.5">{children}</div>}

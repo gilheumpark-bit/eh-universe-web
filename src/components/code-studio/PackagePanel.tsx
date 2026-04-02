@@ -119,10 +119,10 @@ export function PackagePanel({ files, onFilesChange }: Props) {
             <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30" />
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="npm 패키지 검색..."
-              className="w-full bg-white/5 pl-6 pr-2 py-1.5 rounded text-xs text-white outline-none border border-white/8 focus:border-purple-500" />
+              className="w-full bg-white/5 pl-6 pr-2 py-1.5 rounded text-xs text-white outline-none border border-white/8 focus:border-amber-700" />
           </div>
           <button onClick={handleSearch} disabled={searching || !searchQuery.trim()}
-            className="px-2 py-1.5 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30 disabled:opacity-30">
+            className="px-2 py-1.5 bg-amber-900/30 text-amber-400 rounded hover:bg-amber-900/35 disabled:opacity-30">
             {searching ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
           </button>
         </div>
@@ -138,7 +138,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 text-white">
                         <span className="font-semibold truncate">{pkg.name}</span>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400 flex-shrink-0">v{pkg.version}</span>
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400 flex-shrink-0">v{pkg.version}</span>
                       </div>
                       {pkg.description && <p className="text-[10px] text-white/40 truncate mt-0.5">{pkg.description}</p>}
                     </div>
@@ -163,7 +163,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                   <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
                     <Package size={10} className="text-white/30 flex-shrink-0" />
                     <span className="flex-1 truncate">{name}</span>
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400">{version}</span>
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
                     <button onClick={() => handleUninstall(name)} disabled={installing !== null}
                       className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
                       {installing === name ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
@@ -174,7 +174,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                   <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
                     <Package size={10} className="text-white/30 flex-shrink-0" />
                     <span className="flex-1 truncate">{name}</span>
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400">{version}</span>
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
                     <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">dev</span>
                     <button onClick={() => handleUninstall(name)} disabled={installing !== null}
                       className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">

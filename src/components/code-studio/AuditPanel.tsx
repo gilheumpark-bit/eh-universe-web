@@ -22,7 +22,7 @@ const SEVERITY_ICONS: Record<AuditSeverity, string> = {
 };
 
 const GRADE_COLORS: Record<string, string> = {
-  S: 'text-purple-400', A: 'text-accent-green', B: 'text-blue-400',
+  S: 'text-amber-400', A: 'text-accent-green', B: 'text-blue-400',
   C: 'text-yellow-400', D: 'text-orange-400', F: 'text-red-400',
 };
 

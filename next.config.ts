@@ -38,8 +38,6 @@ const nextConfig: NextConfig = {
   },
   // Optimize page transitions
   experimental: {
-    // Prefetch links in viewport for faster navigation
-    optimisticClientCache: true,
     /** Tree-shake barrel imports (smaller client chunks for icon / UI libs). */
     optimizePackageImports: [
       "lucide-react",

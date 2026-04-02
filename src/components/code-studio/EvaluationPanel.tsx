@@ -99,7 +99,7 @@ export function EvaluationPanel({ files, onClose }: Props) {
             <div className="text-center py-8">
               <Trophy size={48} className="mx-auto mb-4 opacity-30 text-white/30" />
               <p className="text-sm text-white/50 mb-4">프로젝트 코드 품질, 시장 적합도, 유지보수성을 평가합니다</p>
-              <button onClick={handleRun} className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700">평가 시작</button>
+              <button onClick={handleRun} className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-800 text-stone-100 hover:bg-amber-700">평가 시작</button>
             </div>
           )}
           {loading && (

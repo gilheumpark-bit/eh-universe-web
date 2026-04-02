@@ -123,7 +123,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 
 function ActionIcon({ type }: { type: RecentAction["type"] }) {
   switch (type) {
-    case "ai": return <Brain size={10} className="text-purple-400 shrink-0" />;
+    case "ai": return <Brain size={10} className="text-amber-400 shrink-0" />;
     case "edit": return <FileText size={10} className="text-blue-400 shrink-0" />;
     case "pipeline": return <Zap size={10} className="text-yellow-400 shrink-0" />;
     default: return <Activity size={10} className="text-text-tertiary shrink-0" />;
@@ -214,7 +214,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
         {teams && teams.length > 0 && (
           <section>
             <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-              <BarChart3 size={12} className="text-purple-400" /> Pipeline Progress
+              <BarChart3 size={12} className="text-amber-400" /> Pipeline Progress
             </h3>
             <div className="space-y-1 mb-2">
               <div className="flex items-center justify-between text-[10px] text-text-tertiary">
@@ -222,7 +222,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
                 <span>{overallProgress}%</span>
               </div>
               <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500 bg-purple-500" style={{ width: `${overallProgress}%` }} />
+                <div className="h-full rounded-full transition-all duration-500 bg-amber-800" style={{ width: `${overallProgress}%` }} />
               </div>
               {etaMs > 0 && (
                 <div className="flex items-center gap-1 text-[9px] text-text-tertiary">

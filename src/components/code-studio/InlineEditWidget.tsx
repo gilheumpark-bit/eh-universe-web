@@ -92,16 +92,16 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
   };
 
   return (
-    <div className="absolute z-50 bg-[#0f1419] border border-purple-500/50 rounded-lg shadow-2xl p-2 w-[400px]" style={{ backdropFilter: "blur(8px)" }}>
+    <div className="absolute z-50 bg-[#0f1419] border border-amber-700/45 rounded-lg shadow-2xl p-2 w-[400px]" style={{ backdropFilter: "blur(8px)" }}>
       <div className="flex items-center gap-2 mb-2">
-        <Sparkles size={14} className="text-purple-400 flex-shrink-0" />
+        <Sparkles size={14} className="text-amber-400 flex-shrink-0" />
         <input ref={inputRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown}
           placeholder="수정 지시 (Enter: 생성, Esc: 취소)"
           className="flex-1 bg-white/5 text-xs text-white px-2 py-1.5 rounded outline-none placeholder:text-white/30" disabled={loading} />
         {history.length > 0 && (
-          <button onClick={() => setShowHistory((v) => !v)} className="text-white/40 hover:text-purple-400 transition-colors"><History size={12} /></button>
+          <button onClick={() => setShowHistory((v) => !v)} className="text-white/40 hover:text-amber-400 transition-colors"><History size={12} /></button>
         )}
-        {loading && <Loader2 size={14} className="animate-spin text-purple-400" />}
+        {loading && <Loader2 size={14} className="animate-spin text-amber-400" />}
       </div>
       {showHistory && history.length > 0 && (
         <div className="mb-2 bg-white/5 rounded p-1 max-h-24 overflow-y-auto">

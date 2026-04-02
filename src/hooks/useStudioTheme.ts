@@ -33,7 +33,7 @@ function normalizeStoredColorTheme(raw: string | null): ColorTheme {
 }
 
 export const COLOR_THEMES: { id: ColorTheme; name: string; nameEn: string; preview: string }[] = [
-  { id: 'default', name: '기본', nameEn: 'Default', preview: '#07090d' },
+  { id: 'default', name: '기본', nameEn: 'Default', preview: '#11100e' },
   { id: 'bright', name: '밝은', nameEn: 'Bright', preview: '#f8fafc' },
   { id: 'beige', name: '베이지', nameEn: 'Beige', preview: '#f5f0e8' },
 ];

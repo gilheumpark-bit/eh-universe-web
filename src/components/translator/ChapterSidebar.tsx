@@ -53,7 +53,7 @@ export function ChapterSidebar({
               type="button"
               onClick={onBatchTranslate}
               disabled={loading}
-              className="flex-1 rounded-xl bg-linear-to-r from-blue-600/80 to-indigo-600/80 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white transition-all hover:brightness-110"
+              className="flex-1 rounded-xl bg-linear-to-r from-amber-800/90 to-stone-900/90 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-stone-100 transition-all hover:brightness-110 shadow-md shadow-amber-950/15"
             >
               ALL BATCH
             </button>

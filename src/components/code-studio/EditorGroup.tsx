@@ -80,7 +80,7 @@ function PaneTabBar({
     <div
       role="tablist"
       className={`flex items-center border-b overflow-x-auto
-        ${isFocused ? "border-purple-500/50 bg-[#0a0e17]/80" : "border-white/8 bg-[#0a0e17]/50"}`}
+        ${isFocused ? "border-amber-700/45 bg-[#0a0e17]/80" : "border-white/8 bg-[#0a0e17]/50"}`}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
       onDrop={onDrop}
     >
@@ -221,7 +221,7 @@ function ResizeHandle({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className={`flex-shrink-0 bg-white/5 hover:bg-purple-500/30 transition-colors
+      className={`flex-shrink-0 bg-white/5 hover:bg-amber-900/35 transition-colors
         ${direction === "horizontal" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize"}`}
     />
   );

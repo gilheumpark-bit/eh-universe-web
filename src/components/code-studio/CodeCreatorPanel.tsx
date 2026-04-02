@@ -293,7 +293,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="flex items-center gap-2 text-xs font-semibold">
-          <FileCode2 size={14} className="text-purple-400" />
+          <FileCode2 size={14} className="text-amber-400" />
           Code Creator
         </span>
         <button onClick={onClose} aria-label="닫기" className="p-1 rounded hover:bg-white/5 text-text-secondary"><X size={14} /></button>
@@ -306,13 +306,13 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
             <textarea
               value={prompt} onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe what you want to create..."
-              className="w-full h-24 px-3 py-2 text-sm bg-[#0d1117] border border-white/10 rounded resize-none focus:outline-none focus:border-purple-500/50"
+              className="w-full h-24 px-3 py-2 text-sm bg-[#0d1117] border border-white/10 rounded resize-none focus:outline-none focus:border-amber-700/45"
               disabled={running}
             />
             <div className="flex gap-2">
               {!running ? (
                 <button onClick={handleStart} disabled={!prompt.trim()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-40">
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-amber-800 text-stone-100 hover:bg-amber-800 disabled:opacity-40">
                   <Play size={12} /> Start Creation
                 </button>
               ) : (
@@ -388,7 +388,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
                   <div className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-white/5"
                     onClick={() => setExpandedFile(isExpanded ? null : file.path)}>
                     {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                    <FileCode2 size={12} className="text-purple-400" />
+                    <FileCode2 size={12} className="text-amber-400" />
                     <span className="text-[11px] font-mono flex-1 truncate">{file.path}</span>
                     {file.isNew && <span className="text-[9px] px-1 py-0.5 rounded bg-green-600 text-white">NEW</span>}
                     <span className="text-[9px] px-1 py-0.5 rounded" style={{
@@ -441,7 +441,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
             <div className="flex gap-2">
               <input value={feedback} onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Revision feedback..."
-                className="flex-1 px-2 py-1 text-xs bg-[#0a0e17] border border-white/10 rounded focus:outline-none focus:border-purple-500/50" />
+                className="flex-1 px-2 py-1 text-xs bg-[#0a0e17] border border-white/10 rounded focus:outline-none focus:border-amber-700/45" />
               <button type="button" disabled={!feedback.trim() || running} onClick={() => void handleRevise()}
                 className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-40">
                 <RefreshCw size={10} /> Revise

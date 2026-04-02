@@ -49,7 +49,7 @@ const PERSONA_COLORS: Record<AgentRole, string> = {
   architect: "#3b82f6",
   developer: "#10b981",
   reviewer: "#f59e0b",
-  tester: "#8b5cf6",
+  tester: "#b8955c",
   documenter: "#ec4899",
 };
 

@@ -152,7 +152,7 @@ export function QuickOpen({ files, recentFileIds, onOpen, onClose }: Props) {
                 key={f.node.id}
                 onClick={() => { onOpen(f.node); onClose(); }}
                 className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
-                  ${i === selectedIdx ? "bg-purple-500/15 text-purple-400" : "hover:bg-white/5 text-text-primary"}`}
+                  ${i === selectedIdx ? "bg-amber-900/22 text-amber-400" : "hover:bg-white/5 text-text-primary"}`}
               >
                 {recentSet.has(f.node.id) ? (
                   <Clock size={12} className="text-amber-400 flex-shrink-0" />

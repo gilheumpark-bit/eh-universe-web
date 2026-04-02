@@ -90,7 +90,7 @@ export function InputDialog({
           placeholder={placeholder}
           aria-label={title}
           className={`w-full bg-white/5 text-xs px-3 py-2 rounded border outline-none transition-colors
-            ${error ? "border-red-400 focus:border-red-400" : "border-white/8 focus:border-purple-400"}`}
+            ${error ? "border-red-400 focus:border-red-400" : "border-white/8 focus:border-amber-600/50"}`}
         />
         {error && <p className="text-[10px] text-red-400 mt-1">{error}</p>}
         <div className="flex justify-end gap-2 mt-3">
@@ -102,7 +102,7 @@ export function InputDialog({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-400 transition-colors"
+            className="px-3 py-1 text-xs bg-amber-800 text-stone-100 rounded hover:bg-amber-600 transition-colors"
           >
             {confirmLabel}
           </button>

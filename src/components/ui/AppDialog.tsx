@@ -73,7 +73,7 @@ export function AppDialog({ open, title, message, variant, onClose, onConfirm, o
               if (variant === 'confirm') onConfirm?.();
               else onAlertOk?.();
             }}
-            className="rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white shadow-lg"
+            className="rounded-xl bg-linear-to-r from-amber-800 to-stone-900 px-4 py-2 text-[10px] font-black uppercase tracking-wide text-stone-100 shadow-lg shadow-amber-950/25"
           >
             {variant === 'confirm' ? '확인' : '닫기'}
           </button>

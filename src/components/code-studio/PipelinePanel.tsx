@@ -105,7 +105,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
         <Shield size={32} className="text-text-tertiary opacity-30" />
         <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 결과 없음", en: "No pipeline results yet" })}</p>
         {onRun && (
-          <button onClick={onRun} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-purple-500 text-white hover:opacity-90 transition-opacity">
+          <button onClick={onRun} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 transition-opacity">
             <Play size={12} /> {L4(lang, { ko: "파이프라인 실행", en: "Run Pipeline" })}
           </button>
         )}
@@ -120,7 +120,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
   if (isRunning && !result) {
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
-        <Loader2 size={32} className="animate-spin text-purple-400" />
+        <Loader2 size={32} className="animate-spin text-amber-400" />
         <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 실행 중...", en: "Pipeline running..." })}</p>
         {onAbort && (
           <button onClick={onAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-yellow-400 hover:bg-bg-tertiary">
@@ -138,7 +138,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
         <span className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-          <Shield size={12} className="text-purple-400" /> {L4(lang, { ko: "파이프라인 결과", en: "Pipeline Results" })}
+          <Shield size={12} className="text-amber-400" /> {L4(lang, { ko: "파이프라인 결과", en: "Pipeline Results" })}
           <StatusBadge status={result.overallStatus} lang={lang} />
           <span className="text-text-tertiary font-mono">{result.overallScore}/100</span>
         </span>

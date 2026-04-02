@@ -93,7 +93,7 @@ export function TranslatorShellInner() {
       {/* 3. Center Area (Editing Region) */}
       {/* 그라데이션 광원을 배경에 미세하게 추가하여 프리미엄 느낌 부여 */}
       <div className="flex-1 flex flex-col min-w-0 z-10 basis-auto h-full relative">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-indigo-900/10 via-[#05050A]/0 to-transparent" />
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-amber-950/15 via-transparent to-transparent" />
         <BilateralEditor />
       </div>
 

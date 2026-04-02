@@ -133,7 +133,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
               return (
                 <button key={change.filePath} onClick={() => setSelectedIndex(idx)}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-white/5 ${
-                    isSelected ? "bg-white/5 border-l-2 border-purple-500" : ""
+                    isSelected ? "bg-white/5 border-l-2 border-amber-700" : ""
                   }`}>
                   <StatusIcon status={change.status} />
                   <span className="flex-1 truncate">{change.filePath}</span>
@@ -149,7 +149,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
               <>
                 <div className="flex items-center justify-between px-4 py-2 border-b border-white/8">
                   <div className="flex items-center gap-2">
-                    <FileCode size={14} className="text-purple-400" />
+                    <FileCode size={14} className="text-amber-400" />
                     <span className="text-xs font-mono">{selected.filePath}</span>
                     <StatusBadge status={selected.status} lang={lang} />
                   </div>
@@ -204,7 +204,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
             {L4(lang, { ko: "취소", en: "Cancel" })}
           </button>
           <button onClick={handleApplyDecisions}
-            className="px-4 py-2 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-500">
+            className="px-4 py-2 text-xs bg-amber-800 text-stone-100 rounded-lg hover:bg-amber-800">
             {L4(lang, { ko: `선택 적용 (${acceptedCount} 수락됨)`, en: `Apply Selection (${acceptedCount} accepted)` })}
           </button>
         </div>

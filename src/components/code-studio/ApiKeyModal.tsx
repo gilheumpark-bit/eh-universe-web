@@ -37,7 +37,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="bg-[#0f1419] border border-white/10 rounded-xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
-          <Code2 size={28} className="text-purple-400" />
+          <Code2 size={28} className="text-amber-400" />
           <div>
             <h2 className="text-lg font-bold text-white">EH Code Studio</h2>
             <p className="text-xs text-white/50">AI 기반 코드 에디터에 오신 것을 환영합니다</p>
@@ -45,7 +45,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
         </div>
 
         <button onClick={onSkip}
-          className="w-full py-3 mb-3 bg-purple-600 text-white text-sm rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+          className="w-full py-3 mb-3 bg-amber-800 text-stone-100 text-sm rounded-lg font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2">
           <Play size={16} />둘러보기
         </button>
         <p className="text-[10px] text-white/40 text-center mb-4">API 키 없이도 기본 편집 기능을 사용할 수 있습니다</p>
@@ -63,7 +63,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
                 <button key={p.id} onClick={() => setProvider(p.id)}
                   className={`px-2 py-1.5 text-[10px] rounded transition-colors ${
                     provider === p.id
-                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
+                      ? "bg-amber-900/30 text-amber-400 border border-amber-700/40"
                       : "bg-white/5 text-white/50 border border-transparent hover:border-white/10"
                   }`}>{p.name}</button>
               ))}

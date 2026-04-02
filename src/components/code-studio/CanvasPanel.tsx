@@ -96,7 +96,7 @@ function ConnectionLine({
 const TYPE_COLORS: Record<CanvasNode["type"], string> = {
   component: "#3b82f6",
   file: "#10b981",
-  module: "#8b5cf6",
+  module: "#b8955c",
   service: "#f59e0b",
 };
 

@@ -4,8 +4,17 @@ import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
+import { MainContentRegion } from "@/components/MainContentRegion";
 import "@/lib/env"; // validate environment variables at startup
-import { IBM_Plex_Mono, IBM_Plex_Sans, JetBrains_Mono, Space_Grotesk, Noto_Sans_KR } from "next/font/google";
+import {
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
+  JetBrains_Mono,
+  Space_Grotesk,
+  Noto_Sans_KR,
+  Cormorant_Garamond,
+  Noto_Serif_KR,
+} from "next/font/google";
 
 import "./globals.css";
 import "./globals-components.css";
@@ -19,6 +28,19 @@ const ibmPlexSans = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subset
 const jetbrainsMono = JetBrains_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap" });
 const spaceGrotesk = Space_Grotesk({ weight: ["500", "600", "700"], subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
 const notoSansKr = Noto_Sans_KR({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-noto-sans-kr", display: "swap", preload: false });
+const cormorantGaramond = Cormorant_Garamond({
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-cormorant-garamond",
+  display: "swap",
+});
+const notoSerifKr = Noto_Serif_KR({
+  weight: ["400", "600"],
+  subsets: ["latin"],
+  variable: "--font-noto-serif-kr",
+  display: "swap",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -65,13 +87,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${ibmPlexMono.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} ${notoSansKr.variable} h-full antialiased`} suppressHydrationWarning data-scroll-behavior="smooth">
+    <html
+      lang="ko"
+      className={`${ibmPlexMono.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} ${notoSansKr.variable} ${cormorantGaramond.variable} ${notoSerifKr.variable} h-full antialiased`}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
       <head>
         {/* Security headers are applied centrally by src/proxy.ts */}
       </head>
       <body className="min-h-full flex flex-col">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline">본문으로 건너뛰기</a>
-        <AuthProvider><LangProvider><div id="main-content">{children}</div></LangProvider></AuthProvider>
+        <AuthProvider>
+          <LangProvider>
+            <MainContentRegion>{children}</MainContentRegion>
+          </LangProvider>
+        </AuthProvider>
         <ErrorReporterInit />
         <ApiKeyHydrator />
         <DeferredClientMetrics />

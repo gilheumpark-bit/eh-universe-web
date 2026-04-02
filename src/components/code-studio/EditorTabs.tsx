@@ -241,12 +241,12 @@ export function EditorTabs({
                     ? "bg-[#0a0e17] text-white"
                     : "text-text-secondary hover:bg-white/5 hover:text-gray-300"
                 }
-                ${isDragTarget ? "border-l-2 border-l-purple-500" : ""}
+                ${isDragTarget ? "border-l-2 border-l-amber-700" : ""}
               `}
             >
               {/* Active tab indicator — purple bottom border */}
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-700" />
               )}
 
               {/* Modified indicator (yellow dot) */}

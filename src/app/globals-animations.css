@@ -18,38 +18,12 @@
   }
 }
 
+/* forwards만 사용: backwards 시 전환 직전 한 프레임이 비어 보이거나 잘못된 레이어가 비칠 수 있음 */
 #main-content > * {
-  animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* View Transitions API for supported browsers */
-@view-transition {
-  navigation: auto;
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.25s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-::view-transition-old(root) {
-  animation-name: fade-out-slide;
-}
-
-::view-transition-new(root) {
-  animation-name: fade-in-slide;
-}
-
-@keyframes fade-out-slide {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-4px); }
-}
-
-@keyframes fade-in-slide {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* View Transitions navigation:auto 는 App Router 클라이언트 전환과 겹치면 홈 등 잘못된 스냅샷이 섞여 보일 수 있어 비활성화 */
 
 /* Smooth scrolling — only when data-scroll-behavior is set (Next.js compatible) */
 html[data-scroll-behavior="smooth"] {
@@ -65,9 +39,9 @@ html[data-scroll-behavior="smooth"]:focus-within {
    Enhanced Focus Ring — Accessibility A++ grade
    ============================================================ */
 *:focus-visible {
-  outline: 2px solid var(--color-accent-purple, #8d7bc3) !important;
+  outline: 2px solid var(--color-accent-amber, #b8955c) !important;
   outline-offset: 3px !important;
-  box-shadow: 0 0 0 4px rgba(141, 123, 195, 0.25) !important;
+  box-shadow: 0 0 0 4px rgba(184, 149, 92, 0.22) !important;
   transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -211,8 +185,8 @@ html[data-theme-changing]::after {
   transform: translateX(-50%);
   z-index: 9999;
   padding: 0.75rem 1.5rem;
-  background: var(--color-accent-purple);
-  color: white;
+  background: var(--color-accent-amber);
+  color: #1a1816;
   font-weight: bold;
   border-radius: 0 0 0.75rem 0.75rem;
   transition: top 0.2s ease-out;
@@ -262,7 +236,7 @@ html[data-theme-changing]::after {
 }
 
 [role="dialog"]:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-accent-purple);
+  box-shadow: 0 0 0 3px var(--color-accent-amber);
 }
 
 /* Screen reader only utility - enhanced */
@@ -300,10 +274,10 @@ html[data-theme-changing]::after {
 }
 
 @keyframes glitch {
-  0% { text-shadow: 2px 0 var(--color-accent-purple), -2px 0 var(--color-accent-red); }
-  25% { text-shadow: -2px 0 var(--color-accent-purple), 2px 0 var(--color-accent-red); }
-  50% { text-shadow: 2px 0 var(--color-accent-red), -2px 0 var(--color-accent-purple); }
-  75% { text-shadow: -1px 0 var(--color-accent-purple), 1px 0 var(--color-accent-red); }
+  0% { text-shadow: 2px 0 var(--color-accent-amber), -2px 0 var(--color-accent-red); }
+  25% { text-shadow: -2px 0 var(--color-accent-amber), 2px 0 var(--color-accent-red); }
+  50% { text-shadow: 2px 0 var(--color-accent-red), -2px 0 var(--color-accent-amber); }
+  75% { text-shadow: -1px 0 var(--color-accent-amber), 1px 0 var(--color-accent-red); }
   100% { text-shadow: none; }
 }
 

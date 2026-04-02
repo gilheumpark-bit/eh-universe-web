@@ -115,7 +115,7 @@ function FileGroup({
         className="w-full flex items-center gap-1 px-3 py-1 hover:bg-white/5 text-text-tertiary"
       >
         {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-        <FileCode size={10} className="text-purple-400" />
+        <FileCode size={10} className="text-amber-400" />
         <span className="flex-1 text-left truncate text-text-primary">{filePath}</span>
         <span className="text-[9px] text-text-tertiary">{results.length}</span>
       </button>
@@ -130,7 +130,7 @@ function FileGroup({
             {showReplace && r.line && (
               <span
                 onClick={(e) => { e.stopPropagation(); onReplace?.(r.fileName, r.line); }}
-                className="text-[8px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400 opacity-0 group-hover:opacity-100 ml-1 shrink-0 cursor-pointer hover:bg-purple-500/30"
+                className="text-[8px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400 opacity-0 group-hover:opacity-100 ml-1 shrink-0 cursor-pointer hover:bg-amber-900/35"
               >
                 {L4(lang, { ko: "바꾸기", en: "Replace" })}</span>
             )}
@@ -267,7 +267,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
             </button>
             <button
               onClick={() => setShowReplace((v) => !v)}
-              className={`text-text-tertiary hover:text-text-primary ${showReplace ? "text-purple-400" : ""}`}
+              className={`text-text-tertiary hover:text-text-primary ${showReplace ? "text-amber-400" : ""}`}
               title={L4(lang, { ko: "바꾸기 전환", en: "Toggle replace" })}
             >
               <Replace size={10} />
@@ -303,7 +303,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
             />
             <button
               onClick={handleReplaceAll}
-              className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
+              className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 hover:bg-amber-900/35"
             >{L4(lang, { ko: "모두 바꾸기", en: "Replace All" })}</button>
           </div>
         )}
@@ -313,14 +313,14 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
           <button
             onClick={() => setCaseSensitive((v) => !v)}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
-              ${caseSensitive ? "bg-purple-500/20 text-purple-400" : "text-text-tertiary hover:text-text-primary"}`}
+              ${caseSensitive ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
           >
             Aa
           </button>
           <button
             onClick={() => setUseRegex((v) => !v)}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
-              ${useRegex ? "bg-purple-500/20 text-purple-400" : "text-text-tertiary hover:text-text-primary"}`}
+              ${useRegex ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
           >
             .*
           </button>
@@ -340,7 +340,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
                   <button
                     key={ft.value}
                     onClick={() => { setFileTypeFilter(ft.value); setShowFileTypeDropdown(false); }}
-                    className={`w-full text-left px-3 py-1 text-[9px] hover:bg-white/5 ${fileTypeFilter === ft.value ? "text-purple-400" : "text-text-primary"}`}
+                    className={`w-full text-left px-3 py-1 text-[9px] hover:bg-white/5 ${fileTypeFilter === ft.value ? "text-amber-400" : "text-text-primary"}`}
                   >
                     {ft.value === "" ? L4(lang, { ko: "모든 파일", en: "All Files" }) : ft.label}
                   </button>

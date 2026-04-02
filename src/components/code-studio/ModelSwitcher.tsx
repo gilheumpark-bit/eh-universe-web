@@ -76,8 +76,8 @@ export function ModelSwitcher({ compact = false }: Props) {
                   const isActive = provider.id === activeProviderId && model === activeModel;
                   return (
                     <button key={`${provider.id}-${model}`} onClick={() => handleSelect(provider.id, model)}
-                      className={`w-full flex items-center gap-2 px-4 py-1.5 text-left text-xs transition-colors hover:bg-white/5 ${isActive ? "text-purple-400 bg-white/5" : "text-white/70"} ${!hasKey ? "opacity-50" : ""}`}>
-                      {isActive ? <Check className="w-3 h-3 flex-shrink-0 text-purple-400" /> : <span className="w-3 h-3 flex-shrink-0" />}
+                      className={`w-full flex items-center gap-2 px-4 py-1.5 text-left text-xs transition-colors hover:bg-white/5 ${isActive ? "text-amber-400 bg-white/5" : "text-white/70"} ${!hasKey ? "opacity-50" : ""}`}>
+                      {isActive ? <Check className="w-3 h-3 flex-shrink-0 text-amber-400" /> : <span className="w-3 h-3 flex-shrink-0" />}
                       <span className="truncate">{model}</span>
                       {!hasKey && <span className="ml-auto text-[10px] text-amber-500/70">키 필요</span>}
                     </button>

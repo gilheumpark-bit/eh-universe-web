@@ -179,8 +179,8 @@ function TreeNode({
         onDrop={(e) => { if (isFolder) onDrop(e, node.id); }}
         onDragLeave={() => onDragLeave()}
         className={`w-full flex items-center gap-1 px-2 py-[3px] hover:bg-white/5 transition-colors text-xs
-          ${isActive ? "bg-white/5 text-purple-400" : "text-text-primary"}
-          ${isSelected ? "bg-purple-500/15 outline outline-purple-500/30" : ""}
+          ${isActive ? "bg-white/5 text-amber-400" : "text-text-primary"}
+          ${isSelected ? "bg-amber-900/22 outline outline-amber-700/35" : ""}
           ${isDragTarget ? "bg-amber-500/10 outline-dashed outline-1 outline-amber-400" : ""}`}
         style={{ paddingLeft: 8 + depth * 12 }}
       >
@@ -193,7 +193,7 @@ function TreeNode({
         {isFolder ? (
           expanded ? <FolderOpen size={14} className="text-amber-400" /> : <Folder size={14} className="text-amber-400" />
         ) : (
-          <FileCode size={14} className={iconColorClass || "text-purple-400"} />
+          <FileCode size={14} className={iconColorClass || "text-amber-400"} />
         )}
         {isModified && (
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title={L4(lang, { ko: "수정됨", en: "Modified" })} />
@@ -201,7 +201,7 @@ function TreeNode({
         {isRenaming ? (
           <input
             autoFocus
-            className="flex-1 bg-bg-primary border border-purple-400 rounded px-1 text-xs outline-none"
+            className="flex-1 bg-bg-primary border border-amber-600/45 rounded px-1 text-xs outline-none"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onBlur={commitRename}

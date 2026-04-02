@@ -57,7 +57,7 @@ export function QuickActions({ selectedText, position, language, onAction, onClo
         {ACTIONS.map((action, i) => (
           <button key={action.id} onClick={() => handleAction(action)} onMouseEnter={() => setFocusIndex(i)} title={action.label}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] rounded-md transition-colors whitespace-nowrap ${
-              focusIndex === i ? "bg-purple-500/20 text-purple-400" : "text-white/50 hover:text-white hover:bg-white/5"
+              focusIndex === i ? "bg-amber-900/30 text-amber-400" : "text-white/50 hover:text-white hover:bg-white/5"
             }`}>
             {action.icon}<span>{action.label}</span>
           </button>

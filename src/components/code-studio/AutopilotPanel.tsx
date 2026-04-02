@@ -240,7 +240,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
-          <Rocket size={14} className="text-purple-400" /> {L4(lang, { ko: "풀 오토파일럿", en: "Full Autopilot" })}
+          <Rocket size={14} className="text-amber-400" /> {L4(lang, { ko: "풀 오토파일럿", en: "Full Autopilot" })}
           {running && <span className="flex items-center gap-1 text-blue-400"><Loader2 size={10} className="animate-spin" />{L4(lang, { ko: "실행 중", en: "Running" })}</span>}
           {result?.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/15 text-green-400">PASSED</span>}
           {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400">BELOW</span>}
@@ -265,7 +265,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
               <button onClick={() => setShowConfig(!showConfig)} className="flex items-center gap-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]">
                 <Settings size={10} /> {showConfig ? L4(lang, { ko: "설정 숨기기", en: "Hide Config" }) : L4(lang, { ko: "설정", en: "Config" })} {showConfig ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
               </button>
-              <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-500 text-white hover:opacity-90 disabled:opacity-40 transition-opacity">
+              <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
                 <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot" })}
               </button>
             </div>
@@ -309,7 +309,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1 bg-[#21262d] rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500 bg-purple-500" style={{ width: `${progress.overallProgress}%` }} />
+                <div className="h-full rounded-full transition-all duration-500 bg-amber-800" style={{ width: `${progress.overallProgress}%` }} />
               </div>
               <span className="text-[9px] text-[#8b949e] font-mono w-8 text-right">{progress.overallProgress}%</span>
             </div>
@@ -357,7 +357,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
             {result.commitMessage && (
               <div className="bg-[#010409] rounded-lg border border-[#30363d] p-2">
                 <span className="text-[10px] text-[#8b949e] flex items-center gap-1 mb-1"><GitCommit size={10} />Commit</span>
-                <code className="text-[10px] text-purple-400 font-mono">{result.commitMessage}</code>
+                <code className="text-[10px] text-amber-400 font-mono">{result.commitMessage}</code>
               </div>
             )}
             {showReport && result.documentation && (

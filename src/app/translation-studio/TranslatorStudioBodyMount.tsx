@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 const ATTR = 'data-eh-translator-studio';
 
 /**
- * globals.css 의 body::before/::after(z~90) 노이즈·스캔라인이 고정 UI(z-50)보다 위에 쌓여
- * 클릭이 막히는 경우가 있어, 이 라우트에 있을 때만 레이어를 끈다.
+ * 과거 전역 body::before 노이즈와의 z-index 충돌 방지용 훅.
+ * 아카이브 리디자인 후 노이즈 레이어는 제거됨 — 속성은 다른 오버레이 대비용으로 유지 가능.
  */
 export function TranslatorStudioBodyMount() {
   useEffect(() => {

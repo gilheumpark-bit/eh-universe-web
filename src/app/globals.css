@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bg-primary: #07090d;
-  --color-bg-secondary: #0f141c;
-  --color-bg-tertiary: #171d28;
-  --color-text-primary: #f3ede1;
-  --color-text-secondary: #b9b2a6;
-  --color-text-tertiary: #7e7a73;
-  --color-accent-purple: #8d7bc3;
-  --color-accent-red: #c16258;
-  --color-accent-green: #2f9b83;
-  --color-accent-amber: #caa15c;
-  --color-accent-blue: #5c8fd6;
-  --color-border: #283142;
-  --color-surface-strong: rgba(18, 24, 35, 0.92);
-  --color-surface-soft: rgba(17, 21, 30, 0.72);
-  --shadow-luxury: 0 22px 80px rgba(0, 0, 0, 0.34);
-  --shadow-panel: 0 14px 40px rgba(0, 0, 0, 0.26);
-  /* Manuscript / long-form panels — warm lift without harsh edges */
-  --shadow-manuscript: 0 18px 56px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(202, 161, 92, 0.06);
+  /* Archive / editorial base — 도서·원고실 톤 (SF 글로우·쿨 블루 최소화) */
+  --color-bg-primary: #11100e;
+  --color-bg-secondary: #1a1816;
+  --color-bg-tertiary: #242018;
+  --color-text-primary: #ebe6db;
+  --color-text-secondary: #a89f8f;
+  --color-text-tertiary: #756c5f;
+  --color-accent-purple: #8b6f56;
+  --color-accent-red: #a85c52;
+  --color-accent-green: #4a8f78;
+  --color-accent-amber: #b8955c;
+  --color-accent-blue: #6d7d8f;
+  --color-border: #2f2c26;
+  --color-surface-strong: rgba(26, 24, 22, 0.94);
+  --color-surface-soft: rgba(20, 19, 17, 0.78);
+  --shadow-luxury: 0 20px 64px rgba(0, 0, 0, 0.45);
+  --shadow-panel: 0 12px 36px rgba(0, 0, 0, 0.32);
+  --shadow-manuscript: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(184, 149, 92, 0.07);
   /* Transition scale — 3 tiers only */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
@@ -29,24 +29,13 @@
   --radius-lg: 18px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  --gradient-page:
-    radial-gradient(
-      circle at top left,
-      rgba(92, 143, 214, 0.14),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at top right,
-      rgba(202, 161, 92, 0.16),
-      transparent 32%
-    ),
-    linear-gradient(180deg, #07090d 0%, #090d13 42%, #07090d 100%);
+  --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
   --font-sans:
     var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",
     "Noto Sans SC", "Hiragino Kaku Gothic ProN", "Microsoft YaHei", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "Fira Code", monospace;
-  --font-display: var(--font-space-grotesk), sans-serif;
-  --font-document: var(--font-ibm-plex-mono), monospace;
+  --font-display: var(--font-cormorant-garamond), var(--font-noto-serif-kr), serif;
+  --font-document: var(--font-noto-serif-kr), var(--font-ibm-plex-mono), serif;
 }
 
 /* ============================================================
@@ -64,19 +53,7 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(92, 143, 214, 0.09),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 85% 12%,
-      rgba(202, 161, 92, 0.08),
-      transparent 28%
-    ),
-    linear-gradient(180deg, rgba(20, 27, 39, 0.68), rgba(7, 9, 13, 0.9)),
-    var(--gradient-page);
+  background: var(--gradient-page);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-size: 1rem;
@@ -97,51 +74,7 @@ select {
   letter-spacing: inherit;
 }
 
-/* Noise/grain overlay — 다크 모드 전용 */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Scanline effect — 다크 모드 전용 */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 89;
-  pointer-events: none;
-  opacity: 0.03;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.03) 2px,
-    rgba(255, 255, 255, 0.03) 4px
-  );
-}
-
-/* 라이트/맥스 모드: 노이즈·스캔라인 숨김 — 문서형 UI에 불필요 */
-[data-theme="light"] body::before,
-[data-theme="light"] body::after,
-[data-theme="max"] body::before,
-[data-theme="max"] body::after,
-body[data-theme="light"]::before,
-body[data-theme="light"]::after,
-body[data-theme="max"]::before,
-body[data-theme="max"]::after {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    display: none;
-  }
-}
+/* 아카이브 톤: 전역 노이즈·스캔라인 제거 (작업 UI = 에디토리얼, SF 장식은 페이지 단위로만) */
 
 @media (max-width: 768px) {
   body {
@@ -155,11 +88,11 @@ main[class~="pt-14"] {
 
 /* Focus-visible */
 *:focus-visible {
-  outline: 2px solid var(--color-accent-purple, #8b5cf6);
+  outline: 2px solid var(--color-accent-amber, #b8955c);
   outline-offset: 2px;
 }
 .ds-input:focus-visible {
-  outline: 2px solid var(--color-accent-purple, #8b5cf6);
+  outline: 2px solid var(--color-accent-amber, #b8955c);
   outline-offset: 2px;
 }
 
@@ -176,21 +109,21 @@ body[data-theme="max"] {
   background: var(--color-bg-primary);
 }
 
-/* Level 1: 딤 (Dim) */
+/* Level 1: 딤 (Dim) — 아카이브용 웜 그레이 */
 [data-theme="dim"] {
-  --color-bg-primary: #1a1a2e;
-  --color-bg-secondary: #22223a;
-  --color-bg-tertiary: #2a2a42;
-  --color-text-primary: #e0e0e8;
-  --color-text-secondary: #a0a0b0;
-  --color-text-tertiary: #707080;
-  --color-border: #3a3a52;
-  --color-surface-strong: rgba(34, 34, 58, 0.92);
-  --color-surface-soft: rgba(26, 26, 46, 0.72);
+  --color-bg-primary: #1c1a17;
+  --color-bg-secondary: #252320;
+  --color-bg-tertiary: #2e2b26;
+  --color-text-primary: #e4dfd6;
+  --color-text-secondary: #9e9588;
+  --color-text-tertiary: #6f685e;
+  --color-border: #3d3830;
+  --color-surface-strong: rgba(37, 35, 32, 0.94);
+  --color-surface-soft: rgba(28, 26, 23, 0.78);
   --gradient-page: none;
 }
 body[data-theme="dim"] {
-  background: linear-gradient(180deg, #1a1a2e 0%, #22223a 100%);
+  background: linear-gradient(180deg, #1c1a17 0%, #252320 100%);
 }
 [data-theme="dim"] * {
   --tw-bg-opacity: 1;
@@ -198,27 +131,27 @@ body[data-theme="dim"] {
 [data-theme="dim"] .bg-black\/40,
 [data-theme="dim"] .bg-black\/30,
 [data-theme="dim"] .bg-black\/20 {
-  background-color: rgba(26, 26, 46, 0.4);
+  background-color: rgba(28, 26, 23, 0.4);
 }
 [data-theme="dim"] .bg-zinc-900,
 [data-theme="dim"] .bg-zinc-900\/20,
 [data-theme="dim"] .bg-zinc-900\/30,
 [data-theme="dim"] .bg-zinc-900\/50 {
-  background-color: rgba(34, 34, 58, 0.5);
+  background-color: rgba(37, 35, 32, 0.5);
 }
 [data-theme="dim"] .border-zinc-800,
 [data-theme="dim"] .border-zinc-800\/50 {
-  border-color: #3a3a52;
+  border-color: #3d3830;
 }
 [data-theme="dim"] .text-zinc-500,
 [data-theme="dim"] .text-zinc-600 {
-  color: #8080a0;
+  color: #8a8478;
 }
 [data-theme="dim"] .text-zinc-400 {
-  color: #a0a0b8;
+  color: #a8a198;
 }
 
-/* Level 2: 라이트 (Light) — 아카이브형 미래감 기본 */
+/* Level 2: 라이트 (Light) — 아카이브 라이트(미색 종이) */
 [data-theme="light"] {
   --color-bg-primary: #FAFAF8;
   --color-bg-secondary: #F2F2EE;
@@ -340,11 +273,11 @@ body[data-theme="max"] {
    ============================================================ */
 
 body[data-color-theme="bright"] {
-  background: linear-gradient(180deg, #0c1220 0%, #0e1628 100%);
+  background: linear-gradient(180deg, #161918 0%, #121413 100%);
 }
 body[data-color-theme="bright"][data-theme="light"],
 body[data-color-theme="bright"][data-theme="max"] {
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #f7f6f3 0%, #eeede8 100%);
 }
 
 body[data-color-theme="beige"] {
@@ -355,51 +288,40 @@ body[data-color-theme="beige"][data-theme="max"] {
   background: linear-gradient(180deg, #f5f0e8 0%, #ebe5da 100%);
 }
 
-/* Bright — cool slate / ice */
+/* Bright — 밝은 아카이브(중성 슬레이트, 쿨 SF 블루 없음) */
 [data-color-theme="bright"] {
-  --color-bg-primary: #0c1220;
-  --color-bg-secondary: #121a2a;
-  --color-bg-tertiary: #182234;
-  --color-text-primary: #e8f0f8;
-  --color-text-secondary: #a0b0c8;
-  --color-text-tertiary: #6480a0;
-  --color-accent-amber: #e8c070;
-  --color-accent-purple: #5c8fd6;
-  --color-accent-blue: #60a5fa;
-  --color-accent-green: #3db8a0;
-  --color-border: #243040;
-  --color-surface-strong: rgba(18, 26, 42, 0.92);
-  --color-surface-soft: rgba(18, 26, 42, 0.72);
-  --shadow-luxury: 0 22px 80px rgba(0, 0, 0, 0.34);
-  --shadow-panel: 0 14px 40px rgba(0, 0, 0, 0.26);
-  --gradient-page:
-    radial-gradient(
-      circle at top left,
-      rgba(92, 143, 214, 0.14),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at top right,
-      rgba(96, 165, 250, 0.12),
-      transparent 32%
-    ),
-    linear-gradient(180deg, #0c1220 0%, #0e1628 42%, #0c1220 100%);
+  --color-bg-primary: #161918;
+  --color-bg-secondary: #1e201e;
+  --color-bg-tertiary: #262824;
+  --color-text-primary: #e6e8e4;
+  --color-text-secondary: #9ca096;
+  --color-text-tertiary: #6b7068;
+  --color-accent-amber: #c9a85e;
+  --color-accent-purple: #7d7265;
+  --color-accent-blue: #7a8478;
+  --color-accent-green: #5a8f7a;
+  --color-border: #2e312c;
+  --color-surface-strong: rgba(30, 32, 30, 0.94);
+  --color-surface-soft: rgba(24, 26, 24, 0.78);
+  --shadow-luxury: 0 20px 64px rgba(0, 0, 0, 0.42);
+  --shadow-panel: 0 12px 36px rgba(0, 0, 0, 0.28);
+  --gradient-page: linear-gradient(180deg, #181a18 0%, #131514 45%, #161918 100%);
 }
 [data-color-theme="bright"][data-theme="light"],
 [data-color-theme="bright"][data-theme="max"] {
-  --color-bg-primary: #f8fafc;
-  --color-bg-secondary: #f1f5f9;
-  --color-bg-tertiary: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-tertiary: #64748b;
-  --color-border: #cbd5e1;
-  --color-accent-purple: #5b5ba3;
-  --color-accent-amber: #a08040;
-  --color-surface-strong: rgba(248, 250, 252, 0.97);
-  --color-surface-soft: rgba(241, 245, 249, 0.88);
-  --shadow-luxury: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --color-bg-primary: #f7f6f3;
+  --color-bg-secondary: #eeede8;
+  --color-bg-tertiary: #e4e2dc;
+  --color-text-primary: #1a1b19;
+  --color-text-secondary: #454840;
+  --color-text-tertiary: #6a6e66;
+  --color-border: #d4d2cb;
+  --color-accent-purple: #5c5348;
+  --color-accent-amber: #8a7038;
+  --color-surface-strong: rgba(247, 246, 243, 0.98);
+  --color-surface-soft: rgba(238, 237, 232, 0.92);
+  --shadow-luxury: 0 8px 28px rgba(0, 0, 0, 0.07);
+  --shadow-panel: 0 4px 14px rgba(0, 0, 0, 0.05);
   --gradient-page: none;
 }
 

@@ -36,7 +36,7 @@ export function MobileWorkspaceDrawer({
             type="button"
             onClick={() => onTab('chapters')}
             className={`flex-1 rounded-xl py-3 text-[10px] font-black uppercase tracking-widest ${
-              tab === 'chapters' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white' : 'theme-pill opacity-80'
+              tab === 'chapters' ? 'bg-linear-to-r from-amber-800 to-stone-900 text-stone-100 shadow-md shadow-amber-950/20' : 'theme-pill opacity-80'
             }`}
           >
             챕터
@@ -45,7 +45,7 @@ export function MobileWorkspaceDrawer({
             type="button"
             onClick={() => onTab('context')}
             className={`flex-1 rounded-xl py-3 text-[10px] font-black uppercase tracking-widest ${
-              tab === 'context' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white' : 'theme-pill opacity-80'
+              tab === 'context' ? 'bg-linear-to-r from-amber-800 to-stone-900 text-stone-100 shadow-md shadow-amber-950/20' : 'theme-pill opacity-80'
             }`}
           >
             맥락 · 로그

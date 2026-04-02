@@ -32,7 +32,7 @@
 }
 .ds-card-lg:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25), 0 0 16px rgba(141, 123, 195, 0.05);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 0 20px rgba(184, 149, 92, 0.06);
 }
 
 /* DS: Button Primary */
@@ -52,7 +52,7 @@
   border: 1px solid transparent;
 }
 .ds-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
-.ds-btn-primary { background: var(--color-accent-purple); color: white; }
+.ds-btn-primary { background: var(--color-accent-amber); color: #1a1816; }
 .ds-btn-primary:hover:not(:disabled) { opacity: 0.85; }
 .ds-btn-secondary { background: var(--color-bg-tertiary); color: var(--color-text-secondary); border-color: var(--color-border); }
 .ds-btn-secondary:hover:not(:disabled) { color: var(--color-text-primary); border-color: var(--color-text-tertiary); }
@@ -74,7 +74,7 @@
   transition: border-color 0.15s;
 }
 .ds-input::placeholder { color: var(--color-text-tertiary); }
-.ds-input:focus { border-color: var(--color-accent-purple); }
+.ds-input:focus { border-color: var(--color-accent-amber); }
 .ds-input[aria-invalid="true"],
 .ds-input.error {
   border-color: var(--color-accent-red);
@@ -175,13 +175,13 @@
 .badge-allow { background: rgba(47, 155, 131, 0.16); color: #ccefe7; border-color: rgba(47, 155, 131, 0.3); }
 .badge-deny { background: rgba(193, 98, 88, 0.16); color: #f4d5d1; border-color: rgba(193, 98, 88, 0.32); }
 .badge-amber { background: rgba(202, 161, 92, 0.16); color: #f6e2bc; border-color: rgba(202, 161, 92, 0.34); }
-.badge-blue { background: rgba(92, 143, 214, 0.16); color: #d8e6ff; border-color: rgba(92, 143, 214, 0.34); }
+.badge-blue { background: rgba(109, 125, 143, 0.2); color: #d4d8de; border-color: rgba(109, 125, 143, 0.35); }
 .badge-redacted { background: rgba(126, 122, 115, 0.18); color: var(--color-text-tertiary); border-color: rgba(126, 122, 115, 0.26); }
 
 /* EH Log block */
 .eh-log {
-  background: linear-gradient(180deg, rgba(13, 19, 28, 0.88), rgba(9, 13, 20, 0.92));
-  border: 1px solid rgba(92, 143, 214, 0.22);
+  background: linear-gradient(180deg, rgba(22, 20, 18, 0.92), rgba(14, 13, 11, 0.95));
+  border: 1px solid rgba(184, 149, 92, 0.2);
   padding: 1rem 1.25rem;
   font-family: var(--font-document);
   font-size: 0.95rem;
@@ -201,7 +201,7 @@
   font-size: 0.82rem;
   color: var(--color-text-secondary);
   line-height: 1.6;
-  background: linear-gradient(180deg, rgba(19, 24, 35, 0.94), rgba(14, 18, 26, 0.94));
+  background: linear-gradient(180deg, rgba(26, 24, 20, 0.94), rgba(18, 17, 15, 0.94));
   backdrop-filter: blur(14px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
 }
@@ -671,9 +671,9 @@
 }
 
 .ds-input:focus {
-  border-color: var(--color-accent-purple);
+  border-color: var(--color-accent-amber);
   box-shadow: 
-    0 0 0 3px rgba(141, 123, 195, 0.15),
+    0 0 0 3px rgba(184, 149, 92, 0.18),
     inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -738,7 +738,7 @@
    Focus & Accessibility Enhancements
    ============================================================ */
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-accent-purple);
+  outline: 2px solid var(--color-accent-amber);
   outline-offset: 2px;
 }
 
@@ -875,8 +875,8 @@
 
 .bottom-sheet-handle.active {
   width: 56px;
-  background: var(--color-accent-purple);
-  box-shadow: 0 0 12px rgba(141, 123, 195, 0.4);
+  background: var(--color-accent-amber);
+  box-shadow: 0 0 12px rgba(184, 149, 92, 0.35);
 }
 
 /* Floating action button */
@@ -887,7 +887,7 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-accent-amber), var(--color-accent-purple));
+  background: linear-gradient(135deg, var(--color-accent-amber), #8a7038);
   border: none;
   box-shadow: 
     0 8px 24px rgba(0, 0, 0, 0.4),
@@ -895,7 +895,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #1a1816;
   z-index: 40;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -966,7 +966,7 @@
   width: 24px;
   height: 24px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-accent-purple);
+  border-top-color: var(--color-accent-amber);
   border-radius: 50%;
   animation: spinner-rotate 0.8s linear infinite;
 }
@@ -998,7 +998,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--color-accent-purple);
+  background: var(--color-accent-amber);
   animation: dots-pulse 1.4s ease-in-out infinite;
 }
 

@@ -15,7 +15,7 @@ export default function TranslationStudioError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#05050A] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg-primary)] px-4">
       <div className="max-w-md space-y-4 text-center">
         <div className="text-4xl" aria-hidden>
           ⚠️

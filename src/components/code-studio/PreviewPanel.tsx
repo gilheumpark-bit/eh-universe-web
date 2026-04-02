@@ -254,7 +254,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         <ToolbarBtn onClick={handleNavForward} disabled={navIndex >= navHistory.length - 1} title="Forward">&rarr;</ToolbarBtn>
         <ToolbarBtn onClick={handleRefresh} disabled={state !== "ready"} title="Refresh">&#x21bb;</ToolbarBtn>
 
-        {isLoading && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-purple-400 rounded-full animate-spin shrink-0" />}
+        {isLoading && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-amber-500 rounded-full animate-spin shrink-0" />}
 
         <input
           type="text" value={displayUrl} readOnly
@@ -268,7 +268,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
       {/* Toolbar Row 2 — Device simulation, console toggle */}
       <div className="flex items-center gap-1 px-2 py-1 border-b border-white/8 bg-[#0d1117] flex-wrap">
         {detectedFramework && (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-purple-500/40 bg-purple-500/10 text-purple-400">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-amber-700/40 bg-amber-900/15 text-amber-400">
             {detectedFramework}
           </span>
         )}
@@ -286,7 +286,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
             onClick={() => setDeviceMode(mode)}
             className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
               deviceMode === mode
-                ? "border-purple-500/60 bg-purple-500/20 text-purple-300"
+                ? "border-amber-700/50 bg-amber-900/30 text-amber-300"
                 : "border-white/10 bg-transparent text-text-tertiary hover:bg-white/5"
             }`}
           >
@@ -311,7 +311,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         {/* Loading states */}
         {state !== "ready" && state !== "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-[#0a0e17]">
-            <div className="w-8 h-8 border-3 border-white/20 border-t-purple-400 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-3 border-white/20 border-t-amber-500 rounded-full animate-spin" />
             <span className="text-xs text-text-secondary">
               {state === "idle" && "Preparing..."}
               {state === "booting" && "Booting WebContainer..."}

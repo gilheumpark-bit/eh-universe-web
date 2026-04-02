@@ -203,7 +203,7 @@ export default function CollabPanel({ onClose }: Props) {
             className="w-full bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none" />
         </div>
         <div className="p-3 border-b border-white/8">
-          <button onClick={createRoom} className="w-full flex items-center justify-center gap-1.5 py-2 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors">
+          <button onClick={createRoom} className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-800 text-stone-100 text-xs rounded hover:bg-amber-700 transition-colors">
             <Plus size={14} /> 방 만들기
           </button>
         </div>
@@ -213,7 +213,7 @@ export default function CollabPanel({ onClose }: Props) {
             <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder="Room ID..."
               onKeyDown={(e) => e.key === "Enter" && joinRoom()}
               className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none" />
-            <button onClick={joinRoom} className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white text-xs rounded hover:bg-purple-700">
+            <button onClick={joinRoom} className="flex items-center gap-1 px-3 py-1.5 bg-amber-800 text-stone-100 text-xs rounded hover:bg-amber-700">
               <LogIn size={14} /> 참가
             </button>
           </div>
@@ -240,7 +240,7 @@ export default function CollabPanel({ onClose }: Props) {
           </button>
         </div>
         <div className="flex gap-1 items-center">
-          <code className="flex-1 bg-[#161b22] px-2 py-1 rounded text-xs font-mono text-purple-400">{roomId}</code>
+          <code className="flex-1 bg-[#161b22] px-2 py-1 rounded text-xs font-mono text-amber-400">{roomId}</code>
           <button onClick={copyShareUrl} className="flex items-center gap-1 text-[10px] border border-white/10 rounded px-2 py-1 text-white/50 hover:text-white">
             <Copy size={12} />{copied ? " 복사됨" : ""}
           </button>
@@ -289,7 +289,7 @@ export default function CollabPanel({ onClose }: Props) {
               <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
                 placeholder="메시지 입력..." className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1 text-xs text-white outline-none" />
-              <button onClick={sendChat} disabled={!chatInput.trim()} className="px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-30">
+              <button onClick={sendChat} disabled={!chatInput.trim()} className="px-2 py-1 bg-amber-800 text-stone-100 rounded text-xs hover:bg-amber-700 disabled:opacity-30">
                 <Send size={12} />
               </button>
             </div>

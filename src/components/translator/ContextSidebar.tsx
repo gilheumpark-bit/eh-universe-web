@@ -111,7 +111,7 @@ function HistoryList({
           <button
             type="button"
             key={i}
-            className="w-full p-4 glass-panel rounded-xl cursor-pointer group hover:border-purple-500/30 transition-all text-left"
+            className="w-full p-4 glass-panel rounded-xl cursor-pointer group hover:border-amber-700/35 transition-all text-left"
             onClick={() => {
               setFrom(h.from);
               setTo(h.to);

@@ -123,7 +123,7 @@ function ConfidenceBar({ value }: { value: number }) {
 // ============================================================
 
 const AGENT_ROLES: Array<{ role: AgentRole; ko: string; en: string; color: string }> = [
-  { role: "architect", ko: "아키텍트", en: "Architect", color: "text-purple-400" },
+  { role: "architect", ko: "아키텍트", en: "Architect", color: "text-amber-400" },
   { role: "developer", ko: "개발자", en: "Developer", color: "text-blue-400" },
   { role: "reviewer", ko: "리뷰어", en: "Reviewer", color: "text-yellow-400" },
   { role: "tester", ko: "테스터", en: "Tester", color: "text-green-400" },
@@ -303,7 +303,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
         {AGENT_ROLES.map((a, i) => (
           <div key={a.role}
             className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] min-w-[60px] transition-all ${
-              i === activeAgentIdx && mode === "executing" ? "bg-[#21262d] ring-1 ring-blue-500/30" : "bg-[#010409]"
+              i === activeAgentIdx && mode === "executing" ? "bg-[#21262d] ring-1 ring-amber-700/35" : "bg-[#010409]"
             }`}>
             <span className={a.color}>{L4(lang, { ko: a.ko, en: a.en })}</span>
             <ConfidenceBar value={confidences[a.role]} />

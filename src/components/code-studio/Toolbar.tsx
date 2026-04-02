@@ -90,7 +90,7 @@ function ToolbarButton({ icon, label, active, onClick, accent = "purple" }: {
   icon: React.ReactNode; label: string; active: boolean; onClick: () => void; accent?: "purple" | "green" | "blue";
 }) {
   const colors = {
-    purple: "bg-purple-500/15 text-purple-400",
+    purple: "bg-amber-900/22 text-amber-400",
     green: "bg-green-500/15 text-green-400",
     blue: "bg-blue-500/15 text-blue-400",
   };
@@ -112,8 +112,8 @@ export function Toolbar({
   return (
     <div className="flex items-center justify-between px-3 py-1.5 bg-[#0f1419] border-b border-white/8">
       <div className="flex items-center gap-2">
-        <Code2 size={18} className="text-purple-400" />
-        <span className="text-sm font-bold tracking-tight text-white">EH <span className="text-purple-400">Code</span></span>
+        <Code2 size={18} className="text-amber-400" />
+        <span className="text-sm font-bold tracking-tight text-white">EH <span className="text-amber-400">Code</span></span>
       </div>
       <div className="flex items-center gap-0.5 text-xs">
         <ToolbarMenu label="File" items={[

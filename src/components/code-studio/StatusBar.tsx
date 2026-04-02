@@ -152,7 +152,7 @@ export function StatusBar({
         {isGenerating && (
           <>
             {SEPARATOR}
-            <div className="flex items-center gap-1 text-[10px] text-purple-300">
+            <div className="flex items-center gap-1 text-[10px] text-amber-300">
               <Loader2 className="w-3 h-3 animate-spin" />
               <span>AI</span>
             </div>

@@ -47,10 +47,10 @@ export function ConfirmDialog({
       ? "bg-red-500 hover:bg-red-400"
       : variant === "warning"
         ? "bg-amber-500 hover:bg-amber-400"
-        : "bg-purple-500 hover:bg-purple-400";
+        : "bg-amber-800 hover:bg-amber-600";
 
   const iconColor =
-    variant === "danger" ? "text-red-400" : variant === "warning" ? "text-amber-400" : "text-purple-400";
+    variant === "danger" ? "text-red-400" : variant === "warning" ? "text-amber-400" : "text-amber-400";
 
   return (
     <div

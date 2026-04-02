@@ -370,7 +370,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
     return (
       <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl overflow-hidden shrink-0 bg-gradient-to-br from-amber-800 to-stone-900 flex items-center justify-center">
             {user.photoURL ? (
               <Image src={user.photoURL} alt="" width={64} height={64} className="w-full h-full object-cover" />
             ) : (

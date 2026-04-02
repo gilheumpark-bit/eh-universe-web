@@ -24,7 +24,7 @@ const KIND_COLORS: Record<SymbolEntry["kind"], string> = {
   function: "text-yellow-400",
   class: "text-blue-400",
   variable: "text-green-400",
-  interface: "text-purple-400",
+  interface: "text-amber-400",
   type: "text-pink-400",
   enum: "text-orange-400",
   const: "text-cyan-400",

@@ -252,9 +252,9 @@ export function ChatPanel({
     <div className="flex flex-col h-full min-h-0 bg-bg-secondary">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <Sparkles size={14} className="text-purple-400" />
+        <Sparkles size={14} className="text-amber-400" />
         <span className="text-xs font-semibold text-text-primary">EH Assistant</span>
-        <span className="text-[10px] px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded">Pipeline</span>
+        <span className="text-[10px] px-1.5 py-0.5 bg-amber-900/30 text-amber-400 rounded">Pipeline</span>
         <div className="ml-auto flex items-center gap-1">
           <button onClick={toggleHistory} title="Chat history" className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary transition-colors">
             <History size={14} />
@@ -305,12 +305,12 @@ export function ChatPanel({
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin" aria-live="polite">
         {chat.messages.length === 0 && !chat.isStreaming && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
-            <Sparkles size={24} className="text-purple-400 opacity-60" />
+            <Sparkles size={24} className="text-amber-400 opacity-60" />
             <p className="text-xs text-text-tertiary leading-relaxed max-w-[240px]">Ask about your code, request reviews, or generate implementations.</p>
             <div className="flex flex-wrap justify-center gap-2 mt-2 max-w-[280px]">
               {["Review this file", "Find bugs", "Refactor", "Add tests"].map((s, i) => (
                 <button key={i} onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                  className="px-3 py-1.5 text-[10px] rounded-full border border-border text-text-tertiary hover:text-text-primary hover:border-purple-500 hover:bg-purple-500/10 transition-all">
+                  className="px-3 py-1.5 text-[10px] rounded-full border border-border text-text-tertiary hover:text-text-primary hover:border-amber-700 hover:bg-amber-900/18 transition-all">
                   <Zap size={9} className="inline opacity-50 mr-1" />{s}
                 </button>
               ))}
@@ -325,7 +325,7 @@ export function ChatPanel({
                 {msg.role === "user" ? (
                   <span className="text-blue-400 font-semibold">You</span>
                 ) : (
-                  <span className="text-purple-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
+                  <span className="text-amber-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
                 )}
               </div>
               <div className="text-text-primary whitespace-pre-wrap">{msg.content}</div>

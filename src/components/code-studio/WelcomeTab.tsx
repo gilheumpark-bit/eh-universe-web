@@ -55,7 +55,7 @@ export default function WelcomeTab({
   const actions = [
     { icon: <Plus size={16} />, label: "New File", onClick: onNewFile, accent: "text-green-400" },
     { icon: <FolderOpen size={16} />, label: "Open Folder", onClick: onOpenFolder, accent: "text-blue-400" },
-    { icon: <GitBranch size={16} />, label: "Clone Repository", onClick: onCloneRepo, accent: "text-purple-400" },
+    { icon: <GitBranch size={16} />, label: "Clone Repository", onClick: onCloneRepo, accent: "text-amber-400" },
   ].filter((a) => a.onClick);
 
   const [now] = useState(() => Date.now());

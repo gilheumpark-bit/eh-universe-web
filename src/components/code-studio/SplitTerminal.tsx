@@ -94,7 +94,7 @@ export function SplitTerminal() {
               <div className="text-white/30 text-[10px] mb-1">$ {panes[0]?.name}</div>
               <div className="text-white/50">Ready.</div>
             </div>
-            <div className={`${splitDir === "horizontal" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize"} bg-white/10 hover:bg-purple-500/50 transition-colors`}
+            <div className={`${splitDir === "horizontal" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize"} bg-white/10 hover:bg-amber-800/50 transition-colors`}
               onMouseDown={handleResize} />
             {panes.length > 1 && (
               <div className="flex-1 overflow-hidden bg-[#0a0e17] p-2 font-mono text-xs text-green-400">

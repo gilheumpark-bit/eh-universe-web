@@ -25,7 +25,7 @@ export function WorkspaceTabBar({ active, onChange, langKo }: Props) {
               onClick={() => onChange(t.id)}
               className={`snap-start shrink-0 rounded-2xl px-5 py-3 text-[11px] md:text-xs font-bold uppercase tracking-[0.08em] transition-all duration-300 ${
                 isOn
-                  ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-1 ring-blue-500/50'
+                  ? 'bg-linear-to-r from-amber-800 to-stone-900 text-stone-100 shadow-lg shadow-amber-950/25 ring-1 ring-amber-900/40'
                   : 'theme-pill text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
               }`}
               aria-current={isOn ? 'page' : undefined}

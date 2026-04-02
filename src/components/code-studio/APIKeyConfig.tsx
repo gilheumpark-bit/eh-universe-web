@@ -154,7 +154,7 @@ export function APIKeyConfig({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
           <div className="flex items-center gap-3">
-            <Key size={20} className="text-purple-400" />
+            <Key size={20} className="text-amber-400" />
             <div>
               <h2 className="text-base font-bold text-white">API 키 슬롯 관리</h2>
               <p className="text-[11px] text-white/50">동일 프로바이더의 키를 여러 역할로 등록 가능</p>
@@ -195,8 +195,8 @@ export function APIKeyConfig({ onClose }: Props) {
 
           {/* Add / Edit Form */}
           {showForm && (
-            <div className="border border-purple-500/30 rounded-lg p-4 bg-white/5 space-y-3 mt-2">
-              <div className="text-sm font-semibold text-purple-400">{editingId ? "슬롯 편집" : "새 슬롯 추가"}</div>
+            <div className="border border-amber-700/30 rounded-lg p-4 bg-white/5 space-y-3 mt-2">
+              <div className="text-sm font-semibold text-amber-400">{editingId ? "슬롯 편집" : "새 슬롯 추가"}</div>
               <div>
                 <label className="text-[11px] text-white/50 mb-1 block">프로바이더</label>
                 <div className="grid grid-cols-4 gap-1">
@@ -254,7 +254,7 @@ export function APIKeyConfig({ onClose }: Props) {
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={handleSave} disabled={!formKey.trim()}
-                  className="flex-1 py-2 bg-purple-600 text-white text-sm rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-30 transition-colors">
+                  className="flex-1 py-2 bg-amber-800 text-stone-100 text-sm rounded-lg font-semibold hover:bg-amber-700 disabled:opacity-30 transition-colors">
                   {editingId ? "저장" : "추가"}
                 </button>
                 <button onClick={resetForm} className="px-4 py-2 bg-white/5 text-white/50 text-sm rounded-lg hover:bg-white/10 transition-colors">취소</button>
@@ -268,7 +268,7 @@ export function APIKeyConfig({ onClose }: Props) {
           <div className="text-[11px] text-white/40">등록: {slots.length}개 | 활성: {enabledSlots.length}개</div>
           {!showForm && (
             <button onClick={() => { resetForm(); setShowForm(true); }}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-amber-900/22 text-amber-400 hover:bg-amber-900/30 transition-colors">
               <Plus size={14} />슬롯 추가
             </button>
           )}

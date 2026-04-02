@@ -96,13 +96,13 @@ export function BilateralEditor() {
     : 'url(/images/abstract-bg.webp)';
 
   return (
-    <div className="w-full h-full flex flex-col relative overflow-hidden bg-[#0A0A0C]">
+    <div className="w-full h-full flex flex-col relative overflow-hidden bg-[#11100e]">
       {/* Background Decor (Glassmorphism) */}
       <div className="absolute inset-0 z-0 opacity-15 pointer-events-none" style={{ backgroundImage: bgImage, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px) saturate(150%)' }} />
       <div className="absolute inset-0 z-0 bg-linear-to-b from-[#0A0A0C]/40 via-transparent to-[#0A0A0C]/80 pointer-events-none" />
 
       {/* Editor Header */}
-      <div className="h-14 w-full border-b border-white/3 flex items-center px-5 justify-between shrink-0 z-10 bg-[#0A0A0C]/60 backdrop-blur-xl shadow-sm">
+      <div className="h-14 w-full border-b border-white/3 flex items-center px-5 justify-between shrink-0 z-10 bg-[#11100e]/60 backdrop-blur-xl shadow-sm">
         <div className="flex items-center gap-4 min-w-0">
           <span
             className="hidden sm:block max-w-[140px] md:max-w-[200px] truncate text-[10px] font-mono text-text-tertiary/90"
