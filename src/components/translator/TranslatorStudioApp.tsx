@@ -1,5 +1,7 @@
 'use client';
 
+import { TranslatorContext } from './TranslatorContext';
+import { TranslatorShell } from './TranslatorShell';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
@@ -1311,648 +1313,62 @@ export default function TranslatorStudioApp() {
     }
   };
 
+  const contextValue = {
+    workspaceTab, setWorkspaceTab,
+    hostedGemini,
+    projectId, setProjectId,
+    projectName, setProjectName,
+    projectList, setProjectList,
+    chapters, setChapters,
+    activeChapterIndex, setActiveChapterIndex,
+    referenceIds, setReferenceIds,
+    source, setSource, result, setResult,
+    from, setFrom, to, setTo,
+    provider, setProvider, apiKeys, setApiKeys,
+    loading, setLoading, statusMsg, setStatusMsg,
+    history, setHistory, lastSavedAt, setLastSavedAt,
+    isZenMode, setIsZenMode,
+    showSettings, setShowSettings,
+    backgroundMode, setBackgroundMode,
+    isCatMode, setIsCatMode,
+    showUrlImport, setShowUrlImport,
+    showCharacters, setShowCharacters,
+    showSummary, setShowSummary,
+    urlInput, setUrlInput,
+    translationMode, setTranslationMode,
+    glossaryText, setGlossaryText,
+    domainPreset, setDomainPreset,
+    preserveDialogueLayout, setPreserveDialogueLayout,
+    cloudSyncStatus, setCloudSyncStatus,
+    cloudSyncDetail, setCloudSyncDetail,
+    lastApproxTokens, setLastApproxTokens,
+    compareResultB, setCompareResultB,
+    showMobileDrawer, setShowMobileDrawer,
+    mobileTab, setMobileTab,
+    showExportOptions, setShowExportOptions,
+    worldContext, setWorldContext,
+    characterProfiles, setCharacterProfiles,
+    storySummary, setStorySummary,
+    styleAnalysis, setStyleAnalysis,
+    backResult, setBackResult,
+    langKo, isAuthLoaded, userId, authUser, hasTranslatorAiAccess,
+    referenceBundle, activeChapter, completedChapters, completionRate,
+    workspaceName, providerLabel, stripeCheckoutEnabled, autoSaveLabel,
+    atmosphereLabel, pipelineLabel, cloudSyncEnabled, referenceStatusLabel,
+    storyBibleStatusLabel,
+    getEffectiveApiKeyForProvider,
+    handleWorkspaceTabChange,
+    patchChapterAtIndex, patchActiveChapter, openChapter,
+    buildContinuityBundle, buildTranslationPayload, updateStoryBibleAfterTranslation,
+    translate, deepTranslate, runChunkedTranslate, runCompareB, analyzeStyle,
+    refineResult, backTranslate, batchTranslateAll, importDocument,
+    exportData, importData, importUrl, downloadAllResults, handleChapterRemove,
+    signInWithGoogle, signOut, getIdToken
+  };
+
   return (
-    <div className={`min-h-screen min-w-0 theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
-      {/* globals.css body::before/::after z-[89–90] 위에 두어 노이즈 레이어 아래로 클릭이 새지 않게 함. AppDialog z-[100]보다는 낮게 유지 */}
-      <header className="pointer-events-auto relative z-[95] flex h-20 shrink-0 items-center justify-between border-x-0 border-t-0 glass-panel px-4 lg:px-6 fixed left-0 right-0 top-0 rounded-none">
-        <div className="flex min-w-0 items-center gap-4">
-          {!isZenMode && (
-            <button
-              type="button"
-              className="lg:hidden rounded-xl px-3 py-2 text-sm font-bold backdrop-blur-xl theme-pill"
-              style={{ color: headerMutedColor }}
-              aria-label="챕터 및 맥락 패널 열기"
-              onClick={() => {
-                setShowMobileDrawer(true);
-                setMobileTab('chapters');
-              }}
-            >
-              ☰
-            </button>
-          )}
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-indigo-500 text-sm font-black text-white shadow-lg shadow-blue-500/20">
-            EH
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: headerMutedColor }}>Narrative Translation Engine</div>
-            <h1 className="truncate text-xl font-black tracking-tight" style={{ color: headerTextColor }}>
-              EH Translator <span className="ml-2 text-[11px] font-medium" style={{ color: headerMutedColor }}>final</span>
-            </h1>
-          </div>
-          <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: headerMutedColor }}>Plan</span>
-            <span className="text-xs font-bold" style={{ color: accentTextColor }}>Personal</span>
-          </div>
-          {activeChapter && (
-            <div className="hidden md:flex items-center gap-3 rounded-full px-4 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
-               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-               <div className="flex flex-col">
-                 <span className="text-[10px] font-black uppercase tracking-tight" style={{ color: headerTextColor }}>{activeChapter.name}</span>
-                 <span className="text-[8px] opacity-60 font-bold" style={{ color: headerMutedColor }}>SAVED {autoSaveLabel}</span>
-               </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 lg:gap-3">
-          <div className="hidden lg:flex items-center gap-1 rounded-full p-1 shadow-sm backdrop-blur-xl" style={{ background: headerChipSurface }}>
-            {BACKGROUND_MODES.map((mode) => (
-              <button
-                type="button"
-                key={mode.id}
-                onClick={() => setBackgroundMode(mode.id)}
-                className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
-                  backgroundMode === mode.id
-                    ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                    : 'hover:brightness-110'
-                }`}
-                style={backgroundMode === mode.id ? undefined : { color: headerMutedColor }}
-                title={mode.note}
-              >
-                {mode.id === 'glacial' ? 'White' : 'Nebula'}
-              </button>
-            ))}
-          </div>
-          {isAuthLoaded && !userId && (
-            <button
-              type="button"
-              onClick={() => void signInWithGoogle()}
-              className="rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-500/20 transition-all hover:brightness-110"
-            >
-              시작하기
-            </button>
-          )}
-          {isAuthLoaded && userId && authUser && (
-            <div className="flex items-center gap-2">
-              {authUser.photoURL ? (
-                <img
-                  src={authUser.photoURL}
-                  alt=""
-                  className="h-9 w-9 rounded-full object-cover shadow-lg"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-indigo-500 text-xs font-bold text-white shadow-lg"
-                  aria-hidden
-                >
-                  {(authUser.email ?? authUser.displayName ?? '?').slice(0, 1).toUpperCase()}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] backdrop-blur-xl transition-all hover:brightness-110"
-                style={{ background: headerChipSurface, color: headerMutedColor }}
-              >
-                로그아웃
-              </button>
-            </div>
-          )}
-          {authError ? (
-            <span className="hidden max-w-[140px] truncate text-[9px] text-red-500 lg:inline" title={authError}>
-              {authError}
-            </span>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => setIsZenMode(!isZenMode)}
-            className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
-              isZenMode
-                ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'backdrop-blur-xl hover:brightness-110'
-            }`}
-            style={isZenMode ? undefined : { background: headerChipSurface, color: headerMutedColor }}
-          >
-            {isZenMode ? 'Focus On' : 'Focus Mode'}
-          </button>
-          <button type="button" onClick={() => setShowSettings(!showSettings)} 
-            className="rounded-full p-2.5 backdrop-blur-xl transition-all hover:brightness-110"
-            style={{ background: headerChipSurface, color: headerMutedColor }}>
-            ⚙️
-          </button>
-        </div>
-      </header>
-
-      {!isZenMode && (
-        <div className="workspace-tab-dock pointer-events-auto relative z-[94] fixed left-0 right-0 top-20 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
-          <WorkspaceTabBar active={workspaceTab} onChange={handleWorkspaceTabChange} langKo={langKo} />
-        </div>
-      )}
-
-      <MobileWorkspaceDrawer
-        open={showMobileDrawer && !isZenMode}
-        onClose={() => setShowMobileDrawer(false)}
-        tab={mobileTab}
-        onTab={setMobileTab}
-        backgroundMode={backgroundMode}
-        childrenChapters={
-          <ChapterSidebar
-            chapters={chapters}
-            activeChapterIndex={activeChapterIndex}
-            loading={loading}
-            showExportOptions={showExportOptions}
-            onToggleExport={() => setShowExportOptions((p) => !p)}
-            onBatchTranslate={() => void batchTranslateAll()}
-            onImportDocument={importDocument}
-            onDownloadAll={downloadAllResults}
-            onOpenChapter={(idx) => {
-              openChapter(idx);
-              setShowMobileDrawer(false);
-            }}
-            onRemoveChapter={handleChapterRemove}
-          />
-        }
-        childrenContext={
-          <ContextSidebar
-            worldContext={worldContext}
-            setWorldContext={setWorldContext}
-            characterProfiles={characterProfiles}
-            setCharacterProfiles={setCharacterProfiles}
-            storySummary={storySummary}
-            setStorySummary={setStorySummary}
-            showCharacters={showCharacters}
-            setShowCharacters={setShowCharacters}
-            showSummary={showSummary}
-            setShowSummary={setShowSummary}
-            accentTextColor={accentTextColor}
-            history={history}
-            setFrom={setFrom}
-            setTo={setTo}
-            setHistory={setHistory}
-          />
-        }
-      />
-
-      <main
-        className="relative isolate z-0 flex min-h-0 min-w-0 w-full overflow-hidden"
-        style={
-          isZenMode
-            ? { paddingTop: '5rem', height: 'calc(100vh - 5rem)' }
-            : {
-                paddingTop: `calc(5rem + ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
-                height: `calc(100vh - 5rem - ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
-              }
-        }
-      >
-        {!isZenMode && (
-          <aside
-            ref={chapterAsideRef}
-            className={`pointer-events-auto relative z-30 hidden w-64 shrink-0 overflow-y-auto border-r border-gray-900/50 bg-sidebar p-4 lg:block glass-panel border-y-0 border-l-0 rounded-none transition-shadow ${
-              workspaceTab === 'chapters' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
-            }`}
-          >
-            <ChapterSidebar
-              chapters={chapters}
-              activeChapterIndex={activeChapterIndex}
-              loading={loading}
-              showExportOptions={showExportOptions}
-              onToggleExport={() => setShowExportOptions((p) => !p)}
-              onBatchTranslate={() => void batchTranslateAll()}
-              onImportDocument={importDocument}
-              onDownloadAll={downloadAllResults}
-              onOpenChapter={(idx) => openChapter(idx)}
-              onRemoveChapter={handleChapterRemove}
-            />
-          </aside>
-        )}
-
-        {/* Center: Editor Area — min-w-0: flex 자식 폭 붕괴(한 글자 세로줄) 방지 */}
-        <section
-          className={`relative z-10 flex min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-20 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
-        >
-          {!isZenMode && workspaceTab === 'network' && (
-            <div ref={networkSectionRef} className="mb-6 min-w-0">
-              <NetworkBridgePanel
-                universeOrigin={process.env.NEXT_PUBLIC_EH_UNIVERSE_ORIGIN ?? ''}
-                getIdToken={getIdToken}
-                projectId={projectId}
-                projectName={projectName}
-                chapters={chapters}
-                worldContext={worldContext}
-                characterProfiles={characterProfiles}
-                storySummary={storySummary}
-                glossaryText={glossaryText}
-              />
-            </div>
-          )}
-          {!isZenMode && (
-            <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,1fr)_minmax(280px,1fr)]">
-              <div className="workspace-hero glass-panel min-w-0 rounded-4xl p-6">
-                <EnvStatusBar />
-                {aiCapabilitiesLoaded && !hasTranslatorAiAccess && (
-                  <div
-                    className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-950 dark:text-amber-100"
-                    role="status"
-                  >
-                    {langKo
-                      ? '선택한 번역 엔진에 사용할 API 키가 없거나 호스티드 Gemini를 쓸 수 없습니다. 설정에서 키를 입력하거나 로그인한 뒤 다시 시도하세요.'
-                      : 'No API key for the selected engine, or hosted Gemini is unavailable. Add a key in Settings or sign in.'}
-                  </div>
-                )}
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="theme-kicker">Premium Narrative Workspace</div>
-                    <h2 className="mt-3 truncate text-2xl font-black tracking-tight theme-text-primary">{workspaceName}</h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary break-words">
-                      장편 번역에서 문체 일관성, 캐릭터 보존, 빠른 편집 흐름을 함께 잡는 에디토리얼 작업실입니다.
-                    </p>
-                  </div>
-                  <div className="theme-pill shrink-0 rounded-3xl px-4 py-3">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] theme-text-secondary">{atmosphereLabel}</div>
-                    <div className="mt-1 text-sm font-bold theme-text-primary">{pipelineLabel}</div>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">
-                    {from.toUpperCase()} → {to.toUpperCase()}
-                  </div>
-                  <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">{providerLabel}</div>
-                  <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">
-                    {chapters.length ? `${chapters.length}개 챕터 관리 중` : '문서를 불러오면 챕터가 여기에 쌓입니다.'}
-                  </div>
-                  <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">{referenceStatusLabel}</div>
-                  <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">
-                    {cloudSyncEnabled ? 'Cloud Sync 활성' : '로컬 작업 모드'}
-                  </div>
-                  {lastApproxTokens != null && (
-                    <div className="theme-pill rounded-full px-3 py-2 text-[11px] font-semibold">
-                      직전 요청 ≈ {lastApproxTokens.toLocaleString()} 토큰 (추정)
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
-                <div className="theme-kicker">Autosave</div>
-                <div className="mt-3 text-3xl font-black tracking-tight theme-text-primary">{autoSaveLabel}</div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
-                  {loading ? `${statusMsg || 'PROCESSING'} 단계가 진행 중입니다.` : '자동 저장을 지연 처리해서 타이핑과 이동이 더 가볍게 유지됩니다.'}
-                </p>
-                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold break-words ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
-                  {loading ? '엔진이 결과를 정리하는 중입니다.' : '변경 내용은 조용히 로컬 상태와 동기화됩니다.'}
-                </div>
-                {cloudSyncEnabled && (
-                  <p className="mt-3 text-[11px] leading-relaxed theme-text-secondary">
-                    클라우드:{' '}
-                    {cloudSyncStatus === 'saving' && '저장 중…'}
-                    {cloudSyncStatus === 'ok' && `마지막 성공 ${cloudSyncDetail}`}
-                    {cloudSyncStatus === 'error' && <span className="text-red-500">{cloudSyncDetail}</span>}
-                    {cloudSyncStatus === 'idle' && '대기 중'}
-                  </p>
-                )}
-              </div>
-
-              <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
-                <div className="theme-kicker">Progress</div>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-3xl font-black tracking-tight theme-text-primary">{completionRate}%</span>
-                  <span className="pb-1 text-[11px] font-semibold theme-text-secondary">{completedChapters}/{chapters.length || 0} ready</span>
-                </div>
-                <div className="metric-bar mt-4">
-                  <span style={{ width: `${completionRate}%` }} />
-                </div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
-                  {activeChapter
-                    ? `${activeChapter.name}${activeChapter.stageProgress ? ` · Stage ${activeChapter.stageProgress}` : ''}`
-                    : '활성 챕터를 선택하면 진행 단계가 여기 표시됩니다.'}
-                </p>
-                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary break-words">{storyBibleStatusLabel}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Style Analysis Result (Compact) */}
-          {styleAnalysis && !isZenMode && (
-            <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
-               <div className="themed-insight glass-panel flex items-center justify-between gap-5 rounded-4xl p-5">
-                 <div>
-                    <h4 className="theme-kicker mb-2">휴리스틱 문체 스캔 (비 LLM)</h4>
-                    <p className="text-sm font-medium theme-text-primary">
-                      패턴 기반 추정: <span style={{ color: accentTextColor }}>{styleAnalysis.genre}</span> 계열,{' '}
-                      <span style={{ color: accentTextColor }}>{styleAnalysis.tone}</span> 성향입니다.
-                    </p>
-                 </div>
-                 <div className="flex gap-2">
-                    <div className="border-r px-3 text-center border-white/10">
-                      <div className="text-[9px] uppercase theme-text-secondary">Fluency</div>
-                      <div className="text-xs font-bold theme-text-primary">{styleAnalysis.metric.fluency}</div>
-                    </div>
-                    <div className="text-center px-3">
-                      <div className="text-[9px] uppercase theme-text-secondary">Immersive</div>
-                      <div className="text-xs font-bold theme-text-primary">{styleAnalysis.metric.immersion}</div>
-                    </div>
-                 </div>
-               </div>
-            </div>
-          )}
-
-          {/* Settings Overlay */}
-          {showSettings && (
-            <div className="mb-6 p-6 rounded-5xl glass-panel shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-3 p-5 bg-purple-500/5 rounded-2xl border border-purple-500/10 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="theme-kicker mb-3 block">Visual Atmosphere (테마)</label>
-                      <div className="flex gap-3">
-                        {BACKGROUND_MODES.map((m) => (
-                          <button key={m.id} onClick={() => setBackgroundMode(m.id)}
-                            className={`flex-1 rounded-xl border p-3 text-left transition-all ${backgroundMode === m.id ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-pill hover:brightness-105'}`}>
-                            <div className="text-[10px] font-black uppercase tracking-tight">{m.label}</div>
-                            <div className="text-[8px] opacity-70 mt-0.5">{m.note}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="theme-kicker mb-3 block">현재 프로젝트 (볼륨 30화 제한)</label>
-                      <div className="flex gap-2 items-center">
-                        <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} 
-                          placeholder="프로젝트명" className="theme-field flex-1 rounded-lg px-3 py-2 text-xs outline-none" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void (async () => {
-                              const ok = await confirm('초기화 하시겠습니까?', '신규 프로젝트');
-                              if (!ok) return;
-                              setProjectId(Date.now().toString());
-                              setProjectName('');
-                              setChapters([]);
-                              setSource('');
-                              setResult('');
-                              setStorySummary('');
-                              setWorldContext('');
-                              setCharacterProfiles('');
-                              setReferenceIds([]);
-                              setGlossaryText('');
-                            })();
-                          }}
-                          className="rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 px-3 py-2 text-[10px] font-bold text-white transition-all hover:brightness-110"
-                        >
-                          신규 생성
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="theme-kicker mb-2 block">이전 프로젝트 참조 (Cross-Reference)</label>
-                    <div className="flex flex-wrap gap-2 text-white">
-                       {projectList.filter((p:any) => p.id !== projectId).map((p:any) => (
-                          <button key={p.id} onClick={() => setReferenceIds(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
-                             className={`rounded-full border px-3 py-1 text-[10px] transition-all ${referenceIds.includes(p.id) ? 'bg-indigo-600 border-indigo-500 text-white' : 'theme-pill hover:brightness-105'}`}>
-                             {p.project_name || p.id.slice(0,4)}
-                          </button>
-                       ))}
-                    </div>
-                    {projectList.filter((project) => project.id !== projectId).length === 0 && (
-                      <p className="mt-2 text-[11px] theme-text-secondary">아직 저장된 다른 프로젝트가 없습니다. 프로젝트명을 붙이고 작업하면 자동으로 참조 목록에 쌓입니다.</p>
-                    )}
-                  </div>
-                </div>
-                <div className="lg:col-span-2">
-                  <label className="theme-kicker mb-2 block">Ensemble API Keys</label>
-                  <div className="space-y-2">
-                    {PROVIDERS.map(p => (
-                      <div key={p.id} className="flex gap-2 items-center">
-                        <span className="theme-text-secondary w-24 text-[9px] uppercase">{p.label}</span>
-                        <input type="password" value={apiKeys[p.id] || ''} onChange={(e) => setApiKeys({...apiKeys, [p.id]: e.target.value})} 
-                          className="theme-field flex-1 rounded-lg px-3 py-2 text-xs outline-none" placeholder={p.role} />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="mt-3 text-[10px] leading-relaxed theme-text-secondary">
-                    BYOK: 키는 브라우저→서버로 전달되어 번역 API 호출에만 사용됩니다. 공용 PC에서는 자제하고 키를 안전하게 보관하세요.
-                  </p>
-                </div>
-                <div className="lg:col-span-3">
-                  <label className="theme-kicker mb-2 block">용어집 (한 줄에 하나: 원문 =&gt; 번역)</label>
-                  <textarea
-                    value={glossaryText}
-                    onChange={(e) => setGlossaryText(e.target.value)}
-                    rows={5}
-                    className="theme-field w-full rounded-lg p-3 text-xs outline-none font-mono"
-                    placeholder={'예:\n魔法少女 => 마법 소녀\n主人公 => 주인공'}
-                  />
-                </div>
-                <div className="lg:col-span-3 rounded-2xl border border-slate-900/10 bg-slate-500/5 p-4 dark:border-white/10">
-                  <p className="text-[11px] leading-relaxed theme-text-secondary">
-                    {langKo
-                      ? '네트워크 브릿지는 상단의 「네트워크」 탭에서 설정합니다. (설정 패널의 API 키·용어집과 동일한 데이터를 사용합니다.)'
-                      : 'Configure the network bridge from the Network tab in the workspace bar (uses the same project data as Settings).'}
-                  </p>
-                </div>
-                <div className="space-y-4">
-                  <label className="theme-kicker block">일반 모드 도메인</label>
-                  <select
-                    value={domainPreset}
-                    onChange={(e) => setDomainPreset(e.target.value as DomainPreset)}
-                    className="theme-field w-full rounded-lg px-3 py-2 text-xs outline-none"
-                  >
-                    <option value="general">일반</option>
-                    <option value="legal">법률</option>
-                    <option value="it">IT</option>
-                    <option value="medical">의학</option>
-                  </select>
-                  <label className="flex items-start gap-2 text-[11px] theme-text-secondary cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5"
-                      checked={preserveDialogueLayout}
-                      onChange={(e) => setPreserveDialogueLayout(e.target.checked)}
-                    />
-                    <span>소설 모드에서 대사/지문 구획·따옴표 보존 지시 강화</span>
-                  </label>
-                </div>
-                <div className="space-y-4">
-                   <label className="theme-kicker block">Settings</label>
-                   <select value={provider} onChange={(e) => setProvider(e.target.value)} className="theme-field w-full rounded-lg px-3 py-2 text-xs outline-none">
-                      {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-                   </select>
-                   <div className="flex gap-2">
-                      <button type="button" onClick={() => void exportData()} className="theme-pill flex-1 rounded-lg py-2 text-[9px] font-bold hover:brightness-105">EXTRACT</button>
-                      <label className="theme-pill flex-1 cursor-pointer rounded-lg py-2 text-center text-[9px] font-bold hover:brightness-105">INJECT<input type="file" onChange={importData} className="hidden" /></label>
-                   </div>
-                   <button
-                     type="button"
-                     disabled={!stripeCheckoutEnabled}
-                     title={stripeCheckoutEnabled ? undefined : 'NEXT_PUBLIC_STRIPE_PRICE_ID 미설정'}
-                     className="theme-pill mt-2 w-full rounded-lg py-2 text-[9px] font-bold hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
-                     onClick={() => {
-                       void (async () => {
-                         if (!stripeCheckoutEnabled) {
-                           await alert('Stripe 가격 ID가 설정되지 않았습니다.');
-                           return;
-                         }
-                         try {
-                           const tok = await getIdToken();
-                           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                           if (tok) headers.Authorization = `Bearer ${tok}`;
-                           const res = await fetch('/api/checkout', { method: 'POST', headers, body: '{}' });
-                           const data = (await res.json()) as { url?: string; error?: string };
-                           if (data.url) window.location.href = data.url;
-                           else await alert(data.error || 'Stripe 가격 ID가 없거나 설정되지 않았습니다.');
-                         } catch (e) {
-                           logger.error('TranslatorStudioApp', 'checkout fetch failed', e);
-                           await alert('결제 세션 요청에 실패했습니다.');
-                         }
-                       })();
-                     }}
-                   >
-                     Stripe 구독 (선택)
-                   </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-         {isCatMode ? (
-            <div className="col-span-1 h-[70vh] space-y-3 overflow-y-auto pr-2 scrollbar-hide lg:col-span-2">
-              {source.split('\n').map((sLine, idx) => {
-                 const rLines = result.split('\n');
-                 const rLine = rLines[idx] || '';
-                 if(!sLine.trim() && !rLine.trim()) return null;
-                 return (
-                   <div key={idx} className="flex min-w-0 flex-col gap-2 rounded-3xl glass-panel p-4 animate-fade-in md:flex-row">
-                  <textarea value={sLine} readOnly className="editor-pane min-w-0 w-full resize-none bg-transparent text-xs leading-relaxed outline-none" />
-                     <textarea value={rLine} readOnly className="result-pane min-w-0 w-full resize-none bg-transparent text-xs font-bold leading-relaxed outline-none" />
-                   </div>
-                 )
-              })}
-            </div>
-          ) : (
-            <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-              <div className="flex min-w-0 flex-col space-y-3">
-                <div className="flex items-center gap-2 mb-1 px-1">
-                  <select value={from} onChange={(e) => setFrom(e.target.value)} className="theme-pill rounded-xl px-4 py-2 text-[11px] font-semibold tracking-wide outline-none shadow-sm transition-all hover:brightness-105 cursor-pointer">
-                    {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                  </select>
-                  <span className="theme-text-secondary text-[10px] font-bold px-1 tracking-widest">→</span>
-                  <select value={to} onChange={(e) => setTo(e.target.value)} className="theme-pill rounded-xl px-4 py-2 text-[11px] font-semibold tracking-wide outline-none shadow-sm transition-all hover:brightness-105 cursor-pointer" style={{ color: accentTextColor }}>
-                    {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                  </select>
-                </div>
-                <div className="relative min-w-0 flex-1 group">
-                  <textarea value={source} onChange={(e) => setSource(e.target.value)} placeholder="원고 입력..."
-                    className="editor-pane h-[60vh] w-full min-w-0 glass-panel rounded-3xl p-6 text-sm lg:text-[15px] leading-loose font-headline resize-none outline-none transition-all scrollbar-hide focus:ring-2 focus:ring-blue-500/30 group-hover:shadow-md" />
-                  <div className="theme-field absolute bottom-4 right-6 rounded-md px-2 py-1 text-[9px] font-mono font-medium shadow-sm opacity-60 transition-opacity group-hover:opacity-100">{source.length} chars</div>
-                </div>
-              </div>
-              <div className="flex min-w-0 flex-col space-y-3">
-                <div className="flex h-8 items-center justify-between px-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: accentTextColor }}>
-                    Result Draft
-                    {result.length > 0 && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>}
-                  </span>
-                </div>
-                <div className="relative min-w-0 flex-1 group">
-                  <textarea value={result} readOnly className="result-pane h-[60vh] w-full min-w-0 glass-panel rounded-3xl p-6 text-sm lg:text-[15px] leading-loose font-headline resize-none outline-none transition-all scrollbar-hide group-hover:shadow-md focus:ring-2 focus:ring-emerald-500/30" />
-                  <div className="theme-field absolute bottom-4 right-6 rounded-md px-2 py-1 text-[9px] font-mono font-medium shadow-sm opacity-60 transition-opacity group-hover:opacity-100">{result.length} chars</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Bar */}
-          <div className="mt-8 max-w-4xl mx-auto space-y-4">
-            <div className="flex items-center gap-2 p-1.5 glass-panel rounded-2xl shadow-sm">
-              <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📖 NOVEL WORKSPACE</button>
-              <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📄 GENERAL ASSIST</button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className={`shrink-0 rounded-2xl px-5 py-3.5 text-[11px] font-bold transition-all duration-300 shadow-sm ${showUrlImport ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-black' : 'theme-pill hover:brightness-105'}`}>🌐 웹 회차 불러오기</button>
-              {showUrlImport && (
-                <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-4 transition-all duration-300">
-                  <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 웹소설 URL 입력" className="theme-field flex-1 rounded-2xl px-5 py-3.5 text-xs outline-none shadow-inner border border-transparent focus:border-blue-500/30 transition-colors" />
-                  <button type="button" onClick={importUrl} disabled={loading} className="px-8 py-3.5 bg-linear-to-r from-slate-800 to-slate-900 dark:from-slate-200 dark:to-slate-100 rounded-2xl text-[11px] font-bold text-white dark:text-slate-900 shadow-lg hover:shadow-xl transition-all disabled:opacity-50">가져오기</button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill sm:w-1/3 rounded-[20px] py-5 text-[12px] font-black tracking-widest transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 shadow-sm disabled:opacity-40 disabled:hover:translate-y-0">FAST DRAFT</button>
-              <button type="button" onClick={() => void deepTranslate()} disabled={loading || !source.trim()} 
-                 className={`flex-1 py-5 rounded-[20px] text-[12px] font-black tracking-widest text-white shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl disabled:opacity-40 disabled:hover:translate-y-0 ${translationMode === 'novel' ? 'bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-indigo-500/25' : 'bg-linear-to-r from-emerald-500 via-teal-600 to-cyan-600 shadow-teal-500/25'}`}>
-                 {statusMsg || (translationMode === 'novel' ? 'DEEP NOVEL PIPELINE' : 'ACCURATE GENERAL')}
-              </button>
-            </div>
-
-            <div className="glass-panel p-2 mt-4 rounded-2xl flex flex-nowrap overflow-x-auto scrollbar-hide gap-2 justify-start md:justify-center px-4 snap-x relative after:content-[''] after:absolute after:right-0 after:top-0 after:w-8 after:h-full after:bg-gradient-to-l after:from-white/50 dark:after:from-slate-950/50 after:to-transparent after:pointer-events-none md:after:hidden">
-              <button type="button" onClick={() => void runCompareB()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                비교 B안
-              </button>
-              <button type="button" onClick={() => void runChunkedTranslate()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                분할 번역
-              </button>
-              <button type="button" onClick={analyzeStyle} disabled={!source.trim()} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                문체 분석
-              </button>
-              <button type="button" onClick={() => void refineResult()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                최종 다듬기
-              </button>
-              <button type="button" onClick={() => void backTranslate()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                역검수
-              </button>
-              <button type="button" onClick={() => setIsCatMode((previous) => !previous)} className={`snap-start shrink-0 rounded-xl px-5 py-3 text-[11px] font-bold transition-all lg:ml-auto ${isCatMode ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/30' : 'theme-pill hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
-                {isCatMode ? '통합 보기 중' : '라인 비교'}
-              </button>
-            </div>
-
-            {compareResultB.trim() ? (
-              <div className="mt-4 rounded-3xl glass-panel p-5 animate-in fade-in slide-in-from-bottom-2">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="theme-kicker text-indigo-500 dark:text-indigo-400">비교 B안 (별도 엔진)</div>
-                  <button type="button" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={() => setCompareResultB('')}>닫기 ✕</button>
-                </div>
-                <textarea readOnly value={compareResultB} className="result-pane theme-field w-full min-h-[120px] rounded-2xl p-4 text-xs lg:text-sm leading-relaxed outline-none focus:ring-1 focus:ring-indigo-500/30" />
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        {!isZenMode && (
-          <aside
-            ref={contextAsideRef}
-            className={`pointer-events-auto relative z-30 hidden w-80 shrink-0 overflow-y-auto border-y-0 border-r-0 rounded-none glass-panel p-6 lg:block space-y-10 bg-sidebar transition-shadow ${
-              workspaceTab === 'context' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
-            }`}
-          >
-            <ContextSidebar
-              worldContext={worldContext}
-              setWorldContext={setWorldContext}
-              characterProfiles={characterProfiles}
-              setCharacterProfiles={setCharacterProfiles}
-              storySummary={storySummary}
-              setStorySummary={setStorySummary}
-              showCharacters={showCharacters}
-              setShowCharacters={setShowCharacters}
-              showSummary={showSummary}
-              setShowSummary={setShowSummary}
-              accentTextColor={accentTextColor}
-              history={history}
-              setFrom={setFrom}
-              setTo={setTo}
-              setHistory={setHistory}
-            />
-          </aside>
-        )}
-      </main>
-
-      {backResult && (
-        <div className="fixed bottom-10 right-10 z-[96] w-96 glass-panel p-6 animate-in fade-in slide-in-from-bottom-5 max-h-[70vh] flex flex-col">
-          <h4 className="theme-kicker mb-2" style={{ color: '#10b981' }}>
-            Integrity Check
-          </h4>
-          <div className="theme-text-primary max-h-60 overflow-y-auto text-xs leading-relaxed">{backResult}</div>
-          <button type="button" onClick={() => setBackResult('')} className="theme-text-secondary mt-4 text-[9px] text-left">
-            CLOSE
-          </button>
-        </div>
-      )}
-
+    <TranslatorContext.Provider value={contextValue}>
+      <TranslatorShell />
       {dialog && (
         <AppDialog
           open
@@ -1964,6 +1380,6 @@ export default function TranslatorStudioApp() {
           onAlertOk={alertOk}
         />
       )}
-    </div>
+    </TranslatorContext.Provider>
   );
 }
