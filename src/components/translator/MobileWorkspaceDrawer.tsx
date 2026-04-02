@@ -1,5 +1,7 @@
 'use client';
 
+import type { TranslatorBackgroundMode } from '@/lib/translator-constants';
+
 type Tab = 'chapters' | 'context';
 
 type Props = {
@@ -7,7 +9,7 @@ type Props = {
   onClose: () => void;
   tab: Tab;
   onTab: (t: Tab) => void;
-  backgroundMode: string;
+  backgroundMode: TranslatorBackgroundMode;
   childrenChapters: React.ReactNode;
   childrenContext: React.ReactNode;
 };

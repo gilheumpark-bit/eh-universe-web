@@ -49,7 +49,7 @@ export function AppDialog({ open, title, message, variant, onClose, onConfirm, o
         role="dialog"
         aria-modal="true"
         aria-labelledby="app-dialog-title"
-        className="theme-glacial relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-2xl dark:bg-slate-900/95"
+        className="theme-bright relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-2xl dark:bg-slate-900/95"
       >
         <h2 id="app-dialog-title" className="text-sm font-black uppercase tracking-widest theme-text-primary">
           {title}

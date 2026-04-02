@@ -10,18 +10,32 @@ export type ThemeLevel = 0 | 1 | 2 | 3;
 export const THEME_NAMES = ['다크', '딤', '라이트', '최대'] as const;
 export const THEME_NAMES_EN = ['Dark', 'Dim', 'Light', 'Max'] as const;
 
-// Color themes
-export type ColorTheme = 'default' | 'beige' | 'ocean' | 'forest' | 'rose' | 'midnight' | 'violet' | 'sapphire' | 'emerald';
+// Color themes (3종: 기본 / 밝은 / 베이지)
+export type ColorTheme = 'default' | 'bright' | 'beige';
+
+const LEGACY_COLOR_THEME_MAP: Record<string, ColorTheme> = {
+  default: 'default',
+  bright: 'bright',
+  beige: 'beige',
+  ocean: 'bright',
+  sapphire: 'bright',
+  emerald: 'bright',
+  violet: 'bright',
+  forest: 'default',
+  midnight: 'default',
+  rose: 'beige',
+};
+
+function normalizeStoredColorTheme(raw: string | null): ColorTheme {
+  if (!raw) return 'default';
+  if (raw === 'default' || raw === 'bright' || raw === 'beige') return raw;
+  return LEGACY_COLOR_THEME_MAP[raw] ?? 'default';
+}
+
 export const COLOR_THEMES: { id: ColorTheme; name: string; nameEn: string; preview: string }[] = [
   { id: 'default', name: '기본', nameEn: 'Default', preview: '#07090d' },
+  { id: 'bright', name: '밝은', nameEn: 'Bright', preview: '#f8fafc' },
   { id: 'beige', name: '베이지', nameEn: 'Beige', preview: '#f5f0e8' },
-  { id: 'ocean', name: '오션', nameEn: 'Ocean', preview: '#0a1628' },
-  { id: 'forest', name: '포레스트', nameEn: 'Forest', preview: '#0d1a14' },
-  { id: 'rose', name: '로즈', nameEn: 'Rose', preview: '#1a0d14' },
-  { id: 'midnight', name: '미드나잇', nameEn: 'Midnight', preview: '#0d0d1a' },
-  { id: 'violet', name: '바이올렛', nameEn: 'Violet', preview: '#8B5CF6' },
-  { id: 'sapphire', name: '사파이어', nameEn: 'Sapphire', preview: '#3B82F6' },
-  { id: 'emerald', name: '에메랄드', nameEn: 'Emerald', preview: '#10B981' },
 ];
 
 /** Manages 4-level theme (dark/dim/light/max), color theme, focus mode, search overlay, and shortcuts panel */
@@ -37,11 +51,13 @@ export function useStudioTheme() {
   });
   
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('noa_color_theme') as ColorTheme;
-      if (stored && COLOR_THEMES.some(t => t.id === stored)) return stored;
+    if (typeof window === 'undefined') return 'default';
+    const raw = localStorage.getItem('noa_color_theme');
+    const normalized = normalizeStoredColorTheme(raw);
+    if (raw !== null && normalized !== raw) {
+      localStorage.setItem('noa_color_theme', normalized);
     }
-    return 'default';
+    return normalized;
   });
   
   const [focusMode, setFocusMode] = useState(false);

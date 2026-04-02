@@ -29,10 +29,22 @@ export const PROVIDERS = [
   { id: 'deepseek', label: 'DEEPSEEK (DS)', role: 'Fast Draft' },
 ] as const;
 
+/** 번역 워크스페이스 배경 — 스튜디오 색상 테마(기본/밝은/베이지)와 동일 3종 */
+export type TranslatorBackgroundMode = 'default' | 'bright' | 'beige';
+
 export const BACKGROUND_MODES = [
-  { id: 'nebula', label: 'NEBULA (DEEP)', note: '오로라 딥스페이스 - 집중형 컨텍스트' },
-  { id: 'glacial', label: 'GLACIAL (WHITE)', note: '화이트 글래스 - 문서 작업 최적화' },
+  { id: 'default' as const, label: 'DEFAULT', note: '딥 포커스 — 집중형 컨텍스트' },
+  { id: 'bright' as const, label: 'BRIGHT', note: '화이트 글래스 — 문서 작업 최적화' },
+  { id: 'beige' as const, label: 'BEIGE', note: '웜 페이퍼 — 장시간 독서 톤' },
 ] as const;
+
+/** 레거시 nebula/glacial 및 알 수 없는 값 → 3종으로 정규화 */
+export function normalizeTranslatorBackgroundMode(raw: unknown): TranslatorBackgroundMode {
+  if (raw === 'default' || raw === 'bright' || raw === 'beige') return raw;
+  if (raw === 'nebula') return 'default';
+  if (raw === 'glacial') return 'bright';
+  return 'default';
+}
 
 /** Rough token estimate for UI (chars / 4) */
 export function estimateTokens(text: string): number {

@@ -159,6 +159,27 @@ describe('useStudioTheme', () => {
     expect(get().themeLevel).toBe(2);
     cleanup();
   });
+
+  it('defaults color theme to default when no stored value', () => {
+    const { get, cleanup } = createThemeHarness();
+    expect(get().colorTheme).toBe('default');
+    cleanup();
+  });
+
+  it('restores valid color theme from localStorage', () => {
+    localStorage.setItem('noa_color_theme', 'beige');
+    const { get, cleanup } = createThemeHarness();
+    expect(get().colorTheme).toBe('beige');
+    cleanup();
+  });
+
+  it('migrates legacy ocean color theme to bright and persists', () => {
+    localStorage.setItem('noa_color_theme', 'ocean');
+    const { get, cleanup } = createThemeHarness();
+    expect(get().colorTheme).toBe('bright');
+    expect(localStorage.getItem('noa_color_theme')).toBe('bright');
+    cleanup();
+  });
 });
 
 // ============================================================

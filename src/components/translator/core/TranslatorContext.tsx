@@ -1,7 +1,7 @@
 import { createContext, useContext, Dispatch, SetStateAction } from 'react';
 import type { ProviderId } from '@/lib/ai-providers';
 import { ChapterEntry, ProjectSnapshot, HistoryEntry, StyleHeuristicAnalysis, TranslationMode, DomainPreset } from '@/types/translator';
-import { WorkspaceTab } from '@/lib/translator-constants';
+import { type TranslatorBackgroundMode, WorkspaceTab } from '@/lib/translator-constants';
 
 // ============================================================
 // PART 1 — Type Definitions & Context
@@ -52,8 +52,8 @@ export interface TranslatorContextState {
   setIsZenMode: Dispatch<SetStateAction<boolean>>;
   showSettings: boolean;
   setShowSettings: Dispatch<SetStateAction<boolean>>;
-  backgroundMode: string;
-  setBackgroundMode: Dispatch<SetStateAction<string>>;
+  backgroundMode: TranslatorBackgroundMode;
+  setBackgroundMode: Dispatch<SetStateAction<TranslatorBackgroundMode>>;
   isCatMode: boolean;
   setIsCatMode: Dispatch<SetStateAction<boolean>>;
   showUrlImport: boolean;

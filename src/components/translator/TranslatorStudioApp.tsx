@@ -27,6 +27,8 @@ import {
   PROVIDERS,
   WORKSPACE_TAB_STORAGE_KEY,
   type WorkspaceTab,
+  type TranslatorBackgroundMode,
+  normalizeTranslatorBackgroundMode,
 } from '@/lib/translator-constants';
 import {
   limitText,
@@ -116,7 +118,7 @@ export default function TranslatorStudioApp() {
   // UI States
   const [isZenMode, setIsZenMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [backgroundMode, setBackgroundMode] = useState('glacial');
+  const [backgroundMode, setBackgroundMode] = useState<TranslatorBackgroundMode>('default');
   const [isCatMode, setIsCatMode] = useState(false);
   const [showUrlImport, setShowUrlImport] = useState(false);
   const [showCharacters, setShowCharacters] = useState(false);
@@ -293,7 +295,9 @@ export default function TranslatorStudioApp() {
       if (parsed.provider !== undefined) setProvider(parsed.provider);
       if (parsed.history !== undefined) setHistory(parsed.history);
       if (parsed.isZenMode !== undefined) setIsZenMode(parsed.isZenMode);
-      if (parsed.backgroundMode !== undefined) setBackgroundMode(parsed.backgroundMode);
+      if (parsed.backgroundMode !== undefined) {
+        setBackgroundMode(normalizeTranslatorBackgroundMode(parsed.backgroundMode));
+      }
       if (parsed.isCatMode !== undefined) setIsCatMode(parsed.isCatMode);
       if (parsed.translationMode !== undefined) setTranslationMode(parsed.translationMode);
       if (parsed.worldContext !== undefined) setWorldContext(parsed.worldContext);
@@ -1016,7 +1020,9 @@ export default function TranslatorStudioApp() {
               if (parsed.storySummary !== undefined) setStorySummary(parsed.storySummary as string);
               if (parsed.referenceIds !== undefined)
                 setReferenceIds(Array.isArray(parsed.referenceIds) ? (parsed.referenceIds as string[]) : []);
-              if (parsed.backgroundMode !== undefined) setBackgroundMode(parsed.backgroundMode as string);
+              if (parsed.backgroundMode !== undefined) {
+                setBackgroundMode(normalizeTranslatorBackgroundMode(parsed.backgroundMode));
+              }
               if (parsed.isZenMode !== undefined) setIsZenMode(parsed.isZenMode as boolean);
               if (parsed.isCatMode !== undefined) setIsCatMode(parsed.isCatMode as boolean);
               if (parsed.translationMode !== undefined) setTranslationMode(parsed.translationMode as 'novel' | 'general');
@@ -1342,7 +1348,12 @@ export default function TranslatorStudioApp() {
     : langKo
       ? '로컬 저장 대기(편집 시 자동)'
       : 'Local autosave (on edit)';
-  const atmosphereLabel = backgroundMode === 'glacial' ? 'Editorial White' : 'Nebula Depth';
+  const atmosphereLabel =
+    backgroundMode === 'bright'
+      ? 'Editorial White'
+      : backgroundMode === 'beige'
+        ? 'Warm Paper'
+        : 'Nebula Depth';
   const pipelineLabel = translationMode === 'novel' ? 'Narrative Pipeline' : 'Auxiliary General';
   const cloudSyncEnabled = Boolean(isAuthLoaded && userId && supabaseUrl && supabaseAnonKey);
   const referenceStatusLabel = referenceBundle.projectNames.length
@@ -1428,7 +1439,7 @@ export default function TranslatorStudioApp() {
 
   return (
     <TranslatorContext.Provider value={contextValue}>
-      <div className="flex h-screen w-full flex-col overflow-hidden bg-[#05050A]">
+      <div className={`flex h-screen w-full flex-col overflow-hidden theme-${backgroundMode}`}>
         {aiCapabilitiesLoaded && !hasTranslatorAiAccess && !apiBannerDismissed && (
           <div className="flex shrink-0 items-center gap-3 border-b border-amber-700/40 bg-amber-900/25 px-4 py-2.5 text-amber-100">
             <Key className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
