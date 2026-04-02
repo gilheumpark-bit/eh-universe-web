@@ -236,7 +236,7 @@ export default function Home() {
       <Header />
 
       {/* HERO */}
-      <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
+      <section ref={heroRef} className="relative overflow-hidden pb-20 pt-24 md:pb-28 md:pt-32">
         <StarField />
         <div className="site-shell relative z-10">
           <div className="premium-panel premium-grid-accent px-6 py-8 md:px-10 md:py-12 xl:px-14">
@@ -300,7 +300,7 @@ export default function Home() {
       </section>
 
       {/* CATEGORY GRID */}
-      <section ref={catRef} className="section-divider py-20">
+      <section ref={catRef} className="section-divider py-16 md:py-20">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -336,7 +336,7 @@ export default function Home() {
       </section>
 
       {/* HUB GRID */}
-      <section ref={hubRef} className="section-divider py-20">
+      <section ref={hubRef} className="section-divider py-16 md:py-20">
         <div className="site-shell">
           <div className="mb-8 px-1">
             <p className="site-kicker">
@@ -389,7 +389,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section ref={ctaRef} className="section-divider pb-24 pt-8">
+      <section ref={ctaRef} className="section-divider pb-24 pt-8 md:pt-16">
         <div className="site-shell">
           <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">

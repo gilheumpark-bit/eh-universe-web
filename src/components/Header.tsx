@@ -347,7 +347,7 @@ function HeaderInner() {
             </button>
             <button
               type="button"
-              className="rounded-full border border-white/8 bg-white/[0.03] p-2.5 text-text-secondary"
+              className="rounded-full border border-white/8 bg-white/[0.03] p-2.5 text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-text-primary"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
               aria-expanded={menuOpen}

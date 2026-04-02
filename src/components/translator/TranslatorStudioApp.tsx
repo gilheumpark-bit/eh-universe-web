@@ -1272,10 +1272,10 @@ export default function TranslatorStudioApp() {
     }
   };
 
-  const headerTextColor = backgroundMode === 'glacial' ? '#0f172a' : '#f8fafc';
-  const headerMutedColor = backgroundMode === 'glacial' ? '#64748b' : '#cbd5e1';
+  const headerTextColor = backgroundMode === 'glacial' ? 'var(--color-text-primary, #0f172a)' : 'var(--color-text-primary, #f8fafc)';
+  const headerMutedColor = backgroundMode === 'glacial' ? 'var(--color-text-secondary, #64748b)' : 'var(--color-text-secondary, #cbd5e1)';
   const headerChipSurface = backgroundMode === 'glacial' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.06)';
-  const accentTextColor = backgroundMode === 'glacial' ? '#2563eb' : '#93c5fd';
+  const accentTextColor = backgroundMode === 'glacial' ? 'var(--color-accent-blue, #2563eb)' : 'var(--color-accent-blue, #93c5fd)';
   const activeChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   const completedChapters = chapters.filter((chapter) => chapter.isDone).length;
   const completionRate = chapters.length ? Math.round((completedChapters / chapters.length) * 100) : 0;
@@ -1340,8 +1340,8 @@ export default function TranslatorStudioApp() {
             </h1>
           </div>
           <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: headerMutedColor }}>Plan</span>
-            <span className="text-xs font-bold" style={{ color: accentTextColor }}>Personal</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: headerMutedColor }}>Level</span>
+            <span className="text-xs font-bold" style={{ color: accentTextColor }}>Standard</span>
           </div>
           {activeChapter && (
             <div className="hidden md:flex items-center gap-3 rounded-full px-4 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
@@ -1520,7 +1520,7 @@ export default function TranslatorStudioApp() {
 
         {/* Center: Editor Area — min-w-0: flex 자식 폭 붕괴(한 글자 세로줄) 방지 */}
         <section
-          className={`relative z-10 flex min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-20 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
+          className={`relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-4 lg:px-6 pb-20 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
         >
           {!isZenMode && workspaceTab === 'network' && (
             <div ref={networkSectionRef} className="mb-6 min-w-0">
@@ -1537,7 +1537,7 @@ export default function TranslatorStudioApp() {
               />
             </div>
           )}
-          {!isZenMode && (
+          {!isZenMode && workspaceTab === 'translate' && (
             <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,1fr)_minmax(280px,1fr)]">
               <div className="workspace-hero glass-panel min-w-0 rounded-4xl p-6">
                 <EnvStatusBar />
@@ -1650,7 +1650,7 @@ export default function TranslatorStudioApp() {
           )}
 
           {/* Settings Overlay */}
-          {showSettings && (
+          {showSettings && !isZenMode && (
             <div className="mb-6 p-6 rounded-5xl glass-panel shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-3 p-5 bg-purple-500/5 rounded-2xl border border-purple-500/10 space-y-6">
@@ -1853,7 +1853,8 @@ export default function TranslatorStudioApp() {
           )}
 
           {/* Action Bar */}
-          <div className="mt-8 max-w-4xl mx-auto space-y-3">
+          {workspaceTab === 'translate' && (
+          <div className="mt-8 max-w-4xl mx-auto space-y-3 w-full">
             <div className="flex items-center gap-2 p-1 glass-panel rounded-2xl">
               <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📖 NOVEL WORKSPACE</button>
               <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📄 GENERAL ASSIST</button>
@@ -1906,6 +1907,7 @@ export default function TranslatorStudioApp() {
               </div>
             ) : null}
           </div>
+          )}
         </section>
 
         {!isZenMode && (
