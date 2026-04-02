@@ -28,7 +28,6 @@ import {
   LANGUAGES,
   PROVIDERS,
   BACKGROUND_MODES,
-  estimateTokens,
   WORKSPACE_TAB_STORAGE_KEY,
   type WorkspaceTab,
 } from '@/lib/translator-constants';
@@ -61,7 +60,6 @@ const AI_STORE_PROVIDER_IDS = new Set<ProviderId>([
   'lmstudio',
 ]);
 
-const WORKSPACE_TAB_BAR_HEIGHT_REM = 8.5;
 
 export default function TranslatorStudioApp() {
   const { dialog, alert, confirm, dismiss, confirmYes, alertOk } = useAppDialog();
@@ -235,7 +233,7 @@ export default function TranslatorStudioApp() {
       if (parsed.projectName !== undefined) setProjectName(parsed.projectName);
       if (restoredProjects.length) setProjectList(restoredProjects);
       if (parsed.chapters !== undefined && Array.isArray(parsed.chapters)) {
-        setChapters(parsed.chapters.map((chapter: any, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
+        setChapters(parsed.chapters.map((chapter: Partial<ChapterEntry>, index: number) => normalizeChapter(chapter, `Part ${index + 1}`)));
       }
       if (parsed.activeChapterIndex !== undefined) setActiveChapterIndex(parsed.activeChapterIndex);
       if (parsed.source !== undefined) setSource(parsed.source);
@@ -324,6 +322,7 @@ export default function TranslatorStudioApp() {
     }, 650);
 
     return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, result, activeChapterIndex, chapters]);
 
   useEffect(() => {
@@ -402,15 +401,15 @@ export default function TranslatorStudioApp() {
         if (!metadata.length || cancelled) return;
 
         const loadedProjects = await Promise.all(
-          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: any) => {
-            const projectData = await loadProjectFromCloud(userId, projectMeta.id);
+          metadata.slice(0, MAX_LOCAL_PROJECTS).map(async (projectMeta: Record<string, unknown>) => {
+            const projectData = await loadProjectFromCloud(userId, projectMeta.id as string);
             if (!projectData) return null;
 
             const normalized = normalizeProjectSnapshots([
               {
-                id: projectMeta.id,
-                project_name: projectMeta.projectName,
-                updated_at: projectMeta.updatedAt ? Date.parse(projectMeta.updatedAt) : Date.now(),
+                id: projectMeta.id as string,
+                project_name: projectMeta.projectName as string,
+                updated_at: projectMeta.updatedAt ? Date.parse(projectMeta.updatedAt as string) : Date.now(),
                 ...projectData,
               },
             ]);
@@ -1126,21 +1125,21 @@ export default function TranslatorStudioApp() {
     let mimeType = 'text/plain';
 
     if (format === 'md') {
-      content = chapters.map((chapter: any) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
+      content = chapters.map((chapter: ChapterEntry) => `# ${chapter.name}\n\n${chapter.result || '(미번역)'}`).join('\n\n---\n\n');
       mimeType = 'text/markdown';
     } else if (format === 'txt') {
-      content = chapters.map((chapter: any) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
+      content = chapters.map((chapter: ChapterEntry) => `[ ${chapter.name} ]\n\n${chapter.result || '(미번역)'}`).join('\n\n====================\n\n');
       mimeType = 'text/plain';
     } else if (format === 'json') {
-      content = JSON.stringify(chapters.map((c: any) => ({ title: c.name, content: c.result || '' })), null, 2);
+      content = JSON.stringify(chapters.map((c: ChapterEntry) => ({ title: c.name, content: c.result || '' })), null, 2);
       mimeType = 'application/json';
     } else if (format === 'html') {
       content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Translation Results</title></head><body style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: sans-serif;">` + 
-        chapters.map((c: any) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') + 
+        chapters.map((c: ChapterEntry) => `<h2>${c.name}</h2><p>${(c.result || '').replace(/\\n/g, '<br>')}</p>`).join('<hr>') + 
         `</body></html>`;
       mimeType = 'text/html';
     } else if (format === 'csv') {
-      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c: any) => `"${c.name.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
+      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((c: ChapterEntry) => `"${c.name.replace(/"/g, '""')}","${(c.result || '').replace(/"/g, '""')}"`).join('\\n');
       mimeType = 'text/csv';
     }
 
@@ -1312,9 +1311,9 @@ export default function TranslatorStudioApp() {
   };
 
   return (
-    <div className={`min-h-screen min-w-0 theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
+    <div className={`h-screen w-full flex flex-col overflow-hidden theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
       {/* globals.css body::before/::after z-[89–90] 위에 두어 노이즈 레이어 아래로 클릭이 새지 않게 함. AppDialog z-[100]보다는 낮게 유지 */}
-      <header className="pointer-events-auto relative z-[95] flex h-20 shrink-0 items-center justify-between border-x-0 border-t-0 glass-panel px-4 lg:px-6 fixed left-0 right-0 top-0 rounded-none">
+      <header className="shrink-0 pointer-events-auto z-40 flex h-16 items-center justify-between border-b border-white/10 glass-panel px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-4">
           {!isZenMode && (
             <button
@@ -1330,21 +1329,21 @@ export default function TranslatorStudioApp() {
               ☰
             </button>
           )}
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-indigo-500 text-sm font-black text-white shadow-lg shadow-blue-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-indigo-500 text-sm font-black text-white shadow-lg shadow-blue-500/20">
             EH
           </div>
           <div className="min-w-0">
             <div className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: headerMutedColor }}>Narrative Translation Engine</div>
-            <h1 className="truncate text-xl font-black tracking-tight" style={{ color: headerTextColor }}>
-              EH Translator <span className="ml-2 text-[11px] font-medium" style={{ color: headerMutedColor }}>final</span>
+            <h1 className="truncate text-lg font-black tracking-tight" style={{ color: headerTextColor }}>
+              EH Translator <span className="ml-2 text-[10px] font-medium" style={{ color: headerMutedColor }}>final</span>
             </h1>
           </div>
-          <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
+          <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur-xl" style={{ background: headerChipSurface }}>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: headerMutedColor }}>Plan</span>
-            <span className="text-xs font-bold" style={{ color: accentTextColor }}>Personal</span>
+            <span className="text-[11px] font-bold" style={{ color: accentTextColor }}>Personal</span>
           </div>
           {activeChapter && (
-            <div className="hidden md:flex items-center gap-3 rounded-full px-4 py-2 backdrop-blur-xl" style={{ background: headerChipSurface }}>
+            <div className="hidden md:flex items-center gap-3 rounded-full px-4 py-1.5 backdrop-blur-xl" style={{ background: headerChipSurface }}>
                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                <div className="flex flex-col">
                  <span className="text-[10px] font-black uppercase tracking-tight" style={{ color: headerTextColor }}>{activeChapter.name}</span>
@@ -1361,7 +1360,7 @@ export default function TranslatorStudioApp() {
                 type="button"
                 key={mode.id}
                 onClick={() => setBackgroundMode(mode.id)}
-                className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
+                className={`rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
                   backgroundMode === mode.id
                     ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
                     : 'hover:brightness-110'
@@ -1377,7 +1376,7 @@ export default function TranslatorStudioApp() {
             <button
               type="button"
               onClick={() => void signInWithGoogle()}
-              className="rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-500/20 transition-all hover:brightness-110"
+              className="rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-lg shadow-blue-500/20 transition-all hover:brightness-110"
             >
               시작하기
             </button>
@@ -1385,15 +1384,16 @@ export default function TranslatorStudioApp() {
           {isAuthLoaded && userId && authUser && (
             <div className="flex items-center gap-2">
               {authUser.photoURL ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={authUser.photoURL}
                   alt=""
-                  className="h-9 w-9 rounded-full object-cover shadow-lg"
+                  className="h-8 w-8 rounded-full object-cover shadow-lg"
                   referrerPolicy="no-referrer"
                 />
               ) : (
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-indigo-500 text-xs font-bold text-white shadow-lg"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-indigo-500 text-[10px] font-bold text-white shadow-lg"
                   aria-hidden
                 >
                   {(authUser.email ?? authUser.displayName ?? '?').slice(0, 1).toUpperCase()}
@@ -1402,23 +1402,23 @@ export default function TranslatorStudioApp() {
               <button
                 type="button"
                 onClick={() => void signOut()}
-                className="rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] backdrop-blur-xl transition-all hover:brightness-110"
+                className="rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] backdrop-blur-xl transition-all hover:brightness-110"
                 style={{ background: headerChipSurface, color: headerMutedColor }}
               >
                 로그아웃
               </button>
             </div>
           )}
-          {authError ? (
+          {authError && (
             <span className="hidden max-w-[140px] truncate text-[9px] text-red-500 lg:inline" title={authError}>
               {authError}
             </span>
-          ) : null}
+          )}
 
           <button
             type="button"
             onClick={() => setIsZenMode(!isZenMode)}
-            className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
+            className={`rounded-full px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
               isZenMode
                 ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
                 : 'backdrop-blur-xl hover:brightness-110'
@@ -1428,7 +1428,7 @@ export default function TranslatorStudioApp() {
             {isZenMode ? 'Focus On' : 'Focus Mode'}
           </button>
           <button type="button" onClick={() => setShowSettings(!showSettings)} 
-            className="rounded-full p-2.5 backdrop-blur-xl transition-all hover:brightness-110"
+            className="rounded-full p-2 backdrop-blur-xl transition-all hover:brightness-110"
             style={{ background: headerChipSurface, color: headerMutedColor }}>
             ⚙️
           </button>
@@ -1436,7 +1436,7 @@ export default function TranslatorStudioApp() {
       </header>
 
       {!isZenMode && (
-        <div className="workspace-tab-dock pointer-events-auto relative z-[94] fixed left-0 right-0 top-20 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+        <div className="shrink-0 workspace-tab-dock z-30 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
           <WorkspaceTabBar active={workspaceTab} onChange={handleWorkspaceTabChange} langKo={langKo} />
         </div>
       )}
@@ -1485,17 +1485,7 @@ export default function TranslatorStudioApp() {
         }
       />
 
-      <main
-        className="relative isolate z-0 flex min-h-0 min-w-0 w-full overflow-hidden"
-        style={
-          isZenMode
-            ? { paddingTop: '5rem', height: 'calc(100vh - 5rem)' }
-            : {
-                paddingTop: `calc(5rem + ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
-                height: `calc(100vh - 5rem - ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
-              }
-        }
-      >
+      <main className="flex-1 flex min-h-0 min-w-0 w-full overflow-hidden relative isolate z-0">
         {!isZenMode && (
           <aside
             ref={chapterAsideRef}
@@ -1518,9 +1508,9 @@ export default function TranslatorStudioApp() {
           </aside>
         )}
 
-        {/* Center: Editor Area — min-w-0: flex 자식 폭 붕괴(한 글자 세로줄) 방지 */}
+        {/* Center: Editor Area */}
         <section
-          className={`relative z-10 flex min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-20 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
+          className={`relative z-10 flex flex-col min-h-0 min-w-0 flex-1 overflow-y-auto p-4 lg:p-6 transition-all pointer-events-auto ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
         >
           {!isZenMode && workspaceTab === 'network' && (
             <div ref={networkSectionRef} className="mb-6 min-w-0">
@@ -1555,7 +1545,7 @@ export default function TranslatorStudioApp() {
                   <div className="min-w-0">
                     <div className="theme-kicker">Premium Narrative Workspace</div>
                     <h2 className="mt-3 truncate text-2xl font-black tracking-tight theme-text-primary">{workspaceName}</h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary break-words">
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary text-wrap">
                       장편 번역에서 문체 일관성, 캐릭터 보존, 빠른 편집 흐름을 함께 잡는 에디토리얼 작업실입니다.
                     </p>
                   </div>
@@ -1588,10 +1578,10 @@ export default function TranslatorStudioApp() {
               <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
                 <div className="theme-kicker">Autosave</div>
                 <div className="mt-3 text-3xl font-black tracking-tight theme-text-primary">{autoSaveLabel}</div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary text-wrap">
                   {loading ? `${statusMsg || 'PROCESSING'} 단계가 진행 중입니다.` : '자동 저장을 지연 처리해서 타이핑과 이동이 더 가볍게 유지됩니다.'}
                 </p>
-                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold break-words ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
+                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold text-wrap ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
                   {loading ? '엔진이 결과를 정리하는 중입니다.' : '변경 내용은 조용히 로컬 상태와 동기화됩니다.'}
                 </div>
                 {cloudSyncEnabled && (
@@ -1614,12 +1604,12 @@ export default function TranslatorStudioApp() {
                 <div className="metric-bar mt-4">
                   <span style={{ width: `${completionRate}%` }} />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary text-wrap">
                   {activeChapter
                     ? `${activeChapter.name}${activeChapter.stageProgress ? ` · Stage ${activeChapter.stageProgress}` : ''}`
                     : '활성 챕터를 선택하면 진행 단계가 여기 표시됩니다.'}
                 </p>
-                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary break-words">{storyBibleStatusLabel}</p>
+                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary text-wrap">{storyBibleStatusLabel}</p>
               </div>
             </div>
           )}
@@ -1700,7 +1690,7 @@ export default function TranslatorStudioApp() {
                   <div>
                     <label className="theme-kicker mb-2 block">이전 프로젝트 참조 (Cross-Reference)</label>
                     <div className="flex flex-wrap gap-2 text-white">
-                       {projectList.filter((p:any) => p.id !== projectId).map((p:any) => (
+                       {projectList.filter((p: ProjectSnapshot) => p.id !== projectId).map((p: ProjectSnapshot) => (
                           <button key={p.id} onClick={() => setReferenceIds(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
                              className={`rounded-full border px-3 py-1 text-[10px] transition-all ${referenceIds.includes(p.id) ? 'bg-indigo-600 border-indigo-500 text-white' : 'theme-pill hover:brightness-105'}`}>
                              {p.project_name || p.id.slice(0,4)}
@@ -1855,94 +1845,109 @@ export default function TranslatorStudioApp() {
             </div>
           )}
 
-          {/* Action Bar */}
-          <div className="mt-8 max-w-4xl mx-auto space-y-4">
-            <div className="flex items-center gap-2 p-1.5 glass-panel rounded-2xl shadow-sm">
-              <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📖 NOVEL WORKSPACE</button>
-              <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-[14px] py-3.5 text-[11px] font-black tracking-[0.1em] transition-all duration-300 ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📄 GENERAL ASSIST</button>
+        </section>
+
+        {/* Right Sidebar: Action & Context Control Panel */}
+        {!isZenMode && (
+          <aside className="pointer-events-auto relative z-30 hidden w-80 lg:w-[320px] xl:w-[360px] shrink-0 overflow-y-auto border-l border-white/10 bg-sidebar glass-panel p-4 flex-col gap-6 lg:flex transition-shadow">
+            {/* View Mode & Import Array */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-1 glass-panel rounded-xl shadow-sm">
+                <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-[10px] py-2.5 text-[10px] font-black tracking-widest transition-all duration-300 ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📖 NOVEL</button>
+                <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-[10px] py-2.5 text-[10px] font-black tracking-widest transition-all duration-300 ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30' : 'theme-text-secondary hover:bg-slate-100/50 dark:hover:bg-slate-800/50'}`}>📄 GENERAL</button>
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
+                <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className={`w-full rounded-xl px-4 py-2.5 text-[10px] font-bold transition-all duration-300 shadow-sm border border-transparent ${showUrlImport ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' : 'theme-pill hover:brightness-105'}`}>🌐 웹 회차 불러오기 (URL)</button>
+                {showUrlImport && (
+                  <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-200">
+                    <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 소설 URL" className="theme-field flex-1 rounded-xl px-3 py-2.5 text-[10px] outline-none border focus:border-indigo-500/50 transition-colors" />
+                    <button type="button" onClick={importUrl} disabled={loading} className="px-4 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-bold text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50">가져오기</button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className={`shrink-0 rounded-2xl px-5 py-3.5 text-[11px] font-bold transition-all duration-300 shadow-sm ${showUrlImport ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-black' : 'theme-pill hover:brightness-105'}`}>🌐 웹 회차 불러오기</button>
-              {showUrlImport && (
-                <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-4 transition-all duration-300">
-                  <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 웹소설 URL 입력" className="theme-field flex-1 rounded-2xl px-5 py-3.5 text-xs outline-none shadow-inner border border-transparent focus:border-blue-500/30 transition-colors" />
-                  <button type="button" onClick={importUrl} disabled={loading} className="px-8 py-3.5 bg-linear-to-r from-slate-800 to-slate-900 dark:from-slate-200 dark:to-slate-100 rounded-2xl text-[11px] font-bold text-white dark:text-slate-900 shadow-lg hover:shadow-xl transition-all disabled:opacity-50">가져오기</button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill sm:w-1/3 rounded-[20px] py-5 text-[12px] font-black tracking-widest transition-all duration-300 hover:brightness-105 hover:-translate-y-0.5 shadow-sm disabled:opacity-40 disabled:hover:translate-y-0">FAST DRAFT</button>
-              <button type="button" onClick={() => void deepTranslate()} disabled={loading || !source.trim()} 
-                 className={`flex-1 py-5 rounded-[20px] text-[12px] font-black tracking-widest text-white shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl disabled:opacity-40 disabled:hover:translate-y-0 ${translationMode === 'novel' ? 'bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-indigo-500/25' : 'bg-linear-to-r from-emerald-500 via-teal-600 to-cyan-600 shadow-teal-500/25'}`}>
+            {/* Run Actions */}
+            <div className="space-y-3">
+               <label className="text-[9px] font-black uppercase tracking-widest theme-text-secondary">Execution</label>
+               <button type="button" onClick={() => void deepTranslate()} disabled={loading || !source.trim()} 
+                 className={`w-full py-3.5 rounded-xl text-[11px] font-black tracking-widest text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-40 disabled:hover:translate-y-0 ${translationMode === 'novel' ? 'bg-linear-to-br from-purple-600 to-blue-600 shadow-indigo-500/20' : 'bg-linear-to-br from-emerald-500 to-cyan-600 shadow-teal-500/20'}`}>
                  {statusMsg || (translationMode === 'novel' ? 'DEEP NOVEL PIPELINE' : 'ACCURATE GENERAL')}
-              </button>
+               </button>
+               <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill w-full rounded-xl py-2.5 text-[10px] font-black tracking-widest transition-all hover:brightness-105 shadow-sm disabled:opacity-40">FAST DRAFT (BASIC)</button>
             </div>
 
-            <div className="glass-panel p-2 mt-4 rounded-2xl flex flex-nowrap overflow-x-auto scrollbar-hide gap-2 justify-start md:justify-center px-4 snap-x relative after:content-[''] after:absolute after:right-0 after:top-0 after:w-8 after:h-full after:bg-gradient-to-l after:from-white/50 dark:after:from-slate-950/50 after:to-transparent after:pointer-events-none md:after:hidden">
-              <button type="button" onClick={() => void runCompareB()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                비교 B안
-              </button>
-              <button type="button" onClick={() => void runChunkedTranslate()} disabled={!source.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                분할 번역
-              </button>
-              <button type="button" onClick={analyzeStyle} disabled={!source.trim()} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                문체 분석
-              </button>
-              <button type="button" onClick={() => void refineResult()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                최종 다듬기
-              </button>
-              <button type="button" onClick={() => void backTranslate()} disabled={!result.trim() || loading} className="snap-start shrink-0 theme-pill rounded-xl px-5 py-3 text-[11px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40">
-                역검수
-              </button>
-              <button type="button" onClick={() => setIsCatMode((previous) => !previous)} className={`snap-start shrink-0 rounded-xl px-5 py-3 text-[11px] font-bold transition-all lg:ml-auto ${isCatMode ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/30' : 'theme-pill hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
-                {isCatMode ? '통합 보기 중' : '라인 비교'}
-              </button>
+            {/* Advanced Pipeline */}
+            <div className="glass-panel p-4 rounded-2xl flex flex-col gap-3 shadow-none border border-slate-200/50 dark:border-slate-800/50">
+              <span className="text-[9px] font-black uppercase tracking-widest theme-text-secondary pl-1">Advanced Tools</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => void runChunkedTranslate()} disabled={!source.trim() || loading} className="theme-pill rounded-lg px-3 py-2.5 text-[10px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 flex gap-2 items-center">
+                  <span className="text-[9px] opacity-50 font-mono">01</span><span>분할 번역</span>
+                </button>
+                <button type="button" onClick={() => void runCompareB()} disabled={!source.trim() || loading} className="theme-pill rounded-lg px-3 py-2.5 text-[10px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 flex gap-2 items-center">
+                  <span className="text-[9px] opacity-50 font-mono">02</span><span>비교 B안</span>
+                </button>
+                <button type="button" onClick={analyzeStyle} disabled={!source.trim()} className="theme-pill rounded-lg px-3 py-2.5 text-[10px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 flex gap-2 items-center">
+                  <span className="text-[9px] opacity-50 font-mono">03</span><span>문체 분석</span>
+                </button>
+                <button type="button" onClick={() => void refineResult()} disabled={!result.trim() || loading} className="theme-pill rounded-lg px-3 py-2.5 text-[10px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 flex gap-2 items-center">
+                  <span className="text-[9px] opacity-50 font-mono">04</span><span>최종 다듬기</span>
+                </button>
+                <button type="button" onClick={() => void backTranslate()} disabled={!result.trim() || loading} className="theme-pill rounded-lg px-3 py-2.5 text-[10px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40 flex gap-2 items-center col-span-2 justify-center">
+                  <span className="text-[9px] opacity-50 font-mono">05</span><span>무결성 역검수 (Back Translate)</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-panel p-4 rounded-2xl flex flex-col gap-3 shadow-none border border-slate-200/50 dark:border-slate-800/50">
+               <span className="text-[9px] font-black uppercase tracking-widest theme-text-secondary pl-1">View Focus</span>
+               <button type="button" onClick={() => setIsCatMode((previous) => !previous)} className={`w-full flex items-center justify-between rounded-lg px-3 py-2.5 transition-all ${isCatMode ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/30 shadow-inner' : 'theme-pill'}`}>
+                 <span className="text-[10px] font-bold">결과 렌더링 모드</span>
+                 <span className="text-[9px] font-black uppercase tracking-wider bg-white/50 dark:bg-black/50 px-2 py-1 rounded">{isCatMode ? 'CAT (단문)' : 'LINE (블록)'}</span>
+               </button>
             </div>
 
             {compareResultB.trim() ? (
-              <div className="mt-4 rounded-3xl glass-panel p-5 animate-in fade-in slide-in-from-bottom-2">
+              <div className="rounded-2xl glass-panel p-4 animate-in fade-in slide-in-from-top-2 border border-indigo-500/30 shadow-md">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="theme-kicker text-indigo-500 dark:text-indigo-400">비교 B안 (별도 엔진)</div>
-                  <button type="button" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={() => setCompareResultB('')}>닫기 ✕</button>
+                  <div className="theme-kicker text-indigo-500 dark:text-indigo-400 flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    비교 B안 결과
+                  </div>
+                  <button type="button" className="text-[9px] font-bold theme-text-secondary hover:text-white" onClick={() => setCompareResultB('')}>✕</button>
                 </div>
-                <textarea readOnly value={compareResultB} className="result-pane theme-field w-full min-h-[120px] rounded-2xl p-4 text-xs lg:text-sm leading-relaxed outline-none focus:ring-1 focus:ring-indigo-500/30" />
+                <textarea readOnly value={compareResultB} className="result-pane theme-field w-full min-h-[120px] rounded-xl p-3 text-[11px] leading-relaxed outline-none focus:ring-1 focus:ring-indigo-500/30 scrollbar-hide" />
               </div>
             ) : null}
-          </div>
-        </section>
 
-        {!isZenMode && (
-          <aside
-            ref={contextAsideRef}
-            className={`pointer-events-auto relative z-30 hidden w-80 shrink-0 overflow-y-auto border-y-0 border-r-0 rounded-none glass-panel p-6 lg:block space-y-10 bg-sidebar transition-shadow ${
-              workspaceTab === 'context' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
-            }`}
-          >
-            <ContextSidebar
-              worldContext={worldContext}
-              setWorldContext={setWorldContext}
-              characterProfiles={characterProfiles}
-              setCharacterProfiles={setCharacterProfiles}
-              storySummary={storySummary}
-              setStorySummary={setStorySummary}
-              showCharacters={showCharacters}
-              setShowCharacters={setShowCharacters}
-              showSummary={showSummary}
-              setShowSummary={setShowSummary}
-              accentTextColor={accentTextColor}
-              history={history}
-              setFrom={setFrom}
-              setTo={setTo}
-              setHistory={setHistory}
-            />
+            {workspaceTab === 'context' && (
+              <div className="pt-4 border-t border-white/5 mt-auto">
+                <ContextSidebar
+                  worldContext={worldContext}
+                  setWorldContext={setWorldContext}
+                  characterProfiles={characterProfiles}
+                  setCharacterProfiles={setCharacterProfiles}
+                  storySummary={storySummary}
+                  setStorySummary={setStorySummary}
+                  showCharacters={showCharacters}
+                  setShowCharacters={setShowCharacters}
+                  showSummary={showSummary}
+                  setShowSummary={setShowSummary}
+                  accentTextColor={accentTextColor}
+                  history={history}
+                  setFrom={setFrom}
+                  setTo={setTo}
+                  setHistory={setHistory}
+                />
+              </div>
+            )}
           </aside>
         )}
       </main>
 
       {backResult && (
-        <div className="fixed bottom-10 right-10 z-[96] w-96 glass-panel p-6 animate-in fade-in slide-in-from-bottom-5 max-h-[70vh] flex flex-col">
+        <div className="fixed bottom-10 right-10 z-96 w-96 glass-panel p-6 animate-in fade-in slide-in-from-bottom-5 max-h-[70vh] flex flex-col">
           <h4 className="theme-kicker mb-2" style={{ color: '#10b981' }}>
             Integrity Check
           </h4>
