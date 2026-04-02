@@ -1,8 +1,12 @@
 'use client';
 
-import { ChangeEvent, startTransition, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { useLang } from '@/lib/LangContext';
+import { getApiKey, type ProviderId } from '@/lib/ai-providers';
+import { logger } from '@/lib/logger';
 import { NetworkBridgePanel } from '@/components/translator/NetworkBridgePanel';
+import { WorkspaceTabBar } from '@/components/translator/WorkspaceTabBar';
 import { EnvStatusBar } from '@/components/translator/EnvStatusBar';
 import {
   loadProjectFromCloud,
@@ -25,6 +29,8 @@ import {
   PROVIDERS,
   BACKGROUND_MODES,
   estimateTokens,
+  WORKSPACE_TAB_STORAGE_KEY,
+  type WorkspaceTab,
 } from '@/lib/translator-constants';
 import {
   limitText,
@@ -45,11 +51,41 @@ import type {
   DomainPreset,
 } from '@/types/translator';
 
+const AI_STORE_PROVIDER_IDS = new Set<ProviderId>([
+  'gemini',
+  'openai',
+  'claude',
+  'groq',
+  'mistral',
+  'ollama',
+  'lmstudio',
+]);
+
+const WORKSPACE_TAB_BAR_HEIGHT_REM = 8.5;
+
 export default function TranslatorStudioApp() {
   const { dialog, alert, confirm, dismiss, confirmYes, alertOk } = useAppDialog();
   const { loading: authLoading, userId, user: authUser, signInWithGoogle, signOut, getIdToken, error: authError } = useAuth();
+  const { lang } = useLang();
+  const langKo = lang === 'ko';
   const isAuthLoaded = !authLoading;
   const isHydrated = useRef(false);
+  const chapterAsideRef = useRef<HTMLElement>(null);
+  const contextAsideRef = useRef<HTMLElement>(null);
+  const networkSectionRef = useRef<HTMLDivElement>(null);
+
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>(() => {
+    if (typeof window === 'undefined') return 'translate';
+    try {
+      const raw = sessionStorage.getItem(WORKSPACE_TAB_STORAGE_KEY);
+      if (raw === 'translate' || raw === 'chapters' || raw === 'context' || raw === 'network') return raw;
+    } catch {
+      /* ignore */
+    }
+    return 'translate';
+  });
+  const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
+  const [hostedGemini, setHostedGemini] = useState(false);
   
   // App States
   const [projectId, setProjectId] = useState(() => Date.now().toString());
@@ -100,6 +136,80 @@ export default function TranslatorStudioApp() {
   const prevActiveChapterIndex = useRef<number | null>(activeChapterIndex);
   const storyBibleRequestCounter = useRef(0);
 
+  const getEffectiveApiKeyForProvider = useCallback(
+    (providerId: string) => {
+      const fromState = (apiKeys[providerId] || '').trim();
+      if (fromState) return fromState;
+      if (AI_STORE_PROVIDER_IDS.has(providerId as ProviderId)) {
+        return getApiKey(providerId as ProviderId).trim();
+      }
+      return '';
+    },
+    [apiKeys],
+  );
+
+  const hasTranslatorAiAccess = useMemo(() => {
+    const key = getEffectiveApiKeyForProvider(provider);
+    if (key) return true;
+    if (provider === 'gemini' && hostedGemini) return true;
+    return false;
+  }, [provider, hostedGemini, getEffectiveApiKeyForProvider]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(WORKSPACE_TAB_STORAGE_KEY, workspaceTab);
+    } catch {
+      /* ignore */
+    }
+  }, [workspaceTab]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/ai-capabilities', { cache: 'no-store' });
+        const data = (await res.json()) as { hosted?: { gemini?: boolean } };
+        if (!cancelled) {
+          setHostedGemini(Boolean(data.hosted?.gemini));
+          setAiCapabilitiesLoaded(true);
+        }
+      } catch (e) {
+        logger.warn('TranslatorStudioApp', 'ai-capabilities fetch failed', e);
+        if (!cancelled) setAiCapabilitiesLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleWorkspaceTabChange = useCallback(
+    (tab: WorkspaceTab) => {
+      setWorkspaceTab(tab);
+      if (isZenMode) setIsZenMode(false);
+      if (tab === 'chapters') {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          setShowMobileDrawer(true);
+          setMobileTab('chapters');
+        } else {
+          chapterAsideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+      if (tab === 'context') {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          setShowMobileDrawer(true);
+          setMobileTab('context');
+        } else {
+          contextAsideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+      if (tab === 'network') {
+        networkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    [isZenMode],
+  );
+
   useEffect(() => {
     const savedState = localStorage.getItem('eh_translator_ui_state');
     const savedProjectLibrary = localStorage.getItem(PROJECT_LIBRARY_KEY);
@@ -108,7 +218,7 @@ export default function TranslatorStudioApp() {
         try {
           setProjectList(normalizeProjectSnapshots(JSON.parse(savedProjectLibrary)));
         } catch (error) {
-          console.error('Failed to restore project library', error);
+          logger.error('TranslatorStudioApp', 'Failed to restore project library', error);
         }
       }
       isHydrated.current = true;
@@ -145,7 +255,7 @@ export default function TranslatorStudioApp() {
       if (parsed.domainPreset !== undefined) setDomainPreset(parsed.domainPreset);
       if (parsed.preserveDialogueLayout !== undefined) setPreserveDialogueLayout(parsed.preserveDialogueLayout);
     } catch (error) {
-      console.error('Failed to restore state', error);
+      logger.error('TranslatorStudioApp', 'Failed to restore state', error);
     } finally {
       isHydrated.current = true;
     }
@@ -315,7 +425,7 @@ export default function TranslatorStudioApp() {
 
         setProjectList((previous) => mergeProjectSnapshots(previous, availableProjects));
       } catch (error) {
-        console.error('Failed to load cloud projects', error);
+        logger.error('TranslatorStudioApp', 'Failed to load cloud projects', error);
       }
     };
 
@@ -372,7 +482,7 @@ export default function TranslatorStudioApp() {
           setCloudSyncDetail(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         }
       } catch (error) {
-        console.error('Failed to save project to cloud', error);
+        logger.error('TranslatorStudioApp', 'Failed to save project to cloud', error);
         setCloudSyncStatus('error');
         setCloudSyncDetail(error instanceof Error ? error.message : '클라우드 저장 실패');
       }
@@ -418,9 +528,16 @@ export default function TranslatorStudioApp() {
     payload: Record<string, unknown>,
     options?: { stream?: boolean; onDelta?: (s: string) => void }
   ) => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    try {
+      const tok = await getIdToken();
+      if (tok) headers.Authorization = `Bearer ${tok}`;
+    } catch {
+      /* ignore */
+    }
     const res = await fetch('/api/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
     });
 
@@ -562,9 +679,9 @@ export default function TranslatorStudioApp() {
     }
 
     const summaryProvider =
-      (apiKeys.gemini && 'gemini') ||
-      (apiKeys.openai && 'openai') ||
-      (apiKeys.claude && 'claude') ||
+      (getEffectiveApiKeyForProvider('gemini') && 'gemini') ||
+      (getEffectiveApiKeyForProvider('openai') && 'openai') ||
+      (getEffectiveApiKeyForProvider('claude') && 'claude') ||
       provider;
 
     const requestId = ++storyBibleRequestCounter.current;
@@ -578,7 +695,7 @@ export default function TranslatorStudioApp() {
             from: to,
             to,
             provider: summaryProvider,
-            apiKey: apiKeys[summaryProvider] || '',
+            apiKey: getEffectiveApiKeyForProvider(summaryProvider),
             stage: 10,
             mode: 'novel',
           },
@@ -598,7 +715,7 @@ export default function TranslatorStudioApp() {
 
       return mergedStoryBible;
     } catch (error) {
-      console.error('Story Bible update failed:', error);
+      logger.error('TranslatorStudioApp', 'Story Bible update failed', error);
       return storySummaryBase;
     }
   };
@@ -615,7 +732,7 @@ export default function TranslatorStudioApp() {
           from,
           to,
           provider,
-          apiKey: apiKeys[provider] || '',
+          apiKey: getEffectiveApiKeyForProvider(provider),
           mode: translationMode,
         })
       );
@@ -642,11 +759,11 @@ export default function TranslatorStudioApp() {
     setLoading(true);
     const stageSequence = translationMode === 'novel'
       ? [
-          { stage: 1, label: 'FIRST DRAFT', providerId: apiKeys.gemini ? 'gemini' : provider },
-          { stage: 2, label: 'LORE ALIGN', providerId: apiKeys.deepseek ? 'deepseek' : provider },
-          { stage: 3, label: 'PROSE SHAPE', providerId: apiKeys.claude ? 'claude' : provider },
-          { stage: 4, label: 'NATIVE RESONANCE', providerId: apiKeys.openai ? 'openai' : provider },
-          { stage: 5, label: 'FINAL POLISH', providerId: apiKeys.claude ? 'claude' : provider },
+          { stage: 1, label: 'FIRST DRAFT', providerId: getEffectiveApiKeyForProvider('gemini') ? 'gemini' : provider },
+          { stage: 2, label: 'LORE ALIGN', providerId: getEffectiveApiKeyForProvider('deepseek') ? 'deepseek' : provider },
+          { stage: 3, label: 'PROSE SHAPE', providerId: getEffectiveApiKeyForProvider('claude') ? 'claude' : provider },
+          { stage: 4, label: 'NATIVE RESONANCE', providerId: getEffectiveApiKeyForProvider('openai') ? 'openai' : provider },
+          { stage: 5, label: 'FINAL POLISH', providerId: getEffectiveApiKeyForProvider('claude') ? 'claude' : provider },
         ]
       : [
           { stage: 1, label: 'STRUCTURAL ANALYSIS', providerId: provider },
@@ -664,7 +781,7 @@ export default function TranslatorStudioApp() {
             from,
             to,
             provider: item.providerId,
-            apiKey: apiKeys[item.providerId] || '',
+            apiKey: getEffectiveApiKeyForProvider(item.providerId),
             mode: translationMode,
           }),
           { stream: true, onDelta: (s) => setResult(s) }
@@ -960,7 +1077,7 @@ export default function TranslatorStudioApp() {
                 from,
                 to,
                 provider,
-                apiKey: apiKeys[provider] || '',
+                apiKey: getEffectiveApiKeyForProvider(provider),
                 mode: translationMode,
               },
               { storySummaryBase: rollingStorySummary, chapterIndex: index }
@@ -980,7 +1097,7 @@ export default function TranslatorStudioApp() {
 
           successCount++;
         } catch (err: unknown) {
-          console.error(`Batch error at idx ${index}:`, err);
+          logger.error('TranslatorStudioApp', 'Batch translate error', index, err);
           const msg = err instanceof Error ? err.message : 'Error';
           patchChapterAtIndex(index, { error: msg });
           failCount++;
@@ -1043,8 +1160,8 @@ export default function TranslatorStudioApp() {
           stage: 5,
           from,
           to,
-          provider: apiKeys.claude ? 'claude' : provider,
-          apiKey: apiKeys.claude || apiKeys[provider] || '',
+          provider: getEffectiveApiKeyForProvider('claude') ? 'claude' : provider,
+          apiKey: getEffectiveApiKeyForProvider('claude') ? getEffectiveApiKeyForProvider('claude') : getEffectiveApiKeyForProvider(provider),
           mode: translationMode,
         }),
         { stream: true, onDelta: (s) => setResult(s) }
@@ -1070,7 +1187,7 @@ export default function TranslatorStudioApp() {
         from: to,
         to: from,
         provider,
-        apiKey: apiKeys[provider] || '',
+        apiKey: getEffectiveApiKeyForProvider(provider),
         mode: 'general',
       });
       setBackResult(reversed);
@@ -1085,7 +1202,7 @@ export default function TranslatorStudioApp() {
   const runCompareB = async () => {
     if (!source.trim()) return;
     const altProvider = provider === 'openai' ? 'claude' : 'openai';
-    if (!apiKeys[altProvider] && !apiKeys[provider]) {
+    if (!getEffectiveApiKeyForProvider(altProvider) && !getEffectiveApiKeyForProvider(provider)) {
       await alert('비교 B안을 만들려면 해당 엔진 API 키를 설정해 주세요.');
       return;
     }
@@ -1097,8 +1214,10 @@ export default function TranslatorStudioApp() {
           text: source,
           from,
           to,
-          provider: apiKeys[altProvider] ? altProvider : provider,
-          apiKey: apiKeys[altProvider] ? apiKeys[altProvider] : apiKeys[provider] || '',
+          provider: getEffectiveApiKeyForProvider(altProvider) ? altProvider : provider,
+          apiKey: getEffectiveApiKeyForProvider(altProvider)
+            ? getEffectiveApiKeyForProvider(altProvider)
+            : getEffectiveApiKeyForProvider(provider),
           mode: translationMode,
         })
       );
@@ -1130,7 +1249,7 @@ export default function TranslatorStudioApp() {
             from,
             to,
             provider,
-            apiKey: apiKeys[provider] || '',
+            apiKey: getEffectiveApiKeyForProvider(provider),
             mode: translationMode,
           })
         );
@@ -1155,6 +1274,7 @@ export default function TranslatorStudioApp() {
   const completionRate = chapters.length ? Math.round((completedChapters / chapters.length) * 100) : 0;
   const workspaceName = projectName.trim() || 'Untitled Narrative Workspace';
   const providerLabel = PROVIDERS.find((item) => item.id === provider)?.label || provider.toUpperCase();
+  const stripeCheckoutEnabled = Boolean(process.env.NEXT_PUBLIC_STRIPE_PRICE_ID?.trim());
   const autoSaveLabel = lastSavedAt
     ? new Date(lastSavedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
     : '준비 완료';
@@ -1185,7 +1305,7 @@ export default function TranslatorStudioApp() {
   };
 
   return (
-    <div className={`min-h-screen theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
+    <div className={`min-h-screen min-w-0 theme-${backgroundMode} font-body ${isZenMode ? 'zen-mode' : ''}`}>
       <header className="fixed left-0 right-0 top-0 z-50 flex h-20 items-center justify-between px-4 lg:px-6 glass-panel border-t-0 border-x-0 rounded-none">
         <div className="flex min-w-0 items-center gap-4">
           {!isZenMode && (
@@ -1305,6 +1425,12 @@ export default function TranslatorStudioApp() {
         </div>
       </header>
 
+      {!isZenMode && (
+        <div className="fixed left-0 right-0 top-20 z-40 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+          <WorkspaceTabBar active={workspaceTab} onChange={handleWorkspaceTabChange} langKo={langKo} />
+        </div>
+      )}
+
       <MobileWorkspaceDrawer
         open={showMobileDrawer && !isZenMode}
         onClose={() => setShowMobileDrawer(false)}
@@ -1349,9 +1475,24 @@ export default function TranslatorStudioApp() {
         }
       />
 
-      <main className="flex h-[calc(100vh-80px)] overflow-hidden pt-20">
+      <main
+        className="flex min-h-0 min-w-0 w-full overflow-hidden"
+        style={
+          isZenMode
+            ? { paddingTop: '5rem', height: 'calc(100vh - 5rem)' }
+            : {
+                paddingTop: `calc(5rem + ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
+                height: `calc(100vh - 5rem - ${WORKSPACE_TAB_BAR_HEIGHT_REM}rem)`,
+              }
+        }
+      >
         {!isZenMode && (
-          <aside className="w-64 border-r border-gray-900/50 bg-sidebar overflow-y-auto p-4 hidden lg:block glass-panel border-y-0 border-l-0 rounded-none">
+          <aside
+            ref={chapterAsideRef}
+            className={`hidden w-64 shrink-0 overflow-y-auto border-r border-gray-900/50 bg-sidebar p-4 lg:block glass-panel border-y-0 border-l-0 rounded-none transition-shadow ${
+              workspaceTab === 'chapters' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
+            }`}
+          >
             <ChapterSidebar
               chapters={chapters}
               activeChapterIndex={activeChapterIndex}
@@ -1367,17 +1508,44 @@ export default function TranslatorStudioApp() {
           </aside>
         )}
 
-        {/* Center: Editor Area */}
-        <section className={`flex-1 overflow-y-auto px-6 pb-20 transition-all ${isZenMode ? 'max-w-5xl mx-auto' : ''}`}>
+        {/* Center: Editor Area — min-w-0: flex 자식 폭 붕괴(한 글자 세로줄) 방지 */}
+        <section
+          className={`flex-1 min-h-0 min-w-0 overflow-y-auto px-6 pb-20 transition-all ${isZenMode ? 'mx-auto w-full max-w-5xl' : ''}`}
+        >
+          {!isZenMode && workspaceTab === 'network' && (
+            <div ref={networkSectionRef} className="mb-6 min-w-0">
+              <NetworkBridgePanel
+                universeOrigin={process.env.NEXT_PUBLIC_EH_UNIVERSE_ORIGIN ?? ''}
+                getIdToken={getIdToken}
+                projectId={projectId}
+                projectName={projectName}
+                chapters={chapters}
+                worldContext={worldContext}
+                characterProfiles={characterProfiles}
+                storySummary={storySummary}
+                glossaryText={glossaryText}
+              />
+            </div>
+          )}
           {!isZenMode && (
-            <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(260px,0.75fr)_minmax(240px,0.8fr)]">
-              <div className="workspace-hero glass-panel rounded-4xl p-6">
+            <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,0.75fr)_minmax(240px,0.8fr)]">
+              <div className="workspace-hero glass-panel min-w-0 rounded-4xl p-6">
                 <EnvStatusBar />
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                {aiCapabilitiesLoaded && !hasTranslatorAiAccess && (
+                  <div
+                    className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-950 dark:text-amber-100"
+                    role="status"
+                  >
+                    {langKo
+                      ? '선택한 번역 엔진에 사용할 API 키가 없거나 호스티드 Gemini를 쓸 수 없습니다. 설정에서 키를 입력하거나 로그인한 뒤 다시 시도하세요.'
+                      : 'No API key for the selected engine, or hosted Gemini is unavailable. Add a key in Settings or sign in.'}
+                  </div>
+                )}
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="theme-kicker">Premium Narrative Workspace</div>
                     <h2 className="mt-3 truncate text-2xl font-black tracking-tight theme-text-primary">{workspaceName}</h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary">
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary break-keep">
                       장편 번역에서 문체 일관성, 캐릭터 보존, 빠른 편집 흐름을 함께 잡는 에디토리얼 작업실입니다.
                     </p>
                   </div>
@@ -1407,13 +1575,13 @@ export default function TranslatorStudioApp() {
                 </div>
               </div>
 
-              <div className="metric-card glass-panel rounded-4xl p-5">
+              <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
                 <div className="theme-kicker">Autosave</div>
                 <div className="mt-3 text-3xl font-black tracking-tight theme-text-primary">{autoSaveLabel}</div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-keep">
                   {loading ? `${statusMsg || 'PROCESSING'} 단계가 진행 중입니다.` : '자동 저장을 지연 처리해서 타이핑과 이동이 더 가볍게 유지됩니다.'}
                 </p>
-                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
+                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold break-keep ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
                   {loading ? '엔진이 결과를 정리하는 중입니다.' : '변경 내용은 조용히 로컬 상태와 동기화됩니다.'}
                 </div>
                 {cloudSyncEnabled && (
@@ -1427,7 +1595,7 @@ export default function TranslatorStudioApp() {
                 )}
               </div>
 
-              <div className="metric-card glass-panel rounded-4xl p-5">
+              <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
                 <div className="theme-kicker">Progress</div>
                 <div className="mt-3 flex items-end gap-2">
                   <span className="text-3xl font-black tracking-tight theme-text-primary">{completionRate}%</span>
@@ -1436,12 +1604,12 @@ export default function TranslatorStudioApp() {
                 <div className="metric-bar mt-4">
                   <span style={{ width: `${completionRate}%` }} />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-keep">
                   {activeChapter
                     ? `${activeChapter.name}${activeChapter.stageProgress ? ` · Stage ${activeChapter.stageProgress}` : ''}`
                     : '활성 챕터를 선택하면 진행 단계가 여기 표시됩니다.'}
                 </p>
-                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary">{storyBibleStatusLabel}</p>
+                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary break-keep">{storyBibleStatusLabel}</p>
               </div>
             </div>
           )}
@@ -1559,18 +1727,12 @@ export default function TranslatorStudioApp() {
                     placeholder={'예:\n魔法少女 => 마법 소녀\n主人公 => 주인공'}
                   />
                 </div>
-                <div className="lg:col-span-3">
-                  <NetworkBridgePanel
-                    universeOrigin={process.env.NEXT_PUBLIC_EH_UNIVERSE_ORIGIN ?? ''}
-                    getIdToken={getIdToken}
-                    projectId={projectId}
-                    projectName={projectName}
-                    chapters={chapters}
-                    worldContext={worldContext}
-                    characterProfiles={characterProfiles}
-                    storySummary={storySummary}
-                    glossaryText={glossaryText}
-                  />
+                <div className="lg:col-span-3 rounded-2xl border border-slate-900/10 bg-slate-500/5 p-4 dark:border-white/10">
+                  <p className="text-[11px] leading-relaxed theme-text-secondary">
+                    {langKo
+                      ? '네트워크 브릿지는 상단의 「네트워크」 탭에서 설정합니다. (설정 패널의 API 키·용어집과 동일한 데이터를 사용합니다.)'
+                      : 'Configure the network bridge from the Network tab in the workspace bar (uses the same project data as Settings).'}
+                  </p>
                 </div>
                 <div className="space-y-4">
                   <label className="theme-kicker block">일반 모드 도메인</label>
@@ -1605,13 +1767,27 @@ export default function TranslatorStudioApp() {
                    </div>
                    <button
                      type="button"
-                     className="theme-pill mt-2 w-full rounded-lg py-2 text-[9px] font-bold hover:brightness-105"
+                     disabled={!stripeCheckoutEnabled}
+                     title={stripeCheckoutEnabled ? undefined : 'NEXT_PUBLIC_STRIPE_PRICE_ID 미설정'}
+                     className="theme-pill mt-2 w-full rounded-lg py-2 text-[9px] font-bold hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
                      onClick={() => {
                        void (async () => {
-                         const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-                         const data = (await res.json()) as { url?: string; error?: string };
-                         if (data.url) window.location.href = data.url;
-                         else await alert(data.error || 'Stripe 가격 ID가 없거나 설정되지 않았습니다.');
+                         if (!stripeCheckoutEnabled) {
+                           await alert('Stripe 가격 ID가 설정되지 않았습니다.');
+                           return;
+                         }
+                         try {
+                           const tok = await getIdToken();
+                           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                           if (tok) headers.Authorization = `Bearer ${tok}`;
+                           const res = await fetch('/api/checkout', { method: 'POST', headers, body: '{}' });
+                           const data = (await res.json()) as { url?: string; error?: string };
+                           if (data.url) window.location.href = data.url;
+                           else await alert(data.error || 'Stripe 가격 ID가 없거나 설정되지 않았습니다.');
+                         } catch (e) {
+                           logger.error('TranslatorStudioApp', 'checkout fetch failed', e);
+                           await alert('결제 세션 요청에 실패했습니다.');
+                         }
                        })();
                      }}
                    >
@@ -1623,22 +1799,22 @@ export default function TranslatorStudioApp() {
           )}
 
          {isCatMode ? (
-            <div className="col-span-1 lg:col-span-2 space-y-3 h-[70vh] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="col-span-1 h-[70vh] space-y-3 overflow-y-auto pr-2 scrollbar-hide lg:col-span-2">
               {source.split('\n').map((sLine, idx) => {
                  const rLines = result.split('\n');
                  const rLine = rLines[idx] || '';
                  if(!sLine.trim() && !rLine.trim()) return null;
                  return (
-                   <div key={idx} className="flex flex-col md:flex-row gap-2 glass-panel p-4 rounded-3xl animate-fade-in">
-                  <textarea value={sLine} readOnly className="editor-pane w-full resize-none bg-transparent text-xs leading-relaxed outline-none" />
-                     <textarea value={rLine} readOnly className="result-pane w-full bg-transparent text-xs font-bold resize-none outline-none leading-relaxed" />
+                   <div key={idx} className="flex min-w-0 flex-col gap-2 rounded-3xl glass-panel p-4 animate-fade-in md:flex-row">
+                  <textarea value={sLine} readOnly className="editor-pane min-w-0 w-full resize-none bg-transparent text-xs leading-relaxed outline-none" />
+                     <textarea value={rLine} readOnly className="result-pane min-w-0 w-full resize-none bg-transparent text-xs font-bold leading-relaxed outline-none" />
                    </div>
                  )
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-3">
+            <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="min-w-0 space-y-3">
                 <div className="flex items-center gap-3 mb-2">
                   <select value={from} onChange={(e) => setFrom(e.target.value)} className="theme-pill rounded-full px-3 py-2 text-xs font-bold outline-none">
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
@@ -1648,18 +1824,18 @@ export default function TranslatorStudioApp() {
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
                 </div>
-                <div className="relative">
+                <div className="relative min-w-0">
                   <textarea value={source} onChange={(e) => setSource(e.target.value)} placeholder="원고 입력..."
-                    className="editor-pane w-full h-[65vh] glass-panel rounded-4xl p-8 text-sm leading-loose resize-none outline-none transition-all scrollbar-hide font-headline focus:ring-2 focus:ring-blue-500/20" />
+                    className="editor-pane h-[65vh] w-full min-w-0 glass-panel rounded-4xl p-8 text-sm leading-loose font-headline resize-none outline-none transition-all scrollbar-hide focus:ring-2 focus:ring-blue-500/20" />
                   <div className="theme-text-secondary absolute bottom-4 right-6 text-[9px] font-mono">{source.length} chars</div>
                 </div>
               </div>
-              <div className="space-y-3">
+              <div className="min-w-0 space-y-3">
                 <div className="h-7 mb-2 flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentTextColor }}>Result Draft</span>
                 </div>
-                <div className="relative">
-                  <textarea value={result} readOnly className="result-pane w-full h-[65vh] glass-panel rounded-4xl p-8 text-sm leading-loose resize-none outline-none transition-all scrollbar-hide font-headline" />
+                <div className="relative min-w-0">
+                  <textarea value={result} readOnly className="result-pane h-[65vh] w-full min-w-0 glass-panel rounded-4xl p-8 text-sm leading-loose font-headline resize-none outline-none transition-all scrollbar-hide" />
                   <div className="theme-text-secondary absolute bottom-4 right-6 text-[9px] font-mono">{result.length} chars</div>
                 </div>
               </div>
@@ -1723,7 +1899,12 @@ export default function TranslatorStudioApp() {
         </section>
 
         {!isZenMode && (
-          <aside className="w-80 glass-panel border-y-0 border-r-0 rounded-none overflow-y-auto p-6 hidden xl:block space-y-10 bg-sidebar">
+          <aside
+            ref={contextAsideRef}
+            className={`hidden w-80 shrink-0 overflow-y-auto border-y-0 border-r-0 rounded-none glass-panel p-6 lg:block space-y-10 bg-sidebar transition-shadow ${
+              workspaceTab === 'context' ? 'ring-2 ring-blue-500/35 ring-inset' : ''
+            }`}
+          >
             <ContextSidebar
               worldContext={worldContext}
               setWorldContext={setWorldContext}

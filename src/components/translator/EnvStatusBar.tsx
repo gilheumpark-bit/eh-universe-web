@@ -82,7 +82,7 @@ export function EnvStatusBar() {
           detail={s.networkBridgeReady ? 'ingest / search 가능' : 'Firebase+Universe 필요'}
         />
       </div>
-      <p className="mt-3 text-[10px] leading-relaxed opacity-80 theme-text-secondary">
+      <p className="mt-3 text-[10px] leading-relaxed opacity-80 theme-text-secondary [word-break:keep-all]">
         Universe 쪽 서버는{' '}
         <code className="rounded bg-black/10 px-1 py-0.5 text-[9px]">AGENT_BUILDER_NETWORK_ID</code>,{' '}
         <code className="rounded bg-black/10 px-1 py-0.5 text-[9px]">VERTEX_AI_CREDENTIALS</code> 등이

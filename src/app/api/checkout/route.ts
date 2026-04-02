@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeSession } from '@/lib/stripe';
+import { logger } from '@/lib/logger';
 
 /**
  * Stripe Checkout for subscription (optional). Requires STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PRICE_ID in env.
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ url: session.url });
   } catch (e) {
-    console.error('checkout error', e);
+    logger.error('api/checkout', 'checkout error', e);
     return NextResponse.json({ error: '결제 세션 생성 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

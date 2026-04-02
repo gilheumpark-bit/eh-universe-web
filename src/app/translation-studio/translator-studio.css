@@ -26,8 +26,22 @@
   font-family: var(--font-body);
   transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
   margin: 0;
+  min-width: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* CJK: 한 글자씩 세로로 쌓이는 현상 방지 — flex/grid 축소 + 줄바꿈 규칙 */
+.translation-studio-root textarea.editor-pane,
+.translation-studio-root textarea.result-pane,
+.translation-studio-root .theme-field.editor-pane {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .translation-studio-root h1,
@@ -296,7 +310,7 @@
   font-size: 1.5rem;
   line-height: 1.8;
   padding: 5rem !important;
-  text-align: center;
+  text-align: start;
 }
 
 /* Custom Scrollbar */
@@ -367,6 +381,7 @@
   font-family: var(--font-headline);
   resize: none;
   overflow-y: auto;
+  min-width: 0;
 }
 
 .theme-nebula .result-pane {

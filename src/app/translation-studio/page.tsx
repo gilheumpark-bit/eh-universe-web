@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const TranslatorStudioApp = dynamic(
   () => import("@/components/translator/TranslatorStudioApp"),
@@ -15,5 +16,9 @@ const TranslatorStudioApp = dynamic(
 );
 
 export default function TranslationStudioPage() {
-  return <TranslatorStudioApp />;
+  return (
+    <ErrorBoundary variant="full-page" section="Translation Studio">
+      <TranslatorStudioApp />
+    </ErrorBoundary>
+  );
 }
