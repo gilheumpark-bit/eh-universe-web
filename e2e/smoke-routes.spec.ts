@@ -26,7 +26,7 @@ const STATIC_SMOKE_PATHS: readonly string[] = [
   "/tools/neka-sound",
   "/tools/noa-tower",
   "/tools/soundtrack",
-  "/tools/style-studio",
+  "/studio?tab=style",
   "/tools/vessel",
   "/tools/warp-gate",
 ];

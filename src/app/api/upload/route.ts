@@ -60,7 +60,7 @@ function splitByHeadings(content: string) {
   return sections;
 }
 
-function splitByParagraphBlocks(content: string) {
+function splitByParagraphBlocks(content: string, maxChunkChars: number) {
   const rawChunks = normalizeNarrativeText(content)
     .split(/\n\s*\n/)
     .map((chunk) => chunk.trim())
@@ -71,7 +71,7 @@ function splitByParagraphBlocks(content: string) {
   let index = 1;
 
   for (const paragraph of rawChunks) {
-    if (currentChunk && currentChunk.length + paragraph.length > 4000) {
+    if (currentChunk && currentChunk.length + paragraph.length > maxChunkChars) {
       sections.push({ title: `Split Part ${index++}`, content: currentChunk });
       currentChunk = paragraph;
       continue;
@@ -87,14 +87,18 @@ function splitByParagraphBlocks(content: string) {
   return sections;
 }
 
-function splitNarrativeContent(content: string) {
+function splitNarrativeContent(content: string, maxChunkChars: number) {
   const headingSections = splitByHeadings(content);
   if (headingSections.length) {
     return headingSections;
   }
 
-  return splitByParagraphBlocks(content);
+  return splitByParagraphBlocks(content, maxChunkChars);
 }
+
+const DEFAULT_PARAGRAPH_CHUNK = 4000;
+/** EH Translator 클라이언트가 보낼 때만 — 번역 스튜디오 업로드 한정 */
+const TRANSLATOR_PARAGRAPH_CHUNK = 9500;
 
 export async function POST(req: NextRequest) {
   try {
@@ -103,6 +107,10 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+
+    const clientSource = formData.get('source');
+    const maxChunkChars =
+      clientSource === 'eh-translator' ? TRANSLATOR_PARAGRAPH_CHUNK : DEFAULT_PARAGRAPH_CHUNK;
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileName = file.name.toLowerCase();
@@ -164,7 +172,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '지원하지 않는 문서 형식입니다.' }, { status: 400 });
     }
 
-    const chapters = splitNarrativeContent(content);
+    const chapters = splitNarrativeContent(content, maxChunkChars);
 
     return NextResponse.json({ chapters });
   } catch (err: unknown) {

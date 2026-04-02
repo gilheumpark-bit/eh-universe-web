@@ -95,7 +95,9 @@ NOD \uac10\ub3c5 \uc2e4\uc2dc\uac04 \ubd84\uc11d
 NOW AI \ucc44\ud305: \uc9d1\ud544 \uc804\uc6a9 AI \uc5b4\uc2dc\uc2a4\ud134\ud2b8` },
 
   { id: "style-studio", title: "7. \ubb38\uccb4 \uc2a4\ud29c\ub514\uc624", content:
-`4\uac00\uc9c0 DNA:
+`\uc9c4\uc785: \uc18c\uc124 \uc2a4\ud29c\ub514\uc624 /studio \u2192 \ubb38\uccb4 \ud0ed (?tab=style). \ubcc4\ub3c4 /tools/style-studio \uc81c\ud488 \ud398\uc774\uc9c0\ub294 \uc5c6\uc74c (\ub808\uac70\uc2dc URL\uc740 \uc2a4\ud29c\ub514\uc624\ub85c \ub9ac\ub2e4\uc774\ub809\ud2b8).
+
+4\uac00\uc9c0 DNA:
   \ud558\ub4dcSF / \uc6f9\uc18c\uc124 / \ubb38\ud559 / \uba40\ud2f0\uc7a5\ub974
 
 5\uac1c \uc2ac\ub77c\uc774\ub354:
@@ -235,7 +237,9 @@ Auto-detect content that contradicts world settings.
 NOW AI Chat: AI assistant dedicated to writing` },
 
   { id: "style-studio", title: "7. Style Studio", content:
-`4 DNA Types:
+`Access: Novel Studio /studio → Style tab (?tab=style). No standalone /tools/style-studio product page (legacy URL redirects to the studio).
+
+4 DNA Types:
   Hard SF / Web Novel / Literary / Multi-genre
 
 5 Sliders:

@@ -1,7 +1,33 @@
 import React from 'react';
-import { Settings, Sliders, Type, Globe } from 'lucide-react';
+import { Settings, Cloud, Sliders } from 'lucide-react';
+import { useTranslator } from '../core/TranslatorContext';
 
 export function SettingsPanel() {
+  const {
+    cloudSyncEnabled,
+    cloudSyncStatus,
+    cloudSyncDetail,
+    provider,
+    langKo,
+  } = useTranslator();
+
+  const syncLabel =
+    cloudSyncStatus === 'saving'
+      ? langKo
+        ? '동기화 중'
+        : 'Syncing'
+      : cloudSyncStatus === 'ok'
+        ? langKo
+          ? '마지막 저장'
+          : 'Last saved'
+        : cloudSyncStatus === 'error'
+          ? langKo
+            ? '오류'
+            : 'Error'
+          : langKo
+            ? '대기'
+            : 'Idle';
+
   return (
     <div className="flex h-full flex-col font-sans">
       <div className="p-4 shrink-0 border-b border-white/5">
@@ -10,70 +36,55 @@ export function SettingsPanel() {
           <span className="text-[13px] font-medium">Translator Settings</span>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4 space-y-6 pointer-events-auto">
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider flex items-center gap-2">
             <Sliders className="w-3 h-3" />
-            AI Configuration
+            {langKo ? '번역 엔진' : 'Translation engine'}
           </h3>
-          <div className="space-y-2">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-text-secondary">Translation Model</span>
-              <select className="bg-white/5 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent-indigo/50">
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                <option value="gpt-4o">GPT-4o</option>
-                <option value="claude-3-opus">Claude 3 Opus</option>
-              </select>
-            </label>
-            
-            <label className="flex flex-col gap-1.5 pt-2">
-              <span className="text-[13px] text-text-secondary flex justify-between">
-                Creativity (Temperature)
-                <span className="text-accent-indigo">0.7</span>
+          <p className="text-[12px] text-text-secondary leading-relaxed">
+            {langKo
+              ? `현재 선택된 프로바이더는 메인 화면(액션 도크·헤더)에서 바꿉니다. 지금: ${provider}. 모델·API 키도 동일 경로의 설정을 따릅니다.`
+              : `Change provider from the main action dock / header. Current: ${provider}. Models and API keys follow the same settings.`}
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider flex items-center gap-2">
+            <Cloud className="w-3 h-3" />
+            {langKo ? '클라우드 저장' : 'Cloud save'}
+          </h3>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] text-text-secondary">{langKo ? '상태' : 'Status'}</span>
+              <span
+                className={`text-[11px] font-medium ${
+                  cloudSyncEnabled ? 'text-emerald-400/90' : 'text-amber-400/90'
+                }`}
+              >
+                {cloudSyncEnabled
+                  ? langKo
+                    ? '로그인·Supabase 사용 가능'
+                    : 'Signed in & Supabase OK'
+                  : langKo
+                    ? '비활성(로그인 또는 env 확인)'
+                    : 'Off (sign in or check env)'}
               </span>
-              <input type="range" min="0" max="1" step="0.1" defaultValue="0.7" className="w-full accent-accent-indigo" />
-            </label>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider flex items-center gap-2">
-            <Type className="w-3 h-3" />
-            Editor Options
-          </h3>
-          <div className="space-y-2">
-            <label className="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
-              <span className="text-[13px] text-text-secondary">Auto-save</span>
-              <input type="checkbox" defaultChecked className="rounded border-white/20 bg-black/50 text-accent-indigo focus:ring-accent-indigo/50" />
-            </label>
-            <label className="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
-              <span className="text-[13px] text-text-secondary">Word Wrap</span>
-              <input type="checkbox" defaultChecked className="rounded border-white/20 bg-black/50 text-accent-indigo focus:ring-accent-indigo/50" />
-            </label>
-            <label className="flex items-center justify-between p-2 rounded hover:bg-white/5 cursor-pointer">
-              <span className="text-[13px] text-text-secondary">Show Glossary Highlights</span>
-              <input type="checkbox" defaultChecked className="rounded border-white/20 bg-black/50 text-accent-indigo focus:ring-accent-indigo/50" />
-            </label>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider flex items-center gap-2">
-            <Globe className="w-3 h-3" />
-            Target Audience
-          </h3>
-          <div className="space-y-2">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-text-secondary">Formality Level</span>
-              <select className="bg-white/5 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent-indigo/50">
-                <option value="auto">Auto (Context Based)</option>
-                <option value="formal">Formal</option>
-                <option value="casual">Casual</option>
-                <option value="literary">Literary</option>
-              </select>
-            </label>
+            </div>
+            {cloudSyncEnabled ? (
+              <div className="flex items-center justify-between gap-2 text-[11px] text-text-tertiary">
+                <span>{syncLabel}</span>
+                <span className="truncate max-w-[60%] text-right" title={cloudSyncDetail}>
+                  {cloudSyncDetail || '—'}
+                </span>
+              </div>
+            ) : null}
+            <p className="text-[11px] text-text-tertiary leading-relaxed pt-1 border-t border-white/5">
+              {langKo
+                ? '여러 기기에서 동시에 편집하면 마지막으로 서버에 도달한 저장이 우선합니다. 중요한 시점에는 JSON보내기로 백업하세요.'
+                : 'If you edit on multiple devices, the last write that reaches the server wins. Export JSON before risky merges.'}
+            </p>
           </div>
         </section>
       </div>

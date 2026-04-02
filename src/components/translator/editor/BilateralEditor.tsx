@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
-import { ArrowLeftRight, Settings2, Focus, AlignLeft } from 'lucide-react';
+import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen } from 'lucide-react';
 export function BilateralEditor() {
   const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode } = useTranslator();
   const layout = useTranslatorLayout();
@@ -134,6 +134,32 @@ export function BilateralEditor() {
           </div>
         </div>
 
+        <div className="flex items-center gap-1.5">
+          {(
+            [
+              { id: 'actions' as const, icon: Zap, title: 'Translate / Pipeline' },
+              { id: 'chat' as const, icon: MessageSquare, title: 'AI Copilot' },
+              { id: 'audit' as const, icon: Shield, title: 'Quality audit' },
+              { id: 'reference' as const, icon: BookOpen, title: 'References' },
+            ] as const
+          ).map(({ id, icon: Icon, title }) => (
+            <button
+              key={id}
+              type="button"
+              title={title}
+              onClick={() =>
+                layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id)
+              }
+              className={`rounded-xl border p-2 transition-all duration-300 ${
+                layout.activeRightPanel === id
+                  ? 'border-accent-purple/40 bg-accent-purple/10 text-accent-purple shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                  : 'border-transparent text-text-tertiary hover:border-white/10 hover:bg-white/5 hover:text-text-primary'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-2">
           <button
             title="Sync Scroll"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslatorLayout } from './core/TranslatorLayoutContext';
 import * as PI from './PanelImports';
+import { TranslationActionDock } from './features/TranslationActionDock';
 import { getLeftPanelLabel, getRightPanelLabel } from './core/panel-registry';
 import { useLang } from '@/lib/LangContext';
 import { X, LayoutTemplate } from 'lucide-react';
@@ -22,6 +23,7 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
       case 'history': return <PI.HistoryPanel />;
       
       // Right
+      case 'actions': return <TranslationActionDock />;
       case 'chat': return <PI.ChatPanel />;
       case 'audit': return <PI.AuditPanel />;
       case 'reference': return <PI.ReferencePanel />;

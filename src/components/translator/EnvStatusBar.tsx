@@ -83,6 +83,11 @@ export function EnvStatusBar() {
         />
       </div>
       <p className="mt-3 text-[10px] leading-relaxed opacity-80 theme-text-secondary [word-break:keep-all]">
+        Supabase 클라우드 동기화는 로그인 후 자동 저장되며, 다른 기기와 동시 편집 시{' '}
+        <strong className="font-semibold opacity-95">마지막 저장 우선(last-write-wins)</strong>입니다. 필요하면 번역 스튜디오에서 JSON
+       보내기로 백업하세요.
+      </p>
+      <p className="mt-2 text-[10px] leading-relaxed opacity-80 theme-text-secondary [word-break:keep-all]">
         Universe 쪽 서버는{' '}
         <code className="rounded bg-black/10 px-1 py-0.5 text-[9px]">AGENT_BUILDER_NETWORK_ID</code>,{' '}
         <code className="rounded bg-black/10 px-1 py-0.5 text-[9px]">VERTEX_AI_CREDENTIALS</code> 등이

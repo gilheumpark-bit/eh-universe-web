@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type LeftPanelType = 'explorer' | 'glossary' | 'history' | 'settings' | null;
-export type RightPanelType = 'chat' | 'audit' | 'reference' | null;
+export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | null;
 export type BottomPanelType = 'terminal' | 'problems' | null;
 
 interface TranslatorLayoutState {
@@ -30,7 +30,7 @@ export function TranslatorLayoutProvider({ children }: { children: ReactNode }) 
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(380);
   const [activeLeftPanel, setActiveLeftPanel] = useState<LeftPanelType>('explorer');
-  const [activeRightPanel, setActiveRightPanel] = useState<RightPanelType>('reference');
+  const [activeRightPanel, setActiveRightPanel] = useState<RightPanelType>('actions');
   const [activeBottomPanel, setActiveBottomPanel] = useState<BottomPanelType>(null);
   const [isBilateralVertical, setIsBilateralVertical] = useState(false);
   const [editorSplitRatio, setEditorSplitRatio] = useState(0.5);

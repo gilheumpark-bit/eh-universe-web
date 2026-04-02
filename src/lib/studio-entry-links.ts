@@ -1,6 +1,7 @@
 /** Primary entry points for authoring tools — used by Header and home hub. */
 
-export const STYLE_STUDIO_PATH = "/tools/style-studio";
+/** 소설 스튜디오(NO A) — 문체 등은 `?tab=` (문체 = `style`) */
+export const NOVEL_STUDIO_PATH = "/studio";
 
 /** 이 레포에 포함된 EH Translator 전체 UI (eh-translator 앱 이식) */
 export const TRANSLATION_STUDIO_PATH = "/translation-studio";

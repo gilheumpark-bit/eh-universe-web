@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { assertUrlAllowedForFetch, rateLimitFetchUrl } from '@/lib/fetch-url-guard';
+import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -106,7 +107,7 @@ export async function GET(req: NextRequest) {
     if (e.name === 'TimeoutError') {
       return NextResponse.json({ error: '요청 시간 초과 (15초). 해당 사이트가 응답하지 않습니다.' }, { status: 504 });
     }
-    console.error('fetch-url error:', err);
+    logger.error('fetch-url', 'proxy fetch failed', err);
     return NextResponse.json({ error: 'URL 본문을 읽는 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

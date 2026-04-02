@@ -7,9 +7,9 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
-import { getTranslatorStudioHref, STYLE_STUDIO_PATH, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
+import { getTranslatorStudioHref, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
 
-type NavKey = "home" | "network" | "studio" | "style" | "translate" | "code";
+type NavKey = "home" | "network" | "studio" | "translate" | "code";
 
 type NavEntry = {
   key: NavKey;
@@ -31,8 +31,6 @@ function usePrimaryNavActive(
         return pathname.startsWith("/network");
       case "studio":
         return pathname.startsWith("/studio") && tab !== "manuscript";
-      case "style":
-        return pathname.startsWith(STYLE_STUDIO_PATH);
       case "translate":
         if (item.external) return false;
         return (
@@ -64,11 +62,6 @@ function HeaderInner() {
       { key: "home", href: "/", label: L4(lang, { ko: "홈", en: "HOME", jp: "ホーム", cn: "首页" }) },
       { key: "network", href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", jp: "ネットワーク", cn: "网络" }) },
       { key: "studio", href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" }) },
-      {
-        key: "style",
-        href: STYLE_STUDIO_PATH,
-        label: L4(lang, { ko: "문체", en: "STYLE", jp: "文体", cn: "文体" }),
-      },
       {
         key: "translate",
         href: translatorHref,

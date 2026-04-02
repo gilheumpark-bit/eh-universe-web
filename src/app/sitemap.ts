@@ -28,6 +28,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/tools/warp-gate`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/tools/noa-tower`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/tools/neka-sound`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${base}/tools/style-studio`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 }

@@ -265,6 +265,13 @@ export default function TranslatorStudioApp() {
       if (parsed.storySummary !== undefined) setStorySummary(parsed.storySummary);
       if (parsed.referenceIds !== undefined) setReferenceIds(parsed.referenceIds);
       if (parsed.glossaryText !== undefined) setGlossaryText(parsed.glossaryText);
+      if (parsed.glossary !== undefined && typeof parsed.glossary === 'object' && parsed.glossary !== null && !Array.isArray(parsed.glossary)) {
+        const next: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed.glossary as Record<string, unknown>)) {
+          if (typeof k === 'string' && typeof v === 'string' && k.trim()) next[k.trim()] = v;
+        }
+        if (Object.keys(next).length) setGlossary(next);
+      }
       if (parsed.domainPreset !== undefined) setDomainPreset(parsed.domainPreset);
       if (parsed.preserveDialogueLayout !== undefined) setPreserveDialogueLayout(parsed.preserveDialogueLayout);
     } catch (error) {
@@ -298,6 +305,7 @@ export default function TranslatorStudioApp() {
         storySummary,
         referenceIds,
         glossaryText,
+        glossary,
         domainPreset,
         preserveDialogueLayout,
       }));
@@ -305,7 +313,7 @@ export default function TranslatorStudioApp() {
     }, 320);
 
     return () => window.clearTimeout(timeout);
-  }, [projectId, projectName, chapters, activeChapterIndex, source, result, from, to, provider, history, isZenMode, backgroundMode, isCatMode, translationMode, worldContext, characterProfiles, storySummary, referenceIds, glossaryText, domainPreset, preserveDialogueLayout]);
+  }, [projectId, projectName, chapters, activeChapterIndex, source, result, from, to, provider, history, isZenMode, backgroundMode, isCatMode, translationMode, worldContext, characterProfiles, storySummary, referenceIds, glossaryText, glossary, domainPreset, preserveDialogueLayout]);
 
   useEffect(() => {
     if (!isHydrated.current) return;
@@ -480,6 +488,7 @@ export default function TranslatorStudioApp() {
           referenceIds,
           translationMode,
           glossaryText,
+          glossary,
           domainPreset,
           preserveDialogueLayout,
         });
@@ -519,6 +528,7 @@ export default function TranslatorStudioApp() {
     referenceIds,
     translationMode,
     glossaryText,
+    glossary,
     domainPreset,
     preserveDialogueLayout,
   ]);
@@ -907,6 +917,7 @@ export default function TranslatorStudioApp() {
       isCatMode,
       translationMode,
       glossaryText,
+      glossary,
       domainPreset,
       preserveDialogueLayout,
     }, null, 2)], { type: 'application/json' });
@@ -965,7 +976,16 @@ export default function TranslatorStudioApp() {
               if (parsed.isZenMode !== undefined) setIsZenMode(parsed.isZenMode as boolean);
               if (parsed.isCatMode !== undefined) setIsCatMode(parsed.isCatMode as boolean);
               if (parsed.translationMode !== undefined) setTranslationMode(parsed.translationMode as 'novel' | 'general');
-              if (parsed.glossaryText !== undefined) setGlossaryText(parsed.glossaryText as string);
+              setGlossaryText(typeof parsed.glossaryText === 'string' ? parsed.glossaryText : '');
+              if (typeof parsed.glossary === 'object' && parsed.glossary !== null && !Array.isArray(parsed.glossary)) {
+                const next: Record<string, string> = {};
+                for (const [k, v] of Object.entries(parsed.glossary as Record<string, unknown>)) {
+                  if (typeof k === 'string' && typeof v === 'string' && k.trim()) next[k.trim()] = v;
+                }
+                setGlossary(next);
+              } else {
+                setGlossary({});
+              }
               if (parsed.domainPreset !== undefined) setDomainPreset(parsed.domainPreset as DomainPreset);
               if (parsed.preserveDialogueLayout !== undefined) setPreserveDialogueLayout(parsed.preserveDialogueLayout as boolean);
             });
@@ -998,6 +1018,7 @@ export default function TranslatorStudioApp() {
       for (const file of Array.from(files)) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('source', 'eh-translator');
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
 

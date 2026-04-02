@@ -1,5 +1,5 @@
 export type LeftPanelType = 'explorer' | 'glossary' | 'settings' | 'history' | null;
-export type RightPanelType = 'chat' | 'audit' | 'reference' | null;
+export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | null;
 
 export interface PanelDef {
   id: string;
@@ -15,6 +15,7 @@ export const LEFT_PANELS: Record<string, PanelDef> = {
 };
 
 export const RIGHT_PANELS: Record<string, PanelDef> = {
+  actions: { id: 'actions', labelEn: 'Translate', labelKo: '번역 실행' },
   chat: { id: 'chat', labelEn: 'AI Copilot', labelKo: 'AI 코파일럿' },
   audit: { id: 'audit', labelEn: 'Quality Audit', labelKo: '품질 검증' },
   reference: { id: 'reference', labelEn: 'References', labelKo: '참고자료' },

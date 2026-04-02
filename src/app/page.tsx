@@ -37,7 +37,7 @@ function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
 
 
 import SplashScreen from "@/components/home/SplashScreen";
-import { getTranslatorStudioHref, STYLE_STUDIO_PATH } from "@/lib/studio-entry-links";
+import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
 
 export default function Home() {
   const { lang } = useLang();
@@ -74,17 +74,17 @@ export default function Home() {
   const universeHubs = useMemo(
     () => [
     {
-      href: STYLE_STUDIO_PATH,
-      badge: "ST",
+      href: NOVEL_STUDIO_PATH,
+      badge: "NS",
       color: "purple" as const,
-      title: T({ ko: "문체 스튜디오", en: "Style Studio", jp: "文体スタジオ", cn: "文体工作室" }),
+      title: T({ ko: "소설 스튜디오", en: "Novel Studio", jp: "小説スタジオ", cn: "小说工作室" }),
       desc: T({
-        ko: "DNA·슬라이더·프리셋으로 문체 프로필을 설계합니다. (독립 도구)",
-        en: "Define style DNA, sliders, and presets as a standalone tool.",
-        jp: "DNAとスライダーで文体プロファイルを設計します。",
-        cn: "用 DNA 与滑块设计文体档案（独立工具）。",
+        ko: "집필·문체·원고 워크스페이스. 문체는 스튜디오 안 문체 탭에서 이용합니다.",
+        en: "Full NOA authoring workspace. Open the Style tab inside the studio for 문체 tools.",
+        jp: "NOA制作ワークスペース。文体はスタジオ内の文体タブから。",
+        cn: "NOA 完整创作工作台；文体工具请使用工作室内的文体标签页。",
       }),
-      meta: T({ ko: "문체 도구 열기", en: "Open style tool", jp: "文体ツールへ", cn: "打开文体工具" }),
+      meta: T({ ko: "스튜디오 열기", en: "Open studio", jp: "スタジオへ", cn: "打开工作室" }),
     },
     {
       href: translatorStudioHref,
@@ -261,8 +261,8 @@ export default function Home() {
                   <Link href="/network" className="premium-button secondary">
                     {T({ ko: "네트워크 진입", en: "Enter Network", jp: "ネットワークへ", cn: "进入网络" })}
                   </Link>
-                  <Link href={STYLE_STUDIO_PATH} className="premium-button secondary">
-                    {T({ ko: "문체 스튜디오", en: "Style Studio", jp: "文体スタジオ", cn: "文体工作室" })}
+                  <Link href={NOVEL_STUDIO_PATH} className="premium-button secondary">
+                    {T({ ko: "소설 스튜디오", en: "Novel Studio", jp: "小説スタジオ", cn: "小说工作室" })}
                   </Link>
                   {translatorStudioHref.startsWith("http") ? (
                     <a

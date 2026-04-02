@@ -11,7 +11,7 @@ test.describe("Tools index & About anchors", () => {
     // Header also links to tools; scope to <main> for the tools index grid only.
     const main = page.locator("main");
     await expect(main.locator('a[href="/tools/galaxy-map"]')).toBeVisible({ timeout: 15000 });
-    await expect(main.locator('a[href="/tools/style-studio"]')).toBeVisible({ timeout: 15000 });
+    await expect(main.locator('a[href="/tools/vessel"]')).toBeVisible({ timeout: 15000 });
   });
 
   test("/about exposes privacy and license sections", async ({ page }) => {

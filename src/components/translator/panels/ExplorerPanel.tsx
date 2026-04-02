@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { Folder, Search, Plus, Trash2, ChevronRight, CheckCircle, Circle } from 'lucide-react';
+import { Folder, Search, Plus, Trash2, ChevronRight, CheckCircle, Circle, Link2 } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 
 export function ExplorerPanel() {
-  const { chapters, activeChapterIndex, openChapter, handleChapterRemove, setChapters } = useTranslator();
+  const {
+    chapters,
+    activeChapterIndex,
+    openChapter,
+    handleChapterRemove,
+    setChapters,
+    urlInput,
+    setUrlInput,
+    importUrl,
+    loading,
+  } = useTranslator();
   const [searchQuery, setSearchQuery] = useState('');
 
   const createNewChapter = () => {
@@ -35,6 +45,28 @@ export function ExplorerPanel() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
           />
+        </div>
+        <div className="mt-3 flex flex-col gap-2 border-t border-white/5 pt-3">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-text-tertiary">URL import</span>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              inputMode="url"
+              placeholder="https://…"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 py-1.5 pl-2 pr-2 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-amber/50 pointer-events-auto"
+            />
+            <button
+              type="button"
+              disabled={loading || !urlInput.trim()}
+              onClick={() => void importUrl()}
+              className="shrink-0 rounded-md border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-1.5 text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:cursor-not-allowed disabled:opacity-40 pointer-events-auto"
+              title="Fetch page text into chapter"
+            >
+              <Link2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
       

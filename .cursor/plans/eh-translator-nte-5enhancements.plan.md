@@ -2,7 +2,7 @@
 
 이 문서는 NTE 고도화 논의·체크리스트·하드 게이트를 **단일 소스**로 유지한다. 구현 착수 전 `GEMINI.md` / `AGENTS.md`와 충돌 시 `GEMINI.md` 우선.
 
-**목차**: **기본 체크리스트(전역)** → MVP 우선순위 → 용어(고도화/고급화) → 인벤토리 → 소설·오염 → 부가 옵션 → 5대 목차 → 사업·도메인 → URL 링크 → 팀 체크리스트 → **남은 작업** → 중간 점검 → **전체 점검(메타)** → **부록(누락 통합)** → 기존 논의·변경 이력.
+**목차**: **기본 체크리스트(전역)** → MVP 우선순위 → 용어(고도화/고급화) → 인벤토리 → **번역 스튜디오 디자인·최적안** → 소설·오염 → 부가 옵션 → 5대 목차 → 사업·도메인 → URL 링크 → 팀 체크리스트 → **남은 작업** → 중간 점검 → **전체 점검(메타)** → **부록(누락 통합)** → 기존 논의·변경 이력.
 
 ---
 
@@ -46,9 +46,9 @@ NTE·번역 전용 백로그는 아래 **「남은 작업」**을 따른다.
 | **번역 코어·배치** | [`src/components/translator/TranslatorStudioApp.tsx`](../../src/components/translator/TranslatorStudioApp.tsx) | `translate` / `deepTranslate` / `batchTranslateAll`, 스토리 바이블 갱신, `compareResultB`·`styleAnalysis`·`backTranslate` **로직 일부 존재** — UI·게이트와 정합 필요 |
 | **URL→본문 가져오기** | [`src/app/api/fetch-url/route.ts`](../../src/app/api/fetch-url/route.ts) + `TranslatorStudioApp` `importUrl` | API·핸들러 **구현됨**; **URL 입력 UI 미연결** — PART 1c |
 | **로컬·클라우드 저장** | 동일 + [`src/lib/supabase.ts`](../../src/lib/supabase.ts)(등) | `localStorage`, `saveProjectToCloud` / `loadProjectFromCloud` 동작 — **충돌·버전·복원 UX**는 고도화 범위 |
-| **문서 업로드 청크 상한** | [`src/app/api/upload/route.ts`](../../src/app/api/upload/route.ts) | `splitByParagraphBlocks` **4000자** 분기 — 플랜대로 **번역 한정 9500** 상향 |
+| **문서 업로드 청크 상한** | [`src/app/api/upload/route.ts`](../../src/app/api/upload/route.ts) | `source=eh-translator` 시 **9500자**, 그 외 **4000** |
 | **청크 전략(에디터 측)** | [`src/lib/project-normalize.ts`](../../src/lib/project-normalize.ts)(`splitTextIntoChunks` 등), `TranslatorStudioApp` 호출부 | 배치 경계·오버랩 일관성 — **고도화(씬/장 단위·게이트)**와 연동 |
-| **액션 독** | [`src/components/translator/features/TranslationActionDock.tsx`](../../src/components/translator/features/TranslationActionDock.tsx) | `loading`/`statusMsg`/번역 핸들러 **미연결**(주석) — **필수 연결** |
+| **액션 독** | [`src/components/translator/features/TranslationActionDock.tsx`](../../src/components/translator/features/TranslationActionDock.tsx) | 우측 패널 **`actions`** + `TranslatorContext`·`translate`/`deepTranslate` 연결됨 |
 | **좌·우 패널 실데이터** | [`src/components/translator/PanelImports.tsx`](../../src/components/translator/PanelImports.tsx) | `GlossaryPanel` **목업+alert**, `ExplorerPanel` **New Chapter alert**, `SettingsPanel`은 일부 연동 |
 | **품질 패널(실감)** | 동일 `AuditPanel` | 정적 **PASSED/WARNING** 목업 — 실제 검사·스테이지 연동은 **고도화(게이트)** |
 | **API 프롬프트·스테이지** | [`src/app/api/translate/route.ts`](../../src/app/api/translate/route.ts), [`src/lib/build-prompt.ts`](../../src/lib/build-prompt.ts) | 파이프라인 기반 있음 — TM·스코프·게이트 **추가 시 고도화** |
@@ -66,6 +66,52 @@ NTE·번역 전용 백로그는 아래 **「남은 작업」**을 따른다.
 | **트렌드·병렬 숙의·스타일 자동 주입** | (미구현) | 플랜의 **부가 옵션** 표 — 구현 시 **프로젝트 플래그 + 기본 OFF** |
 
 **요약**: **고도화**는 `TranslatorStudioApp` 중심 **저장 신뢰·업로드 상한·패널·독 연결·실제 감사/용어**까지 끊김 없게 만드는 일.**고급화**는 이미 **부분 구현된 네트워크·비교·역번역·코파일럿**을 **명시적 토글·쿼터** 아래로 묶고, **트렌드·병렬·스타일 자동** 등 신규는 같은 레이어에 추가한다.
+
+---
+
+## 번역 스튜디오 디자인 점검 · 최적안 (코드 확인 2026-04-03)
+
+`/translation-studio` 라우트·컴포넌트를 기준으로 **현재 UI 구조**를 정리하고, **유지·통합·보완** 방향을 플랜에 고정한다.
+
+### 현재 구조 (확인된 파일)
+
+| 층 | 경로 | 역할 |
+|----|------|------|
+| **레이아웃** | [`src/app/translation-studio/layout.tsx`](../../src/app/translation-studio/layout.tsx) | Inter·Manrope, `translation-studio-root`, 전역 [`translator-studio.css`](../../src/app/translation-studio/translator-studio.css) |
+| **전역 충돌 완화** | [`TranslatorStudioBodyMount.tsx`](../../src/app/translation-studio/TranslatorStudioBodyMount.tsx) | `body[data-eh-translator-studio]` 로 **globals 노이즈 pseudo** 비활성 — 고정 UI 클릭 막힘 방지 |
+| **페이지** | [`page.tsx`](../../src/app/translation-studio/page.tsx) | `TranslatorStudioApp` 동적 로드 + `ErrorBoundary` |
+| **앱 루트** | [`TranslatorStudioApp.tsx`](../../src/components/translator/TranslatorStudioApp.tsx) | `TranslatorContext` + 상태·저장·API — **쉘은 `TranslatorShell` 단일** |
+| **쉘** | [`TranslatorShell.tsx`](../../src/components/translator/TranslatorShell.tsx) | **Activity bar**(lg) + **좌·우 리사이즈 패널** + 중앙 [`BilateralEditor`](../../src/components/translator/editor/BilateralEditor.tsx) |
+| **에디터** | `BilateralEditor` | 언어 스왑·**좌우 분할 리사이즈**·동기 스크롤·젠 모드·배경 이미지 레이어 |
+| **테마 CSS** | `translator-studio.css` | `.theme-glacial` / `.theme-nebula`, CJK `textarea` 규칙, `--accent` 등 토큰 |
+| **테마 상태** | `TranslatorStudioApp` `backgroundMode` | 프로젝트 스냅샷에 저장; **모바일 드로어** [`MobileWorkspaceDrawer`](../../src/components/translator/MobileWorkspaceDrawer.tsx) 에 `theme-${backgroundMode}` 적용 |
+
+### 잘된 점 (유지 권장)
+
+- **전용 레이아웃 + CSS + body 마운트**: 사이트 메인(`globals`)과 **z-index·노이즈** 충돌을 **라우트 단위로 끊는 패턴**은 프로덕션에 적합하다.
+- **IDE형 쉘**: Activity bar + 토글 가능 좌·우 패널 + 중앙 **쌍열 에디터**는 장편·챕터 워크플로와 잘 맞는다.
+- **CJK 편집**: `translator-studio.css` 의 `min-width: 0`, `word-break: keep-all`, `pre-wrap` 은 **에디터 신뢰성**에 유리 — 신규 패널·textarea에도 **동일 규칙 재사용**.
+- **젠 모드·분할 비율**: 레이아웃 컨텍스트와 결합된 **집중/가독** 옵션은 차별화 요소로 유지.
+
+### 문제 · 리스크 (최적안의 출발점)
+
+1. **테마 이원화**: `backgroundMode` + `translator-studio.css` 토큰과 달리, **데스크톱 `TranslatorShell` / `BilateralEditor`** 는 `#05050A`·`#0A0A0C` 등 **Tailwind 고정 팔레트**가 지배적이다. 사용자가 분위기를 바꿔도 **본 쉘 색이 따라가지 않을 수 있음** — 설정·마케팅 카피와 어긋남.
+2. **액션 독 미연결**: [`TranslationActionDock.tsx`](../../src/components/translator/features/TranslationActionDock.tsx) 의 `loading`/`statusMsg`/번역 핸들러가 **주석·스텁** — **주요 CTA가 어디에도 살아 있지 않은** 체감을 줄 수 있음(실제 로직은 컨텍스트에 있으나 UI 분산).
+3. **모바일·sm**: Activity bar `lg:hidden` 메뉴가 **빈 핸들러**에 가깝고, 워크스페이스 탭·드로어와 **역할 중복** 가능 — **한 축으로 정리**할 여지.
+4. **유니버스 메인과 톤**: 홈은 프리미엄 패널/별 필드, 번역 쉘은 **우주 다크** — **의도된 브랜드 분리**로 두거나, 나중에 **헤더·워터마크만** 유니버스와 맞추는 **최소 정합**을 선택해야 함(플랜만 고정: **현재는 분리 유지**).
+
+### 최적안 (플랜 결정)
+
+| # | 항목 | 방향 |
+|---|------|------|
+| A | **테마 단일화** | (P1 설계) `TranslatorShell` 최상단 또는 `BilateralEditor` 래퍼에 **`theme-${backgroundMode}`** 를 적용하고, 쉘·에디터의 하드코딩 배경을 **`translator-studio.css` 변수**로 점진 치환 — **한 소스 토큰**으로 glacial/nebula 전환. |
+| B | **주 액션 가시성** | (P1) `TranslationActionDock` 을 **컨텍스트와 완전 연결**하거나, 동일 정보를 **중앙 헤더 배너**에 합류 — **번역/딥번역·진행·스테이지**가 한 눈에 보이게. |
+| C | **저장·동기화** | (P0) 충돌·클라우드 상태는 **상단 바 또는 고정 토스트 슬롯**에 배치 — 인벤토리의 저장 MVP와 동일 우선순위. |
+| D | **URL·챕터** | 디자인 변경 없이 **챕터 사이드바·컨텍스트 탭**에 URL 행 추가(기존 PART 1c 백로그). |
+| E | **모바일** | Activity bar 모바일 스텁을 **실제 드로어 오픈**으로 연결하거나 제거하고 **워크스페이스 탭만** 남기기 — **한 패턴**으로 문서화 후 구현. |
+| F | **레이아웃·접근성** | 리사이즈 핸들에 **키보드·aria** 보강은 MVP 이후; 색 대비는 테마 단일화 시 **한 번에 검토**. |
+
+**구현 백로그 연계**: 테마 단일화는 **P1** (저장·독·URL 이후 또는 병행), 모바일 정리는 **P1 보조**. 본 절은 **디자인 단일 소스**로 두고, 세부 티켓은 「남은 작업」과 중복 서술하지 않는다.
 
 ---
 
@@ -212,10 +258,11 @@ NTE·번역 전용 백로그는 아래 **「남은 작업」**을 따른다.
 
 **P1 — 저장 이후**
 
-- [ ] [`src/app/api/upload/route.ts`](../../src/app/api/upload/route.ts) 문단 청크 상한 **4000 → 9500** (번역 스튜디오 업로드 한정; NOA 등 타 스튜디오 가드레일은 변경하지 않음).
-- [ ] [`src/components/translator/features/TranslationActionDock.tsx`](../../src/components/translator/features/TranslationActionDock.tsx) — `translate` / `deepTranslate`·`loading`·`statusMsg`·스테이지 표시 **TranslatorContext 연결**.
+- [x] [`src/app/api/upload/route.ts`](../../src/app/api/upload/route.ts) 문단 청크 상한 **9500** — `FormData` `source=eh-translator` 일 때만; 그 외 **4000** 유지.
+- [x] [`src/components/translator/features/TranslationActionDock.tsx`](../../src/components/translator/features/TranslationActionDock.tsx) — `translate` / `deepTranslate`·`loading`·`statusMsg`·우측 패널 **`actions`** 연결(플랜 **「번역 스튜디오 디자인·최적안」B**).
 - [ ] [`src/components/translator/PanelImports.tsx`](../../src/components/translator/PanelImports.tsx) — 용어·프로젝트 탐색·**Audit** 등 **alert/목업 제거**, 실데이터 또는 최소 동작으로 연결.
-- [ ] **링크(URL) 번역 UI**: [`ChapterSidebar`](../../src/components/translator/ChapterSidebar.tsx)(또는 동일 플로우)에 URL 입력 + [`importUrl`](../../src/components/translator/TranslatorStudioApp.tsx) 연결 — 설계 [`docs/eh-translator-nte-5-enhancements.md` PART 1c](../../docs/eh-translator-nte-5-enhancements.md).
+- [x] **링크(URL) 번역 UI**: [`ExplorerPanel`](../../src/components/translator/panels/ExplorerPanel.tsx)에 URL 입력 + [`importUrl`](../../src/components/translator/TranslatorStudioApp.tsx) 연결(챕터 탐색기 플로우) — 설계 PART 1c.
+- [ ] **테마 단일화(P1 설계)**: `backgroundMode`·[`translator-studio.css`](../../src/app/translation-studio/translator-studio.css) 토큰을 [`TranslatorShell`](../../src/components/translator/TranslatorShell.tsx)·[`BilateralEditor`](../../src/components/translator/editor/BilateralEditor.tsx) 고정 색상과 **한 축으로 정렬** — 플랜 **「번역 스튜디오 디자인·최적안」A**.
 
 **P2 — 장기 (5대·도메인 등)**
 
@@ -375,27 +422,31 @@ NTE·번역 전용 백로그는 아래 **「남은 작업」**을 따른다.
 
 ### K. 유니버스 IA — 「문체」탭 제거 · 문체 스튜디오는 소설 스튜디오 내부
 
-**결정**: EH Universe **전역 상단 내비**에서 **「문체」(STYLE)** 항목을 **삭제**한다. 홈 허브 **NARRATIVE ENGINE** 그리드의 **「문체 스튜디오」** 카드·히어로 **문체 스튜디오** 버튼 등 **독립 진입**을 없애고, 사용자는 **`/studio`(소설 스튜디오)** 로 들어간 뒤 **`?tab=style`** 로 문체 기능에 도달한다.
+**결정**: EH Universe **전역 상단 내비**에서 **「문체」(STYLE)** 항목을 **삭제**한다. 홈 허브 **NARRATIVE ENGINE** 그리드의 **「문체 스튜디오」** 카드·히어로 **문체 전용** 버튼 등 **문체 단독 진입**을 **전부 제거**한다.
+
+**제품 진입점(확정)**: 사용자에게 보이는 **유일한 진입 경로는 소설 스튜디오**다 — [`/studio`](../../src/app/studio/page.tsx)에 들어간 뒤 **UI에서 문체 탭**으로 전환한다. 홈·내비·도구 인덱스 등에서 **「문체 스튜디오」로 바로 가는 링크는 두지 않는다**(소설 스튜디오로만 안내).
+
+- **URL `/studio?tab=style`**: 라우트는 **소설 스튜디오의 한 상태**이므로, 북마크·공유용으로 **유지 가능**(여전히 “소설 스튜디오” 앱 안). 다만 **마케팅·홈 CTA는 `/studio`만** 두고 탭 딥링크는 숨기는 것을 권장한다.
 
 **이미 있는 구현(중복만 정리하면 됨)**:
 
 - [`StudioShell.tsx`](../../src/app/studio/StudioShell.tsx) — `VALID_TABS`에 **`style`**, 탭 전환 시 `?tab=style` 동기화.
 - [`StyleTab.tsx`](../../src/components/studio/tabs/StyleTab.tsx) — [`StyleStudioView`](../../src/components/studio/StyleStudioView.tsx) 로드.
-- [`/tools/style-studio`](../../src/app/tools/style-studio/page.tsx) — **동일 UI의 독립 페이지**(북마크·외부 링크용으로 **리다이렉트 대상**으로 두기 적합).
+- [`/tools/style-studio`](../../src/app/tools/style-studio/page.tsx) — **제품 진입점이 아님** — 레거시 URL은 **`redirect('/studio?tab=style')`** 만 두고, **사이트맵·내부 링크·도구 목록에서는 제거**.
 
 **구현 시 손볼 파일(체크리스트)**:
 
 | 순서 | 파일 | 작업 |
 |------|------|------|
 | 1 | [`Header.tsx`](../../src/components/Header.tsx) | `NavKey`·`navItems`에서 **`style` 제거**, `usePrimaryNavActive`의 `case "style"` 제거 |
-| 2 | [`page.tsx`](../../src/app/page.tsx) (홈) | `universeHubs` **문체 ST 카드 제거** 또는 **`/studio?tab=style`**·「소설 스튜디오 — 문체 탭」카피로 **교체**; 히어로 `Link` **문체 스튜디오** → **`/studio?tab=style`** 또는 **소설 스튜디오** 단일 버튼으로 통합 |
-| 3 | [`studio-entry-links.ts`](../../src/lib/studio-entry-links.ts) | `STYLE_STUDIO_PATH`를 **`/studio?tab=style`** 로 정리(또는 별도 `NOVEL_STUDIO_STYLE_TAB` 상수) — **내부 링크 단일화** |
-| 4 | [`tool-links.ts`](../../src/lib/tool-links.ts) | `/tools/style-studio` 항목 **삭제** 또는 **스튜디오 안내** 문구로 변경; `TOOL_LINKS_HEADER_DROPDOWN` 필터 재검토 |
-| 5 | [`/tools/style-studio/page.tsx`](../../src/app/tools/style-studio/page.tsx) | 서버 **`redirect('/studio?tab=style')`**(또는 클라이언트 동일)로 **구 URL 호환** |
-| 6 | [`sitemap.ts`](../../src/app/sitemap.ts) | 리다이렉트 정책에 맞게 URL 목록 정리 |
-| 7 | E2E | [`e2e/smoke-routes.spec.ts`](../../e2e/smoke-routes.spec.ts), [`e2e/tools-about.spec.ts`](../../e2e/tools-about.spec.ts) — 경로·셀렉터 갱신 |
+| 2 | [`page.tsx`](../../src/app/page.tsx) (홈) | `universeHubs` **문체 ST 카드 삭제**; 히어로 **문체 스튜디오** 버튼 **삭제** — 필요 시 **「소설 스튜디오」→ `/studio`만** 유지(문체 딥링크 CTA 없음) |
+| 3 | [`studio-entry-links.ts`](../../src/lib/studio-entry-links.ts) | 외부용 **`STYLE_STUDIO_PATH` 제거 또는 deprecated** — 내부는 **`/studio`**(및 코드 주석으로 문체는 탭 전환)만 사용 |
+| 4 | [`tool-links.ts`](../../src/lib/tool-links.ts) | `/tools/style-studio` 항목 **완전 삭제**; `TOOL_LINKS_HEADER_DROPDOWN` 필터 정리 |
+| 5 | [`/tools/style-studio/page.tsx`](../../src/app/tools/style-studio/page.tsx) | **`redirect('/studio?tab=style')`만** — 독립 페이지·SEO 랜딩 금지 |
+| 6 | [`sitemap.ts`](../../src/app/sitemap.ts) | `/tools/style-studio` **제외** 권장(canonical은 소설 스튜디오) |
+| 7 | E2E·문서 | [`e2e/smoke-routes.spec.ts`](../../e2e/smoke-routes.spec.ts), [`e2e/tools-about.spec.ts`](../../e2e/tools-about.spec.ts), [`docs`](../../src/app/docs/page.tsx)·[`StudioDocsView`](../../src/components/studio/StudioDocsView.tsx) 등 **문체 = 소설 스튜디오 탭**으로 문구 정리 |
 
-**번역 플랜 연계**: 부록 C(Style ↔ 번역)와 정합 — 사용자에게 **문체 = 소설 스튜디오의 한 탭**이라는 모델이 고정된다.
+**번역 플랜 연계**: 부록 C(Style ↔ 번역)와 정합 — **문체 = 소설 스튜디오 안에서만** 노출되는 기능으로 고정한다.
 
 ---
 
@@ -428,3 +479,6 @@ NTE·번역 전용 백로그는 아래 **「남은 작업」**을 따른다.
 - 2026-04-03: **전역 기본 체크리스트** — [`docs/eh-universe-baseline-checklist.md`](../../docs/eh-universe-baseline-checklist.md) 신설, 플랜 상단·기존 논의에 링크.
 - 2026-04-03: **전체 점검(메타)** — 잘된 점·부족한 점·보완 권장·다음 점검 항목; 목차 반영.
 - 2026-04-03: **부록 K** — 유니버스 IA: 상단 **문체** 탭·홈 **문체 스튜디오** 독립 진입 제거, **`/studio?tab=style`** 단일; 구현 파일 체크리스트. 부록 F에 `tab=style` 한 줄.
+- 2026-04-03: **부록 K 보강** — **제품 진입은 소설 스튜디오만**(문체 단독 CTA·도구 링크 제거); `/tools/style-studio`는 리다이렉트만·사이트맵 제외 권장.
+- 2026-04-03: **번역 스튜디오 디자인 점검·최적안** — 레이아웃·쉘·테마 이원화·액션 독·모바일·저장 UI; 목차·P1 독 항목 링크.
+- 2026-04-03: **구현** — 부록 K(문체 진입 소설 스튜디오만), 업로드 9500+`source`, 액션 독+우측 `actions` 패널·헤더 토글, ExplorerPanel URL 가져오기. `next build`·`tsc` 통과.
