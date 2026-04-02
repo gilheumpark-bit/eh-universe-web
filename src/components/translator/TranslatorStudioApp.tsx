@@ -135,6 +135,7 @@ export default function TranslatorStudioApp() {
   const [backResult, setBackResult] = useState('');
   const prevActiveChapterIndex = useRef<number | null>(activeChapterIndex);
   const storyBibleRequestCounter = useRef(0);
+  const lastPrimaryTranslateAt = useRef(0);
 
   const getEffectiveApiKeyForProvider = useCallback(
     (providerId: string) => {
@@ -723,6 +724,9 @@ export default function TranslatorStudioApp() {
   // Core Actions
   const translate = async () => {
     if (!source.trim()) return;
+    const now = Date.now();
+    if (now - lastPrimaryTranslateAt.current < 800) return;
+    lastPrimaryTranslateAt.current = now;
     setLoading(true);
     setStatusMsg('FAST DRAFT');
     try {
@@ -756,6 +760,9 @@ export default function TranslatorStudioApp() {
 
   const deepTranslate = async () => {
     if (!source.trim()) return;
+    const now = Date.now();
+    if (now - lastPrimaryTranslateAt.current < 800) return;
+    lastPrimaryTranslateAt.current = now;
     setLoading(true);
     const stageSequence = translationMode === 'novel'
       ? [
@@ -1350,6 +1357,7 @@ export default function TranslatorStudioApp() {
           <div className="hidden lg:flex items-center gap-1 rounded-full p-1 shadow-sm backdrop-blur-xl" style={{ background: headerChipSurface }}>
             {BACKGROUND_MODES.map((mode) => (
               <button
+                type="button"
                 key={mode.id}
                 onClick={() => setBackgroundMode(mode.id)}
                 className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
@@ -1406,7 +1414,8 @@ export default function TranslatorStudioApp() {
             </span>
           ) : null}
 
-          <button 
+          <button
+            type="button"
             onClick={() => setIsZenMode(!isZenMode)}
             className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all ${
               isZenMode
@@ -1417,7 +1426,7 @@ export default function TranslatorStudioApp() {
           >
             {isZenMode ? 'Focus On' : 'Focus Mode'}
           </button>
-          <button onClick={() => setShowSettings(!showSettings)} 
+          <button type="button" onClick={() => setShowSettings(!showSettings)} 
             className="rounded-full p-2.5 backdrop-blur-xl transition-all hover:brightness-110"
             style={{ background: headerChipSurface, color: headerMutedColor }}>
             ⚙️
@@ -1426,7 +1435,7 @@ export default function TranslatorStudioApp() {
       </header>
 
       {!isZenMode && (
-        <div className="fixed left-0 right-0 top-20 z-40 border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
+        <div className="workspace-tab-dock fixed left-0 right-0 top-20 z-[45] border-b border-slate-900/10 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/85">
           <WorkspaceTabBar active={workspaceTab} onChange={handleWorkspaceTabChange} langKo={langKo} />
         </div>
       )}
@@ -1476,7 +1485,7 @@ export default function TranslatorStudioApp() {
       />
 
       <main
-        className="flex min-h-0 min-w-0 w-full overflow-hidden"
+        className="relative z-0 flex min-h-0 min-w-0 w-full overflow-hidden"
         style={
           isZenMode
             ? { paddingTop: '5rem', height: 'calc(100vh - 5rem)' }
@@ -1528,7 +1537,7 @@ export default function TranslatorStudioApp() {
             </div>
           )}
           {!isZenMode && (
-            <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,0.75fr)_minmax(240px,0.8fr)]">
+            <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,1fr)_minmax(280px,1fr)]">
               <div className="workspace-hero glass-panel min-w-0 rounded-4xl p-6">
                 <EnvStatusBar />
                 {aiCapabilitiesLoaded && !hasTranslatorAiAccess && (
@@ -1545,7 +1554,7 @@ export default function TranslatorStudioApp() {
                   <div className="min-w-0">
                     <div className="theme-kicker">Premium Narrative Workspace</div>
                     <h2 className="mt-3 truncate text-2xl font-black tracking-tight theme-text-primary">{workspaceName}</h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary break-keep">
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed theme-text-secondary break-words">
                       장편 번역에서 문체 일관성, 캐릭터 보존, 빠른 편집 흐름을 함께 잡는 에디토리얼 작업실입니다.
                     </p>
                   </div>
@@ -1578,10 +1587,10 @@ export default function TranslatorStudioApp() {
               <div className="metric-card glass-panel min-w-0 rounded-4xl p-5">
                 <div className="theme-kicker">Autosave</div>
                 <div className="mt-3 text-3xl font-black tracking-tight theme-text-primary">{autoSaveLabel}</div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-keep">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
                   {loading ? `${statusMsg || 'PROCESSING'} 단계가 진행 중입니다.` : '자동 저장을 지연 처리해서 타이핑과 이동이 더 가볍게 유지됩니다.'}
                 </p>
-                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold break-keep ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
+                <div className={`mt-4 rounded-2xl px-3 py-3 text-[11px] font-semibold break-words ${loading ? 'loading-ribbon' : 'theme-pill'}`}>
                   {loading ? '엔진이 결과를 정리하는 중입니다.' : '변경 내용은 조용히 로컬 상태와 동기화됩니다.'}
                 </div>
                 {cloudSyncEnabled && (
@@ -1604,12 +1613,12 @@ export default function TranslatorStudioApp() {
                 <div className="metric-bar mt-4">
                   <span style={{ width: `${completionRate}%` }} />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-keep">
+                <p className="mt-3 text-sm leading-relaxed theme-text-secondary break-words">
                   {activeChapter
                     ? `${activeChapter.name}${activeChapter.stageProgress ? ` · Stage ${activeChapter.stageProgress}` : ''}`
                     : '활성 챕터를 선택하면 진행 단계가 여기 표시됩니다.'}
                 </p>
-                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary break-keep">{storyBibleStatusLabel}</p>
+                <p className="mt-2 text-[11px] leading-relaxed theme-text-secondary break-words">{storyBibleStatusLabel}</p>
               </div>
             </div>
           )}
@@ -1845,16 +1854,16 @@ export default function TranslatorStudioApp() {
           {/* Action Bar */}
           <div className="mt-8 max-w-4xl mx-auto space-y-3">
             <div className="flex items-center gap-2 p-1 glass-panel rounded-2xl">
-              <button onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📖 NOVEL WORKSPACE</button>
-              <button onClick={() => setTranslationMode('general')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📄 GENERAL ASSIST</button>
+              <button type="button" onClick={() => setTranslationMode('novel')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📖 NOVEL WORKSPACE</button>
+              <button type="button" onClick={() => setTranslationMode('general')} className={`flex-1 rounded-xl py-3 text-[10px] font-black tracking-widest transition-all ${translationMode === 'general' ? 'bg-linear-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20' : 'theme-text-secondary hover:brightness-110'}`}>📄 GENERAL ASSIST</button>
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => setShowUrlImport(!showUrlImport)} className="theme-pill px-4 py-3 rounded-xl text-[10px] font-bold">🌐 웹 회차 가져오기</button>
+              <button type="button" onClick={() => setShowUrlImport(!showUrlImport)} className="theme-pill px-4 py-3 rounded-xl text-[10px] font-bold">🌐 웹 회차 가져오기</button>
               {showUrlImport && (
                 <div className="flex-1 flex gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
                   <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="공개 연재 페이지 URL" className="theme-field flex-1 rounded-xl px-4 py-2 text-xs outline-none" />
-                  <button onClick={importUrl} disabled={loading} className="px-6 py-2 bg-emerald-600 rounded-xl text-[10px] font-bold text-white">FETCH</button>
+                  <button type="button" onClick={importUrl} disabled={loading} className="px-6 py-2 bg-emerald-600 rounded-xl text-[10px] font-bold text-white">FETCH</button>
                 </div>
               )}
             </div>
@@ -1865,8 +1874,8 @@ export default function TranslatorStudioApp() {
             )}
 
             <div className="flex gap-4">
-              <button onClick={translate} disabled={loading || !source.trim()} className="theme-pill flex-1 rounded-2xl py-5 text-[11px] font-black tracking-widest transition-all hover:brightness-105">FAST DRAFT</button>
-              <button onClick={deepTranslate} disabled={loading || !source.trim()} 
+              <button type="button" onClick={() => void translate()} disabled={loading || !source.trim()} className="theme-pill flex-1 rounded-2xl py-5 text-[11px] font-black tracking-widest transition-all hover:brightness-105">FAST DRAFT</button>
+              <button type="button" onClick={() => void deepTranslate()} disabled={loading || !source.trim()} 
                  className={`flex-2 py-5 rounded-2xl text-[11px] font-black tracking-widest text-white shadow-2xl transition-all ${translationMode === 'novel' ? 'bg-linear-to-r from-purple-600 to-indigo-600' : 'bg-linear-to-r from-emerald-600 to-teal-600'}`}>
                  {statusMsg || (translationMode === 'novel' ? 'DEEP NOVEL PIPELINE' : 'ACCURATE GENERAL')}
               </button>

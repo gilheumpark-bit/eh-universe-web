@@ -1,5 +1,11 @@
 /* 번역 스튜디오 전용 — 루트 tailwind와 중복 import 하지 않음 */
 
+/* 고정 탭 바: 본문 스크롤 레이어와 겹칠 때 클릭이 본문으로 새지 않도록 */
+.workspace-tab-dock {
+  pointer-events: auto;
+  isolation: isolate;
+}
+
 :root {
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
@@ -212,6 +218,15 @@
 .themed-insight {
   position: relative;
   overflow: hidden;
+  min-width: 0;
+}
+
+/* 좁은 그리드 열 + keep-all 조합에서 한 글자씩 세로로 쌓이는 현상 방지 */
+.translation-studio-root .workspace-hero p,
+.translation-studio-root .metric-card p,
+.translation-studio-root .themed-insight p {
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .workspace-hero::after,
@@ -258,6 +273,7 @@
   content: '';
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
   animation: shimmer 1.8s infinite;
 }
