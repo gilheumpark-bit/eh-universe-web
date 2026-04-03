@@ -22,6 +22,15 @@ export default function WebFeaturesInit() {
       // Speculation Rules: 스튜디오 경로 사전 렌더링 (Chrome/Edge)
       browser.preloadStudioRoutes();
 
+      // Compute Pressure: CPU 부하 감시 → 배치 스로틀 (Chrome)
+      browser.observeComputePressure((state) => {
+        document.documentElement.dataset.cpuPressure = state;
+        // serious/critical이면 배치 작업 자동 일시정지 힌트
+      });
+
+      // File Handling: PWA 파일 핸들러로 열린 파일 수신 (Chrome)
+      browser.consumeLaunchQueue().catch(() => {});
+
       // 외부 링크 보안 강화 (noopener noreferrer)
       webFeatures.hardenExternalLinks();
 

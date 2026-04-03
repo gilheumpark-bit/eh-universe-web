@@ -36,3 +36,6 @@ export { detectKeyboardLayout, formatShortcut, type KeyboardLayoutInfo } from '.
 
 // Advanced APIs (5대 브라우저 최대 활용)
 export { detectTextFromImage, detectBarcode, getLocalFonts, pickColorFromScreen, startScreenRecording, stopScreenRecording, isRecording, addSpeculationRules, preloadStudioRoutes, getBrowserCapabilities, type OCRResult, type LocalFont, type ScreenRecording } from './advanced-apis';
+
+// Platform-Exclusive APIs (브라우저별 특화)
+export { consumeLaunchQueue, supportsFileHandling, getTitleBarArea, supportsWindowControlsOverlay, onTitleBarChange, openDocumentPiP, supportsDocumentPiP, observeComputePressure, getScreens, isMultiScreen, requestInkPresenter, supportsInk, getPlatformCapabilities, type LaunchedFile, type TitleBarArea, type PiPWindow, type PressureState, type ScreenInfo } from './platform-exclusive';

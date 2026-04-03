@@ -8,6 +8,34 @@
   "background_color": "#0a0a0a",
   "orientation": "any",
   "categories": ["productivity", "entertainment", "education"],
+  "display_override": ["window-controls-overlay", "standalone"],
+  "file_handlers": [
+    {
+      "action": "/studio",
+      "accept": {
+        "text/plain": [".txt"],
+        "text/markdown": [".md", ".mdx"],
+        "application/json": [".json"],
+        "application/epub+zip": [".epub"]
+      }
+    },
+    {
+      "action": "/code-studio",
+      "accept": {
+        "text/javascript": [".js", ".jsx", ".ts", ".tsx"],
+        "text/html": [".html"],
+        "text/css": [".css"]
+      }
+    },
+    {
+      "action": "/translation-studio",
+      "accept": {
+        "application/xliff+xml": [".xlf", ".xliff"],
+        "application/x-tmx+xml": [".tmx"],
+        "text/x-po": [".po"]
+      }
+    }
+  ],
   "icons": [
     {
       "src": "/favicon.ico",
