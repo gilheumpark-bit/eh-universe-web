@@ -46,7 +46,22 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  const { translateEpisode, progress, isTranslating, abort } = useTranslation({
+  const [batchMode, setBatchMode] = useState(false);
+  const [glossary, setGlossary] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('eh-novel-glossary');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  const [glossaryTerm, setGlossaryTerm] = useState('');
+  const [glossaryTranslation, setGlossaryTranslation] = useState('');
+
+  const saveGlossary = useCallback((g: Record<string, string>) => {
+    setGlossary(g);
+    localStorage.setItem('eh-novel-glossary', JSON.stringify(g));
+  }, []);
+
+  const { translateEpisode, translateBatch, progress, batchProgress, isTranslating, abort } = useTranslation({
     onProgress: (p) => {
       if (p.status === 'scoring') {
          setLogs(prev => [...prev.slice(-49), { id: Date.now(), type: 'info', text: `Analyzing metrics for chunk ${p.currentChunk + 1}...` }]);
@@ -87,21 +102,28 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     [config.manuscripts]
   );
 
+  const translationConfig = useMemo(() => ({
+    mode, targetLang, band, contractionLevel,
+    genre: targetGenre || undefined,
+    scoreThreshold,
+    glossary: Object.keys(glossary).length > 0 ? glossary : undefined,
+  }), [mode, targetLang, band, contractionLevel, targetGenre, scoreThreshold, glossary]);
+
   const handleTranslate = useCallback(async () => {
-    if (selectedEpisode === null) return;
-    const ms = manuscripts.find((m) => m.episode === selectedEpisode);
-    if (!ms) return;
     setLogs([]);
-    setLogs([{ id: Date.now(), type: 'info', text: `Initialization: Parsing episode ${selectedEpisode} (${ms.charCount} chars) into syntax chunks...` }]);
-    await translateEpisode(ms, { 
-      mode, 
-      targetLang, 
-      band,
-      contractionLevel,
-      genre: targetGenre || undefined,
-      scoreThreshold
-    });
-  }, [selectedEpisode, mode, targetLang, band, contractionLevel, targetGenre, scoreThreshold, manuscripts, translateEpisode]);
+    if (batchMode && manuscripts.length > 0) {
+      // 배치 모드: 전체 에피소드 순차 번역
+      setLogs([{ id: Date.now(), type: 'info', text: `Batch mode: ${manuscripts.length} episodes queued for translation...` }]);
+      await translateBatch(manuscripts, translationConfig);
+    } else {
+      // 단일 에피소드
+      if (selectedEpisode === null) return;
+      const ms = manuscripts.find((m) => m.episode === selectedEpisode);
+      if (!ms) return;
+      setLogs([{ id: Date.now(), type: 'info', text: `Initialization: Parsing episode ${selectedEpisode} (${ms.charCount} chars) into syntax chunks...` }]);
+      await translateEpisode(ms, translationConfig);
+    }
+  }, [batchMode, selectedEpisode, manuscripts, translationConfig, translateEpisode, translateBatch]);
 
   const bandLbl = bandLabel(band, mode, isKO);
 
@@ -297,13 +319,43 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </div>
       )}
 
-      {/* Execution Area - Cyber Button */}
+      {/* Glossary — 용어집 */}
+      <details className="rounded-[1.25rem] border border-white/8 bg-black/20 backdrop-blur-md">
+        <summary className="flex items-center gap-3 px-5 py-3 cursor-pointer font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-text-tertiary hover:text-text-secondary transition-colors">
+          <FileText className="h-3.5 w-3.5 text-[rgba(184,149,92,0.7)]" />
+          {isKO ? `용어집 (${Object.keys(glossary).length}개)` : `Glossary (${Object.keys(glossary).length})`}
+        </summary>
+        <div className="px-5 pb-4 space-y-3">
+          <div className="flex gap-2">
+            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
+            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
+            <button onClick={() => { if (glossaryTerm.trim() && glossaryTranslation.trim()) { saveGlossary({ ...glossary, [glossaryTerm.trim()]: glossaryTranslation.trim() }); setGlossaryTerm(''); setGlossaryTranslation(''); } }} className="px-3 py-2 rounded-lg bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] font-mono text-[10px] font-bold hover:bg-[rgba(184,149,92,0.25)] transition-colors">+</button>
+          </div>
+          {Object.entries(glossary).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(glossary).map(([k, v]) => (
+                <span key={k} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(184,149,92,0.1)] border border-[rgba(184,149,92,0.2)] font-mono text-[10px] text-[rgba(228,215,190,0.9)]">
+                  {k} → {v}
+                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} className="ml-1 text-[rgba(255,100,100,0.6)] hover:text-[rgba(255,100,100,1)]">&times;</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
+
+      {/* Execution Area */}
       <div className="flex flex-col sm:flex-row items-end gap-4 p-5 rounded-[1.25rem] border border-white/8 bg-black/20 backdrop-blur-md">
         <div className="flex-1 w-full space-y-2">
-          <label className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-tertiary">
-            <FileText className="h-3 w-3 text-[rgba(184,149,92,0.7)]" />
-            {isKO ? "에피소드 타겟 지정" : "Episode Target"}
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-tertiary">
+              <FileText className="h-3 w-3 text-[rgba(184,149,92,0.7)]" />
+              {isKO ? "에피소드 타겟 지정" : "Episode Target"}
+            </label>
+            <button onClick={() => setBatchMode(!batchMode)} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-all ${batchMode ? 'border-[rgba(184,149,92,0.4)] bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)]' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
+              {isKO ? (batchMode ? '배치 ON' : '배치 OFF') : (batchMode ? 'BATCH ON' : 'BATCH OFF')}
+            </button>
+          </div>
           <div className="relative group">
             <select
               value={selectedEpisode ?? ""}
@@ -331,10 +383,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         ) : (
           <button
             onClick={handleTranslate}
-            disabled={selectedEpisode === null || manuscripts.length === 0}
+            disabled={batchMode ? manuscripts.length === 0 : (selectedEpisode === null || manuscripts.length === 0)}
             className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-[rgba(235,220,190,0.4)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(184,149,92,0.4)] disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
           >
-            <Play className="h-4 w-4" fill="currentColor" /> {isKO ? "번역 연결 (INIT)" : "INIT"}
+            <Play className="h-4 w-4" fill="currentColor" /> {batchMode ? (isKO ? `배치 번역 (${manuscripts.length}화)` : `BATCH (${manuscripts.length})`) : (isKO ? "번역 연결 (INIT)" : "INIT")}
           </button>
         )}
       </div>
