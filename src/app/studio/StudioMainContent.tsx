@@ -8,9 +8,8 @@ import { useState } from 'react';
 import {
   Menu, X,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
-  Key, Sparkles, Palette,
+  Key, Sparkles,
 } from 'lucide-react';
-import { type ColorTheme, COLOR_THEMES } from '@/hooks/useStudioTheme';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import type {
@@ -33,87 +32,6 @@ import StudioTabRouter from '@/components/studio/StudioTabRouter';
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
 
-// ============================================================
-// Color Theme Picker Component
-// ============================================================
-function ColorThemePicker({ 
-  colorTheme, 
-  setColorTheme, 
-  isKO 
-}: { 
-  colorTheme: ColorTheme; 
-  setColorTheme: (theme: ColorTheme) => void; 
-  isKO: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const currentTheme = COLOR_THEMES.find(t => t.id === colorTheme) || COLOR_THEMES[0];
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
-        title={isKO ? '색상 테마' : 'Color Theme'}
-        aria-label={isKO ? '색상 테마 선택' : 'Select color theme'}
-        aria-expanded={isOpen}
-      >
-        <div 
-          className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
-          style={{ backgroundColor: currentTheme.preview }}
-        />
-        <span className="text-[10px] font-medium text-text-tertiary group-hover:text-text-secondary hidden sm:inline">
-          {isKO ? currentTheme.name : currentTheme.nameEn}
-        </span>
-        <Palette className="w-3 h-3 text-text-tertiary group-hover:text-text-secondary" />
-      </button>
-
-      {/* Dropdown */}
-      {isOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)} 
-            aria-hidden="true"
-          />
-          <div className="absolute right-0 top-full mt-2 z-50 w-48 p-2 rounded-xl bg-bg-secondary/95 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary px-2 py-1.5 mb-1">
-              {isKO ? '색상 테마' : 'Color Theme'}
-            </div>
-            <div className="space-y-0.5">
-              {COLOR_THEMES.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => {
-                    setColorTheme(theme.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-150 ${
-                    colorTheme === theme.id 
-                      ? 'bg-accent-purple/15 text-text-primary' 
-                      : 'hover:bg-white/5 text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  <div 
-                    className={`w-5 h-5 rounded-full border-2 shadow-inner transition-all ${
-                      colorTheme === theme.id ? 'border-accent-purple scale-110' : 'border-white/20'
-                    }`}
-                    style={{ backgroundColor: theme.preview }}
-                  />
-                  <span className="text-xs font-medium">
-                    {isKO ? theme.name : theme.nameEn}
-                  </span>
-                  {colorTheme === theme.id && (
-                    <span className="ml-auto text-accent-purple text-xs">✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 type HostedAiAvailability = Record<string, boolean>;
 
@@ -132,8 +50,6 @@ export interface StudioMainContentProps {
   // Theme
   themeLevel: number;
   toggleTheme: () => void;
-  colorTheme: ColorTheme;
-  setColorTheme: (theme: ColorTheme) => void;
 
   // Search
   showSearch: boolean;
@@ -283,7 +199,7 @@ export interface StudioMainContentProps {
 export default function StudioMainContent(props: StudioMainContentProps) {
   const {
   focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
-  themeLevel, toggleTheme, colorTheme, setColorTheme,
+  themeLevel, toggleTheme,
   showSearch, setShowSearch, searchQuery, setSearchQuery,
     showShortcuts, setShowShortcuts,
     showGlobalSearch, setShowGlobalSearch, globalSearchQuery, setGlobalSearchQuery,
@@ -388,14 +304,6 @@ export default function StudioMainContent(props: StudioMainContentProps) {
               </button>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-white/10" />
-
-              {/* Color Theme Picker */}
-              <ColorThemePicker 
-                colorTheme={colorTheme} 
-                setColorTheme={setColorTheme} 
-                isKO={isKO} 
-              />
             </div>
             <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
           </div>

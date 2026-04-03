@@ -35,7 +35,7 @@ import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import * as PI from "@/components/code-studio/PanelImports";
-import { useStudioTheme } from "@/hooks/useStudioTheme";
+// Theme is applied globally by UnifiedSettingsProvider — no per-studio hook needed
 import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
 import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
 import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
@@ -200,8 +200,7 @@ function CodeStudioShellInner() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   
-  // Apply theme system (same as novel studio)
-  useStudioTheme();
+  // Theme is applied globally by UnifiedSettingsProvider in layout.tsx
 
   // ── File System ──
   const { tree: files, setTree: setFiles, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);

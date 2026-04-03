@@ -18,7 +18,7 @@ import { useProjectManager } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
-import { useStudioTheme } from '@/hooks/useStudioTheme';
+import { useUnifiedSettings } from '@/lib/UnifiedSettingsContext';
 import { useStudioSession } from '@/hooks/useStudioSession';
 import { useStudioImport } from '@/hooks/useStudioImport';
 import { useStudioQuickStart } from '@/hooks/useStudioQuickStart';
@@ -141,14 +141,13 @@ export default function StudioShell() {
     ? (isKO ? '\uAC1C\uC778 \uD0A4 \uCD94\uAC00' : 'Add Key')
     : t('ui.apiKeySetUp');
 
-  const {
-    themeLevel, toggleTheme,
-    colorTheme, setColorTheme,
-    focusMode, setFocusMode,
-    showShortcuts, setShowShortcuts,
-    showSearch, setShowSearch,
-    searchQuery, setSearchQuery,
-  } = useStudioTheme();
+  const { theme, toggleTheme } = useUnifiedSettings();
+  const themeLevel = theme === 'dark' ? 0 : 1;
+
+  const [focusMode, setFocusMode] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // ── Combined UI State ──
   type UiState = {
@@ -519,7 +518,7 @@ export default function StudioShell() {
     <div
       className="flex h-dvh overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
       data-testid="studio-content"
-      data-theme={themeLevel === 0 ? 'dark' : 'light'}
+      data-theme={theme}
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 
@@ -611,7 +610,7 @@ export default function StudioShell() {
       <StudioMainContent
         focusMode={focusMode} setFocusMode={setFocusMode}
         isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        themeLevel={themeLevel} toggleTheme={toggleTheme} colorTheme={colorTheme} setColorTheme={setColorTheme}
+        themeLevel={themeLevel} toggleTheme={toggleTheme}
         showSearch={showSearch} setShowSearch={setShowSearch}
         searchQuery={searchQuery} setSearchQuery={setSearchQuery}
         showShortcuts={showShortcuts} setShowShortcuts={setShowShortcuts}
