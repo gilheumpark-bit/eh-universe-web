@@ -122,7 +122,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
             href={`/archive?cat=${article.category.toLowerCase()}`}
             className="motion-rise inline-block font-mono text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
           >
-            ← ARCHIVE / {article.category}
+            ← {T({ ko: '아카이브', en: 'ARCHIVE', jp: 'アーカイブ', cn: '档案库' })} / {article.category}
           </Link>
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-xl mb-0">

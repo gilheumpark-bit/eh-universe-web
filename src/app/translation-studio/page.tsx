@@ -7,8 +7,11 @@ const TranslatorStudioApp = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[70vh] items-center justify-center font-mono text-sm text-slate-500">
-        번역 스튜디오 로딩…
+      <div className="flex min-h-[70vh] items-center justify-center font-mono text-sm text-text-tertiary">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-accent-amber/30 border-t-accent-amber rounded-full animate-spin" />
+          <span>Translation Studio</span>
+        </div>
       </div>
     ),
   },
