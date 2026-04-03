@@ -6,7 +6,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, Send } from 'lucide-react';
+import { Sparkles, Send, Key } from 'lucide-react';
 import type { AppLanguage, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import { createT } from '@/lib/i18n';
@@ -270,23 +270,29 @@ export default function WritingTabInline(props: Props) {
           <div ref={messagesEndRef} className="h-32" />
         </div>
 
-        {/* 소설 전용 하단 입력창 (Sticky) — AI 모드일 때만 표시 */}
-        {writingMode === 'ai' && !showAiLock && currentSessionId && (
+        {/* 소설 전용 하단 입력창 (Sticky) — AI 모드일 때 표시 */}
+        {writingMode === 'ai' && currentSessionId && (
           <div className="p-4 md:p-6 bg-linear-to-t from-bg-primary via-bg-primary/95 to-transparent sticky bottom-0 z-20">
+            {showAiLock && (
+              <div className="mb-3 flex items-center gap-2 rounded-xl border border-accent-amber/20 bg-accent-amber/5 px-4 py-2.5 text-xs text-accent-amber">
+                <Key className="w-3.5 h-3.5 shrink-0" />
+                <span>{isKO ? '스플래시 화면에서 API 키를 등록하면 AI 생성을 사용할 수 있습니다.' : 'Register an API key from the splash screen to use AI generation.'}</span>
+              </div>
+            )}
             <div className="relative group bg-bg-secondary border border-border rounded-2xl shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 flex items-end">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={t('writing.inputPlaceholder')}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
+                placeholder={showAiLock ? (isKO ? 'API 키를 등록해주세요' : 'Please register an API key') : t('writing.inputPlaceholder')}
                 className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-text-primary placeholder-text-tertiary resize-none max-h-32 leading-relaxed"
                 rows={1}
-                disabled={isGenerating}
+                disabled={isGenerating || showAiLock}
               />
-              <button 
-                onClick={() => handleSend()} 
-                disabled={!input.trim() || isGenerating}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${input.trim() && !isGenerating ? 'bg-accent-purple text-white shadow-lg' : 'bg-bg-tertiary text-text-tertiary opacity-30'}`}
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isGenerating || showAiLock}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${input.trim() && !isGenerating && !showAiLock ? 'bg-accent-purple text-white shadow-lg' : 'bg-bg-tertiary text-text-tertiary opacity-30'}`}
               >
                 {isGenerating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
