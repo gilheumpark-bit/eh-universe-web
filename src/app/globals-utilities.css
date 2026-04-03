@@ -4,6 +4,53 @@
    optimizations, Code Studio responsive + resize handle
    ============================================================ */
 
+/* ── Deep Link Highlight ── */
+.eh-deep-link-highlight {
+  outline: 2px solid var(--color-accent-amber, #b8955c) !important;
+  outline-offset: 2px;
+  background-color: rgba(184, 149, 92, 0.1) !important;
+  animation: deep-link-pulse 0.6s ease-out;
+}
+@keyframes deep-link-pulse {
+  0% { outline-width: 4px; outline-offset: 4px; }
+  100% { outline-width: 2px; outline-offset: 2px; }
+}
+
+/* ── View Transitions ── */
+@view-transition { navigation: auto; }
+::view-transition-old(root) {
+  animation: 200ms ease-out both fade-out;
+}
+::view-transition-new(root) {
+  animation: 200ms ease-in both fade-in;
+}
+[data-transition-direction="forward"]::view-transition-old(root) {
+  animation: 200ms ease-out both slide-out-left;
+}
+[data-transition-direction="forward"]::view-transition-new(root) {
+  animation: 200ms ease-in both slide-in-right;
+}
+[data-transition-direction="backward"]::view-transition-old(root) {
+  animation: 200ms ease-out both slide-out-right;
+}
+[data-transition-direction="backward"]::view-transition-new(root) {
+  animation: 200ms ease-in both slide-in-left;
+}
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes slide-out-left { to { transform: translateX(-30px); opacity: 0; } }
+@keyframes slide-in-right { from { transform: translateX(30px); opacity: 0; } }
+@keyframes slide-out-right { to { transform: translateX(30px); opacity: 0; } }
+@keyframes slide-in-left { from { transform: translateX(-30px); opacity: 0; } }
+
+/* ── Mobile Safe Area ── */
+.eh-safe-area-padding {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
