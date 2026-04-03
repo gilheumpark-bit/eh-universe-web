@@ -6,7 +6,7 @@
 // Ported from CSL IDE SettingsPanel.tsx (simplified)
 
 import { useState, useCallback } from "react";
-import { X, RotateCcw, ShieldCheck, Shield, ShieldOff } from "lucide-react";
+import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle } from "lucide-react";
 
 export interface IDESettings {
   fontSize: number;
@@ -121,6 +121,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
   }, []);
   const onChange = onChangeProp ?? defaultOnChange;
   const [tab, setTab] = useState<SettingsTab>("editor");
+  const [showProConfirm, setShowProConfirm] = useState(false);
 
   const update = useCallback(<K extends keyof IDESettings>(key: K, value: IDESettings[K]) => {
     const next = { ...settings, [key]: value };
@@ -194,7 +195,13 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => update("actionApprovalMode", mode)}
+                    onClick={() => {
+                      if (mode === "pro" && settings.actionApprovalMode !== "pro") {
+                        setShowProConfirm(true);
+                      } else {
+                        update("actionApprovalMode", mode);
+                      }
+                    }}
                     className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
                       settings.actionApprovalMode === mode
                         ? `border-${color}/40 bg-${color}/10 text-${color}`
@@ -207,6 +214,37 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                   </button>
                 ))}
               </div>
+              {/* Pro Mode Confirmation Dialog */}
+              {showProConfirm && (
+                <div className="mt-2 rounded-lg border border-accent-red/40 bg-accent-red/5 p-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-accent-red shrink-0 mt-0.5" />
+                    <div className="flex-1 space-y-2">
+                      <p className="text-[10px] font-bold text-accent-red">Pro 모드 경고</p>
+                      <p className="text-[9px] text-text-secondary leading-relaxed">
+                        활성화 시 AI가 <span className="text-accent-red font-semibold">승인 없이</span> 터미널 명령어, 파일 덮어쓰기, 패키지 설치 등을 즉시 실행합니다. 예기치 않은 시스템 변경이 발생할 수 있습니다.
+                      </p>
+                      <div className="flex gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => { update("actionApprovalMode", "pro"); setShowProConfirm(false); }}
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md border border-accent-red/50 bg-accent-red/15 px-2 py-1.5 text-[9px] font-bold text-accent-red transition-all duration-200 hover:bg-accent-red/25 hover:scale-[1.02] active:scale-95"
+                        >
+                          <ShieldOff size={10} />
+                          위험 감수 — 활성화
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowProConfirm(false)}
+                          className="flex-1 rounded-md border border-border bg-bg-secondary/50 px-2 py-1.5 text-[9px] font-medium text-text-secondary transition-all duration-200 hover:text-text-primary hover:scale-[1.02] active:scale-95"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <Row label="Ghost Text"><Toggle checked={settings.aiGhostText} onChange={(v) => update("aiGhostText", v)} /></Row>
             <Row label="Temperature"><NumberInput value={settings.aiTemperature} onChange={(v) => update("aiTemperature", v)} min={0} max={2} step={0.1} /></Row>

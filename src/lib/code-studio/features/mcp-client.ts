@@ -183,13 +183,19 @@ export async function callTool(
 ): Promise<MCPCallResult> {
   const server = loadServers().find((s) => s.id === serverId);
   if (!server || server.status !== 'connected') {
-    return { content: 'Server not connected', isError: true };
+    return buildStructuredError('CONNECTION_ERROR', 'Server not connected', serverId, toolName, 'Check server status and reconnect');
   }
 
   try {
     const resp = await rpcCall(server.url, 'tools/call', { name: toolName, arguments: args });
     if (resp.error) {
-      return { content: resp.error.message, isError: true };
+      return buildStructuredError(
+        'RPC_ERROR',
+        resp.error.message,
+        serverId,
+        toolName,
+        resp.error.code === -32601 ? 'Tool not found — verify tool name' : 'Retry or check server logs',
+      );
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = resp.result as any;
@@ -198,8 +204,44 @@ export async function callTool(
       : JSON.stringify(result);
     return { content, isError: false };
   } catch (err) {
-    return { content: err instanceof Error ? err.message : String(err), isError: true };
+    const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+    return buildStructuredError(
+      isTimeout ? 'TIMEOUT' : 'EXCEPTION',
+      err instanceof Error ? err.message : String(err),
+      serverId,
+      toolName,
+      isTimeout ? 'Tool execution exceeded 30s — consider breaking into smaller operations' : 'Check network connectivity or server health',
+    );
   }
 }
 
 // IDENTITY_SEAL: PART-4 | role=connection & calls | inputs=serverId,toolName,args | outputs=MCPCallResult
+
+// ============================================================
+// PART 5 — Structured Error Builder
+// ============================================================
+// Returns JSON-formatted error content so Pro mode AI can parse
+// and attempt self-healing (e.g., installing missing packages).
+
+type MCPErrorType = 'CONNECTION_ERROR' | 'RPC_ERROR' | 'TIMEOUT' | 'EXCEPTION';
+
+function buildStructuredError(
+  errorType: MCPErrorType,
+  message: string,
+  serverId: string,
+  toolName: string,
+  suggestion: string,
+): MCPCallResult {
+  const payload = {
+    status: 'error' as const,
+    errorType,
+    message,
+    serverId,
+    toolName,
+    suggestion,
+    timestamp: Date.now(),
+  };
+  return { content: JSON.stringify(payload), isError: true };
+}
+
+// IDENTITY_SEAL: PART-5 | role=structured-error | inputs=errorType,message | outputs=MCPCallResult(JSON)
