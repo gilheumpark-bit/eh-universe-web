@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme inline {
+@theme {
   /* Archive / editorial base — 도서·원고실 톤 (SF 글로우·쿨 블루 최소화) */
   --color-bg-primary: #11100e;
   --color-bg-secondary: #1a1816;
