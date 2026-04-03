@@ -3,12 +3,41 @@
 // ============================================================
 
 import { streamChat } from '@/lib/ai-providers';
+import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
 import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 import { type AgentRole, AGENT_REGISTRY } from '@/types/code-studio-agent';
+
+/** 코드 스튜디오 에이전트 역할 → 멀티키 역할 매핑 */
+const CODE_ROLE_TO_MULTI_KEY: Record<string, MultiKeyAgentRole> = {
+  // Leadership → reviewer (전략적 판단)
+  'team-leader': 'reviewer',
+  'frontend-lead': 'reviewer',
+  'backend-lead': 'reviewer',
+  // Generation → coder
+  'domain-analyst': 'coder',
+  'state-designer': 'coder',
+  'css-layout': 'coder',
+  'interaction-motion': 'coder',
+  'core-engine': 'coder',
+  'api-binding': 'coder',
+  // Verification → analyst
+  'overflow-guard': 'analyst',
+  'security-auth': 'analyst',
+  'memory-cache': 'analyst',
+  'render-optimizer': 'analyst',
+  'deadcode-scanner': 'analyst',
+  'coding-convention': 'analyst',
+  'stress-tester': 'analyst',
+  'dependency-linker': 'analyst',
+  // Repair → coder
+  'progressive-repair': 'coder',
+  'snapshot-manager': 'coder',
+};
 
 // Re-export for consumers that need the new 19-agent types
 export type { AgentRole };
@@ -318,9 +347,9 @@ async function runSingleAgent(
     confidence: 0,
   };
 
-  await streamChat({
+  const streamOpts = {
     systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}`,
-    messages: [{ role: 'user', content: userInput }],
+    messages: [{ role: 'user' as const, content: userInput }],
     temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,
     onChunk(text: string) {
@@ -328,7 +357,17 @@ async function runSingleAgent(
       agentMsg.content = accumulated;
       onMessage({ ...agentMsg });
     },
-  });
+  };
+
+  // 멀티키 활성 시 역할별 슬롯 사용, 아니면 기존 단일키 fallback
+  if (isMultiKeyActive()) {
+    await streamWithMultiKey({
+      ...streamOpts,
+      role: CODE_ROLE_TO_MULTI_KEY[role] ?? 'general',
+    });
+  } else {
+    await streamChat(streamOpts);
+  }
 
   agentMsg.content = accumulated;
   agentMsg.timestamp = Date.now();

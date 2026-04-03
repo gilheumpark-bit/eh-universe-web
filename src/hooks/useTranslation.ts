@@ -5,6 +5,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
 import {
   type TranslationConfig,
@@ -78,18 +79,23 @@ async function callAI(
   signal?: AbortSignal,
   temperature: number = 0.3
 ): Promise<string> {
-  const provider = getActiveProvider();
-  const apiKey = getApiKey(provider);
-  if (!apiKey) throw new Error('API key not configured');
-
   let result = '';
-  await streamChat({
+  const opts = {
     systemInstruction: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
+    messages: [{ role: 'user' as const, content: userPrompt }],
     temperature,
     signal,
     onChunk: (text: string) => { result += text; },
-  });
+  };
+
+  // 멀티키 활성 시 translator 역할 슬롯 사용, 아니면 기존 단일키
+  if (isMultiKeyActive()) {
+    await streamWithMultiKey({ ...opts, role: 'translator' });
+  } else {
+    const apiKey = getApiKey(getActiveProvider());
+    if (!apiKey) throw new Error('API key not configured');
+    await streamChat(opts);
+  }
   return result.trim();
 }
 
@@ -149,7 +155,31 @@ async function scoreTranslation(
     if (resp.ok) {
       const data = await resp.json();
       const raw = typeof data === 'string' ? data : JSON.stringify(data);
-      return parseScoreResponse(raw, config.mode);
+      const primaryScore = parseScoreResponse(raw, config.mode);
+
+      // 멀티키 활성 시 2차 교차 검증 (analyst 역할 슬롯 사용)
+      if (isMultiKeyActive()) {
+        try {
+          let secondaryRaw = '';
+          await streamWithMultiKey({
+            role: 'analyst',
+            systemInstruction: 'You are a translation quality scoring system. Respond ONLY with the JSON object requested.',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.1,
+            signal: signal ?? AbortSignal.timeout(30_000),
+            onChunk: (c) => { secondaryRaw += c; },
+          });
+          if (secondaryRaw.trim()) {
+            const secondaryScore = parseScoreResponse(secondaryRaw, config.mode);
+            // 두 점수의 평균으로 교차 검증 (편차가 크면 보수적 점수 채택)
+            return mergeScores(primaryScore, secondaryScore);
+          }
+        } catch {
+          // 교차 검증 실패 시 1차 점수 그대로 사용
+        }
+      }
+
+      return primaryScore;
     }
   } catch {
     // structured output 실패 → 스트리밍 폴백
@@ -163,6 +193,23 @@ async function scoreTranslation(
     0.1
   );
   return parseScoreResponse(raw, config.mode);
+}
+
+/** 두 점수를 병합: 평균 + 편차가 클 때 보수적 점수 선택 */
+function mergeScores(a: ChunkScoreDetail, b: ChunkScoreDetail): ChunkScoreDetail {
+  const merged = { ...a };
+  // 공통 축의 점수를 평균
+  for (const key of Object.keys(a.axes) as Array<keyof typeof a.axes>) {
+    const va = a.axes[key] ?? 0;
+    const vb = b.axes[key] ?? 0;
+    const diff = Math.abs(va - vb);
+    // 편차 > 20이면 보수적(낮은) 쪽, 아니면 평균
+    (merged.axes as Record<string, number>)[key] = diff > 20 ? Math.min(va, vb) : Math.round((va + vb) / 2);
+  }
+  // 전체 점수도 재계산
+  const axisValues = Object.values(merged.axes).filter((v): v is number => typeof v === 'number');
+  merged.score = axisValues.length > 0 ? Math.round(axisValues.reduce((s, v) => s + v, 0) / axisValues.length) : a.score;
+  return merged;
 }
 
 // ============================================================
