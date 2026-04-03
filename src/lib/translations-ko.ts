@@ -270,6 +270,8 @@ const translations = {
     "directive": "지침",
     "directivePlaceholder": "프롬프트 지침 (예: \"문체를 하드보일드로\", \"대화 비율 50%\", \"1인칭 시점\")",
     "describeFirstScene": "아래 입력창에 첫 장면을 묘사하세요",
+    "modePickerCaption": "집필 모드",
+    "emptyStateManualHint": "AI 없이 직접 원고를 쓰려면 아래 버튼을 누르거나, 상단의 「글쓰기」를 선택하세요.",
     "noApiKeyStart": "API 키 없이 시작하려면:",
     "startManualEdit": "글쓰기 모드로 시작",
     "inlineEditComplete": "[인라인 편집 완료]",

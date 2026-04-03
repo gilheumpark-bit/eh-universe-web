@@ -7,7 +7,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   FilePlus, FolderPlus, Pencil, Trash2, Copy, Clipboard,
-  Columns2, ChevronRight,
+  Columns2, ChevronRight, Scissors, ClipboardPaste, Sparkles,
+  TextSelect, Command,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 
@@ -218,3 +219,44 @@ export function buildFileExplorerMenu(isFolder: boolean, lang: string): ContextM
 }
 
 // IDENTITY_SEAL: PART-4 | role=FileExplorerMenuBuilder | inputs=isFolder | outputs=ContextMenuItem[]
+
+// ============================================================
+// PART 5 — Editor surface (Monaco) context menu
+// ============================================================
+
+/** Right-click menu for the code editor body; actions via {@link runEditorSurfaceMenuAction} */
+export function buildEditorSurfaceMenu(lang: string): ContextMenuItem[] {
+  return [
+    { id: "editor-cut", label: L4(lang, { ko: "잘라내기", en: "Cut" }), icon: <Scissors size={12} />, shortcut: "Ctrl+X" },
+    { id: "editor-copy", label: L4(lang, { ko: "복사", en: "Copy" }), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
+    { id: "editor-paste", label: L4(lang, { ko: "붙여넣기", en: "Paste" }), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
+    { id: "editor-sep-1", label: "", separator: true },
+    {
+      id: "editor-format",
+      label: L4(lang, { ko: "문서 서식", en: "Format Document" }),
+      icon: <Sparkles size={12} />,
+      shortcut: "Ctrl+Shift+I",
+    },
+    {
+      id: "editor-select-all",
+      label: L4(lang, { ko: "모두 선택", en: "Select All" }),
+      icon: <TextSelect size={12} />,
+      shortcut: "Ctrl+A",
+    },
+    { id: "editor-sep-2", label: "", separator: true },
+    {
+      id: "editor-monaco-commands",
+      label: L4(lang, { ko: "에디터 명령…", en: "Editor Commands…" }),
+      icon: <Command size={12} />,
+      shortcut: "F1",
+    },
+    {
+      id: "editor-app-commands",
+      label: L4(lang, { ko: "스튜디오 명령 팔레트", en: "Studio Command Palette" }),
+      icon: <Command size={12} />,
+      shortcut: "Ctrl+Shift+P",
+    },
+  ];
+}
+
+// IDENTITY_SEAL: PART-5 | role=EditorSurfaceMenuBuilder | inputs=lang | outputs=ContextMenuItem[]

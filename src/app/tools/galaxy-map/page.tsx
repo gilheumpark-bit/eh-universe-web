@@ -1,7 +1,6 @@
 "use client";
 
 import Header from "@/components/Header";
-import Link from "next/link";
 import { useLang, L2 } from "@/lib/LangContext";
 import ToolNav from "@/components/tools/ToolNav";
 

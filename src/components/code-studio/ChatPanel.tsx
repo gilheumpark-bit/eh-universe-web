@@ -12,6 +12,8 @@ import {
 import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
 import { getServers, addServer, connectServer, callTool } from "@/lib/code-studio/features/mcp-client";
+import { logger } from "@/lib/logger";
+import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-spec-bridge";
 
 interface ChatSession {
   id: string;
@@ -135,6 +137,18 @@ export function ChatPanel({
   const [renameValue, setRenameValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    try {
+      const seeded = localStorage.getItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
+      if (!seeded) return;
+      setInput((prev) => prev || seeded);
+      localStorage.removeItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
+    } catch (err) {
+      logger.warn("code-studio.chat.seed", "Failed to load project-spec chat seed", err);
+    }
+  }, [isMounted]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

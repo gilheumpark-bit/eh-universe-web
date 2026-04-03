@@ -47,10 +47,9 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
     if (!hydrated || !currentSessionId) return;
     const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
     if (saved !== null) {
-      // eslint-disable-next-line react-hooks/purity
-      setEditDraft(saved);
+      setTimeout(() => setEditDraft(saved), 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [currentSessionId, hydrated]);
 
   useEffect(() => {

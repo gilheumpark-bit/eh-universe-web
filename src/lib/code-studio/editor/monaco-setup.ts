@@ -177,6 +177,7 @@ export function getEditorOptions(opts: EditorSetupOptions = {}): Record<string, 
     formatOnType: true,
     linkedEditing: true,
     fixedOverflowWidgets: true,
+    contextmenu: true,
   };
 }
 

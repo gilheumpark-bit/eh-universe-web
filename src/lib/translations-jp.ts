@@ -270,6 +270,8 @@ const translations = {
     "directive": "指示",
     "directivePlaceholder": "プロンプト指示（例：「ハードボイルドな文体」「対話50%」「一人称視点」）",
     "describeFirstScene": "下の入力欄に最初のシーンを描写してください",
+    "modePickerCaption": "執筆モード",
+    "emptyStateManualHint": "AIを使わずに直接書くには、下のボタンを押すか、上部の「直接編集」を選んでください。",
     "noApiKeyStart": "APIキーなしで始めるには：",
     "startManualEdit": "手動編集モードで開始",
     "inlineEditComplete": "[インライン編集完了]",

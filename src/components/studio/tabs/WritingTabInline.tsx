@@ -13,6 +13,8 @@ import { createT } from '@/lib/i18n';
 import { RightChatPanel } from '@/components/studio/tabs/RightChatPanel';
 import { useWritingChat } from '@/hooks/useWritingChat';
 import type { ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
+import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -81,12 +83,13 @@ interface Props {
 export default function WritingTabInline(props: Props) {
   const {
     language, currentSession, currentSessionId,
-    writingMode,
+    writingMode, setWritingMode,
     editDraft, setEditDraft, editDraftRef,
     isGenerating, lastReport,
     handleSend, handleRegenerate,
     messagesEndRef, searchQuery, filteredMessages,
     showAiLock,
+    hasApiKey, setShowApiKeyModal,
     writingColumnShell,
     input, setInput,
     suggestions, setSuggestions, pipelineResult,
@@ -99,6 +102,7 @@ export default function WritingTabInline(props: Props) {
 
   const t = createT(language);
   const isKO = language === 'KO';
+  const textMenu = useTextAreaContextMenu(language);
 
   // Fix #10: Streaming auto-scroll with manual scroll detection
   const streamContainerRef = useRef<HTMLDivElement>(null);
@@ -128,6 +132,51 @@ export default function WritingTabInline(props: Props) {
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-bg-primary">
       {/* 7: 소설 본문 영역 */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
+        {/* Split 레이아웃에서도 집필 모드 전환 — 메인 스크롤 영역에서도 상단에 고정 (sticky) */}
+        <div className="sticky top-0 z-30 shrink-0 px-3 py-2.5 border-b border-border/60 bg-bg-primary/95 backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
+          <p className="text-center text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary mb-2">
+            {t('writingMode.modePickerCaption')}
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center max-w-4xl mx-auto">
+            <button
+              type="button"
+              onClick={() => {
+                if (!hasApiKey) {
+                  setShowApiKeyModal(true);
+                  return;
+                }
+                setWritingMode('ai');
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+                writingMode === 'ai'
+                  ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple shadow-[0_0_0_1px_rgba(168,85,247,0.25)]'
+                  : 'border-border text-text-secondary hover:border-accent-purple/40'
+              }`}
+            >
+              {t('writingMode.draftGen')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setWritingMode('edit');
+                if (!editDraft && currentSession.messages.length > 0) {
+                  const allText = currentSession.messages
+                    .filter((m) => m.role === 'assistant' && m.content)
+                    .map((m) => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
+                    .join('\n\n---\n\n');
+                  setEditDraft(allText);
+                }
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+                writingMode === 'edit'
+                  ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-[0_0_0_1px_rgba(245,158,11,0.25)]'
+                  : 'border-border text-text-secondary hover:border-accent-amber/40'
+              }`}
+            >
+              {t('writingMode.manualEdit')}
+            </button>
+          </div>
+        </div>
         <div 
           ref={streamContainerRef} 
           onScroll={handleStreamScroll} 
@@ -163,11 +212,28 @@ export default function WritingTabInline(props: Props) {
               <>
                 <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                 {currentSession.messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-center space-y-6 py-20">
+                  <div className="flex flex-col items-center justify-center text-center space-y-6 py-12 md:py-20 px-2">
                     <Sparkles className="w-16 h-16 text-accent-purple/20 animate-pulse" />
-                    <div className="space-y-2">
+                    <div className="space-y-3 max-w-md">
                       <p className="text-text-primary text-xl font-black">{t('engine.startPrompt')}</p>
                       <p className="text-text-tertiary text-xs font-mono">{t('writingMode.describeFirstScene')}</p>
+                      <p className="text-text-tertiary text-[11px] leading-relaxed pt-1">{t('writingMode.emptyStateManualHint')}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWritingMode('edit');
+                          if (!editDraft && currentSession.messages.length > 0) {
+                            const allText = currentSession.messages
+                              .filter((m) => m.role === 'assistant' && m.content)
+                              .map((m) => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim())
+                              .join('\n\n---\n\n');
+                            setEditDraft(allText);
+                          }
+                        }}
+                        className="mt-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-accent-amber/40 bg-accent-amber/10 text-accent-amber hover:bg-accent-amber/20 transition-colors"
+                      >
+                        {t('writingMode.startManualEdit')}
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -194,6 +260,7 @@ export default function WritingTabInline(props: Props) {
                   ref={editDraftRef}
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
+                  onContextMenu={textMenu.openMenu}
                   className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-purple outline-none transition-all resize-none shadow-inner"
                   placeholder={t('writingMode.typeManuscript')}
                 />
@@ -249,6 +316,15 @@ export default function WritingTabInline(props: Props) {
         setActiveTab={setActiveTab}
         hostedProviders={props.hostedProviders}
       />
+      {textMenu.menuState && (
+        <ContextMenu
+          x={textMenu.menuState.x}
+          y={textMenu.menuState.y}
+          items={textMenu.items}
+          onSelect={textMenu.handleSelect}
+          onClose={textMenu.closeMenu}
+        />
+      )}
     </div>
   );
 }

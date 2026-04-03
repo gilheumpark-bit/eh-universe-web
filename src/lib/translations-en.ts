@@ -270,6 +270,8 @@ const translations = {
     "directive": "Directive",
     "directivePlaceholder": "Prompt directive (e.g. \"hardboiled style\", \"50% dialogue\", \"1st person POV\")",
     "describeFirstScene": "Describe the first scene in the input below",
+    "modePickerCaption": "Writing mode",
+    "emptyStateManualHint": "To type without AI, use the button below or choose Write at the top of this column.",
     "noApiKeyStart": "To start without API key:",
     "startManualEdit": "Start in Write mode",
     "inlineEditComplete": "[Inline Edit Complete]",

@@ -37,6 +37,9 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import * as PI from "@/components/code-studio/PanelImports";
 import { useStudioTheme } from "@/hooks/useStudioTheme";
 import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
+import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
+import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
+import type * as MonacoNS from "monaco-editor";
 
 // Extracted components
 import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
@@ -230,6 +233,8 @@ function CodeStudioShellInner() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showQuickOpen, setShowQuickOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [mobileEditorSurfaceMenu, setMobileEditorSurfaceMenu] = useState<{ x: number; y: number } | null>(null);
+  const mobileEditorSurfaceTargetRef = useRef<MonacoNS.editor.IStandaloneCodeEditor | null>(null);
 
   // ── Analysis/Verification State ──
   type VerifyState = {
@@ -792,28 +797,50 @@ function CodeStudioShellInner() {
 
   // Mobile editor panel (simplified)
   const mobileEditorPanel = (
-    <div className="flex h-full flex-col">
-      <PI.EditorTabsComponent openFiles={openFiles} activeFileId={activeFileId} onSelectFile={(id) => setActiveFileId(id)} onCloseFile={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }} />
-      {activeFile && <BreadcrumbComponent path={["project", "src", activeFile.name]} isModified={activeFile.isDirty} />}
-      <div className="flex-1 min-h-0">
-        {activeFile ? (
-          <MonacoEditor height="100%" language={activeFile.language} path={activeMobileEditorPath} value={activeFile.content} onChange={handleEditorChange} theme="vs-dark"
-            options={{ fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize, wordWrap: isMobile ? "on" as const : settings.wordWrap, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 }, fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", lineNumbers: isMobile ? "off" as const : "on" as const, renderLineHighlight: "line" as const, bracketPairColorization: { enabled: true }, smoothScrolling: true, cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const }}
-            onMount={(editor, monaco) => {
-              import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco, editor, { theme: "dark" }));
-              import("@/lib/code-studio/editor/editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco, editor));
-              import("@/lib/code-studio/ai/ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco));
-            }}
-          />
-        ) : !loaded ? (
-          <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-accent-green/40" /></div>
-        ) : !hasEverOpened ? (
-          <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
-        ) : (
-          <div className="flex h-full items-center justify-center"><div className="text-center"><div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div><p className="font-mono text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p></div></div>
-        )}
+    <>
+      <div className="flex h-full flex-col">
+        <PI.EditorTabsComponent openFiles={openFiles} activeFileId={activeFileId} onSelectFile={(id) => setActiveFileId(id)} onCloseFile={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }} />
+        {activeFile && <BreadcrumbComponent path={["project", "src", activeFile.name]} isModified={activeFile.isDirty} />}
+        <div className="flex-1 min-h-0">
+          {activeFile ? (
+            <MonacoEditor height="100%" language={activeFile.language} path={activeMobileEditorPath} value={activeFile.content} onChange={handleEditorChange} theme="vs-dark"
+              options={{ fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize, wordWrap: isMobile ? "on" as const : settings.wordWrap, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 }, fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", lineNumbers: isMobile ? "off" as const : "on" as const, renderLineHighlight: "line" as const, bracketPairColorization: { enabled: true }, smoothScrolling: true, cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const, contextmenu: true }}
+              onMount={(editor, monaco) => {
+                const ed = editor as MonacoNS.editor.IStandaloneCodeEditor;
+                const ctxSub = attachEditorSurfaceContextMenu(ed, (pos, target) => {
+                  mobileEditorSurfaceTargetRef.current = target;
+                  setMobileEditorSurfaceMenu(pos);
+                });
+                ed.onDidDispose(() => ctxSub.dispose());
+                import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco, editor, { theme: "dark" }));
+                import("@/lib/code-studio/editor/editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco, editor));
+                import("@/lib/code-studio/ai/ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco));
+              }}
+            />
+          ) : !loaded ? (
+            <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-accent-green/40" /></div>
+          ) : !hasEverOpened ? (
+            <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
+          ) : (
+            <div className="flex h-full items-center justify-center"><div className="text-center"><div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div><p className="font-mono text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p></div></div>
+          )}
+        </div>
       </div>
-    </div>
+      {mobileEditorSurfaceMenu && (
+        <ContextMenu
+          x={mobileEditorSurfaceMenu.x}
+          y={mobileEditorSurfaceMenu.y}
+          items={buildEditorSurfaceMenu(lang)}
+          onSelect={(id) => {
+            runEditorSurfaceMenuAction(mobileEditorSurfaceTargetRef.current, id, () => setShowCommandPalette(true));
+          }}
+          onClose={() => {
+            setMobileEditorSurfaceMenu(null);
+            mobileEditorSurfaceTargetRef.current = null;
+          }}
+        />
+      )}
+    </>
   );
 
   const chatPanel = (

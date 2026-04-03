@@ -270,6 +270,8 @@ const translations = {
     "directive": "指令",
     "directivePlaceholder": "提示指令（例：「硬汉派风格」「对话50%」「第一人称视角」）",
     "describeFirstScene": "在下方输入框描述第一个场景",
+    "modePickerCaption": "写作模式",
+    "emptyStateManualHint": "若要不使用 AI 直接撰写，请点击下方按钮或选择顶部的「手动编辑」。",
     "noApiKeyStart": "不用API密钥开始：",
     "startManualEdit": "以手动编辑模式开始",
     "inlineEditComplete": "[内联编辑完成]",

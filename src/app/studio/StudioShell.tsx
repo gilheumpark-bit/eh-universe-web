@@ -330,7 +330,7 @@ export default function StudioShell() {
   useEffect(() => {
     if (!aiCapabilitiesLoaded) return;
     if (hasAiAccess) {
-      setWritingMode(prev => prev === 'edit' ? 'ai' : prev);
+      // 플랫폼/호스티드 키가 있어도 사용자가 '수동 편집(edit)'을 선택한 상태를 유지해야 함 (강제로 AI로 되돌리지 않음).
       localStorage.setItem('noa_writing_access', 'api');
     } else {
       setWritingMode(prev => (prev === 'ai' || prev === 'refine' || prev === 'canvas' || prev === 'advanced') ? 'edit' : prev);

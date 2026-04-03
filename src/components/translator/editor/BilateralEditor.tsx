@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive } from 'lucide-react';
+import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 
 export function BilateralEditor() {
   const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel } = useTranslator();
@@ -11,6 +13,7 @@ export function BilateralEditor() {
   
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLTextAreaElement>(null);
+  const textMenu = useTextAreaContextMenu(langKo ? 'KO' : 'EN');
   
   const isDraggingSplit = useRef(false);
 
@@ -220,6 +223,7 @@ export function BilateralEditor() {
             className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-secondary font-sans transition-colors placeholder:text-white/10 placeholder:font-light"
             value={source}
             onChange={(e) => setSource(e.target.value)}
+            onContextMenu={textMenu.openMenu}
             spellCheck={false}
           />
         </div>
@@ -249,10 +253,20 @@ export function BilateralEditor() {
             className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-white/10 placeholder:font-light"
             value={result}
             onChange={(e) => setResult(e.target.value)}
+            onContextMenu={textMenu.openMenu}
             spellCheck={false}
           />
         </div>
       </div>
+      {textMenu.menuState && (
+        <ContextMenu
+          x={textMenu.menuState.x}
+          y={textMenu.menuState.y}
+          items={textMenu.items}
+          onSelect={textMenu.handleSelect}
+          onClose={textMenu.closeMenu}
+        />
+      )}
     </div>
   );
 }

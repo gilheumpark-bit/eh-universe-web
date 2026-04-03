@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Files, Columns2, Command, Settings, Loader2,
@@ -17,8 +17,12 @@ import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features
 import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";
 import { registerCrossFileProviders } from "@/lib/code-studio/core/cross-file";
 import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
+import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
+import { useLang } from "@/lib/LangContext";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
+import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
 import * as PI from "@/components/code-studio/PanelImports";
+import type * as MonacoNS from "monaco-editor";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const BreadcrumbComponent = dynamic(
@@ -146,8 +150,11 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     fsUpdateContent, tcs, children,
   } = props;
 
+  const { lang } = useLang();
   const editorRef = useRef<unknown>(null);
   const crossFileDisposableRef = useRef<{ dispose(): void } | null>(null);
+  const editorSurfaceTargetRef = useRef<MonacoNS.editor.IStandaloneCodeEditor | null>(null);
+  const [editorSurfaceMenu, setEditorSurfaceMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Cleanup cross-file disposable on unmount
   useEffect(() => {
@@ -157,7 +164,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     };
   }, []);
 
-  // EditorGroup per-pane editor renderer
+  // EditorGroup per-pane editor renderer (isFocused is read at Monaco mount only; focus changes do not remount.)
   const renderEditorPane = useCallback((pane: EditorPane, isFocused: boolean) => {
     const paneFile = pane.files.find((f) => f.id === pane.activeFileId);
     if (!paneFile) {
@@ -185,13 +192,22 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           bracketPairColorization: { enabled: true },
           smoothScrolling: true,
           cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+          contextmenu: true,
         }}
-        onMount={isFocused ? (editor: unknown, monaco: unknown) => {
+        onMount={(editor: unknown, monaco: unknown) => {
+          const ed = editor as MonacoNS.editor.IStandaloneCodeEditor;
+          const mon = monaco as Parameters<typeof setupMonaco>[0];
+          const ctxSub = attachEditorSurfaceContextMenu(ed, (pos, target) => {
+            editorSurfaceTargetRef.current = target;
+            setEditorSurfaceMenu(pos);
+          });
+          ed.onDidDispose(() => ctxSub.dispose());
+          if (!isFocused) return;
           editorRef.current = editor;
-          setupMonaco(monaco as Parameters<typeof setupMonaco>[0], editor as Parameters<typeof setupMonaco>[1], { theme: "dark" });
-          registerEditorFeatures(monaco as Parameters<typeof registerEditorFeatures>[0], editor as Parameters<typeof registerEditorFeatures>[1]);
-          registerGhostTextProvider(monaco as Parameters<typeof registerGhostTextProvider>[0]);
-        } : undefined}
+          setupMonaco(mon, ed, { theme: "dark" });
+          registerEditorFeatures(mon as Parameters<typeof registerEditorFeatures>[0], ed);
+          registerGhostTextProvider(mon as Parameters<typeof registerGhostTextProvider>[0]);
+        }}
       />
     );
   }, [files, settings.fontSize, settings.tabSize, settings.wordWrap, settings.minimap, fsUpdateContent, onOpenFiles, tcs.selectFile]);
@@ -208,7 +224,13 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         if (node) onFileSelect(node);
       },
     });
+    const ed = editor as MonacoNS.editor.IStandaloneCodeEditor;
+    const ctxSub = attachEditorSurfaceContextMenu(ed, (pos, target) => {
+      editorSurfaceTargetRef.current = target;
+      setEditorSurfaceMenu(pos);
+    });
     (editor as { onDidDispose: (cb: () => void) => void }).onDidDispose(() => {
+      ctxSub.dispose();
       cancelGhostText();
       crossFileDisposableRef.current?.dispose();
       crossFileDisposableRef.current = null;
@@ -217,6 +239,18 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       onCursorChange(e.position.lineNumber, e.position.column);
     });
   }, [files, onFileSelect, onCursorChange]);
+
+  const handleEditorSurfaceMenuSelect = useCallback(
+    (id: string) => {
+      runEditorSurfaceMenuAction(editorSurfaceTargetRef.current, id, onShowCommandPalette);
+    },
+    [onShowCommandPalette],
+  );
+
+  const closeEditorSurfaceMenu = useCallback(() => {
+    setEditorSurfaceMenu(null);
+    editorSurfaceTargetRef.current = null;
+  }, []);
 
   // Expose editor ref for outline navigation etc.
   const navigateToLine = useCallback((line: number) => {
@@ -358,6 +392,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
                   smoothScrolling: true,
                   cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
                   stickyScroll: { enabled: true },
+                  contextmenu: true,
                 }}
                 onMount={handleMountDesktopEditor}
               />
@@ -368,6 +403,16 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         {/* Right panel slot — injected via children from Shell */}
         {children}
       </div>
+
+      {editorSurfaceMenu && (
+        <ContextMenu
+          x={editorSurfaceMenu.x}
+          y={editorSurfaceMenu.y}
+          items={buildEditorSurfaceMenu(lang)}
+          onSelect={handleEditorSurfaceMenuSelect}
+          onClose={closeEditorSurfaceMenu}
+        />
+      )}
     </div>
   );
 }

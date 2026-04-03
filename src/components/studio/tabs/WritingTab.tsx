@@ -8,6 +8,8 @@ import type { HFCPState } from '@/engine/hfcp';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
+import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -92,6 +94,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
 }: WritingTabProps) => {
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
+  const textMenu = useTextAreaContextMenu(language);
   const handleApplyEdit = React.useCallback(() => {
     if (!editDraft.trim()) return;
     const now = Date.now();
@@ -327,7 +330,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">
                     <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
-                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-mono resize-y" />
+                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} onContextMenu={textMenu.openMenu} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-mono resize-y" />
                   </div>
                 ) : (
                   <InlineRewriter content={editDraft} language={language} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
@@ -346,7 +349,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 2 ? 'bg-pink-600/20 text-pink-400 border border-pink-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>💓 {t('canvas.emotion')}</div>
                   <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 3 ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>👁 {t('canvas.sensory')}</div>
                 </div>
-                <textarea value={canvasContent} onChange={e => setCanvasContent(e.target.value)} className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif outline-none focus:border-accent-purple transition-colors resize-y" />
+                <textarea value={canvasContent} onChange={e => setCanvasContent(e.target.value)} onContextMenu={textMenu.openMenu} className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif outline-none focus:border-accent-purple transition-colors resize-y" />
               </div>
             )}
             
@@ -433,6 +436,15 @@ const WritingTab: React.FC<WritingTabProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {textMenu.menuState && (
+        <ContextMenu
+          x={textMenu.menuState.x}
+          y={textMenu.menuState.y}
+          items={textMenu.items}
+          onSelect={textMenu.handleSelect}
+          onClose={textMenu.closeMenu}
+        />
       )}
     </div>
   );

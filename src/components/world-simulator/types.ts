@@ -283,7 +283,7 @@ export const RULE_LEVELS: { lv: number; ko: string; en: string; desc_ko: string;
 ];
 
 // EH engine intensity calculator (reserved for future use)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export function _getEHModuleIntensity(pct: number) {
   const R = pct;
   return {

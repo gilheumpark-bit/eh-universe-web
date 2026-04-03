@@ -23,6 +23,13 @@ import type { BugReport } from "@/lib/code-studio/pipeline/bugfinder";
 import type { StressReport } from "@/lib/code-studio/pipeline/stress-test";
 import type { VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
 import type { ComposerMode } from "@/lib/code-studio/core/composer-state";
+import { saveProjectSpec } from "@/lib/code-studio/core/project-spec";
+import {
+  CODE_STUDIO_SPEC_CHAT_SEED_KEY,
+  buildProjectSpecChatSeed,
+  toCoreProjectSpec,
+  type ProjectSpecFormData,
+} from "@/lib/code-studio/core/project-spec-bridge";
 import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio/ai/ai-features";
 import type { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import * as PI from "@/components/code-studio/PanelImports";
@@ -252,9 +259,13 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
   const panelPropsMap: Record<string, () => React.ReactNode> = {
     "project-spec": () => (
       <PI.ProjectSpecFormComponent
-        onComplete={(_spec) => {
-          toast("명세서가 로드되었습니다. 템플릿 또는 코드를 가져옵니다.", "success");
-          onSetRightPanel(null);
+        onComplete={(spec: ProjectSpecFormData) => {
+          const coreSpec = toCoreProjectSpec(spec);
+          saveProjectSpec(coreSpec);
+          const chatSeed = buildProjectSpecChatSeed(coreSpec);
+          localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed);
+          toast("명세서가 저장되었고, Chat 패널에 생성 지시문이 준비되었습니다.", "success");
+          onSetRightPanel("chat");
         }}
         onClose={() => onSetRightPanel(null)}
       />

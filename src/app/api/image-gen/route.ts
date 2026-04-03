@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl } = body;
+    const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl: _referenceImageUrl } = body;
 
     if (!provider || !prompt || !apiKey) {
       return NextResponse.json({ error: 'Missing required fields: provider, prompt, apiKey' }, { status: 400 });
