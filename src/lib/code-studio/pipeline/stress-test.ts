@@ -68,22 +68,110 @@ export function getScenarios(): StressScenario[] {
 // IDENTITY_SEAL: PART-2 | role=scenarios | inputs=none | outputs=StressScenario[]
 
 // ============================================================
-// PART 3 — AI Stress Analysis
+// PART 3 — Static Pre-Computation (실측 메트릭)
 // ============================================================
+// AI에게 넘기기 전에 코드에서 직접 계산 가능한 지표를 먼저 뽑는다.
+// 이 숫자들은 추측이 아니라 실제 코드 기반 정적 계산값이다.
 
-// 가상 시뮬레이션: AI가 코드 구조를 분석하여 부하 시나리오를 시뮬레이션합니다.
-// 실제 HTTP 요청을 발생시키지 않습니다. 브라우저 IDE 환경의 구조적 한계.
+interface StaticMetrics {
+  totalLines: number;
+  functionCount: number;
+  nestedLoopDepth: number;        // 최대 루프 중첩 깊이
+  asyncWithoutTryCatch: number;   // try 없는 await 수
+  fetchCallCount: number;         // fetch/axios 호출 수
+  setTimeoutCount: number;        // setTimeout/setInterval 수
+  eventListenerCount: number;     // addEventListener 수 (메모리 릭 위험)
+  consoleLogCount: number;        // console.log 수 (성능 영향)
+  recursiveFunctionCount: number; // 자기 호출 함수 수
+  largeObjectLiteral: number;     // 100자+ 객체 리터럴 수
+  cyclomaticEstimate: number;     // if/else/switch/ternary 분기 수 (복잡도 근사)
+}
+
+function computeStaticMetrics(code: string): StaticMetrics {
+  const lines = code.split('\n');
+  const totalLines = lines.length;
+
+  // 함수 수
+  const functionCount = (code.match(/(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_]\w*)\s*=>|(?:async\s+)?(?:get|set|static\s+)?\w+\s*\([^)]*\)\s*\{)/g) ?? []).length;
+
+  // 중첩 루프 깊이
+  let maxLoopDepth = 0;
+  let currentLoopDepth = 0;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^\s*(?:for\s*\(|while\s*\(|do\s*\{|\.forEach\(|\.map\(|\.reduce\()/.test(trimmed)) {
+      currentLoopDepth++;
+      if (currentLoopDepth > maxLoopDepth) maxLoopDepth = currentLoopDepth;
+    }
+    if (trimmed.includes('}') && currentLoopDepth > 0) currentLoopDepth--;
+  }
+
+  // async/await without try-catch (간이 탐지)
+  let asyncWithoutTryCatch = 0;
+  let inTry = 0;
+  for (const line of lines) {
+    if (line.includes('try')) inTry++;
+    if (line.includes('}') && inTry > 0) inTry--;
+    if (/\bawait\b/.test(line) && inTry === 0) asyncWithoutTryCatch++;
+  }
+
+  const fetchCallCount = (code.match(/\bfetch\s*\(|axios\.|\.get\s*\(|\.post\s*\(/g) ?? []).length;
+  const setTimeoutCount = (code.match(/\bsetTimeout\b|\bsetInterval\b/g) ?? []).length;
+  const eventListenerCount = (code.match(/addEventListener|\.on\s*\(/g) ?? []).length;
+  const consoleLogCount = (code.match(/console\.\w+\s*\(/g) ?? []).length;
+
+  // 재귀 함수 (간이 탐지: 함수 이름이 본문에서 자기 자신 호출)
+  const fnNames = (code.match(/function\s+(\w+)/g) ?? []).map(m => m.replace('function ', ''));
+  let recursiveFunctionCount = 0;
+  for (const name of fnNames) {
+    const bodyMatch = new RegExp(`function\\s+${name}[^}]*\\{([\\s\\S]*?)\\n\\}`, 'm').exec(code);
+    if (bodyMatch && bodyMatch[1].includes(name + '(')) recursiveFunctionCount++;
+  }
+
+  const largeObjectLiteral = (code.match(/\{[^}]{100,}\}/g) ?? []).length;
+  const cyclomaticEstimate = (code.match(/\bif\b|\belse\b|\bswitch\b|\bcase\b|\b\?\s*[^:]/g) ?? []).length;
+
+  return {
+    totalLines, functionCount, nestedLoopDepth: maxLoopDepth,
+    asyncWithoutTryCatch, fetchCallCount, setTimeoutCount,
+    eventListenerCount, consoleLogCount, recursiveFunctionCount,
+    largeObjectLiteral, cyclomaticEstimate,
+  };
+}
+
+// IDENTITY_SEAL: PART-3 | role=static-metrics | inputs=code | outputs=StaticMetrics
+
+// ============================================================
+// PART 4 — AI Virtual Simulation (가상 시뮬레이션)
+// ============================================================
+// 정적 메트릭(실측) + AI 구조 분석(추론) = 하이브리드 시뮬레이션
+
 const STRESS_SYSTEM =
-  'You are a senior performance engineer. Run a VIRTUAL SIMULATION: analyze the code structure and simulate how it would behave under load.\n\n' +
-  'Analyze these specific patterns:\n' +
-  '1. O(n²)+ algorithms, nested loops, recursive calls without memoization\n' +
-  '2. Unbatched DB/API calls (N+1 queries), missing connection pooling\n' +
-  '3. Memory: unbounded caches, event listener leaks, large object retention\n' +
-  '4. Concurrency: missing rate limiting, no backpressure, race conditions\n' +
-  '5. I/O: synchronous file ops, missing stream processing, large payloads\n' +
-  '6. Error handling: missing timeouts, no circuit breakers, cascade failure paths\n\n' +
-  'Base your simulation on these structural patterns, NOT on guessing. If the code has no server logic, say so.\n\n' +
+  'You are a senior performance engineer. Run a VIRTUAL SIMULATION using the pre-computed static metrics AND your own code analysis.\n\n' +
+  'IMPORTANT: Static metrics below are REAL measurements from the code, not guesses. Use them as ground truth.\n\n' +
+  'Your job: combine these hard metrics with structural analysis to simulate load behavior.\n' +
+  'Focus on: how nested loops scale with users, whether unguarded awaits cause cascading timeouts, whether event listeners leak under sustained load.\n\n' +
   'Respond with JSON: {"avgResponseMs":50,"p50Ms":40,"p95Ms":200,"p99Ms":500,"maxResponseMs":1500,"errorRate":0.02,"throughputRps":500,"totalRequests":30000,"failedRequests":600,"breakingPoint":{"virtualUsers":800,"errorRate":0.15,"avgResponseMs":2000},"recommendations":["..."]}';
+
+function buildMetricsBlock(m: StaticMetrics): string {
+  const warnings: string[] = [];
+  if (m.nestedLoopDepth >= 2) warnings.push(`⚠ O(n^${m.nestedLoopDepth}) 중첩 루프 탐지`);
+  if (m.asyncWithoutTryCatch > 0) warnings.push(`⚠ try-catch 없는 await ${m.asyncWithoutTryCatch}건`);
+  if (m.eventListenerCount > 3) warnings.push(`⚠ addEventListener ${m.eventListenerCount}건 — 메모리 릭 위험`);
+  if (m.recursiveFunctionCount > 0) warnings.push(`⚠ 재귀 함수 ${m.recursiveFunctionCount}건 — 스택 오버플로우 위험`);
+  if (m.cyclomaticEstimate > 20) warnings.push(`⚠ 분기 복잡도 ${m.cyclomaticEstimate} — 고복잡도`);
+
+  return [
+    `[STATIC METRICS — computed, not guessed]`,
+    `Lines: ${m.totalLines} | Functions: ${m.functionCount}`,
+    `Loop depth: ${m.nestedLoopDepth} | Cyclomatic: ${m.cyclomaticEstimate}`,
+    `Fetch calls: ${m.fetchCallCount} | Async unguarded: ${m.asyncWithoutTryCatch}`,
+    `Event listeners: ${m.eventListenerCount} | Timers: ${m.setTimeoutCount}`,
+    `Recursive: ${m.recursiveFunctionCount} | Console: ${m.consoleLogCount}`,
+    `Large objects: ${m.largeObjectLiteral}`,
+    warnings.length > 0 ? `\n[WARNINGS]\n${warnings.join('\n')}` : '',
+  ].join('\n');
+}
 
 export async function analyzeStress(
   code: string,
@@ -91,13 +179,16 @@ export async function analyzeStress(
   scenario: StressScenario,
   signal?: AbortSignal,
 ): Promise<StressResult> {
+  const metrics = computeStaticMetrics(code);
+  const metricsBlock = buildMetricsBlock(metrics);
+
   let raw = '';
   await streamChat({
     systemInstruction: STRESS_SYSTEM,
     messages: [
       {
         role: 'user',
-        content: `File: ${fileName} (${code.split('\n').length} lines)\nScenario: ${scenario.name} — ${scenario.description}\nVirtual Users: ${scenario.virtualUsers}, Duration: ${scenario.durationSec}s, Ramp-up: ${scenario.rampUpSec}s\n\nAnalyze for performance bottlenecks:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
+        content: `File: ${fileName}\nScenario: ${scenario.name} — ${scenario.description}\nVirtual Users: ${scenario.virtualUsers}, Duration: ${scenario.durationSec}s, Ramp-up: ${scenario.rampUpSec}s\n\n${metricsBlock}\n\nCode:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
     onChunk: (t) => { raw += t; },

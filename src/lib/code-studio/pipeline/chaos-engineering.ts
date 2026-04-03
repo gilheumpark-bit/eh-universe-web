@@ -86,22 +86,65 @@ export function getScenarios(): FailureSimulation[] {
 // IDENTITY_SEAL: PART-2 | role=registry | inputs=none | outputs=FailureSimulation[]
 
 // ============================================================
-// PART 3 — AI Chaos Analysis
+// PART 3 — Static Resilience Metrics (실측 복원력 지표)
 // ============================================================
 
-// 가상 시뮬레이션: AI가 코드 구조를 분석하여 장애 시나리오를 시뮬레이션합니다.
-// 실제 DB 중단/네트워크 분리를 수행하지 않습니다. 브라우저 IDE 환경의 구조적 한계.
+interface ResilienceMetrics {
+  tryCatchBlocks: number;
+  catchWithoutHandler: number;  // catch {} 빈 블록
+  fetchWithoutTimeout: number;  // AbortController 없는 fetch
+  nullChecks: number;           // ?. ?? 사용 수
+  errorBoundaryCount: number;   // ErrorBoundary 패턴
+  retryPatterns: number;        // retry/backoff 패턴
+  fallbackPatterns: number;     // fallback/default 패턴
+  resourceCleanup: number;      // finally/cleanup/dispose 패턴
+}
+
+function computeResilienceMetrics(code: string): ResilienceMetrics {
+  const tryCatchBlocks = (code.match(/\btry\s*\{/g) ?? []).length;
+  const catchWithoutHandler = (code.match(/catch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
+
+  const fetchCount = (code.match(/\bfetch\s*\(/g) ?? []).length;
+  const abortCount = (code.match(/AbortController|AbortSignal|signal\s*:/g) ?? []).length;
+  const fetchWithoutTimeout = Math.max(0, fetchCount - abortCount);
+
+  const nullChecks = (code.match(/\?\.|\.?\?\?/g) ?? []).length;
+  const errorBoundaryCount = (code.match(/ErrorBoundary|componentDidCatch|onError/g) ?? []).length;
+  const retryPatterns = (code.match(/retry|backoff|maxRetries|maxAttempts/gi) ?? []).length;
+  const fallbackPatterns = (code.match(/fallback|default[A-Z]|placeholder|skeleton/gi) ?? []).length;
+  const resourceCleanup = (code.match(/\bfinally\b|cleanup|dispose|removeEventListener|clearTimeout|clearInterval/g) ?? []).length;
+
+  return { tryCatchBlocks, catchWithoutHandler, fetchWithoutTimeout, nullChecks, errorBoundaryCount, retryPatterns, fallbackPatterns, resourceCleanup };
+}
+
+function buildResilienceBlock(m: ResilienceMetrics): string {
+  const warnings: string[] = [];
+  if (m.catchWithoutHandler > 0) warnings.push(`⚠ 빈 catch 블록 ${m.catchWithoutHandler}건 — 에러 삼킴`);
+  if (m.fetchWithoutTimeout > 0) warnings.push(`⚠ timeout 없는 fetch ${m.fetchWithoutTimeout}건 — 무한 대기 위험`);
+  if (m.retryPatterns === 0 && m.tryCatchBlocks > 0) warnings.push(`⚠ retry/backoff 패턴 0건 — 1회 실패 시 포기`);
+  if (m.resourceCleanup === 0) warnings.push(`⚠ 리소스 정리(finally/cleanup) 0건`);
+
+  return [
+    `[RESILIENCE METRICS — computed, not guessed]`,
+    `try/catch: ${m.tryCatchBlocks} | empty catch: ${m.catchWithoutHandler}`,
+    `fetch w/o timeout: ${m.fetchWithoutTimeout} | null guards: ${m.nullChecks}`,
+    `ErrorBoundary: ${m.errorBoundaryCount} | retry patterns: ${m.retryPatterns}`,
+    `Fallback UI: ${m.fallbackPatterns} | Resource cleanup: ${m.resourceCleanup}`,
+    warnings.length > 0 ? `\n[WARNINGS]\n${warnings.join('\n')}` : '',
+  ].join('\n');
+}
+
+// IDENTITY_SEAL: PART-3 | role=resilience-metrics | inputs=code | outputs=ResilienceMetrics
+
+// ============================================================
+// PART 4 — AI Virtual Chaos Simulation (가상 장애 시뮬레이션)
+// ============================================================
+
 const CHAOS_SYSTEM =
-  'You are a chaos engineering expert. Run a VIRTUAL SIMULATION: analyze the code structure and simulate how it would handle failure scenarios.\n\n' +
-  'Check these specific patterns:\n' +
-  '1. try/catch coverage: are all external calls (fetch, DB, file I/O) wrapped?\n' +
-  '2. Timeout handling: do fetch/API calls have explicit timeouts?\n' +
-  '3. Retry logic: is there exponential backoff? Or naive infinite retry?\n' +
-  '4. Circuit breaker: does repeated failure trigger a cooldown?\n' +
-  '5. Graceful degradation: does the UI show fallback when backend fails?\n' +
-  '6. Data validation: are null/undefined/malformed inputs guarded?\n' +
-  '7. State cleanup: do error paths clean up resources (connections, listeners)?\n\n' +
-  'Base your simulation on ACTUAL code patterns found, not assumptions.\n\n' +
+  'You are a chaos engineering expert. Run a VIRTUAL SIMULATION using the pre-computed resilience metrics AND your own code analysis.\n\n' +
+  'IMPORTANT: Resilience metrics below are REAL measurements from the code, not guesses. Use them as ground truth.\n\n' +
+  'Your job: combine these hard metrics with structural analysis to simulate failure impact.\n' +
+  'Focus on: whether empty catches hide failures, whether unguarded fetches cause cascading timeouts, whether missing cleanup causes resource exhaustion.\n\n' +
   'Respond with JSON: {"severity":"major","description":"...","affectedComponents":["..."],"dataLoss":false,"recoveryTime":"...","hasHandler":false,"handlerQuality":"none","priority":"high","recommendation":"...","pattern":"circuit-breaker"}';
 
 export async function simulateFailure(
@@ -111,6 +154,8 @@ export async function simulateFailure(
   signal?: AbortSignal,
 ): Promise<SimulationResult> {
   const sim = SCENARIOS.find((s) => s.scenario === scenario) ?? SCENARIOS[0];
+  const metrics = computeResilienceMetrics(code);
+  const metricsBlock = buildResilienceBlock(metrics);
   let raw = '';
 
   await streamChat({
@@ -118,7 +163,7 @@ export async function simulateFailure(
     messages: [
       {
         role: 'user',
-        content: `File: ${fileName} (${code.split('\n').length} lines)\nFailure: ${sim.label} — ${sim.description}\nInjection point: ${sim.injectionPoint}\n\nAnalyze resilience:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
+        content: `File: ${fileName}\nFailure: ${sim.label} — ${sim.description}\nInjection point: ${sim.injectionPoint}\n\n${metricsBlock}\n\nCode:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
     onChunk: (t) => { raw += t; },
