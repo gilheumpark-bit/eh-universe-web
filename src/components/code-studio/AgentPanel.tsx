@@ -366,7 +366,33 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
         });
 
         if (result.success) {
-          setSummary(L4(lang, { ko: `하네스 통과 (${result.iterations}회)`, en: `Harness passed (${result.iterations} iteration(s))` }));
+          // 정적 하네스 통과 → 동적 테스트 실행
+          setSummary(L4(lang, { ko: `정적 검증 통과. 동적 테스트 실행 중...`, en: `Static checks passed. Running dynamic tests...` }));
+          try {
+            const { runDynamicSuite, runFrontendGate1, runFrontendGate2 } = await import('@/lib/code-studio/harness');
+
+            // 프론트엔드 게이트
+            const fg1 = runFrontendGate1(applyCandidate.code);
+            const fg2 = runFrontendGate2(applyCandidate.code);
+
+            // 동적 테스트 (WebContainer)
+            const dynamic = await runDynamicSuite(wc, applyCandidate.code, {
+              entryFunction: 'main',
+              onProgress: (gate, status) => {
+                setSummary(L4(lang, { ko: `동적 테스트: ${gate} ${status}`, en: `Dynamic: ${gate} ${status}` }));
+              },
+            });
+
+            const totalScore = Math.round((fg1.score + fg2.score + dynamic.totalScore) / 3);
+            const allPassed = fg1.passed && fg2.passed && dynamic.allPassed;
+
+            setSummary(L4(lang, {
+              ko: `검증 완료: ${allPassed ? '전 게이트 통과 ✅' : '일부 미통과 ⚠️'} (점수: ${totalScore}/100, ${result.iterations}회 반복)`,
+              en: `Verification: ${allPassed ? 'All gates passed ✅' : 'Some gates failed ⚠️'} (Score: ${totalScore}/100, ${result.iterations} iteration(s))`,
+            }));
+          } catch {
+            setSummary(L4(lang, { ko: `하네스 통과 (${result.iterations}회)`, en: `Harness passed (${result.iterations} iteration(s))` }));
+          }
         } else {
           setSummary(L4(lang, {
             ko: `하네스: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length}개 에러 잔존 (${result.iterations}/${result.maxIterations}회)`,

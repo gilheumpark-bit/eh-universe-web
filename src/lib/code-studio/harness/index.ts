@@ -21,3 +21,6 @@ export { analyzeSpyPatterns, generateFuzzInputs, extractFunctionParams, analyzeF
 
 // Headless First Strategy (뼈대→검증→디자인→검증)
 export { runHeadlessFirst, buildSkeletonPrompt, buildDesignPrompt, type HeadlessFirstConfig, type HeadlessFirstResult } from './headless-first';
+
+// Dynamic Executor (WebContainer 런타임 검증 — Spy/Fuzz/Mutation/Visual)
+export { runSpyTest, runFuzzTest, runMutationTest, runVisualTest, runDynamicSuite, type DynamicTestResult } from './dynamic-executor';
