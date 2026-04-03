@@ -35,6 +35,14 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const [generalText, setGeneralText] = useState('');
   const [generalResult, setGeneralResult] = useState('');
   const [generalTranslating, setGeneralTranslating] = useState(false);
+  // Segment editor state (lazy loaded types)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [segments, setSegments] = useState<any[]>([]);
+  const [showSegmentView, setShowSegmentView] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [glossaryCandidates, setGlossaryCandidates] = useState<any[]>([]);
+  const [multiLangTargets, setMultiLangTargets] = useState<string[]>(['EN']);
+  const [tmCount, setTmCount] = useState(0);
   const [mode, setMode] = useState<TranslationMode>("fidelity");
   const [targetLang, setTargetLang] = useState<TranslationTarget>("EN");
   const [band, setBand] = useState<number>(BAND_META.default);
@@ -77,12 +85,18 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       }
     },
     onChunkComplete: (chunk) => {
-      setLogs(prev => [...prev.slice(-49), { 
-        id: Date.now(), 
+      setLogs(prev => [...prev.slice(-49), {
+        id: Date.now(),
         type: chunk.passed ? 'success' : 'error',
         text: `Chunk ${chunk.index + 1} completed — Score: ${(chunk.score * 100).toFixed(1)}%, Attempts: ${chunk.attempt}`,
         detail: chunk.translatedText
       }]);
+      // TM에 자동 저장 (소설 번역 청크)
+      if (chunk.sourceText && chunk.translatedText) {
+        import('@/lib/translation').then(({ addToTM }) => {
+          addToTM(chunk.sourceText, chunk.translatedText, 'KO', targetLang, chunk.passed);
+        }).catch(() => {});
+      }
     },
     onError: (err) => {
       logger.error("Translation", err);
@@ -148,7 +162,24 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       // 패스스루 복원
       const final = restorePassthrough(draft, map);
       setGeneralResult(final);
-      setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: 'Translation complete.' }]);
+
+      // 세그먼트 뷰 생성 (문장 정렬)
+      const { createSegments, addBatchToTM, extractTermsRuleBased } = await import('@/lib/translation');
+      const segs = createSegments(generalText, final);
+      setSegments(segs);
+      setShowSegmentView(true);
+
+      // TM에 자동 저장
+      const pairs = segs.filter((s: { source: string; target: string }) => s.source && s.target).map((s: { source: string; target: string }) => ({ source: s.source, target: s.target }));
+      addBatchToTM(pairs, 'KO', targetLang);
+      const { tmStats } = await import('@/lib/translation');
+      setTmCount(tmStats().total);
+
+      // 용어집 자동 추출 (규칙 기반, 빠름)
+      const candidates = extractTermsRuleBased(generalText);
+      setGlossaryCandidates(candidates);
+
+      setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Translation complete. ${segs.length} segments, ${pairs.length} TM entries saved, ${candidates.length} terms detected.` }]);
     } catch (err) {
       setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Error: ${err}` }]);
     } finally {
@@ -277,11 +308,122 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <div className="relative rounded-xl border border-[rgba(184,149,92,0.2)] bg-black/30 p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[rgba(184,149,92,0.7)]">{isKO ? '번역 결과' : 'Result'}</span>
-                <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
-                  {isKO ? '복사' : 'Copy'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowSegmentView(!showSegmentView)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
+                    {showSegmentView ? (isKO ? '전체 보기' : 'Full') : (isKO ? '문장 정렬' : 'Segments')}
+                  </button>
+                  <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
+                    {isKO ? '복사' : 'Copy'}
+                  </button>
+                </div>
               </div>
-              <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{generalResult}</div>
+              {showSegmentView && segments.length > 0 ? (
+                <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                  {segments.map((seg: { id: string; source: string; target: string; status: string; score: number; comment: string }, idx: number) => (
+                    <div key={seg.id} className="flex gap-2 group">
+                      <span className="shrink-0 w-6 text-[10px] text-text-tertiary text-right pt-2">{idx + 1}</span>
+                      <div className="flex-1 grid grid-cols-2 gap-2 rounded-lg border border-white/5 bg-white/2 p-2 hover:border-[rgba(184,149,92,0.2)] transition-colors">
+                        <div className="text-[12px] text-text-secondary leading-relaxed">{seg.source}</div>
+                        <input
+                          value={seg.target}
+                          onChange={async (e) => {
+                            const { editSegment } = await import('@/lib/translation');
+                            const updated = editSegment(seg, e.target.value);
+                            setSegments((prev: typeof segments) => prev.map((s: typeof seg) => s.id === seg.id ? updated : s));
+                          }}
+                          className="text-[12px] text-text-primary leading-relaxed bg-transparent outline-none border-b border-transparent focus:border-[rgba(184,149,92,0.3)]"
+                        />
+                      </div>
+                      <div className="shrink-0 flex flex-col gap-0.5">
+                        <button
+                          title={isKO ? '이 문장만 재번역' : 'Re-translate this sentence'}
+                          onClick={async () => {
+                            const { buildPartialRetranslatePrompt } = await import('@/lib/translation');
+                            const prev = segments[idx - 1];
+                            const next = segments[idx + 1];
+                            const prompt = buildPartialRetranslatePrompt(seg, targetLang, glossary, prev && next ? { prevSource: prev.source, prevTarget: prev.target, nextSource: next.source } : undefined);
+                            let result = '';
+                            await (await import('@/lib/ai-providers')).streamChat({ systemInstruction: '', messages: [{ role: 'user', content: prompt }], temperature: 0.3, onChunk: (c: string) => { result += c; } });
+                            if (result.trim()) {
+                              const { editSegment } = await import('@/lib/translation');
+                              const updated = editSegment(seg, result.trim());
+                              setSegments((prev: typeof segments) => prev.map((s: typeof seg) => s.id === seg.id ? { ...updated, status: 'edited' } : s));
+                            }
+                          }}
+                          className="text-[10px] px-1.5 py-0.5 rounded text-text-tertiary hover:text-accent-amber hover:bg-accent-amber/10 transition-colors"
+                        >↻</button>
+                        <button
+                          title={isKO ? '확정' : 'Confirm'}
+                          onClick={async () => {
+                            const { confirmSegment } = await import('@/lib/translation');
+                            setSegments((prev: typeof segments) => prev.map((s: typeof seg) => s.id === seg.id ? confirmSegment(s) : s));
+                          }}
+                          className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${seg.status === 'confirmed' ? 'text-accent-green bg-accent-green/10' : 'text-text-tertiary hover:text-accent-green hover:bg-accent-green/10'}`}
+                        >✓</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{generalResult}</div>
+              )}
+            </div>
+          )}
+
+          {/* 용어집 자동 추출 후보 */}
+          {glossaryCandidates.length > 0 && (
+            <details className="rounded-xl border border-white/8 bg-black/20 p-3">
+              <summary className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-tertiary cursor-pointer">
+                {isKO ? `자동 추출 용어 (${glossaryCandidates.length}개)` : `Auto-extracted terms (${glossaryCandidates.length})`}
+              </summary>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {glossaryCandidates.map((c: { term: string; type: string; confidence: number }, i: number) => (
+                  <button key={i} onClick={() => { setGlossaryTerm(c.term); }} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(184,149,92,0.08)] border border-[rgba(184,149,92,0.15)] font-mono text-[10px] text-[rgba(228,215,190,0.9)] hover:bg-[rgba(184,149,92,0.15)] transition-colors">
+                    {c.term} <span className="text-[8px] text-text-tertiary">{c.type}</span>
+                  </button>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {/* 내보내기 도구 */}
+          {generalResult && (
+            <div className="flex flex-wrap gap-2">
+              <span className="font-mono text-[10px] text-text-tertiary self-center">{isKO ? '내보내기:' : 'Export:'}</span>
+              {/* XLIFF */}
+              <button onClick={async () => {
+                if (segments.length === 0) return;
+                const { exportXLIFF } = await import('@/lib/translation');
+                const xml = exportXLIFF(segments, 'ko', targetLang.toLowerCase());
+                const blob = new Blob([xml], { type: 'application/xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `translation_${targetLang}.xlf`; a.click(); URL.revokeObjectURL(url);
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">XLIFF</button>
+              {/* TMX */}
+              <button onClick={async () => {
+                const { loadTM, exportTMX } = await import('@/lib/translation');
+                const entries = loadTM();
+                if (entries.length === 0) return;
+                const xml = exportTMX(entries);
+                const blob = new Blob([xml], { type: 'application/xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'translation_memory.tmx'; a.click(); URL.revokeObjectURL(url);
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TMX ({tmCount})</button>
+              {/* TBX */}
+              <button onClick={async () => {
+                if (Object.keys(glossary).length === 0) return;
+                const { exportTBX } = await import('@/lib/translation');
+                const xml = exportTBX(glossary, 'ko', targetLang.toLowerCase());
+                const blob = new Blob([xml], { type: 'application/xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'glossary.tbx'; a.click(); URL.revokeObjectURL(url);
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TBX</button>
+              {/* Plain text */}
+              <button onClick={() => {
+                const blob = new Blob([generalResult], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `translation_${targetLang}.txt`; a.click(); URL.revokeObjectURL(url);
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TXT</button>
             </div>
           )}
         </div>
