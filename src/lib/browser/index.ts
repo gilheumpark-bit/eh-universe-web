@@ -18,3 +18,18 @@ export { canShare, canShareFiles, shareText, shareFile, shareTranslation, shareV
 
 // Screen Wake Lock (화면 꺼짐 방지)
 export { canWakeLock, acquireWakeLock, releaseWakeLock, isWakeLockActive, withWakeLock } from './wake-lock';
+
+// AI Response Cache (같은 질문 → 캐시 히트 → 토큰 비용 0)
+export { getCachedResponse, cacheResponse, cacheStats, pruneExpiredCache, clearAICache } from './ai-cache';
+
+// View Transitions (부드러운 패널/탭 전환)
+export { supportsViewTransitions, withViewTransition, morphTransition, tabTransition } from './view-transitions';
+
+// Background Sync (오프라인 큐 → 온라인 복구 시 자동 재전송)
+export { enqueueSync, loadQueue, dequeueSync, clearSyncQueue, syncQueueSize, processQueueOnOnline, isOffline, onConnectivityChange, type SyncTask } from './background-sync';
+
+// PWA Badging (앱 아이콘 뱃지)
+export { canBadge, setBadge, clearBadge, incrementBadge, resetBadge, setBadgeCount } from './pwa-badge';
+
+// Keyboard Layout (키보드 배열 감지)
+export { detectKeyboardLayout, formatShortcut, type KeyboardLayoutInfo } from './keyboard-layout';
