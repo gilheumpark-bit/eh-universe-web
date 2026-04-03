@@ -6,7 +6,7 @@
 // Ported from CSL IDE SettingsPanel.tsx (simplified)
 
 import { useState, useCallback } from "react";
-import { X, RotateCcw } from "lucide-react";
+import { X, RotateCcw, ShieldCheck, Shield, ShieldOff } from "lucide-react";
 
 export interface IDESettings {
   fontSize: number;
@@ -28,6 +28,7 @@ export interface IDESettings {
   aiGhostText: boolean;
   aiAutoSuggestDelay: number;
   pipelinePassThreshold: number;
+  actionApprovalMode: "easy" | "normal" | "pro";
 }
 
 const DEFAULT_SETTINGS: IDESettings = {
@@ -37,6 +38,7 @@ const DEFAULT_SETTINGS: IDESettings = {
   formatOnSave: false, terminalFontSize: 12, aiTemperature: 0.7,
   aiMaxTokens: 4096, aiGhostText: true, aiAutoSuggestDelay: 800,
   pipelinePassThreshold: 77,
+  actionApprovalMode: "normal",
 };
 
 const STORAGE_KEY = "eh_code_studio_settings";
@@ -180,15 +182,41 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
         )}
         {tab === "ai" && (
           <>
+            {/* Action Approval Mode */}
+            <div className="pb-3 mb-3 border-b border-border">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">Action Approval</span>
+              <div className="flex gap-1.5 mt-2">
+                {([
+                  { mode: "easy" as const, icon: ShieldCheck, label: "Easy", desc: "모든 작업 승인 필요", color: "accent-green" },
+                  { mode: "normal" as const, icon: Shield, label: "Normal", desc: "위험 명령만 승인", color: "accent-amber" },
+                  { mode: "pro" as const, icon: ShieldOff, label: "Pro", desc: "완전 자율 실행", color: "accent-red" },
+                ]).map(({ mode, icon: ModeIcon, label, desc, color }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => update("actionApprovalMode", mode)}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+                      settings.actionApprovalMode === mode
+                        ? `border-${color}/40 bg-${color}/10 text-${color}`
+                        : 'border-border bg-bg-secondary/30 text-text-tertiary hover:border-border hover:text-text-secondary'
+                    }`}
+                  >
+                    <ModeIcon size={14} />
+                    <span className="font-bold">{label}</span>
+                    <span className="text-[8px] text-text-tertiary leading-tight">{desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             <Row label="Ghost Text"><Toggle checked={settings.aiGhostText} onChange={(v) => update("aiGhostText", v)} /></Row>
             <Row label="Temperature"><NumberInput value={settings.aiTemperature} onChange={(v) => update("aiTemperature", v)} min={0} max={2} step={0.1} /></Row>
             <Row label="Max Tokens"><NumberInput value={settings.aiMaxTokens} onChange={(v) => update("aiMaxTokens", v)} min={256} max={32768} step={256} /></Row>
             <Row label="Auto Suggest Delay (ms)"><NumberInput value={settings.aiAutoSuggestDelay} onChange={(v) => update("aiAutoSuggestDelay", v)} min={100} max={3000} step={100} /></Row>
-            <div className="pt-2 mt-2 border-t border-white/8">
-              <button 
-                type="button" 
+            <div className="pt-2 mt-2 border-t border-border">
+              <button
+                type="button"
                 onClick={onOpenAPIConfig}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 border border-accent-purple/30 rounded-lg text-xs font-mono transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 hover:scale-[1.02] active:scale-95 border border-accent-purple/30 rounded-lg text-xs font-mono transition-all duration-200"
               >
                 API Key Configuration
               </button>

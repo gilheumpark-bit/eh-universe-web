@@ -151,8 +151,18 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const canUseGoogleAuth = hydrated && authConfigured;
   const storageUsageBytes = hydrated ? getStorageUsageBytes() : 0;
   const storageUsageMb = storageUsageBytes / 1024 / 1024;
-  const storageUsagePct = Math.min(100, (storageUsageMb / 5) * 100);
-  const storageUsageColor = storageUsageMb > 4 ? 'bg-red-500' : storageUsageMb > 2 ? 'bg-yellow-500' : 'bg-green-500';
+  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
+      navigator.storage.estimate().then((est) => {
+        if (est.usage != null && est.quota != null) setStorageEstimate({ usage: est.usage, quota: est.quota });
+      });
+    }
+  }, []);
+  const quotaMb = storageEstimate ? storageEstimate.quota / 1024 / 1024 : 5;
+  const usageMb = storageEstimate ? storageEstimate.usage / 1024 / 1024 : storageUsageMb;
+  const storageUsagePct = Math.min(100, (usageMb / quotaMb) * 100);
+  const storageUsageColor = storageUsagePct > 80 ? 'bg-red-500' : storageUsagePct > 50 ? 'bg-yellow-500' : 'bg-green-500';
 
   // Sessions in chronological order (ep #1 = first created)
   const orderedSessions = [...sessions].sort((a, b) => a.lastUpdate - b.lastUpdate);
@@ -852,8 +862,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             {/* Storage usage bar */}
             <div className="mt-2">
               <div className="mb-1 flex justify-between text-[9px] font-mono text-text-tertiary">
-                <span>{storageUsageMb.toFixed(1)} MB / 5 MB</span>
-                {storageUsageMb > 3 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
+                <span>{usageMb < 1024 ? `${usageMb.toFixed(1)} MB` : `${(usageMb / 1024).toFixed(1)} GB`} / {quotaMb < 1024 ? `${quotaMb.toFixed(0)} MB` : `${(quotaMb / 1024).toFixed(1)} GB`}</span>
+                {storageUsagePct > 60 && <span className="text-yellow-400">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
               </div>
               <div className="h-1 overflow-hidden rounded-full bg-white/8">
                 <div className={`h-full ${storageUsageColor} rounded-full transition-all`} style={{ width: `${storageUsagePct}%` }} />

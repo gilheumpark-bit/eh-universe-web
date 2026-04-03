@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
+import { idbEstimateSize } from '@/lib/browser/idb-store';
 
 interface VersionedBackup {
   timestamp: number;
@@ -60,6 +61,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const providerName = PROVIDERS[activeProvider]?.name ?? activeProvider;
 
   const [apiKeyRefresh, setApiKeyRefresh] = useState(0);
+  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
+
+  useEffect(() => {
+    idbEstimateSize().then(setStorageEstimate);
+  }, []);
 
   const checkApiKeys = useCallback(() => {
     setApiKeyRefresh((n) => n + 1);
@@ -112,17 +118,36 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <div className="bg-black/40 p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
-                <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
-                  {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
-                </span>
+                {storageEstimate && storageEstimate.quota > 0 ? (() => {
+                  const usageMB = storageEstimate.usage / 1024 / 1024;
+                  const quotaMB = storageEstimate.quota / 1024 / 1024;
+                  const pct = (storageEstimate.usage / storageEstimate.quota) * 100;
+                  const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
+                  return (
+                    <span className={`text-xs font-black ${pct > 80 ? 'text-red-400' : pct > 50 ? 'text-yellow-400' : 'text-green-500'}`}>
+                      {formatSize(usageMB)} / {formatSize(quotaMB)}
+                    </span>
+                  );
+                })() : (
+                  <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
+                    {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
+                  </span>
+                )}
               </div>
               <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
-                  style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
-                />
+                {storageEstimate && storageEstimate.quota > 0 ? (
+                  <div
+                    className={`h-full rounded-full transition-all ${(() => { const pct = (storageEstimate.usage / storageEstimate.quota) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
+                    style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }}
+                  />
+                ) : (
+                  <div
+                    className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
+                    style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
+                  />
+                )}
               </div>
-              {getStorageUsageBytes() > 4 * 1024 * 1024 && (
+              {storageEstimate && storageEstimate.quota > 0 && (storageEstimate.usage / storageEstimate.quota) > 0.8 && (
                 <p className="text-[10px] text-red-400">{language === 'KO' ? '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.' : 'Storage nearly full. Delete old sessions or export a backup.'}</p>
               )}
             </div>

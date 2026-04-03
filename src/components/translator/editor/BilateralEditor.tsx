@@ -120,7 +120,7 @@ export function BilateralEditor() {
             <button
               type="button"
               title={langKo ? '저장·백업 패널 열기 (JSON·일괄보내기)' : 'Open save & backup panel'}
-              onClick={() => layout.setActiveLeftPanel('backup')}
+              onClick={() => { if (isZenMode) setIsZenMode(false); layout.setActiveLeftPanel('backup'); }}
               className={`shrink-0 flex items-center justify-center rounded-lg border p-1.5 sm:px-2.5 sm:py-1.5 text-[10px] font-semibold transition-all ${
                 layout.activeLeftPanel === 'backup'
                   ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber'
@@ -175,9 +175,10 @@ export function BilateralEditor() {
                 key={id}
                 type="button"
                 title={title}
-                onClick={() =>
-                  layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id)
-                }
+                onClick={() => {
+                  if (isZenMode) setIsZenMode(false);
+                  layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id);
+                }}
                 className={`rounded-lg border p-1.5 sm:p-2 transition-all duration-300 ${
                   layout.activeRightPanel === id
                     ? 'border-accent-purple/40 bg-accent-purple/10 text-accent-purple'
@@ -206,7 +207,7 @@ export function BilateralEditor() {
             <button
               type="button"
               title={langKo ? '설정·로그인·저장/백업' : 'Settings, sign-in, save & backup'}
-              onClick={() => layout.setActiveLeftPanel('settings')}
+              onClick={() => { if (isZenMode) setIsZenMode(false); layout.setActiveLeftPanel('settings'); }}
               className="p-1.5 sm:p-2 rounded-lg text-text-tertiary hover:text-text-primary transition-all"
             >
               <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

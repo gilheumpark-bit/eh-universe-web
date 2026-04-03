@@ -75,7 +75,15 @@ export function TranslatorShellInner() {
       {/* 2. Left Panel container */}
       {!isZenMode && layout.activeLeftPanel && (
         <>
-          <div 
+          {/* Mobile: overlay */}
+          <div className="lg:hidden fixed inset-0 z-[150] flex">
+            <div className="w-[85vw] max-w-[360px] bg-bg-secondary border-r border-border shadow-2xl">
+              <TranslatorPanelManager region="left" />
+            </div>
+            <div className="flex-1 bg-black/40" onClick={() => layout.setActiveLeftPanel(null)} />
+          </div>
+          {/* Desktop: inline */}
+          <div
             className="hidden lg:flex shrink-0 z-90 relative border-r border-border bg-bg-secondary/60 backdrop-blur-2xl transition-all duration-300 ease-out"
             style={{ width: layout.leftSidebarWidth }}
           >
@@ -100,13 +108,20 @@ export function TranslatorShellInner() {
       {/* 4. Right Panel container */}
       {!isZenMode && layout.activeRightPanel && (
         <>
-          {/* Resizer handles the width of Right Panel */}
+          {/* Mobile: overlay */}
+          <div className="lg:hidden fixed inset-0 z-[150] flex justify-end">
+            <div className="flex-1 bg-black/40" onClick={() => layout.setActiveRightPanel(null)} />
+            <div className="w-[85vw] max-w-[400px] bg-bg-secondary border-l border-border shadow-2xl">
+              <TranslatorPanelManager region="right" />
+            </div>
+          </div>
+          {/* Desktop: inline */}
           <div
             onMouseDown={onRightDragStart}
             className="hidden lg:block w-[6px] cursor-col-resize bg-transparent hover:bg-accent-purple/50 z-95 transition-colors shrink-0"
             style={{ marginLeft: -3, marginRight: -3 }}
           />
-          <div 
+          <div
             className="hidden lg:flex shrink-0 border-l border-border z-90 bg-bg-secondary/60 backdrop-blur-2xl transition-all duration-300 ease-out"
             style={{ width: layout.rightSidebarWidth }}
           >
