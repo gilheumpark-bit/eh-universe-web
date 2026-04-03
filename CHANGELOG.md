@@ -3,6 +3,65 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0] - 2026-04-04
+
+### Pipeline Merge — 40+ Feature Commits
+- `claude/check-pipeline-cOffy` 브랜치 master 병합 (98파일, +8,387줄)
+- 하네스 아키텍처, NOD 컨설턴트, 브라우저 API, 번역 시스템, 웹 피처 등
+
+### Theme — Light Mode 전면 대응
+- `@theme inline` → `@theme` — Tailwind CSS 4 런타임 변수 오버라이드 활성화
+- JS inline style로 라이트 모드 변수 강제 (oklch 변환 우회)
+- 소설/번역/코드 스튜디오 전체 100+ 하드코딩 다크 색상 교체
+  - `bg-[#11100e]`, `bg-[#0d1117]`, `bg-black/*` → `bg-bg-primary/*`, `bg-bg-secondary/*`
+  - `text-white/*` → `text-text-primary/*`
+  - `border-white/*` → `border-border`
+- 배지 라이트모드: classified/amber/allow/blue 4종 대응
+- PlanningView: 30+ amber rgba 하드코딩 → Tailwind 토큰
+
+### Dead Code Cleanup — 147 Files Deleted (-17,154 LOC)
+- 76개 소스 파일 삭제 (5 broken + 15 AI + 17 editor + 29 features + 3 pipeline + 7 core)
+- 66개 연관 테스트 파일 삭제
+- 5개 백업 디렉토리/파일 삭제 (-3,659줄)
+- 전수 grep 검증: 삭제 파일 import 깨짐 0건
+
+### Harness 3-Core Upgrade (63% → 85%)
+- **Spy 확장**: fetch → 6개 API (localStorage, sessionStorage, console.error, XMLHttpRequest, indexedDB)
+- **Mutation 확장**: 4종 → 11종 연산자 (>=, <=, !==, ||, +, -, *, return false)
+- **피드백 루프 연결**: `buildHarnessFeedback()` → `runHarnessLoop()` → AI 프롬프트 JSON
+- **프로토콜 ID**: 6개 게이트 태그 (GATE-SPY/FUZZ/MUT/AST/BUILD/TEST)
+- **타임아웃 가드**: `runWithTimeout()` 3초 제한 (while true 방어)
+- **Fail-Fast**: `runMasterHarness()` 단일 진입점 — Gate1(정적 0.1s) → Gate2(린터 0.2s) → Gate3(동적 3s)
+
+### UX Polish
+- 모바일 헤더: 텍스트 크기/간격 조정, 저장 상태 sm:hidden
+- 번역 스튜디오: API 배너 1줄 축약, 헤더 겹침 해결 (ZH/KO 2자 코드)
+- 코드 스튜디오: `onQuickVerify` 데스크탑 레이아웃 연결 (이지모드 버그 수정)
+- doc-header: 다크 gradient → `var(--color-surface-strong)` + 라이트 오버라이드
+
+### Design System Polish
+- `@theme` 토큰 확장: `--spacing-*` 6단계 + `--blur-*` 3단계
+- border-radius: 11종 하드코딩 → 5단계 `var(--radius-*)` 스케일
+- shadow: 하드코딩 rgba → `var(--shadow-panel/luxury)`
+- transition: 18종 → 3단계 `var(--transition-fast/normal/slow)`
+- backdrop-filter: 5종 → 3단계 `var(--blur-sm/md/lg)`
+- focus ring: 3곳 분산 → 단일 `*:focus-visible` + glow
+- hover 상태: ds-card-sm, ds-panel, zone-card 3개 추가
+
+### Code Quality
+- `@ts-ignore` 39건 → 0건 (proper type cast 교체)
+- `@ts-expect-error` → `@ts-ignore` 일괄 전환 (실험적 브라우저 API)
+- TODO/FIXME: 실제 1건만 존재 (나머지 106건은 감사 규칙 문자열)
+
+### Security
+- 시크릿 스캔: 실제 키 0건 (placeholder만)
+- `.gitignore` 강화: +30줄 (*.key, *.p12, credentials, _backup, *.sql, tmp-*)
+- 백업 파일 전수 삭제
+
+### Stats
+- 19 commits, 192 files changed
+- +2,144 / -19,298 lines (net -17,154)
+
 ## [1.2.1] - 2026-04-01
 
 ### Bug Fixes — Resilience
