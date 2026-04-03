@@ -17,10 +17,26 @@ import { generateMutations } from './adversarial-core';
 
 export interface DynamicTestResult {
   gate: string;
+  gateId?: string;
   passed: boolean;
   findings: string[];
   score: number;
   durationMs: number;
+}
+
+// ── Timeout Guard ──
+// AI가 while(true) 등 무한루프를 생성해도 서버가 뻗지 않도록 3초 타임아웃 강제
+const SANDBOX_TIMEOUT_MS = 3000;
+
+async function runWithTimeout(
+  wc: WebContainerInstance,
+  command: string,
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const execution = wc.run(command);
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`[TIMEOUT] ${command} — ${SANDBOX_TIMEOUT_MS}ms 초과. 무한루프 또는 과도한 연산 의심.`)), SANDBOX_TIMEOUT_MS),
+  );
+  return Promise.race([execution, timeout]);
 }
 
 // ── 1. Runtime Spy Execution ──
@@ -81,7 +97,7 @@ console.log('__SPY_REPORT__' + JSON.stringify(report));
 
   try {
     await wc.writeFile('_spy_test.mjs', spyWrapper);
-    const result = await wc.run('node _spy_test.mjs');
+    const result = await runWithTimeout(wc, 'node _spy_test.mjs');
     const output = result.stdout + result.stderr;
 
     // [GATE-SPY] Spy 리포트 파싱 — call_count 기반 판정
@@ -140,7 +156,7 @@ try {
 
     try {
       await wc.writeFile('_fuzz_test.mjs', fuzzCode);
-      const result = await wc.run('node _fuzz_test.mjs');
+      const result = await runWithTimeout(wc, 'node _fuzz_test.mjs');
       const output = result.stdout + result.stderr;
 
       if (output.includes('__FUZZ_CRASH__')) {
@@ -203,7 +219,7 @@ export async function runMutationTest(
     try {
       await wc.writeFile('_mut_code.mjs', mutatedCode);
       await wc.writeFile('_mut_test.mjs', testCode);
-      const result = await wc.run('node _mut_test.mjs');
+      const result = await runWithTimeout(wc, 'node _mut_test.mjs');
 
       if (result.exitCode === 0) {
         // 테스트 통과 = 변조를 못 잡음 = 테스트가 빈깡통
@@ -283,7 +299,7 @@ console.log('__VISUAL_REPORT__' + JSON.stringify(findings));
   try {
     // jsdom은 WebContainer에서 설치 가능
     await wc.writeFile('_visual_test.cjs', testScript);
-    const result = await wc.run('node _visual_test.cjs');
+    const result = await runWithTimeout(wc, 'node _visual_test.cjs');
     const output = result.stdout;
 
     const reportMatch = output.match(/__VISUAL_REPORT__(.+)/);

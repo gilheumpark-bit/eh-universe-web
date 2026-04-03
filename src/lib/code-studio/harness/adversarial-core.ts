@@ -29,6 +29,7 @@ export interface GateResult {
   passed: boolean;
   findings: string[];
   score: number;
+  durationMs?: number;
 }
 
 export interface SpyReport {
