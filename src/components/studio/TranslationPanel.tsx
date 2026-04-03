@@ -13,6 +13,7 @@ import type { TranslationSegment } from "@/lib/translation/editable-segment";
 import { bandLabel, modeDescription, BAND_META } from "@/engine/translation";
 import { GENRE_PRESETS } from "@/engine/genre-presets";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getTaintTracker } from "@/lib/noa/taint-tracker";
 
 interface TranslationPanelProps {
   language: AppLanguage;
@@ -213,12 +214,20 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
   const handleTranslate = useCallback(async () => {
     setLogs([]);
+    // L2 Taint: 소설 원고를 'novel' 도메인으로 태깅 + translation 이동 가능 확인
+    const taint = getTaintTracker();
+    if (!taint.canTransfer('novel', 'translation')) {
+      setLogs([{ id: Date.now(), type: 'error', text: 'Taint Policy: novel → translation transfer blocked' }]);
+      return;
+    }
     if (batchMode && manuscripts.length > 0) {
       // 배치 모드: 전체 에피소드 순차 번역 (실패 시 이어서 계속)
       setLogs([{ id: Date.now(), type: 'info', text: `Batch mode: ${manuscripts.length} episodes queued for translation...` }]);
       let completed = 0;
       for (const ms of manuscripts) {
         try {
+          // Taint 태깅: 각 에피소드 원고를 novel 도메인 오염 표시
+          taint.taint(ms.content?.toString().slice(0, 500) ?? '', 'novel');
           setLogs(prev => [...prev, { id: Date.now(), type: 'info', text: `EP.${ms.episode} (${completed + 1}/${manuscripts.length}) translating...` }]);
           await translateEpisode(ms, translationConfig);
           completed++;
@@ -234,6 +243,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       if (selectedEpisode === null) return;
       const ms = manuscripts.find((m) => m.episode === selectedEpisode);
       if (!ms) return;
+      // Taint 태깅: 단일 에피소드 원고를 novel 도메인 표시
+      taint.taint(ms.content?.toString().slice(0, 500) ?? '', 'novel');
       setLogs([{ id: Date.now(), type: 'info', text: `Initialization: Parsing episode ${selectedEpisode} (${ms.charCount} chars) into syntax chunks...` }]);
       try {
         await translateEpisode(ms, translationConfig);

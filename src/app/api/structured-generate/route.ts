@@ -13,6 +13,7 @@ import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-gena
 import type { AppLanguage } from '@/lib/studio-types';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { dispatchStructuredGeneration } from '@/services/aiProvidersStructured';
+import { validateConstrainedOutput, type ConstraintSchema } from '@/lib/noa/constrained-decoder';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,6 +172,31 @@ export async function POST(req: NextRequest) {
     const result = dispatched.result as any;
     if (result && typeof result === 'object') {
       result._meta = { provider: validated.input.provider, model: validated.input.model, language: validated.input.language };
+    }
+
+    // L3.1 Constrained Decoder: 클라이언트가 스키마를 전달한 경우 Guillotine 검증
+    if (validated.input.schema && result) {
+      const constraintSchema: ConstraintSchema = {
+        name: 'ClientSchema',
+        schema: validated.input.schema as Record<string, unknown>,
+        requiredFields: Object.keys((validated.input.schema as Record<string, unknown>).properties ?? {}),
+      };
+      const guillotine = validateConstrainedOutput(JSON.stringify(result), constraintSchema);
+      if (guillotine.verdict === 'KILL') {
+        logger.warn('Guillotine:KILL', { violations: guillotine.violations });
+        return NextResponse.json(
+          { error: 'Structured output schema violation', violations: guillotine.violations, _fallback: validated.input.fallback },
+          { status: 422 },
+        );
+      }
+      // HOLD → 자동 보정 제안 첨부
+      if (guillotine.verdict === 'HOLD' && result && typeof result === 'object') {
+        result._guillotine = {
+          verdict: 'HOLD',
+          missingVariables: guillotine.missingVariables,
+          autoCorrectSuggestions: guillotine.autoCorrectSuggestions,
+        };
+      }
     }
 
     return NextResponse.json(result);

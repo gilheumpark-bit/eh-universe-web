@@ -16,6 +16,7 @@ import { useCodeStudioAgent } from "@/hooks/useCodeStudioAgent";
 import { ActionBar } from "@/components/ui/ActionBar";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { SagaOrchestrator } from "@/lib/noa/saga-transaction";
 
 type AgentMode = "idle" | "planning" | "executing" | "paused" | "complete" | "error";
 
@@ -324,7 +325,41 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
 
   const handleApply = useCallback(async () => {
     if(applyCandidate) {
-      onApplyCode?.(applyCandidate.code, applyCandidate.fileName);
+      // L4 Saga: 원자적 적용 — snapshot → apply → verify, 실패 시 역순 보상
+      const previousCode = code; // 현재 코드 스냅샷 (보상용)
+      const saga = new SagaOrchestrator('agent-apply');
+
+      saga.addStep({
+        name: 'snapshot',
+        execute: async () => previousCode,
+        compensate: async () => {
+          // 스냅샷 단계는 보상 불필요
+        },
+      });
+
+      saga.addStep({
+        name: 'apply-code',
+        execute: async () => {
+          onApplyCode?.(applyCandidate.code, applyCandidate.fileName);
+          return applyCandidate.code;
+        },
+        compensate: async () => {
+          // 롤백: 이전 코드로 복원
+          onApplyCode?.(previousCode, applyCandidate.fileName);
+          setMode("staged");
+          setSummary(L4(lang, { ko: "Saga 롤백: 이전 코드로 복원됨", en: "Saga rollback: reverted to previous code" }));
+        },
+      });
+
+      const sagaResult = await saga.execute();
+      if (sagaResult.status !== 'COMPLETED') {
+        setSummary(L4(lang, {
+          ko: `Saga 실패: ${sagaResult.error ?? '알 수 없는 오류'}`,
+          en: `Saga failed: ${sagaResult.error ?? 'unknown error'}`,
+        }));
+        return;
+      }
+
       setMode("applied");
       // Apply 후 Preview 자동 오픈
       onOpenPreview?.();

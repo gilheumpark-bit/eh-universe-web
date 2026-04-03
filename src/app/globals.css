@@ -29,17 +29,19 @@
   --radius-lg: 18px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  /* Spacing scale — consistent padding/margin */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  /* Blur scale — glassmorphism depth */
-  --blur-sm: 10px;
-  --blur-md: 18px;
-  --blur-lg: 28px;
+  /* Spacing scale — NOTE: --spacing-{sm,md,lg,xl} MUST NOT be in @theme
+     because Tailwind CSS 4 uses --spacing-* for max-w-md, w-lg etc.
+     Custom spacing tokens moved to --sp-* namespace to avoid collision. */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 48px;
+  /* Blur scale — glassmorphism depth (--bl-* to avoid Tailwind blur-sm/md/lg collision) */
+  --bl-sm: 10px;
+  --bl-md: 18px;
+  --bl-lg: 28px;
   --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
   --font-sans:
     var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",

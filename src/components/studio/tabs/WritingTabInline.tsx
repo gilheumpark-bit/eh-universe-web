@@ -15,6 +15,7 @@ import { useWritingChat } from '@/hooks/useWritingChat';
 import type { ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
+import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 
 const DynSkeleton = () => <div className="h-8 rounded-lg bg-bg-secondary/50 animate-pulse" />;
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
@@ -104,6 +105,7 @@ export default function WritingTabInline(props: Props) {
   const t = createT(language);
   const isKO = language === 'KO';
   const textMenu = useTextAreaContextMenu(language);
+  const { handleSVIKeyDown } = useSVIRecorder();
 
   // Fix #10: Streaming auto-scroll with manual scroll detection
   const streamContainerRef = useRef<HTMLDivElement>(null);
@@ -261,6 +263,7 @@ export default function WritingTabInline(props: Props) {
                   ref={editDraftRef}
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
+                  onKeyDown={handleSVIKeyDown}
                   onContextMenu={textMenu.openMenu}
                   className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-purple outline-none transition-all resize-none shadow-inner"
                   placeholder={t('writingMode.typeManuscript')}
@@ -284,7 +287,7 @@ export default function WritingTabInline(props: Props) {
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
+                onKeyDown={(e) => { handleSVIKeyDown(e); if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
                 placeholder={showAiLock ? (isKO ? 'API 키를 등록해주세요' : 'Please register an API key') : t('writing.inputPlaceholder')}
                 className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-text-primary placeholder-text-tertiary resize-none max-h-32 leading-relaxed"
                 rows={1}

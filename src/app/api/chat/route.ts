@@ -15,6 +15,7 @@ import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { runNoa } from '@/lib/noa';
 import type { DomainType } from '@/lib/noa/types';
+import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 
 // ── Input validation helper (#13) ──
@@ -254,7 +255,7 @@ function resolveAuth(
 }
 
 /** Build final system instruction with optional PRISM guard */
-function buildSystemInstruction(base: string, prismMode?: string): string {
+function buildSystemInstruction(base: string, prismMode?: string, adapterMode?: AdapterMode): string {
   let guard = '';
   switch (prismMode) {
     case 'ALL':
@@ -267,7 +268,19 @@ function buildSystemInstruction(base: string, prismMode?: string): string {
       guard = '\n[SERVER PRISM ENFORCEMENT — MATURE 18+]\nThis environment allows mature fictional themes (thriller, horror, combat violence, dark fantasy). Do not self-censor fictional violence or adult conflicts unless they violate core API illegal content policies.\n';
       break;
   }
-  return guard ? base + guard : base;
+
+  // L2 LoRA Hot-Swap: 어댑터 시스템 프롬프트 주입
+  let loraPrefix = '';
+  if (adapterMode) {
+    const swap = getSwapController();
+    const result = swap.requestSwap(adapterMode, `chat-${Date.now()}`);
+    const manifest = swap.getActiveManifest();
+    if (manifest && (result.status === 'SUCCESS' || result.status === 'CACHE_HIT')) {
+      loraPrefix = `\n[ADAPTER MODE: ${manifest.mode}]\n${manifest.systemPrompt}\n`;
+    }
+  }
+
+  return loraPrefix + (guard ? base + guard : base);
 }
 
 /** Wrap stream with output token tracking */
@@ -345,7 +358,9 @@ export async function POST(req: NextRequest) {
     if (!authResult.ok) return authResult.response;
     let auth = authResult.auth;
 
-    const finalSystem = buildSystemInstruction(systemInstruction, prismMode);
+    // L2 LoRA: 도메인 기반 어댑터 선택 — isChatMode(코드/분석)=LEFT_BRAIN, 소설=RIGHT_BRAIN
+    const adapterMode: AdapterMode | undefined = isChatMode ? 'LEFT_BRAIN' : 'RIGHT_BRAIN';
+    const finalSystem = buildSystemInstruction(systemInstruction, prismMode, adapterMode);
 
     // ── Layer 1: Pre-inference NOA Security Gate ──
     let targetDomain: DomainType = isChatMode ? 'general' : 'creative';

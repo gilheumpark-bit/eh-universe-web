@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
-import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive } from 'lucide-react';
+import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2 } from 'lucide-react';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
+import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 
 export function BilateralEditor() {
-  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel } = useTranslator();
+  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel, translate, loading } = useTranslator();
   const layout = useTranslatorLayout();
   
   const [syncedScrolling, setSyncedScrolling] = useState(true);
+  const { handleSVIKeyDown } = useSVIRecorder();
   
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLTextAreaElement>(null);
@@ -227,22 +229,41 @@ export function BilateralEditor() {
             className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-secondary font-sans transition-colors placeholder:text-text-tertiary/50 placeholder:font-light"
             value={source}
             onChange={(e) => setSource(e.target.value)}
+            onKeyDown={handleSVIKeyDown}
             onContextMenu={textMenu.openMenu}
             spellCheck={false}
           />
         </div>
 
-        {/* Center Resize Handle */}
+        {/* Center Resize Handle + Translate Button */}
         <div
-          onMouseDown={onSplitDragStart}
-          className="w-1.5 bg-border/40 backdrop-blur-md border-x border-border/30 cursor-col-resize flex flex-col justify-center items-center hover:bg-accent-amber/20 transition-all duration-300 shrink-0 z-20 group relative"
+          className="relative flex flex-col justify-center items-center shrink-0 z-20"
         >
-          {/* Handle Core */}
-          <div className="w-[2px] h-12 bg-white/10 group-hover:bg-accent-amber/80 rounded-full transition-colors duration-300 shadow-[0_0_10px_rgba(251,191,36,0)] group-hover:shadow-[0_0_10px_rgba(251,191,36,0.5)] flex flex-col gap-1 items-center justify-center py-2">
-			<div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
-			<div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
-			<div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
-		  </div>
+          {/* Translate Button — 분할선 위 중앙 */}
+          <button
+            type="button"
+            onClick={() => { if (source.trim() && !loading) translate(); }}
+            disabled={!source.trim() || loading}
+            className={`absolute -left-5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
+              source.trim() && !loading
+                ? 'bg-accent-amber text-white hover:scale-110 hover:shadow-xl cursor-pointer'
+                : 'bg-bg-tertiary text-text-tertiary opacity-40 cursor-not-allowed'
+            }`}
+            title={langKo ? '번역 실행' : 'Translate'}
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 ml-0.5" />}
+          </button>
+          {/* Drag Handle */}
+          <div
+            onMouseDown={onSplitDragStart}
+            className="w-1.5 h-full bg-border/40 backdrop-blur-md border-x border-border/30 cursor-col-resize flex flex-col justify-center items-center hover:bg-accent-amber/20 transition-all duration-300 group"
+          >
+            <div className="w-[2px] h-12 bg-white/10 group-hover:bg-accent-amber/80 rounded-full transition-colors duration-300 shadow-[0_0_10px_rgba(251,191,36,0)] group-hover:shadow-[0_0_10px_rgba(251,191,36,0.5)] flex flex-col gap-1 items-center justify-center py-2">
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
+            </div>
+          </div>
         </div>
 
         {/* Result Textarea */}
