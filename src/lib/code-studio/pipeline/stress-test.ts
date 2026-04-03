@@ -71,8 +71,19 @@ export function getScenarios(): StressScenario[] {
 // PART 3 — AI Stress Analysis
 // ============================================================
 
+// NOTE: This is an AI-PREDICTED stress analysis, not actual load testing.
+// Browser IDE cannot run real load tools (k6/artillery). AI analyzes code
+// structure to predict performance characteristics.
 const STRESS_SYSTEM =
-  'You are a performance testing expert. Analyze the code and predict how it would handle the given stress scenario.\n' +
+  'You are a senior performance engineer. Analyze the code structure to PREDICT performance under load.\n\n' +
+  'Analyze these specific patterns:\n' +
+  '1. O(n²)+ algorithms, nested loops, recursive calls without memoization\n' +
+  '2. Unbatched DB/API calls (N+1 queries), missing connection pooling\n' +
+  '3. Memory: unbounded caches, event listener leaks, large object retention\n' +
+  '4. Concurrency: missing rate limiting, no backpressure, race conditions\n' +
+  '5. I/O: synchronous file ops, missing stream processing, large payloads\n' +
+  '6. Error handling: missing timeouts, no circuit breakers, cascade failure paths\n\n' +
+  'Base your predictions on these patterns, NOT on guessing. If the code has no server logic, say so.\n\n' +
   'Respond with JSON: {"avgResponseMs":50,"p50Ms":40,"p95Ms":200,"p99Ms":500,"maxResponseMs":1500,"errorRate":0.02,"throughputRps":500,"totalRequests":30000,"failedRequests":600,"breakingPoint":{"virtualUsers":800,"errorRate":0.15,"avgResponseMs":2000},"recommendations":["..."]}';
 
 export async function analyzeStress(
@@ -87,7 +98,7 @@ export async function analyzeStress(
     messages: [
       {
         role: 'user',
-        content: `File: ${fileName}\nScenario: ${scenario.name} (${scenario.virtualUsers} users, ${scenario.durationSec}s)\n\nCode:\n${code.slice(0, 3000)}`,
+        content: `File: ${fileName} (${code.split('\n').length} lines)\nScenario: ${scenario.name} — ${scenario.description}\nVirtual Users: ${scenario.virtualUsers}, Duration: ${scenario.durationSec}s, Ramp-up: ${scenario.rampUpSec}s\n\nAnalyze for performance bottlenecks:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
     onChunk: (t) => { raw += t; },

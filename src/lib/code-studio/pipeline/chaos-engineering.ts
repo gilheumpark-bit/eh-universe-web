@@ -89,8 +89,20 @@ export function getScenarios(): FailureSimulation[] {
 // PART 3 — AI Chaos Analysis
 // ============================================================
 
+// NOTE: This is an AI-PREDICTED failure analysis, not actual fault injection.
+// Browser IDE cannot inject real faults (kill DB, partition network).
+// AI analyzes code structure to predict resilience gaps.
 const CHAOS_SYSTEM =
-  'You are a chaos engineering expert. Analyze the given code for resilience against the specified failure scenario.\n' +
+  'You are a chaos engineering expert. Analyze code STRUCTURE for resilience gaps.\n\n' +
+  'Check these specific patterns:\n' +
+  '1. try/catch coverage: are all external calls (fetch, DB, file I/O) wrapped?\n' +
+  '2. Timeout handling: do fetch/API calls have explicit timeouts?\n' +
+  '3. Retry logic: is there exponential backoff? Or naive infinite retry?\n' +
+  '4. Circuit breaker: does repeated failure trigger a cooldown?\n' +
+  '5. Graceful degradation: does the UI show fallback when backend fails?\n' +
+  '6. Data validation: are null/undefined/malformed inputs guarded?\n' +
+  '7. State cleanup: do error paths clean up resources (connections, listeners)?\n\n' +
+  'Base answers on ACTUAL code patterns found, not assumptions.\n\n' +
   'Respond with JSON: {"severity":"major","description":"...","affectedComponents":["..."],"dataLoss":false,"recoveryTime":"...","hasHandler":false,"handlerQuality":"none","priority":"high","recommendation":"...","pattern":"circuit-breaker"}';
 
 export async function simulateFailure(
@@ -107,7 +119,7 @@ export async function simulateFailure(
     messages: [
       {
         role: 'user',
-        content: `File: ${fileName}\nScenario: ${sim.label} — ${sim.description}\n\nCode:\n${code.slice(0, 3000)}`,
+        content: `File: ${fileName} (${code.split('\n').length} lines)\nFailure: ${sim.label} — ${sim.description}\nInjection point: ${sim.injectionPoint}\n\nAnalyze resilience:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
     onChunk: (t) => { raw += t; },
