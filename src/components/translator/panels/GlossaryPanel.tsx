@@ -1,9 +1,31 @@
-import React, { useState } from 'react';
-import { BookA, Search, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { BookA, Search, Plus, Trash2, Edit2, Check, X, Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import { useWebFeatures } from '@/hooks/useWebFeatures';
 
 export function GlossaryPanel() {
-  const { glossary, setGlossary } = useTranslator();
+  const { glossary, setGlossary, source } = useTranslator();
+  const web = useWebFeatures();
+  const [extracting, setExtracting] = useState(false);
+
+  // AI 용어 자동 추출
+  const handleAutoExtract = useCallback(async () => {
+    if (!source?.trim() || extracting) return;
+    setExtracting(true);
+    try {
+      const { extractTermsRuleBased } = await import('@/lib/translation');
+      const candidates = extractTermsRuleBased(source);
+      // 기존 용어집에 없는 것만 추가 제안
+      const newTerms: Record<string, string> = {};
+      for (const c of candidates) {
+        if (!glossary[c.term]) newTerms[c.term] = '';
+      }
+      if (Object.keys(newTerms).length > 0) {
+        setGlossary({ ...glossary, ...newTerms });
+      }
+    } catch { /* */ }
+    setExtracting(false);
+  }, [source, glossary, setGlossary, extracting]);
   const [searchQuery, setSearchQuery] = useState('');
   const [newOriginal, setNewOriginal] = useState('');
   const [newTranslation, setNewTranslation] = useState('');

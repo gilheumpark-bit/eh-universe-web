@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine, Headphones } from 'lucide-react';
+import { Share2, Languages, Film, PenLine, Headphones, Printer, Link2 } from 'lucide-react';
+import { useWebFeatures } from '@/hooks/useWebFeatures';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
@@ -27,6 +28,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   config,
   setConfig,
   messages,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via web features hook below
   onEditInStudio
 }) => {
   const [showDashboard, setShowDashboard] = useState(false);
