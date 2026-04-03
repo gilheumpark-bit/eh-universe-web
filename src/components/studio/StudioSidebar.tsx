@@ -327,21 +327,29 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               </div>
             )}
 
-            {/* Nav tabs - Premium styling */}
+            {/* Nav tabs - Premium styling with Primary/Advanced grouping */}
             <nav className="space-y-1.5" role="tablist" aria-label="Studio navigation">
+              {studioMode === 'free' && (
+                <div className="px-3 pt-1 pb-1">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary/50">{language === 'KO' ? '주요' : 'PRIMARY'}</span>
+                </div>
+              )}
               {([
-                { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true, color: 'amber' },
-                { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true, color: 'purple' },
-                { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true, color: 'blue' },
-                { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false, color: 'green' },
-                { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false, color: 'amber' },
-                { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false, color: 'purple' },
-                { tab: 'visual' as AppTab, icon: Zap, label: language === 'KO' ? '비주얼 설계' : 'Visual Design', guided: false, color: 'green' },
-                { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false, color: 'blue' },
-                { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true, color: 'amber' },
+                { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true, color: 'amber', primary: true },
+                { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true, color: 'purple', primary: true },
+                { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true, color: 'blue', primary: true },
+                { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false, color: 'green', primary: true },
+                { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false, color: 'amber', primary: false },
+                { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false, color: 'purple', primary: false },
+                { tab: 'visual' as AppTab, icon: Zap, label: language === 'KO' ? '비주얼 설계' : 'Visual Design', guided: false, color: 'green', primary: false },
+                { tab: 'history' as AppTab, icon: History, label: t('sidebar.archives'), guided: false, color: 'blue', primary: false },
+                { tab: 'docs' as AppTab, icon: BookOpen, label: language === 'KO' ? '사용설명서' : 'User Guide', guided: true, color: 'amber', primary: true },
               ] as const)
                 .filter(item => studioMode === 'free' || item.guided)
-                .map(({ tab, icon: Icon, label, color }) => {
+                .map(({ tab, icon: Icon, label, color, primary }, idx, arr) => {
+                  // Advanced 섹션 시작 시 구분선 삽입
+                  const prevItem = idx > 0 ? arr[idx - 1] : null;
+                  const showDivider = studioMode === 'free' && !primary && prevItem?.primary;
                   const isActive = activeTab === tab;
                   const colorClasses = {
                     amber: {
@@ -376,8 +384,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   const c = colorClasses[color];
                   
                   return (
+                    <React.Fragment key={tab}>
+                    {showDivider && (
+                      <div className="px-3 pt-3 pb-1">
+                        <div className="h-px bg-border/30 mb-2" />
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary/50">{language === 'KO' ? '고급' : 'ADVANCED'}</span>
+                      </div>
+                    )}
                     <button
-                      key={tab}
                       data-testid={`tab-${tab}`}
                       role="tab"
                       aria-selected={isActive}
@@ -421,6 +435,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         <span className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-r ${c.glow} to-transparent`} />
                       )}
                     </button>
+                    </React.Fragment>
                   );
                 })}
             </nav>

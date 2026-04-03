@@ -549,7 +549,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
               <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,149,92,0.5)]"></div>
-              Translation Band
+              {isKO ? '번역 밴드 (정확도 ↔ 자연스러움)' : 'Translation Band (Accuracy ↔ Naturalness)'}
             </label>
             <div className="font-mono text-[10px] px-2.5 py-1 rounded-md bg-[rgba(184,149,92,0.1)] border border-[rgba(184,149,92,0.2)] text-[rgba(228,215,190,0.95)] flex items-center gap-2 shadow-[0_0_10px_rgba(184,149,92,0.05)]">
               <span className="font-bold tracking-widest">{bandLbl}</span>

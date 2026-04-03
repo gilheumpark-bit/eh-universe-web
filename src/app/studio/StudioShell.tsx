@@ -439,7 +439,7 @@ export default function StudioShell() {
     onNewSession: createNewSession,
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
-    onSave: triggerSave,
+    onSave: () => { triggerSave(); setAlertToast({ message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' }); setTimeout(() => setAlertToast(null), 2000); },
     onNewEpisode: () => {
       if (!currentSession) return;
       const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
