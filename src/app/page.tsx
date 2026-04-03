@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import StarField from "@/components/StarField";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -92,13 +91,12 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 function HomePageFallback() {
   return (
     <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
-      <StarField />
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
         <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
           EH
         </div>
         <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-          Initializing Lore Engine...
+          EH Universe
         </div>
       </div>
     </div>
@@ -283,13 +281,12 @@ function HomePageContent() {
   if (splashState === "loading") {
     return (
       <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
-        <StarField />
         <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
           <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
             EH
           </div>
           <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-            Initializing Lore Engine...
+            EH Universe
           </div>
         </div>
       </div>
@@ -327,7 +324,6 @@ function HomePageContent() {
 
       {/* HERO */}
       <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
-        {!stellarWhite ? <StarField /> : null}
         <div className="site-shell relative z-10">
           <div
             ref={heroPanelRef}

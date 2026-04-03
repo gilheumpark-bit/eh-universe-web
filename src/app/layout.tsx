@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
-import ApiKeyHydrator from "@/components/ApiKeyHydrator";
+import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import { MainContentRegion } from "@/components/MainContentRegion";
 import "@/lib/env"; // validate environment variables at startup
@@ -100,11 +100,12 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline">본문으로 건너뛰기</a>
         <AuthProvider>
           <LangProvider>
-            <MainContentRegion>{children}</MainContentRegion>
+            <UnifiedSettingsProvider>
+              <MainContentRegion>{children}</MainContentRegion>
+            </UnifiedSettingsProvider>
           </LangProvider>
         </AuthProvider>
         <ErrorReporterInit />
-        <ApiKeyHydrator />
         <DeferredClientMetrics />
       </body>
     </html>

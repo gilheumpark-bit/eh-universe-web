@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { Globe, PenTool, Code2, Languages, ArrowRight, Sparkles } from "lucide-react";
-import StarField from "@/components/StarField";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import UnifiedSettingsBar from "@/components/home/UnifiedSettingsBar";
 
 export default function SplashScreen({
   onUniverse,
@@ -116,27 +116,6 @@ export default function SplashScreen({
 
   return (
     <div className="relative min-h-dvh flex w-full items-center justify-center overflow-hidden eh-page-canvas">
-      <StarField />
-      
-      {/* Ambient background glow based on hovered card */}
-      <div 
-        className={`fixed inset-0 transition-opacity duration-700 pointer-events-none ${
-          hovered ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        {hovered === 'universe' && (
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-amber/8 blur-[120px]" />
-        )}
-        {hovered === 'studio' && (
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-purple/8 blur-[120px]" />
-        )}
-        {hovered === 'code' && (
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-green/8 blur-[120px]" />
-        )}
-        {hovered === 'translate' && (
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-accent-blue/8 blur-[120px]" />
-        )}
-      </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-10 sm:gap-14">
         {/* Header */}
@@ -157,13 +136,18 @@ export default function SplashScreen({
             {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", jp: "どこへ向かいますか？", cn: "您要去哪里？" })}
           </h1>
           <p className="mt-4 text-sm sm:text-base text-text-secondary max-w-md mx-auto">
-            {L4(lang, { 
-              ko: "세계관을 탐색하거나, 직접 이야기를 써보세요.", 
-              en: "Explore the universe or write your own story.", 
-              jp: "世界観を探索するか、自分の物語を書いてみてください。", 
-              cn: "探索这个世界观，或者写下你自己的故事。" 
+            {L4(lang, {
+              ko: "세계관을 탐색하거나, 직접 이야기를 써보세요.",
+              en: "Explore the universe or write your own story.",
+              jp: "世界観を探索するか、自分の物語を書いてみてください。",
+              cn: "探索这个世界观，或者写下你自己的故事。"
             })}
           </p>
+
+          {/* Unified Settings Bar */}
+          <div className="mt-6">
+            <UnifiedSettingsBar />
+          </div>
         </div>
 
         {/* Cards Grid */}
@@ -191,42 +175,6 @@ export default function SplashScreen({
                   transitionDelay: mounted ? `${150 + index * 100}ms` : '0ms',
                 }}
               >
-                {/* Background glow */}
-                <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                  <div 
-                    className={`
-                      absolute -right-12 -top-12 h-48 w-48 rounded-full ${c.glow} blur-3xl
-                      transition-all duration-500
-                      ${isHovered ? 'opacity-100 scale-110' : 'opacity-40 scale-100'}
-                    `} 
-                  />
-                </div>
-
-                {/* Animated border gradient on hover */}
-                <div 
-                  className={`
-                    absolute inset-0 rounded-[inherit] p-px overflow-hidden
-                    transition-opacity duration-300
-                    ${isHovered ? 'opacity-100' : 'opacity-0'}
-                  `}
-                >
-                  <div 
-                    className={`absolute inset-[-200%] ${c.bg}/30`}
-                    style={{
-                      background: `conic-gradient(from 0deg, transparent, ${
-                        card.color === "amber"
-                          ? "rgba(202,161,92,0.4)"
-                          : card.color === "purple"
-                            ? "rgba(141,123,195,0.4)"
-                            : card.color === "green"
-                              ? "rgba(47,155,131,0.4)"
-                              : "rgba(59,130,246,0.4)"
-                      }, transparent)`,
-                      animation: isHovered ? 'spin 4s linear infinite' : 'none',
-                    }}
-                  />
-                </div>
-
                 {/* Content */}
                 <div className="relative z-10">
                   {/* Kicker with badge */}
@@ -304,12 +252,6 @@ export default function SplashScreen({
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
