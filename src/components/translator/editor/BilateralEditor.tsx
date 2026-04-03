@@ -105,107 +105,111 @@ export function BilateralEditor() {
       <div className="absolute inset-0 z-0 bg-linear-to-b from-bg-primary/60 via-bg-primary/30 to-bg-primary/90 pointer-events-none" />
 
       {/* Editor Header */}
-      <div className="h-14 w-full border-b border-border flex items-center px-5 justify-between shrink-0 z-10 bg-bg-primary/60 backdrop-blur-xl shadow-sm">
-        <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          <span
-            className="hidden sm:block max-w-[120px] md:max-w-[180px] truncate text-[10px] font-mono text-text-tertiary/90"
-            title={autoSaveLabel}
-          >
-            {autoSaveLabel}
-          </span>
-          <button
-            type="button"
-            title={langKo ? '저장·백업 패널 열기 (JSON·일괄보내기)' : 'Open save & backup panel'}
-            onClick={() => layout.setActiveLeftPanel('backup')}
-            className={`hidden sm:flex shrink-0 items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-semibold transition-all ${
-              layout.activeLeftPanel === 'backup'
-                ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber'
-                : 'border-white/10 bg-white/5 text-text-tertiary hover:border-accent-amber/25 hover:text-accent-amber'
-            }`}
-          >
-            <HardDrive className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{langKo ? '저장' : 'Save'}</span>
-          </button>
-          <div className="flex items-center bg-white/2 rounded-xl p-1 border border-white/5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.5)] shrink-0">
-            <select
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="bg-transparent text-sm font-medium text-text-secondary px-3 py-1.5 outline-none cursor-pointer hover:bg-white/5 rounded-lg transition-colors appearance-none"
+      <div className="w-full border-b border-border shrink-0 z-10 bg-bg-primary/60 backdrop-blur-xl shadow-sm">
+        <div className="flex items-center px-2 sm:px-5 h-12 sm:h-14 justify-between gap-1">
+          {/* Left: save + language selectors */}
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
+            <span
+              className="hidden lg:block max-w-[120px] truncate text-[10px] font-mono text-text-tertiary/90"
+              title={autoSaveLabel}
             >
-              <option value="ja" className="bg-bg-secondary">日本語 (Japanese)</option>
-              <option value="en" className="bg-bg-secondary">English</option>
-              <option value="zh" className="bg-bg-secondary">中文 (Chinese)</option>
-              <option value="ko" className="bg-bg-secondary">한국어 (Korean)</option>
-            </select>
-            <button 
-              className="px-2.5 py-1.5 text-text-tertiary hover:text-accent-amber hover:bg-accent-amber/10 rounded-lg transition-all" 
-              onClick={() => { const t = from; setFrom(to); setTo(t); }}
-              title="서로 바꾸기 (Swap Languages)"
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5" />
-            </button>
-            <select
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="bg-transparent text-sm font-medium text-text-secondary px-3 py-1.5 outline-none cursor-pointer hover:bg-white/5 rounded-lg transition-colors appearance-none"
-            >
-              <option value="ko" className="bg-bg-secondary">한국어 (Korean)</option>
-              <option value="ja" className="bg-bg-secondary">日本語 (Japanese)</option>
-              <option value="en" className="bg-bg-secondary">English</option>
-              <option value="zh" className="bg-bg-secondary">中文 (Chinese)</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {(
-            [
-              { id: 'actions' as const, icon: Zap, title: 'Translate / Pipeline' },
-              { id: 'chat' as const, icon: MessageSquare, title: 'Copilot' },
-              { id: 'audit' as const, icon: Shield, title: 'Quality audit' },
-              { id: 'reference' as const, icon: BookOpen, title: 'References' },
-            ] as const
-          ).map(({ id, icon: Icon, title }) => (
+              {autoSaveLabel}
+            </span>
             <button
-              key={id}
               type="button"
-              title={title}
-              onClick={() =>
-                layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id)
-              }
-              className={`rounded-xl border p-2 transition-all duration-300 ${
-                layout.activeRightPanel === id
-                  ? 'border-accent-purple/40 bg-accent-purple/10 text-accent-purple shadow-[0_0_10px_rgba(168,85,247,0.2)]'
-                  : 'border-transparent text-text-tertiary hover:border-white/10 hover:bg-white/5 hover:text-text-primary'
+              title={langKo ? '저장·백업 패널 열기 (JSON·일괄보내기)' : 'Open save & backup panel'}
+              onClick={() => layout.setActiveLeftPanel('backup')}
+              className={`shrink-0 flex items-center justify-center rounded-lg border p-1.5 sm:px-2.5 sm:py-1.5 text-[10px] font-semibold transition-all ${
+                layout.activeLeftPanel === 'backup'
+                  ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber'
+                  : 'border-border bg-bg-secondary/50 text-text-tertiary hover:border-accent-amber/25 hover:text-accent-amber'
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <HardDrive className="h-3.5 w-3.5" />
+              <span className="hidden md:inline ml-1">{langKo ? '저장' : 'Save'}</span>
             </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            title="Sync Scroll"
-            onClick={() => setSyncedScrolling(!syncedScrolling)}
-            className={`p-2 rounded-xl transition-all duration-300 ${syncedScrolling ? 'bg-accent-indigo/10 text-accent-indigo border border-accent-indigo/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'text-text-tertiary border border-transparent hover:text-text-primary hover:bg-white/5 hover:border-white/10'}`}
-          >
-            <AlignLeft className="w-4 h-4" />
-          </button>
-          <button
-            title="Zen Mode"
-            onClick={() => setIsZenMode(!isZenMode)}
-            className={`p-2 rounded-xl transition-all duration-300 ${isZenMode ? 'bg-accent-green/10 text-accent-green border border-accent-green/20 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'text-text-tertiary border border-transparent hover:text-text-primary hover:bg-white/5 hover:border-white/10'}`}
-          >
-            <Focus className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            title={langKo ? '설정·로그인·저장/백업' : 'Settings, sign-in, save & backup'}
-            onClick={() => layout.setActiveLeftPanel('settings')}
-            className="p-2 rounded-xl border border-transparent text-text-tertiary hover:text-text-primary hover:bg-white/5 hover:border-white/10 transition-all duration-300"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
+            <div className="flex items-center bg-bg-secondary/30 rounded-lg p-0.5 sm:p-1 border border-border shrink-0 min-w-0">
+              <select
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
+              >
+                <option value="ja" className="bg-bg-secondary">JA</option>
+                <option value="en" className="bg-bg-secondary">EN</option>
+                <option value="zh" className="bg-bg-secondary">ZH</option>
+                <option value="ko" className="bg-bg-secondary">KO</option>
+              </select>
+              <button
+                className="px-1 sm:px-2.5 py-1 text-text-tertiary hover:text-accent-amber rounded-md transition-all shrink-0"
+                onClick={() => { const t = from; setFrom(to); setTo(t); }}
+                title="서로 바꾸기 (Swap Languages)"
+              >
+                <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
+              <select
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
+              >
+                <option value="ko" className="bg-bg-secondary">KO</option>
+                <option value="ja" className="bg-bg-secondary">JA</option>
+                <option value="en" className="bg-bg-secondary">EN</option>
+                <option value="zh" className="bg-bg-secondary">ZH</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Right: panel toggle icons */}
+          <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0">
+            {(
+              [
+                { id: 'actions' as const, icon: Zap, title: 'Translate / Pipeline' },
+                { id: 'chat' as const, icon: MessageSquare, title: 'Copilot' },
+                { id: 'audit' as const, icon: Shield, title: 'Quality audit' },
+                { id: 'reference' as const, icon: BookOpen, title: 'References' },
+              ] as const
+            ).map(({ id, icon: Icon, title }) => (
+              <button
+                key={id}
+                type="button"
+                title={title}
+                onClick={() =>
+                  layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id)
+                }
+                className={`rounded-lg border p-1.5 sm:p-2 transition-all duration-300 ${
+                  layout.activeRightPanel === id
+                    ? 'border-accent-purple/40 bg-accent-purple/10 text-accent-purple'
+                    : 'border-transparent text-text-tertiary hover:border-border hover:bg-bg-secondary/50 hover:text-text-primary'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <button
+              title="Sync Scroll"
+              onClick={() => setSyncedScrolling(!syncedScrolling)}
+              className={`p-1.5 sm:p-2 rounded-lg transition-all ${syncedScrolling ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
+            >
+              <AlignLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+            <button
+              title="Zen Mode"
+              onClick={() => setIsZenMode(!isZenMode)}
+              className={`p-1.5 sm:p-2 rounded-lg transition-all ${isZenMode ? 'bg-accent-green/10 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
+            >
+              <Focus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+            <button
+              type="button"
+              title={langKo ? '설정·로그인·저장/백업' : 'Settings, sign-in, save & backup'}
+              onClick={() => layout.setActiveLeftPanel('settings')}
+              className="p-1.5 sm:p-2 rounded-lg text-text-tertiary hover:text-text-primary transition-all"
+            >
+              <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
