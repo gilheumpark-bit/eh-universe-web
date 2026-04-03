@@ -293,3 +293,13 @@ export { createAuditManager } from "./audit";
 export { createRiskBudgetManager } from "./availability";
 export { checkHallucination } from "./availability/hallucination";
 export { recordAuditEntry, generateAuditReport, getRecentThreats, formatAuditMarkdown, clearAuditLog } from "./audit-report";
+
+// ── NOA-SYS v2.1 Layers ──
+// L1: SVI Engine (Session Volatility Index — EMA 기반 인지 부하 추적)
+export { SVIEngine, getSVIEngine, type SVIResult, type SVIAction, type TelemetryTick } from "./svi-engine";
+// L3.1: Constrained Decoder (좌뇌 Guillotine — JSON Schema 강제)
+export { validateConstrainedOutput, buildConstrainedSystemPrompt, runConstrainedPipeline, MATH_CALCULATION_SCHEMA, NOVEL_GENERATION_SCHEMA, type GuillotineResult, type GuillotineVerdict, type ConstraintSchema } from "./constrained-decoder";
+// L4: Saga Transaction (원자적 승인 — 보상 트랜잭션 롤백)
+export { SagaOrchestrator, createAIWorkSaga, type SagaStep, type SagaResult, type SagaStatus } from "./saga-transaction";
+// L2: Taint Tracker (데이터 격리 — 도메인 간 오염 방지)
+export { TaintTracker, getTaintTracker, type TaintDomain, type TaintedData, type DecontaminatedData } from "./taint-tracker";
