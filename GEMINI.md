@@ -670,3 +670,11 @@ error → idle | generating
 - 인라인 콘텐츠: { ko, en, jp?, cn? } — jp/cn optional
 - fallback 체인: jp/cn → en → ko
 - CN "연출" = 演出 (导演 아님)
+
+## UI/UX Generation Protocol (V0-Level Quality)
+
+- **Zero Raw HTML Policy**: 스타일 없는 투박한 HTML을 생성하지 않는다. 모든 UI는 TailwindCSS 시맨틱 토큰으로 완벽 스타일링.
+- **V0 Design Standard**: "간단한 버튼", "로그인 폼" 요청이라도 `architecture-spec.ts`의 `[Design & Component Gen Guidelines]`를 준수한다.
+- 필수 적용: 글래스모피즘(`bg-bg-secondary/60 backdrop-blur-2xl`), 마이크로모션(`hover:scale-[1.02] active:scale-95 transition-all duration-200`), lucide-react 아이콘, 반응형(`sm:/md:/lg:`)
+- framer-motion은 리스트 등장·레이아웃 전환·모달 진입 등 모션이 필요한 경우 적용
+- 금지 색상: `bg-blue-500`, `bg-red-500` 등 원색 직접 사용 → `bg-accent-purple/90`, `text-accent-amber` 등 시맨틱 토큰 사용

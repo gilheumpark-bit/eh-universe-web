@@ -230,7 +230,7 @@ function buildStructuredError(
   message: string,
   serverId: string,
   toolName: string,
-  suggestion: string,
+  fallbackSuggestion: string,
 ): MCPCallResult {
   const payload = {
     status: 'error' as const,
@@ -238,10 +238,28 @@ function buildStructuredError(
     message,
     serverId,
     toolName,
-    suggestion,
+    suggestion: inferSelfHealingSuggestion(message) ?? fallbackSuggestion,
     timestamp: Date.now(),
   };
   return { content: JSON.stringify(payload), isError: true };
 }
 
-// IDENTITY_SEAL: PART-5 | role=structured-error | inputs=errorType,message | outputs=MCPCallResult(JSON)
+/** Pattern-match error messages to provide actionable self-healing hints for Pro mode AI */
+function inferSelfHealingSuggestion(msg: string): string | null {
+  const lower = msg.toLowerCase();
+  if (lower.includes('command not found') || lower.includes('cannot find module') || lower.includes('not found')) {
+    return 'Missing dependency detected — run npm install <package> or verify the tool/module name';
+  }
+  if (lower.includes('permission denied') || lower.includes('eacces')) {
+    return 'Permission error — review file permissions or request elevated access';
+  }
+  if (lower.includes('econnrefused') || lower.includes('fetch failed')) {
+    return 'Connection refused — verify the MCP server URL and ensure it is running';
+  }
+  if (lower.includes('syntax error') || lower.includes('unexpected token')) {
+    return 'Malformed arguments — validate JSON structure and retry with corrected params';
+  }
+  return null;
+}
+
+// IDENTITY_SEAL: PART-5 | role=structured-error+self-healing | inputs=errorType,message | outputs=MCPCallResult(JSON)
