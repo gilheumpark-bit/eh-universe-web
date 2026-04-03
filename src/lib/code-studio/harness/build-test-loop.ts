@@ -8,6 +8,7 @@
 
 import type { WebContainerInstance } from '@/lib/code-studio/features/webcontainer';
 import { scanForHollowCode, type HollowCodeFinding } from '@/lib/code-studio/pipeline/ast-hollow-scanner';
+import { buildHarnessFeedback, type HarnessFeedback } from '@/lib/code-studio/harness/adversarial-core';
 
 export interface HarnessResult {
   success: boolean;
@@ -20,6 +21,8 @@ export interface HarnessResult {
   /** Gate 1: AST 빈깡통 감지 결과 */
   hollowFindings: HollowCodeFinding[];
   finalOutput: string;
+  /** Machine-readable AI 피드백 (실패 시 생성) */
+  feedback?: HarnessFeedback;
 }
 
 export interface ParsedError {
@@ -210,6 +213,19 @@ export async function runHarnessLoop(
     }
   }
 
+  // [GATE-SPY/FUZZ/MUT] 실패 시 구조화 JSON 피드백 생성
+  const allErrors = [...allBuildErrors, ...allTestErrors, ...allLintErrors, ...allTypeErrors];
+  const gateResults = [{
+    gate: allHollowFindings.length > 0 ? 'GATE-AST' : allBuildErrors.length > 0 ? 'GATE-BUILD' : 'GATE-TEST',
+    passed: false,
+    findings: allErrors.slice(0, 10).map(e => e.message),
+    score: 0,
+    durationMs: 0,
+  }];
+  const hollowMsgs = allHollowFindings.map(f => f.message);
+  const buildMsgs = allErrors.map(e => `[${e.source}] ${e.file}:${e.line} ${e.message}`);
+  const feedback = buildHarnessFeedback(gateResults, hollowMsgs, buildMsgs);
+
   return {
     success: false,
     iterations: iteration,
@@ -220,25 +236,47 @@ export async function runHarnessLoop(
     typeErrors: allTypeErrors,
     hollowFindings: allHollowFindings,
     finalOutput: currentCode,
+    feedback,
   };
 }
 
 /** 에러를 에이전트 프롬프트로 변환 */
-export function errorsToPrompt(errors: ParsedError[]): string {
-  if (errors.length === 0) return '';
-  const grouped = new Map<string, ParsedError[]>();
-  for (const err of errors) {
-    const key = err.file || 'unknown';
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(err);
+export function errorsToPrompt(errors: ParsedError[], feedback?: HarnessFeedback): string {
+  if (errors.length === 0 && !feedback) return '';
+  const parts: string[] = [];
+
+  // Machine-readable JSON 피드백 (AI가 구조화 데이터로 정확히 이해)
+  if (feedback && feedback.system_action === 'REJECTED_BY_HARNESS') {
+    parts.push('## [SYSTEM HARNESS REJECTION]\n');
+    parts.push('```json');
+    parts.push(JSON.stringify({
+      system_action: feedback.system_action,
+      error_type: feedback.error_type,
+      harness_trigger: feedback.harness_trigger,
+      actual_behavior: feedback.actual_behavior,
+      expected_behavior: feedback.expected_behavior,
+      strict_instruction: feedback.strict_instruction,
+    }, null, 2));
+    parts.push('```\n');
   }
 
-  const parts: string[] = ['## Build/Test Errors to Fix\n'];
-  for (const [file, errs] of grouped) {
-    parts.push(`### ${file}`);
-    for (const err of errs) {
-      parts.push(`- Line ${err.line}: [${err.source}] ${err.message}${err.code ? ` (${err.code})` : ''}`);
+  // 기존 에러 목록
+  if (errors.length > 0) {
+    const grouped = new Map<string, ParsedError[]>();
+    for (const err of errors) {
+      const key = err.file || 'unknown';
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(err);
+    }
+
+    parts.push('## Build/Test Errors to Fix\n');
+    for (const [file, errs] of grouped) {
+      parts.push(`### ${file}`);
+      for (const err of errs) {
+        parts.push(`- Line ${err.line}: [${err.source}] ${err.message}${err.code ? ` (${err.code})` : ''}`);
+      }
     }
   }
+
   return parts.join('\n');
 }

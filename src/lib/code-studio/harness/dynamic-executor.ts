@@ -34,17 +34,48 @@ export async function runSpyTest(
   const start = Date.now();
   const findings: string[] = [];
 
-  // Spy 래퍼 코드 생성
+  // Spy 래퍼 코드 생성 — fetch, localStorage, sessionStorage, console.error, indexedDB 감시
   const spyWrapper = `
 const _spyCalls = {};
-const _originalFetch = globalThis.fetch;
-globalThis.fetch = (...args) => { _spyCalls.fetch = (_spyCalls.fetch || 0) + 1; return _originalFetch(...args); };
+function _spy(target, method) {
+  const orig = target[method];
+  if (typeof orig === 'function') {
+    target[method] = (...args) => {
+      _spyCalls[method] = (_spyCalls[method] || 0) + 1;
+      return orig.apply(target, args);
+    };
+  }
+}
+
+// [GATE-SPY] 외부 의존성 Monkey-Patching
+_spy(globalThis, 'fetch');
+if (typeof localStorage !== 'undefined') {
+  _spy(localStorage, 'setItem');
+  _spy(localStorage, 'getItem');
+}
+if (typeof sessionStorage !== 'undefined') {
+  _spy(sessionStorage, 'setItem');
+}
+_spy(console, 'error');
+if (typeof XMLHttpRequest !== 'undefined') {
+  const _origOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(...args) {
+    _spyCalls.xhr = (_spyCalls.xhr || 0) + 1;
+    return _origOpen.apply(this, args);
+  };
+}
 
 // 모듈 로드 + 실행
 ${code}
 
 // Spy 리포트
-const report = { spyCalls: _spyCalls, hasExternalCalls: Object.keys(_spyCalls).length > 0 };
+const _totalCalls = Object.values(_spyCalls).reduce((s, v) => s + v, 0);
+const report = {
+  spyCalls: _spyCalls,
+  totalCallCount: _totalCalls,
+  hasExternalCalls: _totalCalls > 0,
+  spiedAPIs: Object.keys(_spyCalls).filter(k => _spyCalls[k] > 0),
+};
 console.log('__SPY_REPORT__' + JSON.stringify(report));
 `;
 
@@ -53,12 +84,14 @@ console.log('__SPY_REPORT__' + JSON.stringify(report));
     const result = await wc.run('node _spy_test.mjs');
     const output = result.stdout + result.stderr;
 
-    // Spy 리포트 파싱
+    // [GATE-SPY] Spy 리포트 파싱 — call_count 기반 판정
     const reportMatch = output.match(/__SPY_REPORT__(.+)/);
     if (reportMatch) {
       const report = JSON.parse(reportMatch[1]);
-      if (!report.hasExternalCalls) {
-        findings.push('Spy: 외부 호출(fetch/DB) 없이 하드코딩 값만 반환 — 가짜 로직');
+      if (report.totalCallCount === 0) {
+        findings.push('[GATE-SPY] 외부 호출(fetch/DB/storage) 0회 — 결과값만 반환하는 가짜(Mock) 로직');
+      } else if (!report.spiedAPIs.includes('fetch') && !report.spiedAPIs.includes('xhr')) {
+        findings.push(`[GATE-SPY] 네트워크 호출 없음 (감지된 API: ${report.spiedAPIs.join(', ')})`);
       }
     }
 

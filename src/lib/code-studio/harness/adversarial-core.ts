@@ -17,10 +17,15 @@ export interface HarnessFeedback {
   expected_behavior?: string;
   strict_instruction?: string;
   gate_results?: GateResult[];
+  /** 프로토콜 ID 태그 — 어떤 게이트를 통과/실패했는지 */
+  gate_status?: Record<GateId, '✓' | '✗' | '—'>;
 }
+
+export type GateId = 'GATE-SPY' | 'GATE-FUZZ' | 'GATE-MUT' | 'GATE-AST' | 'GATE-BUILD' | 'GATE-TEST';
 
 export interface GateResult {
   gate: string;
+  gateId?: GateId;
   passed: boolean;
   findings: string[];
   score: number;
@@ -210,19 +215,43 @@ export function generateMutations(code: string): Array<{ line: number; original:
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // > → <, < → >, === → !==
+    // [GATE-MUT] 경계값 돌연변이: > → <, >= → >, <= → <
     if (/\s>\s/.test(line) && !/=>\s/.test(line)) {
       mutations.push({ line: i + 1, original: line, mutated: line.replace(/\s>\s/, ' < '), type: 'boundary' });
     }
+    if (/>=/.test(line) && !/=>\s/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace('>=', '>'), type: 'boundary' });
+    }
+    if (/<=/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace('<=', '<'), type: 'boundary' });
+    }
+    // [GATE-MUT] 동등성 돌연변이: === → !==, !== → ===
     if (/===/.test(line)) {
       mutations.push({ line: i + 1, original: line, mutated: line.replace('===', '!=='), type: 'equality' });
     }
+    if (/!==/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace('!==', '==='), type: 'equality' });
+    }
+    // [GATE-MUT] 논리 돌연변이: && → ||, || → &&
     if (/&&/.test(line)) {
       mutations.push({ line: i + 1, original: line, mutated: line.replace('&&', '||'), type: 'logical' });
     }
-    // true → false
+    if (/\|\|/.test(line) && !/\|\|.*=>/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace('||', '&&'), type: 'logical' });
+    }
+    // [GATE-MUT] 산술 돌연변이: + → -, * → /
+    if (/\s\+\s/.test(line) && !/\+\+/.test(line) && !/'\s*\+\s*'/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace(/\s\+\s/, ' - '), type: 'arithmetic' });
+    }
+    if (/\s\*\s/.test(line) && !/\*\*/.test(line) && !/\*\//.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace(/\s\*\s/, ' / '), type: 'arithmetic' });
+    }
+    // [GATE-MUT] 반환값 돌연변이: return true → false, return false → true
     if (/return\s+true/.test(line)) {
       mutations.push({ line: i + 1, original: line, mutated: line.replace('return true', 'return false'), type: 'return' });
+    }
+    if (/return\s+false/.test(line)) {
+      mutations.push({ line: i + 1, original: line, mutated: line.replace('return false', 'return true'), type: 'return' });
     }
   }
 
@@ -274,6 +303,20 @@ export function buildHarnessFeedback(
     instruction = `${criticalGate.findings[0]}. 이 문제를 수정하고 다시 제출하라.`;
   }
 
+  // 프로토콜 ID별 상태 생성
+  const gateStatus: Record<GateId, '✓' | '✗' | '—'> = {
+    'GATE-SPY': hasSpy ? '✗' : '—',
+    'GATE-FUZZ': hasFuzz ? '✗' : '—',
+    'GATE-MUT': '—',
+    'GATE-AST': '—',
+    'GATE-BUILD': '—',
+    'GATE-TEST': '—',
+  };
+  for (const g of gateResults) {
+    const id = (g.gateId ?? g.gate) as GateId;
+    if (id in gateStatus) gateStatus[id] = g.passed ? '✓' : '✗';
+  }
+
   return {
     system_action: 'REJECTED_BY_HARNESS',
     error_type: errorType,
@@ -282,5 +325,6 @@ export function buildHarnessFeedback(
     expected_behavior: expected,
     strict_instruction: instruction,
     gate_results: gateResults,
+    gate_status: gateStatus,
   };
 }
