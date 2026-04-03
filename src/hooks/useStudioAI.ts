@@ -18,6 +18,7 @@ import { stripEngineArtifacts } from '@/engine/pipeline';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
+import { getNarrativeDepth } from '@/lib/noa/lora-swap';
 import { executePipeline, getDefaultPipelineConfig, type PipelineExecution } from '@/engine/auto-pipeline';
 import type { ProactiveSuggestion } from '@/lib/studio-types';
 
@@ -234,7 +235,7 @@ export function useStudioAI({
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, temperature: (() => { const d = getNarrativeDepth(); const base = parseFloat(localStorage.getItem('noa_temperature') || '0.9'); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
         );
 
         // Trademark/IP filter
@@ -438,7 +439,7 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, temperature: (() => { const d = getNarrativeDepth(); const base = parseFloat(localStorage.getItem('noa_temperature') || '0.9'); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
       );
 
       // Trademark/IP filter
