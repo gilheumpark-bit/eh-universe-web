@@ -1,10 +1,13 @@
 // ============================================================
-// Code Studio Harness — Build-Test-Fix 자동 루프
+// Code Studio Harness — 3-Gate Verification Loop
 // ============================================================
-// AI 코드 → 빌드 → 에러 → AI 수정 → 빌드 → 통과 (최대 N회)
-// WebContainer에서 실제 빌드/테스트 실행 후 에러를 에이전트에 피드백
+// Gate 1: AST Scanner (구조 검증 — 빈깡통, 미사용 파라미터, 더미 리턴)
+// Gate 2: Linter + Type Checker (연결 검증 — tsc + eslint)
+// Gate 3: TDD Sandbox (동적 검증 — jest 실행 + 커버리지)
+// 모든 게이트 통과 시에만 최종 승인.
 
 import type { WebContainerInstance } from '@/lib/code-studio/features/webcontainer';
+import { scanForHollowCode, type HollowCodeFinding } from '@/lib/code-studio/pipeline/ast-hollow-scanner';
 
 export interface HarnessResult {
   success: boolean;
@@ -14,6 +17,8 @@ export interface HarnessResult {
   testErrors: ParsedError[];
   lintErrors: ParsedError[];
   typeErrors: ParsedError[];
+  /** Gate 1: AST 빈깡통 감지 결과 */
+  hollowFindings: HollowCodeFinding[];
   finalOutput: string;
 }
 
@@ -125,11 +130,32 @@ export async function runHarnessLoop(
   const allTestErrors: ParsedError[] = [];
   const allLintErrors: ParsedError[] = [];
   const allTypeErrors: ParsedError[] = [];
+  let allHollowFindings: HollowCodeFinding[] = [];
 
   while (iteration < cfg.maxIterations) {
     iteration++;
     let hasErrors = false;
 
+    // ── Gate 1: AST Hollow Scanner (구조 검증) ──
+    cfg.onProgress?.('ast-scan', iteration, []);
+    const hollowResult = scanForHollowCode(currentCode, 'main');
+    const hollowErrors = hollowResult.filter(f => f.severity === 'error');
+    allHollowFindings = hollowResult;
+    if (hollowErrors.length > 0) {
+      hasErrors = true;
+      cfg.onProgress?.('ast-scan', iteration, hollowErrors.map(f => ({
+        file: f.file, line: f.line, column: 0, message: f.message, severity: 'error' as const, source: 'build' as const,
+      })));
+      // AST 에러를 AI에게 피드백
+      if (iteration < cfg.maxIterations) {
+        const fixedCode = await cfg.onFixRequest(hollowErrors.map(f => ({
+          file: f.file, line: f.line, column: 0, message: `[AST] ${f.type}: ${f.message}`, severity: 'error' as const, source: 'build' as const,
+        })), currentCode);
+        if (fixedCode) { currentCode = fixedCode; continue; }
+      }
+    }
+
+    // ── Gate 2+3: Build/Type/Lint/Test ──
     for (const step of cfg.steps) {
       const command = {
         build: cfg.buildCommand,
@@ -178,6 +204,7 @@ export async function runHarnessLoop(
         testErrors: [],
         lintErrors: [],
         typeErrors: [],
+        hollowFindings: [],
         finalOutput: currentCode,
       };
     }
@@ -191,6 +218,7 @@ export async function runHarnessLoop(
     testErrors: allTestErrors,
     lintErrors: allLintErrors,
     typeErrors: allTypeErrors,
+    hollowFindings: allHollowFindings,
     finalOutput: currentCode,
   };
 }

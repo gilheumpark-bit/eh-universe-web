@@ -5,3 +5,4 @@
 // lazy import: const harness = await import('@/lib/code-studio/harness');
 
 export { runHarnessLoop, errorsToPrompt, type HarnessResult, type HarnessConfig, type ParsedError } from './build-test-loop';
+export { scanForHollowCode, scanProjectForHollowCode, type HollowCodeFinding } from '../pipeline/ast-hollow-scanner';
