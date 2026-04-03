@@ -146,7 +146,7 @@ function SceneGallery({
               key={ep}
               onClick={() => setFilterEp(ep === 0 ? 'all' : ep)}
               className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all ${
-                filterEp === ep ? 'border-blue-500/40 bg-blue-600/10' : 'border-border bg-black/30 hover:border-border'
+                filterEp === ep ? 'border-accent-purple/40 bg-accent-purple/10' : 'border-border bg-bg-secondary/50 hover:border-border'
               }`}
             >
               <span className="text-[10px] font-bold text-text-secondary">
@@ -182,7 +182,7 @@ function SceneGallery({
           <select
             value={filterEp}
             onChange={e => setFilterEp(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-            className="bg-black/50 border border-border rounded-lg px-3 py-1.5 text-[10px] text-text-secondary outline-none appearance-none pr-6"
+            className="bg-bg-secondary/80 border border-border rounded-lg px-3 py-1.5 text-[10px] text-text-secondary outline-none appearance-none pr-6 transition-colors"
           >
             <option value="all">{isKO ? '전체 에피소드' : 'All Episodes'}</option>
             {epOptions.map(ep => (
@@ -195,8 +195,8 @@ function SceneGallery({
           onClick={() => setShowFavOnly(!showFavOnly)}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
             showFavOnly
-              ? 'bg-yellow-600/15 border-yellow-500/30 text-yellow-300'
-              : 'bg-black/30 border-border text-text-tertiary hover:text-text-secondary'
+              ? 'bg-accent-amber/15 border-accent-amber/30 text-accent-amber'
+              : 'bg-bg-secondary/50 border-border text-text-tertiary hover:text-text-secondary'
           }`}
         >
           <Star className="w-3 h-3" /> {isKO ? '즐겨찾기' : 'Favorites'}
@@ -209,7 +209,7 @@ function SceneGallery({
       {/* Masonry-style Grid */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
         {filtered.map(img => (
-          <div key={img.id} className="break-inside-avoid rounded-xl overflow-hidden border border-border/40 bg-black/30 group">
+          <div key={img.id} className="break-inside-avoid rounded-xl overflow-hidden border border-border/40 bg-bg-secondary/50 group">
             <div className="relative">
               {/* dynamic AI-generated URL, unoptimized for lazy load */}
               <Image src={img.imageUrl} alt={img.cardTitle} unoptimized fill className="object-cover" />
@@ -218,14 +218,14 @@ function SceneGallery({
                 <button
                   onClick={() => toggleFavorite(img.cardId, img.id)}
                   className={`p-1.5 rounded-lg transition-colors ${
-                    img.favorite ? 'bg-yellow-500/30 text-yellow-300' : 'bg-black/40 text-white/70 hover:text-yellow-300'
+                    img.favorite ? 'bg-accent-amber/30 text-accent-amber' : 'bg-bg-primary/60 text-text-tertiary hover:text-accent-amber'
                   }`}
                 >
                   <Star className="w-3.5 h-3.5" fill={img.favorite ? 'currentColor' : 'none'} />
                 </button>
                 <button
                   onClick={() => onDeleteImage(img.cardId, img.id)}
-                  className="p-1.5 rounded-lg bg-black/40 text-white/70 hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded-lg bg-bg-primary/60 text-text-tertiary hover:text-accent-red transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -238,14 +238,14 @@ function SceneGallery({
                 <select
                   value={img.assignedEpisode ?? ''}
                   onChange={e => assignEpisode(img.cardId, img.id, Number(e.target.value) || 0)}
-                  className="flex-1 bg-black/40 border border-border rounded px-1.5 py-0.5 text-[9px] text-text-tertiary outline-none"
+                  className="flex-1 bg-bg-secondary/60 border border-border rounded px-1.5 py-0.5 text-[9px] text-text-tertiary outline-none transition-colors"
                 >
                   <option value="">{isKO ? '에피소드 배정' : 'Assign EP'}</option>
                   {Array.from({ length: totalEpisodes }, (_, i) => i + 1).map(ep => (
                     <option key={ep} value={ep}>EP.{ep}</option>
                   ))}
                 </select>
-                {img.favorite && <Star className="w-2.5 h-2.5 text-yellow-400" fill="currentColor" />}
+                {img.favorite && <Star className="w-2.5 h-2.5 text-accent-amber" fill="currentColor" />}
               </div>
             </div>
           </div>

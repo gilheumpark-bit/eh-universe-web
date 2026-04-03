@@ -47,7 +47,7 @@ const StyleTab: React.FC<StyleTabProps> = ({
         <div className="max-w-6xl mx-auto px-4 pt-2 pb-2">
           <button onClick={() => setShowRhythm(!showRhythm)}
             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all ${
-              showRhythm ? 'bg-accent-purple text-white border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+              showRhythm ? 'bg-accent-purple text-bg-primary border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
             }`}>
             📐 {language === 'KO' ? '문장 리듬 분석' : 'Sentence Rhythm'}
           </button>
@@ -68,8 +68,8 @@ const StyleTab: React.FC<StyleTabProps> = ({
           onClick={triggerSave} 
           className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-mono transition-all duration-300 ${
             saveFlash 
-              ? 'bg-accent-green text-white animate-save-bounce-glow' 
-              : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
+              ? 'bg-accent-green text-bg-primary animate-save-bounce-glow' 
+              : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-bg-primary hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
           }`}
         >
           <span className={`transition-transform duration-200 ${saveFlash ? 'animate-icon-pop' : 'group-hover:scale-110'}`}>

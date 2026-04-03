@@ -104,13 +104,13 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
                   max={10}
                   value={genCount}
                   onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
-                  className="w-12 bg-black/50 border border-border/80 rounded-xl px-2 py-3 text-center text-xs font-black text-blue-400 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="w-12 bg-bg-secondary/80 border border-border rounded-xl px-2 py-3 text-center text-xs font-black text-accent-purple focus:border-accent-purple/60 outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
                 />
                 <button
                   onClick={handleAutoGenerate}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-800 to-stone-900 text-stone-100 rounded-xl text-sm font-bold tracking-widest transition-all shadow-lg hover:shadow-amber-950/25 active:scale-95 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-accent-amber/80 to-accent-amber/50 text-bg-primary rounded-xl text-sm font-bold tracking-widest transition-all shadow-lg hover:shadow-accent-amber/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 >
                   {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   {isGenerating ? "Synthesizing..." : (language === 'KO' ? '자동 생성' : 'Auto Generate')}
@@ -123,8 +123,8 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
               onClick={triggerSave} 
               className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
                 saveFlash 
-                  ? 'bg-accent-green text-white animate-save-bounce-glow' 
-                  : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
+                  ? 'bg-accent-green text-bg-primary animate-save-bounce-glow' 
+                  : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-bg-primary hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
               }`}
             >
               <span className={`text-base transition-transform duration-200 ${saveFlash ? 'animate-icon-pop' : 'group-hover:scale-110'}`}>

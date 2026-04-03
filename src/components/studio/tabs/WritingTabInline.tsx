@@ -283,7 +283,7 @@ export default function WritingTabInline(props: Props) {
         {writingMode === 'ai' && currentSessionId && (
           <div className="p-4 md:p-6 bg-linear-to-t from-bg-primary via-bg-primary/95 to-transparent sticky bottom-0 z-20">
             {showAiLock && (
-              <div className="mb-3 flex items-center gap-2 rounded-xl border border-accent-amber/20 bg-accent-amber/5 px-4 py-2.5 text-xs text-accent-amber">
+              <div className="mb-3 flex items-center gap-2 rounded-xl border border-accent-amber/30 bg-accent-amber/10 px-4 py-2.5 text-xs text-accent-amber">
                 <Key className="w-3.5 h-3.5 shrink-0" />
                 <span>{isKO ? '스플래시 화면에서 API 키를 등록하면 AI 생성을 사용할 수 있습니다.' : 'Register an API key from the splash screen to use AI generation.'}</span>
               </div>
@@ -301,7 +301,7 @@ export default function WritingTabInline(props: Props) {
               <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isGenerating || showAiLock}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${input.trim() && !isGenerating && !showAiLock ? 'bg-accent-purple text-white shadow-lg' : 'bg-bg-tertiary text-text-tertiary opacity-30'}`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${input.trim() && !isGenerating && !showAiLock ? 'bg-accent-purple text-bg-primary shadow-lg hover:scale-[1.02] active:scale-95' : 'bg-bg-tertiary text-text-tertiary opacity-50'}`}
               >
                 {isGenerating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
