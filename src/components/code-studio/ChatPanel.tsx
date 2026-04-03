@@ -7,8 +7,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Send, Sparkles, Shield, Square, AtSign, History,
-  Trash2, Plus, Check, Zap,
+  Trash2, Plus, Check, Zap, Stethoscope, Code2,
 } from "lucide-react";
+import { NOD_SYSTEM_PROMPT, NOD_SYSTEM_PROMPT_EN } from "@/lib/code-studio/ai/nod";
 import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
 import { getServers, addServer, connectServer, callTool } from "@/lib/code-studio/features/mcp-client";
@@ -107,6 +108,7 @@ export function ChatPanel({
   const { lang } = useLang();
   const ko = lang === "ko";
   const [isMounted, setIsMounted] = useState(false);
+  const [chatMode, setChatMode] = useState<'code' | 'nod'>('nod'); // NOD가 기본
   
   useEffect(() => {
     // eslint-disable-next-line
@@ -121,7 +123,9 @@ export function ChatPanel({
   })() : "";
 
   const chat = useCodeStudioChat({
-    systemInstruction: `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.${mcpToolsDoc}`,
+    systemInstruction: chatMode === 'nod'
+      ? (ko ? NOD_SYSTEM_PROMPT : NOD_SYSTEM_PROMPT_EN) + (activeFileName ? `\n\n현재 파일: ${activeFileName}` : '')
+      : `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.${mcpToolsDoc}`,
     onMentionResolve: (mention) => {
       const found = allFileNames?.find(f => f.includes(mention));
       return found ? `[File: ${found}]` : null;
@@ -377,6 +381,15 @@ export function ChatPanel({
             ))}
           </div>
         )}
+        {/* NOD / Code 모드 토글 */}
+        <div className="flex items-center gap-1 px-2 mb-1">
+          <button onClick={() => setChatMode('nod')} className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors ${chatMode === 'nod' ? 'bg-accent-green/15 text-accent-green' : 'text-text-tertiary hover:text-text-secondary'}`}>
+            <Stethoscope size={11} /> NOD
+          </button>
+          <button onClick={() => setChatMode('code')} className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors ${chatMode === 'code' ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-tertiary hover:text-text-secondary'}`}>
+            <Code2 size={11} /> Code
+          </button>
+        </div>
         <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg px-3 py-2">
           <button onClick={() => { setShowMentions(!showMentions); setMentionQuery(""); }}
             className="text-text-tertiary hover:text-blue-400 transition-colors" title="Add context">
@@ -384,7 +397,7 @@ export function ChatPanel({
           </button>
           <input ref={inputRef} value={input} onChange={handleInputChange}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !showMentions) handleSend(); if (e.key === "Escape") setShowMentions(false); }}
-            placeholder="Ask about your code..." aria-label="Chat input"
+            placeholder={chatMode === 'nod' ? (ko ? "NOD에게 물어보세요... 뭐든 쉽게 설명해드려요" : "Ask NOD anything... I'll explain it simply") : "Ask about your code..."} aria-label="Chat input"
             className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
           />
           {chat.isStreaming ? (
