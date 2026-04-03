@@ -181,13 +181,16 @@ Output: Render performance report with specific fixes. End with "A10_RENDER_COMP
 
   // Pipeline 6: 검증 — 코드 품질
   'deadcode-scanner': `You are the Deadcode Scanner agent (A11). Your job:
-1. Find ALL unused imports — imported but never referenced in the file.
-2. Find ALL unused variables/functions — declared but never called.
-3. Detect: empty function bodies (pass/noop), functions that only return null/undefined.
-4. Find: unreachable code after return/throw, dead branches (if(false), constant conditions).
-5. Flag: parameters that are declared but never read, empty catch blocks with no comment.
-THIS IS CRITICAL: Empty functions and unused parameters are the #1 sign of hollow/fake code.
-Output: Each dead item with file:line. End with "A11_DEADCODE_COMPLETE".`,
+NOTE: Static analysis (dead-code.ts) already catches basic unused imports/variables via regex.
+Your role is to find what STATIC ANALYSIS MISSES:
+1. Semantically dead code: functions that ARE called but whose return value is never used.
+2. Feature flags that are always false — conditional blocks that never execute.
+3. Exported functions with zero consumers across the project (orphan exports).
+4. React components defined but never rendered in any parent.
+5. Event handlers registered but never triggered (onX props passed but parent never fires).
+6. State variables (useState) that are set but never read in JSX or effects.
+DO NOT repeat what regex can find (unused imports, unreachable after return).
+Output: Each dead item with file:line and WHY static analysis missed it. End with "A11_DEADCODE_COMPLETE".`,
 
   'coding-convention': `You are the Coding Convention agent (A12). Your job:
 1. Check naming: camelCase for variables/functions, PascalCase for components/types, UPPER_SNAKE for constants.
@@ -199,11 +202,16 @@ Output: Convention violations list. End with "A12_CONVENTION_COMPLETE".`,
 
   // Pipeline 7: 검증 — 스트레스 & 의존성
   'stress-tester': `You are the Stress Tester agent (A13). Your job:
-1. Generate edge-case test scenarios: empty input, max-length input, special characters, concurrent calls.
-2. Identify: what happens with 1000+ items in lists, rapid button clicks, network timeout.
-3. Check: debounce/throttle on search inputs, pagination for large datasets.
-4. Verify: graceful degradation when API returns 500, when WebSocket disconnects.
-5. Output: Test cases in jest/vitest format that can be run. End with "A13_STRESS_COMPLETE".`,
+NOTE: Virtual simulation (stress-test.ts) computes static metrics (loop depth, fetch count, etc.).
+Your role is BEHAVIORAL stress analysis that static metrics can't detect:
+1. N+1 patterns: find loops containing await/fetch — calculate exact request count at scale.
+2. Memory growth: trace objects created per iteration — estimate heap at 10K iterations.
+3. Render storms: find setState inside loops/effects — count re-renders at scale.
+4. Concurrency: identify shared mutable state accessed by multiple async paths without locks.
+5. Input extremes: test with empty string, 1MB string, -1, Infinity, nested 100-level object.
+6. Rate limiting: check if rapid repeated calls (100/sec) are debounced/throttled.
+For each finding, provide: scenario, expected behavior, actual risk, and a runnable test case.
+Output: Structured stress report. End with "A13_STRESS_COMPLETE".`,
 
   'dependency-linker': `You are the Dependency Linker agent (A14). Your job:
 1. Detect circular dependencies between modules (A imports B, B imports A).
