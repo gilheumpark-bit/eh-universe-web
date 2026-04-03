@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { X } from "lucide-react";
 import type { OpenFile } from "@/lib/code-studio/core/types";
 import { useLang } from "@/lib/LangContext";
@@ -101,7 +101,7 @@ function TabContextMenu({
 // PART 3 — Main EditorTabs Component
 // ============================================================
 
-export function EditorTabs({
+export const EditorTabs = memo(function EditorTabs({
   openFiles,
   activeFileId,
   onSelectFile,
@@ -283,6 +283,6 @@ export function EditorTabs({
       )}
     </>
   );
-}
+});
 
 // IDENTITY_SEAL: PART-3 | role=tab bar UI | inputs=EditorTabsProps | outputs=JSX tab bar

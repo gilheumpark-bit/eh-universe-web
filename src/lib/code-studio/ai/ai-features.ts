@@ -236,9 +236,17 @@ export async function findMissingImports(
   return safeAICall<ImportSuggestion[]>({
     systemInstruction: `You are an import analyzer for ${language}. Analyze the code and find identifiers that are used but not imported or declared. Return a JSON array of objects with "module" (package/path) and "importStatement" (the full import line). Only include high-confidence suggestions. If none are missing, return an empty array []. Return ONLY the JSON array, no explanation.
 
-Example:
+Example 1:
 Input: "const [count, setCount] = useState(0);"
-Output: [{"module":"react","importStatement":"import { useState } from 'react';"}]`,
+Output: [{"module":"react","importStatement":"import { useState } from 'react';"}]
+
+Example 2:
+Input: "const router = useRouter(); const params = useSearchParams();"
+Output: [{"module":"next/navigation","importStatement":"import { useRouter, useSearchParams } from 'next/navigation';"}]
+
+Example 3 (nothing missing):
+Input: "import { useState } from 'react';\\nconst [x, setX] = useState(0);"
+Output: []`,
     userMessage: code,
     fallback: [],
     signal,
@@ -279,9 +287,17 @@ export async function lintCode(
   return safeAICall<LintResult[]>({
     systemInstruction: `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.
 
-Example:
+Example 1 (null dereference):
 Input: "const x = null; console.log(x.name);"
-Output: [{"line":1,"message":"Potential null dereference: 'x' is null but accessed with '.name'","severity":"error","fix":"Add null check: if (x) { console.log(x.name); }"}]`,
+Output: [{"line":1,"message":"Potential null dereference: 'x' is null but accessed with '.name'","severity":"error","fix":"Add null check: if (x) { console.log(x.name); }"}]
+
+Example 2 (security + perf):
+Input: "function find(items, id) {\\n  eval('return items[' + id + ']');\\n}"
+Output: [{"line":2,"message":"eval() usage is a security risk — allows code injection","severity":"error","fix":"return items[id];"},{"line":1,"message":"Missing parameter types","severity":"warning","fix":"function find(items: Item[], id: string)"}]
+
+Example 3 (clean code):
+Input: "export function add(a: number, b: number): number { return a + b; }"
+Output: []`,
     userMessage: code,
     fallback: [],
     signal,
@@ -546,9 +562,17 @@ export async function generateCommitMessage(
 ): Promise<string> {
   const system = `You are a commit message generator. Given a git diff, write a concise conventional commit message (type: description). Use lowercase type (feat, fix, refactor, chore, docs, style, test, perf). The description should be under 72 characters and describe what changed and why. If multiple changes are present, focus on the most significant one. Output ONLY the commit message, nothing else.
 
-Example:
+Example 1:
 Input: "- Added null guard in auth.ts line 45\\n- Removed unused import in utils.ts"
-Output: "fix(auth): add null guard for session token access"`;
+Output: "fix(auth): add null guard for session token access"
+
+Example 2:
+Input: "+export function useTheme() { ... }\\n+const ThemeContext = createContext()"
+Output: "feat(theme): add useTheme hook and ThemeContext provider"
+
+Example 3:
+Input: "-  const data = await fetch(url)\\n+  const data = await fetch(url, { cache: 'force-cache' })"
+Output: "perf(api): enable force-cache for static data fetches"`;
   const result = await callAI(system, diff, signal);
   if (!result) return 'chore: update code';
   return result.split('\n')[0].trim();

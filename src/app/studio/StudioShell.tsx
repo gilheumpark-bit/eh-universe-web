@@ -30,11 +30,13 @@ import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
-import StudioSidebar from '@/components/studio/StudioSidebar';
-import StudioMainContent from './StudioMainContent';
+import dynamic from 'next/dynamic';
 import { StudioSaveSlotPanel } from './StudioRightPanel';
 import { useStudioShellController } from './useStudioShellController';
-import StudioOverlayManager from '@/components/studio/StudioOverlayManager';
+
+const StudioSidebar = dynamic(() => import('@/components/studio/StudioSidebar'), { ssr: false });
+const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
+const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];

@@ -507,7 +507,8 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                               </span>
                             </div>
                             <div className="p-3 bg-bg-primary max-h-60 overflow-y-auto text-[11px] font-mono leading-relaxed custom-scrollbar">
-                              {diff.map((line, i) => (
+                              {/* Cap diff rendering to 500 lines for DOM performance */}
+                              {(diff.length > 500 ? diff.slice(0, 500) : diff).map((line, i) => (
                                 <div key={i} className={`whitespace-pre-wrap ${
                                   line.type === 'add' ? 'text-green-400/80 bg-green-900/10' :
                                   line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-text-tertiary'
@@ -518,6 +519,9 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                                   {line.text || '\u00A0'}
                                 </div>
                               ))}
+                              {diff.length > 500 && (
+                                <div className="text-center py-1 text-[9px] text-text-tertiary">+{diff.length - 500} lines truncated</div>
+                              )}
                             </div>
                           </div>
                         );

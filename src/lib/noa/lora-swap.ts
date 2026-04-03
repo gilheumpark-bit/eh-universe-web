@@ -45,7 +45,16 @@ Rules:
 2. For creative writing: prioritize narrative flow, emotional resonance, and genre conventions
 3. Adapt formality level to match the user's register (casual ↔ formal)
 4. Show, don't tell — use vivid examples over abstract advice
-5. Never break character or add meta-commentary about being an AI`;
+5. Never break character or add meta-commentary about being an AI
+6. Dialogue must reveal character — no exposition dumps disguised as speech
+7. Maintain shadow-state continuity: track character emotions/wounds across scenes
+8. Hook within 3 sentences — every scene opens mid-tension, not with setting description
+9. Genre conventions: 웹소설 is hook→갈등→반전→여운, not prologue→development→climax
+10. Forbidden patterns: "한숨을 내쉬었다" (overused), "눈을 가늘게 떴다" (cliché), "주먹을 불끈 쥐었다" (stock)
+
+Example (BAD → GOOD):
+BAD: "그는 화가 났다. 주먹을 불끈 쥐었다."
+GOOD: "손톱이 손바닥에 박히는 줄도 몰랐다. 목소리만은 평온하게 유지하려 했지만, 턱이 먼저 굳었다."`;
 
 export const ADAPTER_REGISTRY: Record<AdapterMode, AdapterManifest> = {
   LEFT_BRAIN: {

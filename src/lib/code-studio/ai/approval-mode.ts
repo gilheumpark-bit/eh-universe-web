@@ -131,3 +131,60 @@ export function getHaltState(): Readonly<HaltState> {
 }
 
 // IDENTITY_SEAL: PART-2 | role=halt-mechanism | inputs=action | outputs=boolean+HaltState
+
+// ============================================================
+// PART 3 — Easy Mode Step Tracker
+// ============================================================
+// Tracks step-by-step approval flow for Easy mode UI indicators.
+
+export interface ApprovalStep {
+  id: string;
+  action: string;
+  label: string;
+  status: 'pending' | 'awaiting' | 'approved' | 'rejected';
+  timestamp: number;
+}
+
+let stepQueue: ApprovalStep[] = [];
+const stepListeners: Set<(steps: ApprovalStep[]) => void> = new Set();
+
+function notifyStepListeners(): void {
+  const snapshot = [...stepQueue];
+  stepListeners.forEach((fn) => fn(snapshot));
+}
+
+/** Register a step for user approval in Easy mode */
+export function enqueueApprovalStep(action: string, label: string): string {
+  const id = `step_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  stepQueue.push({ id, action, label, status: 'awaiting', timestamp: Date.now() });
+  notifyStepListeners();
+  return id;
+}
+
+/** Mark a step as approved or rejected */
+export function resolveApprovalStep(id: string, approved: boolean): void {
+  const step = stepQueue.find((s) => s.id === id);
+  if (step) {
+    step.status = approved ? 'approved' : 'rejected';
+    notifyStepListeners();
+  }
+}
+
+/** Get all pending/awaiting steps */
+export function getApprovalSteps(): readonly ApprovalStep[] {
+  return stepQueue;
+}
+
+/** Clear completed steps */
+export function clearResolvedSteps(): void {
+  stepQueue = stepQueue.filter((s) => s.status === 'awaiting' || s.status === 'pending');
+  notifyStepListeners();
+}
+
+/** Subscribe to step changes (for React components) */
+export function onStepChange(listener: (steps: ApprovalStep[]) => void): () => void {
+  stepListeners.add(listener);
+  return () => { stepListeners.delete(listener); };
+}
+
+// IDENTITY_SEAL: PART-3 | role=easy-mode-steps | inputs=action,label | outputs=ApprovalStep[]

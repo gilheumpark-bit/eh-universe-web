@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import {
   Bot, Play, Pause, Square, CheckCircle, XCircle, Loader2,
   ChevronDown, ChevronRight, FileCode, Pencil, Search,
@@ -63,7 +63,7 @@ const STEP_ICONS: Record<string, React.ReactNode> = {
   think: <Bot size={11} />,
 };
 
-function StepRow({ step, expanded, onToggle }: { step: AgentStep; expanded: boolean; onToggle: () => void }) {
+const StepRow = memo(function StepRow({ step, expanded, onToggle }: { step: AgentStep; expanded: boolean; onToggle: () => void }) {
   const icon = STEP_ICONS[step.action] ?? <Bot size={11} />;
   const statusIcon =
     step.status === "running" ? <Loader2 size={10} className="animate-spin text-blue-400" /> :
@@ -87,9 +87,9 @@ function StepRow({ step, expanded, onToggle }: { step: AgentStep; expanded: bool
       )}
     </div>
   );
-}
+});
 
-function AgentBadge({ mode }: { mode: AgentMode }) {
+const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
   const { lang } = useLang();
   const cfg: Record<AgentMode, { ko: string; en: string; color: string }> = {
     idle: { ko: "대기", en: "Idle", color: "text-[#8b949e]" },
@@ -106,7 +106,7 @@ function AgentBadge({ mode }: { mode: AgentMode }) {
       {L4(lang, { ko: c.ko, en: c.en })}
     </span>
   );
-}
+});
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);

@@ -556,7 +556,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
                 {showSessionList && (
                   <div className="mb-3 max-h-36 overflow-y-auto space-y-1 pr-1">
-                    {orderedSessions.map((s, i) => (
+                    {/* Render max 50 sessions for DOM performance; use jump-to for larger sets */}
+                    {(orderedSessions.length > 50 ? orderedSessions.slice(0, 50) : orderedSessions).map((s, i) => (
                       <button
                         key={s.id}
                         draggable={!!onReorderSessions && !batchMode}
@@ -636,6 +637,11 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         </span>
                       </button>
                     ))}
+                    {orderedSessions.length > 50 && (
+                      <p className="text-center text-[9px] text-text-tertiary py-1">
+                        +{orderedSessions.length - 50} {language === 'KO' ? '개 더 — 아래 점프 사용' : 'more — use jump below'}
+                      </p>
+                    )}
                   </div>
                 )}
 
