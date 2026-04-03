@@ -3,6 +3,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
+import { ActionBar } from '@/components/ui/ActionBar';
 import { createT } from '@/lib/i18n';
 import { getStudioBackendDisplayLabel } from '@/lib/studio-ai-backend-label';
 
@@ -251,13 +252,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
         {!isUser && (
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-            <button
-              onClick={() => navigator.clipboard.writeText(message.content)}
-              aria-label="복사"
-              className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-secondary transition-all"
-            >
-              <Copy className="w-3.5 h-3.5" />
-            </button>
+            <ActionBar
+              content={message.content}
+              title={`AI Message`}
+              actions={['copy', 'share', 'feedback']}
+              shareType="novel"
+              onFeedback={(positive) => { /* TODO: collect feedback */ }}
+            />
             {onRegenerate && (
               <button
                 onClick={() => onRegenerate(message.id)}

@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
+import { ActionBar } from "@/components/ui/ActionBar";
 import { useState, useEffect } from "react";
 import { useLang, L2 } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -135,9 +136,19 @@ export default function ArticleClient({ slug }: { slug: string }) {
           </div>
 
           <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-8 sm:p-12">
-            <h1 className="site-title text-2xl font-bold tracking-tight mb-8">
-              {L2(article.title, lang)}
-            </h1>
+            <div className="flex items-start justify-between gap-4 mb-8">
+              <h1 className="site-title text-2xl font-bold tracking-tight">
+                {L2(article.title, lang)}
+              </h1>
+              <ActionBar
+                content={typeof article.content === 'string' ? article.content : L2(article.title, lang)}
+                title={L2(article.title, lang)}
+                actions={['copy', 'share', 'print']}
+                shareType="world-doc"
+                size="md"
+              />
+            </div>
+            </div>
 
             {article.image && (
               <div className="mb-8 overflow-hidden rounded-[22px] border shadow-2xl">

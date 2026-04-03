@@ -3,6 +3,7 @@ import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
+import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import { MainContentRegion } from "@/components/MainContentRegion";
@@ -145,6 +146,7 @@ export default function RootLayout({
         </AuthProvider>
         <ErrorReporterInit />
         <WebFeaturesInit />
+        <StatusIndicator />
         <DeferredClientMetrics />
       </body>
     </html>

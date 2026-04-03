@@ -13,6 +13,7 @@ import {
 import type { AgentRole, AgentSession } from "@/lib/code-studio/ai/agents";
 import { VERIFY_ONLY_ROLES, GENERATE_AND_VERIFY_ROLES } from "@/lib/code-studio/ai/agents";
 import { useCodeStudioAgent } from "@/hooks/useCodeStudioAgent";
+import { ActionBar } from "@/components/ui/ActionBar";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -412,7 +413,15 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
             ))}
             {(mode === "staged" || mode === "applied") && summary && (
               <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-green-400"><CheckCircle size={12} />{summary}</div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-green-400"><CheckCircle size={12} />{summary}</div>
+                  <ActionBar
+                    content={agent.messages.map(m => `[${m.role}]\n${m.content}`).join('\n---\n')}
+                    title="Code Verification Report"
+                    actions={['copy', 'share', 'print']}
+                    shareType="verify-report"
+                  />
+                </div>
               </div>
             )}
             {mode === "staged" && applyCandidate && (
