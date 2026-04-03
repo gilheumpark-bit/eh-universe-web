@@ -9,7 +9,6 @@ import { useState, useCallback } from "react";
 import { Shield, ClipboardPaste, Play, ArrowRight, Sparkles } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { useWebFeatures } from "@/hooks/useWebFeatures";
 
 interface Props {
   /** 검증 시작: 코드와 모드를 Agent 패널로 전달 */
@@ -24,7 +23,6 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"choose" | "paste">("choose");
 
-  const web = useWebFeatures();
   const T = useCallback(
     (v: { ko: string; en: string }) => L4(lang, v),
     [lang],

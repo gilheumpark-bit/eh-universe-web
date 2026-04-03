@@ -5,7 +5,6 @@
 // ============================================================
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useWebFeatures } from "@/hooks/useWebFeatures";
 import {
   Send, Sparkles, Shield, Square, AtSign, History,
   Trash2, Plus, Check, Zap,
@@ -107,7 +106,6 @@ export function ChatPanel({
 }: Props) {
   const { lang } = useLang();
   const ko = lang === "ko";
-  const web = useWebFeatures();
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {

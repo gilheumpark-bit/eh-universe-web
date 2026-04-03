@@ -2,14 +2,12 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive } from 'lucide-react';
-import { useWebFeatures } from '@/hooks/useWebFeatures';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 
 export function BilateralEditor() {
   const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel } = useTranslator();
   const layout = useTranslatorLayout();
-  const web = useWebFeatures();
   
   const [syncedScrolling, setSyncedScrolling] = useState(true);
   

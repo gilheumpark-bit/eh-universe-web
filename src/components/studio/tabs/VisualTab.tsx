@@ -28,7 +28,7 @@ interface VisualTabProps {
   language: AppLanguage;
 }
 
-type TabView = 'editor' | 'gallery' | 'storyboard';
+type TabView = 'editor' | 'gallery';
 
 interface BatchProgress {
   running: boolean;
