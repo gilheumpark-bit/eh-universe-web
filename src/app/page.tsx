@@ -297,16 +297,9 @@ function HomePageContent() {
     return (
       <SplashScreen
         onUniverse={() => setShowSplash(false)}
-        onStudio={() => {
-          setShowSplash(false);
-          router.push("/studio");
-        }}
-        onCodeStudio={() => {
-          setShowSplash(false);
-          router.push("/code-studio");
-        }}
+        onStudio={() => router.push("/studio")}
+        onCodeStudio={() => router.push("/code-studio")}
         onTranslationStudio={() => {
-          setShowSplash(false);
           const href = getTranslatorStudioHref();
           if (href.startsWith("http")) {
             window.open(href, "_blank", "noopener,noreferrer");
