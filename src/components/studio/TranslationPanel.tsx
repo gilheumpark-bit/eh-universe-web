@@ -188,8 +188,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       setGlossaryCandidates(candidates);
 
       setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Translation complete. ${segs.length} segments, ${pairs.length} TM entries saved, ${candidates.length} terms detected.` }]);
-      // 완료 알림
+      // 완료 알림 + 뱃지
       browser.notifyBatchComplete(`General translation → ${targetLang}`);
+      browser.incrementBadge();
+      // AI 캐시에 결과 저장
+      browser.cacheResponse('translate', generalDomain, [{ role: 'user', content: generalText.slice(0, 500) }], 0.1, final).catch(() => {});
     } catch (err) {
       setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Error: ${err}` }]);
     } finally {
@@ -296,11 +299,30 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             ))}
           </div>
 
-          {/* Source Text */}
+          {/* Source Text — URL 붙여넣기 시 자동 추출 */}
           <textarea
             value={generalText}
             onChange={(e) => setGeneralText(e.target.value)}
-            placeholder={isKO ? '번역할 텍스트를 입력하거나 붙여넣으세요...' : 'Enter or paste text to translate...'}
+            onPaste={async (e) => {
+              const pasted = e.clipboardData.getData('text').trim();
+              try {
+                const { isUrl, extractTextFromUrl } = await import('@/lib/web-features');
+                if (isUrl(pasted)) {
+                  e.preventDefault();
+                  setGeneralText(`(${isKO ? 'URL에서 텍스트 추출 중' : 'Extracting from URL'}...)`);
+                  setLogs(prev => [...prev, { id: Date.now(), type: 'info', text: `Fetching: ${pasted}` }]);
+                  const result = await extractTextFromUrl(pasted);
+                  if (result) {
+                    setGeneralText(result.text);
+                    setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Extracted: "${result.title}" (${result.wordCount} words, ${result.language})` }]);
+                  } else {
+                    setGeneralText(pasted);
+                    setLogs(prev => [...prev, { id: Date.now(), type: 'warn', text: 'URL extraction failed, using raw URL' }]);
+                  }
+                }
+              } catch { /* fallback: 일반 텍스트로 처리 */ }
+            }}
+            placeholder={isKO ? '번역할 텍스트 또는 URL을 붙여넣으세요...' : 'Paste text or URL to translate...'}
             className="w-full min-h-[160px] bg-black/40 border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus:border-[rgba(184,149,92,0.3)]"
           />
 

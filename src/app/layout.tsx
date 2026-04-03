@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
+import WebFeaturesInit from "@/components/WebFeaturesInit";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import { MainContentRegion } from "@/components/MainContentRegion";
@@ -143,6 +144,7 @@ export default function RootLayout({
           </LangProvider>
         </AuthProvider>
         <ErrorReporterInit />
+        <WebFeaturesInit />
         <DeferredClientMetrics />
       </body>
     </html>

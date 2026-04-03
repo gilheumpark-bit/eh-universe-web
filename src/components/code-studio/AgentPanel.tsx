@@ -297,12 +297,13 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
       const result = await agent.run(input.trim(), ctx, agentPreset ?? undefined);
       setSession(result);
       const confidence = Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100);
-      setSummary(L4(lang, {
-        ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${confidence}%`,
-        en: `Pipeline complete — ${result.messages.length} messages, avg confidence: ${confidence}%`
-      }));
+      const summaryText = `Pipeline complete — ${result.messages.length} messages, avg confidence: ${confidence}%`;
+      setSummary(L4(lang, { ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${confidence}%`, en: summaryText }));
       setMode("staged");
       browser.notifyCodeVerifyComplete(result.messages.length, confidence);
+      browser.incrementBadge();
+      // AI 캐시에 검증 결과 저장 (같은 코드 재검증 시 캐시 히트)
+      browser.cacheResponse('agents', 'verify', [{ role: 'user', content: input.trim() }], 0.2, result.messages.map((m: { content: string }) => m.content).join('\n---\n')).catch(() => {});
     } catch {
       setMode("error");
       setSummary(L4(lang, { ko: "에이전트 파이프라인 실패", en: "Agent pipeline failed" }));

@@ -90,6 +90,28 @@ export default function ArticleClient({ slug }: { slug: string }) {
       ? "badge-amber"
       : "badge-allow";
 
+  // JSON-LD 구조화 데이터 (SEO)
+  useEffect(() => {
+    import('@/lib/web-features').then(({ buildArticleJsonLd }) => {
+      const jsonLd = buildArticleJsonLd({
+        title: getArticleTitle(slug, lang),
+        slug,
+        description: article.description || getTitle(slug, lang),
+        category: article.category,
+        dateModified: new Date().toISOString(),
+        wordCount: typeof article.content === 'string' ? article.content.split(/\s+/).length : 500,
+      });
+      const existing = document.querySelector('script[data-eh-jsonld]');
+      if (existing) existing.remove();
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.dataset.ehJsonld = '1';
+      script.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(script);
+      return () => { script.remove(); };
+    }).catch(() => {});
+  }, [slug, lang, article, getArticleTitle]);
+
   return (
     <>
       <Header />
