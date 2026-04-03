@@ -322,14 +322,60 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
     setSession(null);
   }, [agent]);
 
-  const handleApply = useCallback(() => {
+  const handleApply = useCallback(async () => {
     if(applyCandidate) {
       onApplyCode?.(applyCandidate.code, applyCandidate.fileName);
       setMode("applied");
       // Apply 후 Preview 자동 오픈
       onOpenPreview?.();
+
+      // 하네스 루프: 빌드 → 에러 → AI 수정 → 재빌드 (백그라운드)
+      try {
+        const { runHarnessLoop, errorsToPrompt } = await import('@/lib/code-studio/harness');
+        const { createWebContainer } = await import('@/lib/code-studio/features/webcontainer');
+        const wc = await createWebContainer();
+        if (!wc.isAvailable) return;
+
+        const result = await runHarnessLoop(wc, applyCandidate.code, {
+          maxIterations: 2,
+          steps: ['typecheck', 'lint', 'build'],
+          onProgress: (step, iter, errors) => {
+            setSummary(L4(lang, {
+              ko: `하네스: ${step} 검증 중 (${iter}/2)${errors.length > 0 ? ` — ${errors.length}개 에러` : ''}`,
+              en: `Harness: ${step} (${iter}/2)${errors.length > 0 ? ` — ${errors.length} error(s)` : ''}`,
+            }));
+          },
+          onFixRequest: async (errors, currentCode) => {
+            // progressive-repair 에이전트에게 에러 피드백
+            const prompt = errorsToPrompt(errors);
+            if (!prompt) return null;
+            let fixed = '';
+            await agent.run(
+              `Fix these errors in the code:\n\n${prompt}\n\nCurrent code:\n\`\`\`\n${currentCode.slice(0, 3000)}\n\`\`\`\n\nOutput ONLY the fixed code.`,
+              '',
+              ['progressive-repair'],
+            ).then(session => {
+              const lastMsg = session.messages[session.messages.length - 1];
+              if (lastMsg) {
+                const codeMatch = lastMsg.content.match(/```[\s\S]*?\n([\s\S]*?)```/);
+                fixed = codeMatch ? codeMatch[1] : lastMsg.content;
+              }
+            }).catch(() => {});
+            return fixed || null;
+          },
+        });
+
+        if (result.success) {
+          setSummary(L4(lang, { ko: `하네스 통과 (${result.iterations}회)`, en: `Harness passed (${result.iterations} iteration(s))` }));
+        } else {
+          setSummary(L4(lang, {
+            ko: `하네스: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length}개 에러 잔존 (${result.iterations}/${result.maxIterations}회)`,
+            en: `Harness: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length} error(s) remain (${result.iterations}/${result.maxIterations})`,
+          }));
+        }
+      } catch { /* harness is best-effort, don't block */ }
     }
-  }, [applyCandidate, onApplyCode, onOpenPreview]);
+  }, [applyCandidate, onApplyCode, onOpenPreview, agent, lang]);
 
   const handleRollback = useCallback(() => {
     // Basic rollback: clear candidate and return to idle
