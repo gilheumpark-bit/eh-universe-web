@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { StatusBadge } from '@/components/ui/StatusIndicator';
 import type {
   ChatSession, StoryConfig, AppTab, AppLanguage, Message,
   Project, ProactiveSuggestion, PipelineStageResult,
@@ -305,6 +306,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
 
               {/* Divider */}
             </div>
+            <StatusBadge showStorage />
             <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
           </div>
         </div>

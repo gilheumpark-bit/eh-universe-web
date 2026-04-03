@@ -5,8 +5,8 @@
 // 로그인 · API 키 · 테마 · 언어를 한 곳에서 관리
 // ============================================================
 
-import { useState } from "react";
-import { Moon, Sun, Globe, Key, User, LogOut, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Moon, Sun, Globe, Key, User, LogOut, HardDrive } from "lucide-react";
 import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang, type Lang } from "@/lib/LangContext";
@@ -19,6 +19,13 @@ export default function UnifiedSettingsBar() {
   const { theme, toggleTheme, enabledSlots } = useUnifiedSettings();
   const { user, signInWithGoogle, signOut, loading: authLoading } = useAuth();
   const { lang, toggleLang } = useLang();
+  const [storageInfo, setStorageInfo] = useState<{ used: string; total: string; percent: number } | null>(null);
+
+  useEffect(() => {
+    import('@/lib/web-features').then(({ getStorageUsage }) => {
+      getStorageUsage().then(setStorageInfo).catch(() => {});
+    }).catch(() => {});
+  }, []);
   const [showApiKeys, setShowApiKeys] = useState(false);
 
   const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
@@ -88,6 +95,20 @@ export default function UnifiedSettingsBar() {
           <Globe className="w-3.5 h-3.5" />
           <span>{LANG_LABELS[lang]}</span>
         </button>
+
+        {/* Storage Usage */}
+        {storageInfo && (
+          <>
+            <div className="w-px h-5 bg-border/30" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary text-xs" title={`${storageInfo.used} / ${storageInfo.total} (${storageInfo.percent}%)`}>
+              <HardDrive className="w-3.5 h-3.5" />
+              <span>{storageInfo.used}</span>
+              <div className="w-12 h-1.5 rounded-full bg-border/30 overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${storageInfo.percent > 80 ? 'bg-accent-red' : storageInfo.percent > 50 ? 'bg-accent-amber' : 'bg-accent-green'}`} style={{ width: `${Math.min(100, storageInfo.percent)}%` }} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* API Key Slot Manager Modal */}
