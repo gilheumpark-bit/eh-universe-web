@@ -6,6 +6,7 @@ import { useState, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+import { getTierLimits, type UserTier } from '@/lib/tier-gate';
 import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
 import {
   type TranslationConfig,
@@ -132,7 +133,8 @@ async function scoreTranslation(
   sourceText: string,
   translatedText: string,
   config: TranslationConfig,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userTier: UserTier = 'free',
 ): Promise<ChunkScoreDetail> {
   const prompt = buildScoringPrompt(sourceText, translatedText, config);
   const schema = config.mode === 'fidelity' ? FIDELITY_SCORE_SCHEMA : EXPERIENCE_SCORE_SCHEMA;
@@ -157,8 +159,9 @@ async function scoreTranslation(
       const raw = typeof data === 'string' ? data : JSON.stringify(data);
       const primaryScore = parseScoreResponse(raw, config.mode);
 
-      // 멀티키 활성 시 2차 교차 검증 (analyst 역할 슬롯 사용)
-      if (isMultiKeyActive()) {
+      // 멀티키 활성 + 티어 허용 시 2차 교차 검증 (analyst 역할 슬롯 사용)
+      const tierLimits = getTierLimits(userTier);
+      if (isMultiKeyActive() && tierLimits.translation.crossValidation) {
         try {
           let secondaryRaw = '';
           await streamWithMultiKey({

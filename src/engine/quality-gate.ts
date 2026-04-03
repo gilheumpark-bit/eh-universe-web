@@ -44,10 +44,11 @@ export function getDefaultThresholds(level: SkillLevel): QualityThresholds {
   return { ...LEVEL_THRESHOLDS[level] };
 }
 
-export function getDefaultGateConfig(level: SkillLevel): QualityGateConfig {
+export function getDefaultGateConfig(level: SkillLevel, tierMaxRetries?: number): QualityGateConfig {
+  const baseRetries = level === 'advanced' ? 5 : 3;
   return {
     enabled: true,
-    maxRetries: level === 'advanced' ? 5 : 3,
+    maxRetries: tierMaxRetries !== undefined ? Math.min(baseRetries, tierMaxRetries) : baseRetries,
     thresholds: getDefaultThresholds(level),
     autoMode: level === 'beginner' ? 'full_auto' : level === 'intermediate' ? 'confirm' : 'off',
   };

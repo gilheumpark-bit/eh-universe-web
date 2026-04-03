@@ -137,7 +137,7 @@ export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
 /** Default agent pipeline order when no custom roles are provided. */
 const DEFAULT_ROLES: AgentRole[] = ['domain-analyst', 'state-designer', 'css-layout', 'interaction-motion'];
 
-/** 검증 전용 프리셋 — 코드 붙여넣기 → 원클릭 검증용 */
+/** 검증 전용 프리셋 — 코드 붙여넣기 → 원클릭 검증용 (전체 8개) */
 export const VERIFY_ONLY_ROLES: AgentRole[] = [
   'team-leader',
   'overflow-guard', 'security-auth',
@@ -145,6 +145,14 @@ export const VERIFY_ONLY_ROLES: AgentRole[] = [
   'deadcode-scanner', 'coding-convention',
   'stress-tester', 'dependency-linker',
 ];
+
+/** 티어별 검증 에이전트 수 제한. agentCount에 맞춰 앞에서부터 슬라이스. */
+export function getVerifyRolesForTier(agentCount: number): AgentRole[] {
+  if (agentCount >= 8) return VERIFY_ONLY_ROLES;
+  // 팀장 + 상위 N개 검증 에이전트 (보안 > 컨벤션 > 데드코드 우선)
+  const priority: AgentRole[] = ['security-auth', 'coding-convention', 'deadcode-scanner', 'overflow-guard', 'memory-cache', 'render-optimizer', 'stress-tester', 'dependency-linker'];
+  return ['team-leader', ...priority.slice(0, agentCount)];
+}
 
 /** 생성 → 검증 프리셋 — 이지모드 전체 흐름용 */
 export const GENERATE_AND_VERIFY_ROLES: AgentRole[] = [
