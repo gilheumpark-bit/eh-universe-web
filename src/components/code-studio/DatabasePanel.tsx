@@ -52,10 +52,10 @@ function TableList({
 }) {
   const [expanded, setExpanded] = useState(true);
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-border">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300"
+        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-text-tertiary hover:text-text-primary"
       >
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         Tables ({tables.length})
@@ -66,7 +66,7 @@ function TableList({
             <button
               key={t}
               onClick={() => onSelect(t)}
-              className="flex w-full items-center gap-1.5 px-3 py-1 text-xs text-gray-400 hover:bg-white/5 hover:text-white"
+              className="flex w-full items-center gap-1.5 px-3 py-1 text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary"
             >
               <Table2 size={12} className="text-blue-400" />
               {t}
@@ -90,7 +90,7 @@ function HistoryList({
     <div>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300"
+        className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-text-tertiary hover:text-text-primary"
       >
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         History ({history.length})
@@ -101,8 +101,8 @@ function HistoryList({
             <button
               key={h.id}
               onClick={() => onSelect(h.query)}
-              className={`flex w-full items-start gap-1.5 px-3 py-1 text-xs hover:bg-white/5 ${
-                h.success ? "text-gray-400" : "text-red-400"
+              className={`flex w-full items-start gap-1.5 px-3 py-1 text-xs hover:bg-bg-secondary/60 ${
+                h.success ? "text-text-secondary" : "text-red-400"
               }`}
             >
               <Clock size={10} className="mt-0.5 shrink-0" />
@@ -124,7 +124,7 @@ function HistoryList({
 function ResultsTable({ result }: { result: QueryResult | null }) {
   if (!result) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-gray-500">
+      <div className="flex h-full items-center justify-center text-sm text-text-tertiary">
         Run a query to see results
       </div>
     );
@@ -140,10 +140,10 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
   return (
     <div className="h-full overflow-auto">
       <table className="w-full border-collapse text-xs">
-        <thead className="sticky top-0 bg-[#1e1e2e]">
+        <thead className="sticky top-0 bg-bg-primary">
           <tr>
             {result.columns.map((col) => (
-              <th key={col} className="border-b border-white/10 px-3 py-1.5 text-left font-medium text-gray-400">
+              <th key={col} className="border-b border-border px-3 py-1.5 text-left font-medium text-text-secondary">
                 {col}
               </th>
             ))}
@@ -151,9 +151,9 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
         </thead>
         <tbody>
           {result.rows.map((row, ri) => (
-            <tr key={ri} className="hover:bg-white/5">
+            <tr key={ri} className="hover:bg-bg-secondary/60">
               {result.columns.map((col) => (
-                <td key={col} className="border-b border-white/5 px-3 py-1 text-gray-300">
+                <td key={col} className="border-b border-border px-3 py-1 text-text-primary">
                   {String(row[col] ?? "NULL")}
                 </td>
               ))}
@@ -161,7 +161,7 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
           ))}
         </tbody>
       </table>
-      <div className="border-t border-white/5 px-3 py-1 text-[10px] text-gray-500">
+      <div className="border-t border-border px-3 py-1 text-[10px] text-text-tertiary">
         {result.rowCount} rows returned in {result.executionTime}ms
       </div>
     </div>
@@ -214,12 +214,12 @@ export default function DatabasePanel({
   return (
     <div className="flex h-full">
       {/* Sidebar */}
-      <div className="w-48 shrink-0 border-r border-white/5 overflow-y-auto bg-[#16161e]">
-        <div className="border-b border-white/5 px-2 py-2">
+      <div className="w-48 shrink-0 border-r border-border overflow-y-auto bg-bg-secondary/50">
+        <div className="border-b border-border px-2 py-2">
           <select
             value={activeConn}
             onChange={(e) => setActiveConn(e.target.value)}
-            className="w-full rounded bg-white/5 px-2 py-1 text-xs text-white border border-white/10 outline-none"
+            className="w-full rounded bg-bg-secondary/40 px-2 py-1 text-xs text-text-primary border border-border outline-none"
           >
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -233,22 +233,22 @@ export default function DatabasePanel({
       {/* Main area */}
       <div className="flex flex-1 flex-col">
         {/* Query editor */}
-        <div className="border-b border-white/5 p-2">
+        <div className="border-b border-border p-2">
           <textarea
             ref={textareaRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={4}
-            className="w-full resize-none rounded border border-white/10 bg-[#12121a] px-3 py-2 font-mono text-xs text-white outline-none focus:border-blue-500/50"
+            className="w-full resize-none rounded border border-border bg-bg-secondary/80 px-3 py-2 font-mono text-xs text-text-primary outline-none focus:border-accent-purple/50"
             placeholder="Enter SQL query... (Ctrl+Enter to execute)"
           />
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">Ctrl+Enter to execute</span>
+            <span className="text-[10px] text-text-tertiary">Ctrl+Enter to execute</span>
             <button
               onClick={execute}
               disabled={running}
-              className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1 rounded bg-accent-green px-3 py-1 text-xs text-bg-primary hover:bg-accent-green/80 disabled:opacity-50 transition-colors"
             >
               {running ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
               Execute

@@ -62,16 +62,16 @@ function ToolbarMenu({ label, items }: { label: string; items: MenuItemDef[] }) 
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="px-2 py-1 rounded text-xs text-white/60 hover:bg-white/10 transition-colors">{label}</button>
+      <button onClick={() => setOpen((v) => !v)} className="px-2 py-1 rounded text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary transition-colors">{label}</button>
       {open && (
-        <div className="absolute top-full left-0 mt-0.5 z-50 min-w-[200px] bg-[#0f1419] border border-white/10 rounded-lg shadow-xl py-1">
+        <div className="absolute top-full left-0 mt-0.5 z-50 min-w-[200px] bg-bg-primary border border-border rounded-lg shadow-xl py-1 backdrop-blur-xl">
           {items.map((item, i) => item.divider ? (
-            <div key={i} className="h-px bg-white/8 my-1" />
+            <div key={i} className="h-px bg-border my-1" />
           ) : (
             <button key={i} onClick={() => { item.action?.(); setOpen(false); }}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 transition-colors">
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary transition-colors">
               <span>{item.label}</span>
-              {item.shortcut && <kbd className="text-[10px] text-white/30 font-mono">{item.shortcut}</kbd>}
+              {item.shortcut && <kbd className="text-[10px] text-text-tertiary font-mono">{item.shortcut}</kbd>}
             </button>
           ))}
         </div>
@@ -90,13 +90,13 @@ function ToolbarButton({ icon, label, active, onClick, accent = "purple" }: {
   icon: React.ReactNode; label: string; active: boolean; onClick: () => void; accent?: "purple" | "green" | "blue";
 }) {
   const colors = {
-    purple: "bg-amber-900/22 text-amber-400",
-    green: "bg-green-500/15 text-green-400",
-    blue: "bg-blue-500/15 text-blue-400",
+    purple: "bg-accent-amber/15 text-accent-amber",
+    green: "bg-accent-green/15 text-accent-green",
+    blue: "bg-accent-purple/15 text-accent-purple",
   };
   return (
     <button onClick={onClick} title={label}
-      className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${active ? colors[accent] : "text-white/50 hover:bg-white/10"}`}>
+      className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${active ? colors[accent] : "text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary"}`}>
       {icon}<span className="hidden sm:inline">{label}</span>
     </button>
   );
@@ -110,10 +110,10 @@ export function Toolbar({
   showChat, showAgent, showTerminal, showPipeline,
 }: Props) {
   return (
-    <div className="flex items-center justify-between px-3 py-1.5 bg-[#0f1419] border-b border-white/8">
+    <div className="flex items-center justify-between px-3 py-1.5 bg-bg-primary border-b border-border">
       <div className="flex items-center gap-2">
-        <Code2 size={18} className="text-amber-400" />
-        <span className="text-sm font-bold tracking-tight text-white">EH <span className="text-amber-400">Code</span></span>
+        <Code2 size={18} className="text-accent-amber" />
+        <span className="text-sm font-bold tracking-tight text-text-primary">EH <span className="text-accent-amber">Code</span></span>
       </div>
       <div className="flex items-center gap-0.5 text-xs">
         <ToolbarMenu label="File" items={[
@@ -140,13 +140,13 @@ export function Toolbar({
           { label: "파이프라인", shortcut: "Ctrl+Shift+Enter", action: onTogglePipeline },
           { label: "버그 파인더", action: onRunBugFinder },
         ]} />
-        <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onUndo} title="Undo" aria-label="실행 취소" className="p-1 rounded hover:bg-white/10 text-white/40"><Undo2 size={14} /></button>
-        <button onClick={onRedo} title="Redo" aria-label="다시 실행" className="p-1 rounded hover:bg-white/10 text-white/40"><Redo2 size={14} /></button>
-        <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onZoomOut} title="Zoom Out" aria-label="축소" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomOut size={14} /></button>
+        <div className="w-px h-4 bg-border mx-1" />
+        <button onClick={onUndo} title="Undo" aria-label="실행 취소" className="p-1 rounded hover:bg-bg-secondary/60 text-text-secondary"><Undo2 size={14} /></button>
+        <button onClick={onRedo} title="Redo" aria-label="다시 실행" className="p-1 rounded hover:bg-bg-secondary/60 text-text-secondary"><Redo2 size={14} /></button>
+        <div className="w-px h-4 bg-border mx-1" />
+        <button onClick={onZoomOut} title="Zoom Out" aria-label="축소" className="p-1 rounded hover:bg-bg-secondary/60 text-text-secondary"><ZoomOut size={14} /></button>
         {fontSize != null && <button onClick={onZoomReset} title="Reset" aria-label="글꼴 크기 초기화" className="px-1 text-[10px] text-white/40 hover:bg-white/10 rounded">{fontSize}px</button>}
-        <button onClick={onZoomIn} title="Zoom In" aria-label="확대" className="p-1 rounded hover:bg-white/10 text-white/40"><ZoomIn size={14} /></button>
+        <button onClick={onZoomIn} title="Zoom In" aria-label="확대" className="p-1 rounded hover:bg-bg-secondary/60 text-text-secondary"><ZoomIn size={14} /></button>
       </div>
       <div className="flex items-center gap-1">
         <ToolbarButton icon={<Search size={14} />} label="Search" active={false} onClick={() => onToggleSearch?.()} />
@@ -154,13 +154,13 @@ export function Toolbar({
         <ToolbarButton icon={<AlertTriangle size={14} />} label="Problems" active={false} onClick={() => onToggleProblems?.()} />
         <ToolbarButton icon={<Bug size={14} />} label="Bugs" active={false} onClick={() => onRunBugFinder?.()} accent="green" />
         <ToolbarButton icon={<Terminal size={14} />} label="Terminal" active={showTerminal} onClick={onToggleTerminal} />
-        <div className="w-px h-4 bg-white/10 mx-1" />
+        <div className="w-px h-4 bg-border mx-1" />
         <ToolbarButton icon={<MessageSquare size={14} />} label="Chat" active={showChat} onClick={onToggleChat} accent="blue" />
         <ToolbarButton icon={<Bot size={14} />} label="Agent" active={showAgent} onClick={onToggleAgent} accent="green" />
         <ToolbarButton icon={<Columns2 size={14} />} label="Split" active={false} onClick={() => onToggleSplit?.()} />
         <ToolbarButton icon={<Rocket size={14} />} label="Deploy" active={false} onClick={() => onDeploy?.()} accent="green" />
-        <div className="w-px h-4 bg-white/10 mx-1" />
-        <button onClick={onOpenSettings} aria-label="설정 열기" className="p-1.5 rounded hover:bg-white/10 text-white/40"><Settings size={14} /></button>
+        <div className="w-px h-4 bg-border mx-1" />
+        <button onClick={onOpenSettings} aria-label="설정 열기" className="p-1.5 rounded hover:bg-bg-secondary/60 text-text-secondary"><Settings size={14} /></button>
       </div>
     </div>
   );
