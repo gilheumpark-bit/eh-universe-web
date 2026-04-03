@@ -70,9 +70,9 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
   const isLast = step === STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleSkip} />
-      <div className="relative z-10 w-full max-w-md mx-4 bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-md mx-4 bg-bg-primary border border-border rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <span className="text-[10px] text-white/40 font-mono">{step + 1} / {STEPS.length}</span>
           <button onClick={handleSkip} aria-label="건너뛰기" className="text-white/40 hover:text-white transition-colors"><X size={16} /></button>

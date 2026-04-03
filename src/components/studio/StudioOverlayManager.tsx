@@ -123,7 +123,7 @@ export default function StudioOverlayManager({
         uxError={uxError} setUxError={setUxError}
       />
       {alertToast && (
-        <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
+        <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[200] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
           alertToast.variant === 'error' ? 'bg-red-900/95 border border-red-600 text-red-100'
           : alertToast.variant === 'info' ? 'bg-blue-900/95 border border-blue-600 text-blue-100'
           : 'bg-amber-900/95 border border-amber-600 text-amber-100'

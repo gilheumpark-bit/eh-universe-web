@@ -142,7 +142,7 @@ export function MoveSessionModal({
 }) {
   const t = createT(language);
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
         <select autoFocus
@@ -175,7 +175,7 @@ export function SaveSlotModal({
 }) {
   const t = createT(language);
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <h3 className="text-sm font-bold text-text-primary">{t('saveSlot.enterSaveName')}</h3>
         <input

@@ -88,10 +88,10 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
       onKeyDown={handleKeyDown} tabIndex={0}
       style={{ animation: "fadeIn 0.15s ease-out" }}
     >
-      <div className="flex flex-col w-full max-w-[1200px] mx-auto my-4 bg-[#0a0e17] rounded-xl shadow-2xl overflow-hidden border border-white/10"
+      <div className="flex flex-col w-full max-w-[1200px] mx-auto my-4 bg-bg-primary rounded-xl shadow-2xl overflow-hidden border border-border"
         style={{ animation: "slideIn 0.2s ease-out" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/8 bg-[#0d1117]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary">
           <div className="flex items-center gap-3">
             <AlertCircle size={16} className="text-amber-400" />
             <span className="text-sm font-semibold">{L4(lang, { ko: "에이전트 변경 확인", en: "Agent Changes Review" })}</span>
@@ -99,19 +99,19 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleAcceptAll}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-green-500/15 text-green-400 rounded-lg hover:bg-green-500/25">
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-green-500/15 text-green-400 rounded-lg hover:bg-green-500/25 transition-colors">
               <CheckCircle size={12} /> {L4(lang, { ko: "모두 수락", en: "Accept All" })}
             </button>
             <button onClick={handleRejectAll}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500/15 text-red-400 rounded-lg hover:bg-red-500/25">
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500/15 text-red-400 rounded-lg hover:bg-red-500/25 transition-colors">
               <XCircle size={12} /> {L4(lang, { ko: "모두 거절", en: "Reject All" })}
             </button>
-            <button onClick={onReject} aria-label="닫기" className="p-1 hover:bg-white/5 rounded"><X size={14} /></button>
+            <button onClick={onReject} aria-label="닫기" className="p-1 hover:bg-bg-secondary/50 rounded transition-colors"><X size={14} /></button>
           </div>
         </div>
 
         {/* Stats bar */}
-        <div className="flex items-center gap-4 px-4 py-2 text-[10px] border-b border-white/8 bg-[#0d1117]/50">
+        <div className="flex items-center gap-4 px-4 py-2 text-[10px] border-b border-border bg-bg-secondary/50">
           <span className="text-green-400">{L4(lang, { ko: `+${stats.totalLinesAdded}줄`, en: `+${stats.totalLinesAdded} lines` })}</span>
           <span className="text-red-400">{L4(lang, { ko: `-${stats.totalLinesRemoved}줄`, en: `-${stats.totalLinesRemoved} lines` })}</span>
           <span className="text-text-secondary">
@@ -126,14 +126,14 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
 
         <div className="flex flex-1 overflow-hidden">
           {/* File list sidebar */}
-          <div className="w-56 border-r border-white/8 overflow-y-auto bg-[#0d1117]">
+          <div className="w-56 border-r border-border overflow-y-auto bg-bg-secondary">
             {changes.map((change, idx) => {
               const decision = decisions.get(change.filePath) ?? "pending";
               const isSelected = idx === selectedIndex;
               return (
                 <button key={change.filePath} onClick={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-white/5 ${
-                    isSelected ? "bg-white/5 border-l-2 border-amber-700" : ""
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-bg-tertiary/50 transition-colors ${
+                    isSelected ? "bg-bg-tertiary/50 border-l-2 border-accent-amber" : ""
                   }`}>
                   <StatusIcon status={change.status} />
                   <span className="flex-1 truncate">{change.filePath}</span>
@@ -147,7 +147,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
           <div className="flex-1 flex flex-col overflow-hidden">
             {selected ? (
               <>
-                <div className="flex items-center justify-between px-4 py-2 border-b border-white/8">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border">
                   <div className="flex items-center gap-2">
                     <FileCode size={14} className="text-amber-400" />
                     <span className="text-xs font-mono">{selected.filePath}</span>
@@ -155,21 +155,21 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => setShowDiff((v) => !v)}
-                      className="text-[9px] px-2 py-1 rounded bg-white/5 text-text-secondary">
+                      className="text-[9px] px-2 py-1 rounded bg-bg-tertiary/50 text-text-secondary transition-colors hover:bg-bg-tertiary">
                       {showDiff ? L4(lang, { ko: "코드 보기", en: "Code View" }) : L4(lang, { ko: "변경 비교", en: "Diff View" })}
                     </button>
                     <button onClick={() => handleDecision(selected.filePath, "accept")}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-green-500/15 text-green-400 rounded hover:bg-green-500/25">
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-green-500/15 text-green-400 rounded hover:bg-green-500/25 transition-colors">
                       <Check size={10} /> {L4(lang, { ko: "수락", en: "Accept" })}
                     </button>
                     <button onClick={() => handleDecision(selected.filePath, "reject")}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-red-500/15 text-red-400 rounded hover:bg-red-500/25">
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-red-500/15 text-red-400 rounded hover:bg-red-500/25 transition-colors">
                       <X size={10} /> {L4(lang, { ko: "거절", en: "Reject" })}
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-2 font-mono text-xs bg-[#060a12]">
+                <div className="flex-1 overflow-auto p-2 font-mono text-xs bg-bg-primary dark:bg-[#060a12]">
                   {showDiff ? (
                     <InlineDiffView original={selected.original} modified={selected.modified} />
                   ) : (
@@ -177,16 +177,16 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
                   )}
                 </div>
 
-                <div className="flex items-center justify-between px-4 py-2 border-t border-white/8">
+                <div className="flex items-center justify-between px-4 py-2 border-t border-border">
                   <button onClick={handlePrev} disabled={selectedIndex === 0}
-                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-white disabled:opacity-30">
+                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors">
                     <ChevronLeft size={12} /> {L4(lang, { ko: "이전", en: "Previous" })}
                   </button>
                   <span className="text-[10px] text-text-tertiary">
                     {L4(lang, { ko: `${selectedIndex + 1} / ${changes.length} (Tab: 다음, Enter: 수락, Esc: 닫기)`, en: `${selectedIndex + 1} / ${changes.length} (Tab: next, Enter: accept, Esc: close)` })}
                   </span>
                   <button onClick={handleNext} disabled={selectedIndex === changes.length - 1}
-                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-white disabled:opacity-30">
+                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors">
                     {L4(lang, { ko: "다음", en: "Next" })} <ChevronRight size={12} />
                   </button>
                 </div>
@@ -198,13 +198,13 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-white/8 bg-[#0d1117]">
+        <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-border bg-bg-secondary">
           <button onClick={handleRejectAll}
-            className="px-4 py-2 text-xs rounded-lg border border-white/10 hover:bg-white/5">
+            className="px-4 py-2 text-xs rounded-lg border border-border hover:bg-bg-tertiary/50 transition-colors">
             {L4(lang, { ko: "취소", en: "Cancel" })}
           </button>
           <button onClick={handleApplyDecisions}
-            className="px-4 py-2 text-xs bg-amber-800 text-stone-100 rounded-lg hover:bg-amber-800">
+            className="px-4 py-2 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 transition-colors">
             {L4(lang, { ko: `선택 적용 (${acceptedCount} 수락됨)`, en: `Apply Selection (${acceptedCount} accepted)` })}
           </button>
         </div>

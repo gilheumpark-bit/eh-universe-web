@@ -55,7 +55,7 @@ function ProviderCard({
       </div>
       <span className={`h-2 w-2 rounded-full ${hasKey ? "bg-green-400" : "bg-gray-600"}`} />
       {onConfigure && (
-        <button onClick={onConfigure} className="p-1 text-gray-500 hover:text-white">
+        <button onClick={onConfigure} className="p-1 text-gray-500 hover:text-text-primary transition-colors">
           <Settings size={12} />
         </button>
       )}

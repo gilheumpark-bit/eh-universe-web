@@ -198,7 +198,7 @@ function PanelFallback({
   if (sanitized.length > 200) sanitized = sanitized.slice(0, 200) + '...';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-8 text-center bg-[#0a0e17]">
+    <div className="flex flex-col items-center justify-center gap-3 p-8 text-center bg-bg-primary">
       <AlertTriangle size={32} className="text-amber-400" />
       <p className="text-sm font-semibold text-text-primary">
         {fallbackMessage ?? 'An error occurred'}

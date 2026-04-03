@@ -93,7 +93,7 @@ function ThreadList({
             <span className="flex-1 truncate">{t.title}</span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
-              className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400"
+              className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-opacity"
             >
               <X size={10} />
             </button>
