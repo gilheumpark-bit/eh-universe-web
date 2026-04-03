@@ -33,3 +33,6 @@ export { canBadge, setBadge, clearBadge, incrementBadge, resetBadge, setBadgeCou
 
 // Keyboard Layout (키보드 배열 감지)
 export { detectKeyboardLayout, formatShortcut, type KeyboardLayoutInfo } from './keyboard-layout';
+
+// Advanced APIs (5대 브라우저 최대 활용)
+export { detectTextFromImage, detectBarcode, getLocalFonts, pickColorFromScreen, startScreenRecording, stopScreenRecording, isRecording, addSpeculationRules, preloadStudioRoutes, getBrowserCapabilities, type OCRResult, type LocalFont, type ScreenRecording } from './advanced-apis';

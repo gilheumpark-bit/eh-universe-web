@@ -19,6 +19,9 @@ export default function WebFeaturesInit() {
       // PWA 설치 프롬프트 감지 시작
       webFeatures.initInstallPrompt();
 
+      // Speculation Rules: 스튜디오 경로 사전 렌더링 (Chrome/Edge)
+      browser.preloadStudioRoutes();
+
       // 외부 링크 보안 강화 (noopener noreferrer)
       webFeatures.hardenExternalLinks();
 
