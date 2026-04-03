@@ -43,6 +43,52 @@
 @keyframes slide-out-right { to { transform: translateX(30px); opacity: 0; } }
 @keyframes slide-in-left { from { transform: translateX(-30px); opacity: 0; } }
 
+/* ── Fluid Typography (320px ~ 2560px) ── */
+html {
+  font-size: clamp(14px, 0.875rem + 0.25vw, 18px);
+}
+@media (min-width: 2560px) {
+  .site-shell { max-width: 1600px; }
+}
+
+/* ── Small Screen (320px) ── */
+@media (max-width: 375px) {
+  .site-shell { padding-inline: 12px; }
+  .premium-panel { padding: 12px; border-radius: 12px; }
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+}
+
+/* ── Tablet (768-1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .site-shell { padding-inline: 24px; }
+}
+
+/* ── Print Styles ── */
+@media print {
+  body { background: white !important; color: black !important; font-size: 12pt; line-height: 1.6; }
+  nav, footer, .no-print, button, .premium-button, [data-testid="studio-content"] > :first-child { display: none !important; }
+  .premium-panel { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
+  a { color: black !important; text-decoration: underline; }
+  a::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
+  img { max-width: 100% !important; }
+  @page { margin: 2cm; }
+}
+
+/* ── Landscape Orientation ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  .eh-page-canvas { padding-top: 0 !important; }
+  header { position: relative !important; }
+}
+
+/* ── Tap Highlight (iOS/Android) ── */
+* { -webkit-tap-highlight-color: rgba(184, 149, 92, 0.15); }
+
+/* ── Prevent Input Zoom (iOS Safari — input 16px minimum) ── */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
 /* ── Mobile Safe Area ── */
 .eh-safe-area-padding {
   padding-top: env(safe-area-inset-top, 0px);

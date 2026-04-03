@@ -42,7 +42,29 @@ const notoSerifKr = Noto_Serif_KR({
   preload: false,
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover' as const,
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#1c1a17' },
+    { media: '(prefers-color-scheme: light)', color: '#FAFAF8' },
+  ],
+};
+
 export const metadata: Metadata = {
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'EH Universe',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   title: {
     default: "EH Universe — A Narrative Engine That Prevents Story Collapse",
     template: "NOA Studio | %s",

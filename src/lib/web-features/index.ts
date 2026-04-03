@@ -27,3 +27,12 @@ export { generateAtomFeed, generateRssFeed, type FeedItem } from './rss-feed';
 
 // 모바일 UX
 export { isMobile, isTouchDevice, onVirtualKeyboard, applySafeArea, onSwipe, onPullToRefresh, getSelectedText } from './mobile-ux';
+
+// 보안 강화
+export { hardenExternalLinks, devToolsWarning, escapeHtml, sanitizeInput, computeIntegrityHash, safeJsonParse, isAllowedMimeType, maskSecret } from './security-hardening';
+
+// 반응형 유틸리티
+export { getDeviceType, getOptimalImageSrc, setupHiDPICanvas, getVisualViewport, printContent, type DeviceType } from './responsive';
+
+// PWA 설치 프롬프트
+export { initInstallPrompt, canInstall, isInstalled, showInstallPrompt, onInstallStateChange } from './pwa-install';
