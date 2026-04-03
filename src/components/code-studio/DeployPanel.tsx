@@ -1,5 +1,9 @@
 "use client";
 
+// ⚠️ SIMULATED PANEL — 실제 배포 기능 없음.
+// 브라우저 IDE 환경에서 배포 시뮬레이션 UI를 제공합니다.
+// WebContainer 연동 시 실제 빌드/배포로 전환 가능.
+
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import {
   Upload,
