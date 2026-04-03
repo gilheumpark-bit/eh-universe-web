@@ -856,7 +856,7 @@ function CodeStudioShellInner() {
     <PI.ChatPanelComponent activeFileContent={activeFile?.content} activeFileName={activeFile?.name} activeFileLanguage={activeFile?.language} allFileNames={openFiles.map(f => f.name)} onApplyCode={handleApplyCode} />
   );
 
-  const terminalPanel = (<div className="h-full bg-[#0d0d0d]"><div ref={termRef} className="h-full" /></div>);
+  const terminalPanel = (<div className="h-full bg-bg-primary"><div ref={termRef} className="h-full" /></div>);
 
   const pipelinePanelMobile = (() => {
     const pipelineResult = pipelineStages.length > 0 ? { stages: pipelineStages.map((s) => ({ stage: s.name, status: s.status, score: s.score ?? 0, findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [] })), overallScore: pipelineScore ?? 0, overallStatus: ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail", timestamp: Date.now() } : null;

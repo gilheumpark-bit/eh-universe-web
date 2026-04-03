@@ -60,7 +60,7 @@ function TabContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 bg-[#1a1f2e] border border-white/10 rounded shadow-lg py-1 min-w-[160px]"
+      className="fixed z-50 bg-bg-secondary border border-white/10 rounded shadow-lg py-1 min-w-[160px]"
       style={{ left: state.x, top: state.y }}
     >
       <button
@@ -201,7 +201,7 @@ export function EditorTabs({
 
   if (openFiles.length === 0) {
     return (
-      <div className="flex items-center h-9 px-3 bg-[#0d1220] border-b border-white/8">
+      <div className="flex items-center h-9 px-3 bg-bg-primary border-b border-white/8">
         <span className="text-xs text-text-tertiary italic">
           {L4(lang, { ko: "열린 파일 없음", en: "No open files" })}
         </span>
@@ -214,7 +214,7 @@ export function EditorTabs({
       <div
         ref={tabsContainerRef}
         role="tablist"
-        className="flex items-center h-9 bg-[#0d1220] border-b border-white/8 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10"
+        className="flex items-center h-9 bg-bg-primary border-b border-white/8 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10"
       >
         {openFiles.map((file) => {
           const isActive = file.id === activeFileId;
@@ -238,7 +238,7 @@ export function EditorTabs({
                 transition-colors cursor-grab active:cursor-grabbing
                 ${
                   isActive
-                    ? "bg-[#0a0e17] text-white"
+                    ? "bg-bg-primary text-white"
                     : "text-text-secondary hover:bg-white/5 hover:text-gray-300"
                 }
                 ${isDragTarget ? "border-l-2 border-l-amber-700" : ""}

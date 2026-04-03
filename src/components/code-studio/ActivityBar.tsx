@@ -89,7 +89,7 @@ function ActivityTooltip({
     <div className="relative" onMouseEnter={show} onMouseLeave={hide}>
       {children}
       {visible && (
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-[#1e2333] text-text-primary text-[11px] rounded shadow-lg whitespace-nowrap z-50 border border-white/10 pointer-events-none">
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-bg-secondary text-text-primary text-[11px] rounded shadow-lg whitespace-nowrap z-50 border border-white/10 pointer-events-none">
           {content}
         </div>
       )}
@@ -172,7 +172,7 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
       role="tablist"
       aria-orientation="vertical"
       aria-label="활동 바"
-      className="flex flex-col items-center w-12 bg-[#0a0e17] border-r border-white/8 pt-2 pb-10 gap-1 shrink-0"
+      className="flex flex-col items-center w-12 bg-bg-primary border-r border-white/8 pt-2 pb-10 gap-1 shrink-0"
       onKeyDown={handleKeyDown}
     >
       {/* AI sparkle indicator at top */}
