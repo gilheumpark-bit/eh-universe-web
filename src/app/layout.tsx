@@ -116,10 +116,25 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
     >
       <head>
-        {/* Security headers are applied centrally by src/proxy.ts */}
+        {/* Resource hints — API endpoints + CDN preconnect */}
+        <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
+        <link rel="dns-prefetch" href="https://api.openai.com" />
+        <link rel="dns-prefetch" href="https://api.anthropic.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col">
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline">본문으로 건너뛰기</a>
+        {/* Skip navigation — multi-language */}
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline" lang="ko">본문으로 건너뛰기</a>
+        {/* Noscript fallback */}
+        <noscript>
+          <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
+            <h1>EH Universe</h1>
+            <p>이 사이트는 JavaScript가 필요합니다. 브라우저 설정에서 JavaScript를 활성화해주세요.</p>
+            <p>This site requires JavaScript. Please enable JavaScript in your browser settings.</p>
+          </div>
+        </noscript>
         <AuthProvider>
           <LangProvider>
             <UnifiedSettingsProvider>

@@ -36,3 +36,9 @@ export { getDeviceType, getOptimalImageSrc, setupHiDPICanvas, getVisualViewport,
 
 // PWA 설치 프롬프트
 export { initInstallPrompt, canInstall, isInstalled, showInstallPrompt, onInstallStateChange } from './pwa-install';
+
+// 적응형 로딩 (네트워크 품질 기반)
+export { getConnectionQuality, getAdaptiveConfig, onConnectionChange, requestPersistentStorage, getStorageUsage, prefetchOnVisible, type ConnectionQuality } from './adaptive-loading';
+
+// 국제화 (Intl API)
+export { segmentSentences, segmentWords, formatDate, formatNumber, formatRelativeTime, detectTextDirection, normalizeText } from './intl-utils';
