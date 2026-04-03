@@ -217,10 +217,45 @@ body[data-theme="light"] {
 [data-theme="light"] .text-text-primary {
   color: #1a1a1a;
 }
-[data-theme="light"] .bg-white\/\[0\.02\],
-[data-theme="light"] .bg-white\/\[0\.03\],
-[data-theme="light"] .bg-white\/\[0\.04\] {
+[data-theme=”light”] .bg-white\/\[0\.02\],
+[data-theme=”light”] .bg-white\/\[0\.03\],
+[data-theme=”light”] .bg-white\/\[0\.04\] {
   background-color: rgba(0, 0, 0, 0.03);
+}
+/* Sidebar: bg-black/20 → light surface */
+[data-theme=”light”] .bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+/* Sidebar: bg-white/4 → subtle border-like fill */
+[data-theme=”light”] .bg-white\/4,
+[data-theme=”light”] .bg-white\/\[0\.04\] {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+/* Sidebar: border-white/8 → visible border on light */
+[data-theme=”light”] .border-white\/8,
+[data-theme=”light”] .border-white\/10,
+[data-theme=”light”] .border-white\/4 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+/* Text legibility: text-tertiary needs higher contrast on light */
+[data-theme=”light”] .text-text-tertiary {
+  color: #5a5a55;
+}
+/* Sidebar gradients: gold/purple rgba → visible on light */
+[data-theme=”light”] .shadow-\[0_10px_30px_rgba\(0\,0\,0\,0\.25\)\] {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+/* Sidebar active tab shadow visibility */
+[data-theme=”light”] .shadow-\[0_0_20px_rgba\(202\,161\,92\,0\.1\)\] {
+  box-shadow: 0 2px 12px rgba(160, 128, 64, 0.12);
+}
+/* Header bg-bg-secondary/40 → visible on light */
+[data-theme=”light”] .bg-bg-secondary\/40 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+/* Theme toggle border on light */
+[data-theme=”light”] .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 /* ============================================================

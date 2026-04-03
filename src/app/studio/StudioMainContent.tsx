@@ -254,15 +254,15 @@ export default function StudioMainContent(props: StudioMainContentProps) {
       )}
 
       {/* Header */}
-      <header className={`h-14 flex items-center justify-between px-4 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
-        <div className="flex items-center gap-2 md:gap-4">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors" aria-label="Toggle sidebar" title={isKO ? '\uC0AC\uC774\uB4DC\uBC14 \uD1A0\uAE00' : 'Toggle sidebar'}>
-            <Menu className="w-5 h-5 text-text-tertiary" />
+      <header className={`h-14 flex items-center justify-between px-3 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
+        <div className="flex items-center gap-1.5 md:gap-4 min-w-0 flex-1 mr-2">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 md:p-2 hover:bg-bg-secondary rounded-lg transition-colors shrink-0" aria-label="Toggle sidebar" title={isKO ? '\uC0AC\uC774\uB4DC\uBC14 \uD1A0\uAE00' : 'Toggle sidebar'}>
+            <Menu className="w-5 h-5 text-text-secondary" />
           </button>
-          <div className="text-sm font-black tracking-tighter uppercase flex items-center gap-2 min-w-0 font-(family-name:--font-mono)">
-            <span className="text-text-tertiary hidden sm:inline">{t('sidebar.activeProject')}:</span>
-            <span className="text-text-primary truncate">{currentSession?.title || t('engine.noStory')}</span>
-            {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+          <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
+            <span className="text-text-secondary hidden md:inline">{t('sidebar.activeProject')}:</span>
+            <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
+            {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
