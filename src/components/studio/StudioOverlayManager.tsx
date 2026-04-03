@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import ApiKeyModal from '@/components/studio/ApiKeyModal';
+import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
 import { ConfirmModal } from '@/components/studio/UXHelpers';
 import { MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
 import StudioToasts from '@/components/studio/StudioToasts';
@@ -87,11 +87,8 @@ export default function StudioOverlayManager({
       />
 
       {showApiKeyModal && (
-        <ApiKeyModal
-          language={language}
-          hostedProviders={hostedProviders}
+        <APIKeySlotManager
           onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
-          onSave={() => setApiKeyVersion(v => v + 1)}
         />
       )}
 

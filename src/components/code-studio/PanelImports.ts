@@ -207,9 +207,9 @@ export const KeybindingsPanelComponent = dynamic(
   { ssr: false },
 );
 
-// ── api-config (named) ────────────────────────────────────────
+// ── api-config (unified) ──────────────────────────────────────
 export const APIKeyConfigComponent = dynamic(
-  () => import("@/components/code-studio/APIKeyConfig").then((m) => ({ default: m.APIKeyConfig })),
+  () => import("@/components/home/APIKeySlotManager").then((m) => ({ default: m.APIKeySlotManager })),
   { ssr: false },
 );
 

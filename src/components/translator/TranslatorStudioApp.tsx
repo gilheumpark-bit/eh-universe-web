@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
 import { getApiKey, type ProviderId } from '@/lib/ai-providers';
 import type { AppLanguage } from '@/lib/studio-types';
-import ApiKeyModal from '@/components/studio/ApiKeyModal';
+import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
 import { logger } from '@/lib/logger';
 import {
   loadProjectFromCloud,
@@ -1470,11 +1470,8 @@ export default function TranslatorStudioApp() {
         </div>
       </div>
       {showApiKeyModal && (
-        <ApiKeyModal
-          language={studioLanguage}
-          hostedProviders={hostedProviders}
-          onClose={() => setShowApiKeyModal(false)}
-          onSave={() => setApiKeyRefresh((n) => n + 1)}
+        <APIKeySlotManager
+          onClose={() => { setShowApiKeyModal(false); setApiKeyRefresh((n) => n + 1); }}
         />
       )}
       {dialog && (
