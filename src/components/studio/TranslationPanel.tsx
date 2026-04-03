@@ -211,18 +211,34 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const handleTranslate = useCallback(async () => {
     setLogs([]);
     if (batchMode && manuscripts.length > 0) {
-      // 배치 모드: 전체 에피소드 순차 번역
+      // 배치 모드: 전체 에피소드 순차 번역 (실패 시 이어서 계속)
       setLogs([{ id: Date.now(), type: 'info', text: `Batch mode: ${manuscripts.length} episodes queued for translation...` }]);
-      await translateBatch(manuscripts, translationConfig);
+      let completed = 0;
+      for (const ms of manuscripts) {
+        try {
+          setLogs(prev => [...prev, { id: Date.now(), type: 'info', text: `EP.${ms.episode} (${completed + 1}/${manuscripts.length}) translating...` }]);
+          await translateEpisode(ms, translationConfig);
+          completed++;
+          setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `EP.${ms.episode} complete (${completed}/${manuscripts.length})` }]);
+        } catch (err) {
+          setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `EP.${ms.episode} failed: ${err}. Continuing to next...` }]);
+          // 실패해도 다음 에피소드로 계속 진행
+        }
+      }
+      setLogs(prev => [...prev, { id: Date.now(), type: completed === manuscripts.length ? 'success' : 'warn', text: `Batch complete: ${completed}/${manuscripts.length} succeeded` }]);
     } else {
       // 단일 에피소드
       if (selectedEpisode === null) return;
       const ms = manuscripts.find((m) => m.episode === selectedEpisode);
       if (!ms) return;
       setLogs([{ id: Date.now(), type: 'info', text: `Initialization: Parsing episode ${selectedEpisode} (${ms.charCount} chars) into syntax chunks...` }]);
-      await translateEpisode(ms, translationConfig);
+      try {
+        await translateEpisode(ms, translationConfig);
+      } catch (err) {
+        setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Translation failed: ${err}` }]);
+      }
     }
-  }, [batchMode, selectedEpisode, manuscripts, translationConfig, translateEpisode, translateBatch]);
+  }, [batchMode, selectedEpisode, manuscripts, translationConfig, translateEpisode]);
 
   const bandLbl = bandLabel(band, mode, isKO);
 

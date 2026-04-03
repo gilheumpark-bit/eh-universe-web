@@ -37,12 +37,14 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Shield size={18} className="text-accent-green" />
           <div>
+            <div className="flex items-center gap-1 text-[10px] text-text-tertiary mb-0.5">
+              <span>{T({ ko: "검증", en: "Verify" })}</span>
+              <span className="text-border">/</span>
+              <span className="text-text-secondary">{T({ ko: "코드 붙여넣기", en: "Paste Code" })}</span>
+            </div>
             <h2 className="text-sm font-bold text-text-primary">
               {T({ ko: "코드 검증", en: "Code Verification" })}
             </h2>
-            <p className="text-[10px] text-text-tertiary">
-              {T({ ko: "AI 팀이 보안, 성능, 컨벤션을 검사합니다", en: "AI team checks security, performance, conventions" })}
-            </p>
           </div>
         </div>
 
@@ -65,6 +67,11 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
 
         {/* Action */}
         <div className="p-4 border-t border-border">
+          {!code.trim() && (
+            <p className="text-[11px] text-text-tertiary text-center mb-2">
+              {T({ ko: "코드를 붙여넣으면 검증 버튼이 활성화됩니다", en: "Paste code above to enable verification" })}
+            </p>
+          )}
           <button
             onClick={() => onStartVerify(code, "verify")}
             disabled={!code.trim()}
@@ -74,7 +81,7 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
             {T({ ko: "검증 시작", en: "Start Verification" })}
           </button>
           <button
-            onClick={() => setStep("choose")}
+            onClick={() => { setCode(''); setStep("choose"); }}
             className="w-full mt-2 py-2 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             {T({ ko: "뒤로", en: "Back" })}
