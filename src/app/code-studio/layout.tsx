@@ -5,5 +5,5 @@ export default function CodeStudioLayout({ children }: { children: React.ReactNo
   if (!isFeatureEnabledServer("CODE_STUDIO")) {
     notFound();
   }
-  return children;
+  return <div spellCheck={false}>{children}</div>;
 }

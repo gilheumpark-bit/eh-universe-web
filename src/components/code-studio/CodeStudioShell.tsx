@@ -404,7 +404,17 @@ function CodeStudioShellInner() {
         e.preventDefault();
         if (activeFileId) {
           const af = openFiles.find((f) => f.id === activeFileId);
-          if (af?.isDirty && !window.confirm(L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }))) return;
+          if (af?.isDirty) {
+            setConfirmState({
+              title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes" }),
+              message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }),
+              onConfirm: () => {
+                setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; });
+                setConfirmState(null);
+              },
+            });
+            return;
+          }
           setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; });
         }
       }
@@ -569,7 +579,7 @@ function CodeStudioShellInner() {
 
   const handleCloseTab = useCallback((id: string) => {
     const file = openFiles.find((f) => f.id === id);
-    if (file?.isDirty) { if (!window.confirm(L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }))) return; }
+    if (file?.isDirty) { setConfirmState({ title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes" }), message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다.", en: "Unsaved changes will be lost. Close anyway?" }), onConfirm: () => { setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== id); if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; }); setConfirmState(null); } }); return; }
     setOpenFiles((prev) => {
       const next = prev.filter((f) => f.id !== id);
       if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null);
