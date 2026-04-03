@@ -17,8 +17,7 @@ export async function detectKeyboardLayout(): Promise<KeyboardLayoutInfo> {
   }
 
   try {
-    // @ts-ignore
-    const layoutMap: Map<string, string> = await navigator.keyboard.getLayoutMap();
+    const layoutMap: Map<string, string> = await (navigator as any).keyboard.getLayoutMap();
     const keyMap = new Map<string, string>();
 
     // 핵심 키 매핑 추출

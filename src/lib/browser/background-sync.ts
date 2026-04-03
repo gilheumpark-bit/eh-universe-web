@@ -64,8 +64,7 @@ async function registerBackgroundSync(): Promise<void> {
   try {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       const reg = await navigator.serviceWorker.ready;
-      // @ts-ignore
-      await reg.sync.register('eh-sync-queue');
+      await (reg as any).sync.register('eh-sync-queue');
     }
   } catch { /* Background Sync 미지원 — 수동 재시도 fallback */ }
 }

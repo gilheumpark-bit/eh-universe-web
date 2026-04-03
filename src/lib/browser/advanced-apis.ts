@@ -15,11 +15,9 @@ export interface OCRResult {
 
 /** 이미지에서 텍스트 추출 (Chromium only) */
 export async function detectTextFromImage(imageSource: ImageBitmapSource): Promise<OCRResult[]> {
-  // @ts-ignore
-  if (typeof TextDetector === 'undefined') return [];
+  if (typeof (globalThis as any).TextDetector === 'undefined') return [];
   try {
-    // @ts-ignore
-    const detector = new TextDetector();
+    const detector = new (globalThis as any).TextDetector();
     const results = await detector.detect(imageSource);
     return results.map((r: { rawValue: string; boundingBox: DOMRectReadOnly }) => ({
       text: r.rawValue,
@@ -33,11 +31,9 @@ export async function detectTextFromImage(imageSource: ImageBitmapSource): Promi
 
 /** 바코드/QR 감지 */
 export async function detectBarcode(imageSource: ImageBitmapSource): Promise<string[]> {
-  // @ts-ignore
-  if (typeof BarcodeDetector === 'undefined') return [];
+  if (typeof (globalThis as any).BarcodeDetector === 'undefined') return [];
   try {
-    // @ts-ignore
-    const detector = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
+    const detector = new (globalThis as any).BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
     const results = await detector.detect(imageSource);
     return results.map((r: { rawValue: string }) => r.rawValue);
   } catch {
@@ -57,10 +53,8 @@ export interface LocalFont {
 /** 시스템에 설치된 폰트 목록 조회 (Chromium only, 권한 필요) */
 export async function getLocalFonts(): Promise<LocalFont[]> {
   try {
-    // @ts-ignore
-    if (!window.queryLocalFonts) return [];
-    // @ts-ignore
-    const fonts = await window.queryLocalFonts();
+    if (!(window as any).queryLocalFonts) return [];
+    const fonts = await (window as any).queryLocalFonts();
     const seen = new Set<string>();
     const result: LocalFont[] = [];
     for (const font of fonts) {
@@ -83,11 +77,9 @@ export async function getLocalFonts(): Promise<LocalFont[]> {
 
 /** 화면에서 색상 추출 (Chromium only) */
 export async function pickColorFromScreen(): Promise<string | null> {
-  // @ts-ignore
-  if (typeof EyeDropper === 'undefined') return null;
+  if (typeof (globalThis as any).EyeDropper === 'undefined') return null;
   try {
-    // @ts-ignore
-    const dropper = new EyeDropper();
+    const dropper = new (globalThis as any).EyeDropper();
     const result = await dropper.open();
     return result.sRGBHex;
   } catch {
@@ -201,14 +193,10 @@ export function preloadStudioRoutes(): void {
 
 export function getBrowserCapabilities() {
   return {
-    // @ts-ignore
-    textDetection: typeof TextDetector !== 'undefined',
-    // @ts-ignore
-    barcodeDetection: typeof BarcodeDetector !== 'undefined',
-    // @ts-ignore
-    localFonts: typeof window !== 'undefined' && !!window.queryLocalFonts,
-    // @ts-ignore
-    eyeDropper: typeof EyeDropper !== 'undefined',
+    textDetection: typeof (globalThis as any).TextDetector !== 'undefined',
+    barcodeDetection: typeof (globalThis as any).BarcodeDetector !== 'undefined',
+    localFonts: typeof window !== 'undefined' && !!(window as any).queryLocalFonts,
+    eyeDropper: typeof (globalThis as any).EyeDropper !== 'undefined',
     screenCapture: typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getDisplayMedia,
     speculationRules: typeof HTMLScriptElement !== 'undefined' && !!HTMLScriptElement.supports?.('speculationrules'),
   };

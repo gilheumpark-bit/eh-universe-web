@@ -17,11 +17,9 @@ export interface LaunchedFile {
 
 /** PWA 파일 핸들링으로 열린 파일 수신 */
 export async function consumeLaunchQueue(): Promise<LaunchedFile[]> {
-  // @ts-ignore
-  if (!window.launchQueue) return [];
+  if (!(window as any).launchQueue) return [];
   const files: LaunchedFile[] = [];
-  // @ts-ignore
-  window.launchQueue.setConsumer(async (launchParams: { files: FileSystemFileHandle[] }) => {
+  (window as any).launchQueue.setConsumer(async (launchParams: { files: FileSystemFileHandle[] }) => {
     for (const handle of launchParams.files) {
       const file = await handle.getFile();
       const content = await file.text();
@@ -33,8 +31,7 @@ export async function consumeLaunchQueue(): Promise<LaunchedFile[]> {
 
 /** 파일 핸들러 등록 가능 여부 */
 export function supportsFileHandling(): boolean {
-  // @ts-ignore
-  return typeof window !== 'undefined' && !!window.launchQueue;
+  return typeof window !== 'undefined' && !!(window as any).launchQueue;
 }
 
 // ── 2. Window Controls Overlay (Chrome PWA) ──
@@ -50,8 +47,7 @@ export interface TitleBarArea {
 
 /** 타이틀바 오버레이 영역 가져오기 */
 export function getTitleBarArea(): TitleBarArea {
-  // @ts-ignore
-  const overlay = navigator.windowControlsOverlay;
+  const overlay = (navigator as any).windowControlsOverlay;
   if (!overlay) return { x: 0, y: 0, width: 0, height: 0, visible: false };
   const rect = overlay.getTitlebarAreaRect();
   return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, visible: overlay.visible };
@@ -59,14 +55,12 @@ export function getTitleBarArea(): TitleBarArea {
 
 /** 타이틀바 오버레이 지원 여부 */
 export function supportsWindowControlsOverlay(): boolean {
-  // @ts-ignore
-  return typeof navigator !== 'undefined' && !!navigator.windowControlsOverlay;
+  return typeof navigator !== 'undefined' && !!(navigator as any).windowControlsOverlay;
 }
 
 /** 타이틀바 변경 리스너 */
 export function onTitleBarChange(callback: (area: TitleBarArea) => void): () => void {
-  // @ts-ignore
-  const overlay = navigator.windowControlsOverlay;
+  const overlay = (navigator as any).windowControlsOverlay;
   if (!overlay) return () => {};
   const handler = () => callback(getTitleBarArea());
   overlay.addEventListener('geometrychange', handler);
@@ -83,11 +77,9 @@ export interface PiPWindow {
 
 /** DOM 요소를 PiP 창으로 분리 */
 export async function openDocumentPiP(width: number = 400, height: number = 300): Promise<PiPWindow | null> {
-  // @ts-ignore
-  if (!window.documentPictureInPicture) return null;
+  if (!(window as any).documentPictureInPicture) return null;
   try {
-    // @ts-ignore
-    const pipWindow = await window.documentPictureInPicture.requestWindow({ width, height });
+    const pipWindow = await (window as any).documentPictureInPicture.requestWindow({ width, height });
     // 기본 스타일 복사
     for (const styleSheet of document.styleSheets) {
       try {
@@ -108,8 +100,7 @@ export async function openDocumentPiP(width: number = 400, height: number = 300)
 
 /** Document PiP 지원 여부 */
 export function supportsDocumentPiP(): boolean {
-  // @ts-ignore
-  return typeof window !== 'undefined' && !!window.documentPictureInPicture;
+  return typeof window !== 'undefined' && !!(window as any).documentPictureInPicture;
 }
 
 // ── 4. Compute Pressure API (Chrome) ──
@@ -122,11 +113,9 @@ export function observeComputePressure(
   callback: (state: PressureState) => void,
   sampleInterval: number = 2000,
 ): (() => void) | null {
-  // @ts-ignore
-  if (typeof PressureObserver === 'undefined') return null;
+  if (typeof (globalThis as any).PressureObserver === 'undefined') return null;
   try {
-    // @ts-ignore
-    const observer = new PressureObserver((records: Array<{ state: PressureState }>) => {
+    const observer = new (globalThis as any).PressureObserver((records: Array<{ state: PressureState }>) => {
       const latest = records[records.length - 1];
       if (latest) callback(latest.state);
     }, { sampleInterval });
@@ -151,11 +140,9 @@ export interface ScreenInfo {
 
 /** 연결된 모든 화면 정보 */
 export async function getScreens(): Promise<ScreenInfo[]> {
-  // @ts-ignore
-  if (!window.getScreenDetails) return [{ label: 'Primary', left: 0, top: 0, width: screen.width, height: screen.height, isPrimary: true }];
+  if (!(window as any).getScreenDetails) return [{ label: 'Primary', left: 0, top: 0, width: screen.width, height: screen.height, isPrimary: true }];
   try {
-    // @ts-ignore
-    const details = await window.getScreenDetails();
+    const details = await (window as any).getScreenDetails();
     return details.screens.map((s: { label: string; left: number; top: number; width: number; height: number; isPrimary: boolean }) => ({
       label: s.label, left: s.left, top: s.top, width: s.width, height: s.height, isPrimary: s.isPrimary,
     }));
@@ -174,11 +161,9 @@ export async function isMultiScreen(): Promise<boolean> {
 
 /** 저지연 펜 입력 활성화 (Canvas용) */
 export async function requestInkPresenter(canvas: HTMLCanvasElement): Promise<unknown | null> {
-  // @ts-ignore
-  if (!navigator.ink) return null;
+  if (!(navigator as any).ink) return null;
   try {
-    // @ts-ignore
-    return await navigator.ink.requestPresenter({ presentationArea: canvas });
+    return await (navigator as any).ink.requestPresenter({ presentationArea: canvas });
   } catch {
     return null;
   }
@@ -186,8 +171,7 @@ export async function requestInkPresenter(canvas: HTMLCanvasElement): Promise<un
 
 /** Ink API 지원 여부 */
 export function supportsInk(): boolean {
-  // @ts-ignore
-  return typeof navigator !== 'undefined' && !!navigator.ink;
+  return typeof navigator !== 'undefined' && !!(navigator as any).ink;
 }
 
 // ── Capability Summary ──
@@ -197,10 +181,8 @@ export function getPlatformCapabilities() {
     fileHandling: supportsFileHandling(),
     windowControlsOverlay: supportsWindowControlsOverlay(),
     documentPiP: supportsDocumentPiP(),
-    // @ts-ignore
-    computePressure: typeof PressureObserver !== 'undefined',
-    // @ts-ignore
-    multiScreen: typeof window !== 'undefined' && !!window.getScreenDetails,
+    computePressure: typeof (globalThis as any).PressureObserver !== 'undefined',
+    multiScreen: typeof window !== 'undefined' && !!(window as any).getScreenDetails,
     ink: supportsInk(),
   };
 }
