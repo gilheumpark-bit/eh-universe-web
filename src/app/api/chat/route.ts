@@ -343,26 +343,6 @@ export async function POST(req: NextRequest) {
     }
 
     const authResult = resolveAuth(provider, clientKey, ip, requestId, userTier, Boolean(keyVerification));
-    // #region agent log
-    void fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
-      body: JSON.stringify({
-        sessionId: '783f48',
-        location: 'route.ts:POST:afterAuth',
-        message: 'auth resolved',
-        data: {
-          hypothesisId: 'H2',
-          ok: authResult.ok,
-          keyVerification: Boolean(keyVerification),
-          tier: userTier,
-          provider,
-          isByok: authResult.ok ? authResult.auth.isByok : false,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     if (!authResult.ok) return authResult.response;
     let auth = authResult.auth;
 

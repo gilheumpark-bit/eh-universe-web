@@ -899,19 +899,6 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
         isChatMode: true,
       }),
     });
-    // #region agent log
-    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
-      body: JSON.stringify({
-        sessionId: '783f48',
-        location: 'ai-providers.ts:testApiKey',
-        message: 'chat probe',
-        data: { hypothesisId: 'H3', providerId, status: res.status, ok: res.ok },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     return res.ok;
   } catch {
     return false;

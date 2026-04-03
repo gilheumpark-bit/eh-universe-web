@@ -655,7 +655,7 @@ export function postProcessResponse(
       if (parsed.world_updates) {
         worldUpdates = parsed.world_updates;
       }
-    } catch (e) {}
+    } catch { /* JSON parse advisory — world_updates extraction is optional */ }
   } else {
     // Also try without markdown blocks if it's just raw JSON at the end
     try {
@@ -672,7 +672,7 @@ export function postProcessResponse(
           }
         }
       }
-    } catch(e) {}
+    } catch { /* JSON fallback parse advisory — non-blocking */ }
   }
 
   const report = generateEngineReport(text, config, language, platform);

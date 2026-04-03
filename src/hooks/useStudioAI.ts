@@ -244,7 +244,7 @@ export function useStudioAI({
 
         finalContent = stripEngineArtifacts(fullContent) || result.content;
         
-        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform); } catch(e) {}
+        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform); } catch { /* manuscript analysis advisory — non-blocking */ }
         qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
         gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);

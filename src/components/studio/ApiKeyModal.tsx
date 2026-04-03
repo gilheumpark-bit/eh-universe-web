@@ -104,24 +104,6 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
   const handleSave = () => {
     const trimmed = currentKey.trim();
     if (!trimmed && !hasStoredApiKey(activeId)) return;
-    // #region agent log
-    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
-      body: JSON.stringify({
-        sessionId: '783f48',
-        location: 'ApiKeyModal.tsx:handleSave',
-        message: 'persist key',
-        data: {
-          hypothesisId: 'H4',
-          provider: activeId,
-          emptyClear: !trimmed,
-          hadStored: hasStoredApiKey(activeId),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     setApiKey(activeId, trimmed);
     setActiveProvider(activeId);
     setActiveModel(selectedModel);

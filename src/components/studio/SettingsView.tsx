@@ -70,28 +70,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const hasPersonalApiKey = typeof window !== 'undefined' && hasStoredApiKey(apiProvider);
   const hasHostedApi = Boolean(hostedProviders[apiProvider]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    // #region agent log
-    fetch('http://127.0.0.1:7306/ingest/98d18562-2c48-4007-bc8f-ed8123607377', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '783f48' },
-      body: JSON.stringify({
-        sessionId: '783f48',
-        location: 'SettingsView.tsx:apiKeyRefresh',
-        message: 'badge state',
-        data: {
-          hypothesisId: 'H1',
-          apiKeyRefresh,
-          hasPersonalApiKey,
-          hasHostedApi,
-          apiProvider,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [apiKeyRefresh, hasPersonalApiKey, hasHostedApi, apiProvider]);
 
   useEffect(() => {
     window.addEventListener('storage', checkApiKeys);
