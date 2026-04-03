@@ -53,7 +53,7 @@ export function ActivityBar() {
   };
 
   return (
-    <div className="flex h-full w-[54px] shrink-0 flex-col border-r border-white/5 bg-black/80 backdrop-blur-2xl pointer-events-auto relative z-50 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+    <div className="flex h-full w-[54px] shrink-0 flex-col border-r border-border bg-bg-secondary/90 backdrop-blur-2xl pointer-events-auto relative z-50 shadow-panel">
       {/* 엑티비티 바 상단 장식 로고 */}
       <div className="flex w-full items-center justify-center pt-5 pb-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-accent-purple/40 to-accent-amber/40 shadow-[0_0_15px_rgba(251,191,36,0.15)] ring-1 ring-white/10">

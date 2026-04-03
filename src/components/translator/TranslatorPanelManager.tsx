@@ -39,9 +39,9 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
   const themeColorClass = region === 'left' ? 'text-accent-amber' : 'text-accent-purple';
 
   return (
-    <div className={`flex h-full w-full flex-col bg-black/40 backdrop-blur-3xl shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]`}>
+    <div className={`flex h-full w-full flex-col bg-bg-secondary/60 backdrop-blur-3xl shadow-panel`}>
       {/* Header */}
-      <div className={`flex items-center justify-between border-b border-white/5 bg-white/[0.01] px-4 py-3 shrink-0`}>
+      <div className={`flex items-center justify-between border-b border-border bg-bg-primary/50 px-4 py-3 shrink-0`}>
         <div className="flex items-center gap-2">
           <LayoutTemplate className={`h-4 w-4 ${themeColorClass} opacity-80`} />
           <h2 className="font-mono text-[11px] font-bold uppercase tracking-wider text-text-secondary drop-shadow-md">
