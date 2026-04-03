@@ -186,10 +186,8 @@ function resolveAuth(
     };
   }
 
-  // 프로 티어 로직 설계 (현재 락 상태)
-  if (userTier === 'pro') {
-    // TODO: 무제한 토큰, NOA 검사 완화 등 프로 혜택 적용 대상. 현재 설계 완료 후 락(Lock)
-  }
+  // 프로 티어 혜택은 tier-gate.ts의 getTierLimits()로 관리.
+  // OPEN_BETA = true 동안 모든 유저가 Pro 수준 기능 사용 가능.
 
   const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
 
