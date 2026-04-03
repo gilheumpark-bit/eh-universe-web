@@ -108,6 +108,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         translatedManuscripts: [...(prev.translatedManuscripts ?? []), entry],
       }));
       setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Episode ${entry.episode} finalization completed and saved to manuscript.` }]);
+      // 완료 알림 (탭 비활성 시)
+      import('@/lib/browser').then(({ notifyTranslationComplete }) => {
+        notifyTranslationComplete(1, targetLang);
+      }).catch(() => {});
     },
   });
 
@@ -129,6 +133,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     setGeneralTranslating(true);
     setGeneralResult('');
     setLogs([{ id: Date.now(), type: 'info', text: `General translation: ${generalDomain} mode, ${targetLang}...` }]);
+    // Wake Lock + 알림 권한 (한 번만)
+    const browser = await import('@/lib/browser');
+    browser.acquireWakeLock().catch(() => {});
+    browser.requestNotificationPermission().catch(() => {});
     try {
       const { buildGeneralPrompt, applyPassthrough, restorePassthrough, GENERAL_DOMAIN_PRESETS } = await import('@/lib/translation');
       const preset = GENERAL_DOMAIN_PRESETS[generalDomain as keyof typeof GENERAL_DOMAIN_PRESETS] ?? GENERAL_DOMAIN_PRESETS.general;
@@ -180,10 +188,13 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       setGlossaryCandidates(candidates);
 
       setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Translation complete. ${segs.length} segments, ${pairs.length} TM entries saved, ${candidates.length} terms detected.` }]);
+      // 완료 알림
+      browser.notifyBatchComplete(`General translation → ${targetLang}`);
     } catch (err) {
       setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Error: ${err}` }]);
     } finally {
       setGeneralTranslating(false);
+      browser.releaseWakeLock().catch(() => {});
     }
   }, [generalText, generalDomain, targetLang, glossary, generalTranslating]);
 

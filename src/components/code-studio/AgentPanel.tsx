@@ -288,18 +288,26 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
     if (!input.trim() || agent.running) return;
     setMode("executing");
     setSummary(null);
+    // Wake Lock + 알림 준비
+    const browser = await import('@/lib/browser');
+    browser.acquireWakeLock().catch(() => {});
+    browser.requestNotificationPermission().catch(() => {});
     try {
       const ctx = `File: ${fileName}\nLanguage: ${language}\n\n${code}`;
       const result = await agent.run(input.trim(), ctx, agentPreset ?? undefined);
       setSession(result);
-      setSummary(L4(lang, { 
-        ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%`, 
-        en: `Pipeline complete — ${result.messages.length} messages, avg confidence: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%` 
+      const confidence = Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100);
+      setSummary(L4(lang, {
+        ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${confidence}%`,
+        en: `Pipeline complete — ${result.messages.length} messages, avg confidence: ${confidence}%`
       }));
-      setMode("staged"); // Automatically go to staging when done instead of 'complete'
+      setMode("staged");
+      browser.notifyCodeVerifyComplete(result.messages.length, confidence);
     } catch {
       setMode("error");
       setSummary(L4(lang, { ko: "에이전트 파이프라인 실패", en: "Agent pipeline failed" }));
+    } finally {
+      browser.releaseWakeLock().catch(() => {});
     }
   }, [input, agent, fileName, language, code, lang]);
 
