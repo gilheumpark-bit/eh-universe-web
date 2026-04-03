@@ -86,10 +86,40 @@ export function useStudioTheme() {
   };
 
   // Apply theme level to document — 2단계: 'dark' | 'light'
+  // Tailwind CSS 4 inlines oklch colors, ignoring CSS variable overrides.
+  // We must set variables via JS inline style to override the cascade.
   useEffect(() => {
     const themeValue = themeLevel === 0 ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', themeValue);
     document.body.setAttribute('data-theme', themeValue);
+    const root = document.documentElement;
+    if (themeValue === 'light') {
+      const vars: Record<string, string> = {
+        '--color-bg-primary': '#FAFAF8',
+        '--color-bg-secondary': '#F0F0EC',
+        '--color-bg-tertiary': '#E4E4E0',
+        '--color-text-primary': '#111111',
+        '--color-text-secondary': '#333333',
+        '--color-text-tertiary': '#555550',
+        '--color-border': '#CDCDC5',
+        '--color-accent-purple': '#5b4b93',
+        '--color-accent-amber': '#8a6a20',
+        '--color-accent-red': '#c16258',
+        '--color-accent-green': '#2f9b83',
+        '--color-accent-blue': '#4a6a8f',
+        '--color-surface-strong': 'rgba(250,250,248,0.97)',
+        '--color-surface-soft': 'rgba(240,240,236,0.88)',
+      };
+      for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+    } else {
+      // Remove inline overrides so @theme defaults apply
+      const keys = ['--color-bg-primary','--color-bg-secondary','--color-bg-tertiary',
+        '--color-text-primary','--color-text-secondary','--color-text-tertiary',
+        '--color-border','--color-accent-purple','--color-accent-amber',
+        '--color-accent-red','--color-accent-green','--color-accent-blue',
+        '--color-surface-strong','--color-surface-soft'];
+      for (const k of keys) root.style.removeProperty(k);
+    }
   }, [themeLevel]);
   
   // Apply color theme on mount and change
