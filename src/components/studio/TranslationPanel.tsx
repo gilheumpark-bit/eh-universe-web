@@ -26,8 +26,15 @@ interface LogEntry {
   detail?: string;
 }
 
+type TranslationScope = 'novel' | 'general';
+
 export default function TranslationPanel({ language, config, setConfig }: TranslationPanelProps) {
   const isKO = language === "KO";
+  const [scope, setScope] = useState<TranslationScope>('novel');
+  const [generalDomain, setGeneralDomain] = useState<string>('general');
+  const [generalText, setGeneralText] = useState('');
+  const [generalResult, setGeneralResult] = useState('');
+  const [generalTranslating, setGeneralTranslating] = useState(false);
   const [mode, setMode] = useState<TranslationMode>("fidelity");
   const [targetLang, setTargetLang] = useState<TranslationTarget>("EN");
   const [band, setBand] = useState<number>(BAND_META.default);
@@ -102,6 +109,53 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     [config.manuscripts]
   );
 
+  // ── 일반 번역 실행 (lazy import — 소설 번들 오염 방지) ──
+  const handleGeneralTranslate = useCallback(async () => {
+    if (!generalText.trim() || generalTranslating) return;
+    setGeneralTranslating(true);
+    setGeneralResult('');
+    setLogs([{ id: Date.now(), type: 'info', text: `General translation: ${generalDomain} mode, ${targetLang}...` }]);
+    try {
+      const { buildGeneralPrompt, applyPassthrough, restorePassthrough, GENERAL_DOMAIN_PRESETS } = await import('@/lib/translation');
+      const preset = GENERAL_DOMAIN_PRESETS[generalDomain as keyof typeof GENERAL_DOMAIN_PRESETS] ?? GENERAL_DOMAIN_PRESETS.general;
+
+      // 패스스루: 수식/코드/인용 보호
+      const { filtered, map } = applyPassthrough(generalText, preset.passthroughPatterns);
+
+      // 4단계 번역
+      let draft = filtered;
+      for (let stage = 1; stage <= 4; stage++) {
+        setLogs(prev => [...prev, { id: Date.now(), type: 'info', text: `Stage ${stage}/4...` }]);
+        const prompt = buildGeneralPrompt({
+          text: draft,
+          from: 'KO',
+          to: targetLang,
+          domain: generalDomain as keyof typeof GENERAL_DOMAIN_PRESETS,
+          glossary: Object.keys(glossary).length > 0 ? glossary : undefined,
+          stage,
+          sourceText: filtered,
+        });
+        let result = '';
+        await (await import('@/lib/ai-providers')).streamChat({
+          systemInstruction: '',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: stage === 1 ? 0.1 : 0.3,
+          onChunk: (c: string) => { result += c; },
+        });
+        draft = result.trim() || draft;
+      }
+
+      // 패스스루 복원
+      const final = restorePassthrough(draft, map);
+      setGeneralResult(final);
+      setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: 'Translation complete.' }]);
+    } catch (err) {
+      setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Error: ${err}` }]);
+    } finally {
+      setGeneralTranslating(false);
+    }
+  }, [generalText, generalDomain, targetLang, glossary, generalTranslating]);
+
   const translationConfig = useMemo(() => ({
     mode, targetLang, band, contractionLevel,
     genre: targetGenre || undefined,
@@ -165,6 +219,76 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-300 ${showAdvanced ? 'rotate-90' : ''}`} />
         </button>
       </div>
+
+      {/* Scope Switch: 소설 / 일반 */}
+      <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit">
+        <button onClick={() => setScope('novel')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-all ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+          {isKO ? '소설 번역' : 'Novel'}
+        </button>
+        <button onClick={() => setScope('general')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-all ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+          {isKO ? '일반 번역' : 'General'}
+        </button>
+      </div>
+
+      {/* ── 일반 번역 모드 ── */}
+      {scope === 'general' && (
+        <div className="space-y-4">
+          {/* Domain Selector */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['general', 'academic', 'business', 'essay', 'legal', 'medical', 'it', 'journalism'].map((d) => {
+              const labels: Record<string, string> = { general: isKO ? '범용' : 'General', academic: isKO ? '학술' : 'Academic', business: isKO ? '비즈니스' : 'Business', essay: isKO ? '에세이' : 'Essay', legal: isKO ? '법률' : 'Legal', medical: isKO ? '의료' : 'Medical', it: 'IT', journalism: isKO ? '저널리즘' : 'News' };
+              return (
+                <button key={d} onClick={() => setGeneralDomain(d)} className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold uppercase tracking-wider border transition-all ${generalDomain === d ? 'border-[rgba(184,149,92,0.4)] bg-[rgba(184,149,92,0.12)] text-[rgba(228,215,190,0.95)]' : 'border-white/8 text-text-tertiary hover:border-white/15'}`}>
+                  {labels[d] || d}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Target Language (reuse) */}
+          <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5 w-fit">
+            {(["EN", "JP", "CN"] as const).map((l) => (
+              <button key={l} onClick={() => setTargetLang(l)} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-all ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Source Text */}
+          <textarea
+            value={generalText}
+            onChange={(e) => setGeneralText(e.target.value)}
+            placeholder={isKO ? '번역할 텍스트를 입력하거나 붙여넣으세요...' : 'Enter or paste text to translate...'}
+            className="w-full min-h-[160px] bg-black/40 border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus:border-[rgba(184,149,92,0.3)]"
+          />
+
+          {/* Translate Button */}
+          <button
+            onClick={handleGeneralTranslate}
+            disabled={!generalText.trim() || generalTranslating}
+            className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-[rgba(235,220,190,0.4)] px-8 py-3 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-all hover:scale-[1.02] disabled:opacity-40 shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
+          >
+            {generalTranslating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            {isKO ? '4단계 번역 시작' : '4-STAGE TRANSLATE'}
+          </button>
+
+          {/* Result */}
+          {generalResult && (
+            <div className="relative rounded-xl border border-[rgba(184,149,92,0.2)] bg-black/30 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[rgba(184,149,92,0.7)]">{isKO ? '번역 결과' : 'Result'}</span>
+                <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
+                  {isKO ? '복사' : 'Copy'}
+                </button>
+              </div>
+              <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{generalResult}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 소설 번역 모드 (기존 UI) ── */}
+      {scope === 'novel' && <>
 
       {/* Mode selector - Nexus Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -510,6 +634,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           </p>
         </div>
       )}
+
+      </>}
     </div>
   );
 }
