@@ -81,6 +81,16 @@ async function callAI(
   temperature: number = 0.3
 ): Promise<string> {
   let result = '';
+
+  // TM 캐시 조회 — 동일 문장이면 API 호출 스킵
+  try {
+    const { searchTM } = await import('@/lib/translation');
+    const matches = searchTM(userPrompt.slice(0, 500), 'EN', 0.95);
+    if (matches.length > 0 && matches[0].type === 'exact') {
+      return matches[0].entry.target;
+    }
+  } catch { /* TM lookup is best-effort */ }
+
   const opts = {
     systemInstruction: systemPrompt,
     messages: [{ role: 'user' as const, content: userPrompt }],

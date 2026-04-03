@@ -124,5 +124,24 @@ export function useWebFeatures() {
     formatRelative,
     isOffline,
     connectionQuality,
+    // ── Platform-exclusive (Chrome/Edge) ──
+    /** 화면 색상 추출 (EyeDropper) */
+    pickColor: async () => { const { pickColorFromScreen } = await import('@/lib/browser'); return pickColorFromScreen(); },
+    /** 시스템 폰트 목록 */
+    getLocalFonts: async () => { const { getLocalFonts } = await import('@/lib/browser'); return getLocalFonts(); },
+    /** Document PiP (떠있는 미니 창) */
+    openPiP: async (w?: number, h?: number) => { const { openDocumentPiP } = await import('@/lib/browser'); return openDocumentPiP(w, h); },
+    /** 듀얼 모니터 감지 */
+    isMultiScreen: async () => { const { isMultiScreen } = await import('@/lib/browser'); return isMultiScreen(); },
+    /** 화면 녹화 시작/중지 */
+    startRecording: async () => { const { startScreenRecording } = await import('@/lib/browser'); return startScreenRecording(); },
+    stopRecording: async () => { const { stopScreenRecording } = await import('@/lib/browser'); return stopScreenRecording(); },
+    /** OCR (이미지→텍스트) */
+    detectText: async (img: ImageBitmapSource) => { const { detectTextFromImage } = await import('@/lib/browser'); return detectTextFromImage(img); },
+    /** 브라우저 기능 지원 여부 */
+    capabilities: async () => {
+      const [{ getBrowserCapabilities }, { getPlatformCapabilities }] = await Promise.all([import('@/lib/browser'), import('@/lib/browser')]);
+      return { ...getBrowserCapabilities(), ...getPlatformCapabilities() };
+    },
   };
 }

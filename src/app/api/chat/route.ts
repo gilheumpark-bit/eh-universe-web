@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasServerProviderCredentials, isServerProviderId, resolveServerProviderKey, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
+import { getTierLimits } from '@/lib/tier-gate';
 import { isGeminiAllocationExhaustedError, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -186,8 +187,8 @@ function resolveAuth(
     };
   }
 
-  // 프로 티어 혜택은 tier-gate.ts의 getTierLimits()로 관리.
-  // OPEN_BETA = true 동안 모든 유저가 Pro 수준 기능 사용 가능.
+  // 티어별 기능 제한 적용 (OPEN_BETA=true면 모두 Pro급)
+  const tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
 
   const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
 
