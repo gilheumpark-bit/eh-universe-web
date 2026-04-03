@@ -224,6 +224,70 @@ body[data-theme="light"] {
 }
 
 /* ============================================================
+   Color Theme: Bright (밝은) — data-color-theme=”bright”
+   ============================================================ */
+[data-color-theme=”bright”] {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #f0f2f5;
+  --color-bg-tertiary: #e4e7ec;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
+  --color-border: #cbd5e1;
+  --color-accent-purple: #7c3aed;
+  --color-accent-red: #dc2626;
+  --color-accent-green: #16a34a;
+  --color-accent-amber: #d97706;
+  --color-accent-blue: #2563eb;
+  --color-surface-strong: rgba(248, 250, 252, 0.97);
+  --color-surface-soft: rgba(240, 242, 245, 0.88);
+  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.05);
+  --shadow-manuscript: 0 12px 40px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(37, 99, 235, 0.08);
+  --gradient-page: none;
+}
+html[data-color-theme=”bright”],
+body[data-color-theme=”bright”] {
+  background: #f8fafc;
+  color: var(--color-text-primary);
+}
+[data-color-theme=”bright”] .eh-page-canvas {
+  background: #f8fafc;
+}
+
+/* ============================================================
+   Color Theme: Beige (베이지) — data-color-theme=”beige”
+   ============================================================ */
+[data-color-theme=”beige”] {
+  --color-bg-primary: #f5f0e8;
+  --color-bg-secondary: #ede6da;
+  --color-bg-tertiary: #e0d8ca;
+  --color-text-primary: #1c1a16;
+  --color-text-secondary: #5c5548;
+  --color-text-tertiary: #8a8070;
+  --color-border: #d4cabb;
+  --color-accent-purple: #7b6340;
+  --color-accent-red: #a85c52;
+  --color-accent-green: #4a8f78;
+  --color-accent-amber: #c09840;
+  --color-accent-blue: #6d7d8f;
+  --color-surface-strong: rgba(245, 240, 232, 0.97);
+  --color-surface-soft: rgba(237, 230, 218, 0.88);
+  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.07), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.05);
+  --shadow-manuscript: 0 12px 40px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(192, 152, 64, 0.1);
+  --gradient-page: none;
+}
+html[data-color-theme=”beige”],
+body[data-color-theme=”beige”] {
+  background: #f5f0e8;
+  color: var(--color-text-primary);
+}
+[data-color-theme=”beige”] .eh-page-canvas {
+  background: #f5f0e8;
+}
+
+/* ============================================================
    Home — Stellar White (Stitch “Universe Studio | Stellar White”)
    활성: URL `/?skin=white` 또는 localStorage / env `HOME_STELLAR_WHITE`
    ============================================================ */
