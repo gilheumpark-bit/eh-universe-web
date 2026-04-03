@@ -91,6 +91,7 @@ export interface CodeStudioEditorProps {
   onOpenDemo: () => void;
   onBlankProject: () => void;
   onResumeProject: () => void;
+  onQuickVerify?: () => void;
 
   // Command palette
   onShowCommandPalette: () => void;
@@ -140,7 +141,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     onCursorChange, diffState, onDiffAccept, onDiffReject,
     onFileSelect, onCloseTab, onEditorChange, onApplyCode,
     onSetActiveFileId, onOpenFiles,
-    onWelcomeNewFile, onOpenDemo, onBlankProject, onResumeProject,
+    onWelcomeNewFile, onOpenDemo, onBlankProject, onResumeProject, onQuickVerify,
     onShowCommandPalette,
     rightPanel, showTerminal,
     onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
@@ -265,7 +266,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
     </div>
   ) : !hasEverOpened ? (
-    <WelcomeScreen onNewFile={onWelcomeNewFile} onOpenDemo={onOpenDemo} onBlankProject={onBlankProject} onResumeProject={onResumeProject} />
+    <WelcomeScreen onNewFile={onWelcomeNewFile} onOpenDemo={onOpenDemo} onBlankProject={onBlankProject} onResumeProject={onResumeProject} onQuickVerify={onQuickVerify} />
   ) : (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">

@@ -956,7 +956,7 @@ function CodeStudioShellInner() {
           diffState={diffState} onDiffAccept={(content) => { handleApplyCode(content); setDiffState(null); }} onDiffReject={() => setDiffState(null)}
           onFileSelect={handleFileSelect} onCloseTab={handleCloseTab} onEditorChange={handleEditorChange}
           onApplyCode={handleApplyCode} onSetActiveFileId={setActiveFileId} onOpenFiles={setOpenFiles}
-          onWelcomeNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject}
+          onWelcomeNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} onQuickVerify={() => setRightPanel("quick-verify" as RightPanel)}
           onShowCommandPalette={() => setShowCommandPalette(true)}
           rightPanel={rightPanel} showTerminal={showTerminal}
           onToggleChat={() => setRightPanel(rightPanel === "chat" ? null : "chat")}
