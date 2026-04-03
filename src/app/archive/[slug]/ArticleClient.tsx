@@ -97,10 +97,10 @@ export default function ArticleClient({ slug }: { slug: string }) {
       const jsonLd = buildArticleJsonLd({
         title: getArticleTitle(slug, lang),
         slug,
-        description: article.description || getTitle(slug, lang),
+        description: getArticleTitle(slug, lang),
         category: article.category,
         dateModified: new Date().toISOString(),
-        wordCount: typeof article.content === 'string' ? article.content.split(/\s+/).length : 500,
+        wordCount: L2(article.content, lang).split(/\s+/).length,
       });
       const existing = document.querySelector('script[data-eh-jsonld]');
       if (existing) existing.remove();
@@ -147,7 +147,6 @@ export default function ArticleClient({ slug }: { slug: string }) {
                 shareType="world-doc"
                 size="md"
               />
-            </div>
             </div>
 
             {article.image && (

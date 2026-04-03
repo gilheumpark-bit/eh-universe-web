@@ -44,7 +44,7 @@ export function setupHiDPICanvas(canvas: HTMLCanvasElement, width: number, heigh
 
 /** 현재 실제 뷰포트 크기 (키보드, 주소창 제외) */
 export function getVisualViewport(): { width: number; height: number } {
-  if (typeof visualViewport !== 'undefined') {
+  if (typeof visualViewport !== 'undefined' && visualViewport) {
     return { width: visualViewport.width, height: visualViewport.height };
   }
   return { width: window.innerWidth, height: window.innerHeight };

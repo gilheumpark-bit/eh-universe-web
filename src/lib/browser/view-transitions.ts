@@ -15,7 +15,7 @@ export function supportsViewTransitions(): boolean {
  */
 export function withViewTransition(updateFn: () => void | Promise<void>): void {
   if (supportsViewTransitions()) {
-    // @ts-expect-error — startViewTransition is not yet in all TS libs
+    // @ts-ignore
     document.startViewTransition(updateFn);
   } else {
     updateFn();
@@ -33,7 +33,7 @@ export function morphTransition(
 ): void {
   if (supportsViewTransitions()) {
     element.style.viewTransitionName = transitionName;
-    // @ts-expect-error
+    // @ts-ignore
     const transition = document.startViewTransition(updateFn);
     transition.finished.then(() => {
       element.style.viewTransitionName = '';
@@ -62,7 +62,7 @@ export function tabTransition(
   const direction = nextIndex > currentIndex ? 'forward' : 'backward';
   document.documentElement.dataset.transitionDirection = direction;
 
-  // @ts-expect-error
+  // @ts-ignore
   const transition = document.startViewTransition(updateFn);
   transition.finished.then(() => {
     delete document.documentElement.dataset.transitionDirection;

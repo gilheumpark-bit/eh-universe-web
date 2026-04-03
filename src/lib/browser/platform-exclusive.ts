@@ -17,10 +17,10 @@ export interface LaunchedFile {
 
 /** PWA 파일 핸들링으로 열린 파일 수신 */
 export async function consumeLaunchQueue(): Promise<LaunchedFile[]> {
-  // @ts-expect-error — launchQueue is Chrome PWA only
+  // @ts-ignore
   if (!window.launchQueue) return [];
   const files: LaunchedFile[] = [];
-  // @ts-expect-error
+  // @ts-ignore
   window.launchQueue.setConsumer(async (launchParams: { files: FileSystemFileHandle[] }) => {
     for (const handle of launchParams.files) {
       const file = await handle.getFile();
@@ -33,7 +33,7 @@ export async function consumeLaunchQueue(): Promise<LaunchedFile[]> {
 
 /** 파일 핸들러 등록 가능 여부 */
 export function supportsFileHandling(): boolean {
-  // @ts-expect-error
+  // @ts-ignore
   return typeof window !== 'undefined' && !!window.launchQueue;
 }
 
@@ -50,7 +50,7 @@ export interface TitleBarArea {
 
 /** 타이틀바 오버레이 영역 가져오기 */
 export function getTitleBarArea(): TitleBarArea {
-  // @ts-expect-error
+  // @ts-ignore
   const overlay = navigator.windowControlsOverlay;
   if (!overlay) return { x: 0, y: 0, width: 0, height: 0, visible: false };
   const rect = overlay.getTitlebarAreaRect();
@@ -59,13 +59,13 @@ export function getTitleBarArea(): TitleBarArea {
 
 /** 타이틀바 오버레이 지원 여부 */
 export function supportsWindowControlsOverlay(): boolean {
-  // @ts-expect-error
+  // @ts-ignore
   return typeof navigator !== 'undefined' && !!navigator.windowControlsOverlay;
 }
 
 /** 타이틀바 변경 리스너 */
 export function onTitleBarChange(callback: (area: TitleBarArea) => void): () => void {
-  // @ts-expect-error
+  // @ts-ignore
   const overlay = navigator.windowControlsOverlay;
   if (!overlay) return () => {};
   const handler = () => callback(getTitleBarArea());
@@ -83,10 +83,10 @@ export interface PiPWindow {
 
 /** DOM 요소를 PiP 창으로 분리 */
 export async function openDocumentPiP(width: number = 400, height: number = 300): Promise<PiPWindow | null> {
-  // @ts-expect-error — documentPictureInPicture is Chrome-only
+  // @ts-ignore
   if (!window.documentPictureInPicture) return null;
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const pipWindow = await window.documentPictureInPicture.requestWindow({ width, height });
     // 기본 스타일 복사
     for (const styleSheet of document.styleSheets) {
@@ -108,7 +108,7 @@ export async function openDocumentPiP(width: number = 400, height: number = 300)
 
 /** Document PiP 지원 여부 */
 export function supportsDocumentPiP(): boolean {
-  // @ts-expect-error
+  // @ts-ignore
   return typeof window !== 'undefined' && !!window.documentPictureInPicture;
 }
 
@@ -122,10 +122,10 @@ export function observeComputePressure(
   callback: (state: PressureState) => void,
   sampleInterval: number = 2000,
 ): (() => void) | null {
-  // @ts-expect-error — PressureObserver is Chrome-only
+  // @ts-ignore
   if (typeof PressureObserver === 'undefined') return null;
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const observer = new PressureObserver((records: Array<{ state: PressureState }>) => {
       const latest = records[records.length - 1];
       if (latest) callback(latest.state);
@@ -151,10 +151,10 @@ export interface ScreenInfo {
 
 /** 연결된 모든 화면 정보 */
 export async function getScreens(): Promise<ScreenInfo[]> {
-  // @ts-expect-error — getScreenDetails is Chrome-only
+  // @ts-ignore
   if (!window.getScreenDetails) return [{ label: 'Primary', left: 0, top: 0, width: screen.width, height: screen.height, isPrimary: true }];
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const details = await window.getScreenDetails();
     return details.screens.map((s: { label: string; left: number; top: number; width: number; height: number; isPrimary: boolean }) => ({
       label: s.label, left: s.left, top: s.top, width: s.width, height: s.height, isPrimary: s.isPrimary,
@@ -174,10 +174,10 @@ export async function isMultiScreen(): Promise<boolean> {
 
 /** 저지연 펜 입력 활성화 (Canvas용) */
 export async function requestInkPresenter(canvas: HTMLCanvasElement): Promise<unknown | null> {
-  // @ts-expect-error — Ink API
+  // @ts-ignore
   if (!navigator.ink) return null;
   try {
-    // @ts-expect-error
+    // @ts-ignore
     return await navigator.ink.requestPresenter({ presentationArea: canvas });
   } catch {
     return null;
@@ -186,7 +186,7 @@ export async function requestInkPresenter(canvas: HTMLCanvasElement): Promise<un
 
 /** Ink API 지원 여부 */
 export function supportsInk(): boolean {
-  // @ts-expect-error
+  // @ts-ignore
   return typeof navigator !== 'undefined' && !!navigator.ink;
 }
 
@@ -197,9 +197,9 @@ export function getPlatformCapabilities() {
     fileHandling: supportsFileHandling(),
     windowControlsOverlay: supportsWindowControlsOverlay(),
     documentPiP: supportsDocumentPiP(),
-    // @ts-expect-error
+    // @ts-ignore
     computePressure: typeof PressureObserver !== 'undefined',
-    // @ts-expect-error
+    // @ts-ignore
     multiScreen: typeof window !== 'undefined' && !!window.getScreenDetails,
     ink: supportsInk(),
   };

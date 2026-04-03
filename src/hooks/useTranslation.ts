@@ -210,19 +210,22 @@ async function scoreTranslation(
 
 /** 두 점수를 병합: 평균 + 편차가 클 때 보수적 점수 선택 */
 function mergeScores(a: ChunkScoreDetail, b: ChunkScoreDetail): ChunkScoreDetail {
-  const merged = { ...a };
-  // 공통 축의 점수를 평균
-  for (const key of Object.keys(a.axes) as Array<keyof typeof a.axes>) {
-    const va = a.axes[key] ?? 0;
-    const vb = b.axes[key] ?? 0;
+  const merged = { ...a } as unknown as Record<string, number>;
+  const bRec = b as unknown as Record<string, number>;
+  // 'overall' 제외한 숫자 축들을 평균
+  const aRec = a as unknown as Record<string, unknown>;
+  const axisKeys = Object.keys(a).filter(k => k !== 'overall' && typeof aRec[k] === 'number');
+  for (const key of axisKeys) {
+    const va = merged[key] ?? 0;
+    const vb = bRec[key] ?? 0;
     const diff = Math.abs(va - vb);
     // 편차 > 20이면 보수적(낮은) 쪽, 아니면 평균
-    (merged.axes as Record<string, number>)[key] = diff > 20 ? Math.min(va, vb) : Math.round((va + vb) / 2);
+    merged[key] = diff > 20 ? Math.min(va, vb) : Math.round((va + vb) / 2);
   }
   // 전체 점수도 재계산
-  const axisValues = Object.values(merged.axes).filter((v): v is number => typeof v === 'number');
-  merged.score = axisValues.length > 0 ? Math.round(axisValues.reduce((s, v) => s + v, 0) / axisValues.length) : a.score;
-  return merged;
+  const axisValues = axisKeys.map(k => merged[k]).filter((v): v is number => typeof v === 'number');
+  merged.overall = axisValues.length > 0 ? Math.round(axisValues.reduce((s, v) => s + v, 0) / axisValues.length) : a.overall;
+  return merged as unknown as ChunkScoreDetail;
 }
 
 // ============================================================

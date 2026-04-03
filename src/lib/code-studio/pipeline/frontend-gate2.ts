@@ -33,7 +33,7 @@ export function scanDesignTokens(code: string, fileName: string = 'unknown'): De
     // 인라인 style 감지 (style={{ ... }})
     if (/style\s*=\s*\{\{/.test(line)) {
       // 허용된 동적 스타일인지 체크
-      const isAllowed = ALLOWED_STYLE_PROPS.some(p => line.includes(p));
+      const isAllowed = [...ALLOWED_STYLE_PROPS].some(p => line.includes(p));
       if (!isAllowed) {
         findings.push({
           type: 'inline-style',

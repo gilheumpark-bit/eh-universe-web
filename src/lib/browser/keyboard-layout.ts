@@ -17,7 +17,7 @@ export async function detectKeyboardLayout(): Promise<KeyboardLayoutInfo> {
   }
 
   try {
-    // @ts-expect-error — Keyboard API
+    // @ts-ignore
     const layoutMap: Map<string, string> = await navigator.keyboard.getLayoutMap();
     const keyMap = new Map<string, string>();
 

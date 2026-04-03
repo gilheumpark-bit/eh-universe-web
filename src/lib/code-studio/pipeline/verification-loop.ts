@@ -18,7 +18,8 @@ import type { ChaosReport } from '@/lib/code-studio/pipeline/chaos-engineering';
 import { scanProject } from '@/lib/code-studio/features/patent-scanner';
 import type { IPReport } from '@/lib/code-studio/features/patent-scanner';
 import type { FileNode } from '@/lib/code-studio/core/types';
-import { runFullAudit } from '@/lib/code-studio/audit/audit-engine';
+import { runProjectAudit } from '@/lib/code-studio/audit/audit-engine';
+import type { AuditContext } from '@/lib/code-studio/audit/audit-types';
 import {
   type SafeFixCategory,
   classifyFixDescription,
@@ -297,23 +298,22 @@ export async function runVerificationLoop(
 
     // --- Step 1.5: Run audit (code-health + UX) ---
     try {
-      const cssFiles = [{ path: 'styles.css', content: currentCode }];
-      const auditResult = runFullAudit(
-        [{ path: 'main.ts', content: currentCode }],
-        cssFiles,
-        [],
-      );
+      const auditCtx: AuditContext = {
+        files: [
+          { path: fileName, content: currentCode, language },
+        ],
+        language,
+      };
+      const auditResult = runProjectAudit(auditCtx);
       // 감사 결과를 파이프라인 스테이지에 추가
-      if (auditResult.findings && auditResult.findings.length > 0) {
+      if (auditResult.totalFindings > 0) {
+        const allFindings = auditResult.areas.flatMap(a => a.findings);
         pipelineResult.stages.push({
-          stage: 'audit',
-          status: auditResult.grade === 'F' || auditResult.grade === 'D' ? 'fail' : 'warn',
-          score: auditResult.score,
-          findings: auditResult.findings.slice(0, 10).map((f: { message: string; severity: string; rule: string }) => ({
-            severity: f.severity === 'critical' ? 'critical' as const : 'minor' as const,
-            message: f.message,
-            rule: f.rule,
-          })),
+          name: 'audit',
+          status: auditResult.totalGrade === 'F' || auditResult.totalGrade === 'D' ? 'fail' : 'warn',
+          score: auditResult.totalScore,
+          message: `Audit: ${auditResult.totalFindings} findings (${auditResult.totalGrade})`,
+          findings: allFindings.slice(0, 10).map(f => f.message),
         });
       }
     } catch { /* audit is advisory, don't block pipeline */ }

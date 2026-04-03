@@ -5,9 +5,9 @@
 /** CJK 텍스트를 문장 단위로 정확하게 분할 (Intl.Segmenter) */
 export function segmentSentences(text: string, locale: string = 'ko'): string[] {
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    // @ts-expect-error — Intl.Segmenter not in all TS libs
+    // @ts-ignore
     const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
-    // @ts-expect-error
+    // @ts-ignore
     return Array.from(segmenter.segment(text), (s: { segment: string }) => s.segment.trim()).filter(Boolean);
   }
   // fallback
@@ -17,9 +17,9 @@ export function segmentSentences(text: string, locale: string = 'ko'): string[] 
 /** 단어 단위 분할 (CJK 대응) */
 export function segmentWords(text: string, locale: string = 'ko'): string[] {
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    // @ts-expect-error
+    // @ts-ignore
     const segmenter = new Intl.Segmenter(locale, { granularity: 'word' });
-    // @ts-expect-error
+    // @ts-ignore
     return Array.from(segmenter.segment(text), (s: { segment: string; isWordLike: boolean }) => s.isWordLike ? s.segment : null).filter(Boolean) as string[];
   }
   return text.split(/\s+/).filter(Boolean);

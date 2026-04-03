@@ -9,6 +9,7 @@ import { Languages, Play, Square, ChevronDown, Check, AlertTriangle, Loader2, Se
 import { logger } from "@/lib/logger";
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from "@/lib/studio-types";
 import type { TranslationMode, TranslationTarget } from "@/engine/translation";
+import type { TranslationSegment } from "@/lib/translation/editable-segment";
 import { bandLabel, modeDescription, BAND_META } from "@/engine/translation";
 import { GENRE_PRESETS } from "@/engine/genre-presets";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -205,7 +206,9 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     mode, targetLang, band, contractionLevel,
     genre: targetGenre || undefined,
     scoreThreshold,
-    glossary: Object.keys(glossary).length > 0 ? glossary : undefined,
+    glossary: Object.keys(glossary).length > 0
+      ? Object.entries(glossary).map(([source, target]) => ({ source, target, locked: false }))
+      : undefined,
   }), [mode, targetLang, band, contractionLevel, targetGenre, scoreThreshold, glossary]);
 
   const handleTranslate = useCallback(async () => {
@@ -368,7 +371,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               </div>
               {showSegmentView && segments.length > 0 ? (
                 <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                  {segments.map((seg: { id: string; source: string; target: string; status: string; score: number; comment: string }, idx: number) => (
+                  {segments.map((seg: TranslationSegment, idx: number) => (
                     <div key={seg.id} className="flex gap-2 group">
                       <span className="shrink-0 w-6 text-[10px] text-text-tertiary text-right pt-2">{idx + 1}</span>
                       <div className="flex-1 grid grid-cols-2 gap-2 rounded-lg border border-white/5 bg-white/2 p-2 hover:border-[rgba(184,149,92,0.2)] transition-colors">

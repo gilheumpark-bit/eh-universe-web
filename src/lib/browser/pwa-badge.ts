@@ -13,11 +13,9 @@ export async function setBadge(count: number): Promise<void> {
   if (!canBadge()) return;
   try {
     if (count <= 0) {
-      // @ts-expect-error
-      await navigator.clearAppBadge();
+      await (navigator as unknown as { clearAppBadge: () => Promise<void> }).clearAppBadge();
     } else {
-      // @ts-expect-error
-      await navigator.setAppBadge(count);
+      await (navigator as unknown as { setAppBadge: (n: number) => Promise<void> }).setAppBadge(count);
     }
   } catch { /* */ }
 }
@@ -26,8 +24,7 @@ export async function setBadge(count: number): Promise<void> {
 export async function clearBadge(): Promise<void> {
   if (!canBadge()) return;
   try {
-    // @ts-expect-error
-    await navigator.clearAppBadge();
+    await (navigator as unknown as { clearAppBadge: () => Promise<void> }).clearAppBadge();
   } catch { /* */ }
 }
 

@@ -15,10 +15,10 @@ export interface OCRResult {
 
 /** 이미지에서 텍스트 추출 (Chromium only) */
 export async function detectTextFromImage(imageSource: ImageBitmapSource): Promise<OCRResult[]> {
-  // @ts-expect-error — TextDetector is Chromium-only
+  // @ts-ignore
   if (typeof TextDetector === 'undefined') return [];
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const detector = new TextDetector();
     const results = await detector.detect(imageSource);
     return results.map((r: { rawValue: string; boundingBox: DOMRectReadOnly }) => ({
@@ -33,10 +33,10 @@ export async function detectTextFromImage(imageSource: ImageBitmapSource): Promi
 
 /** 바코드/QR 감지 */
 export async function detectBarcode(imageSource: ImageBitmapSource): Promise<string[]> {
-  // @ts-expect-error — BarcodeDetector
+  // @ts-ignore
   if (typeof BarcodeDetector === 'undefined') return [];
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const detector = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128'] });
     const results = await detector.detect(imageSource);
     return results.map((r: { rawValue: string }) => r.rawValue);
@@ -57,9 +57,9 @@ export interface LocalFont {
 /** 시스템에 설치된 폰트 목록 조회 (Chromium only, 권한 필요) */
 export async function getLocalFonts(): Promise<LocalFont[]> {
   try {
-    // @ts-expect-error — queryLocalFonts is Chromium-only
+    // @ts-ignore
     if (!window.queryLocalFonts) return [];
-    // @ts-expect-error
+    // @ts-ignore
     const fonts = await window.queryLocalFonts();
     const seen = new Set<string>();
     const result: LocalFont[] = [];
@@ -83,10 +83,10 @@ export async function getLocalFonts(): Promise<LocalFont[]> {
 
 /** 화면에서 색상 추출 (Chromium only) */
 export async function pickColorFromScreen(): Promise<string | null> {
-  // @ts-expect-error — EyeDropper is Chromium-only
+  // @ts-ignore
   if (typeof EyeDropper === 'undefined') return null;
   try {
-    // @ts-expect-error
+    // @ts-ignore
     const dropper = new EyeDropper();
     const result = await dropper.open();
     return result.sRGBHex;
@@ -201,13 +201,13 @@ export function preloadStudioRoutes(): void {
 
 export function getBrowserCapabilities() {
   return {
-    // @ts-expect-error
+    // @ts-ignore
     textDetection: typeof TextDetector !== 'undefined',
-    // @ts-expect-error
+    // @ts-ignore
     barcodeDetection: typeof BarcodeDetector !== 'undefined',
-    // @ts-expect-error
+    // @ts-ignore
     localFonts: typeof window !== 'undefined' && !!window.queryLocalFonts,
-    // @ts-expect-error
+    // @ts-ignore
     eyeDropper: typeof EyeDropper !== 'undefined',
     screenCapture: typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getDisplayMedia,
     speculationRules: typeof HTMLScriptElement !== 'undefined' && !!HTMLScriptElement.supports?.('speculationrules'),
