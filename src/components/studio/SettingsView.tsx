@@ -9,11 +9,12 @@ import { createT } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
-  ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer
+  ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { idbEstimateSize } from '@/lib/browser/idb-store';
+import { setNarrativeDepth as narrativeDepthSetter, getNarrativeDepth } from '@/lib/noa/lora-swap';
 
 interface VersionedBackup {
   timestamp: number;
@@ -55,6 +56,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
   const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.9'));
+  const [narrativeDepth, setNarrativeDepthState] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1.0;
+    const stored = localStorage.getItem('noa_narrative_depth');
+    const val = stored ? parseFloat(stored) : 1.0;
+    narrativeDepthSetter(val);
+    return val;
+  });
 
   const activeProvider = typeof window !== 'undefined' ? getActiveProvider() : 'gemini';
   const activeModel = typeof window !== 'undefined' ? getActiveModel() : '';
@@ -374,6 +382,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <span className="text-xs md:text-sm font-black text-blue-400 w-7 md:w-8 text-right">{temperature.toFixed(1)}</span>
               </div>
             </div>
+
+            {/* Narrative Depth Slider */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-accent-purple shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{language === 'KO' ? '서사 깊이' : 'Narrative Depth'}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
+                    {narrativeDepth <= 0.9 ? (language === 'KO' ? '평작 — 가독성 우선' : 'Light — Readability first') :
+                     narrativeDepth <= 1.0 ? (language === 'KO' ? '기본 — 장르 균형' : 'Standard — Genre balance') :
+                     narrativeDepth <= 1.2 ? (language === 'KO' ? '심화 — 비유/상징 활용' : 'Deep — Metaphor/symbolism') :
+                     (language === 'KO' ? '최대 — 문예 수준 밀도' : 'Maximum — Literary density')}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                <input
+                  type="range"
+                  min="0.9"
+                  max="1.5"
+                  step="0.1"
+                  value={narrativeDepth}
+                  onChange={e => { const v = parseFloat(e.target.value); setNarrativeDepthState(v); localStorage.setItem('noa_narrative_depth', String(v)); narrativeDepthSetter(v); }}
+                  className="w-20 md:w-24 accent-purple-500 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
+                />
+                <span className="text-xs md:text-sm font-black text-accent-purple w-7 md:w-8 text-right">{narrativeDepth.toFixed(1)}</span>
+              </div>
+            </div>
+
           </div>
         </div>
 

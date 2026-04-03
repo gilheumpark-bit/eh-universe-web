@@ -9,6 +9,50 @@ export type AdapterMode = 'LEFT_BRAIN' | 'RIGHT_BRAIN';
 
 export type SwapStatus = 'SUCCESS' | 'CACHE_HIT' | 'OOM_ABORT' | 'TIMEOUT';
 
+/**
+ * 서사 깊이 레벨 (Narrative Depth)
+ * 0.9 = 평작 (의도적 대중성 — 가독성 우선, 묘사 절제)
+ * 1.0 = 기본 (균형 — 장르 관습 준수, 적절한 묘사)
+ * 1.2 = 심화 (문학적 깊이 — 비유/상징 적극 사용)
+ * 1.5 = 최대 (문예 수준 — 밀도 높은 문장, 다층 서사)
+ */
+export type NarrativeDepth = number; // 0.9 ~ 1.5
+
+const DEPTH_PROMPT_MAP: Record<string, string> = {
+  '0.9': `[Depth: 평작] 가독성 최우선. 짧은 문장, 직접적 묘사, 클리셰 허용. 독자 이탈 방지가 목표. 1문장 1행동 원칙.`,
+  '1.0': `[Depth: 기본] 장르 관습 준수. 적절한 묘사와 대화 균형. 복선 1-2개 유지. 감정선 자연스러운 흐름.`,
+  '1.2': `[Depth: 심화] 비유/상징 적극 활용. 인물 내면 다층 묘사. 복선 3개 이상 병행. 문장 리듬 변주(단문↔장문 교차).`,
+  '1.5': `[Depth: 최대] 문예 수준 밀도. 모든 문장이 서사적 기능 수행. 감각 묘사(시각+청각+촉각 혼합), 의식의 흐름, 상징 체계 유지. 독자에게 해석 여지를 남기는 열린 서사.`,
+};
+
+/** 깊이 값에 가장 가까운 프롬프트 키 반환 */
+function getDepthPrompt(depth: NarrativeDepth): string {
+  const clamped = Math.max(0.9, Math.min(1.5, depth));
+  const keys = [0.9, 1.0, 1.2, 1.5];
+  const closest = keys.reduce((prev, curr) =>
+    Math.abs(curr - clamped) < Math.abs(prev - clamped) ? curr : prev
+  );
+  return DEPTH_PROMPT_MAP[closest.toString()] ?? DEPTH_PROMPT_MAP['1.0'];
+}
+
+/** 현재 서사 깊이 설정 (런타임 변경 가능) */
+let currentNarrativeDepth: NarrativeDepth = 1.0;
+
+export function setNarrativeDepth(depth: NarrativeDepth): void {
+  currentNarrativeDepth = Math.max(0.9, Math.min(1.5, depth));
+}
+
+export function getNarrativeDepth(): NarrativeDepth {
+  return currentNarrativeDepth;
+}
+
+/** 깊이에 따른 temperature 보정 */
+function depthToTemperature(baseTemp: number, depth: NarrativeDepth): number {
+  // 0.9 → temp -0.05, 1.0 → 0, 1.2 → +0.1, 1.5 → +0.2
+  const offset = (depth - 1.0) * 0.4;
+  return Math.max(0.1, Math.min(1.5, baseTemp + offset));
+}
+
 export interface AdapterManifest {
   mode: AdapterMode;
   /** 프로바이더 ID (gemini, openai, claude 등) */
@@ -206,10 +250,20 @@ export class SwapController {
     };
   }
 
-  /** 현재 활성 어댑터의 manifest 조회 */
+  /** 현재 활성 어댑터의 manifest 조회 (RIGHT_BRAIN이면 depth 보정 적용) */
   getActiveManifest(): AdapterManifest | null {
     const mode = this.vram.getActiveMode();
-    return mode ? this.registry[mode] : null;
+    if (!mode) return null;
+    const base = this.registry[mode];
+    if (mode === 'RIGHT_BRAIN') {
+      const depth = getNarrativeDepth();
+      return {
+        ...base,
+        systemPrompt: base.systemPrompt + '\n\n' + getDepthPrompt(depth),
+        temperature: depthToTemperature(base.temperature, depth),
+      };
+    }
+    return base;
   }
 
   /** 현재 활성 모드 */
