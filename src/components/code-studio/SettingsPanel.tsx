@@ -5,8 +5,9 @@
 // ============================================================
 // Ported from CSL IDE SettingsPanel.tsx (simplified)
 
-import { useState, useCallback } from "react";
-import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle, Briefcase, Code2, Landmark } from "lucide-react";
+import { setCodingMode, getCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
 
 export interface IDESettings {
   fontSize: number;
@@ -122,6 +123,11 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
   const onChange = onChangeProp ?? defaultOnChange;
   const [tab, setTab] = useState<SettingsTab>("editor");
   const [showProConfirm, setShowProConfirm] = useState(false);
+  const [codingMode, setCodingModeState] = useState<CodingMode>(() => {
+    if (typeof window === 'undefined') return 'standard';
+    return (localStorage.getItem('eh_coding_mode') as CodingMode) || 'standard';
+  });
+  useEffect(() => { setCodingMode(codingMode); }, [codingMode]);
 
   const update = useCallback(<K extends keyof IDESettings>(key: K, value: IDESettings[K]) => {
     const next = { ...settings, [key]: value };
@@ -245,6 +251,32 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                   </div>
                 </div>
               )}
+            </div>
+            {/* Coding Mode Selector */}
+            <div className="pb-3 mb-3 border-b border-border">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">Coding Mode</span>
+              <div className="flex gap-1.5 mt-2">
+                {([
+                  { mode: "standard" as const, icon: Code2, label: "Standard", desc: "정석 코딩", color: "accent-blue" },
+                  { mode: "office" as const, icon: Briefcase, label: "직장인", desc: "복붙 실전 모드", color: "accent-amber" },
+                  { mode: "architect" as const, icon: Landmark, label: "Architect", desc: "설계 중심", color: "accent-purple" },
+                ]).map(({ mode, icon: ModeIcon, label, desc, color }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => { setCodingModeState(mode); setCodingMode(mode); localStorage.setItem('eh_coding_mode', mode); }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+                      codingMode === mode
+                        ? `border-${color}/40 bg-${color}/10 text-${color}`
+                        : 'border-border bg-bg-secondary/30 text-text-tertiary hover:border-border hover:text-text-secondary'
+                    }`}
+                  >
+                    <ModeIcon size={14} />
+                    <span className="font-bold">{label}</span>
+                    <span className="text-[8px] text-text-tertiary leading-tight">{desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <Row label="Ghost Text"><Toggle checked={settings.aiGhostText} onChange={(v) => update("aiGhostText", v)} /></Row>
             <Row label="Temperature"><NumberInput value={settings.aiTemperature} onChange={(v) => update("aiTemperature", v)} min={0} max={2} step={0.1} /></Row>

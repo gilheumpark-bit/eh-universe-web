@@ -48,9 +48,64 @@ export function getNarrativeDepth(): NarrativeDepth {
 
 /** 깊이에 따른 temperature 보정 */
 function depthToTemperature(baseTemp: number, depth: NarrativeDepth): number {
-  // 0.9 → temp -0.05, 1.0 → 0, 1.2 → +0.1, 1.5 → +0.2
   const offset = (depth - 1.0) * 0.4;
   return Math.max(0.1, Math.min(1.5, baseTemp + offset));
+}
+
+// ── LEFT_BRAIN 코딩 모드 (직장인 모드 포함) ──
+
+/**
+ * 코딩 모드 (LEFT_BRAIN 전용)
+ * - 'standard': 기본 — 정석 코딩, 풀 설명, 타입 엄격
+ * - 'office': 직장인 — 복붙 가능 코드, 설명 최소, 실용 우선
+ * - 'architect': 설계자 — 아키텍처 중심, 패턴/구조 강조
+ */
+export type CodingMode = 'standard' | 'office' | 'architect';
+
+const CODING_MODE_PROMPTS: Record<CodingMode, string> = {
+  standard: `[Mode: Standard] 정석 코딩 모드.
+- 타입 안전성 최우선. any 사용 금지.
+- 모든 함수에 JSDoc/파라미터 설명.
+- 에러 핸들링 완전 구현.
+- 설명은 상세하게 — 왜 이 패턴을 선택했는지 근거 제시.`,
+
+  office: `[Mode: 직장인] 실전 복붙 모드. 바쁜 현업 개발자를 위한 세팅.
+- 설명 최소화: "왜"가 아니라 "어떻게"만. 코드 먼저, 한줄 주석만.
+- 복붙 즉시 동작: import문 포함, 파일 경로 명시, 의존성 설치 명령어 제공.
+- 보일러플레이트 생성기: CRUD, API 연동, 폼 검증 등 반복 패턴은 풀 코드 제공.
+- 에러 메시지 → 바로 고칠 수 있는 코드. 원인 분석 생략.
+- 야근 방지: 한 번에 돌아가는 코드. "나중에 리팩터링"은 주석으로 남기되 지금은 동작 우선.
+- 회의용 요약: 기술 결정을 비개발 팀장/PM에게 설명할 수 있는 한줄 요약 첨부.`,
+
+  architect: `[Mode: Architect] 설계자 모드.
+- 구현보다 구조. 파일/폴더 구조, 의존성 방향, 레이어 분리를 먼저 제시.
+- 디자인 패턴 명시: "이건 Strategy 패턴 적용" 등 패턴 이름 + 이유.
+- 확장성 분석: "이 구조에서 기능 추가 시 수정 범위는 N파일".
+- 트레이드오프 비교표: 대안 2-3개를 표로 제시 (복잡도/성능/유지보수).
+- DDD/Clean Architecture 원칙 적용 시 경계 컨텍스트 명시.`,
+};
+
+let currentCodingMode: CodingMode = 'standard';
+
+export function setCodingMode(mode: CodingMode): void {
+  currentCodingMode = mode;
+}
+
+export function getCodingMode(): CodingMode {
+  return currentCodingMode;
+}
+
+function getCodingModePrompt(): string {
+  return CODING_MODE_PROMPTS[currentCodingMode] ?? CODING_MODE_PROMPTS.standard;
+}
+
+/** 코딩 모드별 temperature 보정 */
+function codingModeTemperature(baseTemp: number): number {
+  switch (currentCodingMode) {
+    case 'office': return Math.max(0.05, baseTemp - 0.03);  // 살짝 더 결정적
+    case 'architect': return Math.max(0.05, baseTemp + 0.05); // 살짝 더 창의적
+    default: return baseTemp;
+  }
 }
 
 export interface AdapterManifest {
@@ -250,7 +305,7 @@ export class SwapController {
     };
   }
 
-  /** 현재 활성 어댑터의 manifest 조회 (RIGHT_BRAIN이면 depth 보정 적용) */
+  /** 현재 활성 어댑터의 manifest 조회 (모드별 프롬프트+temp 보정) */
   getActiveManifest(): AdapterManifest | null {
     const mode = this.vram.getActiveMode();
     if (!mode) return null;
@@ -261,6 +316,13 @@ export class SwapController {
         ...base,
         systemPrompt: base.systemPrompt + '\n\n' + getDepthPrompt(depth),
         temperature: depthToTemperature(base.temperature, depth),
+      };
+    }
+    if (mode === 'LEFT_BRAIN') {
+      return {
+        ...base,
+        systemPrompt: base.systemPrompt + '\n\n' + getCodingModePrompt(),
+        temperature: codingModeTemperature(base.temperature),
       };
     }
     return base;
