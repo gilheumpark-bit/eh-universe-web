@@ -73,34 +73,38 @@ describe('useStudioTheme', () => {
     localStorage.clear();
   });
 
-  it('defaults to light theme (level 2) when no stored value', () => {
+  it('defaults to light theme (level 1) when no stored value', () => {
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(2);
+    expect(get().themeLevel).toBe(1);
     expect(get().lightTheme).toBe(true);
     cleanup();
   });
 
   it('restores theme level from localStorage', () => {
-    localStorage.setItem('noa_theme_level', '2');
+    localStorage.setItem('noa_theme_level', '1');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(2);
+    expect(get().themeLevel).toBe(1);
     expect(get().lightTheme).toBe(true);
     cleanup();
   });
 
-  it('migrates legacy noa_light_theme to level 2', () => {
-    localStorage.setItem('noa_light_theme', '1');
+  it('migrates legacy 4-level theme to 2-level', () => {
+    localStorage.setItem('noa_theme_level', '2');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(2);
+    expect(get().themeLevel).toBe(1); // 2,3 → 1 (light)
     cleanup();
   });
 
-  it('cycles theme levels on toggleTheme: 2 → 3 → 0 → 1 → 2', () => {
+  it('migrates legacy noa_light_theme to level 1', () => {
+    localStorage.setItem('noa_light_theme', '1');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(2);
+    expect(get().themeLevel).toBe(1);
+    cleanup();
+  });
 
-    act(() => { get().toggleTheme(); });
-    expect(get().themeLevel).toBe(3);
+  it('toggles between dark (0) and light (1)', () => {
+    const { get, cleanup } = createThemeHarness();
+    expect(get().themeLevel).toBe(1);
     expect(get().lightTheme).toBe(true);
 
     act(() => { get().toggleTheme(); });
@@ -109,10 +113,6 @@ describe('useStudioTheme', () => {
 
     act(() => { get().toggleTheme(); });
     expect(get().themeLevel).toBe(1);
-    expect(get().lightTheme).toBe(false);
-
-    act(() => { get().toggleTheme(); });
-    expect(get().themeLevel).toBe(2);
     expect(get().lightTheme).toBe(true);
 
     cleanup();
@@ -121,7 +121,7 @@ describe('useStudioTheme', () => {
   it('persists theme level to localStorage on toggle', () => {
     const { get, cleanup } = createThemeHarness();
     act(() => { get().toggleTheme(); });
-    expect(localStorage.getItem('noa_theme_level')).toBe('3');
+    expect(localStorage.getItem('noa_theme_level')).toBe('0');
     cleanup();
   });
 

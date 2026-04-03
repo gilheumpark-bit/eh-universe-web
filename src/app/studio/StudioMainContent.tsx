@@ -377,14 +377,11 @@ export default function StudioMainContent(props: StudioMainContentProps) {
               <button 
                 onClick={toggleTheme} 
                 className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
-                title={isKO ? ['다크','딤','라이트','최대'][themeLevel] : ['Dark','Dim','Light','Max'][themeLevel]} 
+                title={isKO ? ['밤','낮'][themeLevel] : ['Night','Day'][themeLevel]}
                 aria-label={t('ui.toggleThemeLabel')}
               >
                 <span className={`relative z-10 transition-all duration-300 ${
-                  themeLevel === 0 ? 'text-accent-purple' : 
-                  themeLevel === 1 ? 'text-accent-blue' : 
-                  themeLevel === 2 ? 'text-accent-amber' : 
-                  'text-accent-amber drop-shadow-[0_0_6px_rgba(202,161,92,0.6)]'
+                  themeLevel === 0 ? 'text-accent-purple' : 'text-accent-amber'
                 }`}>
                   {themeLevel === 0 ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
                 </span>

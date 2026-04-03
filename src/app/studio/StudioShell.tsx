@@ -519,7 +519,7 @@ export default function StudioShell() {
     <div
       className="flex h-dvh overflow-hidden transition-colors duration-300 bg-bg-primary text-text-primary"
       data-testid="studio-content"
-      data-theme={(['', 'dim', 'light', 'max'] as const)[themeLevel] || ''}
+      data-theme={themeLevel === 0 ? 'dark' : 'light'}
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
 

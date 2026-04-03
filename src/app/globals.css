@@ -112,27 +112,11 @@ main[class~="pt-14"] {
 }
 
 /* ============================================================
-   4-Level Brightness Themes (data-theme attribute)
+   2-Level Brightness Theme: dark (밤) / light (낮)
    ============================================================ */
 
-/* ============================================================
-   Theme Application to Body
-   ============================================================ */
-body[data-theme="dim"],
-body[data-theme="light"],
-body[data-theme="max"] {
-  background: var(--color-bg-primary);
-}
-
-body[data-theme="dim"] .eh-page-canvas,
-body[data-theme="light"] .eh-page-canvas,
-body[data-theme="max"] .eh-page-canvas {
-  background: var(--color-bg-primary);
-  background-attachment: scroll;
-}
-
-/* Level 1: 딤 (Dim) — 아카이브용 웜 그레이 */
-[data-theme="dim"] {
+/* ── 밤 (Dark) ── */
+[data-theme="dark"] {
   --color-bg-primary: #1c1a17;
   --color-bg-secondary: #252320;
   --color-bg-tertiary: #2e2b26;
@@ -144,36 +128,39 @@ body[data-theme="max"] .eh-page-canvas {
   --color-surface-soft: rgba(28, 26, 23, 0.78);
   --gradient-page: none;
 }
-body[data-theme="dim"] {
-  background: linear-gradient(180deg, #1c1a17 0%, #252320 100%);
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  background: #1c1a17;
+  color: var(--color-text-primary);
 }
-[data-theme="dim"] * {
-  --tw-bg-opacity: 1;
+[data-theme="dark"] .eh-page-canvas {
+  background: #1c1a17;
 }
-[data-theme="dim"] .bg-black\/40,
-[data-theme="dim"] .bg-black\/30,
-[data-theme="dim"] .bg-black\/20 {
+[data-theme="dark"] .bg-black\/40,
+[data-theme="dark"] .bg-black\/30,
+[data-theme="dark"] .bg-black\/20,
+[data-theme="dark"] .bg-black\/60 {
   background-color: rgba(28, 26, 23, 0.4);
 }
-[data-theme="dim"] .bg-zinc-900,
-[data-theme="dim"] .bg-zinc-900\/20,
-[data-theme="dim"] .bg-zinc-900\/30,
-[data-theme="dim"] .bg-zinc-900\/50 {
+[data-theme="dark"] .bg-zinc-900,
+[data-theme="dark"] .bg-zinc-900\/20,
+[data-theme="dark"] .bg-zinc-900\/30,
+[data-theme="dark"] .bg-zinc-900\/50 {
   background-color: rgba(37, 35, 32, 0.5);
 }
-[data-theme="dim"] .border-zinc-800,
-[data-theme="dim"] .border-zinc-800\/50 {
+[data-theme="dark"] .border-zinc-800,
+[data-theme="dark"] .border-zinc-800\/50 {
   border-color: #3d3830;
 }
-[data-theme="dim"] .text-zinc-500,
-[data-theme="dim"] .text-zinc-600 {
+[data-theme="dark"] .text-zinc-500,
+[data-theme="dark"] .text-zinc-600 {
   color: #8a8478;
 }
-[data-theme="dim"] .text-zinc-400 {
+[data-theme="dark"] .text-zinc-400 {
   color: #a8a198;
 }
 
-/* Level 2: 라이트 (Light) — 아카이브 라이트(미색 종이) */
+/* ── 낮 (Light) ── */
 [data-theme="light"] {
   --color-bg-primary: #FAFAF8;
   --color-bg-secondary: #F2F2EE;
@@ -190,7 +177,12 @@ body[data-theme="dim"] {
   --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --gradient-page: none;
 }
+html[data-theme="light"],
 body[data-theme="light"] {
+  background: #FAFAF8;
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .eh-page-canvas {
   background: #FAFAF8;
 }
 [data-theme="light"] .bg-black\/40,
@@ -231,64 +223,6 @@ body[data-theme="light"] {
   background-color: rgba(0, 0, 0, 0.03);
 }
 
-/* Level 3: 최대 밝기 (Max) — 순백 문서 모드 */
-[data-theme="max"] {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #F8F8F6;
-  --color-bg-tertiary: #F0F0EC;
-  --color-text-primary: #000000;
-  --color-text-secondary: #222222;
-  --color-text-tertiary: #555555;
-  --color-border: #E0E0D8;
-  --color-accent-purple: #5a4a93;
-  --color-accent-amber: #907030;
-  --color-surface-strong: rgba(255, 255, 255, 0.98);
-  --color-surface-soft: rgba(248, 248, 246, 0.92);
-  --shadow-luxury: 0 8px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --shadow-panel: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --gradient-page: none;
-}
-body[data-theme="max"] {
-  background: #ffffff;
-}
-[data-theme="max"] .bg-black\/40,
-[data-theme="max"] .bg-black\/30,
-[data-theme="max"] .bg-black\/20,
-[data-theme="max"] .bg-black\/60 {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-[data-theme="max"] .bg-zinc-900,
-[data-theme="max"] .bg-zinc-900\/20,
-[data-theme="max"] .bg-zinc-900\/30,
-[data-theme="max"] .bg-zinc-900\/50 {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-[data-theme="max"] .border-zinc-800,
-[data-theme="max"] .border-zinc-800\/50,
-[data-theme="max"] .border-white\/6,
-[data-theme="max"] .border-white\/8,
-[data-theme="max"] .border-white\/5 {
-  border-color: #d8d8d0;
-}
-[data-theme="max"] .text-zinc-500,
-[data-theme="max"] .text-zinc-600,
-[data-theme="max"] .text-zinc-700 {
-  color: #555550;
-}
-[data-theme="max"] .text-zinc-400,
-[data-theme="max"] .text-zinc-300 {
-  color: #444440;
-}
-[data-theme="max"] .text-white,
-[data-theme="max"] .text-text-primary {
-  color: #000000;
-}
-[data-theme="max"] .bg-white\/\[0\.02\],
-[data-theme="max"] .bg-white\/\[0\.03\],
-[data-theme="max"] .bg-white\/\[0\.04\] {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
 /* ============================================================
    Color Themes (data-color-theme) — default | bright | beige
    기본: @theme inline 유지. 밝은/베이지만 토큰·바디 배경 오버라이드.
@@ -297,16 +231,14 @@ body[data-theme="max"] {
 body[data-color-theme="bright"] {
   background: linear-gradient(180deg, #161918 0%, #121413 100%);
 }
-body[data-color-theme="bright"][data-theme="light"],
-body[data-color-theme="bright"][data-theme="max"] {
+body[data-color-theme="bright"][data-theme="light"] {
   background: linear-gradient(180deg, #f7f6f3 0%, #eeede8 100%);
 }
 
 body[data-color-theme="beige"] {
   background: linear-gradient(180deg, #1a1814 0%, #24211a 100%);
 }
-body[data-color-theme="beige"][data-theme="light"],
-body[data-color-theme="beige"][data-theme="max"] {
+body[data-color-theme="beige"][data-theme="light"] {
   background: linear-gradient(180deg, #f5f0e8 0%, #ebe5da 100%);
 }
 
@@ -329,8 +261,7 @@ body[data-color-theme="beige"][data-theme="max"] {
   --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02);
   --gradient-page: linear-gradient(180deg, #181a18 0%, #131514 45%, #161918 100%);
 }
-[data-color-theme="bright"][data-theme="light"],
-[data-color-theme="bright"][data-theme="max"] {
+[data-color-theme="bright"][data-theme="light"] {
   --color-bg-primary: #f7f6f3;
   --color-bg-secondary: #eeede8;
   --color-bg-tertiary: #e4e2dc;
@@ -371,8 +302,7 @@ body[data-color-theme="beige"][data-theme="max"] {
     ),
     linear-gradient(180deg, #1a1814 0%, #1e1b16 42%, #1a1814 100%);
 }
-[data-color-theme="beige"][data-theme="light"],
-[data-color-theme="beige"][data-theme="max"] {
+[data-color-theme="beige"][data-theme="light"] {
   --color-bg-primary: #f5f0e8;
   --color-bg-secondary: #ebe5da;
   --color-bg-tertiary: #ddd6c8;

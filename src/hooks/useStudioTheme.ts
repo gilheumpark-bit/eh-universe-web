@@ -5,10 +5,10 @@
 import { useState, useEffect } from 'react';
 import type { AppLanguage } from '@/lib/studio-types';
 
-// 0=다크, 1=딤, 2=라이트, 3=최대밝기
-export type ThemeLevel = 0 | 1 | 2 | 3;
-export const THEME_NAMES = ['다크', '딤', '라이트', '최대'] as const;
-export const THEME_NAMES_EN = ['Dark', 'Dim', 'Light', 'Max'] as const;
+// 0=밤(다크), 1=낮(라이트) — 2단계 간소화
+export type ThemeLevel = 0 | 1;
+export const THEME_NAMES = ['밤', '낮'] as const;
+export const THEME_NAMES_EN = ['Night', 'Day'] as const;
 
 // Color themes (3종: 기본 / 밝은 / 베이지)
 export type ColorTheme = 'default' | 'bright' | 'beige';
@@ -38,16 +38,18 @@ export const COLOR_THEMES: { id: ColorTheme; name: string; nameEn: string; previ
   { id: 'beige', name: '베이지', nameEn: 'Beige', preview: '#f5f0e8' },
 ];
 
-/** Manages 4-level theme (dark/dim/light/max), color theme, focus mode, search overlay, and shortcuts panel */
+/** Manages 2-level theme (dark/light), color theme, focus mode, search overlay, and shortcuts panel */
 export function useStudioTheme() {
   const [themeLevel, setThemeLevel] = useState<ThemeLevel>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('noa_theme_level');
-      if (stored && ['0','1','2','3'].includes(stored)) return Number(stored) as ThemeLevel;
+      // 마이그레이션: 기존 4단계 → 2단계 (0,1=밤 / 2,3=낮)
+      if (stored === '0' || stored === '1') return 0;
+      if (stored === '2' || stored === '3') return 1;
       // 마이그레이션: 기존 noa_light_theme 호환
-      if (localStorage.getItem('noa_light_theme') === '1') return 2;
+      if (localStorage.getItem('noa_light_theme') === '1') return 1;
     }
-    return 2; // 아카이브형 미래감: 밝은 모드 기본. 기존 저장값 있으면 영향 없음
+    return 1; // 기본: 낮(라이트)
   });
   
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
@@ -65,12 +67,12 @@ export function useStudioTheme() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 하위호환: lightTheme = themeLevel >= 2
-  const lightTheme = themeLevel >= 2;
+  // 하위호환: lightTheme = themeLevel === 1 (낮)
+  const lightTheme = themeLevel === 1;
 
   const toggleTheme = () => {
     setThemeLevel(prev => {
-      const next = ((prev + 1) % 4) as ThemeLevel;
+      const next = (prev === 0 ? 1 : 0) as ThemeLevel;
       localStorage.setItem('noa_theme_level', String(next));
       return next;
     });
@@ -83,15 +85,10 @@ export function useStudioTheme() {
     document.documentElement.setAttribute('data-color-theme', theme);
   };
 
-  // Apply theme level to document
+  // Apply theme level to document — 2단계: 'dark' | 'light'
   useEffect(() => {
-    const themeValue = (['', 'dim', 'light', 'max'] as const)[themeLevel] || '';
-    if (themeValue) {
-      document.documentElement.setAttribute('data-theme', themeValue);
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-    // Also apply to body for full coverage
+    const themeValue = themeLevel === 0 ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', themeValue);
     document.body.setAttribute('data-theme', themeValue);
   }, [themeLevel]);
   
