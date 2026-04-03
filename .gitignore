@@ -93,3 +93,33 @@ build-analyze-log.txt
 build-webpack-analyze-log.txt
 build-webpack-analyze.txt
 lint_report.json
+
+# Security: keys, certs, credentials
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+*.crt
+
+# Backup files (should never be committed)
+*.bak
+_backup*/
+
+# Database dumps
+*.sql
+*.dump
+
+# Large test output
+test-output*.log
+
+# Temporary scripts
+tmp-*.cjs
+tmp-*.mjs
+extract-*.js
+patch*.js
+run-audit*.ts
+audit-report.txt
+
+# Panic logs
+next-panic-*.log
