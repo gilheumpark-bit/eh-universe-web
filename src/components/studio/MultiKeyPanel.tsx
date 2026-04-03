@@ -130,7 +130,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
   // ============================================================
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] text-gray-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-bg-tertiary text-gray-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
       {/* ============================================================ */}
 
       {showDashboard && (
-        <div className="px-4 py-3 border-b border-white/10 bg-[#161b22]">
+        <div className="px-4 py-3 border-b border-white/10 bg-bg-secondary">
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
               <div className="text-lg font-bold text-emerald-400">{totalUsage.calls.toLocaleString()}</div>
@@ -294,7 +294,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       <select
                         value={slot.provider}
                         onChange={(e) => handleProviderChange(slot.id, e.target.value as ProviderId)}
-                        className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
+                        className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
                       >
                         {PROVIDER_LIST_UI.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
@@ -308,7 +308,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       <select
                         value={slot.model}
                         onChange={(e) => updateSlot(slot.id, { model: e.target.value })}
-                        className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
+                        className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
                       >
                         {(providerDef?.models ?? []).map((m) => (
                           <option key={m} value={m}>{m}</option>
@@ -327,7 +327,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       value={slot.label}
                       onChange={(e) => updateSlot(slot.id, { label: e.target.value })}
                       placeholder={ko ? "예: 빠른 생성용" : "e.g. Fast generation"}
-                      className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder:text-gray-600"
+                      className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder:text-gray-600"
                     />
                   </div>
 
@@ -343,7 +343,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                           value={slot.apiKey}
                           onChange={(e) => updateSlot(slot.id, { apiKey: e.target.value })}
                           placeholder={providerDef?.placeholder ?? ""}
-                          className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 pr-8 font-mono placeholder:text-gray-600"
+                          className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 pr-8 font-mono placeholder:text-gray-600"
                         />
                         <button
                           onClick={() => setShowKeys((p) => ({ ...p, [slot.id]: !p[slot.id] }))}
@@ -378,7 +378,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       <select
                         value={slot.assignedRole}
                         onChange={(e) => updateSlot(slot.id, { assignedRole: e.target.value as AgentRole })}
-                        className="w-full bg-[#0d1117] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
+                        className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200"
                       >
                         {ROLES.map((r) => (
                           <option key={r} value={r}>
@@ -468,7 +468,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
       {/* PART 9 — Render: Footer Info */}
       {/* ============================================================ */}
 
-      <div className="px-4 py-2.5 border-t border-white/10 bg-[#0d1117]">
+      <div className="px-4 py-2.5 border-t border-white/10 bg-bg-tertiary">
         <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
           <DollarSign className="w-3 h-3" />
           {ko

@@ -711,7 +711,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
       {/* Live Operations Terminal - Data Stream */}
       {(progress.status !== "idle" || logs.length > 0) && (
-        <div className="rounded-[1.25rem] border border-[rgba(184,149,92,0.2)] bg-[#141311] overflow-hidden flex flex-col h-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(184,149,92,0.03)] relative">
+        <div className="rounded-[1.25rem] border border-[rgba(184,149,92,0.2)] bg-bg-secondary overflow-hidden flex flex-col h-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(184,149,92,0.03)] relative">
           {/* Terminal Scanline overlay */}
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(184,149,92,0.02)_50%,transparent_50%)] bg-size-[100%_4px] z-10" />
           
