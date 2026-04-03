@@ -341,6 +341,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         language={activeFile?.language ?? "plaintext"}
         fileName={activeFile?.name ?? "untitled"}
         onApplyCode={onApplyCode}
+        onOpenPreview={() => onSetRightPanel("preview")}
       />
     ),
     "search": () => (

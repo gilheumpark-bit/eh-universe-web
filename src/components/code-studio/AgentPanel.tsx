@@ -33,6 +33,8 @@ interface Props {
   language: string;
   fileName: string;
   onApplyCode?: (code: string, fileName?: string) => void;
+  /** Apply 후 Preview 패널 자동 오픈 */
+  onOpenPreview?: () => void;
 }
 
 interface AgentApplyCandidate {
@@ -206,7 +208,7 @@ export function pickAgentApplyCandidate(session: AgentSession | null): AgentAppl
 // PART 4 — Main Component
 // ============================================================
 
-export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
+export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPreview }: Props) {
   const { lang } = useLang();
   const agent = useCodeStudioAgent();
 
@@ -324,8 +326,10 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
     if(applyCandidate) {
       onApplyCode?.(applyCandidate.code, applyCandidate.fileName);
       setMode("applied");
+      // Apply 후 Preview 자동 오픈
+      onOpenPreview?.();
     }
-  }, [applyCandidate, onApplyCode]);
+  }, [applyCandidate, onApplyCode, onOpenPreview]);
 
   const handleRollback = useCallback(() => {
     // Basic rollback: clear candidate and return to idle
