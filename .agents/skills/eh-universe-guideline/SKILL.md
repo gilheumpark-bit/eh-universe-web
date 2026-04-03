@@ -59,6 +59,9 @@ description: "웹 프로젝트(eh-universe-web) 공식 운영 및 적용 지침 
 * **보안 (CSP / 헤더)**: 모든 보안 헤더는 `src/proxy.ts`에서 통합합니다. (Next.js 16 이 저장소는 `middleware.ts`와 `proxy.ts`를 동시에 두지 않습니다.) 분산 적용은 피합니다.
 * **로딩 시스템**: 스켈레톤 로딩은 `SkeletonLoader`(공용) 및 `code-studio/SkeletonLoader.tsx`(특수)로 관리합니다 (shimmer 이펙트 등 다크 테마 완벽 호환 보장).
 * **에러 제어 (ErrorBoundary)**: `src/components/ErrorBoundary.tsx` 최상단을 사용하고 옵션(variant)은 `'full-page' | 'section' | 'panel'` 중 하나로 통일합니다.
+* **V0급 디자인 프로토콜**: UI 컴포넌트 생성 시 `architecture-spec.ts`의 `[Design & Component Gen Guidelines]`를 반드시 준수합니다. 스타일 없는 raw HTML 금지. 글래스모피즘(`bg-bg-secondary/60 backdrop-blur-2xl`), 마이크로모션(`hover:scale-[1.02] active:scale-95 transition-all`), lucide-react 아이콘, 시맨틱 색상 토큰(`bg-bg-primary`, `text-text-primary`, `border-border`) 필수 적용.
+* **AI 자율성 권한 모드**: Easy(모든 작업 승인) / Normal(위험 명령만 승인) / Pro(자동 실행 + Halt 5회 안전장치). 설정은 `approval-mode.ts`, UI는 `SettingsPanel.tsx`.
+* **MCP Self-Healing**: MCP 스킬 실행 실패 시 구조화된 JSON 에러(`{status, errorType, message, suggestion}`)를 반환하여 Pro 모드 AI가 자동 복구(패키지 설치, 재시도 등)를 시도할 수 있도록 합니다. 상세: `mcp-client.ts` PART 5.
 
 ### C. 자율 파이프라인 (Verification First)
 * 코드 생성보다 "검증 및 평가(Pipeline + Bug Scan + Stress Test)"가 필수입니다.

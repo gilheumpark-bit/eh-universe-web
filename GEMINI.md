@@ -678,3 +678,10 @@ error → idle | generating
 - 필수 적용: 글래스모피즘(`bg-bg-secondary/60 backdrop-blur-2xl`), 마이크로모션(`hover:scale-[1.02] active:scale-95 transition-all duration-200`), lucide-react 아이콘, 반응형(`sm:/md:/lg:`)
 - framer-motion은 리스트 등장·레이아웃 전환·모달 진입 등 모션이 필요한 경우 적용
 - 금지 색상: `bg-blue-500`, `bg-red-500` 등 원색 직접 사용 → `bg-accent-purple/90`, `text-accent-amber` 등 시맨틱 토큰 사용
+
+## MCP Self-Healing 파이프라인
+
+- MCP 스킬(`mcp-client.ts`) 실행 실패 시 plain text 에러 대신 구조화 JSON 반환: `{ status: "error", errorType, message, suggestion, timestamp }`
+- `inferSelfHealingSuggestion`: 에러 메시지 패턴 매칭으로 자동 복구 힌트 생성 (module not found → npm install, permission denied → 권한 확인, ECONNREFUSED → 서버 URL 확인, syntax error → 인자 구조 검증)
+- Pro 모드 AI가 이 JSON을 파싱하여 후속 액션(패키지 설치, 재시도, 사용자 질의)을 자율 결정
+- Halt Mechanism(`approval-mode.ts`): 연속 5회 자동 실행 또는 3회 연속 에러 시 강제 정지 → 사용자 개입 대기
