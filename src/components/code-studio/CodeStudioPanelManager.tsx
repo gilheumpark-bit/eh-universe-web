@@ -264,8 +264,10 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
           saveProjectSpec(coreSpec);
           const chatSeed = buildProjectSpecChatSeed(coreSpec);
           localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed);
-          toast("명세서가 저장되었고, Chat 패널에 생성 지시문이 준비되었습니다.", "success");
-          onSetRightPanel("chat");
+          // 에이전트 파이프라인용 태스크도 저장
+          localStorage.setItem("eh-cs-agent-task", chatSeed);
+          toast("명세서 저장 완료. 에이전트 파이프라인으로 이동합니다.", "success");
+          onSetRightPanel("agents");
         }}
         onClose={() => onSetRightPanel(null)}
       />

@@ -214,6 +214,19 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
   const [session, setSession] = useState<AgentSession | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const autoStartedRef = useRef(false);
+
+  // 이지모드에서 전달된 태스크 자동 로드 & 실행
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    try {
+      const seeded = localStorage.getItem("eh-cs-agent-task");
+      if (!seeded) return;
+      localStorage.removeItem("eh-cs-agent-task");
+      setInput(seeded);
+      autoStartedRef.current = true;
+    } catch { /* */ }
+  }, []);
 
   // Mode is controlled explicitly via handleRun, handleReset, and abort handles.
 
