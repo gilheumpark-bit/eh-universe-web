@@ -127,7 +127,7 @@ const T: Record<Lang, {
     deficiency: "Deficiency",
     personality: "Personality",
   },
-  jp: {
+  ja: {
     loading: "世界観を読み込み中...",
     invalidData: "無効な世界観データです。",
     backHome: "← 戻る",
@@ -158,7 +158,7 @@ const T: Record<Lang, {
     deficiency: "欠如",
     personality: "性格",
   },
-  cn: {
+  zh: {
     loading: "加载世界观中...",
     invalidData: "无效的世界观数据。",
     backHome: "← 返回",
@@ -192,13 +192,13 @@ const T: Record<Lang, {
 };
 
 const GENRE_DISPLAY: Record<string, Record<Lang, string>> = {
-  SF: { ko: "SF", en: "Sci-Fi", jp: "SF", cn: "科幻" },
-  FANTASY: { ko: "판타지", en: "Fantasy", jp: "ファンタジー", cn: "奇幻" },
-  ROMANCE: { ko: "로맨스", en: "Romance", jp: "ロマンス", cn: "浪漫" },
-  THRILLER: { ko: "스릴러", en: "Thriller", jp: "スリラー", cn: "悬疑" },
-  HORROR: { ko: "공포", en: "Horror", jp: "ホラー", cn: "恐怖" },
-  SYSTEM_HUNTER: { ko: "헌터물", en: "System Hunter", jp: "ハンター", cn: "猎人" },
-  FANTASY_ROMANCE: { ko: "로판", en: "Fan-Rom", jp: "ロパン", cn: "奇幻浪漫" },
+  SF: { ko: "SF", en: "Sci-Fi", ja: "SF", zh: "科幻" },
+  FANTASY: { ko: "판타지", en: "Fantasy", ja: "ファンタジー", zh: "奇幻" },
+  ROMANCE: { ko: "로맨스", en: "Romance", ja: "ロマンス", zh: "浪漫" },
+  THRILLER: { ko: "스릴러", en: "Thriller", ja: "スリラー", zh: "悬疑" },
+  HORROR: { ko: "공포", en: "Horror", ja: "ホラー", zh: "恐怖" },
+  SYSTEM_HUNTER: { ko: "헌터물", en: "System Hunter", ja: "ハンター", zh: "猎人" },
+  FANTASY_ROMANCE: { ko: "로판", en: "Fan-Rom", ja: "ロパン", zh: "奇幻浪漫" },
 };
 
 // IDENTITY_SEAL: PART-1 | role=Types & i18n | inputs=Lang | outputs=T, SharedWorldData
@@ -444,13 +444,13 @@ export default function WorldSharePage() {
                 onClick={() => router.push("/")}
                 className="inline-block rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 font-mono text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors cursor-pointer"
               >
-                {L4(lang, { ko: "홈으로", en: "Home", jp: "ホームへ", cn: "回到首页" })}
+                {L4(lang, { ko: "홈으로", en: "Home", ja: "ホームへ", zh: "回到首页" })}
               </button>
               <button
                 onClick={() => router.push("/studio")}
                 className="inline-block rounded-full border border-accent-purple/30 bg-accent-purple/10 px-5 py-2.5 font-mono text-xs text-accent-purple hover:bg-accent-purple/20 transition-colors cursor-pointer"
               >
-                {L4(lang, { ko: "스튜디오로", en: "Studio", jp: "スタジオへ", cn: "去工作室" })}
+                {L4(lang, { ko: "스튜디오로", en: "Studio", ja: "スタジオへ", zh: "去工作室" })}
               </button>
             </div>
           </div>

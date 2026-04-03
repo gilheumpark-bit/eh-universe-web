@@ -7,7 +7,7 @@ import { L4 } from "@/lib/i18n";
 
 export default function NotFound() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
   return (
     <>
@@ -21,30 +21,30 @@ export default function NotFound() {
             404
           </p>
           <p className="font-mono text-sm text-text-tertiary tracking-wider uppercase mb-2">
-            {T({ ko: "신호 유실", en: "SIGNAL LOST", jp: "信号消失", cn: "信号丢失" })}
+            {T({ ko: "신호 유실", en: "SIGNAL LOST", ja: "信号消失", zh: "信号丢失" })}
           </p>
           <p className="text-text-secondary text-sm mb-8 max-w-md mx-auto">
             {T({
               ko: "요청된 좌표가 알려진 은하에 존재하지 않습니다. 해당 페이지는 오타로 처리되었을 수 있습니다.",
               en: "The requested coordinates do not exist in the known galaxy. The page may have been processed as a typo.",
-              jp: "リクエストされた座標は既知の銀河に存在しません。このページはタイプミスとして処理された可能性があります。",
-              cn: "请求的坐标在已知银河系中不存在。该页面可能已被作为笔误处理。",
+              ja: "リクエストされた座標は既知の銀河に存在しません。このページはタイプミスとして処理された可能性があります。",
+              zh: "请求的坐标在已知银河系中不存在。该页面可能已被作为笔误处理。",
             })}
           </p>
           <div className="flex gap-4 justify-center">
             <Link
               href="/"
-              aria-label={T({ ko: "홈으로 돌아가기", en: "Return to home page", jp: "ホームに戻る", cn: "返回首页" })}
+              aria-label={T({ ko: "홈으로 돌아가기", en: "Return to home page", ja: "ホームに戻る", zh: "返回首页" })}
               className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >
-              {T({ ko: "기지로 귀환", en: "RETURN TO BASE", jp: "基地へ帰還", cn: "返回基地" })}
+              {T({ ko: "기지로 귀환", en: "RETURN TO BASE", ja: "基地へ帰還", zh: "返回基地" })}
             </Link>
             <Link
               href="/studio"
-              aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", jp: "スタジオへ", cn: "前往工作室" })}
+              aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", ja: "スタジオへ", zh: "前往工作室" })}
               className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >
-              {T({ ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" })}
+              {T({ ko: "스튜디오", en: "STUDIO", ja: "スタジオ", zh: "工作室" })}
             </Link>
           </div>
         </div>

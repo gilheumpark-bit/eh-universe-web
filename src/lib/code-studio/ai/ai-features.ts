@@ -234,7 +234,11 @@ export async function findMissingImports(
   signal?: AbortSignal,
 ): Promise<ImportSuggestion[]> {
   return safeAICall<ImportSuggestion[]>({
-    systemInstruction: `You are an import analyzer for ${language}. Analyze the code and find identifiers that are used but not imported or declared. Return a JSON array of objects with "module" (package/path) and "importStatement" (the full import line). Only include high-confidence suggestions. If none are missing, return an empty array []. Return ONLY the JSON array, no explanation.`,
+    systemInstruction: `You are an import analyzer for ${language}. Analyze the code and find identifiers that are used but not imported or declared. Return a JSON array of objects with "module" (package/path) and "importStatement" (the full import line). Only include high-confidence suggestions. If none are missing, return an empty array []. Return ONLY the JSON array, no explanation.
+
+Example:
+Input: "const [count, setCount] = useState(0);"
+Output: [{"module":"react","importStatement":"import { useState } from 'react';"}]`,
     userMessage: code,
     fallback: [],
     signal,
@@ -273,7 +277,11 @@ export async function lintCode(
   totalLines?: number,
 ): Promise<LintResult[]> {
   return safeAICall<LintResult[]>({
-    systemInstruction: `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.`,
+    systemInstruction: `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.
+
+Example:
+Input: "const x = null; console.log(x.name);"
+Output: [{"line":1,"message":"Potential null dereference: 'x' is null but accessed with '.name'","severity":"error","fix":"Add null check: if (x) { console.log(x.name); }"}]`,
     userMessage: code,
     fallback: [],
     signal,
@@ -360,7 +368,11 @@ export async function getCodeActions(
   signal?: AbortSignal,
 ): Promise<CodeAction[]> {
   return safeAICall<CodeAction[]>({
-    systemInstruction: `You are a quick-fix assistant for ${language}. Given code and an error message, suggest 1-3 fixes. Return a JSON array of {"title": string, "edit": string}. "title" is a short description of the fix. "edit" is the corrected code snippet that replaces the problematic section. Return ONLY the JSON array.`,
+    systemInstruction: `You are a quick-fix assistant for ${language}. Given code and an error message, suggest 1-3 fixes. Return a JSON array of {"title": string, "edit": string}. "title" is a short description of the fix. "edit" is the corrected code snippet that replaces the problematic section. Return ONLY the JSON array.
+
+Example:
+Input: "Type 'string' is not assignable to type 'number'"
+Output: [{"title":"Change variable type to string","edit":{"range":{"startLine":5},"newText":"let count: string"}}]`,
     userMessage: `Error: ${errorMessage}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``,
     fallback: [],
     signal,
@@ -385,7 +397,11 @@ export async function pairProgramComment(
   signal?: AbortSignal,
 ): Promise<PairComment> {
   return safeAICall<PairComment>({
-    systemInstruction: `You are a pair programmer reviewing ${language} code. Given the code and the developer's context/question, provide a constructive suggestion. Return a JSON object: {"suggestion": string, "reasoning": string}. "suggestion" is the actionable advice or code change. "reasoning" is a 1-2 sentence justification. Return ONLY the JSON object.`,
+    systemInstruction: `You are a pair programmer reviewing ${language} code. Given the code and the developer's context/question, provide a constructive suggestion. Return a JSON object: {"suggestion": string, "reasoning": string}. "suggestion" is the actionable advice or code change. "reasoning" is a 1-2 sentence justification. Return ONLY the JSON object.
+
+Example:
+Input: "function save(data) { fetch('/api', {method:'POST', body: JSON.stringify(data)}); fetch('/api', {method:'POST', body: JSON.stringify(data)}); }"
+Output: {"suggestion":"Extract duplicate fetch call into a helper function","reasoning":"DRY principle — the identical fetch call is repeated, risking inconsistent changes"}`,
     userMessage: `Context: ${context}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\``,
     fallback: { suggestion: 'No suggestion available.', reasoning: '' },
     signal,
@@ -528,7 +544,11 @@ export async function generateCommitMessage(
   diff: string,
   signal?: AbortSignal,
 ): Promise<string> {
-  const system = `You are a commit message generator. Given a git diff, write a concise conventional commit message (type: description). Use lowercase type (feat, fix, refactor, chore, docs, style, test, perf). The description should be under 72 characters and describe what changed and why. If multiple changes are present, focus on the most significant one. Output ONLY the commit message, nothing else.`;
+  const system = `You are a commit message generator. Given a git diff, write a concise conventional commit message (type: description). Use lowercase type (feat, fix, refactor, chore, docs, style, test, perf). The description should be under 72 characters and describe what changed and why. If multiple changes are present, focus on the most significant one. Output ONLY the commit message, nothing else.
+
+Example:
+Input: "- Added null guard in auth.ts line 45\\n- Removed unused import in utils.ts"
+Output: "fix(auth): add null guard for session token access"`;
   const result = await callAI(system, diff, signal);
   if (!result) return 'chore: update code';
   return result.split('\n')[0].trim();

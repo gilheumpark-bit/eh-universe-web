@@ -47,7 +47,24 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(grep -E \"\\\\.ts$|\\\\.tsx$\")",
       "Bash(cd /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집최종 정리본/EH프로젝트/eh-universe-web)",
-      "Bash(grep -r \"runSpyTest\\\\|runFuzzTest\\\\|runMutationTest\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src --include=*.ts --include=*.tsx)"
+      "Bash(grep -r \"runSpyTest\\\\|runFuzzTest\\\\|runMutationTest\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"LoRA\\\\|adapter\\\\|hot.*swap\\\\|model.*switch\" 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\AI 소설\\\\설정집\\\\최종 정리본\\\\EH프로젝트\\\\eh-universe-web\\\\src' --include=*.ts --include=*.tsx)",
+      "Bash(find /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
+      "Bash(/tmp/taint_tracker_report.md:*)",
+      "Read(//tmp/**)",
+      "Bash(/tmp/summary.txt:*)",
+      "Bash(grep -r \"width.*100%\" src/app/globals*.css)",
+      "Bash(grep -n \"writing-mode\\\\|width.*0\\\\|max-width.*0\" src/app/globals*.css)",
+      "Bash(grep -n \"min-width.*0\\\\|flex-grow.*0\\\\|width.*0[^0-9]\" ./src/app/globals*.css)",
+      "Bash(wc -l src/components/studio/*.tsx)",
+      "Bash(grep -l \"createPlanetWithFirstLog\\\\|listLatestPosts\\\\|listLatestSettlements\\\\|getNetworkUserRecord\" src/lib/*.ts)",
+      "Bash(grep -r \"WebContainer\\\\|xterm\\\\|@xterm\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/components/code-studio/*.tsx)",
+      "Bash(wc -l src/lib/network-firestore.ts src/lib/network/*.ts)",
+      "Bash(node -e \"const fs=require\\(''fs''\\); const c=fs.readFileSync\\(''src/lib/code-studio/ai/ai-features.ts'',''utf8''\\); const ticks=c.split\\(''\\\\`''\\); console.log\\(''Template literal count \\(should be even\\):'', ticks.length % 2 === 1 ? ''OK \\(odd splits = even backticks\\)'' : ''MISMATCH''\\); console.log\\(''Total backticks:'', ticks.length - 1\\);\")",
+      "Bash(node -c src/lib/code-studio/ai/ai-features.ts)",
+      "Bash(node -e \"try { require\\(''fs''\\).readFileSync\\(''src/lib/code-studio/ai/ai-features.ts'',''utf8''\\); console.log\\(''File reads OK''\\); } catch\\(e\\) { console.error\\(e\\); }\")",
+      "Bash(xargs grep:*)",
+      "Bash(/tmp/scan_report.txt:*)"
     ]
   }
 }

@@ -63,16 +63,16 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const navItems = useMemo((): NavEntry[] => {
     const all: NavEntry[] = [
-      { key: "home", href: "/", label: L4(lang, { ko: "홈", en: "HOME", jp: "ホーム", cn: "首页" }) },
-      { key: "network", href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", jp: "ネットワーク", cn: "网络" }) },
-      { key: "studio", href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", jp: "スタジオ", cn: "工作室" }) },
+      { key: "home", href: "/", label: L4(lang, { ko: "홈", en: "HOME", ja: "ホーム", zh: "首页" }) },
+      { key: "network", href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", ja: "ネットワーク", zh: "网络" }) },
+      { key: "studio", href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", ja: "スタジオ", zh: "工作室" }) },
       {
         key: "translate",
         href: translatorHref,
-        label: L4(lang, { ko: "번역", en: "TRANS", jp: "翻訳", cn: "翻译" }),
+        label: L4(lang, { ko: "번역", en: "TRANS", ja: "翻訳", zh: "翻译" }),
         external: translatorExternal,
       },
-      { key: "code", href: "/code-studio", label: L4(lang, { ko: "코드", en: "CODE", jp: "コード", cn: "代码" }) },
+      { key: "code", href: "/code-studio", label: L4(lang, { ko: "코드", en: "CODE", ja: "コード", zh: "代码" }) },
     ];
     return all.filter((item) => {
       if (item.key === "network" && !flags.NETWORK_COMMUNITY) return false;
@@ -85,9 +85,9 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const exploreItems = useMemo(
     () => [
-      { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", jp: "アーカイブ", cn: "档案" }) },
-      { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", jp: "報告書", cn: "报告书" }) },
-      { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", jp: "コーデックス", cn: "索引" }) },
+      { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", ja: "アーカイブ", zh: "档案" }) },
+      { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", ja: "報告書", zh: "报告书" }) },
+      { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", ja: "コーデックス", zh: "索引" }) },
     ],
     [lang],
   );
@@ -99,11 +99,11 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         label: L4(lang, {
           ko: t.ko,
           en: t.en,
-          jp: t.jp ?? t.en,
-          cn: t.cn ?? t.en,
+          ja: t.ja ?? t.en,
+          zh: t.zh ?? t.en,
         }),
       })),
-      { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", jp: "紹介", cn: "关于" }) },
+      { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", ja: "紹介", zh: "关于" }) },
     ],
     [lang],
   );
@@ -296,7 +296,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 aria-label="Explore menu"
                 className={exploreBtnClass(["/archive", "/reports", "/codex"].some((p) => pathname.startsWith(p)))}
               >
-                {L4(lang, { ko: "탐색", en: "EXPLORE", jp: "探索", cn: "探索" })}
+                {L4(lang, { ko: "탐색", en: "EXPLORE", ja: "探索", zh: "探索" })}
               </button>
               {exploreOpen && (
                 <div className="absolute left-0 top-full z-[100] pt-3">
@@ -345,7 +345,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 aria-label="Tools menu"
                 className={toolsBtnClass}
               >
-                {L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}
+                {L4(lang, { ko: "도구", en: "TOOLS", ja: "ツール", zh: "工具" })}
               </button>
               {toolsOpen && (
                 <div className="absolute right-0 top-full z-[100] pt-3">
@@ -460,7 +460,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             );
           })}
           <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.06em] text-text-tertiary uppercase">
-            {L4(lang, { ko: "탐색", en: "EXPLORE", jp: "探索", cn: "探索" })}
+            {L4(lang, { ko: "탐색", en: "EXPLORE", ja: "探索", zh: "探索" })}
           </div>
           {exploreItems.map((item) => {
             const isExActive = pathname.startsWith(item.href);
@@ -480,7 +480,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             );
           })}
           <div className="px-4 pb-2 pt-4 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.06em] text-text-tertiary uppercase">
-            {L4(lang, { ko: "도구", en: "TOOLS", jp: "ツール", cn: "工具" })}
+            {L4(lang, { ko: "도구", en: "TOOLS", ja: "ツール", zh: "工具" })}
           </div>
           {toolItems.map((item) => (
             <Link

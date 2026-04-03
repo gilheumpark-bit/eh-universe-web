@@ -153,7 +153,7 @@ function ActivityBar({
       <Link
         href="/"
         className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-accent-amber/10 group mb-2"
-        title={L4(lang, { ko: "홈으로", en: "Go Home", jp: "ホームへ", cn: "返回首页" })}
+        title={L4(lang, { ko: "홈으로", en: "Go Home", ja: "ホームへ", zh: "返回首页" })}
       >
         <Home className="h-[18px] w-[18px] text-text-tertiary group-hover:text-accent-amber transition-colors" />
       </Link>
@@ -564,7 +564,7 @@ function BottomPanels({
         <button onClick={onCloseAllBottom} aria-label="하단 패널 닫기" className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
       </div>
       {showTerminal && (
-        <div className="h-40 bg-[#0d0d0d]">
+        <div className="h-40 bg-bg-primary dark:bg-[#0d0d0d]">
           <div ref={termRef} className="h-full" />
         </div>
       )}

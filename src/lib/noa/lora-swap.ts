@@ -40,8 +40,12 @@ const LEFT_BRAIN_PROMPT = `You are a deterministic analytical engine. Rules:
 5. Cite data sources for every claim`;
 
 const RIGHT_BRAIN_PROMPT = `You are a creative writing assistant with warmth and personality.
-Respond naturally in the user's language. Be helpful, engaging, and adaptive.
-Prioritize user experience and conversation flow over rigid structure.`;
+Rules:
+1. Always respond in the user's language with natural, warm phrasing
+2. For creative writing: prioritize narrative flow, emotional resonance, and genre conventions
+3. Adapt formality level to match the user's register (casual ↔ formal)
+4. Show, don't tell — use vivid examples over abstract advice
+5. Never break character or add meta-commentary about being an AI`;
 
 export const ADAPTER_REGISTRY: Record<AdapterMode, AdapterManifest> = {
   LEFT_BRAIN: {

@@ -17,7 +17,7 @@ import {
 
 type ReportEntry = {
   slug: string;
-  title: { ko: string; en: string; jp?: string; cn?: string };
+  title: { ko: string; en: string; ja?: string; zh?: string };
   level: string;
   subcategory: ReportSubcategory;
 };
@@ -140,7 +140,7 @@ function SubcategoryBadge({
   if (!cat || cat.id === "all") return null;
   return (
     <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-text-tertiary/60 border border-white/6 rounded px-1.5 py-0.5">
-      {(lang === "ko" || lang === "jp" || lang === "cn") ? cat.label : cat.labelEn}
+      {(lang === "ko" || lang === "ja" || lang === "zh") ? cat.label : cat.labelEn}
     </span>
   );
 }
@@ -167,8 +167,8 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
         {L4(lang, {
           ko: "아카이브",
           en: "Archive",
-          jp: "アーカイブ",
-          cn: "档案",
+          ja: "アーカイブ",
+          zh: "档案",
         })}
       </Link>
       <Link
@@ -183,8 +183,8 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
         {L4(lang, {
           ko: "보고서",
           en: "Reports",
-          jp: "報告書",
-          cn: "报告书",
+          ja: "報告書",
+          zh: "报告书",
         })}
       </Link>
     </div>
@@ -260,8 +260,8 @@ export default function ReportsClient() {
               {L4(lang, {
                 ko: "기밀 보고서 아카이브",
                 en: "Classified Reports Archive",
-                jp: "機密報告書アーカイブ",
-                cn: "机密报告档案",
+                ja: "機密報告書アーカイブ",
+                zh: "机密报告档案",
               })}
             </div>
 
@@ -278,7 +278,7 @@ export default function ReportsClient() {
                         : "border border-white/6 text-text-tertiary hover:text-text-secondary hover:border-white/10"
                     }`}
                   >
-                    {(lang === "ko" || lang === "jp" || lang === "cn") ? cat.label : cat.labelEn}
+                    {(lang === "ko" || lang === "ja" || lang === "zh") ? cat.label : cat.labelEn}
                   </button>
                 ))}
               </div>
@@ -289,8 +289,8 @@ export default function ReportsClient() {
                   {L4(lang, {
                     ko: "등급",
                     en: "CLASS",
-                    jp: "等級",
-                    cn: "等级",
+                    ja: "等級",
+                    zh: "等级",
                   })}
                 </span>
                 {CLASSIFICATION_FILTERS.map((f) => (
@@ -311,8 +311,8 @@ export default function ReportsClient() {
                 {L4(lang, {
                   ko: "건",
                   en: "reports",
-                  jp: "件",
-                  cn: "份",
+                  ja: "件",
+                  zh: "份",
                 })}
               </p>
 
@@ -354,8 +354,8 @@ export default function ReportsClient() {
                     {L4(lang, {
                       ko: "해당 조건의 보고서가 없습니다.",
                       en: "No reports match the current filters.",
-                      jp: "該当する報告書がありません。",
-                      cn: "没有符合条件的报告。",
+                      ja: "該当する報告書がありません。",
+                      zh: "没有符合条件的报告。",
                     })}
                   </p>
                 )}

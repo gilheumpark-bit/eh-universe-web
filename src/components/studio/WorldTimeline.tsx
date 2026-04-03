@@ -114,7 +114,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
     <div className="space-y-3">
       <h3 className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest font-mono drop-shadow-[0_0_5px_rgba(255,200,50,0.3)] flex items-center gap-2">
         <Clock className="w-3 h-3 text-[rgba(255,200,50,0.8)]" />
-        {L4(language, { ko: '문명 타임라인', en: 'Civilization Timeline', jp: '文明タイムライン', cn: '文明时间线' })}
+        {L4(language, { ko: '문명 타임라인', en: 'Civilization Timeline', ja: '文明タイムライン', zh: '文明时间线' })}
       </h3>
 
       <div className="overflow-x-auto">

@@ -109,7 +109,7 @@ const TRACKS: Track[] = [
 export default function SoundtrackPage() {
   const { lang } = useLang();
   const en = lang !== "ko";
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [playing, setPlaying] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [durations, setDurations] = useState<Record<string, number>>({});
@@ -205,7 +205,7 @@ export default function SoundtrackPage() {
 
           <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             <h1 className="site-title text-2xl font-bold tracking-tight mb-2">
-              {T({ ko: "EH Universe — 사운드트랙", en: "EH Universe — Soundtrack", jp: "EH Universe — サウンドトラック", cn: "EH Universe — 原声带" })}
+              {T({ ko: "EH Universe — 사운드트랙", en: "EH Universe — Soundtrack", ja: "EH Universe — サウンドトラック", zh: "EH Universe — 原声带" })}
             </h1>
             <p className="text-text-tertiary text-sm mb-10 font-mono">
               {T({ ko: "은하 전역에서 수신된 음향 파편", en: "Intercepted audio fragments from across the galaxy" })}

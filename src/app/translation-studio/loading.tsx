@@ -17,8 +17,8 @@ export default function TranslationStudioLoading() {
           {L4(lang, {
             ko: "번역 스튜디오 로딩 중…",
             en: "LOADING TRANSLATION STUDIO…",
-            jp: "翻訳スタジオを読み込み中…",
-            cn: "正在加载翻译工作室…",
+            ja: "翻訳スタジオを読み込み中…",
+            zh: "正在加载翻译工作室…",
           })}
         </p>
       </div>

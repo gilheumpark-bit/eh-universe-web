@@ -133,7 +133,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest font-mono drop-shadow-[0_0_5px_rgba(255,200,50,0.3)] flex items-center gap-2">
           <MapIcon className="w-3 h-3 text-[rgba(255,200,50,0.8)]" />
-          {L4(language, { ko: '영토 지도', en: 'Territory Map', jp: '領土マップ', cn: '领土地图' })}
+          {L4(language, { ko: '영토 지도', en: 'Territory Map', ja: '領土マップ', zh: '领土地图' })}
         </h3>
         <div className="flex gap-2">
           <button

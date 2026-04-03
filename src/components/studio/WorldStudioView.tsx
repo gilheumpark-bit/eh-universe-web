@@ -51,8 +51,8 @@ interface WorldStudioViewProps {
 const SUB_TABS: Record<AppLanguage, Record<WorldSubTab, string>> = {
   KO: { design: '설계', simulator: '시뮬레이터', analysis: '분석', timeline: '타임라인', map: '지도' },
   EN: { design: 'Design', simulator: 'Simulator', analysis: 'Analysis', timeline: 'Timeline', map: 'Map' },
-  JP: { design: '設計', simulator: 'シミュレーター', analysis: '分析', timeline: 'タイムライン', map: 'マップ' },
-  CN: { design: '设计', simulator: '模拟器', analysis: '分析', timeline: '时间线', map: '地图' },
+  JA: { design: '設計', simulator: 'シミュレーター', analysis: '分析', timeline: 'タイムライン', map: 'マップ' },
+  ZH: { design: '设计', simulator: '模拟器', analysis: '分析', timeline: '时间线', map: '地图' },
 };
 
 const SUB_TAB_ICONS: Record<WorldSubTab, React.ElementType> = {
@@ -156,7 +156,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               <div className="flex items-center gap-3 px-5 py-4 bg-[linear-gradient(45deg,rgba(255,200,50,0.05),transparent)] border border-[rgba(255,200,50,0.2)] rounded-xl shadow-[0_0_20px_rgba(255,200,50,0.05)]">
                 <ArrowDown className="w-4 h-4 text-[rgba(255,200,50,0.8)] shrink-0 animate-bounce" />
                 <span className="text-xs text-[rgba(220,200,150,0.9)] font-mono tracking-wide">
-                  {language === 'EN' ? 'Enter a title and synopsis below — AI will forge your Universe' : language === 'JP' ? 'タイトルとシノプシスを入力すると、AIが世界を設計します' : language === 'CN' ? '输入标题和大纲，AI将设计您的世界' : '아래에 제목과 시놉시스를 입력하면 AI 컨스트럭트가 우주를 설계합니다'}
+                  {language === 'EN' ? 'Enter a title and synopsis below — AI will forge your Universe' : language === 'JA' ? 'タイトルとシノプシスを入力すると、AIが世界を設計します' : language === 'ZH' ? '输入标题和大纲，AI将设计您的世界' : '아래에 제목과 시놉시스를 입력하면 AI 컨스트럭트가 우주를 설계합니다'}
                 </span>
               </div>
             </div>
@@ -170,7 +170,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             {config.title || config.synopsis ? (
               <>
                 <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[rgba(255,200,50,0.3)] bg-black/40 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:bg-[rgba(255,200,50,0.1)] hover:border-[rgba(255,200,50,0.6)] hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-[rgba(255,220,100,0.8)] hover:text-white">
-                  <Cpu className="w-4 h-4 group-hover:text-[rgba(255,200,50,0.9)] transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JP' ? 'シミュレーター' : language === 'CN' ? '地图模拟器' : '엔진 시뮬레이션'}
+                  <Cpu className="w-4 h-4 group-hover:text-[rgba(255,200,50,0.9)] transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JA' ? 'シミュレーター' : language === 'ZH' ? '地图模拟器' : '엔진 시뮬레이션'}
                 </button>
                 <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-white shadow-[0_5px_15px_rgba(255,200,50,0.2)]">
                   <Compass className="w-4 h-4 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /> {startLabel ?? t('planning.commence')}

@@ -5,7 +5,7 @@
 import type { AppLanguage } from '@/lib/studio-types';
 
 /** 번역 대상 언어 */
-export type TranslationTarget = 'EN' | 'JP' | 'CN' | 'KO';
+export type TranslationTarget = 'EN' | 'JA' | 'ZH' | 'KO';
 
 /**
  * 번역 모드: 두 가지 접근
@@ -357,8 +357,8 @@ Appropriate for light novels, web fiction, casual first-person narration.`;
 function buildCountrySpecificDirective(targetLang: TranslationTarget, mode: TranslationMode): string {
   if (mode !== 'experience') return ''; // Fidelity 모드에서는 원문 1:1 대응 원칙이므로 생략
 
-  if (targetLang === 'JP') {
-    return `[JP Localization Algorithm (Narou/Light Novel Style)]
+  if (targetLang === 'JA') {
+    return `[JA Localization Algorithm (Narou/Light Novel Style)]
 - **Pronouns & Honorifics:** Carefully choose first-person pronouns (俺/僕/私) and second-person pronouns (お前/君/あなた) based on the character's relation and personality.
 - **Suffixes:** Retain or adapt honorific suffixes (-san, -sama, -kun, -chan) if it fits the character dynamics. Translate "선배", "형", "오빠", "누나" to appropriate Japanese equivalents.
 - **Emphasis:** Use Japanese quotation marks (「」 and 『』). Use Katakana (カタカナ) creatively for emphasis, foreign concepts, or magic spells.
@@ -366,8 +366,8 @@ function buildCountrySpecificDirective(targetLang: TranslationTarget, mode: Tran
 - **Tone:** Translate distinct anime/manga tropes smoothly (e.g., Tsundere, Chuunibyou elements) using native Japanese otaku/novel vocabularies.`;
   }
 
-  if (targetLang === 'CN') {
-    return `[CN Localization Algorithm (Wangwen/Xianxia Style)]
+  if (targetLang === 'ZH') {
+    return `[ZH Localization Algorithm (Wangwen/Xianxia Style)]
 - **Cultural Equivalents:** Convert Korean idioms into equivalent four-character Chinese idioms (成语 - Chengyu) where it elevates the prose naturally.
 - **Honorifics & Titles:** Translate martial arts or interpersonal titles into proper Wuxia/Xianxia terms (e.g., 사형 → 师兄 Shixiong, 장문인 → 掌门 Zhangmen, 도련님 → 少爷 Shaoye).
 - **Prose Style:** Chinese web fiction flows with punchy, rhythmic sentences (often pairing 4-character or 6-character phrases). Adapt sentence structure to fit this cadence.
@@ -835,7 +835,7 @@ ${sourceText}`;
 // ============================================================
 
 function langName(lang: TranslationTarget): string {
-  const names: Record<TranslationTarget, string> = { EN: 'English', JP: 'Japanese', CN: 'Chinese', KO: 'Korean' };
+  const names: Record<TranslationTarget, string> = { EN: 'English', JA: 'Japanese', ZH: 'Chinese', KO: 'Korean' };
   return names[lang];
 }
 
@@ -1268,8 +1268,8 @@ export interface LengthVerification {
 /** 언어쌍별 예상 길이 확장 비율 */
 const LENGTH_RATIO_RANGES: Record<TranslationTarget, { min: number; max: number }> = {
   EN: { min: 1.10, max: 1.60 },  // KO→EN: 보통 1.2~1.4x
-  JP: { min: 0.85, max: 1.20 },  // KO→JP: 비슷하거나 약간 짧음
-  CN: { min: 0.80, max: 1.15 },  // KO→CN: 한자 압축으로 짧을 수 있음
+  JA: { min: 0.85, max: 1.20 },  // KO→JA: 비슷하거나 약간 짧음
+  ZH: { min: 0.80, max: 1.15 },  // KO→ZH: 한자 압축으로 짧을 수 있음
   KO: { min: 0.90, max: 1.10 },  // KO→KO: 거의 동일
 };
 
@@ -1390,7 +1390,7 @@ export function updateConsistencyTracker(
 // IDENTITY_SEAL: PART-1  | role=Types | inputs=none | outputs=TranslationMode,TranslationConfig,FidelityScoreDetail,ExperienceScoreDetail
 // IDENTITY_SEAL: PART-2  | role=BandUtils | inputs=band(number) | outputs=clamped(number),config
 // IDENTITY_SEAL: PART-3  | role=FidelityDirective | inputs=band | outputs=directive(string)
-// IDENTITY_SEAL: PART-4  | role=ExperienceDirective | inputs=band,targetLang | outputs=directive(string)
+// IDENTITY_SEAL: PART-4  | role=ExperienceDirective | inputs=band,targetLang(JA/ZH/EN/KO) | outputs=directive(string)
 // IDENTITY_SEAL: PART-5  | role=SystemPromptBuilder | inputs=TranslationConfig | outputs=systemPrompt(string)
 // IDENTITY_SEAL: PART-6  | role=Chunking | inputs=text,chunkSize | outputs=string[]
 // IDENTITY_SEAL: PART-7  | role=ScoringPrompt | inputs=source,translation,config | outputs=scoringPrompt(string)

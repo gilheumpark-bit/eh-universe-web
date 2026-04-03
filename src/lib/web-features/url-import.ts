@@ -69,8 +69,8 @@ function parseHtmlContent(html: string, sourceUrl: string): {
   const langAttr = doc.documentElement.lang || '';
   let language = 'unknown';
   if (/^ko/i.test(langAttr) || /[가-힣]/.test(text.slice(0, 200))) language = 'ko';
-  else if (/^ja/i.test(langAttr) || /[\u3040-\u309f\u30a0-\u30ff]/.test(text.slice(0, 200))) language = 'jp';
-  else if (/^zh/i.test(langAttr) || /[\u4e00-\u9fff]/.test(text.slice(0, 200))) language = 'cn';
+  else if (/^ja/i.test(langAttr) || /[\u3040-\u309f\u30a0-\u30ff]/.test(text.slice(0, 200))) language = 'ja';
+  else if (/^zh/i.test(langAttr) || /[\u4e00-\u9fff]/.test(text.slice(0, 200))) language = 'zh';
   else if (/^en/i.test(langAttr) || /^[a-zA-Z\s,.!?]+$/.test(text.slice(0, 200))) language = 'en';
 
   const wordCount = text.split(/\s+/).filter(Boolean).length;

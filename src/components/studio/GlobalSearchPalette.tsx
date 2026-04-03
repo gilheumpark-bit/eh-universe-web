@@ -54,15 +54,15 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   }, []);
 
   const worldFieldLabels = useMemo(() => [
-    { key: 'setting', label: L4(language, { ko: '배경', en: 'Setting', jp: '背景', cn: '背景' }) },
-    { key: 'corePremise', label: L4(language, { ko: '핵심 전제', en: 'Core Premise', jp: 'コアプレミス', cn: '核心前提' }) },
-    { key: 'synopsis', label: L4(language, { ko: '시놉시스', en: 'Synopsis', jp: 'シノプシス', cn: '剧情简介' }) },
-    { key: 'worldHistory', label: L4(language, { ko: '역사', en: 'History', jp: '歴史', cn: '历史' }) },
-    { key: 'socialSystem', label: L4(language, { ko: '사회 시스템', en: 'Social System', jp: '社会システム', cn: '社会系统' }) },
-    { key: 'powerStructure', label: L4(language, { ko: '권력 구조', en: 'Power Structure', jp: '権力構造', cn: '权力结构' }) },
-    { key: 'currentConflict', label: L4(language, { ko: '현재 갈등', en: 'Current Conflict', jp: '現在の対立', cn: '当前冲突' }) },
-    { key: 'culture', label: L4(language, { ko: '문화', en: 'Culture', jp: '文化', cn: '文化' }) },
-    { key: 'magicTechSystem', label: L4(language, { ko: '마법/기술', en: 'Magic/Tech', jp: '魔法/技術', cn: '魔法/科技' }) },
+    { key: 'setting', label: L4(language, { ko: '배경', en: 'Setting', ja: '背景', zh: '背景' }) },
+    { key: 'corePremise', label: L4(language, { ko: '핵심 전제', en: 'Core Premise', ja: 'コアプレミス', zh: '核心前提' }) },
+    { key: 'synopsis', label: L4(language, { ko: '시놉시스', en: 'Synopsis', ja: 'シノプシス', zh: '剧情简介' }) },
+    { key: 'worldHistory', label: L4(language, { ko: '역사', en: 'History', ja: '歴史', zh: '历史' }) },
+    { key: 'socialSystem', label: L4(language, { ko: '사회 시스템', en: 'Social System', ja: '社会システム', zh: '社会系统' }) },
+    { key: 'powerStructure', label: L4(language, { ko: '권력 구조', en: 'Power Structure', ja: '権力構造', zh: '权力结构' }) },
+    { key: 'currentConflict', label: L4(language, { ko: '현재 갈등', en: 'Current Conflict', ja: '現在の対立', zh: '当前冲突' }) },
+    { key: 'culture', label: L4(language, { ko: '문화', en: 'Culture', ja: '文化', zh: '文化' }) },
+    { key: 'magicTechSystem', label: L4(language, { ko: '마법/기술', en: 'Magic/Tech', ja: '魔法/技術', zh: '魔法/科技' }) },
   ], [language]);
 
   const results = useMemo<SearchResult[]>(() => {
@@ -127,9 +127,9 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   };
 
   const categoryLabel = (type: ResultType): string => {
-    if (type === 'character') return L4(language, { ko: '캐릭터', en: 'CHAR', jp: 'キャラ', cn: '角色' });
-    if (type === 'episode') return L4(language, { ko: '에피소드', en: 'EP', jp: 'エピソード', cn: '章节' });
-    return L4(language, { ko: '세계관', en: 'WORLD', jp: '世界観', cn: '世界观' });
+    if (type === 'character') return L4(language, { ko: '캐릭터', en: 'CHAR', ja: 'キャラ', zh: '角色' });
+    if (type === 'episode') return L4(language, { ko: '에피소드', en: 'EP', ja: 'エピソード', zh: '章节' });
+    return L4(language, { ko: '세계관', en: 'WORLD', ja: '世界観', zh: '世界观' });
   };
 
   return (
@@ -151,8 +151,8 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
             placeholder={L4(language, {
               ko: '캐릭터, 에피소드, 세계관 검색... (Ctrl+K)',
               en: 'Search characters, episodes, world... (Ctrl+K)',
-              jp: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
-              cn: '搜索角色、章节、世界观... (Ctrl+K)',
+              ja: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
+              zh: '搜索角色、章节、世界观... (Ctrl+K)',
             })}
             className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary"
           />
@@ -168,8 +168,8 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
               {L4(language, {
                 ko: '검색 결과가 없습니다',
                 en: 'No results found',
-                jp: '検索結果がありません',
-                cn: '没有找到结果',
+                ja: '検索結果がありません',
+                zh: '没有找到结果',
               })}
             </div>
           )}

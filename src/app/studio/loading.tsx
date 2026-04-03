@@ -17,8 +17,8 @@ export default function StudioLoading() {
           {L4(lang, {
             ko: '스튜디오 초기화 중...',
             en: 'INITIALIZING STUDIO...',
-            jp: 'スタジオを初期化中...',
-            cn: '正在初始化工作室...',
+            ja: 'スタジオを初期化中...',
+            zh: '正在初始化工作室...',
           })}
         </p>
       </div>

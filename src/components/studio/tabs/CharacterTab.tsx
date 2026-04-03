@@ -39,12 +39,12 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
   const handleAutoGenerate = async () => {
     if (!activeSupportsStructured()) {
-      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
+      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JA: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", ZH: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
       setUxError({ error: new Error(msg) });
       return;
     }
     if (!config.synopsis) {
-      const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JP: "先にあらすじを書いてください。", CN: "请先编写大纲。" })[language];
+      const msg = ({ KO: "먼저 시놉시스를 작성해주세요.", EN: "Please write the synopsis first.", JA: "先にあらすじを書いてください。", ZH: "请先编写大纲。" })[language];
       setUxError({ error: new Error(msg) });
       return;
     }
@@ -57,7 +57,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
         characters: [...prev.characters, ...generated]
       }));
     } catch {
-      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
+      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JA: "キャラクター生成中にエラーが発生しました。", ZH: "生成角色时出错。" })[language];
       setUxError({ error: new Error(msg) });
     } finally {
       setIsGenerating(false);

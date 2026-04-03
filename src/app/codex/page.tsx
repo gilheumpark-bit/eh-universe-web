@@ -12,16 +12,16 @@ const ReferencePage = dynamic(() => import("../reference/page"), { ssr: false, l
 const DocsPage = dynamic(() => import("../docs/page"), { ssr: false, loading: DynLoading });
 
 const TABS = [
-  { id: "rulebook", ko: "EH RULEBOOK", en: "EH RULEBOOK", jp: "EH RULEBOOK", cn: "EH RULEBOOK", desc: { ko: "서사 붕괴 방지 엔진", en: "Narrative Collapse Prevention Engine", jp: "物語崩壊防止エンジン", cn: "叙事崩溃防止引擎" } },
-  { id: "reference", ko: "REFERENCE", en: "REFERENCE", jp: "REFERENCE", cn: "REFERENCE", desc: { ko: "세계관 참조 문서", en: "World Reference Document", jp: "世界観参照ドキュメント", cn: "世界观参考文档" } },
-  { id: "guide", ko: "GUIDE", en: "GUIDE", jp: "GUIDE", cn: "GUIDE", desc: { ko: "NOA Studio 사용설명서", en: "NOA Studio User Guide", jp: "NOA Studio ユーザーガイド", cn: "NOA Studio 用户指南" } },
+  { id: "rulebook", ko: "EH RULEBOOK", en: "EH RULEBOOK", ja: "EH RULEBOOK", zh: "EH RULEBOOK", desc: { ko: "서사 붕괴 방지 엔진", en: "Narrative Collapse Prevention Engine", ja: "物語崩壊防止エンジン", zh: "叙事崩溃防止引擎" } },
+  { id: "reference", ko: "REFERENCE", en: "REFERENCE", ja: "REFERENCE", zh: "REFERENCE", desc: { ko: "세계관 참조 문서", en: "World Reference Document", ja: "世界観参照ドキュメント", zh: "世界观参考文档" } },
+  { id: "guide", ko: "GUIDE", en: "GUIDE", ja: "GUIDE", zh: "GUIDE", desc: { ko: "NOA Studio 사용설명서", en: "NOA Studio User Guide", ja: "NOA Studio ユーザーガイド", zh: "NOA Studio 用户指南" } },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
 
 export default function CodexPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [tab, setTab] = useState<TabId>("rulebook");
 
   return (
@@ -35,7 +35,7 @@ export default function CodexPage() {
               CODEX
             </h1>
             <p className="text-text-tertiary text-sm font-mono">
-              {T({ ko: "EH Universe 통합 지식 허브", en: "The complete knowledge base of EH Universe", jp: "EH Universe 統合ナレッジベース", cn: "EH Universe 综合知识库" })}
+              {T({ ko: "EH Universe 통합 지식 허브", en: "The complete knowledge base of EH Universe", ja: "EH Universe 統合ナレッジベース", zh: "EH Universe 综合知识库" })}
             </p>
           </div>
 

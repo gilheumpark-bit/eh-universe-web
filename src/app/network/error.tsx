@@ -25,24 +25,24 @@ export default function NetworkError({
           {L4(lang, {
             ko: '네트워크 오류',
             en: 'Network Error',
-            jp: 'ネットワークエラー',
-            cn: '网络错误',
+            ja: 'ネットワークエラー',
+            zh: '网络错误',
           })}
         </h2>
         <p className="text-sm text-text-secondary">
           {L4(lang, {
             ko: '문제가 발생했습니다. 다시 시도해 주세요.',
             en: 'Something went wrong. Please try again.',
-            jp: '問題が発生しました。もう一度お試しください。',
-            cn: '出现了问题，请重试。',
+            ja: '問題が発生しました。もう一度お試しください。',
+            zh: '出现了问题，请重试。',
           })}
         </p>
         <p className="text-xs text-text-tertiary">
           {error.message || L4(lang, {
             ko: '예상치 못한 오류가 발생했습니다.',
             en: 'An unexpected error occurred.',
-            jp: '予期しないエラーが発生しました。',
-            cn: '发生了意外错误。',
+            ja: '予期しないエラーが発生しました。',
+            zh: '发生了意外错误。',
           })}
         </p>
         <button
@@ -52,8 +52,8 @@ export default function NetworkError({
           {L4(lang, {
             ko: '다시 시도',
             en: 'Retry',
-            jp: '再試行',
-            cn: '重试',
+            ja: '再試行',
+            zh: '重试',
           })}
         </button>
       </div>

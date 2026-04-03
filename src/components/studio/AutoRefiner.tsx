@@ -80,7 +80,7 @@ ${context ? `\nWork info: ${context}` : ''}
 
 Manuscript:
 ${numbered}`,
-    JP: `あなたは商業小説の編集者です。以下の原稿の各段落を分析し、改善が必要な部分だけを選んでください。
+    JA: `あなたは商業小説の編集者です。以下の原稿の各段落を分析し、改善が必要な部分だけを選んでください。
 
 分析基準（優先順位）:
 1. 平坦な描写 → "expand"（感覚/内面の詳細不足）
@@ -100,7 +100,7 @@ ${context ? `\n作品情報: ${context}` : ''}
 
 原稿:
 ${numbered}`,
-    CN: `你是一位商业小说编辑。分析以下稿件的每个段落，只选出需要改进的部分。
+    ZH: `你是一位商业小说编辑。分析以下稿件的每个段落，只选出需要改进的部分。
 
 分析标准（优先级）:
 1. 平淡描写 → "expand"（缺乏感官/内心细节）
@@ -130,38 +130,38 @@ function buildFixPrompt(original: string, action: string, before: string, after:
     rewrite: {
       KO: '같은 의미이지만 더 자연스럽고 매끄러운 문장으로 다시 써줘. AI 톤 제거.',
       EN: 'Rewrite with more natural, polished prose. Remove AI tone.',
-      JP: '同じ意味でより自然で滑らかな文章に書き直してください。AIトーンを除去。',
-      CN: '用相同含义但更自然流畅的句子重写。去除AI腔调。',
+      JA: '同じ意味でより自然で滑らかな文章に書き直してください。AIトーンを除去。',
+      ZH: '用相同含义但更自然流畅的句子重写。去除AI腔调。',
     },
     expand: {
       KO: '감각 묘사, 내면 독백, 환경 묘사를 추가해서 2배로 늘려줘. 원래 사건과 대사는 유지.',
       EN: 'Expand 2x with sensory details, inner monologue, environment. Keep events/dialogue.',
-      JP: '感覚描写、内面の独白、環境描写を追加して2倍に拡張してください。元の事件と台詞は維持。',
-      CN: '添加感官描写、内心独白、环境描写，扩展为2倍。保留原有事件和对话。',
+      JA: '感覚描写、内面の独白、環境描写を追加して2倍に拡張してください。元の事件と台詞は維持。',
+      ZH: '添加感官描写、内心独白、环境描写，扩展为2倍。保留原有事件和对话。',
     },
     compress: {
       KO: '핵심만 남기고 절반으로 압축. 불필요한 수식어, 반복 제거.',
       EN: 'Compress to half. Remove unnecessary modifiers and repetition.',
-      JP: '核心だけ残して半分に圧縮。不要な修飾語、繰り返しを除去。',
-      CN: '只留核心压缩到一半。删除不必要的修饰语和重复。',
+      JA: '核心だけ残して半分に圧縮。不要な修飾語、繰り返しを除去。',
+      ZH: '只留核心压缩到一半。删除不必要的修饰语和重复。',
     },
     tension: {
       KO: '긴장감 높여줘. 짧은 문장, 급박한 호흡, 위기감. 원래 사건 유지.',
       EN: 'Increase tension. Short sentences, urgency, crisis. Keep events.',
-      JP: '緊張感を高めてください。短い文、切迫した呼吸、危機感。元の事件を維持。',
-      CN: '提高紧张感。短句、紧迫节奏、危机感。保留原有事件。',
+      JA: '緊張感を高めてください。短い文、切迫した呼吸、危機感。元の事件を維持。',
+      ZH: '提高紧张感。短句、紧迫节奏、危机感。保留原有事件。',
     },
     dialogue: {
       KO: '대사를 캐릭터 성격에 맞게 더 자연스럽고 개성있게. 지문도 다듬어줘.',
       EN: 'Polish dialogue to be more natural and characteristic. Improve tags too.',
-      JP: 'セリフをキャラクターの性格に合わせてより自然で個性的に。ト書きも整えてください。',
-      CN: '打磨对话使其更自然、更有个性。也润色对话标签。',
+      JA: 'セリフをキャラクターの性格に合わせてより自然で個性的に。ト書きも整えてください。',
+      ZH: '打磨对话使其更自然、更有个性。也润色对话标签。',
     },
     insert_after: {
       KO: '이 문단 뒤에 이어지는 전환 장면을 200~400자로 새로 써줘.',
       EN: 'Write a 200-400 char transition scene to follow this paragraph.',
-      JP: 'この段落の後に続く転換シーンを200〜400字で新しく書いてください。',
-      CN: '在这段之后写一个200-400字的过渡场景。',
+      JA: 'この段落の後に続く転換シーンを200〜400字で新しく書いてください。',
+      ZH: '在这段之后写一个200-400字的过渡场景。',
     },
   };
 
@@ -170,8 +170,8 @@ function buildFixPrompt(original: string, action: string, before: string, after:
   const footer: Record<AppLanguage, string> = {
     KO: '순수 소설 텍스트만 출력. 설명/코멘트/따옴표 없이.',
     EN: 'Output pure fiction text only. No explanations/comments/quotes.',
-    JP: '純粋な小説テキストのみ出力。説明/コメント/引用符なし。',
-    CN: '仅输出纯小说文本。无解释/评论/引号。',
+    JA: '純粋な小説テキストのみ出力。説明/コメント/引用符なし。',
+    ZH: '仅输出纯小说文本。无解释/评论/引号。',
   };
 
   return `${prompt}\n\n[앞 문맥]\n${before}\n\n[대상 문단]\n${original}\n\n[뒤 문맥]\n${after}\n\n${footer[language]}`;
@@ -182,12 +182,12 @@ function buildFixPrompt(original: string, action: string, before: string, after:
 // ============================================================
 
 const ACTION_LABEL: Record<string, { label: Record<AppLanguage, string>; color: string }> = {
-  rewrite: { label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' }, color: 'text-blue-400 bg-blue-600/10 border-blue-500/20' },
-  expand: { label: { KO: '살 붙이기', EN: 'Expand', JP: '拡張', CN: '扩展' }, color: 'text-green-400 bg-green-600/10 border-green-500/20' },
-  compress: { label: { KO: '압축', EN: 'Compress', JP: '圧縮', CN: '压缩' }, color: 'text-orange-400 bg-orange-600/10 border-orange-500/20' },
-  tension: { label: { KO: '긴장감', EN: 'Tension', JP: '緊張感', CN: '紧张感' }, color: 'text-red-400 bg-red-600/10 border-red-500/20' },
-  dialogue: { label: { KO: '대사', EN: 'Dialogue', JP: 'セリフ', CN: '台词' }, color: 'text-pink-400 bg-pink-600/10 border-pink-500/20' },
-  insert_after: { label: { KO: '삽입', EN: 'Insert', JP: '挿入', CN: '插入' }, color: 'text-purple-400 bg-purple-600/10 border-purple-500/20' },
+  rewrite: { label: { KO: '다시 쓰기', EN: 'Rewrite', JA: 'リライト', ZH: '重写' }, color: 'text-blue-400 bg-blue-600/10 border-blue-500/20' },
+  expand: { label: { KO: '살 붙이기', EN: 'Expand', JA: '拡張', ZH: '扩展' }, color: 'text-green-400 bg-green-600/10 border-green-500/20' },
+  compress: { label: { KO: '압축', EN: 'Compress', JA: '圧縮', ZH: '压缩' }, color: 'text-orange-400 bg-orange-600/10 border-orange-500/20' },
+  tension: { label: { KO: '긴장감', EN: 'Tension', JA: '緊張感', ZH: '紧张感' }, color: 'text-red-400 bg-red-600/10 border-red-500/20' },
+  dialogue: { label: { KO: '대사', EN: 'Dialogue', JA: 'セリフ', ZH: '台词' }, color: 'text-pink-400 bg-pink-600/10 border-pink-500/20' },
+  insert_after: { label: { KO: '삽입', EN: 'Insert', JA: '挿入', ZH: '插入' }, color: 'text-purple-400 bg-purple-600/10 border-purple-500/20' },
 };
 
 const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, onApply }) => {
@@ -223,7 +223,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     let raw = '';
     try {
       await streamChat({
-        systemInstruction: ({KO:'소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.',EN:'Fiction editor. Output JSON array only. No other text.',JP:'小説編集者。JSON配列のみ出力。他のテキスト禁止。',CN:'小说编辑。仅输出JSON数组。禁止其他文本。'}[language]),
+        systemInstruction: ({KO:'소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.',EN:'Fiction editor. Output JSON array only. No other text.',JA:'小説編集者。JSON配列のみ出力。他のテキスト禁止。',ZH:'小说编辑。仅输出JSON数组。禁止其他文本。'}[language]),
         messages,
         temperature: 0.3,
         signal: controller.signal,
@@ -292,7 +292,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     let result = '';
     try {
       await streamChat({
-        systemInstruction: ({KO:'소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.',EN:'Fiction rewriter. Output pure fiction text only. No explanations.',JP:'小説テキストリライター。純粋な小説テキストのみ出力。説明禁止。',CN:'小说文本改写器。仅输出纯小说文本。禁止解释。'}[language]),
+        systemInstruction: ({KO:'소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.',EN:'Fiction rewriter. Output pure fiction text only. No explanations.',JA:'小説テキストリライター。純粋な小説テキストのみ出力。説明禁止。',ZH:'小说文本改写器。仅输出纯小说文本。禁止解释。'}[language]),
         messages,
         temperature: 0.85,
         signal: controller.signal,

@@ -13,7 +13,7 @@ import {
 
 describe('label map exports', () => {
   it('RELATION_LABELS has entries for all 4 languages', () => {
-    const langs: AppLanguage[] = ['KO', 'EN', 'JP', 'CN'];
+    const langs: AppLanguage[] = ['KO', 'EN', 'JA', 'ZH'];
     for (const lang of langs) {
       expect(RELATION_LABELS[lang]).toBeDefined();
       expect(RELATION_LABELS[lang]['friend']).toBeTruthy();
@@ -26,8 +26,8 @@ describe('label map exports', () => {
   });
 
   it('EXPLICIT_LABELS has entries for all 4 languages', () => {
-    expect(EXPLICIT_LABELS['JP']['high']).toBe('高');
-    expect(EXPLICIT_LABELS['CN']['none']).toBe('无');
+    expect(EXPLICIT_LABELS['JA']['high']).toBe('高');
+    expect(EXPLICIT_LABELS['ZH']['none']).toBe('无');
   });
 
   it('PROFANITY_LABELS has entries for all 4 languages', () => {
@@ -67,13 +67,13 @@ describe('formatSocialProfile', () => {
   });
 
   it('formats JP output', () => {
-    const result = formatSocialProfile(baseSocialProfile, '太郎', 'JP');
+    const result = formatSocialProfile(baseSocialProfile, '太郎', 'JA');
     expect(result).toContain('[太郎 Social Register]');
     expect(result).toContain('Relation: 友人');
   });
 
   it('formats CN output', () => {
-    const result = formatSocialProfile(baseSocialProfile, '小明', 'CN');
+    const result = formatSocialProfile(baseSocialProfile, '小明', 'ZH');
     expect(result).toContain('Relation: 朋友');
   });
 

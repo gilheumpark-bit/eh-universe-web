@@ -1,9 +1,9 @@
 // ============================================================
 // Multi-Language Batch — 다국어 동시 번역
 // ============================================================
-// EN+JP+CN 동시 배치. 각 언어별 진행 상태 추적.
+// EN+JA+ZH 동시 배치. 각 언어별 진행 상태 추적.
 
-export type TargetLanguage = 'EN' | 'JP' | 'CN';
+export type TargetLanguage = 'EN' | 'JA' | 'ZH';
 
 export interface MultiLangBatchConfig {
   targets: TargetLanguage[];

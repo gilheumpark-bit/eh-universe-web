@@ -9,60 +9,60 @@ import type {
 } from "@/lib/network-types";
 import type { Lang } from "@/lib/LangContext";
 
-type LabelPair = { ko: string; en: string; jp?: string; cn?: string };
+type LabelPair = { ko: string; en: string; ja?: string; zh?: string };
 
 // ============================================================
 // PART 1 - DOMAIN LABEL MAPS
 // ============================================================
 
 export const BOARD_TYPE_LABELS: Record<BoardType, LabelPair> = {
-  notice: { ko: "중앙 공문", en: "Central Notice", jp: "中央公文", cn: "中央公文" },
-  registry: { ko: "행성 등록소", en: "Planet Registry", jp: "惑星登録所", cn: "行星注册处" },
-  log: { ko: "관측 로그", en: "Observation Log", jp: "観測ログ", cn: "观测日志" },
-  settlement: { ko: "정산 결과", en: "Settlement Result", jp: "決算結果", cn: "结算结果" },
-  if: { ko: "IF 구역", en: "IF Zone", jp: "IF区域", cn: "IF区域" },
-  feedback: { ko: "피드백 / 협업", en: "Feedback / Collaboration", jp: "フィードバック / 協業", cn: "反馈 / 协作" },
+  notice: { ko: "중앙 공문", en: "Central Notice", ja: "中央公文", zh: "中央公文" },
+  registry: { ko: "행성 등록소", en: "Planet Registry", ja: "惑星登録所", zh: "行星注册处" },
+  log: { ko: "관측 로그", en: "Observation Log", ja: "観測ログ", zh: "观测日志" },
+  settlement: { ko: "정산 결과", en: "Settlement Result", ja: "決算結果", zh: "结算结果" },
+  if: { ko: "IF 구역", en: "IF Zone", ja: "IF区域", zh: "IF区域" },
+  feedback: { ko: "피드백 / 협업", en: "Feedback / Collaboration", ja: "フィードバック / 協業", zh: "反馈 / 协作" },
 };
 
 export const REPORT_TYPE_LABELS: Record<ReportType, LabelPair> = {
-  manual: { ko: "운용교범", en: "Operations Manual", jp: "運用教範", cn: "操作手册" },
-  guide: { ko: "공식해설", en: "Official Guide", jp: "公式解説", cn: "官方指南" },
-  technical: { ko: "기술보고", en: "Technical Report", jp: "技術報告", cn: "技术报告" },
-  settlement: { ko: "정산보고", en: "Settlement Report", jp: "決算報告", cn: "结算报告" },
-  observation: { ko: "관측보고", en: "Observation Report", jp: "観測報告", cn: "观测报告" },
-  incident: { ko: "사건기록", en: "Incident Record", jp: "事件記録", cn: "事件记录" },
-  testimony: { ko: "증언기록", en: "Testimony Record", jp: "証言記録", cn: "证言记录" },
-  recovered: { ko: "회수문서", en: "Recovered Document", jp: "回収文書", cn: "回收文件" },
+  manual: { ko: "운용교범", en: "Operations Manual", ja: "運用教範", zh: "操作手册" },
+  guide: { ko: "공식해설", en: "Official Guide", ja: "公式解説", zh: "官方指南" },
+  technical: { ko: "기술보고", en: "Technical Report", ja: "技術報告", zh: "技术报告" },
+  settlement: { ko: "정산보고", en: "Settlement Report", ja: "決算報告", zh: "结算报告" },
+  observation: { ko: "관측보고", en: "Observation Report", ja: "観測報告", zh: "观测报告" },
+  incident: { ko: "사건기록", en: "Incident Record", ja: "事件記録", zh: "事件记录" },
+  testimony: { ko: "증언기록", en: "Testimony Record", ja: "証言記録", zh: "证言记录" },
+  recovered: { ko: "회수문서", en: "Recovered Document", ja: "回収文書", zh: "回收文件" },
 };
 
 export const PLANET_GOAL_LABELS: Record<PlanetGoal, LabelPair> = {
-  maintain: { ko: "유지", en: "Maintain", jp: "維持", cn: "维持" },
-  develop: { ko: "발전", en: "Develop", jp: "発展", cn: "发展" },
-  collapse: { ko: "붕괴", en: "Collapse", jp: "崩壊", cn: "崩溃" },
-  experiment: { ko: "실험", en: "Experiment", jp: "実験", cn: "实验" },
+  maintain: { ko: "유지", en: "Maintain", ja: "維持", zh: "维持" },
+  develop: { ko: "발전", en: "Develop", ja: "発展", zh: "发展" },
+  collapse: { ko: "붕괴", en: "Collapse", ja: "崩壊", zh: "崩溃" },
+  experiment: { ko: "실험", en: "Experiment", ja: "実験", zh: "实验" },
 };
 
 export const PLANET_STATUS_LABELS: Record<PlanetStatus, LabelPair> = {
-  maintain: { ko: "유지", en: "Maintain", jp: "維持", cn: "维持" },
-  develop: { ko: "발전", en: "Develop", jp: "発展", cn: "发展" },
-  collapse: { ko: "붕괴", en: "Collapse", jp: "崩壊", cn: "崩溃" },
-  experiment: { ko: "실험", en: "Experiment", jp: "実験", cn: "实验" },
-  freeze: { ko: "동결", en: "Freeze", jp: "凍結", cn: "冻结" },
-  discard: { ko: "폐기", en: "Discard", jp: "廃棄", cn: "废弃" },
+  maintain: { ko: "유지", en: "Maintain", ja: "維持", zh: "维持" },
+  develop: { ko: "발전", en: "Develop", ja: "発展", zh: "发展" },
+  collapse: { ko: "붕괴", en: "Collapse", ja: "崩壊", zh: "崩溃" },
+  experiment: { ko: "실험", en: "Experiment", ja: "実験", zh: "实验" },
+  freeze: { ko: "동결", en: "Freeze", ja: "凍結", zh: "冻结" },
+  discard: { ko: "폐기", en: "Discard", ja: "廃棄", zh: "废弃" },
 };
 
 export const OFFICIALITY_LABELS: Record<Officiality, LabelPair> = {
-  official: { ko: "공식", en: "Official", jp: "公式", cn: "官方" },
-  unofficial: { ko: "비공식", en: "Unofficial", jp: "非公式", cn: "非官方" },
-  fan: { ko: "팬기록", en: "Fan Record", jp: "ファン記録", cn: "粉丝记录" },
-  experimental: { ko: "실험기록", en: "Experimental Record", jp: "実験記録", cn: "实验记录" },
-  pending: { ko: "검토중", en: "Pending Review", jp: "審査中", cn: "审核中" },
+  official: { ko: "공식", en: "Official", ja: "公式", zh: "官方" },
+  unofficial: { ko: "비공식", en: "Unofficial", ja: "非公式", zh: "非官方" },
+  fan: { ko: "팬기록", en: "Fan Record", ja: "ファン記録", zh: "粉丝记录" },
+  experimental: { ko: "실험기록", en: "Experimental Record", ja: "実験記録", zh: "实验记录" },
+  pending: { ko: "검토중", en: "Pending Review", ja: "審査中", zh: "审核中" },
 };
 
 export const VISIBILITY_LABELS: Record<Visibility, LabelPair> = {
-  public: { ko: "공개", en: "Public", jp: "公開", cn: "公开" },
-  members: { ko: "회원 공개", en: "Members", jp: "会員公開", cn: "会员公开" },
-  private: { ko: "비공개", en: "Private", jp: "非公開", cn: "非公开" },
+  public: { ko: "공개", en: "Public", ja: "公開", zh: "公开" },
+  members: { ko: "회원 공개", en: "Members", ja: "会員公開", zh: "会员公开" },
+  private: { ko: "비공개", en: "Private", ja: "非公開", zh: "非公开" },
 };
 
 // IDENTITY_SEAL: PART-1 | role=localized label maps | inputs=domain enums | outputs=ko/en labels

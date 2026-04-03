@@ -149,11 +149,11 @@ export function MoveSessionModal({
           className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
           defaultValue=""
           onChange={e => { if (e.target.value) { onMove(data.sessionId, e.target.value); onClose(); } }}>
-          <option value="" disabled>{L4(language, { ko: '프로젝트 선택...', en: 'Select project...', jp: 'プロジェクトを選択...', cn: '选择项目...' })}</option>
+          <option value="" disabled>{L4(language, { ko: '프로젝트 선택...', en: 'Select project...', ja: 'プロジェクトを選択...', zh: '选择项目...' })}</option>
           {data.others.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <button onClick={onClose} className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors">
-          {L4(language, { ko: '취소', en: 'Cancel', jp: 'キャンセル', cn: '取消' })}
+          {L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
         </button>
       </div>
     </div>
@@ -181,7 +181,7 @@ export function SaveSlotModal({
         <input
           autoFocus
           type="text"
-          placeholder={L4(language, { ko: '세이브 이름...', en: 'Save name...', jp: 'セーブ名...', cn: '存档名称...' })}
+          placeholder={L4(language, { ko: '세이브 이름...', en: 'Save name...', ja: 'セーブ名...', zh: '存档名称...' })}
           maxLength={40}
           className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-accent-purple"
           onKeyDown={e => {
@@ -203,7 +203,7 @@ export function SaveSlotModal({
         <div className="flex gap-2">
           <button onClick={onClose}
             className="flex-1 py-2 text-xs font-bold text-text-tertiary border border-border rounded-lg hover:bg-bg-secondary transition-colors">
-            {L4(language, { ko: '취소', en: 'Cancel', jp: 'キャンセル', cn: '取消' })}
+            {L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
           </button>
           <button
             onClick={() => {

@@ -204,7 +204,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           <div className="flex items-center gap-3">
             <Share2 className="w-5 h-5 text-accent-purple" />
             <h2 className="text-sm font-black uppercase tracking-wider">
-              {L4(language, { ko: '네트워크에 공유', en: 'Share to Network', jp: 'ネットワークに共有', cn: '分享到网络' })}
+              {L4(language, { ko: '네트워크에 공유', en: 'Share to Network', ja: 'ネットワークに共有', zh: '分享到网络' })}
             </h2>
           </div>
           <button onClick={onClose} className="p-1 text-text-tertiary hover:text-white">

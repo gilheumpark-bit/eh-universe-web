@@ -89,8 +89,8 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
           const userMsg = L4(lang, {
             ko: "데이터를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
             en: "Something went wrong while loading data. Please try again shortly.",
-            jp: "データの読み込み中に問題が発生しました。しばらくしてからもう一度お試しください。",
-            cn: "加载数据时出现问题，请稍后重试。",
+            ja: "データの読み込み中に問題が発生しました。しばらくしてからもう一度お試しください。",
+            zh: "加载数据时出现问题，请稍后重试。",
           });
           setError(userMsg);
         }
@@ -174,16 +174,16 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section data-testid="error-fallback" className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Detail", jp: "惑星詳細", cn: "星球详情" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Detail", ja: "惑星詳細", zh: "星球详情" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", jp: "惑星が見つかりません。", cn: "未找到星球。" })}
+              {L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", ja: "惑星が見つかりません。", zh: "未找到星球。" })}
             </h1>
             <p className="site-lede mt-4">
-              {error ?? L4(lang, { ko: "유효한 행성 ID를 확인하세요.", en: "Check the requested planet id.", jp: "有効な惑星IDを確認してください。", cn: "请检查请求的星球ID。" })}
+              {error ?? L4(lang, { ko: "유효한 행성 ID를 확인하세요.", en: "Check the requested planet id.", ja: "有効な惑星IDを確認してください。", zh: "请检查请求的星球ID。" })}
             </p>
             <div className="mt-8">
               <Link href="/network" className="premium-button inline-block">
-                {L4(lang, { ko: "← 네트워크로 돌아가기", en: "← Back to Network", jp: "← ネットワークに戻る", cn: "← 返回网络" })}
+                {L4(lang, { ko: "← 네트워크로 돌아가기", en: "← Back to Network", ja: "← ネットワークに戻る", zh: "← 返回网络" })}
               </Link>
             </div>
           </section>
@@ -241,7 +241,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
           <div className="premium-panel-soft p-6 text-center space-y-4">
             <p className="text-sm text-accent-red">{error}</p>
             <Link href="/network" className="premium-button inline-block">
-              {L4(lang, { ko: "네트워크로 돌아가기", en: "Back to Network", jp: "ネットワークに戻る", cn: "返回网络" })}
+              {L4(lang, { ko: "네트워크로 돌아가기", en: "Back to Network", ja: "ネットワークに戻る", zh: "返回网络" })}
             </Link>
           </div>
         ) : null}
@@ -290,7 +290,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                       <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
                         <div>{L4(lang, { ko: `EH 수치 ${settlement.ehValue ?? "-"}`, en: `EH ${settlement.ehValue ?? "-"}` })}</div>
                         <div>{L4(lang, { ko: `위험도 ${settlement.risk ?? "-"}`, en: `Risk ${settlement.risk ?? "-"}` })}</div>
-                        <div>{new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }))}</div>
+                        <div>{new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}</div>
                       </div>
                       {settlement.action ? <p className="mt-4 text-sm text-text-primary">{settlement.action}</p> : null}
                     </article>
@@ -315,7 +315,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                       <h2 className="text-lg font-semibold text-text-primary">{post.title}</h2>
                       <div className="text-xs text-text-tertiary">
                         {post.eventCategory ?? L4(lang, { ko: "미분류", en: "Unclassified" })} ·{" "}
-                        {new Date(post.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }))}
+                        {new Date(post.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}
                       </div>
                       <p className="whitespace-pre-wrap text-sm leading-7 text-text-secondary">{post.content}</p>
 
@@ -382,7 +382,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                       <div className="text-xs text-text-tertiary">{item.kind}</div>
                     </div>
                     <div className="text-xs text-text-tertiary">
-                      {new Date(item.date).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }))}
+                      {new Date(item.date).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}
                     </div>
                   </li>
                 ))}

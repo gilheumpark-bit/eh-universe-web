@@ -424,7 +424,7 @@ export function auditI18n(ctx: AuditContext): AuditAreaResult {
   checks++;
   const translationFile = ctx.files.find(f => /translations/i.test(f.path) && f.language === 'typescript');
   if (translationFile) {
-    const langKeys = (translationFile.content.match(/\b(ko|en|jp|cn|ja|zh)\b\s*:/g) ?? []);
+    const langKeys = (translationFile.content.match(/\b(ko|en|ja|zh)\b\s*:/g) ?? []);
     const uniqueLangs = new Set(langKeys.map(k => k.replace(/\s*:/, '').trim()));
     if (uniqueLangs.size >= 2) { passed++; } else {
       findings.push({

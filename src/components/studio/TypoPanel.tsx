@@ -13,10 +13,10 @@ interface TypoPanelProps {
 }
 
 const TYPE_LABEL: Record<TypoMatch['type'], Record<AppLanguage, string>> = {
-  'double-char': { KO: '글자 중복', EN: 'Double char', JP: '文字重複', CN: '字符重复' },
-  'jamo-slip': { KO: '자모 분리', EN: 'Loose jamo', JP: '字母分離', CN: '字母分离' },
-  'spacing': { KO: '띄어쓰기', EN: 'Spacing', JP: 'スペース', CN: '间距' },
-  'batchim-swap': { KO: '받침 오타', EN: 'Batchim typo', JP: '終声誤字', CN: '韵尾错误' },
+  'double-char': { KO: '글자 중복', EN: 'Double char', JA: '文字重複', ZH: '字符重复' },
+  'jamo-slip': { KO: '자모 분리', EN: 'Loose jamo', JA: '字母分離', ZH: '字母分离' },
+  'spacing': { KO: '띄어쓰기', EN: 'Spacing', JA: 'スペース', ZH: '间距' },
+  'batchim-swap': { KO: '받침 오타', EN: 'Batchim typo', JA: '終声誤字', ZH: '韵尾错误' },
 };
 
 const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => {

@@ -48,49 +48,49 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'rewrite',
     icon: <PenLine className="w-3 h-3" />,
-    label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' },
+    label: { KO: '다시 쓰기', EN: 'Rewrite', JA: 'リライト', ZH: '重写' },
     promptKo: '아래 선택된 텍스트를 같은 의미이지만 더 나은 문장으로 다시 써줘. 앞뒤 문맥에 자연스럽게 이어져야 함. 순수 소설 텍스트만 출력, 설명 없이.',
     promptEn: 'Rewrite the selected text with better prose while keeping the same meaning. Must flow naturally with surrounding context. Output only the rewritten text, no explanation.',
   },
   {
     id: 'expand',
     icon: <Expand className="w-3 h-3" />,
-    label: { KO: '살 붙이기', EN: 'Expand', JP: '拡張', CN: '扩展' },
+    label: { KO: '살 붙이기', EN: 'Expand', JA: '拡張', ZH: '扩展' },
     promptKo: '아래 선택된 텍스트에 감각 묘사, 내면 독백, 환경 묘사를 추가해서 2~3배로 늘려줘. 원래 사건과 대사는 유지. 순수 소설 텍스트만 출력.',
     promptEn: 'Expand the selected text 2-3x by adding sensory details, inner monologue, and environmental description. Keep original events/dialogue. Output only the expanded text.',
   },
   {
     id: 'compress',
     icon: <Scissors className="w-3 h-3" />,
-    label: { KO: '압축', EN: 'Compress', JP: '圧縮', CN: '压缩' },
+    label: { KO: '압축', EN: 'Compress', JA: '圧縮', ZH: '压缩' },
     promptKo: '아래 선택된 텍스트를 핵심만 남기고 절반 이하로 압축해줘. 불필요한 수식어, 반복, 과잉 묘사 제거. 순수 소설 텍스트만 출력.',
     promptEn: 'Compress the selected text to half or less. Remove unnecessary modifiers, repetition, and excessive description. Output only the compressed text.',
   },
   {
     id: 'tension',
     icon: <Thermometer className="w-3 h-3" />,
-    label: { KO: '긴장감 올리기', EN: 'Add tension', JP: '緊張感アップ', CN: '增加紧张感' },
+    label: { KO: '긴장감 올리기', EN: 'Add tension', JA: '緊張感アップ', ZH: '增加紧张感' },
     promptKo: '아래 선택된 텍스트의 긴장감을 높여줘. 짧은 문장, 급박한 호흡, 위기감 있는 묘사로. 원래 사건은 유지. 순수 소설 텍스트만 출력.',
     promptEn: 'Increase tension in the selected text. Use shorter sentences, urgent pacing, and crisis atmosphere. Keep original events. Output only the rewritten text.',
   },
   {
     id: 'action',
     icon: <Sword className="w-3 h-3" />,
-    label: { KO: '액션 강화', EN: 'More action', JP: 'アクション強化', CN: '增强动作' },
+    label: { KO: '액션 강화', EN: 'More action', JA: 'アクション強化', ZH: '增强动作' },
     promptKo: '아래 선택된 텍스트의 액션/전투 묘사를 강화해줘. 동적인 동사, 타격감, 속도감 추가. 순수 소설 텍스트만 출력.',
     promptEn: 'Enhance action/combat in the selected text. Add dynamic verbs, impact, and speed. Output only the rewritten text.',
   },
   {
     id: 'dialogue',
     icon: <MessageCircle className="w-3 h-3" />,
-    label: { KO: '대사 다듬기', EN: 'Polish dialogue', JP: 'セリフ磨き', CN: '润色台词' },
+    label: { KO: '대사 다듬기', EN: 'Polish dialogue', JA: 'セリフ磨き', ZH: '润色台词' },
     promptKo: '아래 선택된 텍스트의 대사를 캐릭터 성격에 맞게 더 자연스럽고 개성있게 다듬어줘. 지문도 자연스럽게. 순수 소설 텍스트만 출력.',
     promptEn: 'Polish the dialogue in the selected text to be more natural and characteristic. Improve dialogue tags too. Output only the rewritten text.',
   },
   {
     id: 'insert_after',
     icon: <ArrowDownToLine className="w-3 h-3" />,
-    label: { KO: '뒤에 삽입', EN: 'Insert after', JP: '後に挿入', CN: '在后面插入' },
+    label: { KO: '뒤에 삽입', EN: 'Insert after', JA: '後に挿入', ZH: '在后面插入' },
     promptKo: '아래 선택된 텍스트 바로 뒤에 이어지는 전환 장면이나 묘사를 새로 써줘. 약 200~400자. 앞 내용에서 자연스럽게 이어져야 함. 순수 소설 텍스트만 출력.',
     promptEn: 'Write a new transition scene or description to follow the selected text. About 200-400 chars. Must flow naturally. Output only the new text.',
   },
@@ -148,13 +148,13 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
     const before = editableContent.slice(Math.max(0, selection.start - 300), selection.start);
     const after = editableContent.slice(selection.end, selection.end + 300);
-    const prompt = (language === 'KO' || language === 'JP') ? action.promptKo : action.promptEn;
+    const prompt = (language === 'KO' || language === 'JA') ? action.promptKo : action.promptEn;
 
     const systemPrompts: Record<string, string> = {
       KO: '당신은 소설 텍스트 리라이터입니다. 지시에 따라 선택된 부분만 수정하세요. 설명, 코멘트, 따옴표 없이 순수 소설 텍스트만 출력하세요.',
       EN: 'You are a fiction text rewriter. Modify only the selected part as instructed. Output pure fiction text only, no explanations or quotes.',
-      JP: 'あなたは小説テキストのリライターです。指示に従い選択部分のみ修正してください。説明やコメントなしに純粋な小説テキストのみ出力してください。',
-      CN: '你是小说文本改写器。按指示仅修改选定部分。只输出纯小说文本，不要解释或引号。',
+      JA: 'あなたは小説テキストのリライターです。指示に従い選択部分のみ修正してください。説明やコメントなしに純粋な小説テキストのみ出力してください。',
+      ZH: '你是小说文本改写器。按指示仅修改选定部分。只输出纯小说文本，不要解释或引号。',
     };
     const systemPrompt = systemPrompts[language] ?? systemPrompts.KO;
 
@@ -197,7 +197,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     executeAction({
       id: 'custom',
       icon: <Sparkles className="w-3 h-3" />,
-      label: { KO: '커스텀', EN: 'Custom', JP: 'カスタム', CN: '自定义' },
+      label: { KO: '커스텀', EN: 'Custom', JA: 'カスタム', ZH: '自定义' },
       promptKo: customPrompt,
       promptEn: customPrompt,
     });

@@ -99,14 +99,14 @@ export function StatusBar({
         <button
           onClick={onSwitchProvider}
           className={`flex items-center gap-1 ${CLICKABLE}`}
-          title={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", jp: "AIモデルを変更", cn: "更改 AI 模型" })}
-          aria-label={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", jp: "AIモデルを変更", cn: "更改 AI 模型" })}
+          title={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", ja: "AIモデルを変更", zh: "更改 AI 模型" })}
+          aria-label={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", ja: "AIモデルを変更", zh: "更改 AI 模型" })}
         >
           <Cpu size={10} />
           <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />
           <span className="truncate max-w-[120px]">
             <Sparkles size={9} className="inline mr-0.5" />
-            {L4(lang || "ko", { ko: "AI 제공자", en: "AI Provider", jp: "AIプロバイダー", cn: "AI 提供方" })}
+            {L4(lang || "ko", { ko: "AI 제공자", en: "AI Provider", ja: "AIプロバイダー", zh: "AI 提供方" })}
           </span>
         </button>
 
@@ -129,8 +129,8 @@ export function StatusBar({
           <span className={`w-1.5 h-1.5 rounded-full ${isDirty ? 'bg-amber-400 animate-pulse' : 'bg-green-400'}`} />
           <span className="text-[10px]">
             {isDirty
-              ? L4(lang || "ko", { ko: "미저장", en: "Unsaved", jp: "未保存", cn: "未保存" })
-              : L4(lang || "ko", { ko: "저장됨", en: "Saved", jp: "保存済み", cn: "已保存" })}
+              ? L4(lang || "ko", { ko: "미저장", en: "Unsaved", ja: "未保存", zh: "未保存" })
+              : L4(lang || "ko", { ko: "저장됨", en: "Saved", ja: "保存済み", zh: "已保存" })}
           </span>
         </div>
 
@@ -173,15 +173,15 @@ export function StatusBar({
                 title={L4(lang || "ko", {
                   ko: `줄 ${cursorLine}, 열 ${cursorColumn}`,
                   en: `Ln ${cursorLine}, Col ${cursorColumn}`,
-                  jp: `${cursorLine}行 ${cursorColumn}列`,
-                  cn: `第 ${cursorLine} 行，第 ${cursorColumn} 列`,
+                  ja: `${cursorLine}行 ${cursorColumn}列`,
+                  zh: `第 ${cursorLine} 行，第 ${cursorColumn} 列`,
                 })}
               >
                 {L4(lang || "ko", {
                   ko: `줄 ${cursorLine}, 열 ${cursorColumn}`,
                   en: `Ln ${cursorLine}, Col ${cursorColumn}`,
-                  jp: `${cursorLine}行 ${cursorColumn}列`,
-                  cn: `第 ${cursorLine} 行，第 ${cursorColumn} 列`,
+                  ja: `${cursorLine}行 ${cursorColumn}列`,
+                  zh: `第 ${cursorLine} 行，第 ${cursorColumn} 列`,
                 })}
               </span>
             )}
@@ -193,21 +193,21 @@ export function StatusBar({
               title={L4(lang || "ko", {
                 ko: `언어: ${activeFile.language}`,
                 en: `Language: ${activeFile.language}`,
-                jp: `言語: ${activeFile.language}`,
-                cn: `语言: ${activeFile.language}`,
+                ja: `言語: ${activeFile.language}`,
+                zh: `语言: ${activeFile.language}`,
               })}
             >
               {activeFile.language}
             </span>
 
             {/* Line count */}
-            <span className="hidden md:inline" title={L4(lang || "ko", { ko: "총 줄 수", en: "Total Lines", jp: "総行数", cn: "总行数" })}>
+            <span className="hidden md:inline" title={L4(lang || "ko", { ko: "총 줄 수", en: "Total Lines", ja: "総行数", zh: "总行数" })}>
               {activeFile.content.split("\n").length}{" "}
-              {L4(lang || "ko", { ko: "줄", en: "lines", jp: "行", cn: "行" })}
+              {L4(lang || "ko", { ko: "줄", en: "lines", ja: "行", zh: "行" })}
             </span>
 
             {/* File size */}
-            <span className="hidden md:inline" title={L4(lang || "ko", { ko: "파일 크기", en: "File Size", jp: "ファイルサイズ", cn: "文件大小" })}>
+            <span className="hidden md:inline" title={L4(lang || "ko", { ko: "파일 크기", en: "File Size", ja: "ファイルサイズ", zh: "文件大小" })}>
               {computeFileSize(activeFile.content)}
             </span>
           </>

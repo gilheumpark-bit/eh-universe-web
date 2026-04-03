@@ -466,7 +466,7 @@ const STORAGE_PREFIX = 'noa_tab_chat_';
 
 const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, hostedProviders = {} }) => {
   const ctx = TAB_CONTEXT[tab];
-  const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
+  const lk: 'ko' | 'en' = (language === 'KO' || language === 'JA') ? 'ko' : 'en';
   const tl = createT(language);
   const backendLabel = useStudioBackendLabel(language, hostedProviders);
 

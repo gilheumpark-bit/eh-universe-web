@@ -49,12 +49,12 @@ export default function StudioShell() {
   const studioRouter = useRouter();
   const pathname = usePathname();
   const [language, setLanguage] = useState<AppLanguage>(() => {
-    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', ja: 'JA', zh: 'ZH' };
     return map[lang] || 'KO';
   });
 
   useEffect(() => {
-    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', jp: 'JP', cn: 'CN' };
+    const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', ja: 'JA', zh: 'ZH' };
     setLanguage(map[lang] || 'KO');
   }, [lang]);
 

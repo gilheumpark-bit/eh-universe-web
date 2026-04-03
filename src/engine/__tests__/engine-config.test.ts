@@ -15,13 +15,13 @@ describe('engine-config', () => {
 
   test('GENRE_LABELS covers all four languages', () => {
     expect(Object.keys(GENRE_LABELS)).toEqual(
-      expect.arrayContaining(['KO', 'EN', 'JP', 'CN']),
+      expect.arrayContaining(['KO', 'EN', 'JA', 'ZH']),
     );
   });
 
   test('each language has labels for all Genre enum values', () => {
     const allGenres = Object.values(Genre);
-    for (const lang of ['KO', 'EN', 'JP', 'CN'] as const) {
+    for (const lang of ['KO', 'EN', 'JA', 'ZH'] as const) {
       for (const g of allGenres) {
         expect(GENRE_LABELS[lang][g]).toBeDefined();
         expect(typeof GENRE_LABELS[lang][g]).toBe('string');

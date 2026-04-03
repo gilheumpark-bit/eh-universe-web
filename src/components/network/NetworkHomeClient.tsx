@@ -119,7 +119,7 @@ function relativeTime(isoDate: string, lang: Lang): string {
   if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago` });
   const days = Math.floor(hours / 24);
   if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago` });
-  return new Date(isoDate).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }));
+  return new Date(isoDate).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }));
 }
 
 export function NetworkHomeClient() {

@@ -30,7 +30,7 @@ interface Props {
 export function APIKeySlotManager({ onClose }: Props) {
   const { slots, addSlot, updateSlot, removeSlot, toggleSlot, enabledSlots } = useUnifiedSettings();
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -98,10 +98,10 @@ export function APIKeySlotManager({ onClose }: Props) {
             </div>
             <div>
               <h2 className="text-sm font-bold text-text-primary">
-                {T({ ko: "API 키 관리", en: "API Key Management", jp: "APIキー管理", cn: "API密钥管理" })}
+                {T({ ko: "API 키 관리", en: "API Key Management", ja: "APIキー管理", zh: "API密钥管理" })}
               </h2>
               <p className="text-[11px] text-text-tertiary">
-                {T({ ko: "모든 스튜디오에서 공유됩니다", en: "Shared across all studios", jp: "全スタジオで共有されます", cn: "所有工作室共享" })}
+                {T({ ko: "모든 스튜디오에서 공유됩니다", en: "Shared across all studios", ja: "全スタジオで共有されます", zh: "所有工作室共享" })}
               </p>
             </div>
           </div>
@@ -112,7 +112,7 @@ export function APIKeySlotManager({ onClose }: Props) {
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
           {slots.length === 0 && !showForm && (
             <div className="text-center py-10 text-text-tertiary text-sm">
-              {T({ ko: "등록된 API 키가 없습니다", en: "No API keys registered", jp: "登録されたAPIキーがありません", cn: "没有注册的API密钥" })}
+              {T({ ko: "등록된 API 키가 없습니다", en: "No API keys registered", ja: "登録されたAPIキーがありません", zh: "没有注册的API密钥" })}
             </div>
           )}
 
@@ -140,13 +140,13 @@ export function APIKeySlotManager({ onClose }: Props) {
           {showForm && (
             <div className="border border-accent-amber/20 rounded-xl p-4 bg-bg-secondary/30 space-y-3 mt-2">
               <div className="text-sm font-semibold text-accent-amber">
-                {editingId ? T({ ko: "키 편집", en: "Edit key", jp: "キー編集", cn: "编辑密钥" }) : T({ ko: "키 추가", en: "Add key", jp: "キー追加", cn: "添加密钥" })}
+                {editingId ? T({ ko: "키 편집", en: "Edit key", ja: "キー編集", zh: "编辑密钥" }) : T({ ko: "키 추가", en: "Add key", ja: "キー追加", zh: "添加密钥" })}
               </div>
 
               {/* Provider */}
               <div>
                 <label className="text-[11px] text-text-tertiary mb-1.5 block">
-                  {T({ ko: "프로바이더", en: "Provider", jp: "プロバイダー", cn: "提供商" })}
+                  {T({ ko: "프로바이더", en: "Provider", ja: "プロバイダー", zh: "提供商" })}
                 </label>
                 <div className="grid grid-cols-3 gap-1.5">
                   {PROVIDERS.map((p) => (
@@ -180,7 +180,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                     className="px-2 py-0.5 text-[10px] rounded-lg border border-border/50 hover:bg-bg-tertiary disabled:opacity-30 flex items-center gap-1 text-text-secondary"
                   >
                     {testing ? <Loader2 size={12} className="animate-spin" /> : testResult === true ? <Check size={12} className="text-accent-green" /> : testResult === false ? <X size={12} className="text-accent-red" /> : null}
-                    {T({ ko: "테스트", en: "Test", jp: "テスト", cn: "测试" })}
+                    {T({ ko: "테스트", en: "Test", ja: "テスト", zh: "测试" })}
                   </button>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               {/* Model */}
               <div>
                 <label className="text-[11px] text-text-tertiary mb-1.5 block">
-                  {T({ ko: "모델", en: "Model", jp: "モデル", cn: "模型" })}
+                  {T({ ko: "모델", en: "Model", ja: "モデル", zh: "模型" })}
                 </label>
                 <select
                   value={formModel || provider.models[0]}
@@ -204,7 +204,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               {/* Label */}
               <div>
                 <label className="text-[11px] text-text-tertiary mb-1.5 block">
-                  {T({ ko: "라벨 (선택)", en: "Label (optional)", jp: "ラベル（任意）", cn: "标签（可选）" })}
+                  {T({ ko: "라벨 (선택)", en: "Label (optional)", ja: "ラベル（任意）", zh: "标签（可选）" })}
                 </label>
                 <input
                   type="text"
@@ -222,10 +222,10 @@ export function APIKeySlotManager({ onClose }: Props) {
                   disabled={!formKey.trim()}
                   className="flex-1 py-2 bg-accent-amber text-white text-sm rounded-xl font-semibold hover:opacity-90 disabled:opacity-30 transition-opacity"
                 >
-                  {editingId ? T({ ko: "저장", en: "Save", jp: "保存", cn: "保存" }) : T({ ko: "추가", en: "Add", jp: "追加", cn: "添加" })}
+                  {editingId ? T({ ko: "저장", en: "Save", ja: "保存", zh: "保存" }) : T({ ko: "추가", en: "Add", ja: "追加", zh: "添加" })}
                 </button>
                 <button onClick={resetForm} className="px-4 py-2 bg-bg-secondary/50 text-text-secondary text-sm rounded-xl hover:bg-bg-tertiary transition-colors">
-                  {T({ ko: "취소", en: "Cancel", jp: "キャンセル", cn: "取消" })}
+                  {T({ ko: "취소", en: "Cancel", ja: "キャンセル", zh: "取消" })}
                 </button>
               </div>
             </div>
@@ -235,7 +235,7 @@ export function APIKeySlotManager({ onClose }: Props) {
         {/* Footer */}
         <div className="border-t border-border px-5 py-3 flex items-center justify-between">
           <div className="text-[11px] text-text-tertiary">
-            {T({ ko: `등록: ${slots.length}개 | 활성: ${enabledSlots.length}개`, en: `Registered: ${slots.length} | Active: ${enabledSlots.length}`, jp: `登録: ${slots.length}個 | 有効: ${enabledSlots.length}個`, cn: `注册: ${slots.length}个 | 活跃: ${enabledSlots.length}个` })}
+            {T({ ko: `등록: ${slots.length}개 | 활성: ${enabledSlots.length}개`, en: `Registered: ${slots.length} | Active: ${enabledSlots.length}`, ja: `登録: ${slots.length}個 | 有効: ${enabledSlots.length}個`, zh: `注册: ${slots.length}个 | 活跃: ${enabledSlots.length}个` })}
           </div>
           {!showForm && (
             <button
@@ -243,7 +243,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-xl bg-accent-amber/15 text-accent-amber hover:bg-accent-amber/25 transition-colors"
             >
               <Plus size={14} />
-              {T({ ko: "키 추가", en: "Add key", jp: "キー追加", cn: "添加密钥" })}
+              {T({ ko: "키 추가", en: "Add key", ja: "キー追加", zh: "添加密钥" })}
             </button>
           )}
         </div>

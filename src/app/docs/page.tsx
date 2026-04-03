@@ -297,7 +297,7 @@ const sectionMap = { ko: sectionsKo, en: sectionsEn };
 
 export default function DocsPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const secs = L2A(sectionMap, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
@@ -326,9 +326,9 @@ export default function DocsPage() {
             <aside className="lg:w-56 shrink-0">
               <div className="premium-panel-soft motion-rise rounded-xl p-4 lg:sticky lg:top-24">
                 <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
-                  {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
+                  {T({ ko: "목차", en: "Contents", ja: "目次", zh: "目录" })}
                 </h2>
-                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
+                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", ja: "目次", zh: "目录" })}>
                   {secs.map((s) => (
                     <a
                       key={s.id}

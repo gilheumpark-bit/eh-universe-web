@@ -322,7 +322,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
           {/* Target Language (reuse) */}
           <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5 w-fit">
-            {(["EN", "JP", "CN"] as const).map((l) => (
+            {(["EN", "JA", "ZH"] as const).map((l) => (
               <button key={l} onClick={() => setTargetLang(l)} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-all ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
                 {l}
               </button>
@@ -538,11 +538,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             {isKO ? "대상 국가 (Target)" : "Target Language"}
           </label>
           <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5">
-            {(["EN", "JP", "CN"] as TranslationTarget[]).map((l) => (
+            {(["EN", "JA", "ZH"] as TranslationTarget[]).map((l) => (
               <button
                 key={l}
                 onClick={() => setTargetLang(l)}
-                title={l === 'JP' ? '나로우/라노벨 최적화 알고리즘 탑재' : l === 'CN' ? '선협/웹소설 전용 호칭 처리 포함' : '영미권 픽션 표준 번역'}
+                title={l === 'JA' ? '나로우/라노벨 최적화 알고리즘 탑재' : l === 'ZH' ? '선협/웹소설 전용 호칭 처리 포함' : '영미권 픽션 표준 번역'}
                 className={`flex-1 rounded-lg px-3 py-2 font-mono text-[12px] font-bold tracking-wider transition-all duration-200 ${
                   targetLang === l
                     ? "bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3),0_0_10px_rgba(184,149,92,0.1)]"

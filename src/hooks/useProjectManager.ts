@@ -29,11 +29,11 @@ export const INITIAL_CONFIG: StoryConfig = {
 };
 
 const PROJECT_NAMES: Record<AppLanguage, string> = {
-  KO: '새 작품', EN: 'New Project', JP: '新しい作品', CN: '新作品',
+  KO: '새 작품', EN: 'New Project', JA: '新しい作品', ZH: '新作品',
 };
 
 const SESSION_TITLES: Record<AppLanguage, string> = {
-  KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说",
+  KO: "새로운 소설", EN: "New Story", JA: "新しい小説", ZH: "新小说",
 };
 
 // ============================================================

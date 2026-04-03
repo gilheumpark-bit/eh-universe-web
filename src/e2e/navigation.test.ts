@@ -28,7 +28,7 @@ describe('E2E: Navigation', () => {
     const langParam = (route: string, lang: string) => `${route}?lang=${lang}`;
     expect(langParam('/studio', 'ko')).toBe('/studio?lang=ko');
     expect(langParam('/studio', 'en')).toBe('/studio?lang=en');
-    expect(langParam('/studio', 'jp')).toBe('/studio?lang=jp');
-    expect(langParam('/studio', 'cn')).toBe('/studio?lang=cn');
+    expect(langParam('/studio', 'ja')).toBe('/studio?lang=ja');
+    expect(langParam('/studio', 'zh')).toBe('/studio?lang=zh');
   });
 });

@@ -10,7 +10,7 @@ import { ArchiveReportsTabs } from "@/app/reports/ReportsClient";
 
 const categories = [
   {
-    id: "core", icon: "📁", label: "CORE", sublabel: { ko: "핵심", en: "Core", jp: "核心", cn: "核心" },
+    id: "core", icon: "📁", label: "CORE", sublabel: { ko: "핵심", en: "Core", ja: "核心", zh: "核心" },
     articles: [
       { slug: "eh-definition", title: { ko: "EH 정의", en: "EH Definition" }, level: "PUBLIC" },
       { slug: "non-intervention", title: { ko: "비개입 원칙", en: "Non-Intervention Principle" }, level: "RESTRICTED" },
@@ -29,7 +29,7 @@ const categories = [
     ],
   },
   {
-    id: "timeline", icon: "📁", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline", jp: "年表", cn: "年表" },
+    id: "timeline", icon: "📁", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline", ja: "年表", zh: "年表" },
     articles: [
       { slug: "era-origin", title: { ko: "기원기 (1945~2025)", en: "Origin Era (1945~2025)" }, level: "PUBLIC" },
       { slug: "era-war", title: { ko: "전쟁기 (2025~2092)", en: "War Era (2025~2092)" }, level: "RESTRICTED" },
@@ -41,7 +41,7 @@ const categories = [
     ],
   },
   {
-    id: "factions", icon: "📁", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions", jp: "勢力", cn: "势力" },
+    id: "factions", icon: "📁", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions", ja: "勢力", zh: "势力" },
     articles: [
       { slug: "council", title: { ko: "협의회", en: "The Council" }, level: "PUBLIC" },
       { slug: "neka-empire", title: { ko: "네카 제국", en: "Neka Empire" }, level: "RESTRICTED" },
@@ -58,7 +58,7 @@ const categories = [
     ],
   },
   {
-    id: "technology", icon: "📁", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech", jp: "技術", cn: "技术" },
+    id: "technology", icon: "📁", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech", ja: "技術", zh: "技术" },
     articles: [
       { slug: "hctg-gate", title: { ko: "HCTG / Gate 체계", en: "HCTG / Gate System" }, level: "RESTRICTED" },
       { slug: "eh-chamber", title: { ko: "EH 챔버", en: "EH Chamber" }, level: "RESTRICTED" },
@@ -82,7 +82,7 @@ const categories = [
     ],
   },
   {
-    id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography", jp: "地理", cn: "地理" },
+    id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography", ja: "地理", zh: "地理" },
     articles: [
       { slug: "galaxy-zones", title: { ko: "은하 구역 분류", en: "Galactic Zone Classification" }, level: "PUBLIC" },
       { slug: "galaxy-profiles", title: { ko: "양쪽 은하 프로필", en: "Galaxy Profiles — Human vs Neka" }, level: "RESTRICTED" },
@@ -98,7 +98,7 @@ const categories = [
     ],
   },
   {
-    id: "military", icon: "📁", label: "MILITARY", sublabel: { ko: "군사", en: "Military", jp: "軍事", cn: "军事" },
+    id: "military", icon: "📁", label: "MILITARY", sublabel: { ko: "군사", en: "Military", ja: "軍事", zh: "军事" },
     articles: [
       { slug: "ship-classes", title: { ko: "함급 체계", en: "Ship Class System" }, level: "RESTRICTED" },
       { slug: "visual-vessel-classification", title: { ko: "함선 분류 도해", en: "Vessel Classification Visual" }, level: "CLASSIFIED" },
@@ -112,7 +112,7 @@ const categories = [
     ],
   },
   {
-    id: "classified", icon: "📁", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified", jp: "機密", cn: "机密" },
+    id: "classified", icon: "📁", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified", ja: "機密", zh: "机密" },
     articles: [
       { slug: "bia-manual", title: { ko: "비밀조사국 매뉴얼", en: "Bureau of Investigation Manual" }, level: "CLASSIFIED" },
       { slug: "pilot-daily", title: { ko: "탑승자 일상", en: "Pilot's Daily Life" }, level: "RESTRICTED" },
@@ -130,7 +130,7 @@ const categories = [
     ],
   },
   {
-    id: "reports", icon: "📁", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports", jp: "報告書", cn: "报告书" },
+    id: "reports", icon: "📁", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports", ja: "報告書", zh: "报告书" },
     articles: [
       { slug: "rpt-eschaton-incident", title: { ko: "Eschaton 함선침몰 사건보고서", en: "Eschaton Incident Report" }, level: "CLASSIFIED" },
       { slug: "rpt-noa10005-interrogation", title: { ko: "NOA #10005 심문 기록", en: "NOA #10005 Interrogation Log" }, level: "CLASSIFIED" },
@@ -173,7 +173,7 @@ export default function ArchiveClient() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const { lang } = useLang();
-  const t = createT(lang === "ko" ? "KO" : lang === "jp" ? "JP" : lang === "cn" ? "CN" : "EN");
+  const t = createT(lang === "ko" ? "KO" : lang === "ja" ? "JA" : lang === "zh" ? "ZH" : "EN");
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";
@@ -229,7 +229,7 @@ export default function ArchiveClient() {
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder={L4(lang, { ko: "🔍 문서 검색...", en: "🔍 Search...", jp: "🔍 文書検索...", cn: "🔍 搜索文档..." })}
+            placeholder={L4(lang, { ko: "🔍 문서 검색...", en: "🔍 Search...", ja: "🔍 文書検索...", zh: "🔍 搜索文档..." })}
             className="w-full mb-3 px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-mono"
           />
           <nav className="space-y-1" role="navigation" aria-label="Archive categories">
@@ -289,7 +289,7 @@ export default function ArchiveClient() {
                 {searchResults ? (
                   <>
                     <p className="text-[10px] text-text-tertiary font-mono uppercase mb-2">
-                      🔍 {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", jp: "件の結果", cn: "条结果" })} — &quot;{searchQuery}&quot;
+                      🔍 {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", ja: "件の結果", zh: "条结果" })} — &quot;{searchQuery}&quot;
                     </p>
                     {searchResults.map((article) => (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
@@ -302,7 +302,7 @@ export default function ArchiveClient() {
                       </Link>
                     ))}
                     {searchResults.length === 0 && (
-                      <p className="text-center text-text-tertiary text-sm py-8">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", jp: "検索結果がありません。", cn: "未找到搜索结果。" })}</p>
+                      <p className="text-center text-text-tertiary text-sm py-8">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", ja: "検索結果がありません。", zh: "未找到搜索结果。" })}</p>
                     )}
                   </>
                 ) : null}

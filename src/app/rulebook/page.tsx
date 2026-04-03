@@ -30,7 +30,7 @@ const sections = {
 
 export default function RulebookPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const secs = L2A(sections, lang);
   const [activeId, setActiveId] = useState(secs[0]?.id ?? "");
 
@@ -60,9 +60,9 @@ export default function RulebookPage() {
             <aside className="lg:w-56 shrink-0">
               <div className="premium-panel-soft rounded-xl p-4 lg:sticky lg:top-24">
                 <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
-                  {T({ ko: "목차", en: "Contents", jp: "目次", cn: "目录" })}
+                  {T({ ko: "목차", en: "Contents", ja: "目次", zh: "目录" })}
                 </h2>
-                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", jp: "目次", cn: "目录" })}>
+                <nav className="space-y-1" role="navigation" aria-label={T({ ko: "목차", en: "Table of contents", ja: "目次", zh: "目录" })}>
                   {secs.map((s) => (
                     <a key={s.id} href={`#${s.id}`} aria-label={s.title} aria-current={activeId === s.id ? "location" : undefined} className={`block py-1.5 px-3 rounded text-xs transition-colors font-mono ${
                       activeId === s.id

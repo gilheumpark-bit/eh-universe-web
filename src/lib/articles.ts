@@ -1,8 +1,8 @@
 export type ArticleData = {
-  title: { ko: string; en: string; jp?: string; cn?: string };
+  title: { ko: string; en: string; ja?: string; zh?: string };
   level: string;
   category: string;
-  content: { ko: string; en: string; jp?: string; cn?: string };
+  content: { ko: string; en: string; ja?: string; zh?: string };
   image?: string;
   related?: string[];
 };
@@ -27,7 +27,7 @@ export const articles: Record<string, ArticleData> = {
   ...reportsData,
 };
 
-export function getArticleTitle(slug: string, lang: "ko" | "en" | "jp" | "cn"): string {
+export function getArticleTitle(slug: string, lang: "ko" | "en" | "ja" | "zh"): string {
   const article = articles[slug];
   if (!article) return slug;
   return article.title[lang] || article.title.en || article.title.ko;

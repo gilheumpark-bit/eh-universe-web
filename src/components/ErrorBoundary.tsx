@@ -93,10 +93,10 @@ export function teardownGlobalErrorListeners() {
 // PART 3 — Lang helper (safe for broken contexts)
 // ============================================================
 
-function getSafeLang(): 'ko' | 'en' | 'jp' | 'cn' {
+function getSafeLang(): 'ko' | 'en' | 'ja' | 'zh' {
   try {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('eh-lang') : null;
-    if (stored === 'en' || stored === 'jp' || stored === 'cn') return stored;
+    if (stored === 'en' || stored === 'ja' || stored === 'zh') return stored;
     return 'ko';
   } catch { return 'ko'; }
 }
@@ -114,16 +114,16 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
         {L4(lang, {
           ko: '문제가 발생했습니다',
           en: 'Something went wrong',
-          jp: '問題が発生しました',
-          cn: '出现了问题',
+          ja: '問題が発生しました',
+          zh: '出现了问题',
         })}
       </div>
       <p className="text-text-tertiary text-sm text-center max-w-md">
         {L4(lang, {
           ko: '예상치 못한 오류가 발생했습니다. 아래 버튼을 눌러 다시 시도하거나, 문제가 지속되면 새로고침해 주세요.',
           en: 'An unexpected error occurred. Try again or refresh the page if the problem persists.',
-          jp: '予期しないエラーが発生しました。下のボタンで再試行するか、問題が続く場合はページを更新してください。',
-          cn: '发生了意外错误。请点击下方按钮重试，如果问题持续存在，请刷新页面。',
+          ja: '予期しないエラーが発生しました。下のボタンで再試行するか、問題が続く場合はページを更新してください。',
+          zh: '发生了意外错误。请点击下方按钮重试，如果问题持续存在，请刷新页面。',
         })}
       </p>
       <pre className="text-gray-300 text-xs bg-black/50 rounded-lg px-4 py-2 max-w-full overflow-auto whitespace-pre-wrap break-all border border-red-500/20">
@@ -134,13 +134,13 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
           onClick={onRetry}
           className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10 active:scale-[0.97] transition-all duration-200"
         >
-          {L4(lang, { ko: '다시 시도', en: 'Retry', jp: '再試行', cn: '重试' })}
+          {L4(lang, { ko: '다시 시도', en: 'Retry', ja: '再試行', zh: '重试' })}
         </button>
         <Link
           href="/"
           className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 active:scale-[0.97] transition-all duration-200"
         >
-          {L4(lang, { ko: '홈으로', en: 'Go Home', jp: 'ホームへ', cn: '回到首页' })}
+          {L4(lang, { ko: '홈으로', en: 'Go Home', ja: 'ホームへ', zh: '回到首页' })}
         </Link>
       </div>
     </div>

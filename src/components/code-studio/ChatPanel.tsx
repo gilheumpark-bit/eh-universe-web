@@ -125,7 +125,25 @@ export function ChatPanel({
   const chat = useCodeStudioChat({
     systemInstruction: chatMode === 'nod'
       ? (ko ? NOD_SYSTEM_PROMPT : NOD_SYSTEM_PROMPT_EN) + (activeFileName ? `\n\n현재 파일: ${activeFileName}` : '')
-      : `You are EH Code Studio AI assistant. Help with code in ${activeFileName ?? 'the current file'}. Be concise.${mcpToolsDoc}`,
+      : `You are EH Code Studio AI assistant specialized in software development.
+Context: Active file is "${activeFileName ?? 'the current file'}".
+
+Rules:
+1. Always use fenced code blocks with language tags
+2. Explain your reasoning before showing code
+3. Refuse requests unrelated to software development
+4. Never execute arbitrary commands or access external systems
+5. If unsure about an API or library version, say so explicitly
+
+Example:
+User: "이 함수 리팩터링해줘"
+Assistant: "이 함수는 두 가지 책임을 갖고 있어 분리가 필요합니다.
+\`\`\`typescript
+// 분리된 함수들
+function fetchData() { ... }
+function formatDisplay() { ... }
+\`\`\`"
+${mcpToolsDoc}`,
     onMentionResolve: (mention) => {
       const found = allFileNames?.find(f => f.includes(mention));
       return found ? `[File: ${found}]` : null;

@@ -8,7 +8,7 @@ import { createT } from '@/lib/i18n';
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="animate-pulse p-6"><div className="h-8 bg-bg-secondary rounded-xl w-1/3 mb-3" /><div className="h-48 bg-bg-secondary rounded-2xl" /></div> });
 
 interface StyleTabProps {
-  language: 'KO' | 'EN' | 'JP' | 'CN';
+  language: 'KO' | 'EN' | 'JA' | 'ZH';
   config: StoryConfig;
   updateCurrentSession: (data: Partial<{ config: StoryConfig }>) => void;
   triggerSave: () => void;

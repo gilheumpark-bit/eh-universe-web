@@ -288,7 +288,17 @@ Rules:
 - Output raw code only
 - Can be multi-line if appropriate
 - Match the existing code style (indentation, naming conventions)
-- If unsure, output nothing`;
+- If unsure, output nothing
+
+Negative examples (DO NOT output these):
+- Import statements when cursor is inside a function body
+- Duplicate of existing code above or below cursor
+- Comments explaining obvious code
+- Closing braces/brackets that already exist
+
+Example:
+Context: function calculateTotal(items: Item[]) {\\n  let total = 0;\\n  for (const item of items) {\\n    |
+Completion: total += item.price * item.quantity;\\n  }\\n  return total;\\n}`;
 
 /** Ghost Text 취소 */
 export function cancelGhostText(): void {

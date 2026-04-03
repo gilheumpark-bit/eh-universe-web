@@ -3,7 +3,7 @@ import { StudioErrorCode } from '../errors/error-codes';
 
 describe('getErrorMessage', () => {
   const ALL_CODES = Object.values(StudioErrorCode);
-  const LANGUAGES = ['KO', 'EN', 'JP', 'CN'] as const;
+  const LANGUAGES = ['KO', 'EN', 'JA', 'ZH'] as const;
 
   it('returns message for every code × language combination', () => {
     for (const code of ALL_CODES) {

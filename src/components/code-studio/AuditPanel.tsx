@@ -163,7 +163,7 @@ export function AuditPanel({ files, onRunAudit, auditResult, isRunning, progress
     return auditResult.areas.find(a => a.area === selectedArea) ?? null;
   }, [auditResult, selectedArea]);
 
-  const isKo = lang === 'ko' || lang === 'jp' || lang === 'cn';
+  const isKo = lang === 'ko' || lang === 'ja' || lang === 'zh';
 
   return (
     <div className="flex flex-col h-full bg-bg-primary text-text-primary">

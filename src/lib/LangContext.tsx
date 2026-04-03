@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 
-export type Lang = "ko" | "en" | "jp" | "cn";
+export type Lang = "ko" | "en" | "ja" | "zh";
 
-const LANG_CYCLE: Lang[] = ["ko", "en", "jp", "cn"];
+const LANG_CYCLE: Lang[] = ["ko", "en", "ja", "zh"];
 const VALID_LANGS = new Set<string>(LANG_CYCLE);
 
 interface LangContextType {
@@ -22,7 +22,7 @@ const LangContext = createContext<LangContextType>({
 // Stable pure function — defined at module level to avoid hoisting issues
 function applyLangToDOM(next: Lang): void {
   localStorage.setItem("eh-lang", next);
-  document.documentElement.lang = next === "jp" ? "ja" : next === "cn" ? "zh" : next;
+  document.documentElement.lang = next;
 }
 
 function detectLang(): Lang {
@@ -30,8 +30,8 @@ function detectLang(): Lang {
   if (saved && VALID_LANGS.has(saved)) return saved as Lang;
   const browserLang = (navigator.language || "").toLowerCase();
   if (browserLang.startsWith("en")) return "en";
-  if (browserLang.startsWith("ja")) return "jp";
-  if (browserLang.startsWith("zh")) return "cn";
+  if (browserLang.startsWith("ja")) return "ja";
+  if (browserLang.startsWith("zh")) return "zh";
   return "ko";
 }
 
@@ -49,7 +49,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   // Sync DOM lang attribute when lang changes
   useEffect(() => {
-    document.documentElement.lang = lang === "jp" ? "ja" : lang === "cn" ? "zh" : lang;
+    document.documentElement.lang = lang;
   }, [lang]);
 
   const toggleLang = useCallback(() => {
@@ -77,18 +77,18 @@ export function useLang() {
   return useContext(LangContext);
 }
 
-/** Safe lookup for i18n objects — jp/cn fall back to ko if missing, then en */
-export function L2(obj: { ko: string; en: string; jp?: string; cn?: string }, lang: Lang): string {
+/** Safe lookup for i18n objects — ja/zh fall back to ko if missing, then en */
+export function L2(obj: { ko: string; en: string; ja?: string; zh?: string }, lang: Lang): string {
   if (lang === "ko") return obj.ko;
-  if (lang === "jp") return obj.jp || obj.ko || obj.en;
-  if (lang === "cn") return obj.cn || obj.ko || obj.en;
+  if (lang === "ja") return obj.ja || obj.ko || obj.en;
+  if (lang === "zh") return obj.zh || obj.ko || obj.en;
   return obj.en;
 }
 
-/** Generic safe lookup for i18n objects with any value type — jp/cn fall back to ko then en */
-export function L2A<T>(obj: { ko: T; en: T; jp?: T; cn?: T }, lang: Lang): T {
+/** Generic safe lookup for i18n objects with any value type — ja/zh fall back to ko then en */
+export function L2A<T>(obj: { ko: T; en: T; ja?: T; zh?: T }, lang: Lang): T {
   if (lang === "ko") return obj.ko;
-  if (lang === "jp") return obj.jp || obj.ko || obj.en;
-  if (lang === "cn") return obj.cn || obj.ko || obj.en;
+  if (lang === "ja") return obj.ja || obj.ko || obj.en;
+  if (lang === "zh") return obj.zh || obj.ko || obj.en;
   return obj.en;
 }

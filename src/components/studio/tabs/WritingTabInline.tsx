@@ -100,7 +100,12 @@ export default function WritingTabInline(props: Props) {
 
   const {
     chatMessages, sendChat, chatLoading, abortChat, clearChat
-  } = useWritingChat();
+  } = useWritingChat({
+    genre: currentSession.config.genre,
+    synopsis: currentSession.config.synopsis,
+    characters: currentSession.config.characters?.map(c => c.name).join(', '),
+    currentChapter: currentSession.messages.slice(-2).map(m => m.content).join('\n').slice(0, 2000),
+  });
 
   const t = createT(language);
   const isKO = language === 'KO';

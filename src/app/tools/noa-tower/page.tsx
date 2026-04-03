@@ -16,26 +16,26 @@ import { ConditionBadge } from "@/components/tools/noa-tower/ConditionBadge";
 // PART 1 — UI Labels & i18n (4-Lang Policy)
 // ============================================================
 
-const T: Record<string, { ko: string; en: string; jp: string; cn: string }> = {
-  pageTitle: { ko: "NOA TOWER", en: "NOA TOWER", jp: "NOA TOWER", cn: "NOA TOWER" },
-  pageSubtitle: { ko: "텍스트 추리 게임", en: "Text Investigation Game", jp: "テキスト推理ゲーム", cn: "文本推理解谜" },
-  progress: { ko: "진행도", en: "Progress", jp: "進行도", cn: "进度" },
-  vectorAnalysis: { ko: "벡터 분석", en: "Vector Analysis", jp: "ベクトル分析", cn: "向量分析" },
-  floorSense: { ko: "층 감각", en: "Floor Sense", jp: "階層感覚", cn: "楼层感官" },
-  recordStatus: { ko: "기록 상태", en: "Record Status", jp: "記録状態", cn: "记录状态" },
-  objectives: { ko: "목표", en: "Objectives", jp: "目標", cn: "目标" },
-  clues: { ko: "단서", en: "Clues", jp: "手がかり", cn: "线索" },
-  fragments: { ko: "이론 조각", en: "Theory Fragments", jp: "理論の断片", cn: "理论碎片" },
-  placeholder: { ko: "당신의 추론을 입력하십시오...", en: "Enter your deduction...", jp: "推理を入力してください...", cn: "请输入您的推论..." },
-  submit: { ko: "기록 전송", en: "Submit", jp: "記録送信", cn: "传送记录" },
-  submitVerdict: { ko: "최종 기록 제출", en: "Submit Verdict", jp: "最終記録提出", cn: "提交最终记录" },
-  silence: { ko: "숨 고르기", en: "Silence", jp: "一息つく", cn: "深呼吸" },
-  probe: { ko: "구조 탐색", en: "Probe", jp: "構造捜색", cn: "结构探测" },
-  hardMode: { ko: "하드 모드", en: "Hard Mode", jp: "ハードモード", cn: "硬核模式" },
-  giveUp: { ko: "포기 선언", en: "Give Up", jp: "放棄宣言", cn: "宣告放弃" },
-  restart: { ko: "재시작", en: "Restart", jp: "再起動", cn: "重新开始" },
-  loading: { ko: "NOA 타워 초기화 중...", en: "NOA TOWER initializing...", jp: "NOAタワー初期化中...", cn: "NOA 塔正在初始化..." },
-  noClues: { ko: "아직 발견된 단서가 없습니다", en: "No clues discovered yet", jp: "まだ手がかりが見つかっていません", cn: "尚未发现线索" },
+const T: Record<string, { ko: string; en: string; ja: string; zh: string }> = {
+  pageTitle: { ko: "NOA TOWER", en: "NOA TOWER", ja: "NOA TOWER", zh: "NOA TOWER" },
+  pageSubtitle: { ko: "텍스트 추리 게임", en: "Text Investigation Game", ja: "テキスト推理ゲーム", zh: "文本推理解谜" },
+  progress: { ko: "진행도", en: "Progress", ja: "進行도", zh: "进度" },
+  vectorAnalysis: { ko: "벡터 분석", en: "Vector Analysis", ja: "ベクトル分析", zh: "向量分析" },
+  floorSense: { ko: "층 감각", en: "Floor Sense", ja: "階層感覚", zh: "楼层感官" },
+  recordStatus: { ko: "기록 상태", en: "Record Status", ja: "記録状態", zh: "记录状态" },
+  objectives: { ko: "목표", en: "Objectives", ja: "目標", zh: "目标" },
+  clues: { ko: "단서", en: "Clues", ja: "手がかり", zh: "线索" },
+  fragments: { ko: "이론 조각", en: "Theory Fragments", ja: "理論の断片", zh: "理论碎片" },
+  placeholder: { ko: "당신의 추론을 입력하십시오...", en: "Enter your deduction...", ja: "推理を入力してください...", zh: "请输入您的推论..." },
+  submit: { ko: "기록 전송", en: "Submit", ja: "記録送信", zh: "传送记录" },
+  submitVerdict: { ko: "최종 기록 제출", en: "Submit Verdict", ja: "最終記録提出", zh: "提交最终记录" },
+  silence: { ko: "숨 고르기", en: "Silence", ja: "一息つく", zh: "深呼吸" },
+  probe: { ko: "구조 탐색", en: "Probe", ja: "構造捜색", zh: "结构探测" },
+  hardMode: { ko: "하드 모드", en: "Hard Mode", ja: "ハードモード", zh: "硬核模式" },
+  giveUp: { ko: "포기 선언", en: "Give Up", ja: "放棄宣言", zh: "宣告放弃" },
+  restart: { ko: "재시작", en: "Restart", ja: "再起動", zh: "重新开始" },
+  loading: { ko: "NOA 타워 초기화 중...", en: "NOA TOWER initializing...", ja: "NOAタワー初期化中...", zh: "NOA 塔正在初始化..." },
+  noClues: { ko: "아직 발견된 단서가 없습니다", en: "No clues discovered yet", ja: "まだ手がかりが見つかっていません", zh: "尚未发现线索" },
 };
 
 function t(key: string, lang: Lang): string {

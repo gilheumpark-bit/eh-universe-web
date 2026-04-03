@@ -17,8 +17,8 @@ export default function CodeStudioLoading() {
           {L4(lang, {
             ko: '코드 스튜디오 로딩 중...',
             en: 'LOADING CODE STUDIO...',
-            jp: 'コードスタジオを読み込み中...',
-            cn: '正在加载代码工作室...',
+            ja: 'コードスタジオを読み込み中...',
+            zh: '正在加载代码工作室...',
           })}
         </p>
       </div>

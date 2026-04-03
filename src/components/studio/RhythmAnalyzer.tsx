@@ -138,7 +138,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
-          {L4(language, { ko: '문장 리듬 분석', en: 'Sentence Rhythm', jp: '文章リズム分析', cn: '句子节奏分析' })}
+          {L4(language, { ko: '문장 리듬 분석', en: 'Sentence Rhythm', ja: '文章リズム分析', zh: '句子节奏分析' })}
         </h3>
         <span className="text-[9px] text-text-tertiary font-mono">
           {stats.totalSentences} {isKO ? '문장' : 'sentences'}
@@ -194,7 +194,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
       {/* 진단 */}
       <div className="bg-black/30 border border-border/50 rounded-lg p-3">
         <div className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider mb-1.5">
-          {L4(language, { ko: '리듬 진단', en: 'Rhythm Diagnosis', jp: 'リズム診断', cn: '节奏诊断' })}
+          {L4(language, { ko: '리듬 진단', en: 'Rhythm Diagnosis', ja: 'リズム診断', zh: '节奏诊断' })}
         </div>
         <div className="text-[10px] text-text-secondary leading-relaxed space-y-1">
           <div>

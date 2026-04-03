@@ -13,7 +13,7 @@ import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { APIKeySlotManager } from "./APIKeySlotManager";
 
-const LANG_LABELS: Record<Lang, string> = { ko: "한국어", en: "English", jp: "日本語", cn: "中文" };
+const LANG_LABELS: Record<Lang, string> = { ko: "한국어", en: "English", ja: "日本語", zh: "中文" };
 
 export default function UnifiedSettingsBar() {
   const { theme, toggleTheme, enabledSlots } = useUnifiedSettings();
@@ -28,7 +28,7 @@ export default function UnifiedSettingsBar() {
   }, []);
   const [showApiKeys, setShowApiKeys] = useState(false);
 
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
   return (
     <>
@@ -54,7 +54,7 @@ export default function UnifiedSettingsBar() {
             className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-accent-amber/40 hover:text-accent-amber transition-all"
           >
             <User className="w-3.5 h-3.5" />
-            {T({ ko: "로그인", en: "Sign in", jp: "ログイン", cn: "登录" })}
+            {T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" })}
           </button>
         )}
 

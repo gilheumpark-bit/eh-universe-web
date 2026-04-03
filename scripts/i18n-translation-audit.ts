@@ -4,8 +4,8 @@
  */
 import ko from '../src/lib/translations-ko';
 import en from '../src/lib/translations-en';
-import jp from '../src/lib/translations-jp';
-import cn from '../src/lib/translations-cn';
+import ja from '../src/lib/translations-ja';
+import zh from '../src/lib/translations-zh';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -34,8 +34,8 @@ function looksLikeEnglishLeak(localeVal: string, enVal: string): boolean {
 
 const K = flatten(ko);
 const E = flatten(en);
-const J = flatten(jp);
-const C = flatten(cn);
+const J = flatten(ja);
+const C = flatten(zh);
 const keys = new Set([...Object.keys(K), ...Object.keys(E), ...Object.keys(J), ...Object.keys(C)]);
 
 const koLeak: string[] = [];

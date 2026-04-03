@@ -389,7 +389,7 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
 ];
 
 export default function SceneSheet({ lang: langProp, language: languageProp, synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
-  const lang: Lang = langProp ?? ((languageProp === 'KO' || languageProp === 'JP') ? 'ko' : 'en');
+  const lang: Lang = langProp ?? ((languageProp === 'KO' || languageProp === 'JA') ? 'ko' : 'en');
   const tl = createT(languageProp ?? (lang === 'ko' ? 'KO' : 'EN'));
   const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);

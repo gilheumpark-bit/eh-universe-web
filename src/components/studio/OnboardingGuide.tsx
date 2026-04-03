@@ -62,7 +62,7 @@ const LABELS: Record<AppLanguage, {
     byok: "API key required",
     skip: "Skip",
   },
-  JP: {
+  JA: {
     eyebrow: "NOA STUDIO",
     title: "どのように始めますか？",
     subtitle: "世界観設計から執筆まで、お好みの方法で始めましょう。",
@@ -75,7 +75,7 @@ const LABELS: Record<AppLanguage, {
     byok: "APIキーが必要",
     skip: "スキップ",
   },
-  CN: {
+  ZH: {
     eyebrow: "NOA STUDIO",
     title: "您想如何开始？",
     subtitle: "从世界观设计到写作，选择您的方式。",
@@ -106,7 +106,7 @@ export default function OnboardingGuide({
   onDemo,
   showQuickStartLock,
 }: OnboardingGuideProps) {
-  const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JP" ? "JP" : lang === "CN" ? "CN" : "EN") as AppLanguage;
+  const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JA" ? "JA" : lang === "ZH" ? "ZH" : "EN") as AppLanguage;
   const L = LABELS[language];
   const [visible, setVisible] = useState(false);
   const [showDemoList, setShowDemoList] = useState(false);

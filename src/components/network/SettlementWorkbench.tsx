@@ -287,7 +287,7 @@ export function SettlementWorkbench() {
                     <SettlementBadge status={settlement.verdict} lang={lang} />
                   </div>
                   <div className="mt-2 text-xs text-text-tertiary">
-                    {new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", jp: "ja-JP", cn: "zh-CN" }))}
+                    {new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}
                   </div>
                 </div>
               ))}

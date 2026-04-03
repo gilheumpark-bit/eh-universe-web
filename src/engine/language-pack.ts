@@ -15,7 +15,7 @@ export interface LanguagePack {
 // IDENTITY_SEAL: PART-1 | role=LanguagePack type & interface | inputs=none | outputs=LanguagePack
 
 // ============================================================
-// PART 2 — Language Pack Registry (KR, EN, JP, CN)
+// PART 2 — Language Pack Registry (KR, EN, JA, ZH)
 // ============================================================
 
 export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
@@ -37,8 +37,8 @@ export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
     dialogueMarkers: { open: '\u201C', close: '\u201D' },
     sentenceRhythm: { minWords: 5, maxWords: 25 },
   },
-  JP: {
-    id: 'JP',
+  JA: {
+    id: 'JA',
     bannedWords: ['奇跡', '運命', '突然', 'なんとなく', '元々'],
     endingMonotony: { pattern: /[たでし]。\s*$/gm, threshold: 0.4 },
     aiTonePatterns: ['まとめると', 'つまり', '重要なのは', '結論として'],
@@ -46,8 +46,8 @@ export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
     dialogueMarkers: { open: '「', close: '」' },
     sentenceRhythm: { minWords: 3, maxWords: 20 },
   },
-  CN: {
-    id: 'CN',
+  ZH: {
+    id: 'ZH',
     bannedWords: ['奇迹', '命运', '突然', '反正', '本来'],
     endingMonotony: { pattern: /了[。！？]?\s*$/gm, threshold: 0.35 },
     aiTonePatterns: ['总之', '综上所述', '值得注意的是', '换言之'],
@@ -64,7 +64,7 @@ export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
 // ============================================================
 
 /**
- * Map AppLanguage ('KO'|'EN'|'JP'|'CN') to the matching LanguagePack.
+ * Map AppLanguage ('KO'|'EN'|'JA'|'ZH') to the matching LanguagePack.
  * Falls back to KR if no match.
  */
 export function getLanguagePack(lang: string): LanguagePack {

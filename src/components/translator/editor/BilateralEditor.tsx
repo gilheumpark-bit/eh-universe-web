@@ -103,11 +103,11 @@ export function BilateralEditor() {
   return (
     <div className="w-full h-full flex flex-col relative overflow-hidden bg-bg-primary">
       {/* Background Decor (Glassmorphism) */}
-      <div className="absolute inset-0 z-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: bgImage, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px) saturate(150%)' }} />
-      <div className="absolute inset-0 z-0 bg-linear-to-b from-bg-primary/60 via-bg-primary/30 to-bg-primary/90 pointer-events-none" />
+      <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: bgImage, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px) saturate(150%)' }} />
+      <div className="absolute inset-0 z-0 bg-linear-to-b from-bg-primary/80 via-bg-primary/70 to-bg-primary/95 pointer-events-none" />
 
       {/* Editor Header */}
-      <div className="w-full border-b border-border shrink-0 z-10 bg-bg-primary/60 backdrop-blur-xl shadow-sm">
+      <div className="w-full border-b border-border shrink-0 z-10 bg-bg-primary/90 backdrop-blur-xl shadow-sm">
         <div className="flex items-center px-2 sm:px-5 h-12 sm:h-14 justify-between gap-1">
           {/* Left: save + language selectors */}
           <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
@@ -218,15 +218,15 @@ export function BilateralEditor() {
       {/* Editor Body (Bilateral Split) */}
       <div className="flex-1 flex overflow-hidden z-10 w-full relative">
         {/* Source Textarea */}
-        <div className="relative flex flex-col h-full bg-white/1 hover:bg-white/2 transition-colors duration-500" style={{ width: `${layout.editorSplitRatio * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-text-tertiary/70 uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-white/20 inline-block shadow-[0_0_5px_rgba(255,255,255,0.3)]"></span>
+        <div className="relative flex flex-col h-full bg-bg-primary hover:bg-bg-secondary/30 transition-colors duration-500" style={{ width: `${layout.editorSplitRatio * 100}%` }}>
+          <div className="absolute top-4 right-5 text-[11px] font-mono text-text-secondary uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-text-secondary/60 inline-block shadow-[0_0_5px_rgba(128,128,128,0.3)]"></span>
             Source ({from})
           </div>
           <textarea
             ref={sourceRef}
             placeholder="여기에 원문을 입력하세요..."
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-secondary font-sans transition-colors placeholder:text-text-tertiary/50 placeholder:font-light"
+            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light"
             value={source}
             onChange={(e) => setSource(e.target.value)}
             onKeyDown={handleSVIKeyDown}
@@ -258,24 +258,24 @@ export function BilateralEditor() {
             onMouseDown={onSplitDragStart}
             className="w-1.5 h-full bg-border/40 backdrop-blur-md border-x border-border/30 cursor-col-resize flex flex-col justify-center items-center hover:bg-accent-amber/20 transition-all duration-300 group"
           >
-            <div className="w-[2px] h-12 bg-white/10 group-hover:bg-accent-amber/80 rounded-full transition-colors duration-300 shadow-[0_0_10px_rgba(251,191,36,0)] group-hover:shadow-[0_0_10px_rgba(251,191,36,0.5)] flex flex-col gap-1 items-center justify-center py-2">
-              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
-              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
-              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/80 transition-colors"></div>
+            <div className="w-[2px] h-12 bg-border/50 group-hover:bg-accent-amber/80 rounded-full transition-colors duration-300 shadow-[0_0_10px_rgba(251,191,36,0)] group-hover:shadow-[0_0_10px_rgba(251,191,36,0.5)] flex flex-col gap-1 items-center justify-center py-2">
+              <div className="w-1 h-1 rounded-full bg-text-tertiary/40 group-hover:bg-accent-amber transition-colors"></div>
+              <div className="w-1 h-1 rounded-full bg-text-tertiary/40 group-hover:bg-accent-amber transition-colors"></div>
+              <div className="w-1 h-1 rounded-full bg-text-tertiary/40 group-hover:bg-accent-amber transition-colors"></div>
             </div>
           </div>
         </div>
 
         {/* Result Textarea */}
-        <div className="relative flex flex-col h-full bg-bg-secondary/40 hover:bg-bg-secondary/60 transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.08)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-accent-amber/80 uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-accent-amber/80 inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+        <div className="relative flex flex-col h-full bg-bg-secondary hover:bg-bg-secondary/80 transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.08)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
+          <div className="absolute top-4 right-5 text-[11px] font-mono text-accent-amber uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent-amber inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
             Translation ({to})
           </div>
           <textarea
             ref={resultRef}
             placeholder="번역 결과가 여기에 표시됩니다..."
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-tertiary/50 placeholder:font-light"
+            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light"
             value={result}
             onChange={(e) => setResult(e.target.value)}
             onContextMenu={textMenu.openMenu}

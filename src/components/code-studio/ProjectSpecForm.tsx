@@ -87,29 +87,29 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
   const currentQuestion = QUESTIONS[currentQ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#0a0e17] border border-white/10 rounded-xl w-[640px] max-h-[80vh] flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/8">
+    <div className="flex flex-col h-full bg-bg-primary">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-amber-400" />
-            <span className="text-sm font-semibold text-white">프로젝트 명세서</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-amber-900/30 text-amber-400 rounded">
+            <FileText size={16} className="text-accent-amber" />
+            <span className="text-sm font-semibold text-text-primary">프로젝트 명세서</span>
+            <span className="text-[10px] px-1.5 py-0.5 bg-accent-amber/20 text-accent-amber rounded">
               {step === "category" ? "1/3" : step === "questions" ? `2/3 (${currentQ + 1}/${QUESTIONS.length})` : "3/3"}
             </span>
           </div>
-          <button onClick={onClose} aria-label="닫기" className="text-white/40 hover:text-white"><X size={16} /></button>
+          <button onClick={onClose} aria-label="닫기" className="text-text-tertiary hover:text-text-primary"><X size={16} /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {step === "category" && (
             <div>
-              <p className="text-sm mb-1 text-white">어떤 프로젝트를 만드시겠어요?</p>
-              <p className="text-xs text-white/40 mb-4">프롬프트를 입력하면 카테고리가 자동 선택됩니다</p>
+              <p className="text-sm mb-1 text-text-primary">어떤 프로젝트를 만드시겠어요?</p>
+              <p className="text-xs text-text-tertiary mb-4">프롬프트를 입력하면 카테고리가 자동 선택됩니다</p>
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 수제 케이크 쇼핑몰 만들어줘"
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white outline-none focus:border-amber-700 mb-4" />
+                className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber mb-4" />
               <div className="grid grid-cols-3 gap-2">
                 {CATEGORIES.map((cat) => (
                   <button key={cat.id} onClick={() => setCategory(cat.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs border transition-colors ${category === cat.id ? "border-amber-700 bg-amber-900/15 text-amber-400" : "border-white/10 hover:bg-white/5 text-white/50"}`}>
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs border transition-colors ${category === cat.id ? "border-accent-amber bg-accent-amber/10 text-accent-amber" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>
                     <span>{cat.icon}</span><span>{cat.label}</span>
                   </button>
                 ))}
@@ -118,21 +118,21 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
           )}
           {step === "questions" && currentQuestion && (
             <div>
-              <p className="text-[10px] text-amber-400 mb-1">{currentQuestion.category}</p>
-              <p className="text-sm font-medium text-white mb-3">{currentQuestion.question}</p>
+              <p className="text-[10px] text-accent-amber mb-1">{currentQuestion.category}</p>
+              <p className="text-sm font-medium text-text-primary mb-3">{currentQuestion.question}</p>
               {currentQuestion.type === "text" && (
                 <input value={(getAnswer(currentQuestion.id) as string) ?? ""} onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white outline-none focus:border-amber-700" autoFocus />
+                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber" autoFocus />
               )}
               {currentQuestion.type === "textarea" && (
                 <textarea value={(getAnswer(currentQuestion.id) as string) ?? ""} onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white outline-none focus:border-amber-700 min-h-[100px]" autoFocus />
+                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber min-h-[100px]" autoFocus />
               )}
               {currentQuestion.type === "select" && currentQuestion.options && (
                 <div className="grid grid-cols-2 gap-2">
                   {currentQuestion.options.map((opt) => (
                     <button key={opt} onClick={() => setAnswer(currentQuestion.id, opt)}
-                      className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${getAnswer(currentQuestion.id) === opt ? "border-amber-700 bg-amber-900/15 text-amber-400" : "border-white/10 hover:bg-white/5 text-white/50"}`}>{opt}</button>
+                      className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${getAnswer(currentQuestion.id) === opt ? "border-accent-amber bg-accent-amber/10 text-accent-amber" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>{opt}</button>
                   ))}
                 </div>
               )}
@@ -143,49 +143,49 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
                     const selected = Array.isArray(current) && current.includes(opt);
                     return (
                       <button key={opt} onClick={() => setAnswer(currentQuestion.id, selected ? current.filter((v) => v !== opt) : [...current, opt])}
-                        className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${selected ? "border-green-500 bg-green-500/10 text-green-400" : "border-white/10 hover:bg-white/5 text-white/50"}`}>{selected ? "✓ " : ""}{opt}</button>
+                        className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${selected ? "border-green-500 bg-green-500/10 text-green-400" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>{selected ? "✓ " : ""}{opt}</button>
                     );
                   })}
                 </div>
               )}
               <div className="flex items-center justify-center gap-1 mt-6">
                 {QUESTIONS.map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentQ ? "bg-amber-500" : i < currentQ ? "bg-green-400" : "bg-white/10"}`} />
+                  <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentQ ? "bg-accent-amber" : i < currentQ ? "bg-green-400" : "bg-border"}`} />
                 ))}
               </div>
             </div>
           )}
           {step === "review" && (
             <div>
-              <p className="text-sm font-medium text-white mb-3">명세서 확인</p>
+              <p className="text-sm font-medium text-text-primary mb-3">명세서 확인</p>
               <div className="space-y-2">
                 {QUESTIONS.map((q) => {
                   const answer = getAnswer(q.id);
                   const text = Array.isArray(answer) ? answer.join(", ") : answer;
                   if (!text) return null;
-                  return <div key={q.id} className="flex items-start gap-2 text-xs"><span className="text-white/40 min-w-[120px]">{q.question}</span><span className="text-white/70">{text}</span></div>;
+                  return <div key={q.id} className="flex items-start gap-2 text-xs"><span className="text-text-tertiary min-w-[120px]">{q.question}</span><span className="text-text-secondary">{text}</span></div>;
                 })}
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-t border-white/8">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border">
           <div>
             {step === "category" && title.trim() && (
               <button onClick={handleAutoFill} disabled={autoFilling}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-amber-900/22 text-amber-400 rounded-lg hover:bg-amber-900/30 disabled:opacity-50">
+                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-accent-amber/15 text-accent-amber rounded-lg hover:bg-accent-amber/20 disabled:opacity-50">
                 {autoFilling ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI 자동 완성
               </button>
             )}
           </div>
           <div className="flex items-center gap-2">
             {step === "questions" && currentQ > 0 && (
-              <button onClick={() => setCurrentQ((p) => p - 1)} className="flex items-center gap-1 px-3 py-1.5 text-xs text-white/40 hover:text-white"><ChevronLeft size={12} /> 이전</button>
+              <button onClick={() => setCurrentQ((p) => p - 1)} className="flex items-center gap-1 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-primary"><ChevronLeft size={12} /> 이전</button>
             )}
-            {step === "category" && <button onClick={() => { if (title.trim()) setStep("questions"); }} disabled={!title.trim()} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-amber-800 text-stone-100 rounded-lg hover:bg-amber-700 disabled:opacity-30">다음 <ChevronRight size={12} /></button>}
-            {step === "questions" && currentQ < QUESTIONS.length - 1 && <button onClick={() => setCurrentQ((p) => p + 1)} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-amber-800 text-stone-100 rounded-lg hover:bg-amber-700">다음 <ChevronRight size={12} /></button>}
-            {step === "questions" && currentQ === QUESTIONS.length - 1 && <button onClick={() => setStep("review")} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-amber-800 text-stone-100 rounded-lg hover:bg-amber-700">확인 <Check size={12} /></button>}
-            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700"><Sparkles size={12} /> 프로젝트 생성</button>}
+            {step === "category" && <button onClick={() => { if (title.trim()) setStep("questions"); }} disabled={!title.trim()} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 disabled:opacity-30">다음 <ChevronRight size={12} /></button>}
+            {step === "questions" && currentQ < QUESTIONS.length - 1 && <button onClick={() => setCurrentQ((p) => p + 1)} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">다음 <ChevronRight size={12} /></button>}
+            {step === "questions" && currentQ === QUESTIONS.length - 1 && <button onClick={() => setStep("review")} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">확인 <Check size={12} /></button>}
+            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-green-600 text-text-primary rounded-lg hover:bg-green-700"><Sparkles size={12} /> 프로젝트 생성</button>}
           </div>
         </div>
       </div>

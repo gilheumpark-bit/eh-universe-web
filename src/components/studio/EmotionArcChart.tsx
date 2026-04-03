@@ -125,15 +125,15 @@ function EmotionArcChart({ messages, language }: Props) {
     <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">
-          {L4(language, { ko: '감정 아크', en: 'Emotion Arc', jp: '感情アーク', cn: '情感弧线' })}
+          {L4(language, { ko: '감정 아크', en: 'Emotion Arc', ja: '感情アーク', zh: '情感弧线' })}
         </h3>
         <div className="flex gap-3 text-[8px] text-text-tertiary">
           <span>AVG: <span className="text-text-secondary font-bold">{avgScore}%</span></span>
-          <span>{L4(language, { ko: '변동', en: 'Var', jp: '変動', cn: '变动' })}: <span className="text-text-secondary font-bold">{variance}</span></span>
+          <span>{L4(language, { ko: '변동', en: 'Var', ja: '変動', zh: '变动' })}: <span className="text-text-secondary font-bold">{variance}</span></span>
         </div>
       </div>
 
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-28" preserveAspectRatio="xMidYMid meet" role="img" aria-label={L4(language, { ko: '감정 아크 차트', en: 'Emotion arc chart', jp: '感情アークチャート', cn: '情感弧线图表' })}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-28" preserveAspectRatio="xMidYMid meet" role="img" aria-label={L4(language, { ko: '감정 아크 차트', en: 'Emotion arc chart', ja: '感情アークチャート', zh: '情感弧线图表' })}>
         <defs>
           <linearGradient id="emotionGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
@@ -215,25 +215,25 @@ function EmotionArcChart({ messages, language }: Props) {
       <div className="flex flex-wrap gap-4 text-[8px]">
         <span className="flex items-center gap-1">
           <span className="w-4 h-0.5 bg-amber-500 inline-block rounded" />
-          {L4(language, { ko: '감정 강도', en: 'Emotion Score', jp: '感情強度', cn: '情感强度' })}
+          {L4(language, { ko: '감정 강도', en: 'Emotion Score', ja: '感情強度', zh: '情感强度' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
           <span className="w-4 h-0.5 bg-red-500 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ef4444 0 3px, transparent 3px 6px)' }} />
-          {L4(language, { ko: '긴장감', en: 'Tension', jp: '緊張感', cn: '紧张感' })}
+          {L4(language, { ko: '긴장감', en: 'Tension', ja: '緊張感', zh: '紧张感' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
           <span className="w-4 h-0.5 bg-green-500 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #22c55e 0 3px, transparent 3px 6px)' }} />
-          {L4(language, { ko: '몰입도', en: 'Immersion', jp: '没入度', cn: '沉浸度' })}
+          {L4(language, { ko: '몰입도', en: 'Immersion', ja: '没入度', zh: '沉浸度' })}
         </span>
-        <span className="text-red-400">▲ {L4(language, { ko: '피크', en: 'Peak', jp: 'ピーク', cn: '峰值' })}</span>
-        <span className="text-blue-400">▼ {L4(language, { ko: '밸리', en: 'Valley', jp: '谷', cn: '谷值' })}</span>
+        <span className="text-red-400">▲ {L4(language, { ko: '피크', en: 'Peak', ja: 'ピーク', zh: '峰值' })}</span>
+        <span className="text-blue-400">▼ {L4(language, { ko: '밸리', en: 'Valley', ja: '谷', zh: '谷值' })}</span>
       </div>
 
       {/* 감정 흐름 진단 */}
       {points.length >= 3 && (
         <div className="bg-black/30 border border-border/50 rounded-lg p-3">
           <div className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider mb-1.5">
-            {L4(language, { ko: '흐름 진단', en: 'Flow Diagnosis', jp: 'フロー診断', cn: '流程诊断' })}
+            {L4(language, { ko: '흐름 진단', en: 'Flow Diagnosis', ja: 'フロー診断', zh: '流程诊断' })}
           </div>
           <div className="text-[10px] text-text-secondary leading-relaxed">
             {variance < 10 ? (
@@ -241,8 +241,8 @@ function EmotionArcChart({ messages, language }: Props) {
                 {L4(language, {
                   ko: '⚠ 감정 변동폭이 낮습니다. 클라이맥스 구간에 더 강한 긴장을 넣어보세요.',
                   en: '⚠ Low emotional variance. Consider adding stronger tension at climax points.',
-                  jp: '⚠ 感情の変動幅が低いです。クライマックスにもっと強い緊張を入れてみてください。',
-                  cn: '⚠ 情感变动幅度较低。考虑在高潮部分加入更强的紧张感。',
+                  ja: '⚠ 感情の変動幅が低いです。クライマックスにもっと強い緊張を入れてみてください。',
+                  zh: '⚠ 情感变动幅度较低。考虑在高潮部分加入更强的紧张感。',
                 })}
               </span>
             ) : variance > 35 ? (
@@ -250,8 +250,8 @@ function EmotionArcChart({ messages, language }: Props) {
                 {L4(language, {
                   ko: '💡 감정 기복이 큽니다. 독자 안정 구간(쿨링 비트)을 확인해보세요.',
                   en: '💡 High emotional swings. Check for reader cooling beats.',
-                  jp: '💡 感情の起伏が大きいです。読者安定区間を確認してください。',
-                  cn: '💡 情感起伏较大。请检查读者冷却节点。',
+                  ja: '💡 感情の起伏が大きいです。読者安定区間を確認してください。',
+                  zh: '💡 情感起伏较大。请检查读者冷却节点。',
                 })}
               </span>
             ) : (
@@ -259,8 +259,8 @@ function EmotionArcChart({ messages, language }: Props) {
                 {L4(language, {
                   ko: '✓ 감정 흐름이 건강한 범위 내에 있습니다.',
                   en: '✓ Emotional flow is within a healthy range.',
-                  jp: '✓ 感情の流れは健全な範囲内です。',
-                  cn: '✓ 情感流程在健康范围内。',
+                  ja: '✓ 感情の流れは健全な範囲内です。',
+                  zh: '✓ 情感流程在健康范围内。',
                 })}
               </span>
             )}

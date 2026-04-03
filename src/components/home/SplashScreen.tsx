@@ -35,10 +35,10 @@ export default function SplashScreen({
       onClick: onUniverse,
       color: "amber",
       Icon: Globe,
-      kicker: { ko: "세계관 탐색", en: "Explore", jp: "世界観探索", cn: "探索世界观" },
+      kicker: { ko: "세계관 탐색", en: "Explore", ja: "世界観探索", zh: "探索世界观" },
       title: "UNIVERSE",
-      desc: { ko: "아카이브, 네트워크, 세계관 문서를 탐색합니다.", en: "Browse the archive, network, and worldbuilding docs.", jp: "アーカイブ、ネットワーク、世界観文書を探索します。", cn: "探索档案库、网络和世界观文档。" },
-      cta: { ko: "탐색 시작", en: "Enter", jp: "探索開始", cn: "开始探索" },
+      desc: { ko: "아카이브, 네트워크, 세계관 문서를 탐색합니다.", en: "Browse the archive, network, and worldbuilding docs.", ja: "アーカイブ、ネットワーク、世界観文書を探索します。", zh: "探索档案库、网络和世界观文档。" },
+      cta: { ko: "탐색 시작", en: "Enter", ja: "探索開始", zh: "开始探索" },
       badge: null,
     },
     {
@@ -46,21 +46,21 @@ export default function SplashScreen({
       onClick: onStudio,
       color: "purple",
       Icon: PenTool,
-      kicker: { ko: "집필 시작", en: "Write", jp: "執筆開始", cn: "开始写作" },
+      kicker: { ko: "집필 시작", en: "Write", ja: "執筆開始", zh: "开始写作" },
       title: "STUDIO",
-      desc: { ko: "AI와 함께 세계관 기반 소설을 집필합니다.", en: "Write stories with AI in this universe.", jp: "AIと共に世界観ベースの小説を執筆します。", cn: "与AI一起在这个世界观中写作。" },
-      cta: { ko: "스튜디오 열기", en: "Open Studio", jp: "スタジオを開く", cn: "打开工作室" },
-      badge: { ko: "AI 집필", en: "AI Writing", jp: "AI執筆", cn: "AI写作" },
+      desc: { ko: "AI와 함께 세계관 기반 소설을 집필합니다.", en: "Write stories with AI in this universe.", ja: "AIと共に世界観ベースの小説を執筆します。", zh: "与AI一起在这个世界观中写作。" },
+      cta: { ko: "스튜디오 열기", en: "Open Studio", ja: "スタジオを開く", zh: "打开工作室" },
+      badge: { ko: "AI 집필", en: "AI Writing", ja: "AI執筆", zh: "AI写作" },
     },
     {
       id: "code",
       onClick: onCodeStudio,
       color: "green",
       Icon: Code2,
-      kicker: { ko: "코드 편집", en: "Code", jp: "コード編集", cn: "代码编辑" },
+      kicker: { ko: "코드 편집", en: "Code", ja: "コード編集", zh: "代码编辑" },
       title: "CODE",
-      desc: { ko: "Monaco 에디터 기반 코드 작업 환경.", en: "Monaco-based coding environment with AI.", jp: "Monacoエディタベースのコーディング環境。", cn: "基于Monaco编辑器的编码环境。" },
-      cta: { ko: "코드 스튜디오", en: "Open Code", jp: "コードスタジオ", cn: "代码工作室" },
+      desc: { ko: "Monaco 에디터 기반 코드 작업 환경.", en: "Monaco-based coding environment with AI.", ja: "Monacoエディタベースのコーディング環境。", zh: "基于Monaco编辑器的编码环境。" },
+      cta: { ko: "코드 스튜디오", en: "Open Code", ja: "コードスタジオ", zh: "代码工作室" },
       badge: "NEW",
     },
     {
@@ -68,16 +68,16 @@ export default function SplashScreen({
       onClick: onTranslationStudio,
       color: "blue",
       Icon: Languages,
-      kicker: { ko: "전문 번역", en: "Translate", jp: "翻訳", cn: "翻译" },
+      kicker: { ko: "전문 번역", en: "Translate", ja: "翻訳", zh: "翻译" },
       title: "TRANSLATE",
       desc: {
         ko: "장편·챕터·용어 중심 EH Translator 워크스페이스입니다.",
         en: "EH Translator — long-form, chapter, and glossary workflow.",
-        jp: "EH Translator — 長編・チャプター・用語を中心としたワークスペース。",
-        cn: "EH Translator 长篇、章节与术语工作空间。",
+        ja: "EH Translator — 長編・チャプター・用語を中心としたワークスペース。",
+        zh: "EH Translator 长篇、章节与术语工作空间。",
       },
-      cta: { ko: "번역 스튜디오", en: "Open Translator", jp: "翻訳へ", cn: "打开翻译" },
-      badge: { ko: "전문", en: "Pro", jp: "専門", cn: "专业" },
+      cta: { ko: "번역 스튜디오", en: "Open Translator", ja: "翻訳へ", zh: "打开翻译" },
+      badge: { ko: "전문", en: "Pro", ja: "専門", zh: "专业" },
     },
   ];
 
@@ -133,14 +133,14 @@ export default function SplashScreen({
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
-            {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", jp: "どこへ向かいますか？", cn: "您要去哪里？" })}
+            {L4(lang, { ko: "어디로 향할까요?", en: "Where are you headed?", ja: "どこへ向かいますか？", zh: "您要去哪里？" })}
           </h1>
           <p className="mt-4 text-sm sm:text-base text-text-secondary max-w-md mx-auto">
             {L4(lang, {
               ko: "세계관을 탐색하거나, 직접 이야기를 써보세요.",
               en: "Explore the universe or write your own story.",
-              jp: "世界観を探索するか、自分の物語を書いてみてください。",
-              cn: "探索这个世界观，或者写下你自己的故事。"
+              ja: "世界観を探索するか、自分の物語を書いてみてください。",
+              zh: "探索这个世界观，或者写下你自己的故事。"
             })}
           </p>
 
@@ -245,8 +245,8 @@ export default function SplashScreen({
             {L4(lang, { 
               ko: "CC-BY-NC-4.0 라이선스로 자유롭게 활용하세요", 
               en: "Free to use under CC-BY-NC-4.0 license", 
-              jp: "CC-BY-NC-4.0ライセンスで自由にご利用ください", 
-              cn: "根据CC-BY-NC-4.0许可证自由使用" 
+              ja: "CC-BY-NC-4.0ライセンスで自由にご利用ください", 
+              zh: "根据CC-BY-NC-4.0许可证自由使用" 
             })}
           </span>
         </div>

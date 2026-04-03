@@ -11,11 +11,11 @@ import type { ArticleData } from "@/lib/articles";
 
 export default function ArticleClient({ slug }: { slug: string }) {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; jp?: string; cn?: string }) => L4(lang, v);
+  const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
   const [articleModule, setArticleModule] = useState<{
     articles: Record<string, ArticleData>;
-    getArticleTitle: (slug: string, lang: "ko" | "en" | "jp" | "cn") => string;
+    getArticleTitle: (slug: string, lang: "ko" | "en" | "ja" | "zh") => string;
   } | null>(null);
 
   const [loadFailed, setLoadFailed] = useState(false);
@@ -40,19 +40,19 @@ export default function ArticleClient({ slug }: { slug: string }) {
             {loadFailed ? (
               <>
                 <div className="text-accent-red text-xs font-mono uppercase tracking-wider mb-4">
-                  {T({ ko: "아카이브 로드 실패", en: "Failed to load archive", jp: "アーカイブの読み込みに失敗", cn: "档案库加载失败" })}
+                  {T({ ko: "아카이브 로드 실패", en: "Failed to load archive", ja: "アーカイブの読み込みに失敗", zh: "档案库加载失败" })}
                 </div>
                 <Link href="/archive" className="text-sm text-accent-purple hover:text-text-primary transition-colors">
-                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", jp: "アーカイブに戻る", cn: "返回档案库" })}
+                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", ja: "アーカイブに戻る", zh: "返回档案库" })}
                 </Link>
               </>
             ) : (
               <>
                 <div className="text-text-tertiary text-xs font-mono uppercase tracking-wider animate-pulse">
-                  {T({ ko: "아카이브 로딩 중...", en: "Loading archive...", jp: "アーカイブ読み込み中...", cn: "档案库加载中..." })}
+                  {T({ ko: "아카이브 로딩 중...", en: "Loading archive...", ja: "アーカイブ読み込み中...", zh: "档案库加载中..." })}
                 </div>
                 <Link href="/archive" className="mt-4 block text-[10px] text-text-tertiary hover:text-text-primary transition-colors">
-                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", jp: "アーカイブに戻る", cn: "返回档案库" })}
+                  ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", ja: "アーカイブに戻る", zh: "返回档案库" })}
                 </Link>
               </>
             )}
@@ -73,10 +73,10 @@ export default function ArticleClient({ slug }: { slug: string }) {
           <div className="text-center">
             <h1 className="font-mono text-4xl font-bold text-text-tertiary mb-4">████████</h1>
             <p className="text-text-secondary mb-2">
-              {T({ ko: "이 문서는 아직 기밀 해제되지 않았습니다.", en: "This document has not yet been declassified.", jp: "この文書はまだ機密解除されていません。", cn: "该文档尚未解密。" })}
+              {T({ ko: "이 문서는 아직 기밀 해제되지 않았습니다.", en: "This document has not yet been declassified.", ja: "この文書はまだ機密解除されていません。", zh: "该文档尚未解密。" })}
             </p>
             <Link href="/archive" className="font-mono text-xs text-accent-purple hover:underline tracking-wider uppercase">
-              ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", jp: "アーカイブに戻る", cn: "返回档案" })}
+              ← {T({ ko: "아카이브로 돌아가기", en: "Back to Archive", ja: "アーカイブに戻る", zh: "返回档案" })}
             </Link>
           </div>
         </main>
@@ -122,7 +122,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
             href={`/archive?cat=${article.category.toLowerCase()}`}
             className="motion-rise inline-block font-mono text-xs text-text-tertiary hover:text-accent-amber transition-colors tracking-wider uppercase mb-6"
           >
-            ← {T({ ko: '아카이브', en: 'ARCHIVE', jp: 'アーカイブ', cn: '档案库' })} / {article.category}
+            ← {T({ ko: '아카이브', en: 'ARCHIVE', ja: 'アーカイブ', zh: '档案库' })} / {article.category}
           </Link>
 
           <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-xl mb-0">
@@ -130,8 +130,8 @@ export default function ArticleClient({ slug }: { slug: string }) {
             {T({
               ko: `문서 등급: ${article.level} | 최종 갱신: 7000년대 | 작성: 비밀조사국`,
               en: `Document Level: ${article.level} | Last Updated: 7000s | Author: Bureau of Investigation`,
-              jp: `文書等級: ${article.level} | 最終更新: 7000年代 | 作成: 秘密調査局`,
-              cn: `文档等级: ${article.level} | 最后更新: 7000年代 | 作者: 秘密调查局`,
+              ja: `文書等級: ${article.level} | 最終更新: 7000年代 | 作成: 秘密調査局`,
+              zh: `文档等级: ${article.level} | 最后更新: 7000年代 | 作者: 秘密调查局`,
             })}
           </div>
 
@@ -162,7 +162,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
             {article.related && article.related.length > 0 && (
               <div className="mt-10 border-t border-border pt-6">
                 <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.15em] uppercase mb-3">
-                  {T({ ko: "관련 문서", en: "Related Documents", jp: "関連文書", cn: "相关文档" })}
+                  {T({ ko: "관련 문서", en: "Related Documents", ja: "関連文書", zh: "相关文档" })}
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {article.related.map((relSlug) => {
@@ -193,9 +193,9 @@ export default function ArticleClient({ slug }: { slug: string }) {
 
             <div className="mt-8 border-t border-border pt-6">
               <p className="font-serif text-xs text-text-tertiary italic text-center">
-                {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only.", jp: "この文書は秘密調査局内部参照用である。", cn: "本文档仅供秘密调查局内部参考。" })}
+                {T({ ko: "이 문서는 비밀조사국 내부 참조용이다.", en: "This document is for Bureau of Investigation internal reference only.", ja: "この文書は秘密調査局内部参照用である。", zh: "本文档仅供秘密调查局内部参考。" })}
                 <br />
-                {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo.", jp: "無断流出した場合、該当人員はタイポとして処理される。", cn: "未经授权泄露者将被作为笔误处理。" })}
+                {T({ ko: "무단 유출 시 해당 인원은 오타로 처리된다.", en: "Unauthorized disclosure will result in the personnel being processed as a typo.", ja: "無断流出した場合、該当人員はタイポとして処理される。", zh: "未经授权泄露者将被作为笔误处理。" })}
               </p>
             </div>
           </div>

@@ -45,7 +45,7 @@ async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> 
 }
 
 function getLanguage(value: unknown): AppLanguage {
-  return value === 'EN' || value === 'JP' || value === 'CN' ? value : 'KO';
+  return value === 'EN' || value === 'JA' || value === 'ZH' ? value : 'KO';
 }
 
 function getModel(value: unknown): string {
@@ -195,7 +195,7 @@ const MUSIC_PROMPT_SCHEMA = {
 // ============================================================
 
 const LANG_NAMES: Record<AppLanguage, string> = {
-  KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese',
+  KO: 'Korean', EN: 'English', JA: 'Japanese', ZH: 'Chinese',
 };
 
 
