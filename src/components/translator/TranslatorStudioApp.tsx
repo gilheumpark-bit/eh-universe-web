@@ -1441,12 +1441,17 @@ export default function TranslatorStudioApp() {
     <TranslatorContext.Provider value={contextValue}>
       <div className={`flex h-screen w-full flex-col overflow-hidden theme-${backgroundMode}`}>
         {aiCapabilitiesLoaded && !hasTranslatorAiAccess && !apiBannerDismissed && (
-          <div className="flex shrink-0 items-center gap-3 border-b border-amber-700/40 bg-amber-900/25 px-4 py-2.5 text-amber-100">
-            <Key className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
-            <p className="min-w-0 flex-1 text-[11px] leading-snug [word-break:keep-all]">
+          <div className="flex shrink-0 items-center gap-2 border-b border-amber-700/40 bg-amber-900/25 px-3 py-1.5 text-amber-100">
+            <Key className="h-3.5 w-3.5 shrink-0 text-amber-300 hidden sm:block" aria-hidden />
+            <p className="min-w-0 flex-1 text-[10px] sm:text-[11px] leading-snug truncate sm:[overflow:visible] sm:[text-overflow:unset] sm:[white-space:normal]">
               {langKo
-                ? '번역을 실행하려면 BYOK API 키를 등록하거나(아래 버튼·소설 스튜디오와 동일), 호스팅 Gemini가 켜진 배포에서 Gemini 엔진을 선택하세요.'
-                : 'Add a BYOK API key (same panel as Novel Studio) or pick Gemini when server-hosted Gemini is enabled.'}
+                ? 'API 키를 등록하세요.'
+                : 'Add an API key to start.'}
+              <span className="hidden sm:inline">
+                {langKo
+                  ? ' 소설 스튜디오와 동일한 패널에서 등록하거나, 호스팅 Gemini 엔진을 선택하세요.'
+                  : ' Same panel as Novel Studio, or pick Gemini when server-hosted.'}
+              </span>
             </p>
             <button
               type="button"
