@@ -257,6 +257,22 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
   }));
 
   const panelPropsMap: Record<string, () => React.ReactNode> = {
+    "quick-verify": () => (
+      <PI.QuickVerifyComponent
+        onStartVerify={(code: string, mode: string) => {
+          // 검증 전용: 코드를 에이전트 태스크로 전달 + 검증 모드 표시
+          const task = mode === "verify"
+            ? `## Code Verification Request\n\nReview the following code for security vulnerabilities, performance issues, memory leaks, dead code, and convention violations.\n\n\`\`\`\n${code}\n\`\`\``
+            : code;
+          localStorage.setItem("eh-cs-agent-task", task);
+          localStorage.setItem("eh-cs-agent-mode", mode);
+          onSetRightPanel("agents");
+          toast(mode === "verify" ? "검증 에이전트로 이동합니다." : "생성 + 검증을 시작합니다.", "success");
+        }}
+        onEasyMode={() => onSetRightPanel("project-spec")}
+        onClose={() => onSetRightPanel(null)}
+      />
+    ),
     "project-spec": () => (
       <PI.ProjectSpecFormComponent
         onComplete={(spec: ProjectSpecFormData) => {

@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useEffect, useState } from "react";
-import { Code2, Play, FolderOpen, ChevronDown } from "lucide-react";
+import { Code2, Play, FolderOpen, ChevronDown, Shield } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
@@ -18,6 +18,7 @@ interface WelcomeScreenProps {
   onBlankProject?: () => void;
   onImportProject?: () => void;
   onResumeProject?: () => void;
+  onQuickVerify?: () => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Imports | inputs=none | outputs=types
@@ -26,7 +27,7 @@ interface WelcomeScreenProps {
 // PART 2 — Main WelcomeScreen (simplified 2-CTA + collapsible extras)
 // ============================================================
 
-export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject, onResumeProject }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, onImportProject, onResumeProject, onQuickVerify }: WelcomeScreenProps) {
   const { lang } = useLang();
   const t = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
   const [visible, setVisible] = useState(false);
@@ -124,6 +125,26 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               <div className="font-mono text-[10px] text-text-tertiary">{t.newFileDesc}</div>
             </div>
           </button>
+
+          {/* Quick Verify CTA */}
+          {onQuickVerify && (
+            <button
+              onClick={onQuickVerify}
+              className="group flex w-full items-center justify-center gap-4 rounded-xl border border-accent-green/20 bg-accent-green/5 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/40 hover:bg-accent-green/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+            >
+              <div className="p-2 rounded-xl bg-accent-green/15 group-hover:bg-accent-green/25 transition-colors">
+                <Shield className="h-5 w-5 text-accent-green" />
+              </div>
+              <div className="text-left">
+                <div className="font-mono text-sm font-bold text-accent-green">
+                  {L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" })}
+                </div>
+                <div className="font-mono text-[10px] text-text-tertiary">
+                  {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" })}
+                </div>
+              </div>
+            </button>
+          )}
         </div>
 
         {/* Collapsible extras */}

@@ -11,6 +11,7 @@ import {
   Terminal, GitBranch,
 } from "lucide-react";
 import type { AgentRole, AgentSession } from "@/lib/code-studio/ai/agents";
+import { VERIFY_ONLY_ROLES, GENERATE_AND_VERIFY_ROLES } from "@/lib/code-studio/ai/agents";
 import { useCodeStudioAgent } from "@/hooks/useCodeStudioAgent";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -210,20 +211,25 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
 
   const [mode, setMode] = useState<AgentMode | "staged" | "applied">("idle");
   const [input, setInput] = useState("");
+  const [agentPreset, setAgentPreset] = useState<AgentRole[] | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [session, setSession] = useState<AgentSession | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
 
-  // 이지모드에서 전달된 태스크 자동 로드 & 실행
+  // 이지모드/퀵검증에서 전달된 태스크 자동 로드
   useEffect(() => {
     if (autoStartedRef.current) return;
     try {
       const seeded = localStorage.getItem("eh-cs-agent-task");
       if (!seeded) return;
       localStorage.removeItem("eh-cs-agent-task");
+      const agentMode = localStorage.getItem("eh-cs-agent-mode") || "generate-verify";
+      localStorage.removeItem("eh-cs-agent-mode");
       setInput(seeded);
+      // 모드별 에이전트 프리셋 적용
+      setAgentPreset(agentMode === "verify" ? VERIFY_ONLY_ROLES : GENERATE_AND_VERIFY_ROLES);
       autoStartedRef.current = true;
     } catch { /* */ }
   }, []);
@@ -284,7 +290,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode }: Props) {
     setSummary(null);
     try {
       const ctx = `File: ${fileName}\nLanguage: ${language}\n\n${code}`;
-      const result = await agent.run(input.trim(), ctx);
+      const result = await agent.run(input.trim(), ctx, agentPreset ?? undefined);
       setSession(result);
       setSummary(L4(lang, { 
         ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100)}%`, 

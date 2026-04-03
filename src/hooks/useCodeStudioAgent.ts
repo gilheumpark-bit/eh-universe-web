@@ -27,7 +27,7 @@ interface UseCodeStudioAgentReturn {
   messages: AgentMessage[];
   session: AgentSession | null;
   averageConfidence: number;
-  run: (instruction: string, context?: string) => Promise<AgentSession>;
+  run: (instruction: string, context?: string, roles?: AgentRole[]) => Promise<AgentSession>;
   abort: () => void;
   reset: () => void;
 }
@@ -45,17 +45,18 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
   });
   const abortRef = useRef<AbortController | null>(null);
 
-  const run = useCallback(async (instruction: string, context?: string): Promise<AgentSession> => {
+  const run = useCallback(async (instruction: string, context?: string, roles?: AgentRole[]): Promise<AgentSession> => {
     if (running) throw new Error('Agent pipeline already running');
 
+    const activeRoles = roles ?? ALL_AGENT_ROLES;
     setRunning(true);
     setMessages([]);
-    setProgress({ currentRole: null, completedRoles: [], totalRoles: ALL_AGENT_ROLES.length, percent: 0 });
+    setProgress({ currentRole: null, completedRoles: [], totalRoles: activeRoles.length, percent: 0 });
 
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const newSession = createAgentSession(instruction, ALL_AGENT_ROLES);
+    const newSession = createAgentSession(instruction, activeRoles);
     setSession(newSession);
 
     try {
@@ -67,8 +68,8 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
           return {
             currentRole: msg.role,
             completedRoles: completed,
-            totalRoles: ALL_AGENT_ROLES.length,
-            percent: Math.round((completed.length / ALL_AGENT_ROLES.length) * 100),
+            totalRoles: activeRoles.length,
+            percent: Math.round((completed.length / activeRoles.length) * 100),
           };
         });
       };
@@ -76,7 +77,7 @@ export function useCodeStudioAgent(): UseCodeStudioAgentReturn {
       const result = await runAgentPipeline(
         instruction,
         context ?? '',
-        ALL_AGENT_ROLES,
+        activeRoles,
         onMessage,
         controller.signal,
       );

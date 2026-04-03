@@ -137,6 +137,27 @@ export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
 /** Default agent pipeline order when no custom roles are provided. */
 const DEFAULT_ROLES: AgentRole[] = ['domain-analyst', 'state-designer', 'css-layout', 'interaction-motion'];
 
+/** 검증 전용 프리셋 — 코드 붙여넣기 → 원클릭 검증용 */
+export const VERIFY_ONLY_ROLES: AgentRole[] = [
+  'team-leader',
+  'overflow-guard', 'security-auth',
+  'memory-cache', 'render-optimizer',
+  'deadcode-scanner', 'coding-convention',
+  'stress-tester', 'dependency-linker',
+];
+
+/** 생성 → 검증 프리셋 — 이지모드 전체 흐름용 */
+export const GENERATE_AND_VERIFY_ROLES: AgentRole[] = [
+  'team-leader',
+  'domain-analyst', 'state-designer',
+  'core-engine', 'api-binding',
+  'css-layout', 'interaction-motion',
+  'overflow-guard', 'security-auth',
+  'memory-cache', 'render-optimizer',
+  'deadcode-scanner', 'coding-convention',
+  'progressive-repair',
+];
+
 /** Execution order — agents run in this sequence regardless of input order. */
 const ROLE_ORDER: AgentRole[] = [
   'team-leader', 'frontend-lead', 'backend-lead',

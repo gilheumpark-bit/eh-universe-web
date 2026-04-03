@@ -207,6 +207,12 @@ export const KeybindingsPanelComponent = dynamic(
   { ssr: false },
 );
 
+// ── quick-verify (one-click verification) ────────────────────
+export const QuickVerifyComponent = dynamic(
+  () => import("@/components/code-studio/QuickVerify").then((m) => ({ default: m.QuickVerify })),
+  { ssr: false },
+);
+
 // ── api-config (unified) ──────────────────────────────────────
 export const APIKeyConfigComponent = dynamic(
   () => import("@/components/home/APIKeySlotManager").then((m) => ({ default: m.APIKeySlotManager })),

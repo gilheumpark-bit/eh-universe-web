@@ -819,7 +819,7 @@ function CodeStudioShellInner() {
           ) : !loaded ? (
             <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-accent-green/40" /></div>
           ) : !hasEverOpened ? (
-            <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} />
+            <WelcomeScreen onNewFile={handleWelcomeNewFile} onOpenDemo={handleOpenDemo} onBlankProject={handleBlankProject} onResumeProject={handleResumeProject} onQuickVerify={() => setRightPanel("quick-verify" as RightPanel)} />
           ) : (
             <div className="flex h-full items-center justify-center"><div className="text-center"><div className="mb-4 inline-block rounded-full border border-accent-green/20 bg-accent-green/8 p-4"><Files className="h-8 w-8 text-accent-green" /></div><p className="font-mono text-[11px] uppercase tracking-wider text-text-tertiary">{tcs.selectFile}</p></div></div>
           )}

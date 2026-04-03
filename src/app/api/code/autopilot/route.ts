@@ -7,9 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Autopilot demo API is disabled in production.' }, { status: 403 });
-  }
+  // 프로덕션 활성화 — 레이트리밋으로 비용 관리
   const origin = req.headers.get('origin');
   const host = req.headers.get('host');
   if (!origin || !host) {
