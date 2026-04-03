@@ -1,5 +1,5 @@
 // ============================================================
-// Code Studio — Stress Testing Engine
+// Code Studio — Virtual Stress Simulation (가상 스트레스 시뮬레이션)
 // ============================================================
 
 import { streamChat } from '@/lib/ai-providers';
@@ -71,11 +71,10 @@ export function getScenarios(): StressScenario[] {
 // PART 3 — AI Stress Analysis
 // ============================================================
 
-// NOTE: This is an AI-PREDICTED stress analysis, not actual load testing.
-// Browser IDE cannot run real load tools (k6/artillery). AI analyzes code
-// structure to predict performance characteristics.
+// 가상 시뮬레이션: AI가 코드 구조를 분석하여 부하 시나리오를 시뮬레이션합니다.
+// 실제 HTTP 요청을 발생시키지 않습니다. 브라우저 IDE 환경의 구조적 한계.
 const STRESS_SYSTEM =
-  'You are a senior performance engineer. Analyze the code structure to PREDICT performance under load.\n\n' +
+  'You are a senior performance engineer. Run a VIRTUAL SIMULATION: analyze the code structure and simulate how it would behave under load.\n\n' +
   'Analyze these specific patterns:\n' +
   '1. O(n²)+ algorithms, nested loops, recursive calls without memoization\n' +
   '2. Unbatched DB/API calls (N+1 queries), missing connection pooling\n' +
@@ -83,7 +82,7 @@ const STRESS_SYSTEM =
   '4. Concurrency: missing rate limiting, no backpressure, race conditions\n' +
   '5. I/O: synchronous file ops, missing stream processing, large payloads\n' +
   '6. Error handling: missing timeouts, no circuit breakers, cascade failure paths\n\n' +
-  'Base your predictions on these patterns, NOT on guessing. If the code has no server logic, say so.\n\n' +
+  'Base your simulation on these structural patterns, NOT on guessing. If the code has no server logic, say so.\n\n' +
   'Respond with JSON: {"avgResponseMs":50,"p50Ms":40,"p95Ms":200,"p99Ms":500,"maxResponseMs":1500,"errorRate":0.02,"throughputRps":500,"totalRequests":30000,"failedRequests":600,"breakingPoint":{"virtualUsers":800,"errorRate":0.15,"avgResponseMs":2000},"recommendations":["..."]}';
 
 export async function analyzeStress(

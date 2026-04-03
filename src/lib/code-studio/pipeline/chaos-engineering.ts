@@ -1,5 +1,5 @@
 // ============================================================
-// Code Studio — Chaos Engineering / Failure Simulation
+// Code Studio — Virtual Chaos Simulation (가상 장애 시뮬레이션)
 // ============================================================
 
 import { streamChat } from '@/lib/ai-providers';
@@ -89,11 +89,10 @@ export function getScenarios(): FailureSimulation[] {
 // PART 3 — AI Chaos Analysis
 // ============================================================
 
-// NOTE: This is an AI-PREDICTED failure analysis, not actual fault injection.
-// Browser IDE cannot inject real faults (kill DB, partition network).
-// AI analyzes code structure to predict resilience gaps.
+// 가상 시뮬레이션: AI가 코드 구조를 분석하여 장애 시나리오를 시뮬레이션합니다.
+// 실제 DB 중단/네트워크 분리를 수행하지 않습니다. 브라우저 IDE 환경의 구조적 한계.
 const CHAOS_SYSTEM =
-  'You are a chaos engineering expert. Analyze code STRUCTURE for resilience gaps.\n\n' +
+  'You are a chaos engineering expert. Run a VIRTUAL SIMULATION: analyze the code structure and simulate how it would handle failure scenarios.\n\n' +
   'Check these specific patterns:\n' +
   '1. try/catch coverage: are all external calls (fetch, DB, file I/O) wrapped?\n' +
   '2. Timeout handling: do fetch/API calls have explicit timeouts?\n' +
@@ -102,7 +101,7 @@ const CHAOS_SYSTEM =
   '5. Graceful degradation: does the UI show fallback when backend fails?\n' +
   '6. Data validation: are null/undefined/malformed inputs guarded?\n' +
   '7. State cleanup: do error paths clean up resources (connections, listeners)?\n\n' +
-  'Base answers on ACTUAL code patterns found, not assumptions.\n\n' +
+  'Base your simulation on ACTUAL code patterns found, not assumptions.\n\n' +
   'Respond with JSON: {"severity":"major","description":"...","affectedComponents":["..."],"dataLoss":false,"recoveryTime":"...","hasHandler":false,"handlerQuality":"none","priority":"high","recommendation":"...","pattern":"circuit-breaker"}';
 
 export async function simulateFailure(
