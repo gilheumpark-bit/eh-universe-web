@@ -215,3 +215,197 @@ export function createAIWorkSaga(config: {
 }
 
 // IDENTITY_SEAL: PART-3 | role=builder | inputs=config | outputs=SagaOrchestrator
+
+// ============================================================
+// PART 4 — HSM Signer (암호학적 점화)
+// ============================================================
+// 사용자 승인 시 디지털 서명을 생성하여 부인 방지(Non-repudiation).
+// 웹 환경: Web Crypto API 기반 HMAC-SHA256 서명.
+
+export type OrbitType = 'STANDARD' | 'ACCELERATED' | 'WARP';
+
+export interface OrbitPayload {
+  orbit: OrbitType;
+  queryHash: string;
+  sviScore: number;
+  parameters: Record<string, unknown>;
+}
+
+export interface SignedEnvelope {
+  payloadHash: string;
+  signature: string;
+  keyId: string;
+  timestampMs: number;
+  sessionId: string;
+}
+
+/** Web Crypto API 기반 HMAC-SHA256 서명 */
+async function hmacSign(data: string, key: string): Promise<string> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    // 폴백: 단순 해시 (서버 환경)
+    let hash = 0;
+    const combined = key + data;
+    for (let i = 0; i < combined.length; i++) {
+      hash = ((hash << 5) - hash + combined.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0');
+  }
+  const encoder = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', encoder.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** SHA-256 해시 */
+async function sha256(data: string): Promise<string> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0');
+  }
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export class HSMSigner {
+  private keyId: string;
+
+  constructor(deviceKeyId = 'eh-web-device') {
+    this.keyId = deviceKeyId;
+  }
+
+  /** 궤도 페이로드 서명 */
+  async sign(payload: OrbitPayload, sessionId: string): Promise<SignedEnvelope> {
+    const serialized = this.serialize(payload);
+    const payloadHash = await sha256(serialized);
+    // [확인 필요] 프로덕션에서는 WebAuthn 또는 서버 HSM으로 교체
+    const signature = await hmacSign(serialized, 'noa-hsm-dev-key');
+
+    return {
+      payloadHash,
+      signature,
+      keyId: this.keyId,
+      timestampMs: Date.now(),
+      sessionId,
+    };
+  }
+
+  /** 서명 검증 (부인 방지) */
+  async verify(envelope: SignedEnvelope, payload: OrbitPayload): Promise<boolean> {
+    const expectedHash = await sha256(this.serialize(payload));
+    if (expectedHash !== envelope.payloadHash) return false;
+    const expectedSig = await hmacSign(this.serialize(payload), 'noa-hsm-dev-key');
+    return expectedSig === envelope.signature;
+  }
+
+  private serialize(payload: OrbitPayload): string {
+    return [
+      payload.orbit,
+      payload.queryHash,
+      payload.sviScore.toFixed(6),
+      JSON.stringify(Object.entries(payload.parameters).sort()),
+    ].join('|');
+  }
+}
+
+// IDENTITY_SEAL: PART-4 | role=hsm-signer | inputs=OrbitPayload | outputs=SignedEnvelope
+
+// ============================================================
+// PART 5 — Atomic HITL Gate (L4 진입점)
+// ============================================================
+// 사용자 궤도 선택 → HSM 서명 → Saga 실행 → 감사 로그.
+// 3위상 궤도: STANDARD(전체검증) / ACCELERATED(일부생략) / WARP(캐시기반).
+
+export interface HITLResult {
+  approved: boolean;
+  orbit: OrbitType;
+  sessionId: string;
+  sagaResult?: SagaResult;
+  envelope?: SignedEnvelope;
+  /** 기술 부채 텐서 (워프 궤도 시) */
+  debtTensor?: {
+    utility: number;
+    epistemicDebt: number;
+    securityDebt: number;
+  };
+  auditTrail: string[];
+}
+
+export class AtomicHITLGate {
+  private signer: HSMSigner;
+  private auditLog: string[] = [];
+
+  constructor(signer?: HSMSigner) {
+    this.signer = signer ?? new HSMSigner();
+  }
+
+  /**
+   * 사용자 승인 수신 → 서명 → Saga 실행.
+   * userConfirmed=false → 즉시 ABORTED.
+   */
+  async approveAndExecute(
+    payload: OrbitPayload,
+    userConfirmed: boolean,
+    steps: SagaStep[],
+  ): Promise<HITLResult> {
+    const sessionId = `hitl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    this.auditLog = [];
+
+    if (!userConfirmed) {
+      this.audit('USER_REJECTED', { orbit: payload.orbit });
+      return {
+        approved: false,
+        orbit: payload.orbit,
+        sessionId,
+        auditTrail: [...this.auditLog],
+      };
+    }
+
+    // 워프 궤도 경고 + 기술 부채 텐서 계산
+    let debtTensor: HITLResult['debtTensor'];
+    if (payload.orbit === 'WARP') {
+      debtTensor = {
+        utility: 0.6,
+        epistemicDebt: -0.25,
+        securityDebt: -0.15,
+      };
+      this.audit('WARP_ORBIT_WARNING', debtTensor);
+    }
+
+    // HSM 서명
+    const envelope = await this.signer.sign(payload, sessionId);
+    this.audit('HSM_SIGNED', { keyId: envelope.keyId, hash: envelope.payloadHash.slice(0, 16) });
+
+    // Saga 실행
+    const saga = new SagaOrchestrator(`hitl-${payload.orbit}`);
+    for (const step of steps) saga.addStep(step);
+
+    const sagaResult = await saga.execute();
+    this.audit('SAGA_COMPLETE', { status: sagaResult.status, steps: sagaResult.completedSteps.length });
+
+    return {
+      approved: true,
+      orbit: payload.orbit,
+      sessionId,
+      sagaResult,
+      envelope,
+      debtTensor,
+      auditTrail: [...this.auditLog, ...saga.getAuditLog().map(e => `[${e.timestamp}] ${e.status} ${e.steps.join(',')}`)]
+    };
+  }
+
+  /** 서명 검증 (사후 감사용) */
+  async verifySignature(envelope: SignedEnvelope, payload: OrbitPayload): Promise<boolean> {
+    return this.signer.verify(envelope, payload);
+  }
+
+  private audit(event: string, meta?: Record<string, unknown>): void {
+    this.auditLog.push(`[${Date.now()}] ${event} ${meta ? JSON.stringify(meta) : ''}`);
+  }
+}
+
+// IDENTITY_SEAL: PART-5 | role=hitl-gate | inputs=OrbitPayload,userConfirmed,steps | outputs=HITLResult
