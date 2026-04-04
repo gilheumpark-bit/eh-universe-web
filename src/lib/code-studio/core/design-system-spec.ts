@@ -1,39 +1,52 @@
 // ============================================================
 // PART 1 — WCAG Lookup Table & CR Calculation
 // ============================================================
-// Design Team Lead AI v8.0 — WCAG luminance lookup and contrast ratio helpers.
+// Design Team Lead AI v8.0 (Hybrid) — Uses ACTUAL project tokens from globals.css.
 // Appended to UI-generating agent prompts (A3 css-layout, A4 interaction-motion).
 
 /**
  * WCAG relative-luminance lookup (L values, ±0.03 tolerance).
- * For colors not listed, use the nearest entry ±0.05.
+ * Includes this project's actual color token hex values.
  */
 export const WCAG_LUMINANCE_LOOKUP = `
-### WCAG L-value Lookup Table (±0.03)
+### WCAG L-value Lookup — Project Token Colors Included
 
-**Greyscale**
-  #000000→L=0.000  #111111→L=0.005  #1E1E1E→L=0.013
-  #252526→L=0.019  #333333→L=0.032  #3C3C3C→L=0.050
-  #555555→L=0.091  #616161→L=0.120  #777777→L=0.184
-  #858585→L=0.235  #9E9E9E→L=0.349  #AAAAAA→L=0.402
-  #BBBBBB→L=0.483  #C8C8C8→L=0.565  #D4D4D4→L=0.658
-  #E0E0E0→L=0.753  #F3F3F3→L=0.896  #FFFFFF→L=1.000
+**Project palette (Archive dark base)**
+  #11100e→L=0.004  #1a1816→L=0.008  #242018→L=0.015
+  #f4f0ea→L=0.880  #b5ac9d→L=0.415  #847a6c→L=0.230
+  #8b6f56→L=0.178  #a85c52→L=0.140  #4a8f78→L=0.218
+  #b8955c→L=0.305  #6d7d8f→L=0.205  #2f2c26→L=0.025
 
-**Key colors**
-  #0000FF→L=0.072  #1D4ED8→L=0.103  #2563EB→L=0.129
-  #3B82F6→L=0.200  #007ACC→L=0.183  #569CD6→L=0.306
-  #38BDF8→L=0.435  #FF0000→L=0.213  #CD3131→L=0.107
-  #EF4444→L=0.215  #F44747→L=0.224  #DC2626→L=0.136
-  #00FF00→L=0.715  #008000→L=0.153  #22C55E→L=0.317
-  #16A34A→L=0.197  #4EC94E→L=0.472  #098658→L=0.080
-  #FFFF00→L=0.928  #FFD700→L=0.928  #F59E0B→L=0.361
-  #D97706→L=0.227  #B45309→L=0.136  #DCDCAA→L=0.693
-  #CE9178→L=0.347  #B5CEA8→L=0.568  #4EC9B0→L=0.467
-  #8B5CF6→L=0.180  #7C3AED→L=0.117
+**Project palette (Light theme)**
+  #FAFAF8→L=0.955  #F0F0EC→L=0.873  #E4E4E0→L=0.786
+  #111111→L=0.005  #333333→L=0.032  #555550→L=0.089
+  #5b4b93→L=0.092  #8a6a20→L=0.157  #CDCDC5→L=0.594
+
+**Project palette (Bright theme)**
+  #f8fafc→L=0.965  #0f172a→L=0.009  #475569→L=0.099
+  #7c3aed→L=0.117  #dc2626→L=0.136  #16a34a→L=0.197
+  #d97706→L=0.227  #2563eb→L=0.129
+
+**Standard greyscale**
+  #000000→L=0.000  #1E1E1E→L=0.013  #333333→L=0.032
+  #555555→L=0.091  #858585→L=0.235  #AAAAAA→L=0.402
+  #D4D4D4→L=0.658  #F3F3F3→L=0.896  #FFFFFF→L=1.000
 
 **CR formula**: CR = (max(L1,L2)+0.05) / (min(L1,L2)+0.05)
 **Pass thresholds**: text ≥4.5:1 | large text(18px+ or 14px bold+) ≥3.0:1 | UI/border/icon ≥3.0:1
+
+**Project CR verification (Archive dark)**
+  text-primary #f4f0ea(L=0.880) on bg-primary #11100e(L=0.004) → CR 17.2:1 AAA ✅
+  text-secondary #b5ac9d(L=0.415) on bg-primary → CR  8.6:1 AAA ✅
+  text-tertiary #847a6c(L=0.230) on bg-primary → CR  5.2:1 AA  ✅
+  accent-amber #b8955c(L=0.305) on bg-primary → CR  6.6:1 AA  ✅
+
+**Project CR verification (Light theme)**
+  text-primary #111111(L=0.005) on bg-primary #FAFAF8(L=0.955) → CR 18.3:1 AAA ✅
+  text-secondary #333333(L=0.032) on bg-primary → CR 12.3:1 AAA ✅
 `.trim();
+
+// IDENTITY_SEAL: PART-1 | role=wcag-lookup | inputs=none | outputs=WCAG_LUMINANCE_LOOKUP
 
 // ============================================================
 // PART 2 — Brand Color Auto-Correction
@@ -43,135 +56,121 @@ export const BRAND_COLOR_CORRECTION = `
 ### Brand Color Auto-Correction (3-step)
 
 **STEP A**: Find input color L-value from lookup table.
-**STEP B**: Calculate CR with white text (L=1.0). If ≥4.5:1, use as-is.
-**STEP C**: If CR insufficient → pick nearest corrected color below.
-           If not in table: keep original hue, lower lightness to L≤0.18.
+**STEP B**: Calculate CR against project background.
+  - Archive dark bg #11100e (L=0.004): white text CR threshold = 4.5:1 → need L≥0.175
+  - Light bg #FAFAF8 (L=0.955): dark text CR threshold = 4.5:1 → need L≤0.180
+**STEP C**: If CR insufficient → keep hue, adjust lightness. Or use project accent tokens.
 
-**White-text correction table (CR ≥4.5:1 guaranteed)**
-  #00FF00(L=0.715) → #008A00(L=0.182) CR 4.5:1
-  #FFFF00(L=0.928) → #787800(L=0.174) CR 4.7:1
-  #FF6600(L=0.305) → #B34700(L=0.106) CR 4.7:1
-  #FF0080(L=0.200) → #AA0055(L=0.081) CR 4.8:1
-  #00BFFF(L=0.520) → #0070A0(L=0.148) CR 4.6:1
-  #FF4444(L=0.215) → #BB1111(L=0.052) CR 5.1:1
-  #44FF44(L=0.527) → #1A7A1A(L=0.161) CR 4.6:1
-  #AAAAFF(L=0.440) → #4444CC(L=0.072) CR 5.2:1
+**Project accent tokens (pre-validated, use these first)**
+  Dark theme:  accent-amber #b8955c | accent-green #4a8f78 | accent-red #a85c52 | accent-purple #8b6f56
+  Light theme: accent-amber #8a6a20 | accent-green #2f9b83 | accent-red #c16258 | accent-purple #5b4b93
+  Bright theme: accent-amber #d97706 | accent-green #16a34a | accent-red #dc2626 | accent-purple #7c3aed
 
-**Bright brand colors (L≥0.4) → use black text instead**
-  #FFD700+#000000 → CR 14.9:1 AAA
-  #FFA500+#000000 → CR 10.6:1 AAA
-  #90EE90+#000000 → CR  9.2:1 AAA
-  #ADD8E6+#000000 → CR  9.8:1 AAA
+**External brand color correction table (CR ≥4.5:1)**
+  #00FF00(L=0.715) → #008A00(L=0.182) | #FFFF00(L=0.928) → #787800(L=0.174)
+  #FF0080(L=0.200) → #AA0055(L=0.081) | #00BFFF(L=0.520) → #0070A0(L=0.148)
+
+**Bright brand colors (L≥0.4) → use dark text (var(--color-text-primary) in light mode)**
 `.trim();
 
 // IDENTITY_SEAL: PART-2 | role=brand-color-correction | inputs=none | outputs=BRAND_COLOR_CORRECTION
 
 // ============================================================
-// PART 3 — Design Tokens (Colors, Z-Index, Motion, Spacing)
+// PART 3 — Project Design Tokens (ACTUAL from globals.css)
 // ============================================================
 
 export const DESIGN_TOKENS = `
-### Design Tokens — Dark Theme
+### Project Design Tokens — from globals.css @theme block
 
-**Backgrounds**
-  --color-bg-base: #1E1E1E (L=0.013)
-  --color-bg-surface: #252526 (L=0.019)
-  --color-bg-overlay: #333333 (L=0.032)
-  --color-bg-active: #3C3C3C (L=0.050)
+**⚠ CRITICAL: Use ONLY these token names. They are the REAL CSS variables in this project.**
 
-**Text**
-  --color-text-primary: #D4D4D4 (L=0.658 | CR 11.2:1 AAA)
-  --color-text-secondary: #858585 (L=0.235 | CR 4.5:1 AA)
-  --color-text-disabled: #555555 (WCAG exception: disabled)
+**Color tokens (Tailwind usage: \`bg-bg-primary\`, \`text-text-primary\`, \`border-border\` etc.)**
+  --color-bg-primary     | dark: #11100e  | light: #FAFAF8  | bright: #f8fafc
+  --color-bg-secondary   | dark: #1a1816  | light: #F0F0EC  | bright: #f0f2f5
+  --color-bg-tertiary    | dark: #242018  | light: #E4E4E0  | bright: #e4e7ec
+  --color-text-primary   | dark: #f4f0ea  | light: #111111  | bright: #0f172a
+  --color-text-secondary | dark: #b5ac9d  | light: #333333  | bright: #475569
+  --color-text-tertiary  | dark: #847a6c  | light: #555550  | bright: #94a3b8
+  --color-accent-purple  | dark: #8b6f56  | light: #5b4b93  | bright: #7c3aed
+  --color-accent-red     | dark: #a85c52  | light: #c16258  | bright: #dc2626
+  --color-accent-green   | dark: #4a8f78  | light: #2f9b83  | bright: #16a34a
+  --color-accent-amber   | dark: #b8955c  | light: #8a6a20  | bright: #d97706
+  --color-accent-blue    | dark: #6d7d8f  | light: #4a6a8f  | bright: #2563eb
+  --color-border         | dark: #2f2c26  | light: #CDCDC5  | bright: #cbd5e1
+  --color-surface-strong | rgba(26,24,22,0.94)
+  --color-surface-soft   | rgba(20,19,17,0.78)
 
-**Syntax highlighting**
-  --color-syntax-keyword: #569CD6 (CR 5.7:1 AA)
-  --color-syntax-string: #CE9178 (CR 6.3:1 AA)
-  --color-syntax-function: #DCDCAA (CR 11.8:1 AAA)
-  --color-syntax-number: #B5CEA8 (CR 9.8:1 AAA)
-  --color-syntax-comment: #6A9955 (CR 3.0:1 — 14px Bold required)
+**Shadow tokens**
+  --shadow-luxury    | multi-layer premium shadow
+  --shadow-panel     | standard panel shadow
+  --shadow-manuscript| document-specific shadow
 
-**Status**
-  --color-status-error: #F44747 (CR 4.6:1 AA)
-  --color-status-success: #4EC94E (CR 8.3:1 AAA)
-  --color-status-warn-bg: #FFD700 (background only — text MUST be #000000)
-  --color-status-warn-text: #000000 (CR 14.9:1 AAA)
+**Transition tokens (NOT duration+ease separate — combined shorthand)**
+  --transition-fast:   150ms cubic-bezier(0.16, 1, 0.3, 1)  — icon state, micro-interaction
+  --transition-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1)  — hover/active, card lift
+  --transition-slow:   400ms cubic-bezier(0.22, 1, 0.36, 1)  — panel slide, modal entrance
+  Usage: \`transition: background-color var(--transition-normal), border-color var(--transition-normal)\`
 
-**Focus / Border**
-  --color-focus-ring: #007ACC (CR 3.7:1 non-text OK)
-  --color-border: #474747
+**Border-radius tokens**
+  --radius-sm:6px  --radius-md:12px  --radius-lg:18px  --radius-xl:24px  --radius-full:9999px
 
-**Spacing (4px grid)**
-  --space-xs:4px  --space-sm:8px  --space-md:16px
-  --space-lg:24px --space-xl:32px --space-2xl:48px --space-3xl:64px
+**Spacing tokens (--sp-* namespace, NOT --space-*)**
+  --sp-xs:4px  --sp-sm:8px  --sp-md:16px  --sp-lg:24px  --sp-xl:32px  --sp-2xl:48px
+  4px grid enforced. Tailwind classes: \`p-[var(--sp-md)]\` or standard \`p-4\`, \`gap-3\`, \`space-y-2\`
 
-**Z-Index layers**
+**Glassmorphism blur tokens (--bl-*)**
+  --bl-sm:10px  --bl-md:18px  --bl-lg:28px
+  Usage: \`backdrop-filter: blur(var(--bl-md))\`
+
+**Z-Index layer tokens (--z-*)**
   --z-base:0  --z-dropdown:100  --z-sticky:200
   --z-overlay:300  --z-modal:400  --z-toast:500  --z-tooltip:600
-  Rule: NEVER use arbitrary z-index numbers. Always use --z-* tokens.
+  Rule: NEVER use arbitrary z-index numbers. Always use var(--z-*) tokens.
 
-**Motion tokens**
-  --duration-fast:100ms (icon state)  --duration-normal:150ms (hover/active)
-  --duration-slow:250ms (panel slide)  --duration-page:350ms (page transition)
-  --ease-standard: cubic-bezier(0.4,0,0.2,1)
-  --ease-enter: cubic-bezier(0,0,0.2,1)
-  --ease-exit: cubic-bezier(0.4,0,1,1)
+**Focus system (already global in globals.css)**
+  *:focus-visible → outline: 2px solid var(--color-accent-amber) + outline-offset:2px + amber glow
+  Do NOT redefine focus styles per component — the global rule handles it.
+  Only override for inverted backgrounds (light focus on dark surface).
 
-### Design Tokens — Light Theme
+**Font families**
+  --font-sans:     IBM Plex Sans → Noto Sans KR → system-ui  (UI text)
+  --font-mono:     JetBrains Mono → Fira Code               (code)
+  --font-display:  Cormorant Garamond → Noto Serif KR       (editorial titles)
+  --font-document: Noto Serif KR → IBM Plex Mono            (manuscript body)
 
-**Backgrounds**
-  --color-bg-base: #FFFFFF (L=1.000)
-  --color-bg-surface: #F3F3F3 (L=0.896)
-  --color-bg-overlay: #E8E8E8 (L=0.807)
-  --color-bg-active: #DCDCDC (L=0.693)
-
-**Text**
-  --color-text-primary: #1F1F1F (L=0.013 | CR 16.5:1 AAA)
-  --color-text-secondary: #616161 (L=0.120 | CR 6.2:1 AA)
-  --color-text-disabled: #AAAAAA (WCAG exception: disabled)
-
-**Syntax**
-  --color-syntax-keyword: #0000FF (CR 8.6:1 AAA)
-  --color-syntax-string: #A31515 (CR 7.9:1 AAA)
-  --color-syntax-function: #795E26 (CR 6.1:1 AA)
-  --color-syntax-number: #098658 (CR 4.6:1 AA)
-  --color-syntax-comment: #008000 (CR 5.1:1 AA)
-
-**Status**: same as dark theme. **Focus/Border**: --color-focus-ring:#007ACC (CR 4.5:1 AA), --color-border:#C8C8C8
-**Spacing/Z-Index/Motion**: inherited from dark theme (identical values).
+**Theme switching**
+  data-theme="dark" | data-theme="light"  (brightness)
+  data-color-theme="bright" | data-color-theme="beige"  (color palette)
+  Token values auto-switch via CSS — no JS color swapping needed.
 `.trim();
 
-// IDENTITY_SEAL: PART-3 | role=design-tokens | inputs=none | outputs=DESIGN_TOKENS
+// IDENTITY_SEAL: PART-3 | role=design-tokens | inputs=globals.css | outputs=DESIGN_TOKENS
 
 // ============================================================
 // PART 4 — Typography Scale
 // ============================================================
 
 export const TYPOGRAPHY_SCALE = `
-### Typography Complete Scale
+### Typography Scale
 
-**Font families**
-  --font-sans: 'Inter', 'Pretendard', system-ui, sans-serif
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace
+**Font families** (use Tailwind classes)
+  Body:      \`font-sans\`     → var(--font-sans)
+  Code:      \`font-mono\`     → var(--font-mono)
+  Editorial: font-family: var(--font-display)  (hero/title only)
+  Document:  font-family: var(--font-document) (manuscript body)
 
-**Type scale (4px grid)**
-  --text-xs:12px (badges, labels)
-  --text-sm:13px (code editor body)
-  --text-base:14px (UI default)
-  --text-md:16px (body, input fields)
-  --text-lg:20px (card titles, subtitles)
-  --text-xl:24px (section headings)
-  --text-2xl:32px (page titles)
-  --text-3xl:48px (hero headings)
+**Type scale** (Tailwind + custom)
+  text-xs:12px (badges) | text-sm:13-14px (UI/code) | text-base:16px (body)
+  text-lg:18-20px (subtitles) | text-xl:20-24px (section) | text-2xl:24-30px (page title)
+  text-3xl+:30-48px (hero)
+  Fluid hero: \`clamp(14px, 0.875rem + 0.25vw, 18px)\` already in body
 
-**Font weight**: normal=400, medium=500, semibold=600, bold=700
-**Line height**: tight=1.2(hero), snug=1.3(subtitle), normal=1.5(body), relaxed=1.6(code)
-**Letter spacing**: tight=-0.025em(hero), normal=0em, wide=0.05em(ALL CAPS labels)
+**Font weight**: font-normal(400) | font-medium(500) | font-semibold(600) | font-bold(700)
+**Line height**: body 1.65 (global default) | leading-tight(1.25) | leading-relaxed(1.625)
+**Letter spacing**: tracking-tight(-0.025em) for hero | tracking-normal(0) | tracking-wide(0.05em) ALL CAPS
 
 **WCAG font-size → CR mapping**
-  12-13px: CR ≥4.5:1 required
-  14px: CR ≥4.5:1 (bold: 3.0:1 OK)
-  20px+: CR ≥3.0:1 (large text)
+  12-13px: CR ≥4.5:1 | 14px bold: CR ≥3.0:1 | 18px+: CR ≥3.0:1 (large text)
 `.trim();
 
 // IDENTITY_SEAL: PART-4 | role=typography-scale | inputs=none | outputs=TYPOGRAPHY_SCALE
@@ -183,28 +182,27 @@ export const TYPOGRAPHY_SCALE = `
 export const RESPONSIVE_RULES = `
 ### Responsive / Mobile Rules
 
-**Breakpoints**
-  --bp-sm:640px (phone landscape)  --bp-md:768px (tablet)
-  --bp-lg:1024px (small desktop)  --bp-xl:1280px (desktop)  --bp-2xl:1536px (wide)
+**Breakpoints** (standard Tailwind + project usage)
+  sm:640px (phone landscape) | md:768px (tablet — PRIMARY) | lg:1024px (desktop)
+  xl:1280px (wide) | 2xl:1536px (ultra-wide)
+  Project also uses: 375px (mobile cutoff), 1220px/1240px (content max-width)
 
 **Touch targets (mandatory)**
-  All interactive elements: min-width:44px, min-height:44px (WCAG 2.5.5 AAA)
-  Adjacent touch targets: gap ≥ 8px (--space-sm)
-  E-commerce CTA buttons: min-height:48px
+  All interactive elements: min-width:44px, min-height:44px (WCAG 2.5.5)
+  Adjacent targets: gap ≥ var(--sp-sm) (8px)
+  Purchase/CTA buttons: min-height:48px
 
 **Responsive typography**
-  Hero (48px) → mobile: 32px
-  Section heading (24px) → mobile: 20px
-  Body/Code: unchanged (16px / 13px)
+  Hero (text-3xl+) → mobile: text-2xl | Section (text-xl) → mobile: text-lg
+  Body(16px) / Code(13px): unchanged across breakpoints
 
 **Responsive spacing**
-  Component padding: mobile 16px → tablet+ 24px
-  Section spacing: mobile 48px → desktop 64px
+  Component padding: mobile var(--sp-md) → tablet+ var(--sp-lg)
+  Section spacing: mobile var(--sp-2xl) → desktop var(--sp-2xl) or 64px
 
 **Grid breakdowns**
-  Features 3-col: desktop 3→tablet 2→mobile 1
-  KPI cards 4-col: desktop 4→tablet 2→mobile 2
-  Product grid 4-col: desktop 4→tablet 2→mobile 2
+  3-col features: lg:3 → md:2 → sm:1
+  4-col KPI/products: xl:4 → md:2 → sm:2
 `.trim();
 
 // IDENTITY_SEAL: PART-5 | role=responsive-rules | inputs=none | outputs=RESPONSIVE_RULES
@@ -214,97 +212,116 @@ export const RESPONSIVE_RULES = `
 // ============================================================
 
 export const MOTION_RULES = `
-### Motion Accessibility Rules
+### Motion Rules — Using Project Transition Tokens
+
+**Project transition tokens (combined shorthand — duration+easing in one)**
+  var(--transition-fast):   150ms cubic-bezier(0.16, 1, 0.3, 1)
+  var(--transition-normal): 250ms cubic-bezier(0.16, 1, 0.3, 1)
+  var(--transition-slow):   400ms cubic-bezier(0.22, 1, 0.36, 1)
 
 **Transition writing rules**
   FORBIDDEN: transition: all 0.3s
-  REQUIRED: specify property + token duration + token easing
-  Example: transition: background-color var(--duration-normal) var(--ease-standard),
-                       color var(--duration-normal) var(--ease-standard);
+  REQUIRED: specify property + project token
+  Example: transition: background-color var(--transition-normal),
+                       border-color var(--transition-normal);
 
-**Duration guide**
-  fast(100ms): icon color, focus ring appear
-  normal(150ms): button hover/active, input border
-  slow(250ms): dropdown open, sidebar collapse
-  page(350ms): modal entrance, page transition
+**Usage guide**
+  fast:   icon color, focus ring, micro-interactions
+  normal: button hover/active, card hover lift, border color
+  slow:   modal/panel entrance, sidebar collapse, page transition
 
-**prefers-reduced-motion — MANDATORY when animation/transition exists**
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
+**prefers-reduced-motion — already declared globally in globals-animations.css**
+  The project has a global \`@media (prefers-reduced-motion: reduce)\` block.
+  For NEW @keyframes animations, add a scoped reduced-motion override.
+  Do NOT re-declare the global block — it already exists.
+
+**Project animation library (29 @keyframes in globals-animations.css)**
+  page-enter | success-pulse | save-success | error-shake | rise-in
+  cs-fade-in | cs-fade-in-scale | cs-slide-in-left | cs-slide-in-right
+  skeleton-shimmer | click-ripple | cs-bounce-dots
+  Use existing animations. Only create NEW @keyframes if none fits.
 `.trim();
 
-// IDENTITY_SEAL: PART-6 | role=motion-rules | inputs=none | outputs=MOTION_RULES
+// IDENTITY_SEAL: PART-6 | role=motion-rules | inputs=globals-animations.css | outputs=MOTION_RULES
 
 // ============================================================
 // PART 7 — Component 5-State Matrix
 // ============================================================
 
 export const COMPONENT_STATE_MATRIX = `
-### Component 5-State Visual Matrix
+### Component 5-State Matrix — Using Project Tokens
 
-| State    | Background              | Text/Icon              | Border                    | Cursor      |
-|----------|-------------------------|------------------------|---------------------------|-------------|
-| Default  | --color-bg-surface      | --color-text-primary   | --color-border            | default     |
-| Hover    | ΔL ±0.03 (lighter)     | unchanged              | --color-focus-ring        | pointer     |
-| Focus    | unchanged               | unchanged              | 2px solid --color-focus-ring | -        |
-| Active   | ΔL ±0.06 (darker)      | unchanged              | --color-focus-ring        | pointer     |
-| Disabled | --color-text-disabled   | --color-text-disabled  | --color-border opacity 0.5 | not-allowed |
+| State    | Background                | Text/Icon                | Border/Outline              | Cursor      |
+|----------|---------------------------|--------------------------|-----------------------------|-------------|
+| Default  | bg-bg-secondary           | text-text-primary        | border-border               | default     |
+| Hover    | bg-bg-tertiary            | unchanged                | border-accent-amber/40      | pointer     |
+| Focus    | unchanged                 | unchanged                | 2px solid accent-amber(global)| —         |
+| Active   | bg-bg-primary             | unchanged                | border-accent-amber         | pointer     |
+| Disabled | opacity:0.3               | text-text-tertiary       | border-border               | not-allowed |
 
-**CSS pattern**
-  .btn { background: var(--color-bg-surface); color: var(--color-text-primary);
-         border: 1px solid var(--color-border);
-         transition: background-color var(--duration-normal) var(--ease-standard),
-                     border-color var(--duration-normal) var(--ease-standard); }
-  .btn:hover { background: var(--color-bg-active); }
-  .btn:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
-  .btn:active { background: var(--color-bg-overlay); }
-  .btn:disabled { color: var(--color-text-disabled); cursor: not-allowed; opacity: 0.6; }
+**Tailwind pattern (project-aligned)**
+  .btn {
+    @apply bg-bg-secondary text-text-primary border border-border rounded-[var(--radius-md)];
+    transition: background-color var(--transition-normal), border-color var(--transition-normal),
+                transform var(--transition-fast);
+  }
+  .btn:hover { @apply bg-bg-tertiary; transform: translateY(-1px); }
+  /* focus-visible handled by global rule — do NOT redeclare */
+  .btn:active { @apply bg-bg-primary; }
+  .btn:disabled { @apply opacity-30 pointer-events-none; }
 
-**Disabled accessibility exception**: WCAG CR not required for disabled elements (WCAG 1.4.3 exception).
-  But: WHY it's disabled must be explained via text or aria-describedby.
+**Existing component classes (use instead of raw Tailwind when available)**
+  .ds-btn-primary | .ds-btn-secondary | .ds-btn-danger | .ds-btn-ghost
+  .premium-button | .premium-button-sm | .premium-button-ghost | .premium-button-danger
+  .ds-card | .ds-card-sm | .ds-card-lg
+  .ds-input | .ds-label
+  .premium-panel | .premium-panel-soft
+  .badge-classified | .badge-allow | .badge-deny | .badge-amber | .badge-blue
+
+**Disabled accessibility**: WCAG CR exemption for disabled elements (1.4.3).
+  But: explain WHY disabled via text or aria-describedby.
 `.trim();
 
-// IDENTITY_SEAL: PART-7 | role=component-state-matrix | inputs=none | outputs=COMPONENT_STATE_MATRIX
+// IDENTITY_SEAL: PART-7 | role=component-state-matrix | inputs=globals-components.css | outputs=COMPONENT_STATE_MATRIX
 
 // ============================================================
-// PART 8 — Anti-Patterns (全 preset common)
+// PART 8 — Anti-Patterns
 // ============================================================
 
 export const ANTIPATTERNS = `
-### Anti-Patterns — Forbidden in ALL presets
+### Anti-Patterns — Forbidden in ALL contexts
 
 **Color**
-  FORBIDDEN: bright bg (L≥0.4) + yellow/fluorescent/light text alone
-  FORCED: yellow bg (#FFD700) → text must be #000000
+  FORBIDDEN: bright bg (L≥0.4) + yellow/fluorescent text alone
+  FORCED: yellow bg → text must be var(--color-text-primary) in light theme or #000000
+  FORBIDDEN: raw Tailwind color classes (\`bg-blue-500\`, \`text-red-500\`) in production
+  FORCED: use project tokens (\`bg-accent-blue\`, \`text-accent-red\`)
 
 **Accessibility**
-  FORBIDDEN: outline:none or outline:0 alone
-  FORCED: :focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
-  FORBIDDEN: color-only status indication (error/success/warning)
-  FORCED: color + icon(⚠✓✗) + text label (minimum 2 of 3)
+  FORBIDDEN: outline:none or outline:0 (global focus-visible handles it)
+  FORBIDDEN: color-only status indication
+  FORCED: color + icon(lucide-react) + text label (minimum 2 of 3)
 
 **Spacing**
-  FORBIDDEN: non-multiple-of-4 spacing (15px, 13px, 7px, 23px, 10px)
-  NORMALIZE: 7→8, 10→8or12, 13→12, 15→16, 23→24
+  FORBIDDEN: non-4-multiple spacing (15px, 13px, 7px, 10px)
+  NORMALIZE: use --sp-* tokens or Tailwind 4px grid (p-1=4px, p-2=8px, p-4=16px)
 
 **Hardcoding**
-  FORBIDDEN: color: #1E1E1E (hex direct)  → FORCED: var(--color-text-primary)
-  FORBIDDEN: z-index: 9999 (arbitrary)     → FORCED: var(--z-modal)
+  FORBIDDEN: hex color direct in JSX → use Tailwind semantic classes
+  FORBIDDEN: z-index: 9999 → use var(--z-*)
+  FORBIDDEN: arbitrary border-radius → use --radius-* tokens
 
 **Transition**
-  FORBIDDEN: transition: all 0.3s (no target)
-  FORCED: transition: background-color var(--duration-normal) var(--ease-standard)
+  FORBIDDEN: transition: all 0.3s
+  FORCED: transition: [property] var(--transition-normal)
 
 **Mobile**
   FORBIDDEN: interactive element min-height < 44px
-  FORCED: min-height: 44px; min-width: 44px;
-  FORBIDDEN: animation/transition without prefers-reduced-motion
-  FORCED: @media (prefers-reduced-motion: reduce) block
+  FORBIDDEN: new animation without checking existing @keyframes first
+
+**Component**
+  FORBIDDEN: rebuilding .ds-btn-*, .premium-button, .ds-card from scratch
+  FORCED: use existing component classes, extend only if insufficient
 `.trim();
 
 // IDENTITY_SEAL: PART-8 | role=antipatterns | inputs=none | outputs=ANTIPATTERNS
@@ -319,7 +336,7 @@ export const ANTIPATTERNS = `
  * Do NOT inject into all agents — only UI pipeline.
  */
 export const DESIGN_SYSTEM_SPEC = [
-  '## Design System Spec v8.0 — UI Generation Rules (mandatory)\n',
+  '## Design System Spec v8.0 (Hybrid) — Project-Aligned UI Rules (mandatory)\n',
   WCAG_LUMINANCE_LOOKUP,
   BRAND_COLOR_CORRECTION,
   DESIGN_TOKENS,

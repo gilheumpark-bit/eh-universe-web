@@ -1,8 +1,7 @@
 // ============================================================
 // PART 1 — Anchor Check (7 items) + 10-Step Linter
 // ============================================================
-// Design Team Lead AI v8.0 — Self-verification prompts.
-// Injected alongside DESIGN_SYSTEM_SPEC into UI-generating agents.
+// Design Team Lead AI v8.0 (Hybrid) — Self-verification using project tokens.
 
 /**
  * ANCHOR CHECK — run internally before every code output.
@@ -11,13 +10,13 @@
 export const ANCHOR_CHECK = `
 ### ANCHOR CHECK — Execute before every code output
 
-  ① Am I using ONLY --color-* tokens? (no hex hardcoding)
-  ② Am I NOT using outline:none alone?
-  ③ Am I using ONLY multiples of 4 for spacing?
-  ④ Am I expressing state with color + icon + text?
+  ① Am I using ONLY project semantic tokens? (bg-bg-primary, text-text-primary, border-border, accent-*)
+  ② Am I NOT overriding the global focus-visible rule? (no outline:none, no custom focus)
+  ③ Am I using ONLY 4-multiple spacing? (--sp-* tokens or Tailwind p-1/p-2/p-4/gap-*)
+  ④ Am I expressing state with color + icon + text? (minimum 2 of 3)
   ⑤ Are all touch targets ≥ 44×44px?
-  ⑥ Have I declared prefers-reduced-motion?
-  ⑦ Am I using ONLY var(--z-*) tokens for z-index?
+  ⑥ Am I using existing .ds-*/.premium-* classes where available?
+  ⑦ Am I using var(--z-*) tokens for z-index? (no arbitrary numbers)
 
 If ANY item is "no" → do NOT output code. Fix first, then output.
 `.trim();
@@ -28,29 +27,29 @@ If ANY item is "no" → do NOT output code. Fix first, then output.
 export const DESIGN_LINTER_10STEP = `
 ### 10-Step Design Linter — Must pass before code output
 
-  [ ] 1.  All text-background CR meets size threshold (4.5:1 or 3:1)?
-  [ ] 2.  No yellow/fluorescent text alone on bright bg (L≥0.4)?
-  [ ] 3.  Warning/yellow: bg=yellow + text=black combo?
-  [ ] 4.  :focus-visible implemented. No standalone outline:none.
-  [ ] 5.  Status: color + icon or text, minimum 2 combined.
-  [ ] 6.  All spacing is multiple of 4. No arbitrary values (15px, 13px).
-  [ ] 7.  All colors use var(--color-*). No hex hardcoding.
+  [ ] 1.  All text-background CR meets threshold? (check against project L-values)
+  [ ] 2.  No raw Tailwind colors (bg-blue-500, text-red-600)? Use accent-* tokens.
+  [ ] 3.  Warning/yellow: bg uses accent-amber + text uses text-primary (dark text)?
+  [ ] 4.  Global :focus-visible preserved. No outline:none anywhere.
+  [ ] 5.  Status: color + icon(lucide) + text label, minimum 2 combined.
+  [ ] 6.  All spacing via --sp-* or Tailwind 4px grid. No arbitrary values.
+  [ ] 7.  All colors via semantic classes (bg-bg-*, text-text-*, text-accent-*, border-border).
   [ ] 8.  Interactive elements min-height/min-width ≥ 44px.
-  [ ] 9.  animation/transition present → prefers-reduced-motion declared.
+  [ ] 9.  Transitions use var(--transition-fast/normal/slow). No transition:all.
   [ ] 10. z-index uses var(--z-*) tokens only. No arbitrary numbers.
 
 After passing, append this comment to code output:
 
 /*
-[Design Linter — WCAG v8.0]
-Background:    --color-bg-*   | L=X.XXX
-Text:          --color-text-* | CR XX.X:1 ✅/❌ grade
+[Design Linter — v8.0 Hybrid]
+Background:    bg-bg-* semantic class ✅/❌
+Text CR:       text-text-* on bg-bg-* → CR XX.X:1 ✅/❌
 Touch target:  min-height Xpx ✅/❌
-Motion a11y:   prefers-reduced-motion ✅/❌
-Z-Index:       var(--z-*) ✅/❌
-Preset:        PRESET-X | Theme: dark/light
+Motion:        var(--transition-*) tokens ✅/❌
+Z-Index:       var(--z-*) tokens ✅/❌
+Components:    .ds-*/.premium-* reused ✅/❌
+Preset:        PRESET-X | Theme: dark/light/bright/beige
 Rejected:      [list or "none"]
-Fallback:      [describe or "N/A"]
 */
 `.trim();
 
@@ -67,7 +66,7 @@ Every UI code output MUST follow this structure:
 
 🧠 3-Step Thinking Process
 [Analysis] Component / Preset / Theme / Detected anti-patterns
-[Design]   Rule application results + Rejected items + REFERENCE patterns
+[Design]   Rule application + Rejected items + Existing classes reused
 [Verify]   ANCHOR CHECK 7 items + 10-step Linter pass/fail
 
 💻 Code
@@ -75,110 +74,120 @@ Every UI code output MUST follow this structure:
 code
 
 ✅ Design Linter Report
-WCAG verification comment format (see linter block)
+Verification comment format (see linter block)
 `.trim();
 
 // IDENTITY_SEAL: PART-2 | role=output-schema | inputs=none | outputs=OUTPUT_SCHEMA
 
 // ============================================================
-// PART 3 — FEW-SHOT Gold Standard Examples (7)
+// PART 3 — FEW-SHOT Gold Standard Examples (7) — Project-Aligned
 // ============================================================
 
 export const FEW_SHOT_EXAMPLES = `
-### FEW-SHOT Gold Standard Examples
+### FEW-SHOT Gold Standard Examples — Using Project Tokens
 
 **#1 [Anti-pattern 3-way defense]**
 User: "[PRESET-2] outline:none, error in red text only, margin 15px."
-→ [Analysis] 3 anti-patterns: ① outline:none WCAG 2.4.7 ② color-only error WCAG 1.4.1 ③ 15px non-4-multiple
-→ [Design] ① Reject → restore :focus-visible ② Reject → color+⚠icon+text ③ 15px→16px normalize
-→ Code: .form-field{padding:var(--space-md)} .input:focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
-  <p class="error-msg" role="alert"><WarningIcon aria-hidden="true"/>이메일 형식이 올바르지 않습니다.</p>
+→ [Analysis] 3 anti-patterns: ① outline:none (global handles it) ② color-only ③ 15px
+→ [Design] ① Reject — global focus-visible already applied ② accent-red + AlertTriangle icon + text ③ 15→16px (--sp-md)
+→ Code: .form-field { padding: var(--sp-md) } — no outline override needed
+  <p class="text-accent-red flex items-center gap-2" role="alert">
+    <AlertTriangle size={16} aria-hidden="true" /> 이메일 형식이 올바르지 않습니다.
+  </p>
 
-**#2 [Brand color correction]**
-User: "[PRESET-5] Sign-up button. Brand #00FF00. White text."
-→ [Analysis] BRAND algorithm: #00FF00 L=0.715 + white → CR 1.4:1 FAIL
-→ [Design] Correct to #008A00 (L=0.182) → CR 4.5:1 ✅, green hue preserved
-→ Code: --color-accent-primary:#008A00; .btn-primary{background:var(--color-accent-primary);color:#FFFFFF;min-height:44px}
-  + @media(prefers-reduced-motion:reduce){.btn-primary{transition:none}}
+**#2 [Brand color correction + project accent]**
+User: "[PRESET-5] Sign-up button. Brand #00FF00."
+→ [Analysis] #00FF00 (L=0.715) on light bg → too bright. Project has accent-green.
+→ [Design] Use accent-green token (#2f9b83 in light, L=0.197) instead. CR vs white: 4.5:1 ✅
+→ Code: <button class="premium-button bg-accent-green text-white min-h-[44px]">가입하기</button>
 
-**#3 [PRESET-1 blur rejection]**
-User: "[PRESET-1] Terminal panel with backdrop-filter:blur glassmorphism."
-→ [Analysis] PRESET-1 forbids blur in editor/panel
-→ [Design] Reject → solid bg + lightness step separation (ΔL=0.019)
-→ Code: .ide-terminal{background-color:var(--color-bg-overlay);font-family:var(--font-mono);z-index:var(--z-base)}
+**#3 [PRESET-1 blur rejection → use bg layers]**
+User: "[PRESET-1] Terminal with glassmorphism."
+→ [Analysis] PRESET-1 forbids blur in editor/panel areas
+→ [Design] Reject blur → use bg-bg-secondary (solid), border-border for separation
+→ Code: <div class="bg-bg-secondary border-t border-border p-[var(--sp-md)] font-mono text-sm">
 
 **#4 [Spacing normalize + status combination]**
 User: "Green-only success badge. Padding 10px."
-→ [Analysis] ① 10px→8px normalize ② green-only → color-blind violation
-→ [Design] ① var(--space-sm) 8px ② green + ✓icon + "완료" text
-→ Code: .badge-success{background:var(--color-status-success);color:#000;padding:var(--space-xs) var(--space-sm)}
-  <span class="badge-success" role="status"><CheckIcon aria-hidden="true"/>완료</span>
+→ [Analysis] ① 10px → 8px (--sp-sm) ② green-only → need icon+text
+→ [Design] Use .badge-allow (existing) or accent-green + Check icon + "완료"
+→ Code: <span class="badge-allow inline-flex items-center gap-1">
+    <Check size={12} aria-hidden="true" /> 완료
+  </span>
 
 **#5 [Fallback + responsive login form]**
 User: "Make a login form."
-→ [Analysis] No preset → Fallback PRESET-2 Light. No framework → HTML+CSS.
-→ [Design] Light tokens. Email+password+submit. Responsive max-width:400px. 3 states.
-→ Code: /* [Fallback] Preset unspecified → PRESET-2 Light defaults applied */
-  .login-form{max-width:400px;padding:var(--space-xl)} .form-input:focus-visible{outline:2px solid var(--color-focus-ring)}
-  + @media(prefers-reduced-motion:reduce) + @media(max-width:640px)
+→ [Analysis] No preset → PRESET-2 Light+Bright. Use existing .ds-input, .ds-label classes.
+→ [Design] .ds-input + .ds-label + .premium-button. max-w-md. Responsive padding.
+→ Code: /* [Fallback] Preset unspecified → PRESET-2 Light+Bright defaults applied */
+  <form class="flex flex-col gap-[var(--sp-sm)] max-w-md p-[var(--sp-xl)]">
+    <label class="ds-label" for="email">이메일</label>
+    <input class="ds-input" id="email" type="email" aria-required="true" />
+    <button class="premium-button min-h-[44px]" type="submit">로그인</button>
+  </form>
 
-**#6 [Responsive Hero + typography scale]**
+**#6 [Responsive Hero with project fonts]**
 User: "[PRESET-2] Landing Hero section."
-→ [Analysis] PRESET-2 Light. Hero CR≥7:1 AAA mandatory.
-→ [Design] Title var(--text-3xl)/tracking-tight. Single Primary CTA. Mobile: text-3xl→text-2xl.
-→ Code: .hero-title{color:var(--color-text-primary);font-size:var(--text-3xl);letter-spacing:var(--tracking-tight)}
-  .hero-cta{min-height:44px;padding:var(--space-sm) var(--space-lg)}
-  @media(max-width:640px){.hero-title{font-size:var(--text-2xl)}}
+→ [Analysis] PRESET-2 Light+Bright. Hero CR≥7:1 → text-text-primary on bg-bg-primary = 18.3:1 ✅
+→ [Design] font-display for title. Single .premium-button CTA. Responsive text scaling.
+→ Code: <section class="bg-bg-primary py-[var(--sp-2xl)] text-center">
+    <h1 class="text-text-primary text-4xl md:text-5xl font-bold tracking-tight"
+        style="font-family:var(--font-display)">...</h1>
+    <button class="premium-button mt-[var(--sp-lg)] min-h-[44px]">시작하기</button>
+  </section>
 
-**#7 [Modal + Z-Index layer system]**
+**#7 [Modal + Z-Index layers]**
 User: "[PRESET-5] Delete confirmation modal."
-→ [Analysis] PRESET-5 SaaS. Modal needs z-overlay(300) + z-modal(400) separation.
-→ [Design] Dim overlay + panel. Delete button = status-error + trash icon + text. Motion + reduced-motion.
-→ Code: .modal-overlay{z-index:var(--z-overlay)} .modal-panel{z-index:var(--z-modal)}
-  .btn-delete{background:var(--color-status-error);min-height:44px}
-  <button class="btn-delete"><TrashIcon aria-hidden="true"/>삭제</button>
-  + role="dialog" aria-modal="true" + @keyframes + @media(prefers-reduced-motion:reduce)
+→ [Analysis] z-overlay(300) for dim + z-modal(400) for panel. Use accent-red for danger.
+→ [Design] .premium-panel for modal body. .premium-button-danger for delete. Existing animations.
+→ Code: <div class="fixed inset-0 bg-black/50" style="z-index:var(--z-overlay)">
+    <div class="premium-panel max-w-md" style="z-index:var(--z-modal)"
+         role="dialog" aria-modal="true" aria-labelledby="del-title">
+      <button class="premium-button-ghost">취소</button>
+      <button class="premium-button-danger min-h-[44px]">
+        <Trash2 size={16} aria-hidden="true" /> 삭제
+      </button>
+    </div>
+  </div>
 `.trim();
 
-// IDENTITY_SEAL: PART-3 | role=few-shot-examples | inputs=none | outputs=FEW_SHOT_EXAMPLES
+// IDENTITY_SEAL: PART-3 | role=few-shot-examples | inputs=project-tokens | outputs=FEW_SHOT_EXAMPLES
 
 // ============================================================
-// PART 4 — REJECTED Patterns (7)
+// PART 4 — REJECTED Patterns (7) — Project-Aligned
 // ============================================================
 
 export const REJECTED_PATTERNS = `
 ### REJECTED — Absolutely forbidden response patterns
 
-**#1 Sycophancy (yielding to user rule violation)**
-  User: "Remove outline"
-  BAD: .input{outline:none}
-  RIGHT: :focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
+**#1 Overriding global focus-visible**
+  BAD: .input { outline: none } or :focus { outline: 0 }
+  RIGHT: Do nothing — globals.css handles *:focus-visible with accent-amber
 
-**#2 Code without reasoning**
-  User: "Yellow button"
-  BAD: .btn{background:yellow;color:white} (CR 1.07:1 FAIL, no verification)
-  RIGHT: yellow bg(#FFD700)+#000000 text → CR 14.9:1 AAA (3-step reasoning first)
+**#2 Code without CR reasoning**
+  BAD: <div class="bg-yellow-300 text-yellow-100">
+  RIGHT: Check L-values → yellow-300 on yellow-100 = CR ~1.2:1 FAIL
+         → Use .badge-amber (pre-validated) or bg-accent-amber + text-text-primary
 
-**#3 Unit confusion (CSS % vs WCAG L-value)**
-  BAD: "Background lightness 60% so..."
-  RIGHT: "Background L=0.896 (≥0.4, bright bg) so..." (WCAG L is 0–1, not %)
+**#3 Raw Tailwind colors instead of project tokens**
+  BAD: <button class="bg-blue-500 text-white">
+  RIGHT: <button class="premium-button"> or <button class="bg-accent-blue text-text-primary">
 
-**#4 Hex hardcoding**
-  BAD: .text{color:#D4D4D4;background:#1E1E1E}
-  RIGHT: .text{color:var(--color-text-primary);background:var(--color-bg-base)}
+**#4 Hex hardcoding in JSX**
+  BAD: <div style={{color:'#f4f0ea', background:'#11100e'}}>
+  RIGHT: <div class="text-text-primary bg-bg-primary">
 
 **#5 Non-4-multiple spacing**
-  BAD: .card{padding:20px 15px;margin:10px}
-  RIGHT: .card{padding:20px var(--space-md);margin:var(--space-sm)} (15→16, 10→8)
+  BAD: <div class="p-[15px] m-[10px]">
+  RIGHT: <div class="p-4 m-2"> or <div class="p-[var(--sp-md)] m-[var(--sp-sm)]">
 
 **#6 Arbitrary z-index**
-  BAD: .modal{z-index:9999} .tooltip{z-index:99}
-  RIGHT: .modal-panel{z-index:var(--z-modal)} .tooltip{z-index:var(--z-tooltip)}
+  BAD: <div style={{zIndex:9999}}>
+  RIGHT: <div style={{zIndex:'var(--z-modal)'}}>
 
-**#7 Missing prefers-reduced-motion**
-  BAD: .btn{transition:all 0.3s} @keyframes spin{...} (no reduced-motion)
-  RIGHT: .btn{transition:background-color var(--duration-normal) var(--ease-standard)}
-         @media(prefers-reduced-motion:reduce){.btn,.spinner{transition:none;animation:none}}
+**#7 Rebuilding existing components**
+  BAD: Writing 30 lines of button CSS when .premium-button exists
+  RIGHT: <button class="premium-button">text</button> — extend with additional Tailwind only if needed
 `.trim();
 
 // IDENTITY_SEAL: PART-4 | role=rejected-patterns | inputs=none | outputs=REJECTED_PATTERNS
@@ -193,7 +202,7 @@ export const REJECTED_PATTERNS = `
  * Inject alongside DESIGN_SYSTEM_SPEC for UI-generating agents.
  */
 export const DESIGN_LINTER_SPEC = [
-  '## Design Linter v8.0 — Self-Verification Rules (mandatory)\n',
+  '## Design Linter v8.0 (Hybrid) — Self-Verification Rules (mandatory)\n',
   ANCHOR_CHECK,
   DESIGN_LINTER_10STEP,
   OUTPUT_SCHEMA,

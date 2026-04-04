@@ -1,8 +1,7 @@
 // ============================================================
-// PART 1 — Preset Definitions (5 types)
+// PART 1 — Preset Definitions (5 types) — Project-Aligned
 // ============================================================
-// Design Team Lead AI v8.0 — Preset-specific rules.
-// Dynamically selected by chat / composer based on user request.
+// Design Team Lead AI v8.0 (Hybrid) — Uses actual project tokens & components.
 
 export type DesignPresetId = 1 | 2 | 3 | 4 | 5;
 
@@ -11,6 +10,7 @@ export interface DesignPreset {
   name: string;
   nameKo: string;
   defaultTheme: 'dark' | 'light';
+  colorTheme?: 'bright' | 'beige';
   prompt: string;
 }
 
@@ -18,114 +18,93 @@ export const DESIGN_PRESETS: Record<DesignPresetId, DesignPreset> = {
   1: {
     id: 1, name: 'IDE / Coding App', nameKo: 'IDE / 코딩 앱', defaultTheme: 'dark',
     prompt: `[PRESET-1: IDE / Coding App]
-Default theme: Dark
-Font: var(--font-mono) mandatory
+Theme: data-theme="dark" (Archive base)
+Font: font-mono (var(--font-mono)) mandatory for code areas
 Layout: ActivityBar(48px) | Sidebar(240px) | Editor | Panel(bottom)
 
 FORBIDDEN:
-  - backdrop-filter:blur — NEVER in editor/panel areas
-  - background-image, gradients — NEVER in editor area
-  - arbitrary z-index numbers — var(--z-*) tokens only
+  - backdrop-filter:blur in editor/panel → use solid bg-bg-secondary/bg-bg-tertiary
+  - background-image/gradients in editor area
+  - Arbitrary z-index → use var(--z-*)
 REQUIRED:
-  - All 5 syntax highlighting tokens must be specified
-  - line-height: var(--leading-relaxed) (1.6)
-  - Layer separation by background lightness difference (ΔL ≈ 0.006–0.013)
-  - Code font: var(--text-sm) 13px
+  - Layer separation by bg-bg-primary → bg-bg-secondary → bg-bg-tertiary
+  - line-height: leading-relaxed (1.625) for code
+  - Code font: text-sm (13px) with font-mono
+  - Use .premium-panel for floating panels (already has backdrop-blur)
 
-REFERENCE: VS Code Web, Linear, Warp Terminal patterns.
-  - Layout: Left ActivityBar + Sidebar + main editor 3-column
-  - Density: information-dense, minimal internal padding (8-16px)
-  - Typography: monospace, small text (12-13px), generous line-height (1.6)
-  - Layers: background lightness steps for area separation (no blur)`,
+REFERENCE: VS Code Web, Linear, Warp Terminal — information-dense, minimal padding.`,
   },
 
   2: {
-    id: 2, name: 'Landing Page / Marketing', nameKo: '랜딩페이지 / 마케팅', defaultTheme: 'light',
+    id: 2, name: 'Landing Page / Marketing', nameKo: '랜딩페이지 / 마케팅', defaultTheme: 'light', colorTheme: 'bright',
     prompt: `[PRESET-2: Landing Page / Marketing]
-Default theme: Light
+Theme: data-theme="light" + data-color-theme="bright"
 Layout: Hero → Features(3-col) → Social Proof → Pricing → CTA → Footer
 
 FORBIDDEN:
-  - 2+ CTA buttons at same visual weight
-  - Text on Hero background image without dim overlay
-  - Yellow stars(★) alone — must pair with "4.9점" text
+  - 2+ CTA buttons at same visual weight → 1 primary (.premium-button) + 1 ghost
+  - Text on Hero bg image without dim overlay
+  - Yellow stars alone → pair with "4.9점" text
 REQUIRED:
-  - Hero title: CR ≥ 7.0:1 (AAA) mandatory
-  - Primary CTA: 1 per page, padding ≥ 12px 24px, min-height 44px
-  - Section background alternation: minimum 2 different backgrounds for rhythm
-  - Hero title: var(--text-3xl), letter-spacing: var(--tracking-tight)
+  - Hero title: CR ≥7:1 AAA → text-text-primary on bg-bg-primary is 18.3:1 ✅
+  - Primary CTA: .premium-button or .ds-btn-primary, min-height 44px
+  - Section bg alternation: bg-bg-primary ↔ bg-bg-secondary for rhythm
+  - Hero: text-3xl+ / font-display / tracking-tight
 
-REFERENCE: Stripe, Vercel, Framer patterns.
-  - Layout: Hero → Features 3-col → Social Proof → Pricing → CTA sequence
-  - Density: generous breathing room (section gap 64-96px)
-  - Typography: large Hero titles (40-60px), clear size hierarchy (3+ levels)
-  - Rhythm: alternating backgrounds (white ↔ light grey ↔ accent)`,
+REFERENCE: Stripe, Vercel, Framer — generous whitespace, clear type hierarchy.`,
   },
 
   3: {
     id: 3, name: 'Dashboard / Admin', nameKo: '대시보드 / 어드민', defaultTheme: 'light',
     prompt: `[PRESET-3: Dashboard / Admin]
-Default theme: Light (dark sidebar allowed)
+Theme: data-theme="light" (dark sidebar via bg-bg-primary in archive base allowed)
 Layout: Sidebar(240px) | TopBar(56px) | KPI Row(4-col) | Chart | Table
 
 FORBIDDEN:
-  - KPI up/down expressed by color only → ▲▼ icons mandatory
-  - Chart legend omitted with color-only series distinction
+  - KPI up/down by color only → ▲▼ icons (lucide: TrendingUp/TrendingDown) mandatory
+  - Chart legend omitted → color + shape (solid/dashed) dual encoding
 REQUIRED:
-  - font-variant-numeric: tabular-nums (number alignment)
-  - Table row height: minimum 40px
-  - Chart colors: color + shape (solid/dashed) combination for color-blind users
+  - font-variant-numeric: tabular-nums on number columns
+  - Table rows: min-height 40px, use .ds-card for card containers
+  - KPI cards: .ds-card-sm with shadow-panel
 
-REFERENCE: Vercel Analytics, Planetscale, Linear Issues patterns.
-  - Layout: Left Sidebar + TopBar + KPI card 4-column grid
-  - Density: information-efficient, card padding 16px, card gap 16px
-  - Typography: tabular-nums for numeric alignment, small data labels (12px)
-  - Visualization: chart color + shape dual encoding (color-blind safe)`,
+REFERENCE: Vercel Analytics, Planetscale — tabular-nums, small data labels, dual encoding.`,
   },
 
   4: {
-    id: 4, name: 'E-Commerce / Shopping', nameKo: '이커머스 / 쇼핑몰', defaultTheme: 'light',
+    id: 4, name: 'E-Commerce / Shopping', nameKo: '이커머스 / 쇼핑몰', defaultTheme: 'light', colorTheme: 'bright',
     prompt: `[PRESET-4: E-Commerce / Shopping]
-Default theme: Light
+Theme: data-theme="light" + data-color-theme="bright"
 Layout: Header | Product Grid(4→2col) | Detail(60/40) | Cart | Checkout
 
 FORBIDDEN:
   - Color overlay on product images
   - Stock status by color only
 REQUIRED:
-  - Sold out: grayscale(50%) + "품절" text + disabled button (all 3)
-  - Ratings: icon + "4.8점 (2,341개)" text mandatory
-  - Price: original(strikethrough) + discounted(bold) + discount%(badge) (all 3)
-  - Purchase button: min-height: 48px (enhanced touch target)
+  - Sold out: grayscale(50%) + "품절" text + disabled button (.ds-btn-primary:disabled)
+  - Ratings: Star icon + "4.8점 (2,341개)" text
+  - Price: original(line-through) + discounted(font-bold text-accent-red) + discount %(badge-amber)
+  - Purchase button: .premium-button with min-height: 48px
 
-REFERENCE: Apple Store, Allbirds, Musinsa patterns.
-  - Layout: product image dominant (60%+), details secondary
-  - Density: generous whitespace around images (product focus)
-  - Typography: price emphasis (bold, large), original price strikethrough
-  - Trust: star rating + review count combined, shipping date text`,
+REFERENCE: Apple Store, Musinsa — image-dominant, generous whitespace, price emphasis.`,
   },
 
   5: {
     id: 5, name: 'SaaS / Web Service', nameKo: 'SaaS / 웹 서비스', defaultTheme: 'light',
     prompt: `[PRESET-5: SaaS / Web Service]
-Default theme: Light
+Theme: data-theme="light"
 Layout: TopNav(56px) | Sidebar(240px) | Main
 
 FORBIDDEN:
-  - Form validation only after submit (must validate on blur in real-time)
-  - Recommended plan highlighted by color only
+  - Form validation only after submit → validate on blur with .ds-input + error state
+  - Recommended plan by color only → border-accent-amber + .badge-amber + aria-label
   - Onboarding without Skip option
 REQUIRED:
-  - Recommended plan: border emphasis + badge + aria-label="추천 플랜" (all 3)
-  - Toast: role="alert" + icon + color (all 3)
-  - Toast z-index: var(--z-toast) mandatory
-  - Brand color → run BRAND correction algorithm
+  - Toast: role="alert" + lucide icon + accent color, z-index: var(--z-toast)
+  - Forms: .ds-input + .ds-label, real-time validation on blur
+  - Brand color → run BRAND correction algorithm against project bg tokens
 
-REFERENCE: Linear, Figma, Clerk, Supabase, Notion patterns.
-  - Layout: TopNav + Left Sidebar(240px) + Main 3-column
-  - Density: moderate (component padding 16px, section gap 32px)
-  - Typography: clear information hierarchy, form labels 14px medium
-  - Interaction: immediate feedback (Toast), real-time form validation`,
+REFERENCE: Linear, Figma, Supabase — TopNav+Sidebar, instant feedback, real-time validation.`,
   },
 };
 
@@ -138,16 +117,17 @@ REFERENCE: Linear, Figma, Clerk, Supabase, Notion patterns.
 export const DESIGN_FALLBACK = `
 ### Default Fallback (when unspecified)
 
-  Preset: PRESET-2 (Landing, Light)
-  Theme: preset default
-  Framework: plain HTML + CSS Custom Properties
-  Brand color: --color-focus-ring (#007ACC) as accent
-  Font: var(--font-sans), body var(--text-md) / var(--leading-normal)
-  Spacing: component 16px | section 64px | item 8px
-  Motion: var(--duration-normal) var(--ease-standard) + prefers-reduced-motion
+  Preset: PRESET-2 (Landing, Light+Bright)
+  Theme: data-theme="light", data-color-theme="bright"
+  Framework: React + TailwindCSS (project default)
+  Brand color: var(--color-accent-amber) as primary accent
+  Font: font-sans (var(--font-sans)), body text-base/leading-normal
+  Spacing: component var(--sp-md) | section var(--sp-2xl) | item var(--sp-sm)
+  Motion: var(--transition-normal) + global prefers-reduced-motion already active
+  Components: prefer existing .ds-*, .premium-* classes over raw Tailwind
 
-  → When fallback applied, add comment at top of code:
-    /* [Fallback] Preset unspecified → PRESET-2 Light defaults applied */
+  → When fallback applied, add comment at top:
+    /* [Fallback] Preset unspecified → PRESET-2 Light+Bright defaults applied */
 `.trim();
 
 /** Detect preset number from user message. Returns null if ambiguous. */
@@ -163,7 +143,7 @@ export function detectPreset(message: string): DesignPresetId | null {
   if (/\b(랜딩|landing|hero|마케팅|marketing)\b/.test(lower)) return 2;
   if (/\b(대시보드|dashboard|admin|어드민|analytics)\b/.test(lower)) return 3;
   if (/\b(이커머스|e-?commerce|쇼핑|shopping|상품|product|장바구니|cart)\b/.test(lower)) return 4;
-  if (/\b(saas|서비스|pricing|온보딩|onboarding|폼|form)\b/.test(lower)) return 5;
+  if (/\b(saas|서비스|pricing|온보딩|onboarding)\b/.test(lower)) return 5;
 
   return null;
 }

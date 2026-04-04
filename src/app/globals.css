@@ -38,6 +38,14 @@
   --sp-lg: 24px;
   --sp-xl: 32px;
   --sp-2xl: 48px;
+  /* Z-index layer system — semantic tokens to prevent arbitrary z-index collisions */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
   /* Blur scale — glassmorphism depth (--bl-* to avoid Tailwind blur-sm/md/lg collision) */
   --bl-sm: 10px;
   --bl-md: 18px;
