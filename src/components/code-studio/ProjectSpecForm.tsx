@@ -165,7 +165,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
                     const selected = Array.isArray(current) && current.includes(opt);
                     return (
                       <button key={opt} onClick={() => setAnswer(currentQuestion.id, selected ? current.filter((v) => v !== opt) : [...current, opt])}
-                        className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${selected ? "border-green-500 bg-green-500/10 text-green-400" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>{selected ? "✓ " : ""}{opt}</button>
+                        className={`px-3 py-2 rounded-lg text-xs border text-left transition-colors ${selected ? "border-accent-green bg-accent-green/10 text-accent-green" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>{selected ? "✓ " : ""}{opt}</button>
                     );
                   })}
                 </div>
@@ -207,7 +207,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
             {step === "category" && <button onClick={() => { if (title.trim()) setStep("questions"); }} disabled={!title.trim()} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 disabled:opacity-30">다음 <ChevronRight size={12} /></button>}
             {step === "questions" && currentQ < QUESTIONS.length - 1 && <button onClick={() => setCurrentQ((p) => p + 1)} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">다음 <ChevronRight size={12} /></button>}
             {step === "questions" && currentQ === QUESTIONS.length - 1 && <button onClick={() => setStep("review")} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">확인 <Check size={12} /></button>}
-            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-green-600 text-text-primary rounded-lg hover:bg-green-700"><Sparkles size={12} /> 프로젝트 생성</button>}
+            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-green text-text-primary rounded-lg hover:bg-accent-green/80"><Sparkles size={12} /> 프로젝트 생성</button>}
           </div>
         </div>
       </div>

@@ -934,7 +934,7 @@
   align-items: center;
   justify-content: center;
   color: #1a1816;
-  z-index: 40;
+  z-index: var(--z-dropdown);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 

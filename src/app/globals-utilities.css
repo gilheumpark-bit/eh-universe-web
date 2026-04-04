@@ -265,7 +265,7 @@ button, a, [role="button"] {
   /* 코드 스튜디오 모바일: 사이드바 숨김, 풀스크린 에디터 */
   .cs-sidebar-mobile { display: none; }
   .cs-editor-mobile { width: 100vw; }
-  .cs-right-panel-mobile { position: fixed; inset: 0; z-index: 40; }
+  .cs-right-panel-mobile { position: fixed; inset: 0; z-index: var(--z-overlay); }
 
   /* 터치 타겟 최소 44px */
   .cs-touch-target { min-height: 44px; min-width: 44px; }

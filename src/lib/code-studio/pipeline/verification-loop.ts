@@ -24,6 +24,8 @@ import {
   type SafeFixCategory,
   classifyFixDescription,
 } from '@/lib/code-studio/core/autofix-policy';
+import { runDesignLint } from '@/lib/code-studio/pipeline/design-lint';
+import type { DesignLintResult } from '@/lib/code-studio/pipeline/design-lint';
 
 // Re-export for existing consumers (`SafeFixCategory` was defined here).
 export type { SafeFixCategory } from '@/lib/code-studio/core/autofix-policy';
@@ -55,6 +57,9 @@ export interface VerificationIteration {
   chaosGrade?: string;
   ipScore?: number;
   ipGrade?: string;
+  designLintScore?: number;
+  designLintPassed?: boolean;
+  designLintSummary?: string;
   combinedScore: number;
   status: 'pass' | 'warn' | 'fail';
 }
@@ -318,6 +323,24 @@ export async function runVerificationLoop(
       }
     } catch { /* audit is advisory, don't block pipeline */ }
 
+    // --- Step 1.6: Run design lint (UI code quality) ---
+    let designLint: DesignLintResult | undefined;
+    try {
+      const isUICode = /tsx?$/.test(fileName) && (/</.test(currentCode) || /className/.test(currentCode));
+      if (isUICode) {
+        designLint = runDesignLint(currentCode);
+        if (designLint.issues.length > 0) {
+          pipelineResult.stages.push({
+            name: 'design-lint',
+            status: designLint.passed ? 'warn' : 'fail',
+            score: designLint.score,
+            message: designLint.summary,
+            findings: designLint.issues.slice(0, 8).map(i => `[${i.rule}] ${i.message}`),
+          });
+        }
+      }
+    } catch { /* design lint is advisory */ }
+
     // --- Step 2: Run bug scan ---
     let bugs: BugReport[];
     try {
@@ -416,6 +439,9 @@ export async function runVerificationLoop(
       chaosGrade: chaosReport?.grade,
       ipScore: ipReport?.score,
       ipGrade: ipReport?.grade,
+      designLintScore: designLint?.score,
+      designLintPassed: designLint?.passed,
+      designLintSummary: designLint?.summary,
       combinedScore,
       status,
     };

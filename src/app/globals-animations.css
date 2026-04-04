@@ -103,7 +103,7 @@ html::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
   background: white;
   opacity: 0;
 }
@@ -183,7 +183,7 @@ html[data-theme-changing]::after {
   top: -100px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: var(--z-tooltip);
   padding: 0.75rem 1.5rem;
   background: var(--color-accent-amber);
   color: #1a1816;

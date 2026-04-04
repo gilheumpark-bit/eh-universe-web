@@ -36,7 +36,7 @@ type ViewTab = 'overview' | 'details' | 'urgent';
 
 function ScoreBar({ score, grade, label }: { score: number; grade: string; label: string }) {
   const fill = Math.max(0, Math.min(100, score));
-  const barColor = score >= 85 ? 'bg-green-500' : score >= 70 ? 'bg-blue-500' : score >= 55 ? 'bg-yellow-500' : score >= 40 ? 'bg-orange-500' : 'bg-red-500';
+  const barColor = score >= 85 ? 'bg-accent-green' : score >= 70 ? 'bg-accent-blue' : score >= 55 ? 'bg-accent-amber' : score >= 40 ? 'bg-accent-amber/70' : 'bg-accent-red';
 
   return (
     <div className="flex items-center gap-2 py-1">

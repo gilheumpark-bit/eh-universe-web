@@ -18,6 +18,7 @@ import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-s
 import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
 import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
+import { runDesignLint, formatDesignLintReport } from "@/lib/code-studio/pipeline/design-lint";
 
 interface ChatSession {
   id: string;
@@ -404,18 +405,39 @@ ${mcpToolsDoc}`,
                 )}
               </div>
               <div className="text-text-primary whitespace-pre-wrap">{msg.content}</div>
-              {codeBlocks.map((block, idx) => (
-                <div key={idx} className="mt-1 flex items-center gap-1">
-                  <button onClick={() => onApplyCode?.(block.code, block.fileName)}
-                    className="text-[9px] px-2 py-0.5 rounded bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">
-                    Apply
-                  </button>
-                  <button onClick={() => navigator.clipboard.writeText(block.code)}
-                    className="text-[9px] px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary hover:bg-border transition-colors">
-                    Copy
-                  </button>
-                </div>
-              ))}
+              {codeBlocks.map((block, idx) => {
+                const isUI = /tsx?/.test(block.language ?? '') && (/</.test(block.code) || /className/.test(block.code));
+                const lint = isUI ? runDesignLint(block.code) : null;
+                return (
+                  <div key={idx} className="mt-1 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => onApplyCode?.(block.code, block.fileName)}
+                        className="text-[9px] px-2 py-0.5 rounded bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">
+                        Apply
+                      </button>
+                      <button onClick={() => navigator.clipboard.writeText(block.code)}
+                        className="text-[9px] px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary hover:bg-border transition-colors">
+                        Copy
+                      </button>
+                      {lint && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${lint.passed ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red'}`}>
+                          Design {lint.score}/100
+                        </span>
+                      )}
+                    </div>
+                    {lint && lint.issues.length > 0 && (
+                      <details className="text-[9px] text-text-tertiary">
+                        <summary className="cursor-pointer hover:text-text-secondary">
+                          {lint.issues.length} design issue{lint.issues.length !== 1 ? 's' : ''} found
+                        </summary>
+                        <pre className="mt-1 p-2 bg-bg-primary rounded text-[8px] leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {formatDesignLintReport(lint)}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
