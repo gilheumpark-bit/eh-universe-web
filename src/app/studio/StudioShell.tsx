@@ -113,7 +113,9 @@ export default function StudioShell() {
   useEffect(() => {
     const bump = () => setApiKeyVersion(v => v + 1);
     window.addEventListener('noa-keys-changed', bump);
-    return () => window.removeEventListener('noa-keys-changed', bump);
+    // 초기 로드 시 슬롯 동기화 후 키 상태 반영 (타이밍 이슈 방지)
+    const initialCheck = setTimeout(bump, 500);
+    return () => { window.removeEventListener('noa-keys-changed', bump); clearTimeout(initialCheck); };
   }, []);
   const [bannerDismissed, setBannerDismissed] = useState(() => typeof window !== 'undefined' && localStorage.getItem('noa_api_banner_dismissed') === '1');
   const [showDashboard, setShowDashboard] = useState(false);
