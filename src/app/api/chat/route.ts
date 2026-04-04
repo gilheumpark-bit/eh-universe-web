@@ -372,7 +372,7 @@ export async function POST(req: NextRequest) {
     const noaResult = await runNoa({
       text: (systemInstruction || '') + '\n' + messages.map(m => m.content).join('\n'),
       domain: targetDomain,
-      sourceTier: (userTier as UserTier) === 'pro' ? 1 : (auth.isByok ? 3 : 2), // 프로는 내부 1등급 완화 보호, 기본 로그인은 2, 비로그인(BYOK)은 제일 빡빡한 3등급
+      sourceTier: auth.isByok ? 1 : ((userTier as UserTier) === 'pro' ? 1 : 2), // BYOK=자기 키이므로 1등급 완화, 호스팅=2등급 표준
     });
 
     if (!noaResult.allowed) {
