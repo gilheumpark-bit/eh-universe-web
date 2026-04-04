@@ -83,8 +83,8 @@ export function StatusBar({
 
   return (
     <div
-      className="hidden sm:flex items-center justify-between px-3 bg-accent-purple text-white text-[11px] leading-[11px] select-none overflow-x-auto shrink-0"
-      style={{ height: 24 }}
+      className="hidden sm:flex items-center justify-between px-3 bg-accent-purple text-[11px] leading-[11px] select-none overflow-x-auto shrink-0"
+      style={{ height: 24, color: '#fff' }}
     >
       {/* ---- Left Section ---- */}
       <div className="flex items-center gap-3 shrink-0">

@@ -136,10 +136,10 @@ export function BilateralEditor() {
                 onChange={(e) => setFrom(e.target.value)}
                 className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
-                <option value="ja" className="bg-bg-secondary">JP</option>
-                <option value="en" className="bg-bg-secondary">EN</option>
-                <option value="zh" className="bg-bg-secondary">CN</option>
-                <option value="ko" className="bg-bg-secondary">KO</option>
+                <option value="ja" className="bg-bg-secondary text-text-primary">JP</option>
+                <option value="en" className="bg-bg-secondary text-text-primary">EN</option>
+                <option value="zh" className="bg-bg-secondary text-text-primary">CN</option>
+                <option value="ko" className="bg-bg-secondary text-text-primary">KO</option>
               </select>
               <button
                 className="px-1 sm:px-2.5 py-1 text-text-tertiary hover:text-accent-amber rounded-md transition-all shrink-0"
@@ -153,10 +153,10 @@ export function BilateralEditor() {
                 onChange={(e) => setTo(e.target.value)}
                 className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
-                <option value="ko" className="bg-bg-secondary">KO</option>
-                <option value="ja" className="bg-bg-secondary">JP</option>
-                <option value="en" className="bg-bg-secondary">EN</option>
-                <option value="zh" className="bg-bg-secondary">CN</option>
+                <option value="ko" className="bg-bg-secondary text-text-primary">KO</option>
+                <option value="ja" className="bg-bg-secondary text-text-primary">JP</option>
+                <option value="en" className="bg-bg-secondary text-text-primary">EN</option>
+                <option value="zh" className="bg-bg-secondary text-text-primary">CN</option>
               </select>
             </div>
           </div>
