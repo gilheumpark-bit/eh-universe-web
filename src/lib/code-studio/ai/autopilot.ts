@@ -3,6 +3,7 @@
 // ============================================================
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
 
 export interface StepValidation {
   passed: boolean;
@@ -38,11 +39,24 @@ Each step must produce exactly one complete function, component, or module.
 Respond ONLY with a JSON array of step descriptions. No markdown, no explanation.
 Example: ["Create the UserCard component with props interface","Create the fetchUser async function","Create the UserList component that uses UserCard and fetchUser"]`;
 
-const STEP_SYSTEM_PROMPT = `You are an autonomous code generator.
+const STEP_SYSTEM_PROMPT_BASE = `You are an autonomous code generator.
 You receive a single atomic step description and project context.
 Output ONLY the code that implements the step. No explanations, no markdown fences, no comments about what you're doing.
 Produce a complete, self-contained function or component.
 Use TypeScript. Include necessary imports.`;
+
+/** Detect if a step description involves UI/component generation. */
+function isUIStep(description: string): boolean {
+  return /component|button|modal|form|card|page|layout|panel|dialog|input|table|list|grid|sidebar|header|footer|nav|menu|tab|ui|디자인|컴포넌트|버튼|페이지|모달|폼/i.test(description);
+}
+
+/** Build step prompt — injects design rules only for UI steps. */
+function buildStepSystemPrompt(stepDescription: string): string {
+  if (isUIStep(stepDescription)) {
+    return `${STEP_SYSTEM_PROMPT_BASE}\n\n${DESIGN_SYSTEM_COMPACT}`;
+  }
+  return STEP_SYSTEM_PROMPT_BASE;
+}
 
 // IDENTITY_SEAL: PART-1 | role=TypeDefinitions | inputs=none | outputs=AutopilotStep,AutopilotPlan,AutopilotMetrics,StepValidation
 
@@ -235,7 +249,7 @@ export async function executeAutopilotStep(
 
   try {
     result = await streamChat({
-      systemInstruction: STEP_SYSTEM_PROMPT,
+      systemInstruction: buildStepSystemPrompt(step.description),
       messages: [
         {
           role: 'user',
@@ -286,7 +300,7 @@ async function retryStep(
 
   try {
     result = await streamChat({
-      systemInstruction: STEP_SYSTEM_PROMPT,
+      systemInstruction: buildStepSystemPrompt(step.description),
       messages: [{ role: 'user', content: retryPrompt }],
       temperature: 0.3,
       signal,

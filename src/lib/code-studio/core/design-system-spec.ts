@@ -347,4 +347,68 @@ export const DESIGN_SYSTEM_SPEC = [
   ANTIPATTERNS,
 ].join('\n\n');
 
+// ============================================================
+// PART 10 — Compact Spec (for non-primary-UI agents)
+// ============================================================
+
+/**
+ * Compact design rules (~800 tokens) for agents that generate UI
+ * but aren't the dedicated css-layout/interaction-motion agents.
+ * Use for: app-generator, autopilot, frontend-lead verification.
+ */
+export const DESIGN_SYSTEM_COMPACT = `
+## Design Rules (Compact) — EH Universe Project Tokens
+
+**Color tokens (mandatory — no raw Tailwind colors)**
+  Background: bg-bg-primary, bg-bg-secondary, bg-bg-tertiary
+  Text: text-text-primary, text-text-secondary, text-text-tertiary
+  Accent: text-accent-amber (primary), accent-red, accent-green, accent-purple, accent-blue
+  Border: border-border
+  Surface: bg-[var(--color-surface-strong)], bg-[var(--color-surface-soft)]
+  FORBIDDEN: bg-blue-500, text-red-600, bg-green-400 등 raw Tailwind colors
+
+**Existing component classes (reuse mandatory — do NOT rebuild from scratch)**
+  Buttons: .premium-button (+ .ghost, .sm, .lg, .danger, .success), .ds-btn-primary/secondary/danger/ghost
+  Cards: .ds-card (+ -sm, -lg), .premium-panel (+ -soft), .zone-card (+ -red/-green/-amber/-blue)
+  Inputs: .ds-input (+ .error, .success), .ds-label
+  Badges: .badge-allow, .badge-classified, .badge-amber, .badge-blue, .ds-tag
+  Layout: .premium-link-card, .ds-panel, .ds-divider, .ds-metric-bar
+
+**Spacing (4px grid)**
+  Custom tokens: var(--sp-xs) 4px, var(--sp-sm) 8px, var(--sp-md) 16px, var(--sp-lg) 24px, var(--sp-xl) 32px, var(--sp-2xl) 48px
+  Tailwind standard: p-1(4px), p-2(8px), p-4(16px), gap-2, gap-4 — all valid
+  FORBIDDEN: non-4-multiple arbitrary values (p-[15px], gap-[13px])
+
+**Motion (use project transition tokens)**
+  var(--transition-fast) 150ms, var(--transition-normal) 250ms, var(--transition-slow) 400ms
+  FORBIDDEN: transition: all 0.3s
+
+**Z-Index (token-only)**
+  var(--z-base:0), var(--z-dropdown:100), var(--z-sticky:200), var(--z-overlay:300), var(--z-modal:400), var(--z-toast:500), var(--z-tooltip:600)
+  FORBIDDEN: z-index: 9999 or any arbitrary number
+
+**Fonts**
+  var(--font-sans): IBM Plex Sans + Noto Sans KR
+  var(--font-mono): JetBrains Mono + Fira Code
+  var(--font-display): Cormorant Garamond + Noto Serif KR
+  var(--font-document): Noto Serif KR + IBM Plex Mono
+
+**Accessibility**
+  Focus: DO NOT override — global *:focus-visible with accent-amber already active
+  Touch targets: min-height 44px on all interactive elements
+  Status: color + icon(lucide-react) + text, minimum 2 of 3
+  Icons: lucide-react only. Text-only buttons forbidden.
+
+**Shadows**: shadow-luxury (hero), shadow-panel (cards), shadow-manuscript (documents)
+**Radius**: var(--radius-sm:6px), var(--radius-md:12px), var(--radius-lg:18px), var(--radius-xl:24px), var(--radius-full:9999px)
+**Glassmorphism**: var(--bl-sm:10px), var(--bl-md:18px), var(--bl-lg:28px) — only in .premium-panel, NOT in editor/terminal
+`.trim();
+
+/**
+ * Minimal design instruction (~100 tokens) for fallback/generic prompts.
+ */
+export const DESIGN_SYSTEM_MINIMAL = `When generating UI code: use project semantic token classes (bg-bg-primary, text-text-primary, border-border, accent-*). Reuse existing component classes (.premium-button, .ds-card, .ds-input, .badge-*) instead of building from scratch. Use lucide-react icons. Min touch target 44px. No raw Tailwind colors (bg-blue-500 etc). No outline:none (global focus-visible handles it).`.trim();
+
+// IDENTITY_SEAL: PART-10 | role=compact-minimal-specs | inputs=none | outputs=DESIGN_SYSTEM_COMPACT,DESIGN_SYSTEM_MINIMAL
+
 // IDENTITY_SEAL: PART-9 | role=design-system-assembly | inputs=all-parts | outputs=DESIGN_SYSTEM_SPEC

@@ -95,7 +95,16 @@ export interface AgentSession {
 export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
   // Leadership
   'team-leader': 'You are the Chief Coordinator. Validate the overall lifecycle state.',
-  'frontend-lead': 'You are the Frontend Lead. Ensure UI/UX integrity and ErrorBoundary wrapping.',
+  'frontend-lead': `You are the Frontend Lead. Ensure UI/UX integrity and ErrorBoundary wrapping.
+
+Design verification checklist (v8.0):
+1. All color classes use project semantic tokens (bg-bg-*, text-text-*, accent-*). Flag any raw Tailwind colors (bg-blue-500, text-red-600).
+2. Existing component classes reused (.premium-button, .ds-card, .ds-input, .badge-*). Flag custom rebuilds of existing primitives.
+3. Z-index uses var(--z-*) tokens only. Flag arbitrary numbers (z-index: 9999).
+4. Global focus-visible not overridden. Flag any outline:none or custom focus styles.
+5. Touch targets ≥ 44px on interactive elements. Flag small buttons/links.
+6. Transitions use var(--transition-fast/normal/slow). Flag transition:all.
+7. Status indicators use color + icon/text (min 2 of 3). Flag color-only states.`,
   'backend-lead': 'You are the Backend Lead. Ensure API integrity and Proxy headers.',
 
   // Pipeline 1: 건축 설계 (Architecture)
@@ -115,19 +124,38 @@ export const AGENT_PROMPTS: Partial<Record<AgentRole, string>> = {
 
   // Pipeline 2: UI 스캐폴딩
   'css-layout': `You are the CSS/Layout agent (A3). Your job:
-1. Analyze the component structure and generate Tailwind v4 CSS classes.
-2. Ensure responsive design: mobile-first with sm/md/lg/xl breakpoints.
-3. Check for: overflow issues, z-index conflicts, flexbox/grid alignment bugs.
-4. Flag any hardcoded px values that should be relative (rem/em/%).
-5. Verify dark/light theme compatibility (CSS variables, no hardcoded colors).
+1. Generate Tailwind v4 CSS using project semantic tokens ONLY:
+   - Backgrounds: bg-bg-primary, bg-bg-secondary, bg-bg-tertiary
+   - Text: text-text-primary, text-text-secondary, text-text-tertiary
+   - Accents: accent-amber (primary), accent-red, accent-green, accent-purple, accent-blue
+   - Border: border-border. Radius: var(--radius-sm/md/lg/xl/full)
+   - NO raw Tailwind colors (bg-blue-500, text-red-600 etc.)
+2. Reuse existing component classes: .premium-button, .ds-card, .ds-input, .badge-*, .zone-card
+3. Responsive: mobile-first sm/md/lg/xl. Check fixed widths > 375px.
+4. Z-index: var(--z-base/dropdown/sticky/overlay/modal/toast/tooltip) ONLY. No arbitrary numbers.
+5. Spacing: 4px grid via --sp-* tokens or Tailwind (p-1/p-2/p-4). No non-4-multiples.
+6. Shadows: shadow-luxury, shadow-panel, shadow-manuscript tokens.
+7. Glassmorphism: var(--bl-sm/md/lg) ONLY in .premium-panel, NOT in editor/terminal.
+8. Verify 5 themes: archive(default), dark, light, bright, beige — all must work.
 Output: Structured layout code with accessibility (role, aria-label). End with "A3_LAYOUT_COMPLETE".`,
 
   'interaction-motion': `You are the Interaction/Motion agent (A4). Your job:
 1. Review all interactive elements: buttons, links, inputs, modals, dropdowns.
-2. Verify: every onClick has corresponding visual feedback (hover, active, focus states).
-3. Check animations: no layout thrashing, will-change used properly, prefers-reduced-motion respected.
-4. Ensure: keyboard navigation works (Tab order, Enter/Escape handlers, focus trap in modals).
-5. Flag: unlinked event handlers, missing disabled states, click targets < 44px.
+2. Verify visual feedback uses project tokens:
+   - Transitions: var(--transition-fast:150ms), var(--transition-normal:250ms), var(--transition-slow:400ms)
+   - FORBIDDEN: transition: all. Always specify target property.
+   - Hover: use bg-bg-tertiary or opacity changes, NOT hardcoded colors
+   - Active: scale-95 or translateY patterns
+3. Check animations: use existing 29 @keyframes from globals-animations.css first.
+   - No layout thrashing, will-change used properly
+   - Global prefers-reduced-motion already declared — do NOT add duplicate
+4. Keyboard navigation: Tab order, Enter/Escape, focus trap in modals.
+   - DO NOT override global *:focus-visible (accent-amber outline already active)
+5. Touch targets: min-height 44px on ALL interactive elements.
+   - Use .premium-button (already min-h 3.4rem) or .ds-btn-* (pre-sized)
+   - Flag: click targets < 44px, unlinked handlers, missing disabled states
+6. Status: color + icon(lucide-react) + text label, minimum 2 of 3.
+   - Color-blind pairs (red/green) need icon/shape differentiation
 Output: Interaction audit with fixes. End with "A4_INTERACTION_COMPLETE".`,
 
   // Pipeline 3: 로직 생성

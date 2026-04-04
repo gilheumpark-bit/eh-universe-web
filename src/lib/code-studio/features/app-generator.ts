@@ -3,6 +3,8 @@
 // ============================================================
 
 import { streamChat } from '@/lib/ai-providers';
+import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+import { detectPreset, buildPresetPrompt } from '@/lib/code-studio/core/design-presets';
 
 // ============================================================
 // PART 1 — Types
@@ -134,11 +136,18 @@ export function getTemplateById(id: string): AppTemplate | undefined {
 // PART 3 — AI-Powered App Generation
 // ============================================================
 
-const GEN_SYSTEM =
+const GEN_SYSTEM_BASE =
   'You are an expert app generator. Create a complete project with all necessary files.\n' +
   'Output each file as: ```path/to/file\ncontent\n```\n' +
   'Include package.json, tsconfig.json, and all source files.\n' +
-  'Follow best practices for the chosen framework.';
+  'Follow best practices for the chosen framework.\n\n';
+
+/** Build generation prompt with design context injected based on user prompt. */
+function buildGenSystem(prompt: string): string {
+  const presetId = detectPreset(prompt);
+  const presetPrompt = buildPresetPrompt(presetId);
+  return `${GEN_SYSTEM_BASE}${DESIGN_SYSTEM_COMPACT}\n\n${presetPrompt}`;
+}
 
 export async function generateApp(
   prompt: string,
@@ -147,7 +156,7 @@ export async function generateApp(
 ): Promise<GeneratedApp> {
   let raw = '';
   await streamChat({
-    systemInstruction: GEN_SYSTEM,
+    systemInstruction: buildGenSystem(prompt),
     messages: [
       {
         role: 'user',

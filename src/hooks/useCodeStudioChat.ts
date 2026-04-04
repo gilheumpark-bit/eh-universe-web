@@ -11,6 +11,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { streamChat, type ChatMsg } from '@/lib/ai-providers';
 import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
+import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
 
 export interface ChatMessage {
   id: string;
@@ -86,7 +87,7 @@ function generateId(): string {
 export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCodeStudioChatReturn {
   const {
     sessionId = `session-${Date.now()}`,
-    systemInstruction = 'You are an expert software engineer assistant integrated into Code Studio.',
+    systemInstruction = `You are an expert software engineer assistant integrated into Code Studio.\n${DESIGN_SYSTEM_MINIMAL}`,
     onMentionResolve,
   } = options;
 
