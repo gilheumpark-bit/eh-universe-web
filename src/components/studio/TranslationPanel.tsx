@@ -272,7 +272,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 Nexus Bridge
               </span>
               <span className="flex h-1.5 w-1.5 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[rgba(184,149,92,0.6)] opacity-75"></span>
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[rgba(184,149,92,0.4)]"></span>
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[rgba(184,149,92,0.9)]"></span>
               </span>
             </div>
@@ -353,7 +353,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               } catch { /* fallback: 일반 텍스트로 처리 */ }
             }}
             placeholder={isKO ? '번역할 텍스트 또는 URL을 붙여넣으세요...' : 'Paste text or URL to translate...'}
-            className="w-full min-h-[160px] bg-black/40 border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus:border-[rgba(184,149,92,0.3)]"
+            className="w-full min-h-[160px] bg-bg-tertiary border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus:border-[rgba(184,149,92,0.3)]"
           />
 
           {/* Translate Button */}
@@ -506,8 +506,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               onClick={() => setMode(m)}
               className={`relative overflow-hidden rounded-[1.25rem] border p-5 text-left transition-all duration-300 ${
                 isSelected
-                  ? "border-[rgba(184,149,92,0.4)] bg-[linear-gradient(145deg,rgba(184,149,92,0.12),rgba(0,0,0,0.6))] shadow-[0_8px_32px_rgba(184,149,92,0.1)] translate-y-[-2px]"
-                  : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
+                  ? "border-accent-amber/40 bg-bg-secondary shadow-panel translate-y-[-2px]"
+                  : "border-border bg-bg-tertiary/50 hover:border-border hover:bg-bg-secondary"
               }`}
             >
               {isSelected && (
@@ -530,7 +530,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       </div>
 
       {/* Config row - Nexus Bridge Dashboard */}
-      <div className="relative flex flex-col md:flex-row items-center gap-6 rounded-[1.25rem] border border-white/8 bg-black/40 backdrop-blur-xl p-5 shadow-2xl before:absolute before:inset-0 before:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03),transparent)] before:pointer-events-none before:rounded-[1.25rem]">
+      <div className="relative flex flex-col md:flex-row items-center gap-6 rounded-[1.25rem] border border-white/8 bg-bg-tertiary backdrop-blur-xl p-5 shadow-2xl before:absolute before:inset-0 before:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03),transparent)] before:pointer-events-none before:rounded-[1.25rem]">
         {/* Target language */}
         <div className="space-y-2.5 w-full md:w-auto md:min-w-[160px] relative z-10">
           <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
@@ -594,7 +594,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
       {/* Advanced Settings Panel - Nexus Blue */}
       {showAdvanced && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-[1.25rem] border border-[rgba(184,149,92,0.2)] bg-[linear-gradient(to_bottom_right,rgba(184,149,92,0.05),rgba(0,0,0,0.5))] shadow-[inset_0_0_20px_rgba(184,149,92,0.02)] animate-in slide-in-from-top-2 duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-[1.25rem] border border-accent-amber/20 bg-bg-secondary animate-in slide-in-from-top-2 duration-300">
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-[rgba(184,149,92,0.7)]">
               <Settings2 className="h-3 w-3" />
@@ -603,7 +603,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={targetGenre}
               onChange={(e) => setTargetGenre(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 font-mono text-[11px] text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
             >
               <option value="">(None - Auto Detect)</option>
               {Object.keys(GENRE_PRESETS).map(genre => (
@@ -623,7 +623,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 min={0.5} max={0.99} step={0.01}
                 value={scoreThreshold}
                 onChange={(e) => setScoreThreshold(parseFloat(e.target.value) || 0.75)}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 font-mono text-[11px] text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
+                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
               />
             </div>
           </div>
@@ -637,7 +637,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               value={contractionLevel}
               onChange={(e) => setContractionLevel(e.target.value as typeof contractionLevel)}
               disabled={mode !== 'experience'}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-[rgba(235,230,215,0.9)] outline-none focus:border-[rgba(184,149,92,0.5)] focus:ring-1 focus:ring-[rgba(184,149,92,0.3)] transition-all"
             >
               <option value="none">None (Strict/Formal)</option>
               <option value="low">Low (Dialogue only)</option>
@@ -656,8 +656,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </summary>
         <div className="px-5 pb-4 space-y-3">
           <div className="flex gap-2">
-            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
-            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
+            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
+            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
             <button onClick={() => { if (glossaryTerm.trim() && glossaryTranslation.trim()) { saveGlossary({ ...glossary, [glossaryTerm.trim()]: glossaryTranslation.trim() }); setGlossaryTerm(''); setGlossaryTranslation(''); } }} className="px-3 py-2 rounded-lg bg-[rgba(184,149,92,0.15)] text-[rgba(228,215,190,0.95)] font-mono text-[10px] font-bold hover:bg-[rgba(184,149,92,0.25)] transition-colors">+</button>
           </div>
           {Object.entries(glossary).length > 0 && (
@@ -689,7 +689,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={selectedEpisode ?? ""}
               onChange={(e) => setSelectedEpisode(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full appearance-none rounded-xl border border-white/10 bg-black/50 px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus:border-[rgba(184,149,92,0.4)] group-hover:border-white/20 transition-all shadow-inner"
+              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus:border-[rgba(184,149,92,0.4)] group-hover:border-white/20 transition-all shadow-inner"
             >
               <option value="">{isKO ? "/// 번역 대기 큐에서 선택 ///" : "/// Select queued episode ///"}</option>
               {manuscripts.map((m) => (
@@ -806,7 +806,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {translatedList.map((t, i) => (
-               <div key={i} className="group relative flex flex-col gap-2.5 rounded-2xl border border-[rgba(184,149,92,0.15)] bg-black/40 backdrop-blur-md p-4 transition-all duration-300 hover:border-[rgba(184,149,92,0.4)] hover:bg-[rgba(184,149,92,0.05)] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(184,149,92,0.1)]">
+               <div key={i} className="group relative flex flex-col gap-2.5 rounded-2xl border border-[rgba(184,149,92,0.15)] bg-bg-tertiary backdrop-blur-md p-4 transition-all duration-300 hover:border-[rgba(184,149,92,0.4)] hover:bg-[rgba(184,149,92,0.05)] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(184,149,92,0.1)]">
                 <div className="absolute top-0 left-4 right-4 h-px bg-[linear-gradient(90deg,transparent,rgba(184,149,92,0.3),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(184,149,92,0.1)] text-[rgba(235,220,190,0.9)]">
@@ -817,10 +817,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                   </div>
                 </div>
                 <div className="flex items-center gap-2 font-mono text-[10px] text-[rgba(235,220,190,0.7)] ml-11">
-                  <span className="bg-black/50 border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider font-bold shadow-inner">
+                  <span className="bg-bg-tertiary border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider font-bold shadow-inner">
                     {t.sourceLang} <span className="text-[rgba(184,149,92,0.5)]">→</span> {t.targetLang}
                   </span>
-                  <span className="bg-black/50 border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider uppercase font-bold shadow-inner">
+                  <span className="bg-bg-tertiary border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider uppercase font-bold shadow-inner">
                     MODE:{t.mode.slice(0,3)}
                   </span>
                   <span className="text-emerald-400 font-bold ml-auto pr-1">Q_GATE: {(t.avgScore * 100).toFixed(1)}%</span>
