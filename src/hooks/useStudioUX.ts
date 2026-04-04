@@ -94,7 +94,7 @@ export function useStudioUX() {
     // Storage
     storageFull, setStorageFull,
     // Export
-    exportDoneFormat,
+    exportDoneFormat, setExportDoneFormat,
     // Save
     lastSaveTime, saveFlash, triggerSave,
     // Fallback

@@ -72,6 +72,7 @@ const MAX_HISTORY = 50;
 // PART 2 — Utilities
 // ============================================================
 
+// [시뮬레이션] 실제 Git 연동 아님
 function generateHash(): string {
   const chars = "0123456789abcdef";
   let result = "";

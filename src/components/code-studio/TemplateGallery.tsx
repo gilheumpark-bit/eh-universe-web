@@ -63,6 +63,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
     return matchFw && matchSearch;
   }), [activeFramework, searchQuery]);
 
+  // [시뮬레이션] 실제 AI 호출 없음
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim() || isGenerating) return;
     setIsGenerating(true);

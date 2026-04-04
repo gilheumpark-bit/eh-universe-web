@@ -116,13 +116,20 @@ export default function SoundtrackPage() {
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
   const animRef = useRef<number>(0);
 
+  // Store listener refs for proper cleanup
+  const listenersRef = useRef<Record<string, { meta: () => void; ended: () => void }>>({});
+
   // Cleanup audio elements on unmount — remove event listeners to prevent memory leaks
   useEffect(() => {
     const activeRefs = audioRefs.current;
+    const activeLis = listenersRef.current;
     return () => {
-      Object.values(activeRefs).forEach((audio) => {
-        audio.removeEventListener("loadedmetadata", () => {});
-        audio.removeEventListener("ended", () => {});
+      Object.entries(activeRefs).forEach(([id, audio]) => {
+        const lis = activeLis[id];
+        if (lis) {
+          audio.removeEventListener("loadedmetadata", lis.meta);
+          audio.removeEventListener("ended", lis.ended);
+        }
         audio.pause();
       });
     };
@@ -149,13 +156,11 @@ export default function SoundtrackPage() {
 
     if (!audioRefs.current[id]) {
       const a = new Audio(TRACKS.find((t) => t.id === id)!.file);
-      a.addEventListener("loadedmetadata", () => {
-        setDurations((d) => ({ ...d, [id]: a.duration }));
-      });
-      a.addEventListener("ended", () => {
-        setPlaying(null);
-        setProgress((p) => ({ ...p, [id]: 0 }));
-      });
+      const metaHandler = () => { setDurations((d) => ({ ...d, [id]: a.duration })); };
+      const endedHandler = () => { setPlaying(null); setProgress((p) => ({ ...p, [id]: 0 })); };
+      a.addEventListener("loadedmetadata", metaHandler);
+      a.addEventListener("ended", endedHandler);
+      listenersRef.current[id] = { meta: metaHandler, ended: endedHandler };
       audioRefs.current[id] = a;
     }
 

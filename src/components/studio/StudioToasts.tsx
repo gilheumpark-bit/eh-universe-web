@@ -25,6 +25,7 @@ interface StudioToastsProps {
   setFallbackNotice: (v: string | null) => void;
   // Export
   exportDoneFormat: string | null;
+  setExportDoneFormat: (v: string | null) => void;
   // World import
   worldImportBanner: boolean;
   setWorldImportBanner: (v: boolean) => void;
@@ -152,7 +153,7 @@ export default function StudioToasts({
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
   storageFull, setStorageFull, exportAllJSON,
   fallbackNotice, setFallbackNotice,
-  exportDoneFormat,
+  exportDoneFormat, setExportDoneFormat,
   worldImportBanner, setWorldImportBanner,
   uxError, setUxError,
 }: StudioToastsProps) {
@@ -208,7 +209,7 @@ export default function StudioToasts({
 
       {/* Export Complete */}
       {exportDoneFormat && (
-        <AutoDismissToast variant="success" duration={3000} onDismiss={() => {}}>
+        <AutoDismissToast variant="success" duration={3000} onDismiss={() => setExportDoneFormat(null)}>
           <CheckCircle className="w-5 h-5 text-accent-green shrink-0" />
           <p className="flex-1 text-sm font-medium text-text-primary">
             {exportDoneFormat} {isKO ? '내보내기 완료' : 'export complete'}

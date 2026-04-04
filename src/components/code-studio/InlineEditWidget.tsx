@@ -76,6 +76,7 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
 
   const diffLines = preview ? computeSimpleDiff(selectedText, preview) : [];
 
+  // [시뮬레이션] 실제 AI 호출 없음
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || loading) return;
     saveToHistory(prompt.trim());

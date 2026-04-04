@@ -91,6 +91,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
     setSearching(false);
   };
 
+  // [시뮬레이션] 실제 npm 설치 없음
   const handleInstall = async (name: string) => {
     setInstalling(name); setShowTerminal(true);
     setTerminalOutput((p) => [...p, `\n$ npm install ${name}\n`]);

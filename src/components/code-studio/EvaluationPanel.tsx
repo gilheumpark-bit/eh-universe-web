@@ -78,10 +78,9 @@ export function EvaluationPanel({ files, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRun = useCallback(async () => {
+  const handleRun = useCallback(() => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
       setResult(evaluateFiles(files));
     } catch (err) { setError((err as Error).message); }
     finally { setLoading(false); }

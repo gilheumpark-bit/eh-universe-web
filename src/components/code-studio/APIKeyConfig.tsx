@@ -113,6 +113,7 @@ export function APIKeyConfig({ onClose }: Props) {
     setFormLabel(slot.label); setTestResult(null); setShowForm(true);
   }
 
+  // [시뮬레이션] 실제 API 검증 없음 — 키 길이 체크만
   async function handleTest() {
     if (!formKey.trim()) return;
     setTesting(true); setTestResult(null);

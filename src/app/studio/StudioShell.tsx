@@ -197,7 +197,7 @@ export default function StudioShell() {
   const {
     uxError, setUxError,
     storageFull, setStorageFull,
-    exportDoneFormat,
+    exportDoneFormat, setExportDoneFormat,
     lastSaveTime, saveFlash, triggerSave,
     fallbackNotice, setFallbackNotice,
     confirmState, showConfirm, closeConfirm,
@@ -704,7 +704,7 @@ export default function StudioShell() {
         user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
         storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
         fallbackNotice={fallbackNotice} setFallbackNotice={setFallbackNotice}
-        exportDoneFormat={exportDoneFormat}
+        exportDoneFormat={exportDoneFormat} setExportDoneFormat={setExportDoneFormat}
         worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
         uxError={uxError} setUxError={setUxError}
         alertToast={alertToast} setAlertToast={setAlertToast}

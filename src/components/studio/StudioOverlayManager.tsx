@@ -52,6 +52,7 @@ interface StudioOverlayManagerProps {
   fallbackNotice: string | null;
   setFallbackNotice: (v: string | null) => void;
   exportDoneFormat: string | null;
+  setExportDoneFormat: (v: string | null) => void;
   worldImportBanner: boolean;
   setWorldImportBanner: React.Dispatch<React.SetStateAction<boolean>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,7 +72,7 @@ export default function StudioOverlayManager({
   saveSlotModalOpen, setSaveSlotModalOpen, activeTab, currentSession, updateCurrentSession, triggerSave,
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
   storageFull, setStorageFull, exportAllJSON,
-  fallbackNotice, setFallbackNotice, exportDoneFormat,
+  fallbackNotice, setFallbackNotice, exportDoneFormat, setExportDoneFormat,
   worldImportBanner, setWorldImportBanner,
   uxError, setUxError,
   alertToast, setAlertToast
@@ -118,7 +119,7 @@ export default function StudioOverlayManager({
         user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
         storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
         fallbackNotice={fallbackNotice} setFallbackNotice={setFallbackNotice}
-        exportDoneFormat={exportDoneFormat}
+        exportDoneFormat={exportDoneFormat} setExportDoneFormat={setExportDoneFormat}
         worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
         uxError={uxError} setUxError={setUxError}
       />

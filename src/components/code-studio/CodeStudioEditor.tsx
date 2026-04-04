@@ -321,7 +321,6 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           onToggleTerminal={onToggleTerminal}
           onTogglePipeline={onTogglePipeline}
           onToggleAgent={onToggleAgent}
-          onToggleSidebar={() => {}}
           onToggleSearch={onToggleSearch}
           onNewFile={onNewFile}
           onOpenSettings={() => { onToggleSettings(); onSettingsSaved(); }}

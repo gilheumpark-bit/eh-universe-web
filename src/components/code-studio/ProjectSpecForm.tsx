@@ -69,10 +69,9 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
     return answers.find((a) => a.questionId === questionId)?.answer ?? "";
   }, [answers]);
 
-  const handleAutoFill = useCallback(async () => {
+  const handleAutoFill = useCallback(() => {
     if (!title.trim()) return;
     setAutoFilling(true);
-    await new Promise((r) => setTimeout(r, 1000));
 
     // Infer design preset from project title/description + category
     const lower = title.toLowerCase();
