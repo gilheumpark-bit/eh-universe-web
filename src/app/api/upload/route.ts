@@ -211,6 +211,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ chapters });
   } catch (err: unknown) {
     logger.error('EH Translator upload', err);
-    return NextResponse.json({ error: '문서 파싱 중 오류가 발생했습니다. 파일 형식을 확인해주세요.' }, { status: 500 });
+    return NextResponse.json({ error: '문서 파싱 중 오류가 발생했습니다. 파일 형식을 확인해주세요.' }, { status: 400 });
   }
 }

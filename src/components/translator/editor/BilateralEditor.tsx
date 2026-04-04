@@ -96,9 +96,9 @@ export function BilateralEditor() {
     document.body.style.userSelect = 'none';
   }, []);
 
-  const bgImage = isCatMode 
+  const bgImage = isCatMode
     ? 'url(/images/cat-bg.webp)'
-    : 'url(/images/abstract-bg.webp)';
+    : 'none';
 
   return (
     <div className="w-full h-full flex flex-col relative overflow-hidden bg-bg-primary">
