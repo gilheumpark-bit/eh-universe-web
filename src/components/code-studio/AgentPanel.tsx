@@ -519,7 +519,16 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
           </div>
         ) : (
           <div className="space-y-1">
-            {steps.map((step) => (
+            {/* Show last 10 steps when list is long, with toggle */}
+            {steps.length > 10 && !expandedSteps.has('__show_all__') && (
+              <button
+                onClick={() => toggleStep('__show_all__')}
+                className="w-full text-center py-1 text-[9px] text-text-tertiary hover:text-accent-purple transition-colors"
+              >
+                {L4(lang, { ko: `+${steps.length - 10}개 이전 스텝 보기`, en: `Show ${steps.length - 10} earlier steps` })}
+              </button>
+            )}
+            {(steps.length <= 10 || expandedSteps.has('__show_all__') ? steps : steps.slice(-10)).map((step) => (
               <StepRow key={step.id} step={step} expanded={expandedSteps.has(step.id)} onToggle={() => toggleStep(step.id)} />
             ))}
             {(mode === "staged" || mode === "applied") && summary && (

@@ -169,10 +169,10 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             {/* CTA: 세계관 설정 유무에 따라 다른 동선 - Stellar Buttons */}
             {config.title || config.synopsis ? (
               <>
-                <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[rgba(255,200,50,0.3)] bg-black/40 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:bg-[rgba(255,200,50,0.1)] hover:border-[rgba(255,200,50,0.6)] hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-[rgba(255,220,100,0.8)] hover:text-white">
+                <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-accent-amber/30 bg-bg-secondary/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:bg-accent-amber/10 hover:border-accent-amber/60 hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-accent-amber hover:text-text-primary">
                   <Cpu className="w-4 h-4 group-hover:text-[rgba(255,200,50,0.9)] transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JA' ? 'シミュレーター' : language === 'ZH' ? '地图模拟器' : '엔진 시뮬레이션'}
                 </button>
-                <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-white shadow-[0_5px_15px_rgba(255,200,50,0.2)]">
+                <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-amber/70 to-accent-amber/90 border border-accent-amber/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-bg-primary shadow-lg">
                   <Compass className="w-4 h-4 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /> {startLabel ?? t('planning.commence')}
                 </button>
               </>
@@ -181,8 +181,8 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               onClick={onSave} 
               className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-all duration-300 ${
                 saveFlash 
-                  ? 'bg-accent-green text-white border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
-                  : 'bg-[linear-gradient(to_bottom,rgba(255,200,50,0.15),rgba(200,120,20,0.2))] border border-[rgba(255,200,50,0.4)] text-[rgba(255,220,100,0.95)] hover:bg-[rgba(255,200,50,0.25)] hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
+                  ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
+                  : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
               }`}
             >
               {saveFlash ? <Check className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-[rgba(255,220,100,0.9)] shadow-[0_0_8px_rgba(255,200,50,1)]" />}
@@ -211,8 +211,8 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               onClick={onSave} 
               className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-all duration-300 ${
                 saveFlash 
-                  ? 'bg-accent-green text-white border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
-                  : 'bg-[linear-gradient(to_bottom,rgba(255,200,50,0.15),rgba(200,120,20,0.2))] border border-[rgba(255,200,50,0.4)] text-[rgba(255,220,100,0.95)] hover:bg-[rgba(255,200,50,0.25)] hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
+                  ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
+                  : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
               }`}
             >
               {saveFlash ? <Check className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-[rgba(255,220,100,0.9)] shadow-[0_0_8px_rgba(255,200,50,1)]" />}

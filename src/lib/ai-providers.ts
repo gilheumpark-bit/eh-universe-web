@@ -703,7 +703,12 @@ async function streamViaProxy(
     try {
       const errData = await res.json();
       if (errData.noa?.reason) {
-        errMsg = `🛑 NOA 보안 차단: ${errData.noa.reason}`;
+        const reason = errData.noa.reason;
+        if (reason === 'FAST_TRACK_BLOCK') {
+          errMsg = '🛑 입력에 제한된 표현이 포함되어 있습니다. 내용을 수정 후 다시 시도해주세요.';
+        } else {
+          errMsg = `🛑 NOA 보안 필터: ${reason === 'TRINITY_BLOCK' ? '안전 검사에서 차단되었습니다' : reason === 'BUDGET_EXCEEDED' ? '일일 사용 한도에 도달했습니다' : reason}`;
+        }
       } else if (res.status === 429) {
         const retryAfter = res.headers.get('retry-after');
         errMsg = retryAfter

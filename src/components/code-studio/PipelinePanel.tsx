@@ -205,7 +205,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
 
                 {isExpanded && stage.findings.length > 0 && (
                   <div className="mt-1 p-2 bg-bg-primary border border-border rounded text-[9px] space-y-1 max-h-32 overflow-y-auto">
-                    {stage.findings.map((f: Finding, i: number) => (
+                    {(stage.findings.length > 10 ? stage.findings.filter((f: Finding) => f.severity === 'critical' || f.severity === 'major').slice(0, 10) : stage.findings).map((f: Finding, i: number) => (
                       <div key={i} className="flex items-start gap-1">
                         <span className={
                           f.severity === "critical" ? "text-red-400" :
@@ -218,6 +218,11 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                         {f.line != null && <span className="text-text-tertiary">L{f.line}</span>}
                       </div>
                     ))}
+                    {stage.findings.length > 10 && (
+                      <div className="text-center pt-1 text-text-tertiary">
+                        +{stage.findings.length - stage.findings.filter((f: Finding) => f.severity === 'critical' || f.severity === 'major').length} minor items hidden
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
