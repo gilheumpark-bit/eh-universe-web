@@ -249,13 +249,30 @@ export function useUnifiedSettings() {
 }
 
 // ── Legacy Sync ──
-/** 기존 ai-providers.ts가 읽는 noa_*_key에 슬롯 데이터 동기화 */
+/** ai-providers.ts의 setApiKey/setActiveProvider를 직접 호출하여 키 동기화 */
 function syncToLegacyKeys(slots: APIKeySlot[]): void {
-  const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"];
-  for (const pid of providers) {
-    const activeSlot = slots.find((s) => s.provider === pid && s.enabled && s.apiKey.trim());
-    if (activeSlot) {
-      localStorage.setItem(`noa_${pid}_key`, activeSlot.apiKey);
+  // dynamic import 방지 — 동기 함수이므로 직접 import
+  import('@/lib/ai-providers').then(({ setApiKey, setActiveProvider, setActiveModel }) => {
+    const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
+    let firstActiveProvider: string | null = null;
+    let firstActiveModel: string | null = null;
+    for (const pid of providers) {
+      const activeSlot = slots.find((s) => s.provider === pid && s.enabled && s.apiKey.trim());
+      if (activeSlot) {
+        setApiKey(pid, activeSlot.apiKey);
+        if (!firstActiveProvider) {
+          firstActiveProvider = pid;
+          firstActiveModel = activeSlot.model;
+        }
+      } else {
+        // 슬롯에서 제거된 프로바이더는 키도 제거
+        setApiKey(pid, '');
+      }
     }
-  }
+    // 첫 번째 활성 슬롯을 기본 프로바이더로 설정
+    if (firstActiveProvider) {
+      setActiveProvider(firstActiveProvider as typeof providers[number]);
+      if (firstActiveModel) setActiveModel(firstActiveModel);
+    }
+  }).catch(() => {});
 }
