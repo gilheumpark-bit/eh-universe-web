@@ -178,7 +178,7 @@ export function LogComposer({
             onChange={(event) =>
               handleField(
                 "ehImpact",
-                event.target.value === "" ? null : Number.parseInt(event.target.value, 10),
+                event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0),
               )
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"

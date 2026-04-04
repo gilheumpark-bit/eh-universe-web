@@ -91,7 +91,10 @@ export function SettlementWorkbench() {
   );
 
   const handleSubmit = async () => {
-    if (!user || !selectedPost || !canCreateSettlement(viewerRecord)) return;
+    if (!user || !selectedPost || !canCreateSettlement(viewerRecord)) {
+      setError(lang === "ko" ? "필수 항목을 입력해주세요." : "Please fill in required fields.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -213,7 +216,7 @@ export function SettlementWorkbench() {
                   min={-100}
                   max={100}
                   value={ehValue ?? ""}
-                  onChange={(event) => setEhValue(event.target.value === "" ? null : Number.parseInt(event.target.value, 10))}
+                  onChange={(event) => setEhValue(event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0))}
                   className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
                 />
               </label>
@@ -224,7 +227,7 @@ export function SettlementWorkbench() {
                   min={0}
                   max={100}
                   value={risk ?? ""}
-                  onChange={(event) => setRisk(event.target.value === "" ? null : Number.parseInt(event.target.value, 10))}
+                  onChange={(event) => setRisk(event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0))}
                   className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
                 />
               </label>

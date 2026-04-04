@@ -333,7 +333,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             onChange={(event) =>
               setPlanet((current) => ({
                 ...current,
-                ehRisk: event.target.value === "" ? null : Number.parseInt(event.target.value, 10),
+                ehRisk: event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0),
               }))
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
@@ -349,7 +349,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             onChange={(event) =>
               setPlanet((current) => ({
                 ...current,
-                systemExposure: event.target.value === "" ? null : Number.parseInt(event.target.value, 10),
+                systemExposure: event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0),
               }))
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
@@ -567,7 +567,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             onChange={(event) =>
               setFirstLog((current) => ({
                 ...current,
-                ehImpact: event.target.value === "" ? null : Number.parseInt(event.target.value, 10),
+                ehImpact: event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0),
               }))
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"

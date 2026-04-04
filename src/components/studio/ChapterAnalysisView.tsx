@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
 import { getApiKey } from "@/lib/ai-providers";
 import { showAlert } from "@/lib/show-alert";
@@ -223,6 +223,10 @@ export default function ChapterAnalysisView({
     character: true, background: true, scene: true, sound: true, image: true, music: true,
   });
   const [analyzing, setAnalyzing] = useState(false);
+  const analysisAbortRef = useRef<AbortController | null>(null);
+
+  // Cleanup: abort analysis fetch on unmount
+  useEffect(() => () => { analysisAbortRef.current?.abort(); }, []);
 
   const toggleSection = (key: string) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -242,6 +246,10 @@ export default function ChapterAnalysisView({
   // AI auto-analysis
   const runAutoAnalysis = useCallback(async () => {
     if (!manuscriptContent.trim() || analyzing) return;
+    // Abort previous in-flight analysis
+    analysisAbortRef.current?.abort();
+    const controller = new AbortController();
+    analysisAbortRef.current = controller;
     setAnalyzing(true);
 
     try {
@@ -250,6 +258,7 @@ export default function ChapterAnalysisView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: manuscriptContent, language, apiKey: clientApiKey || undefined }),
+        signal: controller.signal,
       });
 
       if (!res.ok) throw new Error("Analysis failed");

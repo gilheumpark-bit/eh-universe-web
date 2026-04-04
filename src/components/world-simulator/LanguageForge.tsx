@@ -42,6 +42,15 @@ export function LanguageForge({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const vizFrameRef = useRef<number | null>(null);
+  const seqTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const playingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Cleanup: close AudioContext + clear all timeouts on unmount
+  useEffect(() => () => {
+    audioCtxRef.current?.close();
+    seqTimeoutsRef.current.forEach(clearTimeout);
+    clearTimeout(playingTimerRef.current);
+  }, []);
 
   const getAudioCtx = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -110,7 +119,8 @@ export function LanguageForge({
     gainNode.connect(analyserRef.current!);
 
     setPlayingId(ph.id);
-    setTimeout(() => setPlayingId(null), duration * 1000);
+    clearTimeout(playingTimerRef.current);
+    playingTimerRef.current = setTimeout(() => setPlayingId(null), duration * 1000);
 
     if (ph.sigClass === "sustained") {
       const osc = ctx.createOscillator();
@@ -166,10 +176,16 @@ export function LanguageForge({
   }, [getAudioCtx]);
 
   const playSequence = useCallback((phIds: string[]) => {
+    // Clear previous sequence timeouts
+    seqTimeoutsRef.current.forEach(clearTimeout);
+    seqTimeoutsRef.current = [];
     const delay = 280;
     phIds.forEach((pid, i) => {
       const ph = phonemes.find(p => p.id === pid);
-      if (ph) setTimeout(() => playPhoneme(ph), i * delay);
+      if (ph) {
+        const tid = setTimeout(() => playPhoneme(ph), i * delay);
+        seqTimeoutsRef.current.push(tid);
+      }
     });
   }, [phonemes, playPhoneme]);
 

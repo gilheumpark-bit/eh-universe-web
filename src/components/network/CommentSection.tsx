@@ -147,9 +147,10 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         return;
       }
       try {
+        if (!user) return;
         setSubmitting(true);
         setError(null);
-        await updateComment(commentId, trimmed, user!.uid);
+        await updateComment(commentId, trimmed, user.uid);
         setComments((prev) =>
           prev.map((c) => (c.id === commentId ? { ...c, content: trimmed, updatedAt: new Date().toISOString() } : c)),
         );
@@ -166,9 +167,10 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
 
   const handleDelete = useCallback(
     async (comment: CommentRecord) => {
+      if (!user) return;
       if (!window.confirm(L2(LABELS.confirmDelete, lang))) return;
       try {
-        await deleteComment(comment.id, comment.postId, user!.uid);
+        await deleteComment(comment.id, comment.postId, user.uid);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       } catch {
         setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment." }));

@@ -502,9 +502,19 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   // PART 3 — 문체 변환 API 호출
   // ============================================================
 
+  const transformAbortRef = useRef<AbortController | null>(null);
+
+  // Cleanup: cancel stream on unmount
+  useEffect(() => () => { transformAbortRef.current?.abort(); }, []);
+
   const transformText = useCallback(async () => {
     if (!sourceText.trim()) return;
     if (activeStyles.size === 0) return;
+
+    // Abort previous in-flight request
+    transformAbortRef.current?.abort();
+    const controller = new AbortController();
+    transformAbortRef.current = controller;
 
     const NAMES = en ? STYLE_NAMES_EN : STYLE_NAMES_KO;
     const selectedStyleNames = (Array.from(activeStyles) as number[])
@@ -544,6 +554,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           messages: [{ role: "user", content: userPrompt }],
           temperature: 0.8,
         }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {

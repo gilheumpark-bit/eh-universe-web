@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -52,6 +52,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loginHint, setLoginHint] = useState<string | null>(null);
   const loginHintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Cleanup: clear loginHint timer on unmount
+  useEffect(() => () => { clearTimeout(loginHintTimer.current); }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!user || submitting) return;

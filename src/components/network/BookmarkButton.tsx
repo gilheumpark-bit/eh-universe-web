@@ -36,6 +36,9 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
   const [loginHint, setLoginHint] = useState<string | null>(null);
   const loginHintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // Cleanup: clear loginHint timer on unmount
+  useEffect(() => () => { clearTimeout(loginHintTimer.current); }, []);
+
   useEffect(() => {
     if (!user) {
       setSaved(false);

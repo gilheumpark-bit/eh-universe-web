@@ -88,6 +88,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
 
   const handleSubmit = async () => {
     if (!user || !post || !value.title.trim() || !value.content.trim() || !value.eventCategory.trim()) {
+      setError(lang === "ko" ? "필수 항목을 입력해주세요." : "Please fill in required fields.");
       return;
     }
 

@@ -38,7 +38,21 @@ export function NetworkAgentSearchClient() {
     setQuery("");
 
     // Start search
-    const idToken = await user.getIdToken();
+    let idToken: string;
+    try {
+      idToken = await user.getIdToken();
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "agent",
+          content: L4(lang, { ko: "인증 토큰을 가져올 수 없습니다. 다시 로그인해 주세요.", en: "Failed to get auth token. Please sign in again." }),
+          isError: true,
+        },
+      ]);
+      return;
+    }
     const result = await searchAgent(queryText, {
       onlyPublic: false,
       idToken,

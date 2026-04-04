@@ -78,9 +78,13 @@ export function useStudioAI({
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const generationLockRef = useRef(false);
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Cleanup: abort streaming on unmount
-  useEffect(() => () => { abortControllerRef.current?.abort(); }, []);
+  // Cleanup: abort streaming + clear timeout on unmount
+  useEffect(() => () => {
+    abortControllerRef.current?.abort();
+    clearTimeout(timeoutIdRef.current);
+  }, []);
 
   const handleCancel = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -146,10 +150,11 @@ export function useStudioAI({
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => abortControllerRef.current?.abort(), 180_000);
+    clearTimeout(timeoutIdRef.current);
+    timeoutIdRef.current = setTimeout(() => abortControllerRef.current?.abort(), 180_000);
     const capturedSessionId = currentSessionId;
     // 비동기 타이밍에 currentSession이 null일 수 있으므로 방어 체크
-    if (!currentSession) { clearTimeout(timeoutId); generationLockRef.current = false; setIsGenerating(false); return; }
+    if (!currentSession) { clearTimeout(timeoutIdRef.current); generationLockRef.current = false; setIsGenerating(false); return; }
     const capturedConfig = currentSession.config;
 
     // --- AUTO PIPELINE EXECUTION ---
@@ -169,7 +174,7 @@ export function useStudioAI({
     if (pipelineResultExecution.finalStatus === 'failed') {
       generationLockRef.current = false;
       setIsGenerating(false);
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutIdRef.current);
       const blockedMsg: Message = {
         id: `sys-${Date.now()}`, role: 'assistant', 
         content: language === 'KO' 
@@ -375,7 +380,7 @@ export function useStudioAI({
         }
       }
     } finally {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutIdRef.current);
       generationLockRef.current = false;
       // 3-pass canvas mode: auto-inject on pass completion
       if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
