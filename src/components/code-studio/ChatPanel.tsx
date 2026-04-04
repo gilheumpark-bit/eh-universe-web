@@ -136,6 +136,8 @@ Rules:
 5. If unsure about an API or library version, say so explicitly
 6. When generating UI components, follow V0-grade design rules: use theme tokens (bg-bg-primary, text-text-primary, border-border), lucide-react icons, micro-motion (hover:scale-[1.02] active:scale-95 transition-all duration-200), glassmorphism (bg-bg-secondary/60 backdrop-blur-2xl)
 7. Never output raw unstyled HTML — all output must look production-ready
+8. Form accessibility: every input must have a matching <label htmlFor>, error messages must use aria-describedby + role="alert", required fields must have aria-required="true", related inputs must use <fieldset>+<legend>
+9. Image accessibility: informational images require descriptive alt text, decorative images require alt="", icons (lucide-react) require aria-hidden="true" with adjacent text label
 
 Example 1 (리팩터링):
 User: "이 함수 리팩터링해줘"

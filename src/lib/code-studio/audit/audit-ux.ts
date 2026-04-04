@@ -246,11 +246,63 @@ export function auditAccessibility(ctx: AuditContext): AuditAreaResult {
     });
   }
 
+  // Check 7: Form inputs without associated labels (v8 — form accessibility)
+  checks++;
+  let inputNoLabel = 0;
+  for (const f of tsxFiles) {
+    const inputMatches = f.content.match(/<(?:input|textarea|select)\b[^>]*>/g) ?? [];
+    for (const tag of inputMatches) {
+      if (/type\s*=\s*["']hidden["']/.test(tag)) continue;
+      if (!/aria-label|aria-labelledby|id\s*=/.test(tag) && !/htmlFor/.test(f.content)) {
+        inputNoLabel++;
+      }
+    }
+  }
+  const labelThreshold = Math.max(5, Math.floor(tsxFiles.length * 0.1));
+  if (inputNoLabel <= labelThreshold) { passed++; } else {
+    findings.push({
+      id: fid('a11y'), area: 'accessibility', severity: 'high',
+      message: `폼 입력에 label/aria-label 미연결 ${inputNoLabel}건 (허용: ${labelThreshold}) — WCAG 1.3.1 위반`, rule: 'INPUT_NO_LABEL',
+    });
+  }
+
+  // Check 8: Error messages without aria-describedby (v8 — form accessibility)
+  checks++;
+  let errorNoDescribedby = 0;
+  for (const f of tsxFiles) {
+    const hasErrorDisplay = /error.*message|error-msg|errorMessage|\.error\b/i.test(f.content);
+    const hasDescribedby = /aria-describedby/.test(f.content);
+    if (hasErrorDisplay && !hasDescribedby) errorNoDescribedby++;
+  }
+  const errorDescThreshold = Math.max(5, Math.floor(tsxFiles.length * 0.15));
+  if (errorNoDescribedby <= errorDescThreshold) { passed++; } else {
+    findings.push({
+      id: fid('a11y'), area: 'accessibility', severity: 'medium',
+      message: `에러 메시지에 aria-describedby 미연결 ${errorNoDescribedby}건 (허용: ${errorDescThreshold}) — 스크린리더 접근성 저하`, rule: 'ERROR_NO_DESCRIBEDBY',
+    });
+  }
+
+  // Check 9: Required fields without aria-required (v8 — form accessibility)
+  checks++;
+  let requiredNoAria = 0;
+  for (const f of tsxFiles) {
+    const hasRequired = /required\b/.test(f.content) && /<(?:input|textarea|select)\b/.test(f.content);
+    const hasAriaRequired = /aria-required/.test(f.content);
+    if (hasRequired && !hasAriaRequired) requiredNoAria++;
+  }
+  const requiredThreshold = Math.max(3, Math.floor(tsxFiles.length * 0.08));
+  if (requiredNoAria <= requiredThreshold) { passed++; } else {
+    findings.push({
+      id: fid('a11y'), area: 'accessibility', severity: 'medium',
+      message: `필수 필드에 aria-required 미표기 ${requiredNoAria}건 (허용: ${requiredThreshold}) — 스크린리더 필수 정보 누락`, rule: 'REQUIRED_NO_ARIA',
+    });
+  }
+
   const score = Math.max(0, Math.round((passed / Math.max(checks, 1)) * 100));
   return {
     area: 'accessibility', category: 'user-experience', score, grade: gradeFromScore(score),
     findings, checks, passed,
-    metrics: { imgWithoutAlt, buttonNoLabel, roleUsage, colorOnlyIndicators },
+    metrics: { imgWithoutAlt, buttonNoLabel, roleUsage, colorOnlyIndicators, inputNoLabel, errorNoDescribedby, requiredNoAria },
   };
 }
 

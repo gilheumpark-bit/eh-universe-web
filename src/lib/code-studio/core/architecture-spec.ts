@@ -98,6 +98,32 @@ AI가 UI 코드를 생성할 때 반드시 아래 규칙을 따른다.
 - 본문: \`text-sm\` 또는 \`text-xs\`, \`leading-relaxed\`.
 - 라벨/뱃지: \`text-[10px] font-bold uppercase tracking-widest\`.
 - 간격 토큰: \`p-4\`, \`gap-3\`, \`space-y-2\` 등 Tailwind spacing scale 사용.
+
+### Accessibility — Forms & Images (v8)
+AI가 폼 또는 이미지를 포함하는 UI 코드를 생성할 때 아래 규칙을 반드시 따른다.
+
+**폼 접근성 (필수)**
+- 모든 \`<input>\` / \`<textarea>\` / \`<select>\` → 대응하는 \`<label htmlFor>\` 연결 필수.
+- 에러 메시지 → \`aria-describedby\`로 입력 필드와 연결 필수. 에러 컨테이너에 \`role="alert"\` 적용.
+- 필수 항목 → \`aria-required="true"\` 표기 필수. 시각적 표시(\`*\`)와 병용.
+- 관련 입력 그룹(라디오, 체크박스 세트) → \`<fieldset>\` + \`<legend>\`로 감싸기 필수.
+- 실시간 검증: \`onBlur\` 시점에 에러 표시 (submit 후에만 표시 금지).
+
+**이미지 접근성 (필수)**
+- 정보성 이미지 → \`alt\` 텍스트 필수 (내용을 설명하는 문장).
+- 장식용 이미지 → \`alt=""\` 빈 값 필수 (\`alt\` 속성 자체는 반드시 존재).
+- 배경 이미지 위 텍스트 → 별도 텍스트 노드로 접근 가능하게 구현 (CSS 배경에 의존 금지).
+- \`<img>\` 대신 아이콘(\`lucide-react\`) 사용 시 → \`aria-hidden="true"\` + 인접 텍스트 레이블 필수.
+
+### Design reference philosophy (v8)
+UI 생성 시 아래 카테고리별 설계 철학을 학습 데이터 기반으로 모방한다.
+최신 UI 반영이 필요하면 사용자가 스크린샷을 첨부하면 더 정확하다.
+- IDE/코딩 앱: VS Code Web, Linear, Warp Terminal의 정보 밀집형 레이아웃·여백 밀도·고정폭 타이포그래피 패턴.
+- 랜딩/마케팅: Stripe, Vercel의 Hero → Features → CTA 리듬·넉넉한 여백·타이포 위계 패턴.
+- 대시보드: Vercel Analytics, Planetscale의 KPI 카드 그리드·tabular-nums·차트 이중 인코딩 패턴.
+- SaaS: Linear, Figma의 TopNav+Sidebar+Main 구조·즉각 피드백·실시간 폼 검증 패턴.
+참조 허용: 레이아웃 구조, 여백 밀도, 타이포그래피 위계, 컴포넌트 배치 패턴.
+참조 금지: 색상 값 직접 복사 (색상은 반드시 프로젝트 시맨틱 토큰에서만), 독점적 아이덴티티 요소.
 `.trim();
 
 // IDENTITY_SEAL: PART-1 | role=architecture-spec | inputs=PIPELINE_TEAM_STAGES | outputs=CODE_STUDIO_ARCHITECTURE_APPENDIX
