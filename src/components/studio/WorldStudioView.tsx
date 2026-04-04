@@ -105,7 +105,12 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 key={tab}
                 role="tab"
                 aria-selected={active}
-                onClick={() => setSubTab(tab)}
+                onClick={() => {
+                  setSubTab(tab);
+                  // 서브탭 전환 시 콘텐츠 스크롤 상단 리셋
+                  const sc = document.querySelector('[data-testid="studio-content"] .overflow-y-auto');
+                  if (sc) sc.scrollTop = 0;
+                }}
                 className={`relative z-10 group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
                   active
                     ? "bg-[linear-gradient(135deg,rgba(255,200,50,0.15),rgba(0,0,0,0.2))] text-[rgba(255,220,100,0.95)] border border-[rgba(255,200,50,0.4)] shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_10px_rgba(255,200,50,0.1)] -translate-y-px"
