@@ -6,6 +6,8 @@ import { streamChat } from '@/lib/ai-providers';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
 import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
+import { DESIGN_SYSTEM_SPEC } from '@/lib/code-studio/core/design-system-spec';
+import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -492,8 +494,12 @@ async function runSingleAgent(
     confidence: 0,
   };
 
+  // UI-generating agents (css-layout, interaction-motion) receive the full design system + linter spec.
+  const isUIAgent = role === 'css-layout' || role === 'interaction-motion';
+  const designAppendix = isUIAgent ? `\n\n${DESIGN_SYSTEM_SPEC}\n\n${DESIGN_LINTER_SPEC}` : '';
+
   const streamOpts = {
-    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}`,
+    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}`,
     messages: [{ role: 'user' as const, content: userInput }],
     temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,

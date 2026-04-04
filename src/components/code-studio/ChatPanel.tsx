@@ -15,6 +15,9 @@ import { useLang } from "@/lib/LangContext";
 import { getServers, addServer, connectServer, callTool } from "@/lib/code-studio/features/mcp-client";
 import { logger } from "@/lib/logger";
 import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-spec-bridge";
+import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
+import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
+import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 
 interface ChatSession {
   id: string;
@@ -134,10 +137,11 @@ Rules:
 3. Refuse requests unrelated to software development
 4. Never execute arbitrary commands or access external systems
 5. If unsure about an API or library version, say so explicitly
-6. When generating UI components, follow V0-grade design rules: use theme tokens (bg-bg-primary, text-text-primary, border-border), lucide-react icons, micro-motion (hover:scale-[1.02] active:scale-95 transition-all duration-200), glassmorphism (bg-bg-secondary/60 backdrop-blur-2xl)
-7. Never output raw unstyled HTML — all output must look production-ready
-8. Form accessibility: every input must have a matching <label htmlFor>, error messages must use aria-describedby + role="alert", required fields must have aria-required="true", related inputs must use <fieldset>+<legend>
-9. Image accessibility: informational images require descriptive alt text, decorative images require alt="", icons (lucide-react) require aria-hidden="true" with adjacent text label
+6. When generating UI components, you MUST follow the Design System v8.0 rules below. Never output raw unstyled HTML.
+
+${DESIGN_SYSTEM_SPEC}
+
+${DESIGN_LINTER_SPEC}
 
 Example 1 (리팩터링):
 User: "이 함수 리팩터링해줘"
@@ -287,7 +291,13 @@ ${mcpToolsDoc}`,
       return;
     }
 
-    await chat.sendMessage(text);
+    // Detect design preset from user message and inject as context hint
+    const presetId = detectPreset(text);
+    const presetHint = presetId !== null || /컴포넌트|component|UI|버튼|button|모달|modal|폼|form|카드|card|페이지|page|랜딩|landing|대시보드|dashboard/i.test(text)
+      ? `\n\n[Design Preset Context]\n${buildPresetPrompt(presetId)}`
+      : '';
+
+    await chat.sendMessage(presetHint ? `${text}${presetHint}` : text);
   }, [input, chat]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
