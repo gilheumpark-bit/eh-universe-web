@@ -183,6 +183,48 @@ export default function WritingTabInline(props: Props) {
             >
               {t('writingMode.manualEdit')}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!hasApiKey) { setShowApiKeyModal(true); return; }
+                setWritingMode('canvas');
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+                writingMode === 'canvas'
+                  ? 'bg-accent-green/20 border-accent-green/50 text-accent-green shadow-[0_0_0_1px_rgba(74,143,120,0.25)]'
+                  : 'border-border text-text-secondary hover:border-accent-green/40'
+              }`}
+            >
+              {t('writingMode.canvas') || '3-Pass Canvas'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!hasApiKey) { setShowApiKeyModal(true); return; }
+                setWritingMode('refine');
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+                writingMode === 'refine'
+                  ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue shadow-[0_0_0_1px_rgba(109,125,143,0.25)]'
+                  : 'border-border text-text-secondary hover:border-accent-blue/40'
+              }`}
+            >
+              {t('writingMode.refine') || 'AUTO 30%'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!hasApiKey) { setShowApiKeyModal(true); return; }
+                setWritingMode('advanced');
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+                writingMode === 'advanced'
+                  ? 'bg-accent-red/20 border-accent-red/50 text-accent-red shadow-[0_0_0_1px_rgba(168,92,82,0.25)]'
+                  : 'border-border text-text-secondary hover:border-accent-red/40'
+              }`}
+            >
+              {t('writingMode.advanced') || '정밀 집필'}
+            </button>
           </div>
         </div>
         <div 
