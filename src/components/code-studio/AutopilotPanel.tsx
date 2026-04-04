@@ -175,8 +175,13 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [progress?.logs]);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const handleStart = useCallback(async () => {
     if (!prompt.trim() || running) return;
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
     setRunning(true);
     setResult(null);
     setProgress(null);
@@ -187,7 +192,8 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       const resp = await fetch('/api/code/autopilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, config, code, language, fileName })
+        body: JSON.stringify({ prompt, config, code, language, fileName }),
+        signal: ac.signal,
       });
 
       const reader = resp.body?.getReader();
@@ -246,7 +252,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
           {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400">BELOW</span>}
         </span>
         <div className="flex items-center gap-1">
-          {running && <button onClick={() => setRunning(false)} aria-label="중지" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-yellow-400" /></button>}
+          {running && <button onClick={() => { abortRef.current?.abort(); setRunning(false); }} aria-label="중지" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-yellow-400" /></button>}
           {result && <button onClick={handleReset} aria-label="초기화" className="p-1 hover:bg-[#21262d] rounded"><RotateCcw size={12} className="text-[#8b949e]" /></button>}
           <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-[#21262d] rounded"><XCircle size={12} className="text-[#8b949e]" /></button>
         </div>

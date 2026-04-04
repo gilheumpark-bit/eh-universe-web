@@ -262,7 +262,7 @@ export async function runVisualTest(
   // 간이 HTML 페이지로 렌더링 검사 스크립트 생성
   const testScript = `
 const { JSDOM } = require('jsdom');
-const dom = new JSDOM(\`<!DOCTYPE html><html><body>${htmlCode.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}</body></html>\`, { pretendToBeVisual: true });
+const dom = new JSDOM(\`<!DOCTYPE html><html><body>${htmlCode.replace(/\\\\/g, '\\\\\\\\').replace(/\`/g, '\\\\`')}</body></html>\`, { pretendToBeVisual: true });
 const doc = dom.window.document;
 
 const findings = [];

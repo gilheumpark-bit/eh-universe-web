@@ -349,9 +349,8 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get('Authorization') || '';
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1]?.trim() ?? '';
-      if (token === 'PRO_LOCKED') {
-        userTier = 'pro';
-      } else {
+      // PRO_LOCKED 하드코딩 인증 제거 — Firebase 토큰만 허용
+      if (token) {
         const verified = await verifyFirebaseIdToken(token);
         if (verified) userTier = 'free';
       }

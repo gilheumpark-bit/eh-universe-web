@@ -167,12 +167,16 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
 
     window.addEventListener('message', handler);
 
+    // 코드 인젝션 방지: script 태그 탈출 차단 + base64 인코딩으로 격리
+    const safeCode = code.replace(/<\/script/gi, '<\\/script');
+    const encoded = btoa(unescape(encodeURIComponent(safeCode)));
     const html = `<!doctype html><html><body><script>
       try {
         var __out = [];
         var _log = console.log;
         console.log = function() { __out.push(Array.from(arguments).join(' ')); };
-        ${code}
+        var __code = decodeURIComponent(escape(atob("${encoded}")));
+        (new Function(__code))();
         parent.postMessage({ output: __out.join('\\n') }, '*');
       } catch(e) {
         parent.postMessage({ error: e.message, output: '' }, '*');

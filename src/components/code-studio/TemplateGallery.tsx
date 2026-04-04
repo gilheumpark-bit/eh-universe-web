@@ -136,7 +136,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
                     </div>
                   </div>
                   <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{template.description}</p>
-                  <span className="text-[10px] text-white/20">{template.files.length}개 파일</span>
+                  <span className="text-[10px] text-white/50">{template.files.length}개 파일</span>
                 </button>
               ))}
             </div>

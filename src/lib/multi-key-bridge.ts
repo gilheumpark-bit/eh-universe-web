@@ -146,7 +146,7 @@ export async function streamWithMultiKey(opts: MultiKeyStreamOptions): Promise<{
     // 원래 설정 복원
     setActiveProvider(prevProvider);
     setActiveModel(prevModel);
-    if (prevKey) setApiKey(slot.provider, prevKey);
+    if (prevKey !== undefined) setApiKey(slot.provider, prevKey);
   }
 }
 
@@ -269,7 +269,7 @@ export async function streamWithCrossValidation(
       } finally {
         setActiveProvider(prevProvider);
         setActiveModel(prevModel);
-        if (prevKey) setApiKey(slot.provider, prevKey);
+        if (prevKey !== undefined) setApiKey(slot.provider, prevKey);
       }
     },
     config.maxParallel,

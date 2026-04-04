@@ -206,9 +206,10 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+                    const target = e.target as HTMLElement;
+                    target.setPointerCapture?.(e.pointerId);
                     const startX = e.clientX;
-                    const barWidth = (e.target as HTMLElement).closest('.flex')?.getBoundingClientRect().width || 600;
+                    const barWidth = target.closest('.flex')?.getBoundingClientRect().width || 600;
                     const handleMove = (pe: PointerEvent) => {
                       const delta = Math.round(((pe.clientX - startX) / barWidth) * 100);
                       if (Math.abs(delta) >= 1) updateWidth(i, delta);
@@ -216,9 +217,11 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
                     const handleUp = () => {
                       document.removeEventListener('pointermove', handleMove);
                       document.removeEventListener('pointerup', handleUp);
+                      document.removeEventListener('pointercancel', handleUp);
                     };
                     document.addEventListener('pointermove', handleMove);
                     document.addEventListener('pointerup', handleUp);
+                    document.addEventListener('pointercancel', handleUp);
                   }}
                 />
               )}

@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
     );
   }
   try {
-    const { prompt, config, code, language, fileName } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { prompt, config, code, language, fileName } = body ?? {};
+    if (!prompt || typeof prompt !== 'string') {
+      return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
+    }
 
     const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY?.trim() || '' : '';
     if (!apiKey && !hasServerProviderCredentials('gemini')) {

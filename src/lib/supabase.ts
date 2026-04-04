@@ -7,10 +7,10 @@ export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // Initialize the Supabase client
 // Note: It will log warnings or fail if environment variables are missing,
 // but we handle graceful fallback in the UI.
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder'
-);
+// placeholder 도메인 사용 금지 — 환경변수 없으면 null
+export const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 /**
  * 챕터, 스토리 요약, 캐릭터 프로필 등 작업 내역 전체를 클라우드에 영구 저장합니다.

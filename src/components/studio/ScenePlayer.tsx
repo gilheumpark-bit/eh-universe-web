@@ -175,6 +175,8 @@ function ParticleLayer({ type }: { type: ParticleType }) {
 function TypingText({ text, speed = 40, onDone }: { text: string; speed?: number; onDone?: () => void }) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     setDisplayed("");
@@ -183,10 +185,10 @@ function TypingText({ text, speed = 40, onDone }: { text: string; speed?: number
     const interval = setInterval(() => {
       i++;
       setDisplayed(text.slice(0, i));
-      if (i >= text.length) { clearInterval(interval); setDone(true); onDone?.(); }
+      if (i >= text.length) { clearInterval(interval); setDone(true); onDoneRef.current?.(); }
     }, speed);
     return () => clearInterval(interval);
-  }, [text, speed, onDone]);
+  }, [text, speed]);
 
   return (
     <span>

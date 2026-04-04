@@ -50,8 +50,9 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let api: any;
   try {
+    // dynamic import 대신 globalThis 캐시 활용 — new Function() eval 위험 제거
     const moduleName = "@webcontainer/api";
-    api = await (Function('m', 'return import(m)')(moduleName));
+    api = await import(/* webpackIgnore: true */ moduleName);
   } catch {
     return null;
   }

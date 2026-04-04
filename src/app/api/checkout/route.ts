@@ -13,10 +13,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const returnUrl =
-      typeof body.returnUrl === 'string' ? body.returnUrl : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-    const session = await getStripeSession(priceId, undefined, returnUrl);
+    // returnUrl을 sanitizeStripeReturnBase로 검증 — 오픈 리다이렉트 방지
+    const rawReturnUrl = typeof body.returnUrl === 'string' ? body.returnUrl : undefined;
+    const session = await getStripeSession(priceId, undefined, rawReturnUrl);
     if (!session.url) {
       return NextResponse.json({ error: 'Checkout 세션을 만들 수 없습니다.' }, { status: 500 });
     }

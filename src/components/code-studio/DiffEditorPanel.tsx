@@ -161,18 +161,18 @@ export function DiffEditorPanel({ original, modified, language = "typescript", f
         {renderSideBySide ? (
           <div className="flex h-full">
             <div className="flex-1 overflow-auto border-r border-white/8 p-2">
-              <div className="text-[10px] text-white/30 mb-1">Original</div>
+              <div className="text-[10px] text-white/50 mb-1">Original</div>
               {origLines.map((line, i) => (
-                <div key={i} className="flex"><span className="w-8 text-right pr-2 text-white/20 select-none">{i + 1}</span><span className="text-white/60">{line}</span></div>
+                <div key={i} className="flex"><span className="w-8 text-right pr-2 text-white/40 select-none">{i + 1}</span><span className="text-white/60">{line}</span></div>
               ))}
             </div>
             <div className="flex-1 overflow-auto p-2">
-              <div className="text-[10px] text-white/30 mb-1">Modified</div>
+              <div className="text-[10px] text-white/50 mb-1">Modified</div>
               {modLines.map((line, i) => {
                 const isChanged = i < origLines.length ? origLines[i] !== line : true;
                 return (
                   <div key={i} className={`flex ${isChanged ? "bg-green-500/10" : ""}`}>
-                    <span className="w-8 text-right pr-2 text-white/20 select-none">{i + 1}</span>
+                    <span className="w-8 text-right pr-2 text-white/40 select-none">{i + 1}</span>
                     <span className={isChanged ? "text-green-400" : "text-white/60"}>{line}</span>
                   </div>
                 );
@@ -187,10 +187,10 @@ export function DiffEditorPanel({ original, modified, language = "typescript", f
               return (
                 <div key={i}>
                   {wasRemoved && (
-                    <div className="flex bg-red-500/10"><span className="w-8 text-right pr-2 text-white/20 select-none">-</span><span className="text-red-400 line-through">{origLines[i]}</span></div>
+                    <div className="flex bg-red-500/10"><span className="w-8 text-right pr-2 text-white/40 select-none">-</span><span className="text-red-400 line-through">{origLines[i]}</span></div>
                   )}
                   <div className={`flex ${isChanged ? "bg-green-500/10" : ""}`}>
-                    <span className="w-8 text-right pr-2 text-white/20 select-none">{isChanged ? "+" : " "}</span>
+                    <span className="w-8 text-right pr-2 text-white/40 select-none">{isChanged ? "+" : " "}</span>
                     <span className={isChanged ? "text-green-400" : "text-white/60"}>{line}</span>
                   </div>
                 </div>

@@ -1,12 +1,14 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+// Stripe 초기화: 환경변수 없으면 null 반환 — placeholder 키 사용 금지
+const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
+export const stripe = stripeKey ? new Stripe(stripeKey, {
   apiVersion: '2026-03-25.dahlia',
   appInfo: {
     name: 'EH-Translator-V3',
     version: '3.0.0',
   },
-});
+}) : null;
 
 /** Open redirect 방지: NEXT_PUBLIC_APP_URL과 동일 origin만 허용, 결과는 origin 문자열만 사용 */
 export function sanitizeStripeReturnBase(raw: string | undefined): string {
@@ -28,6 +30,7 @@ export function sanitizeStripeReturnBase(raw: string | undefined): string {
 }
 
 export const getStripeSession = async (priceId: string, customerId?: string, returnUrl?: string) => {
+  if (!stripe) throw new Error('Stripe is not configured');
   const base = sanitizeStripeReturnBase(returnUrl);
   return stripe.checkout.sessions.create({
     mode: 'subscription',

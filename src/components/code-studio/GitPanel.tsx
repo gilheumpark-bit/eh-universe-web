@@ -558,13 +558,15 @@ export default function GitPanel({
       files: snapshots,
     };
 
+    // setState 안에서 다른 setState 호출 금지 — 분리
     setCommits((prev) => {
       const next = [entry, ...prev];
-      const trimmed = next.length > MAX_HISTORY ? next.slice(0, MAX_HISTORY) : next;
-      // Also persist to branchCommits
-      setBranchCommits((bc) => ({ ...bc, [currentBranch]: trimmed }));
-      return trimmed;
+      return next.length > MAX_HISTORY ? next.slice(0, MAX_HISTORY) : next;
     });
+    setBranchCommits((bc) => ({
+      ...bc,
+      [currentBranch]: [entry, ...(bc[currentBranch] || [])].slice(0, MAX_HISTORY),
+    }));
     setActiveTab("history");
     // 커밋 후 dirty 상태 해제
     onClearDirty?.();

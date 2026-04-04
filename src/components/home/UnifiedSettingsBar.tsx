@@ -39,7 +39,7 @@ export default function UnifiedSettingsBar() {
             onClick={signOut}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-border hover:text-text-primary transition-all"
           >
-            {user.photoURL ? (
+            {user.photoURL && /^https:\/\//.test(user.photoURL) ? (
               <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
             ) : (
               <User className="w-3.5 h-3.5" />
