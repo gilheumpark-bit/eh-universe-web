@@ -6,6 +6,7 @@ import { Message, AppLanguage } from '@/lib/studio-types';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { createT } from '@/lib/i18n';
 import { getStudioBackendDisplayLabel } from '@/lib/studio-ai-backend-label';
+import { logger } from '@/lib/logger';
 
 const ChatMarkdownBlock = dynamic(
   () => import('./ChatMarkdownBlock').then((m) => m.ChatMarkdownBlock),
@@ -257,7 +258,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               title={`AI Message`}
               actions={['copy', 'share', 'feedback']}
               shareType="novel"
-              onFeedback={(positive) => { /* TODO: collect feedback */ }}
+              onFeedback={(positive) => { logger.info('feedback', `AI message ${message.id}: ${positive ? 'positive' : 'negative'}`); }}
             />
             {onRegenerate && (
               <button

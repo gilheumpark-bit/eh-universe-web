@@ -22,9 +22,6 @@ export { createRoomId, getCollabInviteUrl, copyCollabInvite, createLocalUser, cr
 // SEO 구조화 데이터 (JSON-LD)
 export { buildArticleJsonLd, buildWebAppJsonLd, buildBreadcrumbJsonLd, buildFAQJsonLd, jsonLdScript } from './structured-data';
 
-// RSS/Atom 피드
-export { generateAtomFeed, generateRssFeed, type FeedItem } from './rss-feed';
-
 // 모바일 UX
 export { isMobile, isTouchDevice, onVirtualKeyboard, applySafeArea, onSwipe, onPullToRefresh, getSelectedText } from './mobile-ux';
 

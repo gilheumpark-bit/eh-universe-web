@@ -5,7 +5,7 @@
 // 코드 페어 리뷰. 설치형에선 매우 어렵지만 웹에선 자연스러움.
 //
 // 구현: BroadcastChannel (같은 기기) + 서버 SSE (원격 유저)
-// CRDT는 기존 crdt-presence.ts 활용
+// CRDT 구현 시 별도 모듈 추가 예정
 
 export interface CollabUser {
   id: string;
@@ -124,18 +124,20 @@ export interface RemoteCollabConnection {
  * 서버가 /api/collab/:roomId SSE 엔드포인트를 제공해야 함.
  * 현재는 로컬 채널만으로 동작, 원격 서버 구현 시 활성화.
  */
+/**
+ * 원격 협업 연결 — 현재 미구현 (로컬 BroadcastChannel만 지원).
+ * /api/collab/:roomId SSE 엔드포인트 구현 시 활성화 예정.
+ * @returns 항상 null (원격 서버 미구현)
+ */
 export function connectRemote(
-  roomId: string,
-  user: CollabUser,
-  handlers: {
+  _roomId: string,
+  _user: CollabUser,
+  _handlers: {
     onEdit?: (edit: CollabEdit) => void;
     onCursor?: (user: CollabUser) => void;
     onJoin?: (user: CollabUser) => void;
     onLeave?: (userId: string) => void;
   },
 ): RemoteCollabConnection | null {
-  // SSE 엔드포인트가 있을 때만 연결
-  // 현재는 null 반환 (로컬 채널만 사용)
-  // TODO: /api/collab/:roomId 구현 시 활성화
-  return null;
+  return null; // [미구현] 원격 SSE 서버 필요
 }
