@@ -111,6 +111,10 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "api-config",     label: "API Configuration",    labelKo: "API 설정",          icon: "Key",             group: "settings",     category: "View",  color: "text-accent-red",     status: "stable" },
   // ── audit (감사) ─────────────────────────────────────────
   { id: "audit",           label: "Project Audit",        labelKo: "프로젝트 감사",     icon: "ShieldCheck",     group: "verification", category: "View",  color: "text-accent-purple",  status: "stable" },
+  // ── multi-diff (멀티 파일 비교) ─────────────────────────
+  { id: "multi-diff",      label: "Multi-file Diff",      labelKo: "멀티파일 비교",     icon: "GitCompareArrows", group: "editing",     category: "View",  color: "text-accent-amber",   status: "beta" },
+  // ── debugger (디버거) ──────────────────────────────────
+  { id: "debugger",        label: "Debugger",             labelKo: "디버거",            icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red",     status: "beta" },
 ] as const;
 
 // IDENTITY_SEAL: PART-2 | role=Registry | inputs=PanelDef | outputs=PANEL_REGISTRY

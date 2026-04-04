@@ -19,6 +19,7 @@ import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
 import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 import { runDesignLint, formatDesignLintReport } from "@/lib/code-studio/pipeline/design-lint";
+import { parseNLCommand } from "@/lib/code-studio/features/nl-terminal";
 
 interface ChatSession {
   id: string;
@@ -33,6 +34,8 @@ interface Props {
   allFileNames?: string[];
   onApplyCode?: (code: string, fileName?: string) => void;
   onInsertCode?: (code: string) => void;
+  onTerminalCommand?: (command: string, terminalId?: number | null) => void;
+  onFileAction?: (action: string, params: Record<string, string>) => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=ChatMessage,Props
@@ -108,6 +111,8 @@ export function ChatPanel({
   activeFileName,
   allFileNames,
   onApplyCode,
+  onTerminalCommand,
+  onFileAction,
 }: Props) {
   const { lang } = useLang();
   const ko = lang === "ko";
@@ -291,6 +296,23 @@ ${mcpToolsDoc}`,
       
       await chat.sendMessage("System: Available MCP commands:\n- /mcp list\n- /mcp connect <name> <url>\n- /mcp call <serverName> <toolName> [argsJSON]");
       return;
+    }
+
+    // NL Terminal Bridge: messages starting with / (not /mcp) or > are terminal commands
+    if (text.startsWith(">") || (text.startsWith("/") && !text.startsWith("/mcp"))) {
+      const rawCmd = text.startsWith(">") ? text.slice(1).trim() : text.slice(1).trim();
+      const nlResult = parseNLCommand(rawCmd);
+      if (nlResult.type === "shell") {
+        onTerminalCommand?.(nlResult.command, nlResult.terminalId);
+        await chat.sendMessage(`[Terminal] ${nlResult.command}${nlResult.terminalId != null ? ` (terminal ${nlResult.terminalId + 1})` : ""}`);
+        return;
+      }
+      if (nlResult.type === "action") {
+        onFileAction?.(nlResult.action, nlResult.params);
+        await chat.sendMessage(`[Action] ${nlResult.action}: ${JSON.stringify(nlResult.params)}`);
+        return;
+      }
+      // Unknown NL command — fall through to normal chat
     }
 
     // Detect design preset from user message and inject as context hint

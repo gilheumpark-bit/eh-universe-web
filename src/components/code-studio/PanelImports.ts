@@ -243,7 +243,19 @@ export const AuditPanelComponent = dynamic(
   { ssr: false },
 );
 
-// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=20-dynamic-components
+// ── multi-diff (named) ──────────────────────────────────────
+export const MultiFileDiffComponent = dynamic(
+  () => import("@/components/code-studio/MultiFileDiff").then((m) => ({ default: m.MultiFileDiff })),
+  { ssr: false },
+);
+
+// ── debugger (named) ────────────────────────────────────────
+export const DebugPanelComponent = dynamic(
+  () => import("@/components/code-studio/DebugPanel").then((m) => ({ default: m.DebugPanel })),
+  { ssr: false },
+);
+
+// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=22-dynamic-components
 
 // ============================================================
 // PART 3 — Shared Utility Imports

@@ -26,6 +26,15 @@ import {
   type WebContainerInstance,
 } from "@/lib/code-studio/features/webcontainer";
 import { generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
+import {
+  initRepo,
+  commitFiles as engineCommit,
+  createBranch as engineCreateBranch,
+  switchBranch as engineSwitchBranch,
+  getBranches as engineGetBranches,
+  getLog as engineGetLog,
+  type GitRepo,
+} from "@/lib/code-studio/features/git-engine";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -72,8 +81,9 @@ const MAX_HISTORY = 50;
 // PART 2 — Utilities
 // ============================================================
 
-// [시뮬레이션] 실제 Git 연동 아님
-function generateHash(): string {
+// [시뮬레이션] generateHash는 git-engine의 SHA-1 기반 커밋으로 대체됨.
+// 폴백용으로만 유지 (engineCommit 실패 시).
+function generateHashFallback(): string {
   const chars = "0123456789abcdef";
   let result = "";
   for (let i = 0; i < 40; i++) {
@@ -405,6 +415,9 @@ export default function GitPanel({
   const [gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
   const gitContainerRef = useRef<WebContainerInstance | null>(null);
 
+  // In-memory git engine (SHA-1 based)
+  const gitEngineRef = useRef<GitRepo>(initRepo());
+
   const dirtyFiles = useMemo(
     () => openFiles.filter((f) => f.isDirty),
     [openFiles]
@@ -494,6 +507,13 @@ export default function GitPanel({
       }
     }
 
+    // In-memory engine branch
+    try {
+      engineCreateBranch(gitEngineRef.current, name);
+    } catch {
+      // Branch may already exist in engine
+    }
+
     setBranches((prev) => [...prev, name]);
     // Copy current branch commit history to the new branch
     setBranchCommits((prev) => ({ ...prev, [name]: [...(prev[currentBranch] ?? [])] }));
@@ -514,6 +534,13 @@ export default function GitPanel({
       } catch {
         // Fall through to simulation
       }
+    }
+
+    // In-memory engine switch
+    try {
+      engineSwitchBranch(gitEngineRef.current, branch);
+    } catch {
+      // Branch may not exist in engine
     }
 
     // Save current branch commits
@@ -556,8 +583,21 @@ export default function GitPanel({
       };
     });
 
+    // Use git-engine for proper SHA-1 hash
+    let commitHash: string;
+    try {
+      const engineFiles = new Map<string, string>();
+      for (const df of dirtyFiles) {
+        engineFiles.set(df.name, df.content);
+      }
+      const engineResult = await engineCommit(gitEngineRef.current, engineFiles, commitMessage);
+      commitHash = engineResult.hash;
+    } catch {
+      commitHash = generateHashFallback();
+    }
+
     const entry: CommitEntry = {
-      hash: generateHash(),
+      hash: commitHash,
       message: commitMessage,
       timestamp: Date.now(),
       files: snapshots,

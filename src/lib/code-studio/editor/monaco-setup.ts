@@ -4,6 +4,7 @@
 // 컴파일러 옵션, 언어 등록, 테마 설정, IntelliSense, provider 등록.
 
 import type * as Monaco from 'monaco-editor';
+import { setupTypeScriptIntelliSense } from './ts-intellisense';
 
 // ============================================================
 // PART 1 — Theme Configuration
@@ -245,6 +246,7 @@ export function setupMonaco(
 ): void {
   registerThemes(monaco);
   configureTypeScript(monaco);
+  setupTypeScriptIntelliSense(monaco);
 
   const theme = options.theme === 'light' ? 'eh-light' : 'eh-dark';
   monaco.editor.setTheme(theme);
