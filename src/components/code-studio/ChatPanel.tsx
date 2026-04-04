@@ -199,6 +199,7 @@ ${mcpToolsDoc}`,
     try {
       const seeded = localStorage.getItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
       if (!seeded) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time localStorage seed on mount, intentional initialization
       setInput((prev) => prev || seeded);
       localStorage.removeItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
     } catch (err) {

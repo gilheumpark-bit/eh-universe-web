@@ -64,6 +64,7 @@ async function registerBackgroundSync(): Promise<void> {
   try {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       const reg = await navigator.serviceWorker.ready;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ServiceWorkerRegistration.sync is non-standard Background Sync API
       await (reg as any).sync.register('eh-sync-queue');
     }
   } catch { /* Background Sync 미지원 — 수동 재시도 fallback */ }

@@ -5,6 +5,8 @@
 // All: Multi-Screen (Chrome lead)
 // 미지원 브라우저: graceful fallback
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Experimental Chrome-only APIs without TS declarations (launchQueue, windowControlsOverlay, documentPictureInPicture, PressureObserver, ink) */
+
 // ── 1. File Handling API (Chrome PWA) ──
 // PWA를 .md, .txt, .json, .xliff 등의 기본 앱으로 등록
 // manifest.json에 "file_handlers" 추가 필요

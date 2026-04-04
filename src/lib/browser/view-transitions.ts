@@ -4,6 +4,8 @@
 // 브라우저 내장 모핑 애니메이션 (서버 비용 0원)
 // Chrome 111+, Safari 18+ 지원. 미지원 브라우저는 즉시 전환.
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- document.startViewTransition() lacks TS declarations in older lib targets */
+
 /** View Transitions 지원 여부 */
 export function supportsViewTransitions(): boolean {
   return typeof document !== 'undefined' && 'startViewTransition' in document;

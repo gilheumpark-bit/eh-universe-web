@@ -2,6 +2,8 @@
 // Intl Utilities — 브라우저 내장 국제화 API 활용
 // ============================================================
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Intl.Segmenter is not in TS lib declarations for all targets */
+
 /** CJK 텍스트를 문장 단위로 정확하게 분할 (Intl.Segmenter) */
 export function segmentSentences(text: string, locale: string = 'ko'): string[] {
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {

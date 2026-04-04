@@ -17,6 +17,7 @@ export async function detectKeyboardLayout(): Promise<KeyboardLayoutInfo> {
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Keyboard API (navigator.keyboard) has no TS declarations
     const layoutMap: Map<string, string> = await (navigator as any).keyboard.getLayoutMap();
     const keyMap = new Map<string, string>();
 

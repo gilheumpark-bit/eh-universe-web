@@ -5,6 +5,8 @@
 // All: Screen Capture, Speculation Rules
 // 미지원 브라우저: graceful fallback (에러 없이 비활성)
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Experimental browser APIs without TS declarations (TextDetector, BarcodeDetector, EyeDropper, queryLocalFonts) */
+
 // ── 1. Shape Detection API (OCR — 이미지→텍스트) ──
 
 export interface OCRResult {

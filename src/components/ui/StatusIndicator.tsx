@@ -15,6 +15,7 @@ export function StatusIndicator() {
   useEffect(() => {
     const onOnline = () => setIsOffline(false);
     const onOffline = () => setIsOffline(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync initial online state on mount; no cascading risk
     setIsOffline(!navigator.onLine);
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
@@ -54,6 +55,7 @@ export function StatusBadge({ showStorage = false }: { showStorage?: boolean }) 
   const [storageLabel, setStorageLabel] = useState('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync initial online state on mount; no cascading risk
     setIsOffline(!navigator.onLine);
     const on = () => setIsOffline(false);
     const off = () => setIsOffline(true);
