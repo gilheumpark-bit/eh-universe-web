@@ -251,11 +251,11 @@ function lintRule10_ZIndex(code: string): DesignLintIssue[] {
 // Bonus: check for rebuilding existing components
 function lintBonusComponentReuse(code: string): DesignLintIssue[] {
   const issues: DesignLintIssue[] = [];
-  // Detect someone building a full button from scratch when .premium-button exists
-  const lines = code.split('\n').length;
+
+  // Detect button built from scratch when .premium-button / .ds-btn exists
   const hasButton = /<button\b/.test(code);
   const hasManyStyles = (code.match(/hover:|active:|focus:|transition|rounded|border|bg-|text-/g) ?? []).length;
-  if (hasButton && hasManyStyles > 8 && !/premium-button|ds-btn/.test(code) && lines > 5) {
+  if (hasButton && hasManyStyles > 8 && !/premium-button|ds-btn/.test(code) && code.split('\n').length > 5) {
     issues.push({
       rule: 'COMPONENT_REBUILD',
       severity: 'info',
@@ -263,10 +263,223 @@ function lintBonusComponentReuse(code: string): DesignLintIssue[] {
       fix: 'Use existing component classes: premium-button, premium-button-ghost, ds-btn-primary, etc.',
     });
   }
+
+  // Detect card built from scratch when .ds-card / .premium-panel exists
+  const hasCardPattern = (code.match(/rounded.*border.*shadow|shadow.*border.*rounded/g) ?? []).length;
+  if (hasCardPattern > 0 && !/ds-card|premium-panel|zone-card/.test(code)) {
+    issues.push({
+      rule: 'CARD_REBUILD',
+      severity: 'info',
+      message: 'Card-like element built from scratch — consider .ds-card, .premium-panel, or .zone-card',
+      fix: 'Use existing: ds-card, ds-card-sm, ds-card-lg, premium-panel, premium-panel-soft, zone-card',
+    });
+  }
+
+  // Detect input built from scratch when .ds-input exists
+  const hasInput = /<input\b/.test(code);
+  const hasInputStyles = /border.*rounded.*focus|focus.*border.*rounded/.test(code);
+  if (hasInput && hasInputStyles && !/ds-input/.test(code)) {
+    issues.push({
+      rule: 'INPUT_REBUILD',
+      severity: 'info',
+      message: 'Styled input built from scratch — consider .ds-input (has focus, error, success states)',
+      fix: 'Use ds-input class. Add .error or .success modifier for validation states.',
+    });
+  }
+
+  // Detect badge built from scratch when .badge-* exists
+  const hasBadgePattern = /text-\[1[0-2]px\].*rounded-full|rounded-full.*text-\[1[0-2]px\]|uppercase.*tracking.*rounded/.test(code);
+  if (hasBadgePattern && !/badge-|ds-tag/.test(code)) {
+    issues.push({
+      rule: 'BADGE_REBUILD',
+      severity: 'info',
+      message: 'Badge-like element built from scratch — consider .badge-* or .ds-tag',
+      fix: 'Use existing: badge-allow, badge-classified, badge-amber, badge-blue, ds-tag',
+    });
+  }
+
   return issues;
 }
 
-// IDENTITY_SEAL: PART-2 | role=lint-rules | inputs=code-string | outputs=DesignLintIssue[]
+// IDENTITY_SEAL: PART-2b | role=component-reuse | inputs=code | outputs=DesignLintIssue[]
+
+// ============================================================
+// PART 2c — Rule 11: Color-blind pair detection
+// ============================================================
+
+/** Confusable color pairs for common color vision deficiencies */
+const CONFUSABLE_PAIRS: [RegExp, RegExp, string][] = [
+  [/(?:text|bg)-accent-red/, /(?:text|bg)-accent-green/, 'red/green (protanopia/deuteranopia)'],
+  [/(?:text|bg)-red-\d/, /(?:text|bg)-green-\d/, 'red/green (protanopia/deuteranopia)'],
+  [/(?:text|bg)-accent-blue/, /(?:text|bg)-accent-purple/, 'blue/purple (tritanopia)'],
+];
+
+function lintRule11_ColorBlindPairs(code: string): DesignLintIssue[] {
+  const issues: DesignLintIssue[] = [];
+  for (const [patternA, patternB, deficiency] of CONFUSABLE_PAIRS) {
+    if (patternA.test(code) && patternB.test(code)) {
+      // Check if they have icon/shape differentiation
+      const hasShapeDiff = /lucide|Icon|aria-hidden|▲|▼|●|■/.test(code);
+      if (!hasShapeDiff) {
+        issues.push({
+          rule: 'COLOR_BLIND_PAIR',
+          severity: 'warning',
+          message: `Confusable color pair: ${deficiency} — add icon/shape differentiation`,
+          fix: 'Add lucide icons or shape indicators (▲▼) alongside colors for color-blind users',
+        });
+      }
+    }
+  }
+  return issues;
+}
+
+// ============================================================
+// PART 2d — Rule 12: Precise touch target detection
+// ============================================================
+
+function lintRule12_PreciseTouchTarget(code: string): DesignLintIssue[] {
+  const issues: DesignLintIssue[] = [];
+  const lines = code.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Detect interactive elements with explicit small sizing
+    if (/<(?:button|a)\b/.test(line)) {
+      // Check for explicit small padding that results in < 44px
+      // p-0.5 = 2px, p-1 = 4px, p-1.5 = 6px — these are too small alone
+      const hasSmallPadding = /\bp-(?:0\.5|1|1\.5)\b/.test(line) && !/p-\d{2,}/.test(line);
+      const hasExplicitSmallHeight = /h-\[(?:[1-3]\d)px\]|h-[1-7]\b/.test(line);
+      const hasMinHeight = /min-h-|min-height|premium-button|ds-btn/.test(line);
+
+      if ((hasSmallPadding || hasExplicitSmallHeight) && !hasMinHeight) {
+        // Check nearby lines for min-h
+        const context = lines.slice(Math.max(0, i - 1), Math.min(lines.length, i + 3)).join(' ');
+        if (!/min-h-|min-height|premium-button|ds-btn/.test(context)) {
+          issues.push({
+            rule: 'TOUCH_TARGET_PRECISE',
+            severity: 'warning',
+            message: `Interactive element with small padding/height — may not meet 44px touch target`,
+            line: i + 1,
+            fix: 'Add min-h-[44px] min-w-[44px] or use .premium-button/.ds-btn-*',
+          });
+        }
+      }
+    }
+  }
+  return issues;
+}
+
+// ============================================================
+// PART 2e — Rule 13: Dual-theme CR verification
+// ============================================================
+
+/** Project token L-values for both themes */
+const TOKEN_L_VALUES: Record<string, { dark: number; light: number }> = {
+  'bg-bg-primary':     { dark: 0.008, light: 0.960 },
+  'bg-bg-secondary':   { dark: 0.013, light: 0.896 },
+  'bg-bg-tertiary':    { dark: 0.022, light: 0.807 },
+  'text-text-primary': { dark: 0.920, light: 0.005 },
+  'text-text-secondary': { dark: 0.402, light: 0.032 },
+  'text-text-tertiary':  { dark: 0.184, light: 0.091 },
+  'text-accent-amber': { dark: 0.300, light: 0.170 },
+  'text-accent-red':   { dark: 0.215, light: 0.136 },
+  'text-accent-green': { dark: 0.317, light: 0.197 },
+  'text-accent-purple': { dark: 0.184, light: 0.117 },
+  'text-accent-blue':  { dark: 0.184, light: 0.129 },
+};
+
+function calcCR(l1: number, l2: number): number {
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function lintRule13_DualThemeCR(code: string): DesignLintIssue[] {
+  const issues: DesignLintIssue[] = [];
+
+  // Find text-on-bg combinations
+  const bgMatch = code.match(/\b(bg-bg-(?:primary|secondary|tertiary))\b/);
+  const textMatches = code.match(/\b(text-(?:text-(?:primary|secondary|tertiary)|accent-(?:amber|red|green|purple|blue)))\b/g);
+
+  if (!bgMatch || !textMatches) return issues;
+
+  const bgToken = bgMatch[1];
+  const bgL = TOKEN_L_VALUES[bgToken];
+  if (!bgL) return issues;
+
+  for (const textToken of new Set(textMatches)) {
+    const textL = TOKEN_L_VALUES[textToken];
+    if (!textL) continue;
+
+    const crDark = calcCR(textL.dark, bgL.dark);
+    const crLight = calcCR(textL.light, bgL.light);
+
+    const darkPass = crDark >= 4.5;
+    const lightPass = crLight >= 4.5;
+
+    if (!darkPass || !lightPass) {
+      const failTheme = !darkPass && !lightPass ? 'both themes' : !darkPass ? 'dark theme' : 'light theme';
+      issues.push({
+        rule: 'DUAL_THEME_CR_FAIL',
+        severity: 'warning',
+        message: `${textToken} on ${bgToken}: CR fails in ${failTheme} (dark: ${crDark.toFixed(1)}:1, light: ${crLight.toFixed(1)}:1)`,
+        fix: 'Use text-text-primary (always high CR) or check both theme L-values',
+      });
+    }
+  }
+  return issues;
+}
+
+// ============================================================
+// PART 2f — Rule 14: Responsive overflow detection
+// ============================================================
+
+function lintRule14_ResponsiveOverflow(code: string): DesignLintIssue[] {
+  const issues: DesignLintIssue[] = [];
+
+  // Fixed width that could overflow on mobile
+  const fixedWidthMatch = code.match(/w-\[(\d+)px\]/g);
+  if (fixedWidthMatch) {
+    for (const match of fixedWidthMatch) {
+      const px = parseInt(match.match(/\d+/)?.[0] ?? '0', 10);
+      if (px > 375) {
+        issues.push({
+          rule: 'FIXED_WIDTH_OVERFLOW',
+          severity: 'warning',
+          message: `Fixed width ${px}px exceeds mobile viewport (375px) — use max-w or responsive classes`,
+          fix: `Replace w-[${px}px] with max-w-[${px}px] w-full or use responsive: w-full md:w-[${px}px]`,
+        });
+      }
+    }
+  }
+
+  // Horizontal flex without wrapping that could overflow
+  if (/flex\b/.test(code) && !/flex-wrap|flex-col|grid/.test(code)) {
+    const manyChildren = (code.match(/<(?:div|span|button|a)\b/g) ?? []).length;
+    if (manyChildren > 5 && !/overflow-x|overflow-auto|scrollbar/.test(code)) {
+      issues.push({
+        rule: 'FLEX_NO_WRAP',
+        severity: 'info',
+        message: 'Horizontal flex with 5+ children and no flex-wrap — may overflow on mobile',
+        fix: 'Add flex-wrap or use responsive: flex-col md:flex-row',
+      });
+    }
+  }
+
+  // No responsive breakpoint used at all
+  if (code.length > 300 && !/\b(?:sm:|md:|lg:|xl:)\b/.test(code) && /</.test(code)) {
+    issues.push({
+      rule: 'NO_RESPONSIVE_CLASSES',
+      severity: 'info',
+      message: 'No responsive breakpoint classes found — consider mobile-first responsive design',
+      fix: 'Add sm:/md:/lg: variants for layout, typography, and spacing',
+    });
+  }
+
+  return issues;
+}
+
+// IDENTITY_SEAL: PART-2f | role=responsive-lint | inputs=code | outputs=DesignLintIssue[]
 
 // ============================================================
 // PART 3 — Main Linter Entry Point
@@ -297,6 +510,10 @@ export function runDesignLint(code: string): DesignLintResult {
     ...lintRule8_TouchTarget(code),
     ...lintRule9_TransitionAll(code),
     ...lintRule10_ZIndex(code),
+    ...lintRule11_ColorBlindPairs(code),
+    ...lintRule12_PreciseTouchTarget(code),
+    ...lintRule13_DualThemeCR(code),
+    ...lintRule14_ResponsiveOverflow(code),
     ...lintBonusComponentReuse(code),
   ];
 
@@ -339,4 +556,41 @@ export function formatDesignLintReport(result: DesignLintResult): string {
   return lines.join('\n');
 }
 
-// IDENTITY_SEAL: PART-3 | role=design-linter-runtime | inputs=code | outputs=DesignLintResult
+// ============================================================
+// PART 4 — Public Utilities
+// ============================================================
+
+/**
+ * Check contrast ratio between two project tokens.
+ * Returns CR for both dark and light themes.
+ *
+ * Usage:
+ *   checkTokenContrast('text-text-primary', 'bg-bg-primary')
+ *   → { dark: { cr: 15.2, pass: true }, light: { cr: 18.3, pass: true } }
+ */
+export function checkTokenContrast(
+  textToken: string,
+  bgToken: string,
+  threshold = 4.5,
+): { dark: { cr: number; pass: boolean }; light: { cr: number; pass: boolean } } | null {
+  const textL = TOKEN_L_VALUES[textToken];
+  const bgL = TOKEN_L_VALUES[bgToken];
+  if (!textL || !bgL) return null;
+
+  const crDark = calcCR(textL.dark, bgL.dark);
+  const crLight = calcCR(textL.light, bgL.light);
+
+  return {
+    dark: { cr: Math.round(crDark * 10) / 10, pass: crDark >= threshold },
+    light: { cr: Math.round(crLight * 10) / 10, pass: crLight >= threshold },
+  };
+}
+
+/**
+ * Get all available project token names for CR checking.
+ */
+export function getAvailableTokens(): string[] {
+  return Object.keys(TOKEN_L_VALUES);
+}
+
+// IDENTITY_SEAL: PART-4 | role=public-utilities | inputs=tokens | outputs=CR-result
