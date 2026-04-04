@@ -41,7 +41,7 @@ export type { StatusBarProps };
 
 function getScoreBadgeClasses(score: number): string {
   if (score >= 80) return "bg-green-500/30 text-green-300";
-  if (score >= 50) return "bg-yellow-500/30 text-yellow-300";
+  if (score >= 50) return "bg-accent-amber/30 text-yellow-300";
   return "bg-red-500/30 text-red-300";
 }
 

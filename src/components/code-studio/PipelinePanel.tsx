@@ -123,7 +123,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
         <Loader2 size={32} className="animate-spin text-amber-400" />
         <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 실행 중...", en: "Pipeline running..." })}</p>
         {onAbort && (
-          <button onClick={onAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-yellow-400 hover:bg-bg-tertiary">
+          <button onClick={onAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-accent-amber hover:bg-bg-tertiary">
             <Square size={12} /> {L4(lang, { ko: "중단", en: "Abort" })}
           </button>
         )}
@@ -209,7 +209,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                       <div key={i} className="flex items-start gap-1">
                         <span className={
                           f.severity === "critical" ? "text-red-400" :
-                          f.severity === "major" ? "text-yellow-400" :
+                          f.severity === "major" ? "text-accent-amber" :
                           "text-text-tertiary"
                         }>
                           {f.severity === "critical" ? "C" : f.severity === "major" ? "M" : "m"}

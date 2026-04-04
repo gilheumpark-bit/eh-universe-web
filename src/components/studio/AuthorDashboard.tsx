@@ -80,7 +80,7 @@ function MetricBar({ value, max, color, label }: { value: number; max: number; c
 // ============================================================
 
 const GRADE_COLORS: Record<string, string> = {
-  S: 'text-yellow-400', A: 'text-green-400', B: 'text-blue-400',
+  S: 'text-accent-amber', A: 'text-green-400', B: 'text-blue-400',
   C: 'text-purple-400', D: 'text-orange-400', F: 'text-red-400',
 };
 

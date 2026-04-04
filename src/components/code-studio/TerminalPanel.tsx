@@ -591,7 +591,7 @@ export function TerminalPanel({
             onClick={() => setScrollLock((v) => !v)}
             className={`p-0.5 hover:bg-white/5 rounded ${
               scrollLock
-                ? "text-yellow-400"
+                ? "text-accent-amber"
                 : "text-text-secondary hover:text-white"
             }`}
             title={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll" })}

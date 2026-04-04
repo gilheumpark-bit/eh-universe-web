@@ -204,7 +204,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                 onChange={(e) => persist({ ...config, parallelExecution: e.target.checked })}
                 className="accent-emerald-500"
               />
-              <Zap className="w-3.5 h-3.5 text-yellow-400" />
+              <Zap className="w-3.5 h-3.5 text-accent-amber" />
               {ko ? "병렬 실행" : "Parallel Exec"}
             </label>
             <div className="flex items-center gap-1 text-xs text-gray-500">

@@ -63,8 +63,8 @@ function ConflictView({
   }
 
   return (
-    <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5">
-      <div className="flex items-center gap-2 border-b border-yellow-500/10 px-3 py-2 text-xs text-yellow-400">
+    <div className="rounded-lg border border-accent-amber/20 bg-accent-amber/5">
+      <div className="flex items-center gap-2 border-b border-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
         <AlertTriangle size={14} />
         Conflict at line {conflict.startLine}
       </div>
@@ -171,9 +171,9 @@ export default function MergeConflictEditor({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-2">
         <div className="flex items-center gap-2">
-          <GitMerge size={16} className="text-yellow-400" />
+          <GitMerge size={16} className="text-accent-amber" />
           <span className="text-sm font-medium text-white">{fileName}</span>
-          <span className={`text-xs ${allResolved ? "text-green-400" : "text-yellow-400"}`}>
+          <span className={`text-xs ${allResolved ? "text-green-400" : "text-accent-amber"}`}>
             {resolvedCount}/{totalCount} resolved
           </span>
         </div>
@@ -216,7 +216,7 @@ export default function MergeConflictEditor({
       <div className="border-t border-white/5 px-4 py-2">
         <div className="h-1 w-full rounded-full bg-white/10">
           <div
-            className={`h-full rounded-full transition-all duration-300 ${allResolved ? "bg-green-500" : "bg-yellow-500"}`}
+            className={`h-full rounded-full transition-all duration-300 ${allResolved ? "bg-green-500" : "bg-accent-amber"}`}
             style={{ width: `${totalCount > 0 ? (resolvedCount / totalCount) * 100 : 0}%` }}
           />
         </div>

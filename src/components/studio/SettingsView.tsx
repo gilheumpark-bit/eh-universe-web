@@ -132,12 +132,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   const pct = (storageEstimate.usage / storageEstimate.quota) * 100;
                   const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
                   return (
-                    <span className={`text-xs font-black ${pct > 80 ? 'text-red-400' : pct > 50 ? 'text-yellow-400' : 'text-green-500'}`}>
+                    <span className={`text-xs font-black ${pct > 80 ? 'text-red-400' : pct > 50 ? 'text-accent-amber' : 'text-green-500'}`}>
                       {formatSize(usageMB)} / {formatSize(quotaMB)}
                     </span>
                   );
                 })() : (
-                  <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-yellow-400' : 'text-green-500'; })()}`}>
+                  <span className={`text-xs font-black ${(() => { const mb = getStorageUsageBytes() / 1024 / 1024; return mb > 4 ? 'text-red-400' : mb > 2 ? 'text-accent-amber' : 'text-green-500'; })()}`}>
                     {(getStorageUsageBytes() / 1024 / 1024).toFixed(1)} MB / 5 MB
                   </span>
                 )}
@@ -145,12 +145,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                 {storageEstimate && storageEstimate.quota > 0 ? (
                   <div
-                    className={`h-full rounded-full transition-all ${(() => { const pct = (storageEstimate.usage / storageEstimate.quota) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
+                    className={`h-full rounded-full transition-all ${(() => { const pct = (storageEstimate.usage / storageEstimate.quota) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
                     style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }}
                   />
                 ) : (
                   <div
-                    className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-yellow-500' : 'bg-green-500'; })()}`}
+                    className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
                     style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
                   />
                 )}
@@ -190,7 +190,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                       : t('settings.apiKeyNotSet')}
                 </div>
                 {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
-                  <div className="text-[8px] md:text-[9px] text-yellow-400">
+                  <div className="text-[8px] md:text-[9px] text-accent-amber">
                     {language === 'KO'
                       ? `키 갱신 권장 (${getKeyAge(apiProvider)}일)`
                       : `Rotate key (${getKeyAge(apiProvider)}d old)`}

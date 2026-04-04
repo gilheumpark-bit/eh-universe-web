@@ -125,7 +125,7 @@ function ActionIcon({ type }: { type: RecentAction["type"] }) {
   switch (type) {
     case "ai": return <Brain size={10} className="text-amber-400 shrink-0" />;
     case "edit": return <FileText size={10} className="text-blue-400 shrink-0" />;
-    case "pipeline": return <Zap size={10} className="text-yellow-400 shrink-0" />;
+    case "pipeline": return <Zap size={10} className="text-accent-amber shrink-0" />;
     default: return <Activity size={10} className="text-text-tertiary shrink-0" />;
   }
 }
@@ -267,7 +267,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
         {/* Session Stats */}
         <section>
           <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-            <Zap size={12} className="text-yellow-400" /> Session Stats
+            <Zap size={12} className="text-accent-amber" /> Session Stats
           </h3>
           <div className="grid grid-cols-3 gap-2">
             <StatCard label="File Edits" value={`${sessionStats.fileEdits}`} icon={<FileText size={12} />} />

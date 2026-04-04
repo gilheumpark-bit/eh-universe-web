@@ -36,7 +36,7 @@ function severityIcon(severity: ProblemFinding["severity"]) {
     case "critical":
       return <XCircle size={10} className="text-red-400 flex-shrink-0" />;
     case "major":
-      return <AlertTriangle size={10} className="text-yellow-400 flex-shrink-0" />;
+      return <AlertTriangle size={10} className="text-accent-amber flex-shrink-0" />;
     case "minor":
       return <Info size={10} className="text-blue-400 flex-shrink-0" />;
     case "info":
@@ -85,7 +85,7 @@ export function ProblemsPanel({ findings }: ProblemsPanelProps) {
           </span>
         )}
         {counts.major > 0 && (
-          <span className="flex items-center gap-0.5 text-yellow-400">
+          <span className="flex items-center gap-0.5 text-accent-amber">
             <AlertTriangle size={10} /> {counts.major}
           </span>
         )}

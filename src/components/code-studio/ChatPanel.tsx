@@ -443,7 +443,7 @@ ${mcpToolsDoc}`,
         })}
         {chat.isStreaming && (
           <div className="flex items-center gap-2 text-xs text-text-tertiary">
-            <Zap size={12} className="animate-pulse text-yellow-400" /> Generating...
+            <Zap size={12} className="animate-pulse text-accent-amber" /> Generating...
           </div>
         )}
       </div>

@@ -251,7 +251,7 @@ export const EditorTabs = memo(function EditorTabs({
 
               {/* Modified indicator (yellow dot) */}
               {file.isDirty && (
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-amber shrink-0" />
               )}
 
               <span className="truncate max-w-[120px]">{file.name}</span>

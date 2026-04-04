@@ -95,7 +95,7 @@ const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
     idle: { ko: "대기", en: "Idle", color: "text-[#8b949e]" },
     planning: { ko: "계획 중", en: "Planning", color: "text-blue-400" },
     executing: { ko: "실행 중", en: "Running", color: "text-green-400" },
-    paused: { ko: "일시 정지", en: "Paused", color: "text-yellow-400" },
+    paused: { ko: "일시 정지", en: "Paused", color: "text-accent-amber" },
     complete: { ko: "완료", en: "Done", color: "text-green-400" },
     error: { ko: "오류", en: "Error", color: "text-red-400" },
   };
@@ -110,7 +110,7 @@ const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
-  const color = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-yellow-400" : "bg-red-400";
+  const color = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-accent-amber" : "bg-red-400";
   return (
     <div className="flex items-center gap-1">
       <div className="w-16 h-1.5 bg-[#21262d] rounded-full overflow-hidden">
@@ -132,7 +132,7 @@ import { AGENT_REGISTRY, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
 const CATEGORY_COLORS: Record<string, string> = {
   leadership: "text-amber-400",
   generation: "text-blue-400",
-  verification: "text-yellow-400",
+  verification: "text-accent-amber",
   repair: "text-green-400",
 };
 
@@ -462,7 +462,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
         </span>
         <div className="flex items-center gap-1">
           {mode === "executing" && (
-            <button onClick={() => { agent.abort(); setMode("paused"); }} aria-label="일시정지" className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-yellow-400" /></button>
+            <button onClick={() => { agent.abort(); setMode("paused"); }} aria-label="일시정지" className="p-1 hover:bg-[#21262d] rounded"><Pause size={12} className="text-accent-amber" /></button>
           )}
           {(mode === "complete" || mode === "error" || mode === "applied" || mode === "staged") && (
             <button onClick={handleReset} aria-label="초기화" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-[#8b949e]" /></button>
@@ -479,7 +479,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
             <span className="text-[#8b949e]">예외/타입 패스</span>
           </div>
           <div className="flex items-center gap-1 rounded bg-[#21262d] px-1.5 py-0.5">
-            <span className="text-yellow-400 font-bold">[G] 성능</span>
+            <span className="text-accent-amber font-bold">[G] 성능</span>
             <CheckCircle size={10} className="text-green-400" />
             <span className="text-[#8b949e]">O(n) 최적화</span>
           </div>

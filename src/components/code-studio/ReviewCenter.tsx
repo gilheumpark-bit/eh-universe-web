@@ -62,7 +62,7 @@ const TABS: ReviewTab[] = ["problems", "pipeline", "checklist", "bugfinder"];
 const SEVERITY_ORDER: Severity[] = ["critical", "major", "minor", "info"];
 const SEVERITY_COLORS: Record<Severity, string> = {
   critical: "text-red-400",
-  major: "text-yellow-400",
+  major: "text-accent-amber",
   minor: "text-blue-400",
   info: "text-text-tertiary",
 };
@@ -125,7 +125,7 @@ function ChecklistView() {
     <div className="p-2 space-y-2">
       <div className="flex items-center justify-between text-[10px] text-text-tertiary px-2">
         <span>Review Checklist ({passCount}/{total})</span>
-        <span className={score >= 77 ? "text-green-400" : score >= 60 ? "text-yellow-400" : "text-red-400"}>
+        <span className={score >= 77 ? "text-green-400" : score >= 60 ? "text-accent-amber" : "text-red-400"}>
           {score}%
         </span>
       </div>
@@ -169,7 +169,7 @@ function FileReviewList({ files, onApprove, onReject }: {
             <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${
               file.status === "approved" ? "bg-green-500/15 text-green-400" :
               file.status === "rejected" ? "bg-red-500/15 text-red-400" :
-              "bg-yellow-500/15 text-yellow-400"
+              "bg-accent-amber/15 text-accent-amber"
             }`}>{file.status.toUpperCase()}</span>
             <span className="text-text-tertiary">{file.findings.length} issues</span>
           </button>
@@ -273,7 +273,7 @@ export function ReviewCenter({ pipelineResult, files, onBugScan, onApproveFile, 
           <div className="p-2 space-y-1 overflow-y-auto" style={{ maxHeight: 200 }}>
             <div className="flex items-center gap-2 text-xs text-text-primary px-2 py-1">
               <span>Overall: <strong>{pipelineResult.overallScore}</strong>/100</span>
-              <span className={pipelineResult.overallStatus === "pass" ? "text-green-400" : pipelineResult.overallStatus === "warn" ? "text-yellow-400" : "text-red-400"}>
+              <span className={pipelineResult.overallStatus === "pass" ? "text-green-400" : pipelineResult.overallStatus === "warn" ? "text-accent-amber" : "text-red-400"}>
                 {pipelineResult.overallStatus.toUpperCase()}
               </span>
             </div>
