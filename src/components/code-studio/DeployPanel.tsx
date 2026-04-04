@@ -470,8 +470,10 @@ export default function DeployPanel({ files, language }: DeployPanelProps) {
   return (
     <div className="flex h-full flex-col bg-bg-secondary text-text-primary">
       {/* Simulation notice */}
-      <div className="text-[9px] text-text-tertiary bg-white/[0.02] px-3 py-1 border-b border-white/[0.08]">
-        Simulation mode — export files or connect a real deploy target
+      <div className="flex items-center gap-1.5 text-[9px] text-amber-300 bg-amber-950/30 px-3 py-1 border-b border-white/[0.08]">
+        <Upload size={12} className="text-amber-400 shrink-0" />
+        <span className="font-medium">(시뮬레이션 / Simulated)</span>
+        <span className="text-text-tertiary ml-1">— export files or connect a real deploy target</span>
       </div>
       {/* Tab bar */}
       <div className="flex border-b border-border/30">

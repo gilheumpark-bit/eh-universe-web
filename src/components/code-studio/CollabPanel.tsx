@@ -199,7 +199,7 @@ export default function CollabPanel({ onClose }: Props) {
     return (
       <div className="flex flex-col h-full bg-[#0a0e17] text-white text-[13px]">
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/8 bg-[#0f1419] text-[12px] font-semibold uppercase tracking-wider">
-          <span className="flex items-center gap-1.5"><Users size={14} /> 협업</span>
+          <span className="flex items-center gap-1.5"><Users size={14} /> 협업 <span className="ml-1 rounded bg-amber-900/60 px-1.5 py-0.5 text-[9px] font-normal normal-case tracking-normal text-amber-300">(시뮬레이션)</span></span>
           {onClose && <button onClick={onClose} className="text-white/60 hover:text-white">&times;</button>}
         </div>
         <div className="p-3 border-b border-white/8">
@@ -233,7 +233,7 @@ export default function CollabPanel({ onClose }: Props) {
   return (
     <div className="flex flex-col h-full bg-[#0a0e17] text-white text-[13px]">
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8 bg-[#0f1419] text-[12px] font-semibold uppercase tracking-wider">
-        <span className="flex items-center gap-1.5"><Users size={14} /> 협업 <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /></span>
+        <span className="flex items-center gap-1.5"><Users size={14} /> 협업 <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /><span className="ml-1 rounded bg-amber-900/60 px-1.5 py-0.5 text-[9px] font-normal normal-case tracking-normal text-amber-300">(시뮬레이션)</span></span>
         {onClose && <button onClick={onClose} className="text-white/60 hover:text-white">&times;</button>}
       </div>
 

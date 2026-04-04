@@ -114,25 +114,6 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
     });
   }, [lang]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future genre auto-generation UI
-  const handleAutoGenerate = useCallback(() => {
-    const template = AUTO_WORLD_TEMPLATES[selectedGenre];
-    if (!template) return;
-    const newCivs = template.civs.map((c, i) => ({
-      ...c,
-      id: `auto-${Date.now()}-${i}`,
-    }));
-    setCivs(newCivs);
-    const newRels: CivRelation[] = [];
-    template.relations.forEach((r, i) => {
-      if (newCivs[i] && newCivs[i + 1]) {
-        newRels.push({ from: newCivs[i].id, to: newCivs[i + 1].id, type: r.type });
-      }
-    });
-    setRelations(newRels);
-    setTransitions([]);
-  }, [selectedGenre]);
-
   // IDENTITY_SEAL: PART-1 | role=state-orchestration | inputs=WorldSimProps | outputs=state-vars,handlers
 
   // ============================================================

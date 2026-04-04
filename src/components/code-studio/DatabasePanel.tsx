@@ -183,6 +183,13 @@ export default function DatabasePanel({
   onExecuteQuery,
   tables = [],
 }: DatabasePanelProps) {
+  // ⚠️ Simulation badge — no real DB connection
+  const SIMULATION_BADGE = (
+    <div className="flex items-center gap-1.5 border-b border-border/30 bg-amber-950/30 px-3 py-1">
+      <Database size={12} className="text-amber-400" />
+      <span className="text-[9px] font-medium text-amber-300">(시뮬레이션 / Simulated)</span>
+    </div>
+  );
   const [activeConn, setActiveConn] = useState<string>(connections[0]?.id ?? "");
   const [query, setQuery] = useState("SELECT * FROM ");
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -215,7 +222,9 @@ export default function DatabasePanel({
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col">
+      {SIMULATION_BADGE}
+      <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <div className="w-48 shrink-0 border-r border-border overflow-y-auto bg-bg-secondary/50">
         <div className="border-b border-border px-2 py-2">
@@ -263,6 +272,7 @@ export default function DatabasePanel({
         <div className="flex-1 overflow-hidden">
           <ResultsTable result={result} />
         </div>
+      </div>
       </div>
     </div>
   );
