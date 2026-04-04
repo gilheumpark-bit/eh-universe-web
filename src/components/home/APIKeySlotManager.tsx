@@ -5,7 +5,7 @@
 // 코드 스튜디오 APIKeyConfig 기반, 전체 스튜디오 공용
 // ============================================================
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Key, Plus, Trash2, Pencil, Check, X, ToggleLeft, ToggleRight,
   Loader2,
@@ -31,6 +31,12 @@ export function APIKeySlotManager({ onClose }: Props) {
   const { slots, addSlot, updateSlot, removeSlot, toggleSlot, enabledSlots } = useUnifiedSettings();
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
+
+  // 모달 열릴 때 body 스크롤 차단
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,8 +94,8 @@ export function APIKeySlotManager({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-bg-primary border border-border rounded-2xl w-full max-w-xl max-h-[80vh] flex flex-col shadow-luxury">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md" style={{ zIndex: 'var(--z-modal)' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-bg-primary border border-border rounded-2xl w-full max-w-xl max-h-[70vh] flex flex-col shadow-luxury mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
