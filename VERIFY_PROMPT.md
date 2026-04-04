@@ -13,16 +13,19 @@
 
 ## 프로젝트 개요
 - 이름: EH Universe Web — SF 소설 집필 보조 웹앱
-- 스택: Next.js 15 (App Router) + TypeScript + Firebase Auth + Google Gemini API
+- 스택: Next.js 16.2 (App Router) + TypeScript + Firebase Auth + Multi-AI (Gemini/OpenAI/Claude/Groq/Mistral)
 - 주요 기능:
   · AI 소설 집필 스튜디오 (씬시트, 연출, 세계관 시뮬)
   · 문체 개발 스튜디오 (문체 분석/비교/개발)
+  · Code Studio (검증형 IDE — Verification Loop, Composer State Machine)
+  · Translation Studio (장편 번역 워크스페이스)
   · Narrative Sentinel 엔진 (장르별 HCRF 채점, 섀도우 스테이트)
   · 상표/IP 자동 감지 필터
   · Google Drive 동기화
   · EPUB/DOCX 내보내기
-- 파일 수: ~68 TSX/TS 파일
-- 의존성: @google/genai, firebase, next, react, lucide-react, react-markdown
+- 파일 수: ~300+ TSX/TS 파일
+- 테스트: Jest 161 suites (~1,600 tests) + Integration 50 cases
+- 의존성: @google/genai, openai, @anthropic-ai/sdk, firebase, next, react, lucide-react, monaco-editor
 
 ## 검증 축 (7가지)
 
@@ -112,9 +115,11 @@ P0 (즉시 수정 필수) 항목을 별도로 3개 이내로 뽑아주세요.
 2. `src/engine/hfcp.ts` — HCRF 채점 엔진
 3. `src/engine/shadow.ts` — 섀도우 스테이트
 4. `src/engine/validator.ts` — 검증기
-5. `src/app/studio/page.tsx` — 메인 스튜디오 페이지
+5. `src/app/studio/page.tsx` — 메인 스튜디오 (StudioShell 분리 구조)
 6. `src/components/studio/SceneSheet.tsx` — 씬시트
 7. `src/components/studio/StyleStudioView.tsx` — 문체 스튜디오
+7-1. `src/app/code-studio/page.tsx` — Code Studio 진입점
+7-2. `src/lib/code-studio/core/panel-registry.ts` — 40개 패널 레지스트리
 8. `src/lib/ai-providers.ts` — AI 프로바이더 관리
 9. `src/services/geminiService.ts` — Gemini API 호출
 10. `src/services/driveService.ts` — Drive 동기화

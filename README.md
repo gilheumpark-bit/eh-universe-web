@@ -1,8 +1,8 @@
 # EH Universe Web
 
-![Tests](https://img.shields.io/badge/tests-1400+-green)
-![Suites](https://img.shields.io/badge/suites-212-green)
-![Audit](https://img.shields.io/badge/audit-95%2F100%20(S)-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1600+-green)
+![Suites](https://img.shields.io/badge/suites-161-green)
+![Audit](https://img.shields.io/badge/audit-94%2F100%20(S)-brightgreen)
 ![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
 ![License](https://img.shields.io/badge/license-CC--BY--NC--4.0-blue)
 
@@ -12,7 +12,7 @@
 
 | 영역 | 설명 | 상태 |
 |------|------|------|
-| **EH Universe 포털** | 설정집 아카이브(109문서) + 기밀 보고서(53건) + 코덱스 + 룰북 + 레퍼런스 | Production |
+| **EH Universe 포털** | 설정집 아카이브(109문서) + 기밀 보고서(80건) + 코덱스 + 룰북 + 레퍼런스 | Production |
 | **NOA Studio** | AI 소설 집필 엔진 — 세계관/캐릭터/연출/문체/원고 관리 | Production |
 | **Code Studio** | 검증형 코드 IDE — Verification Loop + Composer State Machine | Beta |
 | **Translation Studio (EH Translator)** | 장편 번역 워크스페이스 — Translate/Chapters/Context/Network | Production |
@@ -31,8 +31,8 @@
 | DB/Auth | Firebase Firestore + Auth (EH Network) |
 | Engine | ANS 10.0 (서사 엔진), Verification Loop (코드 검증) |
 | Export | EPUB / DOCX / TXT (순수 JS, 외부 의존성 없음) |
-| Test | Jest 30 (~1,400 tests, 212 suites) + Playwright 1.58 (E2E 3 specs) |
-| Audit | 16-area Project Audit Engine — 95/100 (S) |
+| Test | Jest 30 (~1,600 tests, 161 suites) + Integration tests (50 cases) |
+| Audit | 16-area Project Audit Engine — 94/100 (S) |
 | Deploy | Vercel |
 
 ## Quick Start
@@ -43,7 +43,7 @@ npm run dev          # localhost:3000
 npm run build        # production build
 npm run lint         # ESLint
 npm test             # Jest unit tests
-npm run test:e2e     # Playwright E2E
+npm run test:integration  # Integration tests
 ```
 
 서버 API·라우트 명세는 [`docs/API.md`](docs/API.md)를 본문으로 둡니다.
@@ -53,7 +53,7 @@ npm run test:e2e     # Playwright E2E
 세계관 탐색 포털 — 홈에서 스플래시 후 허브로 진입.
 
 - **설정집 아카이브**: 6개 카테고리(핵심/연표/세력/군사/지리/기술), 109개 문서
-- **기밀 보고서**: 53건, 7종 서브카테고리, 등급 필터(CLASSIFIED/RESTRICTED/PUBLIC)
+- **기밀 보고서**: 80건, 7종 서브카테고리, 등급 필터(CLASSIFIED/RESTRICTED/PUBLIC)
 - **코덱스**: 세계관 핵심 법칙, 용어, 구조 참조
 - **룰북 v1.0**: 서사 엔진의 구조와 원리
 - **레퍼런스**: 프로젝트 4페이지 요약본
@@ -75,7 +75,8 @@ npm run test:e2e     # Playwright E2E
 
 ## Code Studio (검증형 IDE)
 
-- **Panel Registry**: 38개 패널 (필수 기본 노출 + Advanced 토글, `audit` 포함)
+- **Panel Registry**: 40개 패널 (필수 기본 노출 + Advanced 토글, `audit` 포함)
+- **Design Linter**: Step 1.6 in verification-loop, 16 runtime rules
 - **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager 3파일 분리 (1,721줄 → 3파일)
 - **lib/code-studio/**: 6-directory 구조 — `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **useAIProvider Hook**: 18개 컴포넌트의 ai-providers 레이어 위반 → 훅 브릿지 경유
@@ -95,7 +96,8 @@ Fallback: JP/CN → EN → KO.
 
 - **ErrorBoundary**: 통합 컴포넌트, variant prop (`full-page` | `section` | `panel`)
 - **SkeletonLoader**: 5 variants (`text` | `card` | `panel` | `editor` | `sidebar`) — shimmer 기반
-- **CSP / Security headers**: `src/proxy.ts` — CSP 및 보안 헤더 통합 관리 (Next.js 16)
+- **CSP / Security headers**: `next.config.ts headers()` — CSP 및 보안 헤더 통합 관리
+- **Design System v8.0**: 3-Tier token efficiency, 16-rule runtime linter, 5 design presets
 - **Logger**: `@/lib/logger` — `console.*` 대신 logger.info/warn/error 사용
 - **Streaming**: fetch 120s + AI 180s + 구조화 60s + 동시실행 lock
 - **Storage**: localStorage try/catch + IndexedDB 백업 + 용량 감지
@@ -105,15 +107,15 @@ Fallback: JP/CN → EN → KO.
 
 ```
 Layer 1: Static — TypeScript + ESLint + Next.js Build (28 routes)
-Layer 2: Unit   — Jest 212 suites (~1,400 tests), 22 component + 19 hooks + 137 lib suites
-Layer 3: E2E    — Playwright 3 specs (navigation, studio, code-studio)
-Layer 4: Audit  — 16-area Project Audit Engine, 4,400+ checks, 95/100 (S)
+Layer 2: Unit   — Jest 161 suites (~1,600 tests), 22 component + 19 hooks + 137 lib suites
+Layer 3: Integration — 3 suites, 50 test cases (navigation, studio, code-studio)
+Layer 4: Audit  — 16-area Project Audit Engine, 4,400+ checks, 94/100 (S)
 Layer 5: Runtime Guards — ErrorBoundary (3 variants), AbortController, generationLockRef
 ```
 
 Coverage thresholds: branches 50%, functions/lines/statements 60%.
 
-## Project Audit (95/100 S)
+## Project Audit (94/100 S)
 
 16개 영역, 4개 카테고리 자동 감사:
 

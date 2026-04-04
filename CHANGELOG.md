@@ -3,6 +3,37 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-04-05] Quality Sweep + Design v8.0 + Content
+
+### Added
+- Design System v8.0 (3-Tier tokens, 16-rule linter, 5 presets, 4 UI primitives)
+- 57 missing reports (total 80 KO+EN bilingual)
+- Integration tests: 3 suites, 50 test cases (navigation, studio, code-studio)
+- Security headers via next.config.ts headers()
+- Simulation badges on CollabPanel/DatabasePanel/DeployPanel
+
+### Fixed
+- P0 security: PRO_LOCKED auth bypass, sandbox injection, eval, open redirect (24 fixes)
+- P1 memory leaks: 8 fixes (AbortController, AudioContext, setTimeout cleanup)
+- P1 race conditions: 2 fixes (getIdToken, user null guard)
+- P1 input validation: 8 fixes (parseInt NaN, silent validation failure)
+- Visibility: 56 dark-mode contrast fixes + 37 yellow→semantic amber
+- Light mode: 2 contrast fixes (translator options, status bar)
+- Theme switch: data-theme wrapper removal, dark mode inline vars
+- Scroll to top on studio tab change
+- React hooks violation in ArticleClient.tsx
+- Upload route 500→400 on parse error
+
+### Changed
+- Language codes: JA→JP, ZH→CN across 53 files
+- "AI 자동 생성" → "스튜디오 제안/초안 생성" (writer-friendly)
+- "Narrative Workbench" → "Writing Workbench"
+- Gemini 3.1 model support across 6 files
+
+### Removed
+- Dead code: rss-feed.ts, builders/index.ts, 3 fake E2E tests (-206 lines)
+- middleware.ts (caused 404, replaced by next.config.ts headers)
+
 ## [1.3.0] - 2026-04-04
 
 ### Pipeline Merge — 40+ Feature Commits
@@ -119,7 +150,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [1.1.0] - 2026-03-29
 
 ### Code Studio — Full Implementation
-- **Panel Registry**: 37개 패널 레지스트리 기반 관리, dynamic import barrel
+- **Panel Registry**: 40개 패널 레지스트리 기반 관리, dynamic import barrel
 - **Verification Loop Engine**: 3회 검증 루프 (Pipeline + Bug Scan + Stress Test), 5 stop reasons, hard gate
 - **Composer State Machine**: 7단계 전이표 + canTransition guard
 - **Staging/Rollback**: 사람 승인 후 안전 반영, snapshot 기반 되돌리기
@@ -128,7 +159,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **73/76 컴포넌트 연결** (3개 의도적 standalone)
 
 ### Reports Archive
-- `/reports` 전용 페이지: 53개 보고서, 7종 서브카테고리, 등급 필터
+- `/reports` 전용 페이지: 80개 보고서, 7종 서브카테고리, 등급 필터
 - 아카이브/보고서 탭 네비게이션
 - 랜딩 허브에 기밀보고서 카드 추가
 

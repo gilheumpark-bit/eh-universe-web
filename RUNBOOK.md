@@ -1,4 +1,4 @@
-# 운영 Runbook — NOA Studio (v1.1.0)
+# 운영 Runbook — NOA Studio (v1.2.0)
 
 ---
 
@@ -12,7 +12,7 @@
 | DB | Firebase Firestore |
 | 인증 | Firebase Auth (Google SSO) |
 | AI | 7대 프로바이더 (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LMStudio) |
-| 앱 구성 | NOA Studio (서사) + Code Studio (검증형 IDE) + EH Network (커뮤니티) + Reports (기밀 아카이브) |
+| 앱 구성 | NOA Studio (서사) + Code Studio (검증형 IDE) + EH Network (커뮤니티) + Translation Studio (번역) + Reports (기밀 아카이브) |
 
 ---
 
@@ -69,7 +69,7 @@ curl https://eh-universe-web.vercel.app/api/health
 1. GitHub Actions CI 로그 확인
 2. TypeScript 에러 → `npx tsc --noEmit` 로컬 실행
 3. 테스트 실패 → `npm test` 로컬 실행
-4. E2E 실패 → `npx playwright test` 로컬 실행
+4. Integration 실패 → `npm run test:integration` 로컬 실행
 5. 의존성 문제 → `rm -rf node_modules && npm ci`
 
 ---
