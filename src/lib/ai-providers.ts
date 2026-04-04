@@ -704,6 +704,11 @@ async function streamViaProxy(
       const errData = await res.json();
       if (errData.noa?.reason) {
         errMsg = `🛑 NOA 보안 차단: ${errData.noa.reason}`;
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get('retry-after');
+        errMsg = retryAfter
+          ? `⏳ 요청 한도 초과 — ${retryAfter}초 후 다시 시도해주세요 (Rate Limited)`
+          : '⏳ 요청 한도 초과 — 잠시 후 다시 시도해주세요 (Rate Limited)';
       } else if (errData.error) {
         errMsg = errData.error;
       }

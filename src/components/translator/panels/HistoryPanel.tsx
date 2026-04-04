@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { Clock, RotateCcw } from "lucide-react";
+import React, { useCallback, useMemo, useState } from "react";
+import { Clock, RotateCcw, Check } from "lucide-react";
 import { useTranslator } from "../core/TranslatorContext";
 import { useLang } from "@/lib/LangContext";
 import type { HistoryEntry } from "@/types/translator";
@@ -27,12 +27,16 @@ export function HistoryPanel() {
     [history],
   );
 
+  const [restoredId, setRestoredId] = useState<number | null>(null);
+
   const restore = useCallback(
     (entry: HistoryEntry) => {
       setSource(entry.source);
       setResult(entry.result);
       setFrom(entry.from);
       setTo(entry.to);
+      setRestoredId(entry.time);
+      setTimeout(() => setRestoredId(null), 2000);
     },
     [setSource, setResult, setFrom, setTo],
   );
@@ -95,10 +99,14 @@ export function HistoryPanel() {
                       <button
                         type="button"
                         onClick={() => restore(item)}
-                        className="text-[11px] text-accent-purple hover:underline transition-opacity flex items-center gap-1 shrink-0"
+                        className={`text-[11px] flex items-center gap-1 shrink-0 transition-all duration-200 ${
+                          restoredId === item.time
+                            ? 'text-accent-green font-bold'
+                            : 'text-accent-purple hover:underline'
+                        }`}
                       >
-                        <RotateCcw className="w-3 h-3" />
-                        {langKo ? "복원" : "Restore"}
+                        {restoredId === item.time ? <Check className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}
+                        {restoredId === item.time ? (langKo ? "복원됨!" : "Restored!") : (langKo ? "복원" : "Restore")}
                       </button>
                     </div>
                   </div>

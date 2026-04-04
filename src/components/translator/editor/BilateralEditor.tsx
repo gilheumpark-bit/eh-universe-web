@@ -220,7 +220,8 @@ export function BilateralEditor() {
       <div className="flex-1 flex overflow-hidden z-10 w-full relative">
         {/* Source Textarea */}
         <div className="relative flex flex-col h-full bg-bg-primary hover:bg-bg-secondary/30 transition-colors duration-500" style={{ width: `${layout.editorSplitRatio * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-text-secondary uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
+          <div className="absolute top-4 right-5 text-[11px] font-mono text-text-secondary uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-3">
+            <span className="text-[9px] normal-case tracking-normal text-text-tertiary">{source.length.toLocaleString()}{langKo ? '자' : ' chars'}</span>
             <span className="w-2 h-2 rounded-full bg-text-secondary/60 inline-block shadow-[0_0_5px_rgba(128,128,128,0.3)]"></span>
             Source ({from})
           </div>
@@ -269,7 +270,8 @@ export function BilateralEditor() {
 
         {/* Result Textarea */}
         <div className="relative flex flex-col h-full bg-bg-secondary hover:bg-bg-secondary/80 transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.08)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-accent-amber uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-2">
+          <div className="absolute top-4 right-5 text-[11px] font-mono text-accent-amber uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-3">
+            <span className="text-[9px] normal-case tracking-normal text-text-tertiary">{result.length.toLocaleString()}{langKo ? '자' : ' chars'}{source.length > 0 ? ` (${Math.round((result.length / source.length) * 100)}%)` : ''}</span>
             <span className="w-2 h-2 rounded-full bg-accent-amber inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
             Translation ({to})
           </div>
