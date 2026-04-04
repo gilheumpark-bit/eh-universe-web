@@ -176,8 +176,15 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         totalEpisodes: 25,
         guardrails: { min: 4000, max: 6000 },
       }));
-    } catch {
-      showAlert(tl('planningExtra.aiFailed'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('401') || msg.includes('credentials')) {
+        showAlert(language === 'KO'
+          ? 'Gemini API 키가 필요합니다. 설정에서 Gemini 키를 등록해주세요.'
+          : 'Gemini API key required. Please add your Gemini key in Settings.');
+      } else {
+        showAlert(tl('planningExtra.aiFailed') + (msg ? ` (${msg.slice(0, 80)})` : ''));
+      }
     } finally {
       setAiGenerating(false);
     }

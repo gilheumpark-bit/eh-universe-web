@@ -11,7 +11,14 @@ import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message 
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getActiveModel, getPreferredModel, ChatMsg } from "../lib/ai-providers";
+import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, ChatMsg } from "../lib/ai-providers";
+
+/** 동기 getApiKey가 빈 문자열이면 비동기로 재시도 */
+async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {
+  const sync = getApiKey(providerId);
+  if (sync) return sync;
+  try { return await getApiKeyAsync(providerId); } catch { return ''; }
+}
 import { HISTORY_LIMITS, truncateMessages } from "../lib/token-utils";
 
 export interface GenerateOptions {
@@ -47,7 +54,8 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     ...body,
     provider: 'gemini',
     model: getStructuredModel(),
-    apiKey: getApiKey('gemini') || undefined,
+    // 동기 getApiKey가 빈 문자열이면 비동기로 재시도 (v4 AES-GCM 복호화 대기)
+    apiKey: getApiKey('gemini') || await getApiKeyFallback('gemini') || undefined,
   });
 
   // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
