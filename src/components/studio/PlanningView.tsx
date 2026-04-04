@@ -129,7 +129,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
 
   const handleAIGenerate = async () => {
     // hosted provider가 있으면 로컬 키 없이도 사용 가능
-    if (!getApiKey(getActiveProvider()) && !hasAiAccess) {
+    // Gemini 키 또는 활성 프로바이더 키 또는 호스팅 중 하나만 있으면 OK
+    if (!getApiKey('gemini') && !getApiKey(getActiveProvider()) && !hasAiAccess) {
       showAlert(tl('planningExtra.apiKeyAlert'));
       return;
     }

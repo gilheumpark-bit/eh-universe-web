@@ -388,11 +388,11 @@ export default function StudioShell() {
   const handleTabChange = useCallback((tab: AppTab) => {
     // 탭 전환 시 콘텐츠 스크롤을 상단으로 리셋
     const scrollReset = () => {
-      // 렌더 완료 후 스크롤 리셋 (requestAnimationFrame으로 다음 프레임 보장)
-      requestAnimationFrame(() => {
+      // 렌더 완료 후 스크롤 리셋 — setTimeout으로 React 렌더 이후 보장
+      setTimeout(() => {
         const scrollContainer = document.querySelector('[data-testid="studio-content"] .overflow-y-auto');
         if (scrollContainer) scrollContainer.scrollTop = 0;
-      });
+      }, 50);
     };
     if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
       showConfirm({
