@@ -65,6 +65,29 @@ export default function ArticleClient({ slug }: { slug: string }) {
   const { articles, getArticleTitle } = articleModule;
   const article = articles[slug];
 
+  // JSON-LD 구조화 데이터 (SEO) — hooks는 early return 전에 호출해야 함
+  useEffect(() => {
+    if (!article) return;
+    import('@/lib/web-features').then(({ buildArticleJsonLd }) => {
+      const jsonLd = buildArticleJsonLd({
+        title: getArticleTitle(slug, lang),
+        slug,
+        description: getArticleTitle(slug, lang),
+        category: article.category,
+        dateModified: new Date().toISOString(),
+        wordCount: L2(article.content, lang).split(/\s+/).length,
+      });
+      const existing = document.querySelector('script[data-eh-jsonld]');
+      if (existing) existing.remove();
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.dataset.ehJsonld = '1';
+      script.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(script);
+      return () => { script.remove(); };
+    }).catch(() => {});
+  }, [slug, lang, article, getArticleTitle]);
+
   if (!article) {
     return (
       <>
@@ -91,27 +114,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
       ? "badge-amber"
       : "badge-allow";
 
-  // JSON-LD 구조화 데이터 (SEO)
-  useEffect(() => {
-    import('@/lib/web-features').then(({ buildArticleJsonLd }) => {
-      const jsonLd = buildArticleJsonLd({
-        title: getArticleTitle(slug, lang),
-        slug,
-        description: getArticleTitle(slug, lang),
-        category: article.category,
-        dateModified: new Date().toISOString(),
-        wordCount: L2(article.content, lang).split(/\s+/).length,
-      });
-      const existing = document.querySelector('script[data-eh-jsonld]');
-      if (existing) existing.remove();
-      const script = document.createElement('script');
-      script.type = 'application/ld+json';
-      script.dataset.ehJsonld = '1';
-      script.textContent = JSON.stringify(jsonLd);
-      document.head.appendChild(script);
-      return () => { script.remove(); };
-    }).catch(() => {});
-  }, [slug, lang, article, getArticleTitle]);
+  // JSON-LD는 early return 전 useEffect에서 처리됨
 
   return (
     <>
