@@ -46,7 +46,7 @@ async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> 
 }
 
 function getLanguage(value: unknown): AppLanguage {
-  return value === 'EN' || value === 'JA' || value === 'ZH' ? value : 'KO';
+  return value === 'EN' || value === 'JP' || value === 'CN' ? value : 'KO';
 }
 
 // Implementations of generateJsonOpenAICompat, generateJsonClaude, and generateJsonGemini are in @/services/aiProvidersStructured.ts

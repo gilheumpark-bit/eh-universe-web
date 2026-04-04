@@ -136,7 +136,7 @@ const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({
 // ============================================================
 
 const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) => {
-  const lang: 'ko' | 'en' = (language === 'KO' || language === 'JA') ? 'ko' : 'en';
+  const lang: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const t = createT(language);
 
   const [windowSize, setWindowSize] = useState(5);

@@ -53,7 +53,7 @@ export const GENRE_LABELS: Record<AppLanguage, Record<Genre, string>> = {
     [Genre.WUXIA]: "Wuxia",
     [Genre.LIGHT_NOVEL]: "Light Novel",
   },
-  JA: {
+  JP: {
     [Genre.SF]: "SF",
     [Genre.FANTASY]: "ファンタジー",
     [Genre.ROMANCE]: "ロマンス",
@@ -66,7 +66,7 @@ export const GENRE_LABELS: Record<AppLanguage, Record<Genre, string>> = {
     [Genre.WUXIA]: "武侠",
     [Genre.LIGHT_NOVEL]: "ラノベ",
   },
-  ZH: {
+  CN: {
     [Genre.SF]: "科幻",
     [Genre.FANTASY]: "奇幻",
     [Genre.ROMANCE]: "浪漫",

@@ -133,7 +133,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
                    <input
                     className={`w-full bg-bg-tertiary/50 border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none transition-colors placeholder:text-text-tertiary ${nameError ? 'border-red-500' : 'border-border'}`}
-                    placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JA' ? 'キャラクター名...' : language === 'ZH' ? '角色名...' : 'Character name...'}
+                    placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     maxLength={50}
                     value={newChar.name}
                     onChange={e => { setNewChar({...newChar, name: e.target.value}); if (nameError) setNameError(false); }}
@@ -169,7 +169,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   <ScrollText className="absolute left-4 top-4 w-4 h-4 text-text-tertiary" />
                   <textarea
                     className="w-full bg-bg-tertiary/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none resize-none leading-relaxed"
-                    placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JA' ? '特性、背景、口調...' : language === 'ZH' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
+                    placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
                     maxLength={500}
                     value={newChar.traits}
                     onChange={e => setNewChar({...newChar, traits: e.target.value})}
@@ -237,10 +237,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   <Users className="w-8 h-8 opacity-30" />
                 </div>
                 <span className="text-xs font-black tracking-[0.4em] uppercase mb-2">
-                  {language === 'KO' ? '캐릭터 없음' : language === 'JA' ? 'キャラクターなし' : language === 'ZH' ? '没有角色' : 'No Characters Found'}
+                  {language === 'KO' ? '캐릭터 없음' : language === 'JP' ? 'キャラクターなし' : language === 'CN' ? '没有角色' : 'No Characters Found'}
                 </span>
                 <p className="text-[11px] text-text-tertiary max-w-[280px] text-center">
-                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, AI 자동 생성 버튼을 사용하세요.' : language === 'JA' ? '左パネルから追加するか、AI自動生成を使用してください。' : language === 'ZH' ? '从左侧面板手动添加，或使用AI自动生成按钮。' : 'Add manually from the left panel, or use the AI auto-generate button.'}
+                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, AI 자동 생성 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、AI自動生成を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用AI自动生成按钮。' : 'Add manually from the left panel, or use the AI auto-generate button.'}
                 </p>
               </div>
             ) : (

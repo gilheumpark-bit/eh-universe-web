@@ -173,7 +173,7 @@ export default function ArchiveClient() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const { lang } = useLang();
-  const t = createT(lang === "ko" ? "KO" : lang === "ja" ? "JA" : lang === "zh" ? "ZH" : "EN");
+  const t = createT(lang === "ko" ? "KO" : lang === "ja" ? "JP" : lang === "zh" ? "CN" : "EN");
 
   useEffect(() => {
     const cat = searchParams.get("cat") || "core";

@@ -60,7 +60,7 @@ Respond ONLY in the JSON format below. No other text:
 }
 
 If text is short or lacks worldbuilding elements, write "Insufficient data" for that field.`,
-    JA: `あなたは小説の世界観分析の専門家です。与えられたテキストから世界観要素を抽出し分析します。
+    JP: `あなたは小説の世界観分析の専門家です。与えられたテキストから世界観要素を抽出し分析します。
 
 必ず以下のJSON形式のみで応答してください。他のテキストなしにJSONのみ出力:
 
@@ -74,7 +74,7 @@ If text is short or lacks worldbuilding elements, write "Insufficient data" for 
 }
 
 テキストが短いか世界観要素が不足している場合、該当フィールドに「情報不足」と記入してください。`,
-    ZH: `你是小说世界观分析专家。从给定文本中提取和分析世界观元素。
+    CN: `你是小说世界观分析专家。从给定文本中提取和分析世界观元素。
 
 请务必仅以下面的JSON格式回答。不要输出其他文本:
 
@@ -122,7 +122,7 @@ const SECTION_LABELS: Record<AppLanguage, Record<string, string>> = {
     inconsistencies: 'Inconsistencies',
     summary: 'Summary',
   },
-  JA: {
+  JP: {
     worldStructure: '世界構造',
     powerSystem: '能力体系',
     geography: '地理/空間',
@@ -130,7 +130,7 @@ const SECTION_LABELS: Record<AppLanguage, Record<string, string>> = {
     inconsistencies: '矛盾検出',
     summary: '総合評価',
   },
-  ZH: {
+  CN: {
     worldStructure: '世界结构',
     powerSystem: '能力体系',
     geography: '地理/空间',
@@ -290,7 +290,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
               onClick={loadFromConfig}
               className="px-3 py-1.5 bg-[linear-gradient(45deg,rgba(255,200,50,0.1),transparent)] border border-[rgba(255,200,50,0.3)] rounded-lg text-xs font-bold text-[rgba(255,220,100,0.9)] hover:bg-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:shadow-[0_0_15px_rgba(255,200,50,0.2)] transition-all font-mono"
             >
-              📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JA' ? '設計データ読込' : language === 'ZH' ? '加载设计数据' : 'Load Design Data'}
+              📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
             </button>
           )}
         </div>

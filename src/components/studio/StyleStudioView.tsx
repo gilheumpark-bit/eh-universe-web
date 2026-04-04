@@ -388,7 +388,7 @@ interface Props {
 
 export default function StyleStudioView({ language: languageProp, isKO: isKOProp, initialProfile, onProfileChange }: Props) {
   const language: AppLanguage = languageProp ?? (isKOProp === false ? 'EN' : 'KO');
-  const en = language === 'EN' || language === 'ZH';
+  const en = language === 'EN' || language === 'CN';
 
   const [tab, setTab] = useState(0);
   const [selectedCards, setSelectedCards] = useState<Set<number>>(

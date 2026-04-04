@@ -1,5 +1,5 @@
 // ============================================================
-// Network i18n — 네트워크 컴포넌트 다국어 라벨 (KO/EN/JA/ZH)
+// Network i18n — 네트워크 컴포넌트 다국어 라벨 (KO/EN/JP/CN)
 // ============================================================
 
 interface L4 { ko: string; en: string; ja?: string; zh?: string }
@@ -90,4 +90,4 @@ export function netT(key: NetLabelKey, lang: string): string {
   return t(pair, lang);
 }
 
-// IDENTITY_SEAL: network-translations | role=네트워크 다국어 라벨 KO/EN/JA/ZH | inputs=key,lang | outputs=localized string
+// IDENTITY_SEAL: network-translations | role=네트워크 다국어 라벨 KO/EN/JP/CN | inputs=key,lang | outputs=localized string

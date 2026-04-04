@@ -11,7 +11,7 @@ interface NovelContext {
 }
 
 function buildWritingChatSystem(language: AppLanguage, ctx?: NovelContext): string {
-  const isKo = language === 'KO' || language === 'JA';
+  const isKo = language === 'KO' || language === 'JP';
   const base = isKo
     ? `당신은 전문 소설 집필 컨설턴트입니다. 사용자의 언어로 응답하세요.`
     : `You are a professional fiction writing consultant. Respond in the user's language.`;

@@ -188,8 +188,8 @@ export default function TranslatorStudioApp() {
 
   const studioLanguage: AppLanguage = useMemo(() => {
     if (lang === 'ko') return 'KO';
-    if (lang === 'ja') return 'JA';
-    if (lang === 'zh') return 'ZH';
+    if (lang === 'ja') return 'JP';
+    if (lang === 'zh') return 'CN';
     return 'EN';
   }, [lang]);
 

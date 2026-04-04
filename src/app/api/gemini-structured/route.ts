@@ -59,7 +59,7 @@ async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> 
 }
 
 function getLanguage(value: unknown): AppLanguage {
-  return value === 'EN' || value === 'JA' || value === 'ZH' ? value : 'KO';
+  return value === 'EN' || value === 'JP' || value === 'CN' ? value : 'KO';
 }
 
 function getModel(value: unknown): string {

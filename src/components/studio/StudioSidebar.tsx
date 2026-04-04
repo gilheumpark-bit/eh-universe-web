@@ -289,7 +289,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               onClick={() => createNewSession()}
               className="premium-button mt-3 flex w-full justify-center rounded-[1.1rem] px-4 py-3 text-[11px]"
             >
-              <Plus className="h-4 w-4" /> {language === 'KO' ? '새 에피소드' : language === 'JA' ? '新しいエピソード' : language === 'ZH' ? '新剧集' : 'New Episode'}
+              <Plus className="h-4 w-4" /> {language === 'KO' ? '새 에피소드' : language === 'JP' ? '新しいエピソード' : language === 'CN' ? '新剧集' : 'New Episode'}
             </button>
           </div>
 
@@ -836,7 +836,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             {/* Language + Settings */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
-                {(['KO', 'EN', 'JA', 'ZH'] as AppLanguage[]).map(l => (
+                {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
                   <button
                     key={l}
                     onClick={() => setLanguage(l)}

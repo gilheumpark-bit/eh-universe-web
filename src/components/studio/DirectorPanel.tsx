@@ -28,12 +28,12 @@ const SEV_DOTS: Record<number, string> = {
 };
 
 const KIND_LABELS: Record<string, Record<AppLanguage, string>> = {
-  BLUR: { KO: '인과 흐림', EN: 'Causal Blur', JA: '因果のぼかし', ZH: '因果模糊' },
-  GAIN_NO_COST: { KO: '이득 vs 대가', EN: 'Gain w/o Cost', JA: '対価なし', ZH: '无代价获益' },
-  SIMILAR_CONTEXT: { KO: '맥락 반복', EN: 'Context Repeat', JA: '文脈の繰り返し', ZH: '上下文重复' },
-  AI_TONE: { KO: 'AI 톤', EN: 'AI Tone', JA: 'AIトーン', ZH: 'AI腔调' },
-  TYPO: { KO: '오타', EN: 'Typo', JA: '誤字', ZH: '错字' },
-  ENDING_MONO: { KO: '종결 단조', EN: 'Ending Monotone', JA: '語尾単調', ZH: '结尾单调' },
+  BLUR: { KO: '인과 흐림', EN: 'Causal Blur', JP: '因果のぼかし', CN: '因果模糊' },
+  GAIN_NO_COST: { KO: '이득 vs 대가', EN: 'Gain w/o Cost', JP: '対価なし', CN: '无代价获益' },
+  SIMILAR_CONTEXT: { KO: '맥락 반복', EN: 'Context Repeat', JP: '文脈の繰り返し', CN: '上下文重复' },
+  AI_TONE: { KO: 'AI 톤', EN: 'AI Tone', JP: 'AIトーン', CN: 'AI腔调' },
+  TYPO: { KO: '오타', EN: 'Typo', JP: '誤字', CN: '错字' },
+  ENDING_MONO: { KO: '종결 단조', EN: 'Ending Monotone', JP: '語尾単調', CN: '结尾单调' },
 };
 
 const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
@@ -117,12 +117,12 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
 
         {/* Stats summary */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-border/50 text-[10px] text-text-tertiary font-mono">
-          {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JA:'語尾',ZH:'结尾'}[language])}{report.stats.ending_mono}%</span>}
-          {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JA:'ぼかし',ZH:'模糊'}[language])}{report.stats.blur}</span>}
-          {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JA:'無対価',ZH:'无代价'}[language])}{report.stats.gain_no_cost}</span>}
-          {report.stats.ai_tone > 0 && <span>{({KO:'AI톤',EN:'AI',JA:'AI',ZH:'AI'}[language])}{report.stats.ai_tone}</span>}
-          {report.stats.typo > 0 && <span>{({KO:'오타',EN:'Typo',JA:'誤字',ZH:'错字'}[language])}{report.stats.typo}</span>}
-          {report.stats.similar_context > 0 && <span>{({KO:'반복',EN:'Repeat',JA:'繰返',ZH:'重复'}[language])}{report.stats.similar_context}</span>}
+          {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JP:'語尾',CN:'结尾'}[language])}{report.stats.ending_mono}%</span>}
+          {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JP:'ぼかし',CN:'模糊'}[language])}{report.stats.blur}</span>}
+          {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JP:'無対価',CN:'无代价'}[language])}{report.stats.gain_no_cost}</span>}
+          {report.stats.ai_tone > 0 && <span>{({KO:'AI톤',EN:'AI',JP:'AI',CN:'AI'}[language])}{report.stats.ai_tone}</span>}
+          {report.stats.typo > 0 && <span>{({KO:'오타',EN:'Typo',JP:'誤字',CN:'错字'}[language])}{report.stats.typo}</span>}
+          {report.stats.similar_context > 0 && <span>{({KO:'반복',EN:'Repeat',JP:'繰返',CN:'重复'}[language])}{report.stats.similar_context}</span>}
         </div>
       </div>
     </details>

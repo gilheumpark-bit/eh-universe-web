@@ -19,40 +19,40 @@ export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 const LANG_NAMES: Record<AppLanguage, string> = {
   KO: 'Korean (한국어)',
   EN: 'English',
-  JA: 'Japanese (日本語)',
-  ZH: 'Chinese (中文)',
+  JP: 'Japanese (日本語)',
+  CN: 'Chinese (中文)',
 };
 
 const ACT_GUIDELINES: Record<number, Record<AppLanguage, string>> = {
   1: {
     KO: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드세요. 정보를 서사에 녹이세요.',
     EN: 'This is the setup. Introduce the world and characters naturally. Create a flow from normalcy to disruption. Weave exposition into narrative.',
-    JA: '導入部です。世界と人物を自然に紹介し、日常→亀裂の流れを作ってください。情報を物語に溶け込ませてください。',
-    ZH: '这是开篇。自然地介绍世界和人物，创造从日常到裂变的流程。将信息融入叙事中。',
+    JP: '導入部です。世界と人物を自然に紹介し、日常→亀裂の流れを作ってください。情報を物語に溶け込ませてください。',
+    CN: '这是开篇。自然地介绍世界和人物，创造从日常到裂变的流程。将信息融入叙事中。',
   },
   2: {
     KO: '상승 구간입니다. 갈등을 심화시키고, 캐릭터에게 선택을 강요하세요. 서브플롯을 엮으세요.',
     EN: 'Rising action. Deepen conflicts, force characters into choices. Weave in subplots.',
-    JA: '上昇局面です。葛藤を深め、キャラクターに選択を迫ってください。サブプロットを織り込んでください。',
-    ZH: '上升阶段。深化冲突，迫使角色做出选择。编织副线情节。',
+    JP: '上昇局面です。葛藤を深め、キャラクターに選択を迫ってください。サブプロットを織り込んでください。',
+    CN: '上升阶段。深化冲突，迫使角色做出选择。编织副线情节。',
   },
   3: {
     KO: '중반 전환점입니다. 반전이나 정보 공개로 이야기의 방향을 틀어주세요. 독자의 기대를 배신하세요.',
     EN: 'Midpoint pivot. Use a twist or revelation to shift the story direction. Subvert reader expectations.',
-    JA: '中盤の転換点です。反転や情報公開で物語の方向を変えてください。読者の期待を裏切ってください。',
-    ZH: '中段转折点。用反转或信息揭露改变故事方向。颠覆读者期待。',
+    JP: '中盤の転換点です。反転や情報公開で物語の方向を変えてください。読者の期待を裏切ってください。',
+    CN: '中段转折点。用反转或信息揭露改变故事方向。颠覆读者期待。',
   },
   4: {
     KO: '하강/위기 구간입니다. 상황을 최악으로 몰아가세요. 캐릭터의 내면 갈등이 외부 갈등과 충돌해야 합니다.',
     EN: 'Falling action / crisis. Push things to their worst. Internal conflicts must collide with external ones.',
-    JA: '下降・危機局面です。状況を最悪に追い込んでください。キャラクターの内面の葛藤が外部の葛藤と衝突しなければなりません。',
-    ZH: '下降/危机阶段。将局势推向最坏。角色的内心冲突必须与外部冲突碰撞。',
+    JP: '下降・危機局面です。状況を最悪に追い込んでください。キャラクターの内面の葛藤が外部の葛藤と衝突しなければなりません。',
+    CN: '下降/危机阶段。将局势推向最坏。角色的内心冲突必须与外部冲突碰撞。',
   },
   5: {
     KO: '절정입니다. 모든 실마리를 수렴시키고, 캐릭터의 최종 선택을 묘사하세요. 감정의 밀도를 극대화하세요.',
     EN: 'Climax. Converge all threads. Depict the character\'s ultimate choice. Maximize emotional density.',
-    JA: 'クライマックスです。すべての伏線を収束させ、キャラクターの最終選択を描いてください。感情の密度を最大化してください。',
-    ZH: '高潮部分。收束所有线索，描绘角色的最终选择。将情感密度最大化。',
+    JP: 'クライマックスです。すべての伏線を収束させ、キャラクターの最終選択を描いてください。感情の密度を最大化してください。',
+    CN: '高潮部分。收束所有线索，描绘角色的最终选择。将情感密度最大化。',
   },
 };
 
@@ -262,18 +262,18 @@ export function buildSystemInstruction(
     : config.characters;
   // 캐릭터 라벨 다국어 매핑
   const CHAR_LABELS: Record<string, Record<AppLanguage, string>> = {
-    personality: { KO: '성격', EN: 'Personality', JA: '性格', ZH: '性格' },
-    speechStyle: { KO: '말투', EN: 'Speech style', JA: '口調', ZH: '语气' },
-    speechExample: { KO: '대사 예시', EN: 'Dialogue example', JA: '台詞例', ZH: '台词示例' },
-    desire: { KO: '욕망', EN: 'Desire', JA: '欲望', ZH: '欲望' },
-    deficiency: { KO: '결핍', EN: 'Deficiency', JA: '欠乏', ZH: '缺陷' },
-    conflict: { KO: '갈등', EN: 'Conflict', JA: '葛藤', ZH: '冲突' },
-    values: { KO: '가치관/금지선', EN: 'Values / Red lines', JA: '価値観/禁忌', ZH: '价值观/底线' },
-    changeArc: { KO: '변화 방향', EN: 'Change arc', JA: '変化の方向', ZH: '变化方向' },
-    strength: { KO: '강점', EN: 'Strength', JA: '強み', ZH: '优势' },
-    weakness: { KO: '약점', EN: 'Weakness', JA: '弱み', ZH: '弱点' },
-    backstory: { KO: '과거', EN: 'Backstory', JA: '過去', ZH: '过去' },
-    noCharacters: { KO: '등록된 캐릭터 없음', EN: 'No characters registered', JA: 'キャラクター未登録', ZH: '未注册角色' },
+    personality: { KO: '성격', EN: 'Personality', JP: '性格', CN: '性格' },
+    speechStyle: { KO: '말투', EN: 'Speech style', JP: '口調', CN: '语气' },
+    speechExample: { KO: '대사 예시', EN: 'Dialogue example', JP: '台詞例', CN: '台词示例' },
+    desire: { KO: '욕망', EN: 'Desire', JP: '欲望', CN: '欲望' },
+    deficiency: { KO: '결핍', EN: 'Deficiency', JP: '欠乏', CN: '缺陷' },
+    conflict: { KO: '갈등', EN: 'Conflict', JP: '葛藤', CN: '冲突' },
+    values: { KO: '가치관/금지선', EN: 'Values / Red lines', JP: '価値観/禁忌', CN: '价值观/底线' },
+    changeArc: { KO: '변화 방향', EN: 'Change arc', JP: '変化の方向', CN: '变化方向' },
+    strength: { KO: '강점', EN: 'Strength', JP: '強み', CN: '优势' },
+    weakness: { KO: '약점', EN: 'Weakness', JP: '弱み', CN: '弱点' },
+    backstory: { KO: '과거', EN: 'Backstory', JP: '過去', CN: '过去' },
+    noCharacters: { KO: '등록된 캐릭터 없음', EN: 'No characters registered', JP: 'キャラクター未登録', CN: '未注册角色' },
   };
   const cl = (key: string) => CHAR_LABELS[key]?.[language] ?? CHAR_LABELS[key]?.EN ?? key;
 
@@ -304,13 +304,13 @@ export function buildSystemInstruction(
   // Character relationships — filter to only include relations where BOTH characters
   // are within the injectedCharacters list (first 20) to avoid ghost references.
   const REL_LABELS: Record<string, Record<AppLanguage, string>> = {
-    lover: { KO: '연인', EN: 'Lover', JA: '恋人', ZH: '恋人' },
-    rival: { KO: '라이벌', EN: 'Rival', JA: 'ライバル', ZH: '对手' },
-    friend: { KO: '친구', EN: 'Friend', JA: '友人', ZH: '朋友' },
-    enemy: { KO: '적', EN: 'Enemy', JA: '敵', ZH: '敌人' },
-    family: { KO: '가족', EN: 'Family', JA: '家族', ZH: '家人' },
-    mentor: { KO: '사제', EN: 'Mentor', JA: '師弟', ZH: '师徒' },
-    subordinate: { KO: '상하', EN: 'Superior-subordinate', JA: '上下', ZH: '上下级' },
+    lover: { KO: '연인', EN: 'Lover', JP: '恋人', CN: '恋人' },
+    rival: { KO: '라이벌', EN: 'Rival', JP: 'ライバル', CN: '对手' },
+    friend: { KO: '친구', EN: 'Friend', JP: '友人', CN: '朋友' },
+    enemy: { KO: '적', EN: 'Enemy', JP: '敵', CN: '敌人' },
+    family: { KO: '가족', EN: 'Family', JP: '家族', CN: '家人' },
+    mentor: { KO: '사제', EN: 'Mentor', JP: '師弟', CN: '师徒' },
+    subordinate: { KO: '상하', EN: 'Superior-subordinate', JP: '上下', CN: '上下级' },
   };
   const injectedCharIds = new Set(injectedCharacters.map(c => c.id));
   const filteredRelations = (config.charRelations ?? []).filter(

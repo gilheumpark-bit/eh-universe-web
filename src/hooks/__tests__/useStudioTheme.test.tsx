@@ -208,15 +208,15 @@ describe('useStudioLanguage', () => {
 
   it('persists language change to localStorage', () => {
     const { get, cleanup } = createLanguageHarness();
-    act(() => { get().setLanguage('JA'); });
-    expect(get().language).toBe('JA');
-    expect(localStorage.getItem('noa_studio_lang')).toBe('JA');
+    act(() => { get().setLanguage('JP'); });
+    expect(get().language).toBe('JP');
+    expect(localStorage.getItem('noa_studio_lang')).toBe('JP');
     cleanup();
   });
 
   it('supports all 4 languages', () => {
     const { get, cleanup } = createLanguageHarness();
-    const langs = ['KO', 'EN', 'JA', 'ZH'] as const;
+    const langs = ['KO', 'EN', 'JP', 'CN'] as const;
     for (const lang of langs) {
       act(() => { get().setLanguage(lang); });
       expect(get().language).toBe(lang);

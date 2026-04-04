@@ -7,15 +7,15 @@ import { getActiveModel, getActiveProvider, getApiKey, PROVIDERS } from '@/lib/a
 const AUTO: Record<AppLanguage, string> = {
   KO: '자동',
   EN: 'Auto',
-  JA: '自動',
-  ZH: '自动',
+  JP: '自動',
+  CN: '自动',
 };
 
 const NO_KEY: Record<AppLanguage, string> = {
   KO: 'API 미설정',
   EN: 'No API key',
-  JA: 'APIキー未設定',
-  ZH: '未配置 API',
+  JP: 'APIキー未設定',
+  CN: '未配置 API',
 };
 
 function computeLabel(

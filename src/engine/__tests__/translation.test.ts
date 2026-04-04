@@ -8,7 +8,7 @@ describe('translation', () => {
   });
 
   it('defines TranslationTarget type values', () => {
-    const targets = ['EN', 'JA', 'ZH', 'KO'];
+    const targets = ['EN', 'JP', 'CN', 'KO'];
     expect(targets).toContain('EN');
     expect(targets).toContain('KO');
     expect(targets).toHaveLength(4);

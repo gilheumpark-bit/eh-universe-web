@@ -47,7 +47,7 @@ const SECTIONS: Record<AppLanguage, DocSection[]> = {
     { id: "security", title: "11. Security", content: "API key encrypted storage (XOR + Base64 + browser fingerprint)\nDrive sync AES-GCM encryption (UID-based)\nPRISM server guard: Content filtering in ALL mode\nCSRF: Origin + x-real-ip validation\nRate Limiting: 30 req/min per IP\n500 error auto-retry (dual exponential backoff)" },
     { id: "common", title: "12. Common Features", content: "Auto-save (localStorage + IndexedDB backup)\nLast save timestamp (\"just now\" / \"N sec ago\")\nGoogle Drive sync\n4 languages (KO / EN / JP / CN)\nGuided/Free mode toggle\nCollapsible export/account section\nWCAG AA accessibility\nKeyboard shortcuts\nKorean IME stability" },
   ],
-  JA: [
+  JP: [
     { id: "start", title: "1. はじめに", content: "アクセス: https://eh-universe-web.vercel.app\n\nBYOK (Bring Your Own Key)\n7つのAIプロバイダー: Gemini / OpenAI / Claude / Groq / Mistral / Ollama(ローカル) / LM Studio(ローカル)\nカスタムモデル直接入力可能\nAPIキーはブラウザに暗号化保存\n\nクイックスタート: ジャンル選択 → ワンクリックで世界観+キャラ+初シーン自動生成\nデモモード: APIキー不要で体験\nGoogleログイン + Drive同期 (AES-GCM暗号化)" },
     { id: "world", title: "2. 世界観設計", content: "7ジャンル × 2プリセット = 14シナリオ\nテンションカーブチャート\n最大500話\n\nPRISM-MODEコンテンツ等級: OFF / FREE / ALL / T15 / M18\n\nNOL AIチャット: 世界観専門AIアシスタント" },
     { id: "simulator", title: "3. 世界観シミュレーター", content: "ジャンル別完成度チェック (全フィールド自動生成)\n文明/勢力関係の可視化 + ヘックスマップ\n\nEHエンジン9段階適用率" },
@@ -61,7 +61,7 @@ const SECTIONS: Record<AppLanguage, DocSection[]> = {
     { id: "security", title: "11. セキュリティ", content: "APIキー暗号化保存\nDrive同期AES-GCM暗号化\nPRISMサーバーガード\nCSRF防御 / レートリミット: IP毎30リクエスト/分\n500エラー自動リトライ" },
     { id: "common", title: "12. 共通機能", content: "自動保存 (localStorage + IndexedDBバックアップ)\n最終保存時刻表示\nGoogle Drive同期\n4言語 (KO / EN / JP / CN)\nガイド/フリーモード切替\nWCAG AAアクセシビリティ\nキーボードショートカット" },
   ],
-  ZH: [
+  CN: [
     { id: "start", title: "1. 入门", content: "访问: https://eh-universe-web.vercel.app\n\nBYOK (Bring Your Own Key)\n7个AI提供商: Gemini / OpenAI / Claude / Groq / Mistral / Ollama(本地) / LM Studio(本地)\n支持自定义模型输入\nAPI密钥加密存储\n\n快速开始: 选择类型 → 一键生成世界观+角色+首场景\n演示模式: 无需API密钥体验\nGoogle登录 + Drive同步 (AES-GCM加密)" },
     { id: "world", title: "2. 世界观设计", content: "7种类型 × 2预设 = 14种情景\n张力曲线图\n最多500集\n\nPRISM-MODE内容分级: OFF / FREE / ALL / T15 / M18\n\nNOL AI聊天: 世界观专业AI助手" },
     { id: "simulator", title: "3. 世界观模拟器", content: "各类型完成度检查 (全字段自动生成)\n文明/势力关系可视化 + 六角地图\n\nEH引擎9级应用率" },
@@ -82,7 +82,7 @@ const SECTIONS: Record<AppLanguage, DocSection[]> = {
 // ============================================================
 
 export default function StudioDocsView({ lang }: Props) {
-  const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JA" ? "JA" : lang === "ZH" ? "ZH" : "EN") as AppLanguage;
+  const language = (lang === "ko" || lang === "KO" ? "KO" : lang === "JP" ? "JP" : lang === "CN" ? "CN" : "EN") as AppLanguage;
   const t = createT(language);
   const secs = SECTIONS[language] ?? SECTIONS.KO;
   const [activeId, setActiveId] = useState(secs[0].id);

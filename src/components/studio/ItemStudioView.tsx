@@ -431,7 +431,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       }
     } catch {
       const targetName = subTab === 'skills' ? 'Skill' : subTab === 'magic' ? 'Magic System' : 'Item';
-      const msg = ({ KO: `${targetName} 생성에 실패했습니다. API 키를 확인하세요.`, EN: `${targetName} generation failed. Check API key.`, JA: '生成に失敗しました。', ZH: '生成失败。' })[language];
+      const msg = ({ KO: `${targetName} 생성에 실패했습니다. API 키를 확인하세요.`, EN: `${targetName} generation failed. Check API key.`, JP: '生成に失敗しました。', CN: '生成失败。' })[language];
       showAlert(msg);
     } finally {
       setIsGenerating(false);

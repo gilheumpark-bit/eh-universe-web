@@ -16,7 +16,7 @@ export enum Genre {
 
 export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
-export type AppLanguage = 'KO' | 'EN' | 'JA' | 'ZH';
+export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 
 export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual';
 
@@ -262,7 +262,7 @@ export interface StoryConfig {
   // Translation Engine — 번역 설정 (mirrors TranslationConfig from @/engine/translation, minus contextBridge)
   translationConfig?: {
     mode: 'fidelity' | 'experience';
-    targetLang: 'EN' | 'JA' | 'ZH' | 'KO';
+    targetLang: 'EN' | 'JP' | 'CN' | 'KO';
     band: number;                     // 0.480 ~ 0.520
     scoreThreshold: number;           // 기본 0.70
     maxRecreate: number;              // 기본 2
@@ -285,7 +285,7 @@ export interface EpisodeManuscript {
 export interface TranslatedManuscriptEntry {
   episode: number;
   sourceLang: AppLanguage;          // 원문 언어
-  targetLang: 'EN' | 'JA' | 'ZH' | 'KO';
+  targetLang: 'EN' | 'JP' | 'CN' | 'KO';
   mode: 'fidelity' | 'experience';
   translatedTitle: string;
   translatedContent: string;

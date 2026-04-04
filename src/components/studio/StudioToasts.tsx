@@ -167,7 +167,7 @@ export default function StudioToasts({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-text-primary truncate">
               {user
-                ? `${t('syncReminder.lastSyncPrefix')}${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString(language === 'KO' ? 'ko-KR' : language === 'JA' ? 'ja-JP' : language === 'ZH' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : t('syncReminder.never')}${t('syncReminder.lastSyncSuffix')}`
+                ? `${t('syncReminder.lastSyncPrefix')}${lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString(language === 'KO' ? 'ko-KR' : language === 'JP' ? 'ja-JP' : language === 'CN' ? 'zh-CN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : t('syncReminder.never')}${t('syncReminder.lastSyncSuffix')}`
                 : t('syncReminder.browserOnly')}
             </p>
           </div>

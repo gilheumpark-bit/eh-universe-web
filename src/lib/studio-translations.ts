@@ -9,6 +9,6 @@ import zh from "./translations-zh";
 export const TRANSLATIONS: Record<AppLanguage, Record<string, any>> = {
   KO: ko,
   EN: en,
-  JA: ja,
-  ZH: zh,
+  JP: ja,
+  CN: zh,
 };

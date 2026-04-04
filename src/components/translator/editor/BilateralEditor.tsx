@@ -136,9 +136,9 @@ export function BilateralEditor() {
                 onChange={(e) => setFrom(e.target.value)}
                 className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
-                <option value="ja" className="bg-bg-secondary">JA</option>
+                <option value="ja" className="bg-bg-secondary">JP</option>
                 <option value="en" className="bg-bg-secondary">EN</option>
-                <option value="zh" className="bg-bg-secondary">ZH</option>
+                <option value="zh" className="bg-bg-secondary">CN</option>
                 <option value="ko" className="bg-bg-secondary">KO</option>
               </select>
               <button
@@ -154,9 +154,9 @@ export function BilateralEditor() {
                 className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
                 <option value="ko" className="bg-bg-secondary">KO</option>
-                <option value="ja" className="bg-bg-secondary">JA</option>
+                <option value="ja" className="bg-bg-secondary">JP</option>
                 <option value="en" className="bg-bg-secondary">EN</option>
-                <option value="zh" className="bg-bg-secondary">ZH</option>
+                <option value="zh" className="bg-bg-secondary">CN</option>
               </select>
             </div>
           </div>

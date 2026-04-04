@@ -3,7 +3,7 @@
 // ============================================================
 // EN+JA+ZH 동시 배치. 각 언어별 진행 상태 추적.
 
-export type TargetLanguage = 'EN' | 'JA' | 'ZH';
+export type TargetLanguage = 'EN' | 'JP' | 'CN';
 
 export interface MultiLangBatchConfig {
   targets: TargetLanguage[];
