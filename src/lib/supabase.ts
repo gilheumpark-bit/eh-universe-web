@@ -16,7 +16,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
  * 챕터, 스토리 요약, 캐릭터 프로필 등 작업 내역 전체를 클라우드에 영구 저장합니다.
  */
 export async function saveProjectToCloud(userId: string, projectId: string, state: Record<string, unknown>) {
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabase || !supabaseUrl || !supabaseAnonKey) {
     logger.warn('EH Translator', 'Supabase DB credentials missing. Skipping cloud save.');
     return { error: 'DB_DISABLED' };
   }
@@ -37,7 +37,7 @@ export async function saveProjectToCloud(userId: string, projectId: string, stat
  * 클라우드에서 작업 내역을 불러옵니다.
  */
 export async function loadProjectFromCloud(userId: string, projectId: string) {
-  if (!supabaseUrl || !supabaseAnonKey || !userId) return null;
+  if (!supabase || !supabaseUrl || !supabaseAnonKey || !userId) return null;
 
   const { data, error } = await supabase
     .from('eh_projects')
@@ -54,7 +54,7 @@ export async function loadProjectFromCloud(userId: string, projectId: string) {
  * [V3.1] 사용자가 보유한 모든 프로젝트 목록(이름, 날짜 등 메타데이터)을 불러옵니다.
  */
 export async function listUserProjects(userId: string) {
-  if (!supabaseUrl || !supabaseAnonKey || !userId) return [];
+  if (!supabase || !supabaseUrl || !supabaseAnonKey || !userId) return [];
 
   const { data, error } = await supabase
     .from('eh_projects')
@@ -77,7 +77,7 @@ export async function listUserProjects(userId: string) {
  * [V3.1] 참조(Cross-Reference)용으로 선택된 다수의 이전 프로젝트 데이터를 한 번에 불러옵니다.
  */
 export async function getProjectsForReference(userId: string, referenceIds: string[]) {
-  if (!supabaseUrl || !supabaseAnonKey || !userId || referenceIds.length === 0) return [];
+  if (!supabase || !supabaseUrl || !supabaseAnonKey || !userId || referenceIds.length === 0) return [];
 
   const { data, error } = await supabase
     .from('eh_projects')
