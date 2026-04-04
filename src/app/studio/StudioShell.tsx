@@ -384,6 +384,11 @@ export default function StudioShell() {
   }, [anyModalOpen, showApiKeyModal, showShortcuts, confirmState.open, saveSlotModalOpen, moveModal, showQuickStartModal]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
+    // 탭 전환 시 콘텐츠 스크롤을 상단으로 리셋
+    const scrollReset = () => {
+      const scrollContainer = document.querySelector('[data-testid="studio-content"] .overflow-y-auto');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    };
     if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
       showConfirm({
         title: t('confirm.unsavedEdits'),
@@ -395,12 +400,14 @@ export default function StudioShell() {
           closeConfirm();
           setEditDraft('');
           setActiveTab(tab);
+          scrollReset();
           if (window.innerWidth < 768) setIsSidebarOpen(false);
         }
       });
       return;
     }
     setActiveTab(tab);
+    scrollReset();
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm]);
