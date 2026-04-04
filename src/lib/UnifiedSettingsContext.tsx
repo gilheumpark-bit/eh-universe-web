@@ -148,12 +148,25 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
       };
       for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
     } else {
-      const keys = ["--color-bg-primary","--color-bg-secondary","--color-bg-tertiary",
-        "--color-text-primary","--color-text-secondary","--color-text-tertiary",
-        "--color-border","--color-accent-purple","--color-accent-amber",
-        "--color-accent-red","--color-accent-green","--color-accent-blue",
-        "--color-surface-strong","--color-surface-soft"];
-      for (const k of keys) root.style.removeProperty(k);
+      // 다크 모드: @theme 기본값이 다크이지만, Tailwind CSS 4 @layer theme specificity 문제로
+      // StudioShell의 data-theme wrapper가 라이트 CSS를 잡을 수 있으므로 JS inline으로 강제 설정
+      const darkVars: Record<string, string> = {
+        "--color-bg-primary": "#1c1a17",
+        "--color-bg-secondary": "#252320",
+        "--color-bg-tertiary": "#2e2b26",
+        "--color-text-primary": "#f2ede4",
+        "--color-text-secondary": "#aca292",
+        "--color-text-tertiary": "#7b7367",
+        "--color-border": "#3d3830",
+        "--color-accent-purple": "#8b6f56",
+        "--color-accent-amber": "#b8955c",
+        "--color-accent-red": "#a85c52",
+        "--color-accent-green": "#4a8f78",
+        "--color-accent-blue": "#6d7d8f",
+        "--color-surface-strong": "rgba(37,35,32,0.94)",
+        "--color-surface-soft": "rgba(28,26,23,0.78)",
+      };
+      for (const [k, v] of Object.entries(darkVars)) root.style.setProperty(k, v);
     }
   }, [theme]);
 

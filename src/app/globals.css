@@ -107,6 +107,7 @@ input,
 textarea,
 select {
   font: inherit;
+  color: inherit;
   letter-spacing: inherit;
 }
 
@@ -133,7 +134,26 @@ main[class~="pt-14"] {
    2-Level Brightness Theme: dark (밤) / light (낮)
    ============================================================ */
 
-/* ── 밤 (Dark) ── */
+/* ── 테마 변수 오버라이드 ── */
+/* Tailwind CSS 4: @theme 블록은 @layer theme { :root { ... } }로 컴파일됨.
+   테마 전환 오버라이드는 @layer 밖(unlayered)에서 선언해야 @layer theme보다 우선함.
+   data-theme 미설정 시 @theme 기본값(다크 아카이브 톤)이 적용됨. */
+[data-theme="light"] {
+  --color-bg-primary: #FAFAF8;
+  --color-bg-secondary: #F0F0EC;
+  --color-bg-tertiary: #E4E4E0;
+  --color-text-primary: #111111;
+  --color-text-secondary: #333333;
+  --color-text-tertiary: #555550;
+  --color-border: #CDCDC5;
+  --color-accent-purple: #5b4b93;
+  --color-accent-amber: #8a6a20;
+  --color-surface-strong: rgba(250, 250, 248, 0.97);
+  --color-surface-soft: rgba(242, 242, 238, 0.88);
+  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --gradient-page: none;
+}
 [data-theme="dark"] {
   --color-bg-primary: #1c1a17;
   --color-bg-secondary: #252320;
@@ -176,24 +196,6 @@ body[data-theme="dark"] {
 }
 [data-theme="dark"] .text-zinc-400 {
   color: #a8a198;
-}
-
-/* ── 낮 (Light) ── */
-[data-theme="light"] {
-  --color-bg-primary: #FAFAF8;
-  --color-bg-secondary: #F0F0EC;
-  --color-bg-tertiary: #E4E4E0;
-  --color-text-primary: #111111;
-  --color-text-secondary: #333333;
-  --color-text-tertiary: #555550;
-  --color-border: #CDCDC5;
-  --color-accent-purple: #5b4b93;
-  --color-accent-amber: #8a6a20;
-  --color-surface-strong: rgba(250, 250, 248, 0.97);
-  --color-surface-soft: rgba(242, 242, 238, 0.88);
-  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  --gradient-page: none;
 }
 html[data-theme="light"],
 body[data-theme="light"] {
