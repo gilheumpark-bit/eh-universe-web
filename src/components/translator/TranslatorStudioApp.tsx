@@ -1338,7 +1338,7 @@ export default function TranslatorStudioApp() {
   const activeChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   const completedChapters = chapters.filter((chapter) => chapter.isDone).length;
   const completionRate = chapters.length ? Math.round((completedChapters / chapters.length) * 100) : 0;
-  const workspaceName = projectName.trim() || 'Untitled Narrative Workspace';
+  const workspaceName = projectName.trim() || '새 번역 프로젝트';
   const providerLabel = PROVIDERS.find((item) => item.id === provider)?.label || provider.toUpperCase();
   const stripeCheckoutEnabled = Boolean(process.env.NEXT_PUBLIC_STRIPE_PRICE_ID?.trim());
   const autoSaveLabel = lastSavedAt

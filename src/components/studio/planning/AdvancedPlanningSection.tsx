@@ -48,7 +48,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-text-tertiary/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
           ]).map(({ value, label, activeClass, desc }) => (
             <button key={value} onClick={() => setConfig({ ...config, narrativeIntensity: value })}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-black border-border text-text-tertiary hover:text-text-secondary'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}
               title={desc}>
               <span>{label}</span>
               <span className="text-[8px] font-normal normal-case tracking-normal text-text-tertiary">{desc}</span>
@@ -75,7 +75,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 if (preset) updates.guardrails = { min: preset.episodeLength.min, max: preset.episodeLength.max };
                 setConfig(prev => ({ ...prev, ...updates }));
               }}
-                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-black border-border text-text-tertiary hover:text-text-secondary'}`}>
+                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}>
                 {labels[pp] || pp}
               </button>
             );
@@ -94,22 +94,22 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
-          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
-          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
-          <input className="w-full bg-black border border-border rounded-xl p-4 text-sm font-bold focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
         </div>
       </div>
 
       {/* 시놉시스 */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.synopsis}</label>
-        <textarea className="w-full bg-black border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
+        <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
       </div>
 
       {/* 세계관 Tier 1 */}
@@ -123,7 +123,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
           ] as const).map(f => (
             <div key={f.key} className="space-y-2">
               <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
-              <textarea className="w-full bg-black border border-border rounded-xl p-4 text-sm h-24 resize-none focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+              <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
             </div>
           ))}
         </div>
@@ -155,7 +155,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             ] as const).map(f => (
               <div key={f.key} className="space-y-2">
                 <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
-                <textarea className="w-full bg-black border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none focus:border-amber-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+                <textarea className="w-full bg-bg-tertiary border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none text-text-primary placeholder:text-text-tertiary focus:border-amber-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
           </div>
@@ -181,7 +181,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             ] as const).map(f => (
               <div key={f.key} className="space-y-2">
                 <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
-                <textarea className="w-full bg-black border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none focus:border-emerald-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+                <textarea className="w-full bg-bg-tertiary border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none text-text-primary placeholder:text-text-tertiary focus:border-emerald-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
           </div>
@@ -193,7 +193,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-blue-500" /> {te.tensionPreview}
         </h3>
-        <div className="bg-black/40 rounded-2xl border border-border/50 p-4">
+        <div className="bg-bg-tertiary/40 rounded-2xl border border-border/50 p-4">
           <div className="h-20 flex items-end gap-px">
             {tensionData.map((td, i) => {
               const height = Math.round(td * 100);

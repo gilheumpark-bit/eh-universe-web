@@ -12,9 +12,9 @@ interface ProviderDef {
 }
 
 const PROVIDERS: ProviderDef[] = [
-  { id: "gemini", name: "Gemini", color: "#4285f4", models: ["gemini-2.0-flash", "gemini-1.5-pro"] },
-  { id: "openai", name: "OpenAI", color: "#10a37f", models: ["gpt-4o", "gpt-4o-mini"] },
-  { id: "anthropic", name: "Claude", color: "#d4a373", models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"] },
+  { id: "gemini", name: "Gemini", color: "#4285f4", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-3.1-pro-preview", "gemini-3-flash-preview"] },
+  { id: "openai", name: "OpenAI", color: "#10a37f", models: ["gpt-5.4", "gpt-5.4-mini", "gpt-4.1"] },
+  { id: "anthropic", name: "Claude", color: "#d4a373", models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"] },
   { id: "groq", name: "Groq", color: "#f55036", models: ["llama-3.3-70b-versatile"] },
 ];
 
@@ -25,7 +25,7 @@ export function ModelSwitcher({ compact = false }: Props) {
   const [activeProviderId, setActiveProviderId] = useState<ProviderId>(getActiveProvider());
   const [activeModel, setActiveModel] = useState(() => {
     const p = PROVIDERS.find((pr) => pr.id === getActiveProvider());
-    return p?.models[0] ?? "gemini-2.0-flash";
+    return p?.models[0] ?? "gemini-2.5-pro";
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
 

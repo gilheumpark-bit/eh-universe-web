@@ -204,7 +204,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   <Zap className="h-4 w-4" />
                 </span>
                 <div>
-                  <div className="site-kicker text-[0.62rem]">Narrative Workbench</div>
+                  <div className="site-kicker text-[0.62rem]">Writing Workbench</div>
                   <h1 className="font-display text-lg font-semibold tracking-[-0.04em] text-text-primary">
                     NOA Studio
                   </h1>

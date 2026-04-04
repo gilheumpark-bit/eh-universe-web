@@ -15,7 +15,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
 const PROVIDERS = [
-  { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"] },
+  { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"] },
   { id: "openai", name: "OpenAI", color: "#10a37f", placeholder: "sk-...", models: ["gpt-5.4", "gpt-5.4-mini", "gpt-4.1"] },
   { id: "claude", name: "Claude", color: "#d4a373", placeholder: "sk-ant-...", models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"] },
   { id: "groq", name: "Groq", color: "#f55036", placeholder: "gsk_...", models: ["llama-3.3-70b-versatile", "qwen-qwq-32b"] },
