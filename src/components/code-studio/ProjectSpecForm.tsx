@@ -39,6 +39,8 @@ const QUESTIONS: SpecQuestion[] = [
   { id: "q2", question: "기술 스택을 선택하세요", category: "기술", type: "multi-select", options: ["React", "Next.js", "Vue", "Svelte", "Express", "FastAPI", "Tailwind CSS", "TypeScript"] },
   { id: "q3", question: "대상 사용자는 누구인가요?", category: "기획", type: "text", placeholder: "예: 개발자, 일반 사용자, 기업" },
   { id: "q4", question: "배포 환경은?", category: "인프라", type: "select", options: ["Vercel", "AWS", "GCP", "Docker", "기타"] },
+  { id: "q5", question: "디자인 스타일을 선택하세요", category: "디자인", type: "select", options: ["IDE / 코딩 앱", "랜딩페이지 / 마케팅", "대시보드 / 어드민", "이커머스 / 쇼핑몰", "SaaS / 웹 서비스"] },
+  { id: "q6", question: "테마를 선택하세요", category: "디자인", type: "select", options: ["다크 (Archive)", "다크 (Night)", "라이트", "라이트 (Bright)", "베이지 (Warm)"] },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=SpecQuestion,Props
@@ -71,14 +73,34 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
     if (!title.trim()) return;
     setAutoFilling(true);
     await new Promise((r) => setTimeout(r, 1000));
+
+    // Infer design preset from project title/description + category
+    const lower = title.toLowerCase();
+    const catLower = category.toLowerCase();
+    let inferredPreset = "랜딩페이지 / 마케팅";
+    let inferredTheme = "라이트 (Bright)";
+    if (/ide|에디터|editor|terminal|터미널|코딩|code/i.test(lower) || catLower === "cli") {
+      inferredPreset = "IDE / 코딩 앱"; inferredTheme = "다크 (Archive)";
+    } else if (/대시보드|dashboard|admin|어드민|analytics|모니터링|관리/i.test(lower)) {
+      inferredPreset = "대시보드 / 어드민"; inferredTheme = "라이트";
+    } else if (/쇼핑|shopping|이커머스|e-?commerce|상품|product|장바구니|주문/i.test(lower)) {
+      inferredPreset = "이커머스 / 쇼핑몰"; inferredTheme = "라이트 (Bright)";
+    } else if (/saas|서비스|구독|pricing|온보딩|폼|회원|로그��|가입/i.test(lower)) {
+      inferredPreset = "SaaS / 웹 서비스"; inferredTheme = "라이트";
+    } else if (catLower === "api") {
+      inferredPreset = "대시보드 / 어드민"; inferredTheme = "다크 (Night)";
+    }
+
     setAnswers([
       { questionId: "q1", answer: `${title} 관련 핵심 기능 구현` },
       { questionId: "q2", answer: ["React", "TypeScript", "Tailwind CSS"] },
       { questionId: "q3", answer: "개발자" },
       { questionId: "q4", answer: "Vercel" },
+      { questionId: "q5", answer: inferredPreset },
+      { questionId: "q6", answer: inferredTheme },
     ]);
     setAutoFilling(false); setStep("review");
-  }, [title]);
+  }, [title, category]);
 
   const handleComplete = useCallback(() => {
     onComplete({ category, title, answers });

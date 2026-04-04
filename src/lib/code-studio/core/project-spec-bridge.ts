@@ -1,5 +1,6 @@
 import type { ProjectSpec } from "@/lib/code-studio/core/project-spec";
 import { formatSpecForAI } from "@/lib/code-studio/core/project-spec";
+import { type DesignPresetId, DESIGN_PRESETS, DESIGN_FALLBACK, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 
 export interface ProjectSpecFormAnswer {
   questionId: string;
@@ -51,12 +52,50 @@ export function toCoreProjectSpec(form: ProjectSpecFormData): ProjectSpec {
   };
 }
 
-export function buildProjectSpecChatSeed(spec: ProjectSpec): string {
+/** Map design preset label (from ProjectSpecForm q5) → DesignPresetId */
+const PRESET_LABEL_MAP: Record<string, DesignPresetId> = {
+  "IDE / 코딩 앱": 1,
+  "랜딩페이지 / 마케팅": 2,
+  "대시보드 / 어드민": 3,
+  "이커머스 / 쇼핑몰": 4,
+  "SaaS / 웹 서비스": 5,
+};
+
+/** Map theme label (from ProjectSpecForm q6) → data-theme + data-color-theme */
+const THEME_LABEL_MAP: Record<string, string> = {
+  "다크 (Archive)": 'data-theme="dark" (Archive base — default gradient)',
+  "다크 (Night)": 'data-theme="dark" (Night — flat dark bg)',
+  "라이트": 'data-theme="light"',
+  "라이트 (Bright)": 'data-theme="light" + data-color-theme="bright"',
+  "베이지 (Warm)": 'data-theme="light" + data-color-theme="beige"',
+};
+
+export function buildProjectSpecChatSeed(spec: ProjectSpec, formData?: { answers: { questionId: string; answer: string | string[] }[] }): string {
   const header = formatSpecForAI(spec);
+
+  // Extract design context from form answers (q5, q6)
+  let designContext = "";
+  if (formData) {
+    const presetAnswer = formData.answers.find(a => a.questionId === "q5")?.answer;
+    const themeAnswer = formData.answers.find(a => a.questionId === "q6")?.answer;
+    const presetLabel = typeof presetAnswer === "string" ? presetAnswer : "";
+    const themeLabel = typeof themeAnswer === "string" ? themeAnswer : "";
+    const presetId = PRESET_LABEL_MAP[presetLabel] ?? null;
+    const presetPrompt = buildPresetPrompt(presetId);
+    const themeDesc = THEME_LABEL_MAP[themeLabel] ?? 'data-theme="light" + data-color-theme="bright"';
+
+    designContext = [
+      "\n## Design Spec (from Project Spec)",
+      `Theme: ${themeDesc}`,
+      presetPrompt,
+    ].join("\n");
+  }
+
   return [
     "Use this Project Spec as the single source of truth.",
     header,
+    designContext,
     "Generate a practical bootstrap plan, then propose initial file scaffolding for this repository.",
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
 }
 

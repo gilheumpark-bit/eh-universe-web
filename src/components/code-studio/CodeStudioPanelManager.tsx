@@ -278,7 +278,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         onComplete={(spec: ProjectSpecFormData) => {
           const coreSpec = toCoreProjectSpec(spec);
           saveProjectSpec(coreSpec);
-          const chatSeed = buildProjectSpecChatSeed(coreSpec);
+          const chatSeed = buildProjectSpecChatSeed(coreSpec, spec);
           localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed);
           // 에이전트 파이프라인용 태스크도 저장
           localStorage.setItem("eh-cs-agent-task", chatSeed);
