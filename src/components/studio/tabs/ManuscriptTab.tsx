@@ -39,7 +39,10 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const handleSceneMode = useCallback((mode: 'radio' | 'visual' | 'edit') => {
     const manuscripts = config.manuscripts ?? [];
     const latestMs = manuscripts[manuscripts.length - 1];
-    if (!latestMs?.content) return;
+    if (!latestMs?.content) {
+      alert(language === 'KO' ? '원고를 먼저 작성해주세요. 집필 탭에서 에피소드를 생성하세요.' : 'Please write a manuscript first. Create an episode in the Writing tab.');
+      return;
+    }
 
     const result = parseManuscript(latestMs.content, config.characters ?? []);
     setParsedScenes(result.scenes);

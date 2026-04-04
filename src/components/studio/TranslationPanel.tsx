@@ -259,7 +259,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const translatedList = config.translatedManuscripts ?? [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6 animate-fade-in">
+    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6 animate-fade-in overflow-hidden">
       {/* Header - Nexus Bridge */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
