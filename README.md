@@ -1,140 +1,213 @@
-# EH Universe Web
+<div align="center">
 
-[![한국어](https://img.shields.io/badge/lang-한국어-blue)](README.ko.md)
+<img src="public/images/logo-badge.svg" alt="EH Universe" width="320" />
 
-![Tests](https://img.shields.io/badge/tests-1600+-green)
-![Suites](https://img.shields.io/badge/suites-161-green)
-![Audit](https://img.shields.io/badge/audit-94%2F100%20(S)-brightgreen)
-![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
-![License](https://img.shields.io/badge/license-CC--BY--NC--4.0-blue)
+### Where are you headed?
 
-A **worldbuilding portal** for exploring the history, factions, technology, and geography of 200,000 star systems governed by the Galactic Central Council — plus an AI-powered writing studio and a verified code IDE, all in one platform.
+A worldbuilding portal for 200,000 star systems — with an AI writing studio and a verified code IDE.
 
-## Core Apps
+[![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
+![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
+![Audit](https://img.shields.io/badge/audit-94%2F100-22c55e?style=flat-square)
+![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 
-| App | Description | Status |
-|-----|-------------|--------|
-| **EH Universe Portal** | Lore archive (109 docs) + Classified reports (80) + Codex + Rulebook + Reference | Production |
-| **NOA Studio** | AI novel writing engine — worldbuilding / characters / direction / style / manuscript | Production |
-| **Code Studio** | Verified code IDE — Verification Loop + Composer State Machine | Beta |
-| **Translation Studio** | Long-form translation workspace — Translate / Chapters / Context / Network | Production |
-| **EH Network** | Writer community — planet systems, logs, settlements | Beta |
-| **Tools** | Galaxy map, vessel specs, warp gate calculator, soundtrack, and more (7 tools) | Production |
+[Live Demo](https://ehuniverse.com) · [Docs](#documentation) · [Contributing](CONTRIBUTING.md)
+
+</div>
+
+---
+
+## Overview
+
+EH Universe is a full-stack creative platform built on a single Next.js application. It combines a worldbuilding archive, an AI-powered novel writing studio, a verified code IDE, a translation workspace, and a writer community — all sharing a unified design system and authentication layer.
+
+**82% of features work without an API key.** The platform functions as a standalone writing tool, code editor, and lore archive even with AI completely disabled.
+
+---
+
+## Apps
+
+<table>
+<tr>
+<td width="50%">
+
+**Universe Portal** `/`
+Lore archive with 109 documents, 80 classified reports, codex, rulebook, and 7 interactive tools including galaxy map, vessel specs, and warp gate calculator.
+
+</td>
+<td width="50%">
+
+**NOA Studio** `/studio`
+AI novel writing engine with worldbuilding, character design, scene direction, style profiling, manuscript management, and EPUB/DOCX/TXT export.
+
+</td>
+</tr>
+<tr>
+<td>
+
+**Code Studio** `/code-studio`
+Browser-based IDE with Monaco editor, multi-terminal, WebContainer preview, TypeScript IntelliSense, Git engine, natural language commands, and AI verification pipeline.
+
+</td>
+<td>
+
+**Translation Studio** `/translation-studio`
+Long-form translation workspace with bilateral editor, chapter management, glossary, and 5-stage AI translation pipeline.
+
+</td>
+</tr>
+<tr>
+<td>
+
+**EH Network** `/network`
+Writer community with planet systems, posts, comments, logs, settlements, and moderation tools.
+
+</td>
+<td>
+
+**Tools** `/tools/*`
+Galaxy map, vessel specs, warp gate, soundtrack player, Neka sound generator, NOA tower, and style studio.
+
+</td>
+</tr>
+</table>
+
+---
 
 ## Tech Stack
 
-| Area | Technology |
-|------|------------|
-| Framework | Next.js 16.2 (App Router, 28 routes) |
-| Language | TypeScript 5, React 19 |
-| UI | Tailwind CSS 4, Lucide Icons, Design System v8.0 |
-| AI | Gemini, OpenAI, Claude, Groq, Mistral, LM Studio (BYOK) |
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16.2, React 19, TypeScript 5 |
+| UI | Tailwind CSS 4, Design System v8.0, Lucide Icons |
+| AI | Gemini 3.1, OpenAI GPT-5.4, Claude 4.6, Groq, Mistral (BYOK) |
 | Editor | Monaco Editor, xterm.js, WebContainer API |
-| DB/Auth | Firebase Firestore + Auth (EH Network) |
-| Engine | ANS 10.0 (Narrative Engine), Verification Loop (Code Verification) |
-| Export | EPUB / DOCX / TXT (pure JS, zero external dependencies) |
-| Test | Jest 30 (~1,600 tests, 161 suites) + Integration tests (50 cases) |
-| Audit | 16-area Project Audit Engine — 94/100 (S) |
+| Database | Firebase Firestore + Auth |
+| Engine | ANS 10.0 (Narrative), Verification Loop (Code) |
+| Export | EPUB / DOCX / TXT — pure JS, zero dependencies |
+| Testing | Jest (~1,600 tests), Integration (50 cases) |
 | Deploy | Vercel |
+
+---
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/gilheumpark-bit/eh-universe-web.git
+cd eh-universe-web
 npm install
-npm run dev          # localhost:3000
-npm run build        # production build
-npm run lint         # ESLint
-npm test             # Jest unit tests
-npm run test:integration  # Integration tests
+npm run dev
 ```
 
-## EH Universe Portal
+Open [localhost:3000](http://localhost:3000). No API key required for basic features.
 
-A worldbuilding exploration portal — enter via splash screen into the hub.
+```bash
+npm run build        # Production build
+npm run lint         # ESLint (0 errors)
+npm test             # Unit tests
+```
 
-- **Lore Archive**: 6 categories (Core / Timeline / Factions / Military / Geography / Technology), 109 documents
-- **Classified Reports**: 80 reports, 7 subcategories, clearance filter (CLASSIFIED / RESTRICTED / PUBLIC)
-- **Codex**: Core laws, terminology, and structural reference of the universe
-- **Rulebook v1.0**: Structure and principles of the narrative engine
-- **Reference**: 4-page project summary
-- **Tools**: Galaxy map, vessel specs, warp gate, soundtrack, Neka sound, NOA tower, etc. (`/tools/*`)
+---
 
-## NOA Studio (Writing Studio)
+## Architecture
 
-| Tab | Features |
-|-----|----------|
-| World (`world`) | 3-tier design, civilization simulator, analysis, timeline, map (5 sub-tabs) |
-| Characters (`characters`) | Character / item studio (2 sub-tabs), relationship / resource management |
-| Direction (`rulebook`) | **SceneSheet (direction features)**, foreshadowing / tension / transition design |
-| Writing (`writing`) | AI generation / editing / canvas / refine / advanced (5 modes) |
-| Style (`style`) | DNA / slider-based style profiling (`/studio?tab=style`) |
-| Manuscript (`manuscript`) | Manuscript / episode management |
-| Visual (`visual`) | NOI prompt cards, consistency tags |
-| Archive (`history`) | Session / project archive |
-| Docs (`docs`) | User guide |
+```
+src/
+├── app/                    # Next.js App Router (28 routes)
+│   ├── studio/             # NOA Writing Studio
+│   ├── code-studio/        # Verified Code IDE
+│   ├── translation-studio/ # Translation Workspace
+│   ├── network/            # Writer Community
+│   └── tools/              # Interactive Tools (7)
+├── components/             # React Components (~200)
+├── engine/                 # ANS 10.0 Narrative Engine
+├── lib/                    # Shared Libraries
+│   └── code-studio/        # IDE Core (6 directories)
+│       ├── core/           # Panel Registry, Design System v8.0
+│       ├── ai/             # Agent Teams, Ghost Text
+│       ├── pipeline/       # Verification Loop, Design Linter
+│       ├── editor/         # Monaco Setup, IntelliSense
+│       ├── features/       # Terminal, Git, Debugger, Sandbox
+│       └── audit/          # Quality Engine
+├── hooks/                  # Custom React Hooks
+└── services/               # AI Provider Services
+```
 
-**Works without AI**: Project management, manual writing, character/world setup, scene sheets, export (EPUB/DOCX/TXT), save slots, demo mode — 82% of features require no API key.
+---
 
-## Code Studio (Verified IDE)
+## Design System v8.0
 
-- **Panel Registry**: 40 panels (essential defaults + Advanced toggle, `audit` included)
-- **Design Linter**: Step 1.6 in verification-loop, 16 runtime rules
-- **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager (3-file split)
-- **lib/code-studio/**: 6-directory structure — `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
-- **Verification Loop**: Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) — 3-round verification
-- **Composer State Machine**: idle → generating → verifying → review → staged → applied
-- **Staging/Rollback**: Human approval before applying, rollback supported
-- **Multi-Terminal**: Up to 5 tabs + split terminal (horizontal/vertical)
-- **Session Restore**: IndexedDB-based last session auto-restore
+Three-tier token efficiency for AI-generated UI:
 
-## Translation Studio
+| Tier | Tokens | Usage |
+|------|--------|-------|
+| FULL | ~3,000 | CSS layout agents, ChatPanel |
+| COMPACT | ~800 | App generator, Autopilot |
+| MINIMAL | ~100 | Chat fallback |
 
-- **Bilateral Editor**: Source/translation side-by-side editing
-- **Chapter Management**: Add/delete/reorder chapters
-- **Glossary**: Manual term registration + AI extraction
-- **Document Upload**: TXT / EPUB / PDF import
-- **5-Stage AI Pipeline**: Context → Translate → Verify → Polish → Finalize
+- Semantic color tokens (`bg-bg-primary`, not raw Tailwind)
+- Z-index variables (`--z-dropdown` through `--z-tooltip`)
+- 4px spacing grid, 44px touch targets
+- 16-rule runtime design linter
+- 5 design presets with auto-detection
+
+---
+
+## Testing
+
+```
+Layer 1  Static       TypeScript + ESLint + Build
+Layer 2  Unit         161 suites, ~1,600 tests
+Layer 3  Integration  3 suites, 50 cases
+Layer 4  Audit        16 areas, 94/100 (S grade)
+Layer 5  Runtime      ErrorBoundary, AbortController
+```
+
+---
 
 ## i18n
 
-Korean (KO), English (EN), Japanese (JP), Chinese (CN) — real-time switching.
-Central dictionary: `studio-translations.ts` (identical leaf count).
-Fallback chain: JP/CN → EN → KO.
+Korean, English, Japanese, Chinese — real-time switching.
 
-## Resilience
+Central dictionary with identical leaf counts across all languages. Fallback: JP/CN → EN → KO.
 
-- **ErrorBoundary**: Unified component, variant prop (`full-page` | `section` | `panel`)
-- **SkeletonLoader**: 5 variants (`text` | `card` | `panel` | `editor` | `sidebar`) — shimmer-based
-- **CSP / Security Headers**: `next.config.ts headers()` — centralized CSP + security headers
-- **Design System v8.0**: 3-Tier token efficiency, 16-rule runtime linter, 5 design presets
-- **Logger**: `@/lib/logger` — structured logging instead of `console.*`
-- **Streaming**: fetch 120s + AI 180s + structured 60s + concurrent execution lock
-- **Storage**: localStorage try/catch + IndexedDB backup + capacity detection
-- **Input Validation**: maxLength 45 instances + engine 50K hard limit
+---
 
-## Test Architecture
+## Security
 
-```
-Layer 1: Static     — TypeScript + ESLint + Next.js Build (28 routes)
-Layer 2: Unit       — Jest 161 suites (~1,600 tests)
-Layer 3: Integration — 3 suites, 50 test cases (navigation, studio, code-studio)
-Layer 4: Audit      — 16-area Project Audit Engine, 4,400+ checks, 94/100 (S)
-Layer 5: Runtime    — ErrorBoundary (3 variants), AbortController, generationLockRef
-```
+- CSP + HSTS + X-Frame-Options via `next.config.ts headers()`
+- API key encryption (AES-GCM v4)
+- Firebase Auth with admin role gates
+- SHA-256 password hashing for shared content
+- Input validation (45 maxLength + 50K engine limit)
 
-Coverage thresholds: branches 50%, functions/lines/statements 60%.
+---
 
-## Project Audit (94/100 S)
+## Documentation
 
-16 areas, 4 categories — automated audit:
+| Document | Description |
+|----------|------------|
+| [README.ko.md](README.ko.md) | Korean documentation |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
+| [SECURITY.md](SECURITY.md) | Security policy |
+| [RUNBOOK.md](RUNBOOK.md) | Operations runbook |
+| [docs/feature-inventory.md](docs/feature-inventory.md) | 168 features inventory |
 
-| Category | Grade | Areas |
-|----------|-------|-------|
-| Code Health | A | operations, complexity, architecture, dependencies |
-| Quality | S | testing, error-handling, feature-completeness, documentation |
-| User Experience | S | design-system, accessibility, ux-quality, i18n |
-| Infra & Security | S | security, performance, api-health, env-config |
+---
 
 ## License
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/)
+[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — Free to use for non-commercial purposes.
+
+<div align="center">
+
+---
+
+*"Where are you headed?"*
+
+Built with Next.js, TypeScript, and seven AI providers.
+
+</div>

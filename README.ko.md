@@ -1,12 +1,21 @@
-# EH Universe Web
+<div align="center">
 
-[![English](https://img.shields.io/badge/lang-English-blue)](README.md)
+<img src="public/images/logo-badge.svg" alt="EH Universe" width="320" />
 
-![Tests](https://img.shields.io/badge/tests-1600+-green)
-![Suites](https://img.shields.io/badge/suites-161-green)
-![Audit](https://img.shields.io/badge/audit-94%2F100%20(S)-brightgreen)
-![Languages](https://img.shields.io/badge/i18n-KO%20EN%20JP%20CN-purple)
-![License](https://img.shields.io/badge/license-CC--BY--NC--4.0-blue)
+### 어디로 향할까요?
+
+20만 행성계 세계관 포털 — AI 소설 스튜디오와 검증형 코드 IDE를 갖춘 창작 플랫폼.
+
+[![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](README.md)
+![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
+![Audit](https://img.shields.io/badge/audit-94%2F100-22c55e?style=flat-square)
+![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+
+</div>
+
+---
 
 은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색하는 **세계관 포털**이자, AI 기반 집필 스튜디오와 검증형 코드 IDE를 갖춘 창작 플랫폼.
 
