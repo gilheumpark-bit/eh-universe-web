@@ -8,6 +8,7 @@ import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
 import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
 import { DESIGN_SYSTEM_SPEC } from '@/lib/code-studio/core/design-system-spec';
 import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
+import { buildIdiomDirective, detectFramework, type FrameworkId } from '@/lib/code-studio/ai/idiom-presets';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -43,6 +44,15 @@ const CODE_ROLE_TO_MULTI_KEY: Record<string, MultiKeyAgentRole> = {
 
 // Re-export for consumers that need the new 19-agent types
 export type { AgentRole };
+
+// Re-export idiom utilities for external consumers
+export { buildIdiomDirective, detectFramework, type FrameworkId };
+
+/**
+ * Module-level detected framework. Set by runAgentPipeline from codeContext,
+ * consumed by runSingleAgent to inject framework-specific idiom directives.
+ */
+let _detectedFramework: FrameworkId | null = null;
 
 /** A single message produced by an agent during a session. */
 export interface AgentMessage {
@@ -526,8 +536,14 @@ async function runSingleAgent(
   const isUIAgent = role === 'css-layout' || role === 'interaction-motion';
   const designAppendix = isUIAgent ? `\n\n${DESIGN_SYSTEM_SPEC}\n\n${DESIGN_LINTER_SPEC}` : '';
 
+  // Code-generating agents receive framework idiom directive when detected.
+  const isCodeGenAgent = isUIAgent || role === 'frontend-lead' || role === 'core-engine';
+  const idiomAppendix = isCodeGenAgent && _detectedFramework
+    ? `\n\n${buildIdiomDirective(_detectedFramework)}`
+    : '';
+
   const streamOpts = {
-    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}`,
+    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}`,
     messages: [{ role: 'user' as const, content: userInput }],
     temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,
@@ -597,6 +613,15 @@ export async function runAgentPipeline(
   const session = createAgentSession(task, roles);
   session.status = 'running';
   const startTime = Date.now();
+
+  // Detect framework from code context for idiom injection
+  if (codeContext.trim()) {
+    _detectedFramework = detectFramework([
+      { name: 'context.tsx', content: codeContext },
+    ]);
+  } else {
+    _detectedFramework = null;
+  }
 
   const sortedRoles = ROLE_ORDER.filter((r) => roles.includes(r));
 

@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Sparkles, Check, X, Loader2, History, Undo2 } from "lucide-react";
+import { streamChat } from "@/lib/ai-providers";
 
 const INLINE_EDIT_HISTORY_KEY = "eh_inline_edit_history";
 const MAX_HISTORY = 5;
@@ -76,15 +77,30 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
 
   const diffLines = preview ? computeSimpleDiff(selectedText, preview) : [];
 
-  // [시뮬레이션] 실제 AI 호출 없음
+  const [error, setError] = useState<string | null>(null);
+
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || loading) return;
     saveToHistory(prompt.trim());
-    setLoading(true); setPreview("");
-    await new Promise((r) => setTimeout(r, 800));
-    const result = `// Modified by AI: ${prompt}\n${selectedText.split("\n").map((l) => `  ${l}`).join("\n")}`;
-    setPreview(result);
-    setLoading(false);
+    setLoading(true); setPreview(""); setError(null);
+    try {
+      const systemPrompt = `You are a code refiner. The user selected code and wants you to modify ONLY the selected portion. Return ONLY the modified code, no explanations.`;
+      let result = '';
+      await streamChat({
+        systemInstruction: systemPrompt,
+        messages: [{ role: 'user', content: `Instruction: ${prompt}\n\nSelected code:\n${selectedText}` }],
+        temperature: 0.3,
+        onChunk: (text) => { result = text; setPreview(text); },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!result) setError("AI returned empty response");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI generation failed";
+      setError(msg);
+      setPreview("");
+    } finally {
+      setLoading(false);
+    }
   }, [prompt, loading, selectedText]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -136,6 +152,9 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         <div className="mb-2">
           <pre className="text-[10px] font-mono bg-[#0a0e17] p-2 rounded max-h-32 overflow-y-auto text-green-400 whitespace-pre-wrap">{preview}</pre>
         </div>
+      )}
+      {error && (
+        <div className="mb-2 px-2 py-1 text-[10px] text-red-400 bg-red-500/10 rounded">{error}</div>
       )}
       {preview && !loading && (
         <div className="flex items-center justify-end gap-2">

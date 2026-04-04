@@ -511,6 +511,17 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
         });
       }}
     />,
+    "module-profile": () => <PI.ModuleProfilePanelComponent />,
+    "cognitive-load": () => <PI.CognitiveLoadPanelComponent code={activeFile?.content ?? ''} />,
+    "adr": () => <PI.ADRPanelComponent
+      files={files.flatMap(function flatFiles(n: typeof files[number]): string[] {
+        if (n.type === 'file') return [n.name];
+        return (n.children ?? []).flatMap(flatFiles);
+      })}
+    />,
+    "code-rhythm": () => <PI.RhythmPanelComponent code={activeFile?.content ?? ''} />,
+    "migration-audit": () => <PI.MigrationAuditPanelComponent />,
+    "snippet-market": () => <PI.SnippetMarketComponent onImportToEditor={undefined} />,
   };
 
   const renderer = panelPropsMap[rightPanel];

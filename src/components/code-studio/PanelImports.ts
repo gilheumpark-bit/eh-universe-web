@@ -255,7 +255,61 @@ export const DebugPanelComponent = dynamic(
   { ssr: false },
 );
 
-// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=22-dynamic-components
+// ── naming-dict (named) ─────────────────────────────────────
+export const NamingDictPanelComponent = dynamic(
+  () => import("@/components/code-studio/NamingDictPanel").then((m) => ({ default: m.NamingDictPanel })),
+  { ssr: false },
+);
+
+// ── dep-graph (default) ─────────────────────────────────────
+export const DependencyGraphComponent = dynamic(
+  () => import("@/components/code-studio/DependencyGraph"),
+  { ssr: false },
+);
+
+// ── review-board (named) ────────────────────────────────────
+export const ReviewBoardComponent = dynamic(
+  () => import("@/components/code-studio/ReviewBoard").then((m) => ({ default: m.ReviewBoard })),
+  { ssr: false },
+);
+
+// ── module-profile (named) ─────────────────────────────────
+export const ModuleProfilePanelComponent = dynamic(
+  () => import("@/components/code-studio/ModuleProfilePanel").then((m) => ({ default: m.ModuleProfilePanel })),
+  { ssr: false },
+);
+
+// ── cognitive-load (named) ─────────────────────────────────
+export const CognitiveLoadPanelComponent = dynamic(
+  () => import("@/components/code-studio/CognitiveLoadPanel").then((m) => ({ default: m.CognitiveLoadPanel })),
+  { ssr: false },
+);
+
+// ── adr (named) ────────────────────────────────────────────
+export const ADRPanelComponent = dynamic(
+  () => import("@/components/code-studio/ADRPanel").then((m) => ({ default: m.ADRPanel })),
+  { ssr: false },
+);
+
+// ── code-rhythm (named) ────────────────────────────────────
+export const RhythmPanelComponent = dynamic(
+  () => import("@/components/code-studio/RhythmPanel").then((m) => ({ default: m.RhythmPanel })),
+  { ssr: false },
+);
+
+// ── migration-audit (named) ────────────────────────────────
+export const MigrationAuditPanelComponent = dynamic(
+  () => import("@/components/code-studio/MigrationAuditPanel").then((m) => ({ default: m.MigrationAuditPanel })),
+  { ssr: false },
+);
+
+// ── snippet-market (named) ─────────────────────────────────
+export const SnippetMarketComponent = dynamic(
+  () => import("@/components/code-studio/SnippetMarket").then((m) => ({ default: m.SnippetMarket })),
+  { ssr: false },
+);
+
+// IDENTITY_SEAL: PART-2 | role=NewPanelImports | inputs=none | outputs=32-dynamic-components
 
 // ============================================================
 // PART 3 — Shared Utility Imports
