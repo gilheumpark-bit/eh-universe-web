@@ -272,7 +272,10 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     if (!sug || sug.status !== 'pending') return;
 
     const apiKey = getApiKey(getActiveProvider());
-    if (!apiKey) return;
+    if (!apiKey) {
+      setError(language === 'KO' ? 'API 키가 필요합니다. 설정에서 등록해주세요.' : 'API key required. Please add one in Settings.');
+      return;
+    }
 
     setSuggestions(prev => prev.map((s, i) => i === idx ? { ...s, status: 'generating' } : s));
     setCurrentFixIdx(idx);

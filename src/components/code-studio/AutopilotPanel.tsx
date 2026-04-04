@@ -192,7 +192,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       const resp = await fetch('/api/code/autopilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, config, code, language, fileName }),
+        body: JSON.stringify({ prompt, config, code, language, fileName, apiKey: (await import('@/lib/ai-providers').then(m => m.getApiKey('gemini'))) || undefined }),
         signal: ac.signal,
       });
 

@@ -19,10 +19,7 @@ export default function ApiKeyHydrator() {
           /* keys load lazily on first use */
         });
     };
-    if (typeof requestIdleCallback !== "undefined") {
-      const id = requestIdleCallback(hydrate, { timeout: 2500 });
-      return () => cancelIdleCallback(id);
-    }
+    // 즉시 실행 — v4 키 복호화를 지연하면 AI 기능이 빈 키로 실패함
     const t = window.setTimeout(hydrate, 0);
     return () => window.clearTimeout(t);
   }, []);

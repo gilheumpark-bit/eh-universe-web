@@ -35,9 +35,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY?.trim() || '' : '';
+    // BYOK 키 우선, 서버 키 폴백
+    const clientApiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+    const serverApiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY?.trim() || '' : '';
+    const apiKey = clientApiKey || serverApiKey;
     if (!apiKey && !hasServerProviderCredentials('gemini')) {
-      return NextResponse.json({ error: 'Gemini server credentials are not configured.' }, { status: 400 });
+      return NextResponse.json({ error: 'Gemini API key required. Add your key in Settings or configure server credentials.' }, { status: 400 });
     }
 
     const encoder = new TextEncoder();

@@ -794,7 +794,8 @@ function getFallbackProviders(
  */
 export async function streamChat(opts: StreamOptions): Promise<string> {
   const provider = getActiveProvider();
-  const apiKey = getApiKey(provider);
+  // v4 AES-GCM 키 비동기 복호화 대기 — 동기 getApiKey 빈 문자열이면 async 폴백
+  const apiKey = getApiKey(provider) || await getApiKeyAsync(provider);
   const model = getActiveModel();
 
   // Truncate messages to fit context window
