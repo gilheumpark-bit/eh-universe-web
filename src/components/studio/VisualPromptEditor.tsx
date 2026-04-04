@@ -261,7 +261,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
           </button>
         </div>
         <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">
-          {finalPrompt || (isKO ? '레벨을 조절하면 자동 생성됩니다' : 'Adjust levels to auto-generate')}
+          {finalPrompt || (isKO ? '레벨을 조절하면 초안이 생성됩니다' : 'Adjust levels to generate draft')}
         </p>
         {negPrompt && (
           <div className="mt-3 pt-3 border-t border-border">
@@ -352,7 +352,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         </div>
       )}
 
-      {/* NOI 일관성 태그 자동생성 */}
+      {/* NOI 일관성 태그 추출 */}
       {characters && characters.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -384,7 +384,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 transition-all"
             >
-              <Sparkles className="w-3 h-3" /> {isKO ? '자동 추출' : 'Auto Extract'}
+              <Sparkles className="w-3 h-3" /> {isKO ? '추출' : 'Extract'}
             </button>
           </div>
           {(card.consistencyTags?.length ?? 0) > 0 && (

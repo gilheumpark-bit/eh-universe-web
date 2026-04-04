@@ -650,8 +650,8 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </h3>
             <p className="text-[12px] text-text-tertiary max-w-md">
               {isKO
-                ? '원고탭에서 챕터 분석 후 자동 생성하거나, + 버튼으로 빈 카드를 만들 수 있습니다.'
-                : 'Auto-generate from chapter analysis or create an empty card with the + button.'}
+                ? '원고탭에서 챕터 분석 후 초안을 생성하거나, + 버튼으로 빈 카드를 만들 수 있습니다.'
+                : 'Generate draft from chapter analysis or create an empty card with the + button.'}
             </p>
             <button
               onClick={addEmptyCard}

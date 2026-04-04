@@ -101,7 +101,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
             <BarChart3 className="w-5 h-5 text-text-tertiary mx-auto" />
             <p className="text-[9px] text-text-tertiary font-bold uppercase tracking-wider">No Report Yet</p>
             <p className="text-[10px] text-text-tertiary max-w-[200px] mx-auto">
-              자동 생성 후 등급·메트릭·분석 리포트가 여기에 표시됩니다.
+              초안 생성 후 등급·메트릭·분석 리포트가 여기에 표시됩니다.
             </p>
           </div>
         )}

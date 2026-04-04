@@ -240,7 +240,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   {language === 'KO' ? '캐릭터 없음' : language === 'JP' ? 'キャラクターなし' : language === 'CN' ? '没有角色' : 'No Characters Found'}
                 </span>
                 <p className="text-[11px] text-text-tertiary max-w-[280px] text-center">
-                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, AI 자동 생성 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、AI自動生成を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用AI自动生成按钮。' : 'Add manually from the left panel, or use the AI auto-generate button.'}
+                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, 스튜디오 제안 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、スタジオ提案を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用工作室建议按钮。' : 'Add manually from the left panel, or use the Studio Suggest button.'}
                 </p>
               </div>
             ) : (
@@ -663,7 +663,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       </div>
                     </div>
 
-                    {/* 한 줄 요약 공식 (자동 생성) */}
+                    {/* 한 줄 요약 공식 (스튜디오 제안) */}
                     {(char.desire || char.deficiency || char.conflict) && (
                       <div className="mb-4 p-3 bg-accent-purple/5 border border-accent-purple/10 rounded-xl">
                         <span className="text-[10px] font-black text-accent-purple/60 uppercase tracking-widest">{t.formulaLabel}</span>

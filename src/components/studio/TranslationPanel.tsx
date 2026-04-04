@@ -437,7 +437,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           {glossaryCandidates.length > 0 && (
             <details className="rounded-xl border border-white/8 bg-black/20 p-3">
               <summary className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-tertiary cursor-pointer">
-                {isKO ? `자동 추출 용어 (${glossaryCandidates.length}개)` : `Auto-extracted terms (${glossaryCandidates.length})`}
+                {isKO ? `추출된 용어 (${glossaryCandidates.length}개)` : `Extracted terms (${glossaryCandidates.length})`}
               </summary>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {glossaryCandidates.map((c: { term: string; type: string; confidence: number }, i: number) => (

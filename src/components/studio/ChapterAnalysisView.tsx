@@ -273,7 +273,7 @@ export default function ChapterAnalysisView({
       if (data.musicPromptPack) setMusicPrompt(data.musicPromptPack);
     } catch {
       // API 실패 시 수동 입력으로 폴백 (analyze-chapter 라우트 구현 완료)
-      showAlert(language === 'KO' ? '자동 분석 실패. 수동으로 입력해주세요.' : 'Auto-analysis failed. Please enter manually.', 'error');
+      showAlert(language === 'KO' ? '분석에 실패했습니다. 직접 입력해주세요.' : 'Analysis failed. Please enter manually.', 'error');
     } finally {
       setAnalyzing(false);
     }

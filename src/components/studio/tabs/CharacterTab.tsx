@@ -113,7 +113,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
                   className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-accent-amber/80 to-accent-amber/50 text-bg-primary rounded-xl text-sm font-bold tracking-widest transition-all shadow-lg hover:shadow-accent-amber/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 >
                   {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isGenerating ? "Synthesizing..." : (language === 'KO' ? '자동 생성' : 'Auto Generate')}
+                  {isGenerating ? "Synthesizing..." : (language === 'KO' ? '초안 생성' : 'Generate Draft')}
                 </button>
               </div>
             )}
