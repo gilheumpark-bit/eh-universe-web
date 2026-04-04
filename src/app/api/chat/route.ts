@@ -205,11 +205,14 @@ function resolveAuth(
     }
 
     if (hostedGeminiEnabled) {
+      // BYOK 우선 정책: 유저가 자기 키를 입력했으면 유저 키를 먼저 사용
+      if (isByok) {
+        return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
+      }
+
+      // 유저 키 없는 경우에만 호스팅 키 사용
       const budget = userTier === 'pro' ? { allowed: true, remaining: Infinity } : checkTokenBudget(ip, false);
       if (!budget.allowed) {
-        if (isByok) {
-          return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
-        }
         return {
           ok: false,
           response: NextResponse.json(
@@ -219,7 +222,7 @@ function resolveAuth(
         };
       }
 
-      return { ok: true, auth: { apiKey: '', isByok: false, userApiKey, canFallbackToUserKey: isByok } };
+      return { ok: true, auth: { apiKey: '', isByok: false, userApiKey: '', canFallbackToUserKey: false } };
     }
 
     return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };

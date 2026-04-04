@@ -6,6 +6,7 @@ import WebFeaturesInit from "@/components/WebFeaturesInit";
 import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
+import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { MainContentRegion } from "@/components/MainContentRegion";
 import "@/lib/env"; // validate environment variables at startup
 import {
@@ -146,6 +147,7 @@ export default function RootLayout({
         </AuthProvider>
         <ErrorReporterInit />
         <WebFeaturesInit />
+        <ApiKeyHydrator />
         <StatusIndicator />
         <DeferredClientMetrics />
       </body>

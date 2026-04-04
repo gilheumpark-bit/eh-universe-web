@@ -63,6 +63,10 @@ export function isGeminiAllocationExhaustedError(error: unknown): boolean {
 
 export type GeminiExecutionMode = 'hosted' | 'byok';
 
+/**
+ * BYOK 우선 정책: 유저 키가 있으면 유저 키 먼저.
+ * 유저 키 없을 때만 호스팅 키 사용.
+ */
 export async function executeGeminiHostedFirst<T>(
   clientApiKey: unknown,
   operation: (apiKey: string, mode: GeminiExecutionMode) => Promise<T>,
@@ -74,18 +78,17 @@ export async function executeGeminiHostedFirst<T>(
     throw new Error('Gemini server credentials are not configured');
   }
 
-  if (!hostedEnabled) {
+  // BYOK 우선: 유저 키가 있으면 유저 키 사용
+  if (userApiKey) {
     return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
   }
 
-  try {
+  // 유저 키 없을 때만 호스팅 키
+  if (hostedEnabled) {
     return { result: await operation('', 'hosted'), mode: 'hosted' };
-  } catch (error) {
-    if (userApiKey && isGeminiAllocationExhaustedError(error)) {
-      return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
-    }
-    throw error;
   }
+
+  throw new Error('No API key available');
 }
 
 export function createServerGeminiClient(apiKey?: string): GoogleGenAI {
