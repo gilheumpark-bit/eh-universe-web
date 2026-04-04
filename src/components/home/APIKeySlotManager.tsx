@@ -94,8 +94,8 @@ export function APIKeySlotManager({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md" style={{ zIndex: 'var(--z-modal)' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-bg-primary border border-border rounded-2xl w-full max-w-xl max-h-[70vh] flex flex-col shadow-luxury mx-4">
+    <div className="fixed inset-0 flex items-start justify-center pt-[8vh] pb-[4vh] overflow-y-auto bg-black/70 backdrop-blur-md" style={{ zIndex: 'var(--z-modal)' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-bg-primary border border-border rounded-2xl w-full max-w-xl max-h-[88vh] flex flex-col shadow-luxury mx-4 my-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
