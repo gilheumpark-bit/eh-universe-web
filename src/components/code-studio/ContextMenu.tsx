@@ -153,6 +153,7 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
     <div
       ref={ref}
       role="menu"
+      aria-activedescendant={focusIdx >= 0 && visibleItems[focusIdx] ? `ctx-item-${visibleItems[focusIdx].id}` : undefined}
       className="fixed z-100 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[180px]"
       style={style}
     >
@@ -167,6 +168,7 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
             onMouseLeave={() => setHoveredId(null)}
           >
             <button
+              id={`ctx-item-${item.id}`}
               role="menuitem"
               disabled={item.disabled}
               onClick={() => {

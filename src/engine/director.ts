@@ -128,12 +128,21 @@ function checkSimilarContext(text: string): { findings: DirectorFinding[]; count
   return { findings, count };
 }
 
+function countOccurrences(text: string, phrase: string): number {
+  let count = 0;
+  let pos = text.indexOf(phrase);
+  while (pos !== -1) {
+    count++;
+    pos = text.indexOf(phrase, pos + phrase.length);
+  }
+  return count;
+}
+
 function checkAITone(text: string): { findings: DirectorFinding[]; count: number } {
   const findings: DirectorFinding[] = [];
   let count = 0;
   for (const phrase of AI_PHRASES) {
-    const matches = text.split(phrase).length - 1;
-    count += matches;
+    count += countOccurrences(text, phrase);
   }
   if (count >= 3) {
     findings.push({
@@ -197,10 +206,10 @@ function checkHallucinationRisk(text: string): { findings: DirectorFinding[]; ce
   let nuanceCount = 0;
 
   for (const marker of CERTAINTY_MARKERS) {
-    certaintyCount += (text.split(marker).length - 1);
+    certaintyCount += countOccurrences(text, marker);
   }
   for (const marker of NUANCE_MARKERS) {
-    nuanceCount += (text.split(marker).length - 1);
+    nuanceCount += countOccurrences(text, marker);
   }
 
   if (certaintyCount > 2 && nuanceCount === 0) {

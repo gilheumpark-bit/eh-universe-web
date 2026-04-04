@@ -34,7 +34,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
   const selectedProvider = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="EH Code Studio API 키 설정">
       <div className="bg-[#0f1419] border border-white/10 rounded-xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
           <Code2 size={28} className="text-amber-400" />

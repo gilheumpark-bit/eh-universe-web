@@ -312,6 +312,8 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
         <div className="flex gap-2 mt-1 flex-wrap items-center">
           <button
             onClick={() => setCaseSensitive((v) => !v)}
+            aria-label={L4(lang, { ko: "대소문자 구분", en: "Case sensitive" })}
+            aria-pressed={caseSensitive}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
               ${caseSensitive ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
           >
@@ -319,6 +321,8 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
           </button>
           <button
             onClick={() => setUseRegex((v) => !v)}
+            aria-label={L4(lang, { ko: "정규식 사용", en: "Use regular expression" })}
+            aria-pressed={useRegex}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
               ${useRegex ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
           >

@@ -2,7 +2,7 @@
 // useStudioSync — Drive 동기화 상태 관리
 // ============================================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { syncAllProjects } from '@/services/driveService';
 import type { Project } from '@/lib/studio-types';
@@ -24,6 +24,10 @@ export function useStudioSync({
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [showSyncReminder, setShowSyncReminder] = useState(false);
+
+  // Ref to avoid stale closure over `projects` in handleSync
+  const projectsRef = useRef(projects);
+  projectsRef.current = projects;
 
   // 2-hour sync reminder
   const SYNC_REMINDER_MS = 2 * 60 * 60 * 1000;
@@ -49,7 +53,7 @@ export function useStudioSync({
     }
     setSyncStatus('syncing');
     try {
-      const result = await syncAllProjects(token, projects);
+      const result = await syncAllProjects(token, projectsRef.current);
       setProjects(result.merged);
       setLastSyncTime(Date.now());
       if (result.failedCount > 0) {
@@ -65,7 +69,7 @@ export function useStudioSync({
         const newToken = await refreshAccessToken();
         if (newToken) {
           try {
-            const retryResult = await syncAllProjects(newToken, projects);
+            const retryResult = await syncAllProjects(newToken, projectsRef.current);
             setProjects(retryResult.merged);
             setLastSyncTime(Date.now());
             if (retryResult.failedCount > 0) {
@@ -88,7 +92,8 @@ export function useStudioSync({
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
     }
-  }, [accessToken, refreshAccessToken, projects, setProjects, setUxError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- projectsRef.current avoids stale closure
+  }, [accessToken, refreshAccessToken, setProjects, setUxError]);
 
   return {
     syncStatus,

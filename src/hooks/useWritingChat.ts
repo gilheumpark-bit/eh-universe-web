@@ -47,6 +47,10 @@ export function useWritingChat(novelContext?: NovelContext) {
   const [chatLoading, setChatLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Ref to avoid stale closure over chatMessages in sendChat
+  const chatMessagesRef = useRef(chatMessages);
+  chatMessagesRef.current = chatMessages;
+
   const sendChat = useCallback(async (text: string, language: AppLanguage) => {
     if (!text.trim() || chatLoading) return;
 
@@ -72,7 +76,7 @@ export function useWritingChat(novelContext?: NovelContext) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const history: ChatMsg[] = chatMessages
+      const history: ChatMsg[] = chatMessagesRef.current
         .slice(-10)
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
       history.push({ role: 'user', content: text });
@@ -110,7 +114,8 @@ export function useWritingChat(novelContext?: NovelContext) {
       setChatLoading(false);
       abortControllerRef.current = null;
     }
-  }, [chatLoading, chatMessages, novelContext]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chatMessagesRef avoids stale closure
+  }, [chatLoading, novelContext]);
 
   const abortChat = useCallback(() => {
     if (abortControllerRef.current) {

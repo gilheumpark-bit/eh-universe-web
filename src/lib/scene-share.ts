@@ -68,6 +68,15 @@ function generateToken(): string {
 // PART 3 — Firestore 저장/조회
 // ============================================================
 
+/** Hash a password string using SHA-256 and return hex digest */
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // P0#5 fix: Firebase 인스턴스 캐싱 (중복 초기화 방지)
 import type { Firestore } from 'firebase/firestore';
 let _dbCache: Firestore | null = null;
@@ -92,6 +101,8 @@ export async function createShareLink(options: ShareOptions): Promise<string> {
   const token = generateToken();
   const now = Date.now();
 
+  const hashedPw = options.password ? await hashPassword(options.password) : undefined;
+
   const data: SharedSceneData = {
     token,
     title: options.title,
@@ -100,7 +111,7 @@ export async function createShareLink(options: ShareOptions): Promise<string> {
     backgroundUrls: options.backgroundUrls,
     createdAt: now,
     expiresAt: now + options.expiryDays * 24 * 60 * 60 * 1000,
-    password: options.password,
+    password: hashedPw,
     feedbackEnabled: options.feedbackEnabled ?? false,
     authorName: options.authorName,
   };
@@ -126,10 +137,11 @@ export async function loadSharedScene(token: string): Promise<SharedSceneData | 
   return data;
 }
 
-/** 비밀번호 검증 */
-export function verifyPassword(data: SharedSceneData, input: string): boolean {
+/** 비밀번호 검증 (SHA-256 해시 비교) */
+export async function verifyPassword(data: SharedSceneData, input: string): Promise<boolean> {
   if (!data.password) return true;
-  return data.password === input;
+  const inputHash = await hashPassword(input);
+  return data.password === inputHash;
 }
 
 // IDENTITY_SEAL: PART-3 | role=firestore-crud | inputs=ShareOptions,token | outputs=SharedSceneData

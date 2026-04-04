@@ -21,6 +21,7 @@ import { createTTSController, adjustVoiceForEmotion } from "@/engine/scene-parse
 import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
 import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
+import { L4 } from "@/lib/i18n";
 
 // ============================================================
 // PART 1 — Props & State Types
@@ -243,6 +244,7 @@ function DialogueBox({
   canPrev,
   showMetrics,
   tension,
+  language,
 }: {
   beat: SceneBeat;
   speed: number;
@@ -251,16 +253,16 @@ function DialogueBox({
   canPrev: boolean;
   showMetrics: boolean;
   tension: number;
+  language: AppLanguage;
 }) {
   const typingSpeed = Math.round(40 / speed);
-  const isKO = true; // Studio scene player is KO-only by design
 
   const typeLabel: Record<SceneBeat["type"], string> = {
-    dialogue: "대사",
-    narration: "서술",
-    action: "행동",
-    thought: "내면",
-    description: "묘사",
+    dialogue: L4(language, { ko: "대사", en: "Dialogue" }),
+    narration: L4(language, { ko: "서술", en: "Narration" }),
+    action: L4(language, { ko: "행동", en: "Action" }),
+    thought: L4(language, { ko: "내면", en: "Thought" }),
+    description: L4(language, { ko: "묘사", en: "Description" }),
   };
 
   return (
@@ -287,18 +289,18 @@ function DialogueBox({
         <div className="mt-3 flex items-center justify-between">
           {showMetrics ? (
             <div className="flex items-center gap-3 text-[10px] text-text-tertiary">
-              <span>텐션 <span className={tension > 70 ? "text-accent-red" : tension > 40 ? "text-accent-amber" : "text-accent-green"}>{tension}</span></span>
-              <span>템포 {beat.tempo === "fast" ? "⚡" : beat.tempo === "slow" ? "🐌" : "▶"}</span>
-              <span>카메라 {beat.camera}</span>
+              <span>{L4(language, { ko: '텐션', en: 'Tension' })} <span className={tension > 70 ? "text-accent-red" : tension > 40 ? "text-accent-amber" : "text-accent-green"}>{tension}</span></span>
+              <span>{L4(language, { ko: '템포', en: 'Tempo' })} {beat.tempo === "fast" ? "⚡" : beat.tempo === "slow" ? "🐌" : "▶"}</span>
+              <span>{L4(language, { ko: '카메라', en: 'Camera' })} {beat.camera}</span>
             </div>
           ) : <div />}
 
           <div className="flex items-center gap-2">
-            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label="이전">
+            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label={L4(language, { ko: '이전', en: 'Previous' })}>
               <ChevronLeft className="h-4 w-4 text-text-secondary" />
             </button>
-            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label="다음">
-              다음 ▶
+            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label={L4(language, { ko: '다음', en: 'Next' })}>
+              {L4(language, { ko: '다음', en: 'Next' })} ▶
             </button>
           </div>
         </div>
@@ -601,6 +603,7 @@ export default function ScenePlayer({
         canPrev={canPrev}
         showMetrics={state.showOverlay}
         tension={currentScene.tension}
+        language={language}
       />}
 
       {/* 라디오 모드 하단: 간단한 다음 버튼 */}

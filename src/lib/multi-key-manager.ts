@@ -131,7 +131,16 @@ export function loadMultiKeyConfig(): MultiKeyConfig {
   } catch { return createDefaultConfig(); }
 }
 
-// 간단한 XOR 난독화 (보안용 아님, 평문 노출 방지)
+/**
+ * WARNING: XOR obfuscation with a static salt is NOT cryptographic security.
+ * This only prevents casual plaintext exposure in localStorage/devtools.
+ * It does NOT protect against a determined attacker inspecting the page.
+ *
+ * For real encryption, API keys should migrate to the ai-providers.ts v4
+ * AES-GCM encryption flow (see encryptApiKey / decryptApiKey in that module).
+ *
+ * TODO: Migrate multi-key-manager storage to ai-providers.ts v4 encryption.
+ */
 function obfuscate(key: string): string {
   const salt = 'ehsu';
   return 'mk:' + btoa(key.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ salt.charCodeAt(i % salt.length))).join(''));

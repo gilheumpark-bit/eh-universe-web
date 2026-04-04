@@ -254,8 +254,12 @@ function FullTrendSparkline({ metrics, language }: { metrics: EpMetric[]; langua
         })}
 
         {/* Episode index labels at bottom (sparse) */}
-        {metrics.filter((_, i) => i === 0 || i === metrics.length - 1 || (i + 1) % Math.max(1, Math.ceil(metrics.length / 10)) === 0).map(m => {
-          const i = metrics.indexOf(m);
+        {metrics.reduce<Array<{ m: EpMetric; i: number }>>((acc, m, i) => {
+          if (i === 0 || i === metrics.length - 1 || (i + 1) % Math.max(1, Math.ceil(metrics.length / 10)) === 0) {
+            acc.push({ m, i });
+          }
+          return acc;
+        }, []).map(({ m, i }) => {
           const x = padX + (metrics.length > 1 ? (i / (metrics.length - 1)) * chartW : chartW / 2);
           return (
             <text key={m.index} x={x} y={h - 1} fill="rgba(255,255,255,0.2)" fontSize="6" textAnchor="middle">

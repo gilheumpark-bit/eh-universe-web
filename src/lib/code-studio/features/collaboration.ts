@@ -68,6 +68,7 @@ export class CRDTDocument {
   private clock = 0;
   private vectorClock: VectorClock = {};
   private operationLog: CRDTOperation[] = [];
+  private charIndex = new Map<string, number>(); // O(1) lookup index (#7)
   readonly siteId: string;
 
   constructor(siteId: string) {
@@ -153,6 +154,7 @@ export class CRDTDocument {
       if (afterIdx === -1) { this.chars.push(char); }
       else { this.chars.splice(this.findInsertPosition(afterIdx + 1, op.id), 0, char); }
     }
+    this.rebuildCharIndex();
     return true;
   }
 
@@ -189,11 +191,19 @@ export class CRDTDocument {
     return result;
   }
 
-  private findCharById(id: CRDTId): number {
+  private charIndexKey(id: CRDTId): string {
+    return `${id.site}:${id.clock}`;
+  }
+
+  private rebuildCharIndex(): void {
+    this.charIndex.clear();
     for (let i = 0; i < this.chars.length; i++) {
-      if (this.chars[i].id.site === id.site && this.chars[i].id.clock === id.clock) return i;
+      this.charIndex.set(this.charIndexKey(this.chars[i].id), i);
     }
-    return -1;
+  }
+
+  private findCharById(id: CRDTId): number {
+    return this.charIndex.get(this.charIndexKey(id)) ?? -1;
   }
 
   private findInsertPosition(startIdx: number, newId: CRDTId): number {

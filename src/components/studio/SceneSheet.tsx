@@ -239,7 +239,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
                 maxLength={100}
                 className="bg-transparent font-bold text-xs outline-none flex-1" />
               <div className="flex items-center gap-1">
-                <input type="color" value={seg.color} onChange={e => updateSegment(i, { color: e.target.value })} className="w-5 h-5 rounded cursor-pointer border-0" />
+                <input type="color" value={seg.color} onChange={e => updateSegment(i, { color: e.target.value })} aria-label={`${seg.label || '세그먼트'} 색상 선택`} className="w-5 h-5 rounded cursor-pointer border-0" />
                 {segments.length > 2 && (
                   <button onClick={() => removeSegment(i)} className="text-text-tertiary hover:text-accent-red text-[10px]">✕</button>
                 )}

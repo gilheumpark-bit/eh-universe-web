@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useLang } from '@/lib/LangContext';
 import type { AuditReport, AuditCategoryResult, AuditAreaResult, AuditSeverity } from '@/lib/code-studio/audit/audit-types';
 import { AUDIT_AREA_LABELS, CATEGORY_LABELS } from '@/lib/code-studio/audit/audit-types';
+import { ScoreBar } from '@/components/code-studio/ui/ProgressBar';
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -22,8 +23,8 @@ const SEVERITY_ICONS: Record<AuditSeverity, string> = {
 };
 
 const GRADE_COLORS: Record<string, string> = {
-  S: 'text-amber-400', A: 'text-accent-green', B: 'text-blue-400',
-  C: 'text-yellow-400', D: 'text-orange-400', F: 'text-red-400',
+  S: 'text-accent-amber', A: 'text-accent-green', B: 'text-accent-blue',
+  C: 'text-accent-amber', D: 'text-accent-red', F: 'text-accent-red',
 };
 
 type ViewTab = 'overview' | 'details' | 'urgent';
@@ -31,30 +32,7 @@ type ViewTab = 'overview' | 'details' | 'urgent';
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=Props,constants
 
 // ============================================================
-// PART 2 — Score Bar Component
-// ============================================================
-
-function ScoreBar({ score, grade, label }: { score: number; grade: string; label: string }) {
-  const fill = Math.max(0, Math.min(100, score));
-  const barColor = score >= 85 ? 'bg-accent-green' : score >= 70 ? 'bg-accent-blue' : score >= 55 ? 'bg-accent-amber' : score >= 40 ? 'bg-accent-amber/70' : 'bg-accent-red';
-
-  return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="text-[11px] text-text-secondary w-[100px] truncate">{label}</span>
-      <div className="flex-1 h-[6px] bg-white/5 rounded-full overflow-hidden">
-        <div className={`h-full ${barColor} rounded-full transition-all duration-500`} style={{ width: `${fill}%` }} />
-      </div>
-      <span className={`text-[11px] font-mono font-semibold w-[50px] text-right ${GRADE_COLORS[grade] ?? 'text-text-primary'}`}>
-        {score}/{grade}
-      </span>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-2 | role=score-bar | inputs=score,grade,label | outputs=JSX
-
-// ============================================================
-// PART 3 — Category Card
+// PART 2 — Category Card
 // ============================================================
 
 function CategoryCard({ cat, lang, onSelectArea }: { cat: AuditCategoryResult; lang: string; onSelectArea: (area: string) => void }) {

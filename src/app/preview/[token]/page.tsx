@@ -174,9 +174,9 @@ export default function PreviewPage() {
   }, [token]);
 
   // 비밀번호 확인
-  const handlePasswordSubmit = useCallback(() => {
+  const handlePasswordSubmit = useCallback(async () => {
     if (state.status !== "password") return;
-    if (verifyPassword(state.data, passwordInput)) {
+    if (await verifyPassword(state.data, passwordInput)) {
       setState({ status: "ready", data: state.data });
     } else {
       setPasswordInput("");

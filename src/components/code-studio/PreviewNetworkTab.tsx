@@ -96,7 +96,7 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
         <div className="flex items-center gap-0.5">
           <Filter size={10} className="text-white/50 mr-0.5" />
           {FILTER_OPTIONS.map((opt) => (
-            <button key={opt.value} onClick={() => setFilterType(opt.value)}
+            <button key={opt.value} onClick={() => setFilterType(opt.value)} aria-label={`Filter: ${opt.label}`}
               className={`px-1.5 py-0.5 rounded text-[10px] ${filterType === opt.value ? "bg-amber-900/30 text-amber-400" : "hover:bg-white/5 text-white/60"}`}>{opt.label}</button>
           ))}
         </div>

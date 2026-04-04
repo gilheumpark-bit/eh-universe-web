@@ -149,7 +149,7 @@ export function APIKeyConfig({ onClose }: Props) {
   const enabledSlots = slots.filter((s) => s.enabled && s.apiKey.trim().length > 0);
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" style={{ zIndex: 9999 }} role="dialog" aria-modal="true" aria-label="API 키 슬롯 관리">
       <div className="bg-[#0f1419] border border-white/10 rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col" style={{ minHeight: 320 }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">

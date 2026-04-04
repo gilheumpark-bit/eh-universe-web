@@ -88,7 +88,7 @@ export function EvaluationPanel({ files, onClose }: Props) {
   }, [files]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-label="프로젝트 평가">
       <div className="bg-[#0a0e17] border border-white/10 rounded-xl shadow-2xl flex flex-col" style={{ width: 520, maxHeight: "80vh" }}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <div className="flex items-center gap-2 text-sm font-semibold text-white"><BarChart3 size={16} /> 프로젝트 평가</div>

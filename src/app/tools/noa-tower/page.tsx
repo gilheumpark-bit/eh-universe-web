@@ -423,6 +423,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
               }
             }}
             placeholder={t("placeholder", lang)}
+            aria-label={t("placeholder", lang)}
             disabled={isEnded}
             rows={1}
             className="flex-1 resize-none bg-transparent px-4 py-4 font-[--font-mono] text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary/40 focus:outline-none disabled:opacity-40"

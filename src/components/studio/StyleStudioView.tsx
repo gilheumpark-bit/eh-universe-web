@@ -13,6 +13,20 @@ import StylePreview from "./StylePreview";
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
 
+// 10 style presets — each sets slider values + DNA card selection (module-scope constant)
+const STYLE_PRESETS: readonly { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
+  { key: "hard-sf", ko: "하드 SF 문체", en: "Hard SF Style", sliders: { s1: 2, s2: 1, s3: 2, s4: 1, s5: 5 }, dna: [0] },
+  { key: "web-novel", ko: "웹소설 리듬형", en: "Web Novel Rhythm", sliders: { s1: 1, s2: 3, s3: 3, s4: 4, s5: 2 }, dna: [1] },
+  { key: "literary", ko: "순문학 감성", en: "Literary Emotional", sliders: { s1: 4, s2: 5, s3: 5, s4: 5, s5: 4 }, dna: [2] },
+  { key: "action", ko: "액션/전투 압축", en: "Action/Battle Compact", sliders: { s1: 1, s2: 2, s3: 3, s4: 4, s5: 3 }, dna: [4] },
+  { key: "romance", ko: "로맨스 감정선", en: "Romance Emotion Line", sliders: { s1: 3, s2: 5, s3: 4, s4: 5, s5: 2 }, dna: [3] },
+  { key: "thriller", ko: "스릴러 건조체", en: "Thriller Dry Style", sliders: { s1: 1, s2: 1, s3: 2, s4: 3, s5: 3 }, dna: [0, 4] },
+  { key: "fantasy", ko: "판타지 서사체", en: "Fantasy Epic", sliders: { s1: 4, s2: 3, s3: 4, s4: 3, s5: 3 }, dna: [2, 3] },
+  { key: "horror", ko: "호러/괴담체", en: "Horror/Ghost Story", sliders: { s1: 2, s2: 4, s3: 5, s4: 5, s5: 2 }, dna: [4] },
+  { key: "essay", ko: "에세이/수필", en: "Essay/Memoir", sliders: { s1: 3, s2: 4, s3: 3, s4: 2, s5: 3 }, dna: [2] },
+  { key: "cinematic", ko: "시네마틱 묘사", en: "Cinematic Description", sliders: { s1: 3, s2: 3, s3: 5, s4: 4, s5: 3 }, dna: [1, 2] },
+] as const;
+
 interface SliderDefI18n {
   id: string;
   ko: string;
@@ -439,27 +453,12 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   );
   const benchmarkProfile = benchmarkAuthor ? AUTHOR_PROFILES[benchmarkAuthor] : undefined;
 
-  // 10 style presets — each sets slider values + DNA card selection
-  const STYLE_PRESETS: { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
-    { key: "hard-sf", ko: "하드 SF 문체", en: "Hard SF Style", sliders: { s1: 2, s2: 1, s3: 2, s4: 1, s5: 5 }, dna: [0] },
-    { key: "web-novel", ko: "웹소설 리듬형", en: "Web Novel Rhythm", sliders: { s1: 1, s2: 3, s3: 3, s4: 4, s5: 2 }, dna: [1] },
-    { key: "literary", ko: "순문학 감성", en: "Literary Emotional", sliders: { s1: 4, s2: 5, s3: 5, s4: 5, s5: 4 }, dna: [2] },
-    { key: "action", ko: "액션/전투 압축", en: "Action/Battle Compact", sliders: { s1: 1, s2: 2, s3: 3, s4: 4, s5: 3 }, dna: [4] },
-    { key: "romance", ko: "로맨스 감정선", en: "Romance Emotion Line", sliders: { s1: 3, s2: 5, s3: 4, s4: 5, s5: 2 }, dna: [3] },
-    { key: "thriller", ko: "스릴러 건조체", en: "Thriller Dry Style", sliders: { s1: 1, s2: 1, s3: 2, s4: 3, s5: 3 }, dna: [0, 4] },
-    { key: "fantasy", ko: "판타지 서사체", en: "Fantasy Epic", sliders: { s1: 4, s2: 3, s3: 4, s4: 3, s5: 3 }, dna: [2, 3] },
-    { key: "horror", ko: "호러/괴담체", en: "Horror/Ghost Story", sliders: { s1: 2, s2: 4, s3: 5, s4: 5, s5: 2 }, dna: [4] },
-    { key: "essay", ko: "에세이/수필", en: "Essay/Memoir", sliders: { s1: 3, s2: 4, s3: 3, s4: 2, s5: 3 }, dna: [2] },
-    { key: "cinematic", ko: "시네마틱 묘사", en: "Cinematic Description", sliders: { s1: 3, s2: 3, s3: 5, s4: 4, s5: 3 }, dna: [1, 2] },
-  ];
-
   const applyStylePreset = useCallback((presetKey: string) => {
     const preset = STYLE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
     setSliderVals(prev => ({ ...prev, ...preset.sliders }));
     setSelectedCards(new Set(preset.dna));
     setShowStylePresetMenu(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- STYLE_PRESETS is a constant array defined inline
   }, []);
 
   const totalChecked = checkedSF.size + checkedWeb.size;

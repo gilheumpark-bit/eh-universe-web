@@ -281,6 +281,8 @@ function ChangesTab({
   );
 }
 
+const MemoizedChangesTab = React.memo(ChangesTab);
+
 // IDENTITY_SEAL: PART-4 | role=ChangesTab | inputs=OpenFile[],FileNode[] | outputs=JSX
 
 // ============================================================
@@ -367,6 +369,8 @@ function HistoryTab({
     </div>
   );
 }
+
+const MemoizedHistoryTab = React.memo(HistoryTab);
 
 // IDENTITY_SEAL: PART-5 | role=HistoryTab | inputs=CommitEntry[] | outputs=JSX
 
@@ -678,7 +682,7 @@ export default function GitPanel({
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto p-2">
         {activeTab === "changes" ? (
-          <ChangesTab
+          <MemoizedChangesTab
             dirtyFiles={dirtyFiles}
             selectedFileId={selectedFileId}
             onSelectFile={setSelectedFileId}
@@ -686,7 +690,7 @@ export default function GitPanel({
             fileTree={files}
           />
         ) : (
-          <HistoryTab
+          <MemoizedHistoryTab
             commits={commits}
             expandedHash={expandedHash}
             onToggleExpand={handleToggleExpand}

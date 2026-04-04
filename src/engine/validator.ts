@@ -100,15 +100,25 @@ const TELL_PATTERNS: Array<{ pattern: RegExp; shows: string[] }> = [
   { pattern: /기[뻤쁨]/g, shows: ['입꼬리가 올라갔다', '어깨가 펴졌다'] },
 ];
 
+// Pre-compiled regexes for REPETITION_ALT phrases (#3)
+const REPETITION_ALT_REGEXES = new Map<string, RegExp>(
+  Object.keys(REPETITION_ALT).map(phrase => [
+    phrase,
+    new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+  ]),
+);
+
 export function validateQuality(text: string): { showTellIssues: FixRecord[]; repetitionIssues: FixRecord[]; score: number } {
   // ReDoS prevention
   if (text.length > 50_000) text = text.slice(0, 50_000);
   const showTellIssues: FixRecord[] = [];
   const repetitionIssues: FixRecord[] = [];
 
-  // Check repetitive expressions (flag when 3+ occurrences)
+  // Check repetitive expressions (flag when 3+ occurrences, pre-compiled regexes)
   for (const [phrase, alts] of Object.entries(REPETITION_ALT)) {
-    const count = (text.match(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+    const re = REPETITION_ALT_REGEXES.get(phrase)!;
+    re.lastIndex = 0;
+    const count = (text.match(re) || []).length;
     if (count >= 3) {
       repetitionIssues.push({
         fixType: FixType.REPETITION,
@@ -167,12 +177,27 @@ const PUNCT_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
 const EH_BANNED_WORDS_KO = ['기적', '운명', '갑자기', '그냥', '원래'];
 const EH_BANNED_WORDS_EN = ['miracle', 'destiny', 'suddenly', 'just because', 'originally'];
 
-function isInsideCodeBlock(text: string, position: number): boolean {
+// Cached code block ranges for O(1) membership check (#6)
+let _codeBlockCacheText: string | null = null;
+let _codeBlockRanges: Array<[number, number]> = [];
+
+function getCodeBlockRanges(text: string): Array<[number, number]> {
+  if (_codeBlockCacheText === text) return _codeBlockRanges;
+  _codeBlockCacheText = text;
+  _codeBlockRanges = [];
   const regex = /```[\s\S]*?```/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    if (position >= match.index && position < match.index + match[0].length) return true;
-    if (match.index > position) break;
+    _codeBlockRanges.push([match.index, match.index + match[0].length]);
+  }
+  return _codeBlockRanges;
+}
+
+function isInsideCodeBlock(text: string, position: number): boolean {
+  const ranges = getCodeBlockRanges(text);
+  for (const [start, end] of ranges) {
+    if (position >= start && position < end) return true;
+    if (start > position) break;
   }
   return false;
 }

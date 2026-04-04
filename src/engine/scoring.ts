@@ -21,6 +21,10 @@ const SENSORY_KEYWORDS_KO = [
   '거친', '달콤', '쓴', '축축', '바람', '울림', '진동',
 ];
 
+// Pre-compiled regexes for hot-path keyword matching (#1)
+const EMOTION_KEYWORD_REGEXES = EMOTION_KEYWORDS_KO.map(kw => new RegExp(kw, 'g'));
+const SENSORY_KEYWORD_REGEXES = SENSORY_KEYWORDS_KO.map(kw => new RegExp(kw, 'g'));
+
 export function calculateEOSScore(text: string, precomputedSentenceCount?: number): number {
   if (!text || text.length < 100) return 0;
   // ReDoS prevention
@@ -30,17 +34,19 @@ export function calculateEOSScore(text: string, precomputedSentenceCount?: numbe
   // Edge case: no punctuation — estimate from char count
   const sentences = (rawCount <= 1 && text.length > 100) ? Math.ceil(text.length / 200) : (rawCount || 1);
 
-  // Emotional keyword density
+  // Emotional keyword density (pre-compiled regexes)
   let emotionCount = 0;
-  for (const kw of EMOTION_KEYWORDS_KO) {
-    const matches = text.match(new RegExp(kw, 'g'));
+  for (const re of EMOTION_KEYWORD_REGEXES) {
+    re.lastIndex = 0;
+    const matches = text.match(re);
     if (matches) emotionCount += matches.length;
   }
 
-  // Sensory description density
+  // Sensory description density (pre-compiled regexes)
   let sensoryCount = 0;
-  for (const kw of SENSORY_KEYWORDS_KO) {
-    const matches = text.match(new RegExp(kw, 'g'));
+  for (const re of SENSORY_KEYWORD_REGEXES) {
+    re.lastIndex = 0;
+    const matches = text.match(re);
     if (matches) sensoryCount += matches.length;
   }
 
@@ -96,6 +102,10 @@ export function calculateGrade(
 // Metrics Analysis
 // ============================================================
 
+// Pre-compiled regexes for tension keywords (#2)
+const TENSION_KEYWORDS = ['위험', '급', '갑자기', '폭발', '비명', '긴장', '전투', '충돌', 'danger', 'explosion', 'scream'];
+const TENSION_KEYWORD_REGEXES = TENSION_KEYWORDS.map(kw => new RegExp(kw, 'gi'));
+
 export function analyzeMetrics(
   text: string,
   _config: StoryConfig,
@@ -111,11 +121,11 @@ export function analyzeMetrics(
   const sentences = precomputedSentences ?? text.split(/[.!?。]+/).filter(s => s.trim());
   const sentenceCount = precomputedCount ?? (sentences.length > 0 ? sentences.length : Math.max(1, Math.ceil(text.length / 80)));
 
-  // Tension: keyword density + short sentence ratio
-  const tensionKeywords = ['위험', '급', '갑자기', '폭발', '비명', '긴장', '전투', '충돌', 'danger', 'explosion', 'scream'];
+  // Tension: keyword density + short sentence ratio (pre-compiled regexes)
   let tensionHits = 0;
-  for (const kw of tensionKeywords) {
-    tensionHits += (text.match(new RegExp(kw, 'gi')) || []).length;
+  for (const re of TENSION_KEYWORD_REGEXES) {
+    re.lastIndex = 0;
+    tensionHits += (text.match(re) || []).length;
   }
   const shortSentenceRatio = sentences.filter(s => s.trim().length < 20).length / sentenceCount;
   const tension = Math.min(100, Math.round(

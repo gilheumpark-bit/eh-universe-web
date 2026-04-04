@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
@@ -179,7 +179,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
-                  <span>서사 잠재력</span>
+                  <span>{L4(language, { ko: '서사 잠재력', en: 'Narrative Potential' })}</span>
                   <span className="text-blue-500">{newChar.dna} pts</span>
                 </div>
                 <input 
@@ -691,7 +691,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
-                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">서사 잠재력</span>
+                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '서사 잠재력', en: 'Narrative Potential' })}</span>
                        </div>
                        <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
                     </div>

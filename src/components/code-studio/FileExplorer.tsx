@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useEffect, useMemo, useRef, startTransition } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef, startTransition } from "react";
 import {
   ChevronRight, ChevronDown, FileCode, Folder, FolderOpen,
   Plus, FoldVertical, GripVertical,
@@ -224,7 +224,7 @@ function TreeNode({
         </div>
       )}
       {isFolder && expanded && node.children?.map((child) => (
-        <TreeNode
+        <MemoizedTreeNode
           key={child.id} node={child} depth={depth + 1} onOpen={onOpen} activeId={activeId}
           onContextMenu={onContextMenu} selectedIds={selectedIds} onFileClick={onFileClick}
           collapseAllTrigger={collapseAllTrigger} modifiedFileIds={modifiedFileIds}
@@ -235,6 +235,8 @@ function TreeNode({
     </div>
   );
 }
+
+const MemoizedTreeNode = React.memo(TreeNode);
 
 // IDENTITY_SEAL: PART-3 | role=TreeNode | inputs=FileNode,depth | outputs=recursive-tree-JSX
 
@@ -404,7 +406,7 @@ export function FileExplorer({
         </div>
       )}
       {sortedFiles.map((node) => (
-        <TreeNode
+        <MemoizedTreeNode
           key={node.id} node={node} depth={0} onOpen={onOpen} activeId={activeId}
           onContextMenu={handleContextMenu} selectedIds={selectedIds} onFileClick={handleFileClick}
           collapseAllTrigger={collapseAllTrigger} modifiedFileIds={modifiedFileIds}

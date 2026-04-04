@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare } from "lucide-react";
 import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
-import { createT } from "@/lib/i18n";
+import { createT, L4 } from "@/lib/i18n";
 import ChapterAnalysisView from "./ChapterAnalysisView";
 
 // ============================================================
@@ -46,7 +46,7 @@ function stripJSON(text: string): string {
   return text.replace(/```json[\s\S]*?```/g, "").trim();
 }
 
-function generateEpub(title: string, author: string, manuscripts: EpisodeManuscript[]): Blob {
+function generateEpub(title: string, author: string, manuscripts: EpisodeManuscript[], lang: AppLanguage = 'KO'): Blob {
   const mimetype = "application/epub+zip";
   const container = `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -148,7 +148,7 @@ function generateEpub(title: string, author: string, manuscripts: EpisodeManuscr
 <h1>${title}</h1>
 <p style="color:#888;">${author} | ${manuscripts.length} episodes | ${new Date().toLocaleDateString()}</p>
 <div class="toc">
-<h3>목차</h3>
+<h3>${L4(lang, { ko: '목차', en: 'Table of Contents' })}</h3>
 ${chapters.map((c, i) => `<a href="#ch${i}">${c.title}</a>`).join("\n")}
 </div>
 ${chapters
@@ -276,7 +276,8 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     const blob = generateEpub(
       config.title || t('manuscript.untitled'),
       "NOA Studio",
-      manuscripts
+      manuscripts,
+      language
     );
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

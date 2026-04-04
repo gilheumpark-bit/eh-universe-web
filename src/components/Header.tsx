@@ -111,6 +111,16 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setMenuOpen(false);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.body.style.overflow = "";
+        document.removeEventListener("keydown", handleEscape);
+      };
     } else {
       document.body.style.overflow = "";
     }
@@ -290,6 +300,16 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 type="button"
                 onClick={() => {
                   setExploreOpen((p) => !p);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown" && !exploreOpen) {
+                    e.preventDefault();
+                    setExploreOpen(true);
+                  }
+                  if (e.key === "Escape" && exploreOpen) {
+                    e.preventDefault();
+                    setExploreOpen(false);
+                  }
                 }}
                 aria-expanded={exploreOpen}
                 aria-haspopup="menu"

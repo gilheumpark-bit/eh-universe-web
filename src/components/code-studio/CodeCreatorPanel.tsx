@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   Play, Square, CheckCircle, XCircle, AlertTriangle,
   Loader2, ChevronDown, ChevronRight, FileCode2,
@@ -470,7 +470,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
 // PART 4 — Sub-components
 // ============================================================
 
-function ScoreBadge({ score, label }: { score: number; label: string }) {
+const ScoreBadge = React.memo(function ScoreBadge({ score, label }: { score: number; label: string }) {
   const color = score >= 77 ? "#3fb950" : score >= 50 ? "#d29922" : "#f85149";
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -480,6 +480,6 @@ function ScoreBadge({ score, label }: { score: number; label: string }) {
       </span>
     </div>
   );
-}
+});
 
 // IDENTITY_SEAL: PART-4 | role=서브 컴포넌트 | inputs=score, label | outputs=JSX.Element

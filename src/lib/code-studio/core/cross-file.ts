@@ -13,6 +13,20 @@ type ITextModel = import("monaco-editor").editor.ITextModel;
 type IPosition = import("monaco-editor").IPosition;
 type Uri = import("monaco-editor").Uri;
 
+/** Minimal shape for the TS/JS language service worker proxy returned by Monaco */
+interface TsWorkerClient {
+  getDefinitionAtPosition(uri: string, offset: number): Promise<{ fileName: string; textSpan: { start: number; length: number } }[] | undefined>;
+  getReferencesAtPosition(uri: string, offset: number): Promise<{ fileName: string; textSpan: { start: number; length: number } }[] | undefined>;
+  findRenameLocations(uri: string, offset: number, findInStrings: boolean, findInComments: boolean, providePrefix?: boolean): Promise<{ fileName: string; textSpan: { start: number; length: number } }[] | undefined>;
+  getQuickInfoAtPosition(uri: string, offset: number): Promise<{ displayParts?: { text: string }[]; documentation?: { text: string }[] } | undefined>;
+  getRenameInfo(uri: string, offset: number, options?: unknown): Promise<{
+    canRename: boolean;
+    displayName?: string;
+    localizedErrorMessage?: string;
+    triggerSpan?: { start: number; length: number };
+  }>;
+}
+
 // ── Event system for file navigation ──
 
 type OpenFileHandler = (filePath: string, line?: number, column?: number) => void;
@@ -97,19 +111,21 @@ function isNodeModulesPath(path: string): boolean {
 // PART 2 — TypeScript Worker Access & Definition Lookup
 // ============================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-async function getWorkerForUri(monaco: Monaco, uri: Uri): Promise<any> {
+async function getWorkerForUri(monaco: Monaco, uri: Uri): Promise<unknown> {
   const model = monaco.editor.getModel(uri);
   const isTS = model
     ? model.getLanguageId() === "typescript" || model.getLanguageId() === "typescriptreact"
     : true;
 
-  const ts = (monaco.languages as any).typescript;
+  // Monaco's TypeScript language service is not fully typed
+  const ts = (monaco.languages as Record<string, unknown>).typescript as {
+    getTypeScriptWorker: () => Promise<(uri: Uri) => Promise<unknown>>;
+    getJavaScriptWorker: () => Promise<(uri: Uri) => Promise<unknown>>;
+  };
   const getWorker = isTS ? ts.getTypeScriptWorker : ts.getJavaScriptWorker;
   const worker = await getWorker();
   return await worker(uri);
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 async function getDefinitionAtPosition(
   monaco: Monaco,
@@ -120,7 +136,7 @@ async function getDefinitionAtPosition(
   if (!model) return [];
 
   try {
-    const client = await getWorkerForUri(monaco, uri);
+    const client = (await getWorkerForUri(monaco, uri)) as TsWorkerClient;
     const offset = model.getOffsetAt(position);
     const definitions = await client.getDefinitionAtPosition(uri.toString(), offset);
     if (!definitions || definitions.length === 0) return [];
@@ -155,7 +171,7 @@ async function findReferences(
   if (!model) return [];
 
   try {
-    const client = await getWorkerForUri(monaco, uri);
+    const client = (await getWorkerForUri(monaco, uri)) as TsWorkerClient;
     const offset = model.getOffsetAt(position);
     const references = await client.getReferencesAtPosition(uri.toString(), offset);
     if (!references || references.length === 0) return [];
@@ -255,7 +271,7 @@ export async function findRenameLocations(
   if (oldName === newName) return null;
 
   try {
-    const client = await getWorkerForUri(monaco, uri);
+    const client = (await getWorkerForUri(monaco, uri)) as TsWorkerClient;
     const offset = model.getOffsetAt(position);
 
     const renameInfo = await client.getRenameInfo(uri.toString(), offset, {
@@ -404,7 +420,7 @@ export function registerCrossFileProviders(
   const typeDefProvider = monaco.languages.registerTypeDefinitionProvider(languages, {
     provideTypeDefinition: async (model, position) => {
       try {
-        const client = await getWorkerForUri(monaco, model.uri);
+        const client = (await getWorkerForUri(monaco, model.uri)) as TsWorkerClient;
         const offset = model.getOffsetAt(position);
         const definitions = await client.getDefinitionAtPosition(model.uri.toString(), offset);
         if (!definitions || definitions.length === 0) return null;
@@ -475,15 +491,15 @@ export function registerCrossFileProviders(
       return { edits: resourceEdits };
     },
 
-    resolveRenameLocation: async (model, position) => {
+    resolveRenameLocation: async (model, position, _token) => {
       try {
-        const client = await getWorkerForUri(monaco, model.uri);
+        const client = (await getWorkerForUri(monaco, model.uri)) as TsWorkerClient;
         const offset = model.getOffsetAt(position);
         const renameInfo = await client.getRenameInfo(model.uri.toString(), offset, {
           allowRenameOfImportPath: false,
         });
 
-        if (!renameInfo.canRename) {
+        if (!renameInfo.canRename || !renameInfo.triggerSpan) {
           return {
             range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
             text: "",
@@ -496,7 +512,7 @@ export function registerCrossFileProviders(
 
         return {
           range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
-          text: renameInfo.displayName,
+          text: renameInfo.displayName ?? "",
         };
       } catch {
         return {

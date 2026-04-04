@@ -223,11 +223,11 @@ function classifyBeat(
 // ============================================================
 
 const EMOTION_WORDS: Record<keyof Emotion, RegExp[]> = {
-  joy: [/웃|미소|행복|기쁨|좋아|사랑|즐거|smile|laugh|happy|love|joy/i],
-  sadness: [/눈물|울|슬픔|외로|그리움|이별|아프|cry|tear|sad|lonely|miss/i],
-  anger: [/분노|화|짜증|욕|으르렁|주먹|anger|fury|rage|furious|yell/i],
-  fear: [/공포|두려|떨|무서|겁|소름|fear|scared|terrif|horror|dread/i],
-  surprise: [/놀라|깜짝|갑자기|어|헉|surprise|shock|sudden|gasp/i],
+  joy: [/웃|미소|행복|기쁨|좋아|사랑|즐거|smile|laugh|happy|love|joy/gi],
+  sadness: [/눈물|울|슬픔|외로|그리움|이별|아프|cry|tear|sad|lonely|miss/gi],
+  anger: [/분노|화|짜증|욕|으르렁|주먹|anger|fury|rage|furious|yell/gi],
+  fear: [/공포|두려|떨|무서|겁|소름|fear|scared|terrif|horror|dread/gi],
+  surprise: [/놀라|깜짝|갑자기|어|헉|surprise|shock|sudden|gasp/gi],
 };
 
 function estimateEmotion(text: string): Emotion {
@@ -237,7 +237,8 @@ function estimateEmotion(text: string): Emotion {
   for (const [key, patterns] of Object.entries(EMOTION_WORDS)) {
     let count = 0;
     for (const p of patterns) {
-      const matches = text.match(new RegExp(p.source, 'gi'));
+      p.lastIndex = 0;
+      const matches = text.match(p);
       if (matches) count += matches.length;
     }
     (result as unknown as Record<string, number>)[key] = Math.min(1, count / (len / 200));

@@ -12,6 +12,18 @@ const ChatMarkdownBlock = dynamic(
   () => import('./ChatMarkdownBlock').then((m) => m.ChatMarkdownBlock),
   { ssr: false, loading: () => <span className="text-text-tertiary text-xs">…</span> },
 );
+/** Parsed analysis data extracted from JSON blocks in assistant messages */
+interface AnalysisData {
+  grade?: string;
+  metrics?: Record<string, number>;
+  critique?: string;
+  tension?: number;
+  pacing?: number;
+  immersion?: number;
+  eosScore?: number;
+  [key: string]: unknown;
+}
+
 interface ChatMessageProps {
   message: Message;
   language?: AppLanguage;
@@ -36,8 +48,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const report = message.meta?.engineReport ?? null;
 
   let mainContent = message.content;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let analysisData: any = null;
+  let analysisData: AnalysisData | null = null;
 
   if (!report && !isUser) {
     // 1) ```json ... ``` blocks (case-insensitive, with or without newlines)
@@ -45,9 +56,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     let blockMatch: RegExpExecArray | null;
     while ((blockMatch = jsonBlockRe.exec(mainContent)) !== null) {
       try {
-        const parsed = JSON.parse(blockMatch[1]);
-        if (parsed && typeof parsed === 'object') {
-          analysisData = analysisData || parsed;
+        const parsed: unknown = JSON.parse(blockMatch[1]);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          analysisData = analysisData || (parsed as AnalysisData);
         }
       } catch { /* not valid JSON, leave it */ }
     }
@@ -59,9 +70,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     let jsonMatch: RegExpExecArray | null;
     while ((jsonMatch = jsonObjRe.exec(mainContent)) !== null) {
       try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed && typeof parsed === 'object') {
-          analysisData = analysisData || parsed;
+        const parsed: unknown = JSON.parse(jsonMatch[0]);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          analysisData = analysisData || (parsed as AnalysisData);
         }
       } catch { /* not valid JSON */ }
     }

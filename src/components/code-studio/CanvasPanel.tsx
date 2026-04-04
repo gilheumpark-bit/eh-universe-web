@@ -323,27 +323,27 @@ export default function CanvasPanel({
     <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#12121a]">
       {/* Toolbar */}
       <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-white/10 bg-[#1e1e2e] p-1">
-        <button onClick={() => setZoom((z) => Math.min(z + 0.2, MAX_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomIn}>
+        <button onClick={() => setZoom((z) => Math.min(z + 0.2, MAX_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomIn} aria-label={t.canvasZoomIn}>
           <ZoomIn size={14} />
         </button>
         <span className="px-1 text-[10px] text-gray-500">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom((z) => Math.max(z - 0.2, MIN_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomOut}>
+        <button onClick={() => setZoom((z) => Math.max(z - 0.2, MIN_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomOut} aria-label={t.canvasZoomOut}>
           <ZoomOut size={14} />
         </button>
         <div className="mx-1 h-4 w-px bg-white/10" />
-        <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="p-1 text-gray-400 hover:text-white" title={t.canvasResetView}>
+        <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="p-1 text-gray-400 hover:text-white" title={t.canvasResetView} aria-label={t.canvasResetView}>
           <Maximize2 size={14} />
         </button>
-        <button onClick={addNode} className="p-1 text-gray-400 hover:text-white" title={t.canvasAddNode}>
+        <button onClick={addNode} className="p-1 text-gray-400 hover:text-white" title={t.canvasAddNode} aria-label={t.canvasAddNode}>
           <Plus size={14} />
         </button>
         {selectedId && (
-          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title={t.canvasDeleteNode}>
+          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title={t.canvasDeleteNode} aria-label={t.canvasDeleteNode}>
             <Trash2 size={14} />
           </button>
         )}
         {onExportImage && (
-          <button onClick={onExportImage} className="p-1 text-gray-400 hover:text-white" title={t.canvasExportImage}>
+          <button onClick={onExportImage} className="p-1 text-gray-400 hover:text-white" title={t.canvasExportImage} aria-label={t.canvasExportImage}>
             <Download size={14} />
           </button>
         )}

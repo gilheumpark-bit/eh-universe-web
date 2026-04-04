@@ -422,11 +422,16 @@ function escapeRegex(str: string): string {
 // ============================================================
 
 /**
- * TypeScript interface for AST node — minimal shape to avoid hard
+ * TypeScript module shape — minimal interface to avoid hard
  * dependency on the `typescript` package at bundle time.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TsLike = any;
+interface TsLikeModule {
+  createSourceFile(fileName: string, source: string, target: unknown, setParentNodes?: boolean): TsSourceFile;
+  forEachChild(node: TsNode, cb: (node: TsNode) => void): void;
+  SyntaxKind: Record<string, number>;
+  ScriptTarget?: Record<string, unknown>;
+  [key: string]: unknown;
+}
 
 interface TsNode {
   kind: number;
@@ -436,6 +441,12 @@ interface TsNode {
   getText?(): string;
   getStart?(): number;
   getFullStart?(): number;
+  name?: TsNode & { escapedText?: string };
+  body?: TsNode;
+  modifiers?: TsNode[];
+  clauses?: TsNode[];
+  // AST nodes have inherently dynamic shape; explicit properties above
+  // cover known accesses, index signature covers the rest.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
@@ -449,11 +460,11 @@ interface TsSourceFile extends TsNode {
  * Attempt to load the `typescript` module dynamically.
  * Returns null if unavailable (e.g. browser without bundled TS).
  */
-async function loadTs(): Promise<TsLike | null> {
+async function loadTs(): Promise<TsLikeModule | null> {
   try {
     // Dynamic import so the module is optional
     const ts = await import('typescript');
-    return ts.default ?? ts;
+    return (ts.default ?? ts) as unknown as TsLikeModule;
   } catch {
     return null;
   }
@@ -477,7 +488,7 @@ export async function findBugsAst(code: string, language: string): Promise<BugRe
   const tsModule = await loadTs();
   if (!tsModule) return [];
   // Non-null const so inner closures can capture without narrowing issues
-  const ts: TsLike = tsModule;
+  const ts: TsLikeModule = tsModule;
 
   const ext = /tsx|jsx/i.test(language) ? 'file.tsx' : 'file.ts';
   let sourceFile: TsSourceFile;
@@ -485,7 +496,7 @@ export async function findBugsAst(code: string, language: string): Promise<BugRe
     sourceFile = ts.createSourceFile(
       ext,
       code,
-      ts.ScriptTarget.Latest ?? 99,
+      ts.ScriptTarget?.Latest ?? 99,
       true,
     );
   } catch {

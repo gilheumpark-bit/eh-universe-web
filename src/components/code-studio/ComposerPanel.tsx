@@ -107,7 +107,7 @@ function ChangeCard({
   onAccept: () => void;
   onReject: () => void;
   onPreview?: () => void;
-  lang: string;
+  lang: "KO" | "EN" | string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const linesChanged = change.modified.split("\n").length - change.original.split("\n").length;

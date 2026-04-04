@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/lib/AuthContext";
-import { listReports, updateReportStatus } from "@/lib/network-firestore";
-import type { ReportRecord } from "@/lib/network-types";
+import { listReports, updateReportStatus, getNetworkUserRecord } from "@/lib/network-firestore";
+import type { ReportRecord, UserRecord } from "@/lib/network-types";
+import { isAdmin } from "@/lib/network-permissions";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-400 bg-yellow-900/30 border-yellow-600/30",
@@ -20,6 +21,8 @@ export default function ReportsAdminPage() {
   const [reports, setReports] = useState<ReportRecord[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "reviewed">("pending");
   const [loading, setLoading] = useState(true);
+  const [userRecord, setUserRecord] = useState<UserRecord | null>(null);
+  const [adminChecked, setAdminChecked] = useState(false);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -33,10 +36,22 @@ export default function ReportsAdminPage() {
     }
   }, [filter]);
 
+  // Fetch user record to verify admin role
+  useEffect(() => {
+    if (!user) { setAdminChecked(false); setUserRecord(null); return; }
+    let cancelled = false;
+    getNetworkUserRecord(user.uid).then(record => {
+      if (cancelled) return;
+      setUserRecord(record);
+      setAdminChecked(true);
+    }).catch(() => { if (!cancelled) setAdminChecked(true); });
+    return () => { cancelled = true; };
+  }, [user]);
+
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
   const handleStatusChange = async (reportId: string, status: "pending" | "reviewed" | "dismissed") => {
-    if (!user) return;
+    if (!user || !isAdmin(userRecord)) return;
     await updateReportStatus(reportId, status, user.uid);
     setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
   };
@@ -67,6 +82,23 @@ export default function ReportsAdminPage() {
               홈으로
             </Link>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Admin role gate — block non-admin users from managing reports
+  if (adminChecked && !isAdmin(userRecord)) {
+    return (
+      <main className="min-h-screen bg-bg-primary text-text-primary flex items-center justify-center">
+        <div className="text-center space-y-5">
+          <p className="text-text-tertiary">관리자 권한이 필요합니다.</p>
+          <Link
+            href="/network"
+            className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
+          >
+            &larr; Network로 돌아가기
+          </Link>
         </div>
       </main>
     );
