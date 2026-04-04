@@ -247,7 +247,7 @@
   align-items: stretch;
   gap: 14px;
   margin-bottom: 12px;
-  background: linear-gradient(180deg, rgba(24, 24, 34, 0.88), rgba(17, 17, 25, 0.88));
+  background: var(--color-bg-secondary);
   padding: 18px 20px 16px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
