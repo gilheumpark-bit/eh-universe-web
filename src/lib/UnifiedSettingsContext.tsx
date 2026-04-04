@@ -178,6 +178,12 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
     setThemeState(mode);
   }, []);
 
+  // ── 초기 로드 시 슬롯 → ai-providers 동기화 ──
+  useEffect(() => {
+    if (slots.length > 0) syncToLegacyKeys(slots);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- 초기 1회만
+  }, []);
+
   // ── Slot CRUD ──
   const persist = useCallback((next: APIKeySlot[]) => {
     setSlots(next);
@@ -248,11 +254,14 @@ export function useUnifiedSettings() {
   return ctx;
 }
 
-// ── Legacy Sync ──
-/** ai-providers.ts의 setApiKey/setActiveProvider를 직접 호출하여 키 동기화 */
+// ── Legacy Sync (동기) ──
+/** ai-providers.ts의 setApiKey/setActiveProvider를 동기 호출하여 키 즉시 반영 */
 function syncToLegacyKeys(slots: APIKeySlot[]): void {
-  // dynamic import 방지 — 동기 함수이므로 직접 import
-  import('@/lib/ai-providers').then(({ setApiKey, setActiveProvider, setActiveModel }) => {
+  if (typeof window === 'undefined') return;
+  try {
+    // 동기 import — 이미 같은 번들에 포함되어 있으므로 circular dependency 아님
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { setApiKey, setActiveProvider, setActiveModel } = require('@/lib/ai-providers');
     const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
     let firstActiveProvider: string | null = null;
     let firstActiveModel: string | null = null;
@@ -265,14 +274,28 @@ function syncToLegacyKeys(slots: APIKeySlot[]): void {
           firstActiveModel = activeSlot.model;
         }
       } else {
-        // 슬롯에서 제거된 프로바이더는 키도 제거
         setApiKey(pid, '');
       }
     }
-    // 첫 번째 활성 슬롯을 기본 프로바이더로 설정
     if (firstActiveProvider) {
       setActiveProvider(firstActiveProvider as typeof providers[number]);
       if (firstActiveModel) setActiveModel(firstActiveModel);
     }
-  }).catch(() => {});
+  } catch {
+    // 번들링 문제 시 폴백 — 비동기 import
+    import('@/lib/ai-providers').then(({ setApiKey, setActiveProvider, setActiveModel }) => {
+      const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
+      let first: string | null = null;
+      let firstModel: string | null = null;
+      for (const pid of providers) {
+        const s = slots.find((sl) => sl.provider === pid && sl.enabled && sl.apiKey.trim());
+        if (s) { setApiKey(pid, s.apiKey); if (!first) { first = pid; firstModel = s.model; } }
+        else { setApiKey(pid, ''); }
+      }
+      if (first) {
+        setActiveProvider(first as typeof providers[number]);
+        if (firstModel) setActiveModel(firstModel);
+      }
+    }).catch(() => {});
+  }
 }
