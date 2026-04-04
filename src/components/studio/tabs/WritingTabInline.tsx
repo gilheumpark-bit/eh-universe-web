@@ -195,7 +195,7 @@ export default function WritingTabInline(props: Props) {
                   : 'border-border text-text-secondary hover:border-accent-green/40'
               }`}
             >
-              {t('writingMode.canvas') || '3-Pass Canvas'}
+              {t('writingMode.threeStep')}
             </button>
             <button
               type="button"
@@ -209,7 +209,7 @@ export default function WritingTabInline(props: Props) {
                   : 'border-border text-text-secondary hover:border-accent-blue/40'
               }`}
             >
-              {t('writingMode.refine') || 'AUTO 30%'}
+              {t('writingMode.auto30')}
             </button>
             <button
               type="button"
@@ -223,7 +223,7 @@ export default function WritingTabInline(props: Props) {
                   : 'border-border text-text-secondary hover:border-accent-red/40'
               }`}
             >
-              {t('writingMode.advanced') || '정밀 집필'}
+              {t('writingMode.advanced')}
             </button>
           </div>
         </div>
