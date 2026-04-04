@@ -5,11 +5,12 @@
 // ============================================================
 
 import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Key, Trash2, Check, X, ToggleLeft, ToggleRight,
   Loader2, ChevronDown, Eye, EyeOff,
 } from "lucide-react";
-import { useUnifiedSettings, type APIKeySlot } from "@/lib/UnifiedSettingsContext";
+import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -31,11 +32,15 @@ interface Props { onClose: () => void; }
 // ============================================================
 
 export function APIKeySlotManager({ onClose }: Props) {
-  const { slots, addSlot, updateSlot, removeSlot, toggleSlot, enabledSlots } = useUnifiedSettings();
+  const { slots, addSlot, removeSlot, toggleSlot, enabledSlots } = useUnifiedSettings();
   const { lang } = useLang();
+  
+  // 브라우저 렌더링 환경 확인을 위한 변수
+  const isBrowser = typeof window !== "undefined";
+
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
-  // 모달 열릴 때 body 스크롤 차단
+  // 모달 열릴 때 body 스크롤 차단 및 포탈 마운트 처리
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -95,10 +100,12 @@ export function APIKeySlotManager({ onClose }: Props) {
   // 이미 등록된 프로바이더 ID
   const registeredProviders = new Set(slots.map(s => s.provider));
 
-  return (
+  if (!isBrowser) return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 flex items-start justify-center pt-[8vh] pb-[4vh] overflow-y-auto bg-black/70 backdrop-blur-md"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 'var(--z-modal, 99999)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
@@ -261,5 +268,6 @@ export function APIKeySlotManager({ onClose }: Props) {
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }
+
