@@ -98,7 +98,7 @@ export function APIKeySlotManager({ onClose }: Props) {
   return (
     <div
       className="fixed inset-0 flex items-start justify-center pt-[8vh] pb-[4vh] overflow-y-auto bg-black/70 backdrop-blur-md"
-      style={{ zIndex: 'var(--z-modal)' }}
+      style={{ zIndex: 9999 }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
