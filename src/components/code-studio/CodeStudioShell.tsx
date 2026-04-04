@@ -224,6 +224,7 @@ function CodeStudioShellInner() {
   // ── Panel State ──
   const [rightPanel, setRightPanel] = useState<RightPanel>("chat");
   const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const [rightPanelWidth, setRightPanelWidth] = useState(380);
   const [showTerminal, setShowTerminal] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
@@ -913,7 +914,11 @@ function CodeStudioShellInner() {
       <div className="flex flex-1 min-h-0">
         {/* Activity Bar */}
         <ActivityBar
-          rightPanel={rightPanel} onSetRightPanel={setRightPanel as (p: RightPanel | null) => void}
+          rightPanel={rightPanel} onSetRightPanel={(p) => {
+            // files 클릭 시 좌측 탐색기 토글
+            if (p === 'files') { setSidebarVisible(v => !v); return; }
+            (setRightPanel as (p: RightPanel | null) => void)(p);
+          }}
           bugReports={bugReports} showAdvancedPanels={showAdvancedPanels}
           onToggleAdvancedPanels={() => setShowAdvancedPanels(v => !v)}
           showSettings={showSettings} onToggleSettings={() => setShowSettings(s => !s)} lang={lang}
@@ -927,12 +932,14 @@ function CodeStudioShellInner() {
         />
 
         {/* File Explorer Sidebar */}
+        {sidebarVisible && (
         <div className="flex shrink-0 flex-col border-r border-white/8 bg-bg-secondary" style={{ width: sidebarWidth }}>
           {explorerPanel}
         </div>
+        )}
 
         {/* Sidebar Resize Handle */}
-        <div
+        {sidebarVisible && <div
           className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
           onMouseDown={(e) => {
             e.preventDefault();
@@ -943,7 +950,7 @@ function CodeStudioShellInner() {
             document.addEventListener("mousemove", onMove);
             document.addEventListener("mouseup", onUp);
           }}
-        />
+        />}
 
         {/* Center — Editor (extracted component) */}
         <CodeStudioEditor
