@@ -59,7 +59,7 @@ export function ModelSwitcher({ compact = false }: Props) {
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 z-50 min-w-[280px] max-h-[420px] overflow-y-auto rounded-lg border border-white/10 bg-[#0f1419] shadow-xl">
           <div className="px-3 py-2 border-b border-white/8">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30">모델 선택</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">모델 선택</span>
           </div>
           {PROVIDERS.map((provider) => {
             const hasKey = getApiKey(provider.id as ProviderId).trim().length > 0;

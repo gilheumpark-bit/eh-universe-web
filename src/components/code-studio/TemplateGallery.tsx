@@ -81,25 +81,25 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[680px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <h2 className="text-sm font-semibold text-white">새 프로젝트 만들기</h2>
-          <button onClick={onClose} aria-label="닫기" className="p-1 rounded hover:bg-white/10 transition-colors"><X size={14} className="text-white/40" /></button>
+          <button onClick={onClose} aria-label="닫기" className="p-1 rounded hover:bg-white/10 transition-colors"><X size={14} className="text-white/60" /></button>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 border-b border-white/8">
-          <Search size={14} className="text-white/30 shrink-0" />
+          <Search size={14} className="text-white/50 shrink-0" />
           <input ref={searchRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="템플릿 검색..."
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50" />
           <button onClick={() => setShowAiPrompt(!showAiPrompt)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-amber-900/30 text-amber-400" : "bg-white/5 text-white/40 hover:text-amber-400"}`}>
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-amber-900/30 text-amber-400" : "bg-white/5 text-white/60 hover:text-amber-400"}`}>
             <Sparkles size={12} /> AI로 생성
           </button>
         </div>
         {showAiPrompt && (
           <div className="px-4 py-3 border-b border-white/8 bg-amber-800/5">
-            <p className="text-xs text-white/40 mb-2">만들고 싶은 앱을 설명하세요</p>
+            <p className="text-xs text-white/60 mb-2">만들고 싶은 앱을 설명하세요</p>
             <textarea ref={aiInputRef} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
               placeholder="예: Todo 앱을 React + Tailwind로 만들어줘"
-              className="w-full h-20 p-2 rounded-lg bg-[#0a0e17] border border-white/10 text-sm text-white placeholder:text-white/30 outline-none resize-none" disabled={isGenerating} />
+              className="w-full h-20 p-2 rounded-lg bg-[#0a0e17] border border-white/10 text-sm text-white placeholder:text-white/50 outline-none resize-none" disabled={isGenerating} />
             <div className="flex items-center justify-between mt-2">
-              <span className="text-[10px] text-white/30">{isGenerating ? "생성 중..." : "Ctrl+Enter로 생성"}</span>
+              <span className="text-[10px] text-white/50">{isGenerating ? "생성 중..." : "Ctrl+Enter로 생성"}</span>
               <button onClick={handleAiGenerate} disabled={!aiPrompt.trim() || isGenerating}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-amber-800 text-stone-100 disabled:opacity-40 hover:bg-amber-700">
                 {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
@@ -111,12 +111,12 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
         <div className="flex items-center gap-1 px-4 py-2 border-b border-white/8 overflow-x-auto">
           {FRAMEWORK_FILTERS.map((fw) => (
             <button key={fw} onClick={() => setActiveFramework(fw)}
-              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${activeFramework === fw ? "bg-amber-900/22 text-amber-400 font-medium" : "text-white/40 hover:bg-white/5"}`}>{fw}</button>
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${activeFramework === fw ? "bg-amber-900/22 text-amber-400 font-medium" : "text-white/60 hover:bg-white/5"}`}>{fw}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-white/30">
+            <div className="flex flex-col items-center justify-center py-12 text-white/50">
               <Search size={24} className="mb-2 opacity-40" /><p className="text-xs">일치하는 템플릿이 없습니다.</p>
             </div>
           ) : (
@@ -125,17 +125,17 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
                 <button key={template.id} onClick={() => { onSelectTemplate(template); onClose(); }}
                   className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-amber-700 hover:bg-amber-800/5 transition-all text-left">
                   <div className="flex items-center gap-3 w-full">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/40 group-hover:text-amber-400 transition-colors">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/60 group-hover:text-amber-400 transition-colors">
                       {getFrameworkIcon(template.framework)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-white truncate">{template.name}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-white/40">{template.framework}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-white/60">{template.framework}</span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{template.description}</p>
+                  <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">{template.description}</p>
                   <span className="text-[10px] text-white/50">{template.files.length}개 파일</span>
                 </button>
               ))}

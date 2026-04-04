@@ -327,7 +327,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       value={slot.label}
                       onChange={(e) => updateSlot(slot.id, { label: e.target.value })}
                       placeholder={ko ? "예: 빠른 생성용" : "e.g. Fast generation"}
-                      className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder:text-gray-600"
+                      className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 placeholder:text-white/50"
                     />
                   </div>
 
@@ -343,7 +343,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                           value={slot.apiKey}
                           onChange={(e) => updateSlot(slot.id, { apiKey: e.target.value })}
                           placeholder={providerDef?.placeholder ?? ""}
-                          className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 pr-8 font-mono placeholder:text-gray-600"
+                          className="w-full bg-bg-tertiary border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 pr-8 font-mono placeholder:text-white/50"
                         />
                         <button
                           onClick={() => setShowKeys((p) => ({ ...p, [slot.id]: !p[slot.id] }))}

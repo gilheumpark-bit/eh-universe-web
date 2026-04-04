@@ -74,8 +74,8 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleSkip} />
       <div className="relative z-10 w-full max-w-md mx-4 bg-bg-primary border border-border rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <span className="text-[10px] text-white/40 font-mono">{step + 1} / {STEPS.length}</span>
-          <button onClick={handleSkip} aria-label="건너뛰기" className="text-white/40 hover:text-white transition-colors"><X size={16} /></button>
+          <span className="text-[10px] text-white/60 font-mono">{step + 1} / {STEPS.length}</span>
+          <button onClick={handleSkip} aria-label="건너뛰기" className="text-white/60 hover:text-white transition-colors"><X size={16} /></button>
         </div>
         <div className="flex justify-center gap-1.5 px-5 pb-3">
           {STEPS.map((_, i) => (
@@ -88,7 +88,7 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
           <p className="text-xs text-white/50 leading-relaxed whitespace-pre-line text-left w-full">{current.description}</p>
         </div>
         <div className="flex items-center justify-between px-6 py-4 border-t border-white/8">
-          <button onClick={handleSkip} className="text-xs text-white/40 hover:text-white transition-colors">건너뛰기</button>
+          <button onClick={handleSkip} className="text-xs text-white/60 hover:text-white transition-colors">건너뛰기</button>
           <div className="flex items-center gap-2">
             {step > 0 && (
               <button onClick={handlePrev} className="flex items-center gap-1 px-3 py-1.5 text-xs text-white/50 hover:text-white border border-white/10 rounded-lg">

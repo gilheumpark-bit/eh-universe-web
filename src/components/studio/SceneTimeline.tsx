@@ -433,7 +433,7 @@ export default function SceneTimeline({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button onClick={undo} disabled={undoStack.length === 0} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 transition-colors text-text-secondary" aria-label="되돌리기">
+          <button onClick={undo} disabled={undoStack.length === 0} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors text-text-secondary" aria-label="되돌리기">
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
           <button onClick={handleExport} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-text-secondary" aria-label="원고 내보내기">

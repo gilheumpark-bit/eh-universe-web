@@ -87,7 +87,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
           onClick={() => canPrev && onSwitch(currentIndex - 1)}
           disabled={!canPrev}
           aria-label="이전 버전"
-          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
+          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-40 transition-colors"
         >
           <ChevronLeft className="w-3 h-3" />
         </button>
@@ -98,7 +98,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
           onClick={() => canNext && onSwitch(currentIndex + 1)}
           disabled={!canNext}
           aria-label="다음 버전"
-          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-20 transition-colors"
+          className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary disabled:opacity-40 transition-colors"
         >
           <ChevronRight className="w-3 h-3" />
         </button>

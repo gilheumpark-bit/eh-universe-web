@@ -341,7 +341,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             <nav className="space-y-1.5" role="tablist" aria-label="Studio navigation">
               {studioMode === 'free' && (
                 <div className="px-3 pt-1 pb-1">
-                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary/50">{language === 'KO' ? '주요' : 'PRIMARY'}</span>
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary">{language === 'KO' ? '주요' : 'PRIMARY'}</span>
                 </div>
               )}
               {([
@@ -398,7 +398,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     {showDivider && (
                       <div className="px-3 pt-3 pb-1">
                         <div className="h-px bg-border/30 mb-2" />
-                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary/50">{language === 'KO' ? '고급' : 'ADVANCED'}</span>
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-text-tertiary">{language === 'KO' ? '고급' : 'ADVANCED'}</span>
                       </div>
                     )}
                     <button

@@ -77,15 +77,15 @@ export function SplitTerminal() {
       <div className="flex items-center bg-[#0f1419] border-b border-white/8 px-1 shrink-0">
         {panes.map((p) => (
           <button key={p.id} onClick={() => setActiveId(p.id)}
-            className={`flex items-center gap-1 px-2 py-1 text-[10px] border-r border-white/8 ${p.id === activeId ? "bg-[#0a0e17] text-white" : "text-white/40 hover:bg-white/5"}`}>
+            className={`flex items-center gap-1 px-2 py-1 text-[10px] border-r border-white/8 ${p.id === activeId ? "bg-[#0a0e17] text-white" : "text-white/60 hover:bg-white/5"}`}>
             <TerminalIcon size={10} />{p.name}
             {panes.length > 1 && (
               <span onClick={(e) => { e.stopPropagation(); closePane(p.id); }} role="button" aria-label="터미널 탭 닫기" className="hover:text-red-400 ml-1 cursor-pointer"><X size={8} /></span>
             )}
           </button>
         ))}
-        <button onClick={addPane} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded" title={t.termNew} aria-label={t.termNew}><Plus size={10} /></button>
-        <button onClick={toggleSplit} className="p-1 text-white/40 hover:text-white hover:bg-white/5 rounded ml-auto" title="분할" aria-label="분할 방향 전환">
+        <button onClick={addPane} className="p-1 text-white/60 hover:text-white hover:bg-white/5 rounded" title={t.termNew} aria-label={t.termNew}><Plus size={10} /></button>
+        <button onClick={toggleSplit} className="p-1 text-white/60 hover:text-white hover:bg-white/5 rounded ml-auto" title="분할" aria-label="분할 방향 전환">
           {splitDir === "horizontal" ? <Columns2 size={10} /> : <Rows2 size={10} />}
         </button>
       </div>
@@ -93,21 +93,21 @@ export function SplitTerminal() {
         {splitDir === "none" ? (
           panes.map((p) => (
             <div key={p.id} className={p.id === activeId ? "flex-1 bg-[#0a0e17] p-2 font-mono text-xs text-green-400" : "hidden"}>
-              <div className="text-white/30 text-[10px] mb-1">$ {p.name}</div>
+              <div className="text-white/50 text-[10px] mb-1">$ {p.name}</div>
               <div className="text-white/50">{t.splitReadyCmd}</div>
             </div>
           ))
         ) : (
           <>
             <div style={{ flex: `0 0 ${splitRatio}%` }} className="overflow-hidden bg-[#0a0e17] p-2 font-mono text-xs text-green-400">
-              <div className="text-white/30 text-[10px] mb-1">$ {panes[0]?.name}</div>
+              <div className="text-white/50 text-[10px] mb-1">$ {panes[0]?.name}</div>
               <div className="text-white/50">{t.splitReady}</div>
             </div>
             <div className={`${splitDir === "horizontal" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize"} bg-white/10 hover:bg-amber-800/50 transition-colors`}
               onMouseDown={handleResize} />
             {panes.length > 1 && (
               <div className="flex-1 overflow-hidden bg-[#0a0e17] p-2 font-mono text-xs text-green-400">
-                <div className="text-white/30 text-[10px] mb-1">$ {panes[1]?.name}</div>
+                <div className="text-white/50 text-[10px] mb-1">$ {panes[1]?.name}</div>
                 <div className="text-white/50">{t.splitReady}</div>
               </div>
             )}

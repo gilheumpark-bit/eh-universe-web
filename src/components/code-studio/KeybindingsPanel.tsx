@@ -50,11 +50,11 @@ export function KeybindingsPanel({ onClose }: Props) {
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[500px] max-h-[500px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <span className="flex items-center gap-2 text-sm font-semibold text-white"><Keyboard size={14} /> 키보드 단축키</span>
-          <button onClick={onClose} aria-label="닫기" className="text-white/40 hover:text-white"><X size={14} /></button>
+          <button onClick={onClose} aria-label="닫기" className="text-white/60 hover:text-white"><X size={14} /></button>
         </div>
         <div className="px-4 py-2 border-b border-white/8">
           <div className="flex items-center gap-2 bg-white/5 rounded px-2 py-1">
-            <Search size={12} className="text-white/30" />
+            <Search size={12} className="text-white/50" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="단축키 검색..."
               className="flex-1 bg-transparent text-xs text-white outline-none" autoFocus />
           </div>
@@ -62,7 +62,7 @@ export function KeybindingsPanel({ onClose }: Props) {
         <div className="overflow-y-auto max-h-[380px] p-2">
           {categories.map((cat) => (
             <div key={cat} className="mb-3">
-              <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider px-2 mb-1">{cat}</p>
+              <p className="text-[10px] font-semibold text-white/60 uppercase tracking-wider px-2 mb-1">{cat}</p>
               {filtered.filter((k) => k.category === cat).map((k) => (
                 <div key={k.id} className="flex items-center justify-between px-2 py-1 text-xs text-white/70 hover:bg-white/5 rounded">
                   <span>{k.label}</span>

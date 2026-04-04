@@ -689,7 +689,7 @@ export function TerminalPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-xs font-mono text-green-400 outline-none placeholder:text-white/40"
+          className="flex-1 bg-transparent text-xs font-mono text-green-400 outline-none placeholder:text-white/60"
           placeholder={
             wcBooting
               ? L4(lang, { ko: "부팅 중\u2026", en: "Booting\u2026" })

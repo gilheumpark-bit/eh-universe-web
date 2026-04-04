@@ -67,7 +67,7 @@ function FileSelector({
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         placeholder={L4(lang, { ko: "파일 필터링...", en: "Filter files..." })}
-        className="w-full border-b border-white/5 bg-transparent px-3 py-1.5 text-xs text-white outline-none placeholder:text-gray-600"
+        className="w-full border-b border-white/5 bg-transparent px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/50"
       />
       <div className="max-h-40 overflow-y-auto">
         {filtered.map((f) => (
@@ -219,7 +219,7 @@ export default function ComposerPanel({
           onChange={(e) => setInstruction(e.target.value)}
           rows={3}
           placeholder={L4(lang, { ko: "이 파일들에 적용할 변경 사항을 설명해주세요...", en: "Describe the changes you want across these files..." })}
-          className="w-full resize-none rounded border border-white/10 bg-bg-primary px-3 py-2 text-xs text-white outline-none focus:border-blue-500/50 placeholder:text-gray-600"
+          className="w-full resize-none rounded border border-white/10 bg-bg-primary px-3 py-2 text-xs text-white outline-none focus:border-blue-500/50 placeholder:text-white/50"
         />
         <div className="mt-2 flex items-center justify-between">
           <span className="text-[10px] text-gray-600">{selectedIds.size}{L4(lang, { ko: "개 파일 선택됨", en: " file(s) selected" })}</span>

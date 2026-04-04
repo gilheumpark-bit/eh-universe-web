@@ -29,7 +29,7 @@ function formatSize(bytes: number): string {
 function formatDuration(ms: number): string { return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`; }
 
 function statusColor(status: number): string {
-  if (status === 0) return "text-white/40";
+  if (status === 0) return "text-white/60";
   if (status < 300) return "text-green-400";
   if (status < 400) return "text-amber-400";
   return "text-red-400";
@@ -85,41 +85,41 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
   return (
     <div className="flex flex-col h-full border-t border-white/8 bg-[#0f1419]">
       <div className="flex items-center gap-1.5 px-2 py-1 border-b border-white/8 text-xs">
-        <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-white/10 rounded text-white/40"><X size={12} /></button>
-        <button onClick={() => { setEntries([]); setSelectedId(null); }} aria-label="기록 지우기" className="p-1 hover:bg-white/10 rounded text-white/40"><Trash2 size={12} /></button>
+        <button onClick={onClose} aria-label="닫기" className="p-1 hover:bg-white/10 rounded text-white/60"><X size={12} /></button>
+        <button onClick={() => { setEntries([]); setSelectedId(null); }} aria-label="기록 지우기" className="p-1 hover:bg-white/10 rounded text-white/60"><Trash2 size={12} /></button>
         <div className="flex-1" />
         <div className="flex items-center gap-1 bg-white/5 border border-white/8 rounded px-1.5 py-0.5">
-          <Search size={10} className="text-white/30" />
+          <Search size={10} className="text-white/50" />
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter..."
             className="bg-transparent border-none outline-none text-[10px] text-white w-28" />
         </div>
         <div className="flex items-center gap-0.5">
-          <Filter size={10} className="text-white/30 mr-0.5" />
+          <Filter size={10} className="text-white/50 mr-0.5" />
           {FILTER_OPTIONS.map((opt) => (
             <button key={opt.value} onClick={() => setFilterType(opt.value)}
-              className={`px-1.5 py-0.5 rounded text-[10px] ${filterType === opt.value ? "bg-amber-900/30 text-amber-400" : "hover:bg-white/5 text-white/40"}`}>{opt.label}</button>
+              className={`px-1.5 py-0.5 rounded text-[10px] ${filterType === opt.value ? "bg-amber-900/30 text-amber-400" : "hover:bg-white/5 text-white/60"}`}>{opt.label}</button>
           ))}
         </div>
       </div>
       <div className="flex-1 flex overflow-hidden">
         <div className={`flex-1 flex flex-col overflow-hidden ${selectedEntry ? "w-1/2" : "w-full"}`}>
-          <div className="flex items-center border-b border-white/8 text-[10px] text-white/40 font-semibold select-none">
+          <div className="flex items-center border-b border-white/8 text-[10px] text-white/60 font-semibold select-none">
             <div className="w-14 px-1 py-1">Status</div><div className="w-14 px-1 py-1">Method</div>
             <div className="flex-1 px-1 py-1">URL</div><div className="w-12 px-1 py-1">Type</div>
             <div className="w-16 px-1 py-1 text-right">Size</div><div className="w-16 px-1 py-1 text-right">Time</div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {filteredEntries.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-white/30 text-xs">No requests</div>
+              <div className="flex items-center justify-center h-full text-white/50 text-xs">No requests</div>
             ) : filteredEntries.map((entry) => (
               <div key={entry.id} onClick={() => setSelectedId(entry.id === selectedId ? null : entry.id)}
                 className={`flex items-center text-[10px] cursor-pointer border-b border-white/5 hover:bg-white/5 ${entry.id === selectedId ? "bg-white/5" : ""}`}>
                 <div className={`w-14 px-1 py-0.5 font-mono ${statusColor(entry.status)}`}>{entry.status || "--"}</div>
-                <div className="w-14 px-1 py-0.5 font-mono text-white/40">{entry.method}</div>
+                <div className="w-14 px-1 py-0.5 font-mono text-white/60">{entry.method}</div>
                 <div className="flex-1 px-1 py-0.5 truncate font-mono text-white/70" title={entry.url}>{truncateUrl(entry.url)}</div>
-                <div className="w-12 px-1 py-0.5 text-white/40">{entry.type}</div>
-                <div className="w-16 px-1 py-0.5 text-right font-mono text-white/40">{formatSize(entry.size)}</div>
-                <div className="w-16 px-1 py-0.5 text-right font-mono text-white/40">{formatDuration(entry.duration)}</div>
+                <div className="w-12 px-1 py-0.5 text-white/60">{entry.type}</div>
+                <div className="w-16 px-1 py-0.5 text-right font-mono text-white/60">{formatSize(entry.size)}</div>
+                <div className="w-16 px-1 py-0.5 text-right font-mono text-white/60">{formatDuration(entry.duration)}</div>
               </div>
             ))}
           </div>
@@ -143,7 +143,7 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
           </div>
         )}
       </div>
-      <div className="flex items-center gap-4 px-3 py-1 border-t border-white/8 text-[10px] text-white/30">
+      <div className="flex items-center gap-4 px-3 py-1 border-t border-white/8 text-[10px] text-white/50">
         <span>{entries.length} request{entries.length !== 1 ? "s" : ""}</span>
         <span>{formatSize(totalSize)} transferred</span>
       </div>
@@ -164,7 +164,7 @@ function DetailSection({ title, children }: { title: string; children: React.Rea
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
-  return <div className="flex gap-2"><span className="text-white/30 flex-shrink-0 min-w-[80px]">{label}:</span><span className="break-all font-mono text-white/60">{value}</span></div>;
+  return <div className="flex gap-2"><span className="text-white/50 flex-shrink-0 min-w-[80px]">{label}:</span><span className="break-all font-mono text-white/60">{value}</span></div>;
 }
 
 // IDENTITY_SEAL: PART-3 | role=Component | inputs=Props | outputs=JSX

@@ -115,14 +115,14 @@ export function PackagePanel({ files, onFilesChange }: Props) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="flex items-center gap-2 font-semibold text-white">
           <Package size={14} className="text-red-400" /> Packages
-          {installedCount > 0 && <span className="text-[10px] text-white/40">({installedCount})</span>}
+          {installedCount > 0 && <span className="text-[10px] text-white/60">({installedCount})</span>}
         </span>
-        <button onClick={() => setShowTerminal((v) => !v)} className="p-1 hover:bg-white/10 rounded text-white/40"><Terminal size={12} /></button>
+        <button onClick={() => setShowTerminal((v) => !v)} className="p-1 hover:bg-white/10 rounded text-white/60"><Terminal size={12} /></button>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
         <div className="flex items-center gap-1">
           <div className="flex-1 relative">
-            <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50" />
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="npm 패키지 검색..."
               className="w-full bg-white/5 pl-6 pr-2 py-1.5 rounded text-xs text-white outline-none border border-white/8 focus:border-amber-700" />
@@ -146,7 +146,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                         <span className="font-semibold truncate">{pkg.name}</span>
                         <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400 flex-shrink-0">v{pkg.version}</span>
                       </div>
-                      {pkg.description && <p className="text-[10px] text-white/40 truncate mt-0.5">{pkg.description}</p>}
+                      {pkg.description && <p className="text-[10px] text-white/60 truncate mt-0.5">{pkg.description}</p>}
                     </div>
                     <button onClick={() => handleInstall(pkg.name)} disabled={installing !== null}
                       className="p-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 disabled:opacity-30 flex-shrink-0">
@@ -167,7 +167,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
               <div className="ml-2 mt-1 space-y-0.5">
                 {Object.entries(installed.deps).map(([name, version]) => (
                   <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
-                    <Package size={10} className="text-white/30 flex-shrink-0" />
+                    <Package size={10} className="text-white/50 flex-shrink-0" />
                     <span className="flex-1 truncate">{name}</span>
                     <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
                     <button onClick={() => handleUninstall(name)} disabled={installing !== null}
@@ -178,7 +178,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                 ))}
                 {Object.entries(installed.devDeps).map(([name, version]) => (
                   <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
-                    <Package size={10} className="text-white/30 flex-shrink-0" />
+                    <Package size={10} className="text-white/50 flex-shrink-0" />
                     <span className="flex-1 truncate">{name}</span>
                     <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
                     <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">dev</span>
@@ -193,18 +193,18 @@ export function PackagePanel({ files, onFilesChange }: Props) {
           </div>
         )}
         {installedCount === 0 && searchResults.length === 0 && (
-          <p className="text-center text-white/30 py-4"><Package size={14} className="inline opacity-30" /> package.json을 찾을 수 없습니다</p>
+          <p className="text-center text-white/50 py-4"><Package size={14} className="inline opacity-30" /> package.json을 찾을 수 없습니다</p>
         )}
       </div>
       {showTerminal && (
         <div className="border-t border-white/8">
           <div className="flex items-center justify-between px-2 py-1 bg-white/3">
-            <span className="text-[10px] text-white/40 flex items-center gap-1"><Terminal size={10} /> {t.pkgOutput}</span>
-            <button onClick={() => setTerminalOutput([])} className="text-[9px] text-white/30 hover:text-white">{t.pkgClear}</button>
+            <span className="text-[10px] text-white/60 flex items-center gap-1"><Terminal size={10} /> {t.pkgOutput}</span>
+            <button onClick={() => setTerminalOutput([])} className="text-[9px] text-white/50 hover:text-white">{t.pkgClear}</button>
           </div>
           <div ref={terminalRef} className="h-32 overflow-y-auto p-2 bg-[#0a0e17] font-mono text-[10px] text-green-400">
             {terminalOutput.map((line, i) => <div key={i} className="whitespace-pre-wrap leading-4">{line}</div>)}
-            {terminalOutput.length === 0 && <span className="text-white/30">패키지 설치 출력이 여기에 표시됩니다...</span>}
+            {terminalOutput.length === 0 && <span className="text-white/50">패키지 설치 출력이 여기에 표시됩니다...</span>}
           </div>
         </div>
       )}

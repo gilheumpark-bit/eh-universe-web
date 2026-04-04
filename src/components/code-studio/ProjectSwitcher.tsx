@@ -88,9 +88,9 @@ export function ProjectSwitcher({ currentProjectId, onProjectSwitch, onProjectCr
         <div className="absolute top-full left-0 mt-1 w-80 rounded-lg shadow-xl z-50 bg-[#0a0e17] border border-white/10 overflow-hidden">
           <div className="p-2 border-b border-white/8">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" />
               <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="프로젝트 검색..."
-                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-md bg-white/5 text-white border border-white/8 placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-amber-700/50" />
+                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-md bg-white/5 text-white border border-white/8 placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-amber-700/50" />
             </div>
           </div>
           <div className="flex items-center gap-1 p-2 border-b border-white/8">
@@ -103,7 +103,7 @@ export function ProjectSwitcher({ currentProjectId, onProjectSwitch, onProjectCr
                 className="w-full px-2 py-1.5 text-xs rounded-md bg-[#0a0e17] text-white border border-white/10 focus:outline-none focus:ring-1 focus:ring-amber-700/50 mb-2"
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()} />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowCreateForm(false)} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-white/40">취소</button>
+                <button onClick={() => setShowCreateForm(false)} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-white/60">취소</button>
                 <button onClick={handleCreate} disabled={!newName.trim()} className="px-3 py-1 text-xs rounded bg-amber-800 text-stone-100 hover:bg-amber-700 disabled:opacity-50">만들기</button>
               </div>
             </div>
@@ -111,7 +111,7 @@ export function ProjectSwitcher({ currentProjectId, onProjectSwitch, onProjectCr
           <div className="max-h-64 overflow-y-auto">
             {!searchQuery && filtered.length > 0 && (
               <div className="px-2 pt-2 pb-1">
-                <span className="text-[10px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> 최근</span>
+                <span className="text-[10px] uppercase tracking-wider text-white/50 font-medium flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> 최근</span>
               </div>
             )}
             {filtered.map((project) => (
@@ -120,16 +120,16 @@ export function ProjectSwitcher({ currentProjectId, onProjectSwitch, onProjectCr
                   <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border-b border-white/8">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
                     <span className="text-xs text-red-400 flex-1">삭제하시겠습니까?</span>
-                    <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-0.5 text-xs rounded hover:bg-white/5 text-white/40">아니오</button>
+                    <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-0.5 text-xs rounded hover:bg-white/5 text-white/60">아니오</button>
                     <button onClick={() => handleDelete(project.id)} className="px-2 py-0.5 text-xs rounded bg-red-500 text-white hover:bg-red-600">예</button>
                   </div>
                 ) : (
                   <button onClick={() => handleSwitch(project.id)}
                     className={`w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-white/5 transition-colors ${project.id === currentProjectId ? "bg-white/5 border-l-2 border-l-amber-700" : ""}`}>
-                    <FolderOpen className={`w-4 h-4 mt-0.5 shrink-0 ${project.id === currentProjectId ? "text-amber-400" : "text-white/30"}`} />
+                    <FolderOpen className={`w-4 h-4 mt-0.5 shrink-0 ${project.id === currentProjectId ? "text-amber-400" : "text-white/50"}`} />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-white truncate">{project.name}</div>
-                      <div className="flex items-center gap-2 text-[10px] text-white/30">
+                      <div className="flex items-center gap-2 text-[10px] text-white/50">
                         <span>{project.fileCount} files</span><span>{formatDate(project.updatedAt)}</span>
                       </div>
                     </div>
@@ -145,7 +145,7 @@ export function ProjectSwitcher({ currentProjectId, onProjectSwitch, onProjectCr
               </div>
             ))}
             {filtered.length === 0 && searchQuery && (
-              <div className="px-3 py-4 text-xs text-center text-white/30">일치하는 프로젝트 없음</div>
+              <div className="px-3 py-4 text-xs text-center text-white/50">일치하는 프로젝트 없음</div>
             )}
           </div>
         </div>

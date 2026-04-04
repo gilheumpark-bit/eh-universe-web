@@ -133,7 +133,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t.symSearchPlaceholder}
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-600"
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50"
           />
           <button onClick={onClose} className="text-gray-500 hover:text-white">
             <X size={14} />

@@ -97,9 +97,9 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         <Sparkles size={14} className="text-amber-400 flex-shrink-0" />
         <input ref={inputRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown}
           placeholder="수정 지시 (Enter: 생성, Esc: 취소)"
-          className="flex-1 bg-white/5 text-xs text-white px-2 py-1.5 rounded outline-none placeholder:text-white/30" disabled={loading} />
+          className="flex-1 bg-white/5 text-xs text-white px-2 py-1.5 rounded outline-none placeholder:text-white/50" disabled={loading} />
         {history.length > 0 && (
-          <button onClick={() => setShowHistory((v) => !v)} className="text-white/40 hover:text-amber-400 transition-colors"><History size={12} /></button>
+          <button onClick={() => setShowHistory((v) => !v)} className="text-white/60 hover:text-amber-400 transition-colors"><History size={12} /></button>
         )}
         {loading && <Loader2 size={14} className="animate-spin text-amber-400" />}
       </div>
@@ -107,11 +107,11 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         <div className="mb-2 bg-white/5 rounded p-1 max-h-24 overflow-y-auto">
           {history.map((h, i) => (
             <button key={i} onClick={() => { setPrompt(h); setShowHistory(false); }}
-              className="block w-full text-left text-[10px] px-2 py-1 hover:bg-white/10 rounded truncate text-white/40">{h}</button>
+              className="block w-full text-left text-[10px] px-2 py-1 hover:bg-white/10 rounded truncate text-white/60">{h}</button>
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between text-[9px] text-white/30 mb-1 px-1">
+      <div className="flex items-center justify-between text-[9px] text-white/50 mb-1 px-1">
         <span>선택{isMultiLine ? ` (${selectionLineCount}줄)` : ""}: <span className="text-red-400 line-through">{selectedText.slice(0, 80)}{selectedText.length > 80 ? "..." : ""}</span></span>
         <span className="flex items-center gap-2">
           <span>~{contextSize} tokens</span>
@@ -124,7 +124,7 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         <div className="mb-2">
           <pre ref={previewRef} className="text-[10px] font-mono bg-[#0a0e17] p-2 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">
             {diffLines.map((line, i) => (
-              <div key={i} className={line.type === "add" ? "text-green-400 bg-green-500/10" : line.type === "remove" ? "text-red-400 bg-red-500/10 line-through" : "text-white/40"}>
+              <div key={i} className={line.type === "add" ? "text-green-400 bg-green-500/10" : line.type === "remove" ? "text-red-400 bg-red-500/10 line-through" : "text-white/60"}>
                 {line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  "}{line.text}
               </div>
             ))}
@@ -138,7 +138,7 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
       )}
       {preview && !loading && (
         <div className="flex items-center justify-end gap-2">
-          <button onClick={onCancel} className="flex items-center gap-1 px-2 py-1 text-[10px] text-white/40 hover:text-red-400"><X size={10} /> 거절</button>
+          <button onClick={onCancel} className="flex items-center gap-1 px-2 py-1 text-[10px] text-white/60 hover:text-red-400"><X size={10} /> 거절</button>
           <button onClick={() => onApply(preview)} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
             <Check size={10} /> 수락 (Enter)
           </button>

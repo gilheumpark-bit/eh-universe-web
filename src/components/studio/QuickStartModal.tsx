@@ -107,7 +107,7 @@ export default function QuickStartModal({
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder={t('quickStartModal.placeholder')}
-                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none transition-all placeholder:text-text-tertiary/50 focus:border-accent-purple"
+                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none transition-all placeholder:text-text-tertiary focus:border-accent-purple"
                 disabled={isGenerating}
                 maxLength={240}
               />

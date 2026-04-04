@@ -294,7 +294,7 @@ function DialogueBox({
           ) : <div />}
 
           <div className="flex items-center gap-2">
-            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-20 transition-colors" aria-label="이전">
+            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label="이전">
               <ChevronLeft className="h-4 w-4 text-text-secondary" />
             </button>
             <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label="다음">
@@ -560,7 +560,7 @@ export default function ScenePlayer({
 
       {/* 재생 컨트롤 (하단 중앙) */}
       <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
-        <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-bg-primary/30 backdrop-blur-sm hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="이전 비트">
+        <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-bg-primary/30 backdrop-blur-sm hover:bg-white/10 disabled:opacity-40 transition-colors" aria-label="이전 비트">
           <SkipBack className="h-4 w-4 text-text-secondary" />
         </button>
         <button onClick={togglePlay} className="p-3 rounded-full bg-accent-purple/30 backdrop-blur-sm hover:bg-accent-purple/50 transition-colors" aria-label={state.isPlaying && !state.isPaused ? "일시정지" : "재생"}>
@@ -606,7 +606,7 @@ export default function ScenePlayer({
       {/* 라디오 모드 하단: 간단한 다음 버튼 */}
       {isRadio && (
         <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4">
-          <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="이전">
+          <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-40 transition-colors" aria-label="이전">
             <ChevronLeft className="h-5 w-5 text-text-secondary" />
           </button>
           <button onClick={goNext} className="px-6 py-2 bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple rounded-full text-sm font-mono transition-colors">

@@ -200,7 +200,7 @@ export default function CollabPanel({ onClose }: Props) {
       <div className="flex flex-col h-full bg-[#0a0e17] text-white text-[13px]">
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/8 bg-[#0f1419] text-[12px] font-semibold uppercase tracking-wider">
           <span className="flex items-center gap-1.5"><Users size={14} /> 협업</span>
-          {onClose && <button onClick={onClose} className="text-white/40 hover:text-white">&times;</button>}
+          {onClose && <button onClick={onClose} className="text-white/60 hover:text-white">&times;</button>}
         </div>
         <div className="p-3 border-b border-white/8">
           <label className="text-[11px] text-white/50 mb-1 block">사용자 이름</label>
@@ -223,7 +223,7 @@ export default function CollabPanel({ onClose }: Props) {
             </button>
           </div>
         </div>
-        <div className="p-4 text-center text-[11px] text-white/30">실시간 코드 협업을 위한 공유 세션을 만드세요</div>
+        <div className="p-4 text-center text-[11px] text-white/50">실시간 코드 협업을 위한 공유 세션을 만드세요</div>
       </div>
     );
   }
@@ -234,7 +234,7 @@ export default function CollabPanel({ onClose }: Props) {
     <div className="flex flex-col h-full bg-[#0a0e17] text-white text-[13px]">
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8 bg-[#0f1419] text-[12px] font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-1.5"><Users size={14} /> 협업 <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /></span>
-        {onClose && <button onClick={onClose} className="text-white/40 hover:text-white">&times;</button>}
+        {onClose && <button onClick={onClose} className="text-white/60 hover:text-white">&times;</button>}
       </div>
 
       <div className="p-3 border-b border-white/8">
@@ -250,7 +250,7 @@ export default function CollabPanel({ onClose }: Props) {
             <Copy size={12} />{copied ? " 복사됨" : ""}
           </button>
         </div>
-        <div className="text-[10px] text-white/30 mt-1 flex items-center gap-1">
+        <div className="text-[10px] text-white/50 mt-1 flex items-center gap-1">
           <Link size={10} /> {typeof window !== "undefined" ? window.location.origin : ""}/code-studio?room={roomId}
         </div>
         <p className="text-[10px] text-amber-200/70 mt-2 leading-snug">
@@ -266,8 +266,8 @@ export default function CollabPanel({ onClose }: Props) {
         {showUsers && allUsers.map((user) => (
           <div key={user.id} className={`flex items-center gap-2 px-1.5 py-1 rounded ${user.id === localUser.id ? "bg-white/5" : ""}`}>
             <Circle size={10} fill={user.color} stroke={user.color} />
-            <span className="flex-1 text-xs">{user.name}{user.id === localUser.id && <span className="text-white/40 text-[10px] ml-1">(나)</span>}</span>
-            {user.cursor && <span className="text-[10px] text-white/30 font-mono">{user.cursor.file.split("/").pop()}:{user.cursor.line}</span>}
+            <span className="flex-1 text-xs">{user.name}{user.id === localUser.id && <span className="text-white/60 text-[10px] ml-1">(나)</span>}</span>
+            {user.cursor && <span className="text-[10px] text-white/50 font-mono">{user.cursor.file.split("/").pop()}:{user.cursor.line}</span>}
           </div>
         ))}
       </div>
@@ -280,11 +280,11 @@ export default function CollabPanel({ onClose }: Props) {
         {showChat && (
           <>
             <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1 min-h-[100px]">
-              {chatMessages.length === 0 && <div className="text-center text-[11px] text-white/30 py-4">메시지가 없습니다</div>}
+              {chatMessages.length === 0 && <div className="text-center text-[11px] text-white/50 py-4">메시지가 없습니다</div>}
               {chatMessages.map((msg) => (
                 <div key={msg.id} className="text-xs">
                   <span style={{ color: msg.color }} className="font-semibold">{msg.userName}</span>
-                  <span className="text-white/30 text-[10px] ml-1.5">{new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-white/50 text-[10px] ml-1.5">{new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
                   <div className="text-white/80 mt-0.5 pl-0.5">{msg.message}</div>
                 </div>
               ))}

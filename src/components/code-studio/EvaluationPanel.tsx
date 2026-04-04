@@ -97,14 +97,14 @@ export function EvaluationPanel({ files, onClose }: Props) {
         <div className="flex-1 overflow-y-auto p-4">
           {!result && !loading && (
             <div className="text-center py-8">
-              <Trophy size={48} className="mx-auto mb-4 opacity-30 text-white/30" />
+              <Trophy size={48} className="mx-auto mb-4 opacity-30 text-white/50" />
               <p className="text-sm text-white/50 mb-4">프로젝트 코드 품질, 시장 적합도, 유지보수성을 평가합니다</p>
               <button onClick={handleRun} className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-800 text-stone-100 hover:bg-amber-700">평가 시작</button>
             </div>
           )}
           {loading && (
             <div className="flex flex-col items-center py-12 gap-3">
-              <Loader2 size={32} className="animate-spin text-white/30" />
+              <Loader2 size={32} className="animate-spin text-white/50" />
               <p className="text-sm text-white/50">분석 중...</p>
             </div>
           )}

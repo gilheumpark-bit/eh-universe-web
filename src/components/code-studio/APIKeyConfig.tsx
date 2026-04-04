@@ -166,7 +166,7 @@ export function APIKeyConfig({ onClose }: Props) {
         {/* Slot List */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
           {slots.length === 0 && !showForm && (
-            <div className="text-center py-10 text-white/40 text-sm">등록된 API 키가 없습니다.</div>
+            <div className="text-center py-10 text-white/60 text-sm">등록된 API 키가 없습니다.</div>
           )}
           {slots.map((slot) => {
             const p = PROVIDERS.find((pr) => pr.id === slot.provider);
@@ -180,7 +180,7 @@ export function APIKeyConfig({ onClose }: Props) {
                       {ROLE_ICONS[slot.role]}{ROLE_LABELS[slot.role]}
                     </span>
                   </div>
-                  <div className="text-[11px] text-white/40 truncate">{p?.name} / {slot.model}</div>
+                  <div className="text-[11px] text-white/60 truncate">{p?.name} / {slot.model}</div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => handleToggle(slot.id)} className="p-1 rounded hover:bg-white/10 text-white/50">
@@ -210,7 +210,7 @@ export function APIKeyConfig({ onClose }: Props) {
               <div>
                 <label className="text-[11px] text-white/50 mb-1 block">API 키</label>
                 <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-                  <Key size={14} className="text-white/30 shrink-0" />
+                  <Key size={14} className="text-white/50 shrink-0" />
                   <input type="password" value={formKey} onChange={(e) => { setFormKey(e.target.value); setTestResult(null); }}
                     placeholder={provider.placeholder} className="flex-1 bg-transparent text-sm text-white outline-none" />
                   <button onClick={handleTest} disabled={testing || !formKey.trim()}
@@ -265,7 +265,7 @@ export function APIKeyConfig({ onClose }: Props) {
 
         {/* Footer */}
         <div className="border-t border-white/8 px-5 py-3 flex items-center justify-between">
-          <div className="text-[11px] text-white/40">등록: {slots.length}개 | 활성: {enabledSlots.length}개</div>
+          <div className="text-[11px] text-white/60">등록: {slots.length}개 | 활성: {enabledSlots.length}개</div>
           {!showForm && (
             <button onClick={() => { resetForm(); setShowForm(true); }}
               className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-amber-900/22 text-amber-400 hover:bg-amber-900/30 transition-colors">

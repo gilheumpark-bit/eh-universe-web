@@ -186,7 +186,7 @@ function ChatArea({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit()}
             placeholder={t.aiMsgPlaceholder}
-            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-gray-600"
+            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/50"
           />
           <button
             onClick={handleSubmit}
