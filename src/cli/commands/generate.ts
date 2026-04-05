@@ -181,12 +181,14 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
 
   // Dynamic import to avoid loading AI at startup
   const { streamChat } = await import('@/lib/ai-providers');
+  const { getTemperature } = await import('../core/ai-config');
 
   let planRaw = '';
   await streamChat({
     systemInstruction: PLANNER_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: planPrompt }],
     onChunk: (t: string) => { planRaw += t; },
+    temperature: getTemperature('plan'),
   });
 
   const plan = parsePlanResult(planRaw);

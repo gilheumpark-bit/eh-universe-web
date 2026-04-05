@@ -23,6 +23,7 @@ export { scanProjectStyle, saveProfile, loadProfile, recordSuggestionResult, bui
 export { evaluateBadges, evaluateChallenges, generateShareCard, generateReadmeBadge, BADGES, CHALLENGES } from './core/badges';
 export { checkPatentPatterns, PATENT_PATTERNS, type PatentCheckResult } from './core/patent-db';
 export { checkDeprecations, formatDeprecationReport, type DeprecationFinding } from './core/deprecation-checker';
+export { getTemperature, routeTask, getSingleKeyStrategy, recommendSecondKey, printAIProfileSummary, AI_PROFILES, TEMPERATURE_MAP, type AITask, type AIStrength, type RouteDecision } from './core/ai-config';
 export { searchPatterns, buildReferencePrompt, addPattern, seedDB, getRefStats, CATEGORIES, SEED_PATTERNS, type ReferencePattern, type ReferenceDB } from './core/reference-db';
 export { runEnhancedPipeline, type ASTFinding, type EnhancedPipelineResult } from './core/ast-bridge';
 export { runFullDataFlowAnalysis, trackNullFlow, trackCrossFileFlow, trackTaintFlow, type FlowChain, type DataFlowResult } from './core/data-flow';
