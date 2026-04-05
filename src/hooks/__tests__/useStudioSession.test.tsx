@@ -24,7 +24,7 @@ jest.mock('@/lib/demo-presets', () => ({
       config: { title: 'Demo', genre: 'FANTASY' },
     },
   ],
-  buildDemoSession: (preset: any, _isKO: boolean) => ({
+  buildDemoSession: (preset: any, isKO: boolean) => ({
     title: preset.title,
     messages: preset.messages,
     config: preset.config,

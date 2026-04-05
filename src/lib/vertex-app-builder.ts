@@ -223,11 +223,11 @@ export async function converseAgentBuilder(
     throw new Error(`Agent Builder engine for "${studio}" is not configured.`);
   }
 
-  const _client = getSearchClient();
+  const client = getSearchClient();
   const project = getProjectId();
   const location = getLocation();
 
-  const _servingConfig = `projects/${project}/locations/${location}/collections/default_collection/engines/${engineId}/servingConfigs/default_search`;
+  const servingConfig = `projects/${project}/locations/${location}/collections/default_collection/engines/${engineId}/servingConfigs/default_search`;
 
   // Conversational search는 SearchServiceClient.converseConversation 사용
   // 단, 이 기능은 별도의 ConversationalSearchServiceClient가 필요할 수 있으므로

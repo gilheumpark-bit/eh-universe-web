@@ -11,6 +11,7 @@ import {
   GROUP_LABELS,
   type PanelDef,
   type PanelGroup,
+  type RightPanel,
 } from '../code-studio/core/panel-registry';
 
 // ============================================================
@@ -18,8 +19,8 @@ import {
 // ============================================================
 
 describe('PANEL_REGISTRY', () => {
-  test('has exactly 51 entries', () => {
-    expect(PANEL_REGISTRY).toHaveLength(51);
+  test('has exactly 38 entries', () => {
+    expect(PANEL_REGISTRY).toHaveLength(38);
   });
 
   test('all IDs are unique', () => {

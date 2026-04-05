@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Zap, Plus, Globe, UserCircle, FileText, PenTool, Edit3, History,
-  Download, Upload, Cloud, _CloudOff, Settings, X, BookOpen, Hash,
+  Download, Upload, Cloud, CloudOff, Settings, X, BookOpen, Hash,
 } from 'lucide-react';
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';

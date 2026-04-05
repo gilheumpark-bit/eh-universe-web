@@ -92,7 +92,7 @@ describe("StudioSidebar", () => {
   it("renders the EH logo link", () => {
     render(<StudioSidebar {...baseProps} />);
     // Should contain the EH brand link back to home
-    const _homeLink = screen.queryByText("EH");
+    const homeLink = screen.queryByText("EH");
     // Even if not found by text, the component should render
     expect(document.body.innerHTML.length).toBeGreaterThan(0);
   });

@@ -43,9 +43,9 @@ export function useStudioTheme() {
   const [themeLevel, setThemeLevel] = useState<ThemeLevel>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('noa_theme_level');
-      // 마이그레이션: 기존 4단계 → 2단계. 2,3은 낮(1), 0은 밤(0). 1은 원래 밤이었으나 이제 낮으로 매핑.
-      if (stored === '0') return 0;
-      if (stored === '1' || stored === '2' || stored === '3') return 1;
+      // 마이그레이션: 기존 4단계 → 2단계 (0,1=밤 / 2,3=낮)
+      if (stored === '0' || stored === '1') return 0;
+      if (stored === '2' || stored === '3') return 1;
       // 마이그레이션: 기존 noa_light_theme 호환
       if (localStorage.getItem('noa_light_theme') === '1') return 1;
     }

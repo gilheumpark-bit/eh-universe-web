@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
-import { _detectLanguage } from "@/lib/code-studio/core/types";
+import { detectLanguage } from "@/lib/code-studio/core/types";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai/ghost";
 import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
 import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";
@@ -136,9 +136,9 @@ export interface CodeStudioEditorProps {
 export function CodeStudioEditor(props: CodeStudioEditorProps) {
   const {
     files, openFiles, activeFile, activeFileId, settings, loaded,
-    hasEverOpened, _isMobile, useEditorGroup, onToggleEditorGroup,
+    hasEverOpened, isMobile, useEditorGroup, onToggleEditorGroup,
     showSettings, onToggleSettings, showMultiKey, onCloseMultiKey,
-    onCursorChange, diffState, _onDiffAccept, onDiffReject,
+    onCursorChange, diffState, onDiffAccept, onDiffReject,
     onFileSelect, onCloseTab, onEditorChange, onApplyCode,
     onSetActiveFileId, onOpenFiles,
     onWelcomeNewFile, onOpenDemo, onBlankProject, onResumeProject, onQuickVerify,
@@ -147,7 +147,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
     onToggleSearch, onNewFile, onToggleProblems, onRunBugFinder,
     onDeploy, onToggleSplit, onUndo, onRedo, onZoomIn, onZoomOut,
-    onZoomReset, _onSaveToast, onSettingsSaved,
+    onZoomReset, onSaveToast, onSettingsSaved,
     fsUpdateContent, tcs, children,
   } = props;
 
@@ -254,7 +254,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
   }, []);
 
   // Expose editor ref for outline navigation etc.
-  const _navigateToLine = useCallback((line: number) => {
+  const navigateToLine = useCallback((line: number) => {
     const editor = editorRef.current as { revealLineInCenter?: (l: number) => void; setPosition?: (p: { lineNumber: number; column: number }) => void } | null;
     editor?.revealLineInCenter?.(line);
     editor?.setPosition?.({ lineNumber: line, column: 1 });

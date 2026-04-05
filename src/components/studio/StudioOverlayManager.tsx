@@ -66,7 +66,7 @@ interface StudioOverlayManagerProps {
 export default function StudioOverlayManager({
   language, isKO,
   showQuickStartModal, setShowQuickStartModal, handleQuickStart, isQuickGenerating,
-  showApiKeyModal, setShowApiKeyModal, _hostedProviders, setApiKeyVersion,
+  showApiKeyModal, setShowApiKeyModal, hostedProviders, setApiKeyVersion,
   confirmState, closeConfirm,
   moveModal, setMoveModal, moveSessionToProject,
   saveSlotModalOpen, setSaveSlotModalOpen, activeTab, currentSession, updateCurrentSession, triggerSave,

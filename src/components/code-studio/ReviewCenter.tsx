@@ -7,7 +7,7 @@
 import { useState, useCallback, useMemo } from "react";
 import {
   AlertTriangle, GitBranch, BarChart3, Bug, Loader2,
-  CheckCircle, _XCircle, ChevronDown, ChevronRight,
+  CheckCircle, XCircle, ChevronDown, ChevronRight,
   Filter, ThumbsUp, ThumbsDown, MessageSquare,
 } from "lucide-react";
 import type { TeamResult, Finding, Severity } from "@/lib/code-studio/pipeline/pipeline-teams";

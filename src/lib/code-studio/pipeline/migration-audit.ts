@@ -37,7 +37,7 @@ export interface MigrationAuditResult {
 // PART 2 — Function Signature Extraction
 // ============================================================
 
-const _FUNC_PATTERNS = [
+const FUNC_PATTERNS = [
   // function declarations
   /^(\s*)(export\s+)?(async\s+)?function\s+(\w+)\s*\(([^)]*)\)(?:\s*:\s*([^\s{]+))?\s*\{/,
   // arrow functions assigned to const/let/var

@@ -18,7 +18,7 @@ interface Props {
   onClose?: () => void;
 }
 
-export function QuickVerify({ onStartVerify, onEasyMode, _onClose }: Props) {
+export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
   const { lang } = useLang();
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"choose" | "paste">("choose");

@@ -11,8 +11,6 @@ export default function ApiKeyHydrator() {
     const hydrate = () => {
       void import("@/lib/ai-providers")
         .then((m) => m.hydrateAllApiKeys())
-        .then(() => import("@/lib/multi-key-manager"))
-        .then((m) => m.hydrateMultiKeyManager())
         .then(() => {
           // 키 로드 완료 후 UI에 알림 — BYOK 키 인식 트리거
           window.dispatchEvent(new Event('noa-keys-changed'));

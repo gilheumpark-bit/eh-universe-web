@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
+
 interface StudioUIState {
   // Layout & Visibility
   focusMode: boolean;
@@ -33,8 +35,8 @@ interface StudioUIState {
   setMobileDrawerOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
 
   // Core Writing/Drafting state
-  writingMode: string;
-  setWritingMode: (val: string) => void;
+  writingMode: WritingMode;
+  setWritingMode: (val: WritingMode) => void;
   
   editDraft: string;
   setEditDraft: (val: string) => void;

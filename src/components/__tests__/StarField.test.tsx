@@ -21,7 +21,7 @@ const mockContext = {
 HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
 // Mock requestAnimationFrame
-let _rafCallback: FrameRequestCallback | null = null;
+let rafCallback: FrameRequestCallback | null = null;
 global.requestAnimationFrame = jest.fn((cb) => { rafCallback = cb; return 1; });
 global.cancelAnimationFrame = jest.fn();
 

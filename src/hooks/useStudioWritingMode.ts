@@ -4,8 +4,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-import { useStudioUIStore } from '@/store/studio-ui-store';
 
+type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
 const DEFAULT_ADVANCED: AdvancedWritingSettings = {
   sceneGoals: [],
@@ -21,27 +21,21 @@ const DEFAULT_ADVANCED: AdvancedWritingSettings = {
  * @param hydrated - Whether localStorage has been loaded (prevents SSR flash)
  */
 export function useStudioWritingMode(currentSessionId: string | null, hydrated: boolean) {
-  const {
-    writingMode, setWritingMode,
-    editDraft, setEditDraft,
-    canvasContent, setCanvasContent,
-    canvasPass, setCanvasPass,
-    promptDirective, setPromptDirective,
-  } = useStudioUIStore();
-
+  const [writingMode, setWritingMode] = useState<WritingMode>('ai');
+  const [editDraft, setEditDraft] = useState('');
   const editDraftRef = useRef<HTMLTextAreaElement>(null);
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedWritingSettings>(DEFAULT_ADVANCED);
+  const [canvasContent, setCanvasContent] = useState('');
+  const [canvasPass, setCanvasPass] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('noa_canvasPass');
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
+  const [promptDirective, setPromptDirective] = useState('');
 
   // canvasPass persist
-  useEffect(() => {
-    // Initialize canvasPass from storage on mount if it's 0
-    if (typeof window !== 'undefined' && canvasPass === 0) {
-      const saved = sessionStorage.getItem('noa_canvasPass');
-      if (saved) setCanvasPass(parseInt(saved, 10));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useEffect(() => {
     if (canvasPass > 0) sessionStorage.setItem('noa_canvasPass', String(canvasPass));
     else sessionStorage.removeItem('noa_canvasPass');
@@ -53,9 +47,10 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
     if (!hydrated || !currentSessionId) return;
     const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
     if (saved !== null) {
-      setEditDraft(saved);
+      setTimeout(() => setEditDraft(saved), 0);
     }
-  }, [currentSessionId, hydrated, setEditDraft]);
+     
+  }, [currentSessionId, hydrated]);
 
   useEffect(() => {
     if (!currentSessionId || !hydrated) return;

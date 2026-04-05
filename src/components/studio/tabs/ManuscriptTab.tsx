@@ -140,7 +140,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
             scenes={parsedScenes}
             language={language}
             onScenesChange={setParsedScenes}
-            onPlayFrom={(_si, _bi) => { setSceneMode('visual'); }}
+            onPlayFrom={(si, bi) => { setSceneMode('visual'); }}
             onExportText={(text) => {
               setConfig((prev) => {
                 const manuscripts = [...(prev.manuscripts ?? [])];

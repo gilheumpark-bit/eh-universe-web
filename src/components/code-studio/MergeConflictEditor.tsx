@@ -4,8 +4,8 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, _useMemo } from "react";
-import { GitMerge, _Check, ChevronLeft, ChevronRight, ArrowLeftRight, CheckCircle, AlertTriangle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { GitMerge, Check, ChevronLeft, ChevronRight, ArrowLeftRight, CheckCircle, AlertTriangle } from "lucide-react";
 
 export interface ConflictBlock {
   id: string;

@@ -120,50 +120,24 @@ export interface RemoteCollabConnection {
 }
 
 /**
- * 웹소켓/SSE 원격 연결 (로컬 BroadcastChannel 폴백).
- * 서버리스 모드에서는 동일 기기/브라우저 내 다중 탭 간의 릴레이 모드로 자동 대체됩니다.
+ * 원격 협업 연결 (SSE + fetch).
+ * 서버가 /api/collab/:roomId SSE 엔드포인트를 제공해야 함.
+ * 현재는 로컬 채널만으로 동작, 원격 서버 구현 시 활성화.
+ */
+/**
+ * 원격 협업 연결 — 현재 미구현 (로컬 BroadcastChannel만 지원).
+ * /api/collab/:roomId SSE 엔드포인트 구현 시 활성화 예정.
+ * @returns 항상 null (원격 서버 미구현)
  */
 export function connectRemote(
-  roomId: string,
-  user: CollabUser,
-  handlers: {
+  _roomId: string,
+  _user: CollabUser,
+  _handlers: {
     onEdit?: (edit: CollabEdit) => void;
     onCursor?: (user: CollabUser) => void;
     onJoin?: (user: CollabUser) => void;
     onLeave?: (userId: string) => void;
   },
-): RemoteCollabConnection {
-  // 현재 서버형 SSE 노드가 없으므로, 로컬 릴레이(BroadcastChannel) 모드로 강제 동작합니다.
-  const localRelay = new BroadcastChannel(`eh-collab-relay-${roomId}`);
-
-  const messageHandler = (e: MessageEvent) => {
-    const { type, payload } = e.data;
-    switch (type) {
-      case 'edit': handlers.onEdit?.(payload); break;
-      case 'cursor': handlers.onCursor?.(payload); break;
-      case 'join': handlers.onJoin?.(payload); break;
-      case 'leave': handlers.onLeave?.(payload); break;
-    }
-  };
-
-  localRelay.addEventListener('message', messageHandler);
-  
-  // 입장 신호 릴레이 전송
-  localRelay.postMessage({ type: 'join', payload: user });
-
-  return {
-    send: (data: CollabEdit | CollabUser) => {
-      // type guard based on data shape
-      if ('position' in data) {
-        localRelay.postMessage({ type: 'edit', payload: data as CollabEdit });
-      } else {
-        localRelay.postMessage({ type: 'cursor', payload: data as CollabUser });
-      }
-    },
-    close: () => {
-      localRelay.postMessage({ type: 'leave', payload: user.id });
-      localRelay.removeEventListener('message', messageHandler);
-      localRelay.close();
-    }
-  };
+): RemoteCollabConnection | null {
+  return null; // [미구현] 원격 SSE 서버 필요
 }

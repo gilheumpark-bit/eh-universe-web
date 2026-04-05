@@ -8,7 +8,7 @@
 // PART 1 — Types
 // ============================================================
 
-import { useEffect, useRef, useCallback, _useState } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 export interface ShortcutBinding {
   /** e.g. "ctrl+shift+p", "f1", "ctrl+s" */

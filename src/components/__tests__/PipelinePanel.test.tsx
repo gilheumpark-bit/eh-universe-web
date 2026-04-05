@@ -2,7 +2,7 @@
  * PipelinePanel (code-studio) — renders pipeline status
  */
 import React from 'react';
-import { render, _screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { PipelinePanel } from '../code-studio/PipelinePanel';
 

@@ -5,7 +5,7 @@ import {
   READER_LEVELS,
   GENRE_BENCHMARKS,
 } from '../genre-review';
-import type { _ReaderLevel } from '../genre-review';
+import type { ReaderLevel } from '../genre-review';
 
 // ============================================================
 // PART 1 — extractTextMetrics

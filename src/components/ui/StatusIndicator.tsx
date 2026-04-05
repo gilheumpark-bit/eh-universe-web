@@ -5,12 +5,12 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, HardDrive, _Cpu } from "lucide-react";
+import { Wifi, WifiOff, HardDrive, Cpu } from "lucide-react";
 
 export function StatusIndicator() {
   const [isOffline, setIsOffline] = useState(false);
-  const [_storagePercent, setStoragePercent] = useState(0);
-  const [_storageLabel, setStorageLabel] = useState('');
+  const [storagePercent, setStoragePercent] = useState(0);
+  const [storageLabel, setStorageLabel] = useState('');
 
   useEffect(() => {
     const onOnline = () => setIsOffline(false);

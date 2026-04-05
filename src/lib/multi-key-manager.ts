@@ -97,61 +97,19 @@ export function createDefaultConfig(): MultiKeyConfig {
 // PART 3 — Persistence (localStorage)
 // ============================================================
 
-import { encryptApiKey, decryptApiKey } from './ai-providers';
-
-/** In-memory plain text cache for v4 keys */
-const _mkPlainCache = new Map<string, string>();
-
-/** App mount 시점에 v4 AES 암호화 키를 복호화하여 캐시에 준비 */
-export async function hydrateMultiKeyManager(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
-  try {
-    const parsed = JSON.parse(raw) as MultiKeyConfig;
-    await Promise.all(parsed.slots.map(async s => {
-      if (s.apiKey && s.apiKey.startsWith('noa:')) {
-        const plain = await decryptApiKey(s.apiKey);
-        _mkPlainCache.set(s.id, plain);
-      }
-    }));
-  } catch { /* ignore */ }
-}
-
 export function saveMultiKeyConfig(config: MultiKeyConfig): void {
   if (typeof window === 'undefined') return;
-  // 비동기 V4 암호화 수행 및 저장
-  (async () => {
-    try {
-      const serializable = {
-        ...config,
-        slots: await Promise.all(config.slots.map(async (s) => {
-          let encrypted = '';
-          if (s.apiKey) {
-            if (s.apiKey.startsWith('noa:')) {
-              encrypted = s.apiKey; // prevent double encryption if loaded from raw fallback
-            } else {
-              encrypted = await encryptApiKey(s.apiKey);
-              _mkPlainCache.set(s.id, s.apiKey);
-            }
-          } else {
-            _mkPlainCache.delete(s.id);
-          }
-          return { ...s, apiKey: encrypted };
-        })),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
-    } catch { /* quota */ }
-  })();
-}
-
-function deobfuscateLegacyMk(encoded: string): string {
-  if (!encoded.startsWith('mk:')) return encoded;
   try {
-    const salt = 'ehsu';
-    const decoded = atob(encoded.slice(3));
-    return decoded.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ salt.charCodeAt(i % salt.length))).join('');
-  } catch { return encoded; }
+    // API 키는 간단한 난독화 적용
+    const serializable = {
+      ...config,
+      slots: config.slots.map((s) => ({
+        ...s,
+        apiKey: s.apiKey ? obfuscate(s.apiKey) : '',
+      })),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+  } catch { /* quota */ }
 }
 
 export function loadMultiKeyConfig(): MultiKeyConfig {
@@ -160,34 +118,39 @@ export function loadMultiKeyConfig(): MultiKeyConfig {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return createDefaultConfig();
     const parsed = JSON.parse(raw) as MultiKeyConfig;
-    let needsMigration = false;
-
-    parsed.slots = parsed.slots.map(s => {
-      let plain = '';
-      if (s.apiKey) {
-        if (s.apiKey.startsWith('noa:')) {
-          plain = _mkPlainCache.get(s.id) ?? '';
-        } else if (s.apiKey.startsWith('mk:')) {
-          plain = deobfuscateLegacyMk(s.apiKey);
-          needsMigration = true;
-        } else {
-          plain = s.apiKey; // plaintext
-        }
-      }
-      return { ...s, apiKey: plain };
-    });
-
+    // 복호화
+    parsed.slots = parsed.slots.map((s) => ({
+      ...s,
+      apiKey: s.apiKey ? deobfuscate(s.apiKey) : '',
+    }));
     // 7개 슬롯 보장
     while (parsed.slots.length < 7) {
       parsed.slots.push(createEmptySlot(parsed.slots.length + 1));
     }
-
-    // 마이그레이션 필요 시 비동기 저장 (v4 AES 형식 업그레이드)
-    if (needsMigration) {
-      saveMultiKeyConfig(parsed);
-    }
     return parsed;
   } catch { return createDefaultConfig(); }
+}
+
+/**
+ * WARNING: XOR obfuscation with a static salt is NOT cryptographic security.
+ * This only prevents casual plaintext exposure in localStorage/devtools.
+ * It does NOT protect against a determined attacker inspecting the page.
+ *
+ * For real encryption, API keys should migrate to the ai-providers.ts v4
+ * AES-GCM encryption flow (see encryptApiKey / decryptApiKey in that module).
+ *
+ * TODO: Migrate multi-key-manager storage to ai-providers.ts v4 encryption.
+ */
+function obfuscate(key: string): string {
+  const salt = 'ehsu';
+  return 'mk:' + btoa(key.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ salt.charCodeAt(i % salt.length))).join(''));
+}
+
+function deobfuscate(encoded: string): string {
+  if (!encoded.startsWith('mk:')) return encoded;
+  const salt = 'ehsu';
+  const decoded = atob(encoded.slice(3));
+  return decoded.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ salt.charCodeAt(i % salt.length))).join('');
 }
 
 // ============================================================

@@ -2,9 +2,9 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import {
-  Key, Trash2, RotateCcw, Zap, Shield, Eye, EyeOff,
+  Key, Plus, Trash2, RotateCcw, Zap, Shield, Eye, EyeOff,
   Activity, DollarSign, ChevronDown, ChevronRight, CheckCircle2,
-  AlertTriangle, Loader2, Layers, BarChart3,
+  AlertTriangle, Loader2, Settings2, Layers, BarChart3,
 } from "lucide-react";
 import {
   type ProviderId,
@@ -71,15 +71,6 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
 
   const activeCount = useMemo(() => getActiveSlotCount(config), [config]);
   const totalUsage = useMemo(() => getTotalUsage(config), [config]);
-
-  // Handle Hydration completion and cross-tab sync
-  React.useEffect(() => {
-    const handleKeysChanged = () => {
-      setConfig(loadMultiKeyConfig());
-    };
-    window.addEventListener('noa-keys-changed', handleKeysChanged);
-    return () => window.removeEventListener('noa-keys-changed', handleKeysChanged);
-  }, []);
 
   // ============================================================
   // PART 4 — Handlers
@@ -250,7 +241,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
               className={`rounded-lg border transition-all ${
                 isActive
                   ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-white/5 bg-white/2"
+                  : "border-white/5 bg-white/[0.02]"
               }`}
             >
               {/* Slot Header */}
@@ -416,7 +407,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
 
                   {/* Usage Stats */}
                   {slot.usage.totalCalls > 0 && (
-                    <div className="rounded bg-white/3 p-2">
+                    <div className="rounded bg-white/[0.03] p-2">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] text-gray-500 uppercase flex items-center gap-1">
                           <Activity className="w-3 h-3" />

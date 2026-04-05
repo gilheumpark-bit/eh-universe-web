@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useEffect, _useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   MessageSquare, Terminal, Activity, Settings, Code2, Bot, Columns2,
   Search, AlertTriangle, Bug, Undo2, Redo2, ZoomIn, ZoomOut, Rocket,

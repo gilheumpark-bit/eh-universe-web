@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import _Link from "next/link";
+import Link from "next/link";
 import type { StoryConfig, Character } from "@/lib/studio-types";
 
 // ============================================================

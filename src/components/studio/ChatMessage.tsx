@@ -1,7 +1,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Bot, User, _Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
+import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { createT } from '@/lib/i18n';

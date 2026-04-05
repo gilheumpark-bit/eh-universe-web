@@ -40,7 +40,7 @@ const mockTransaction = {
 };
 
 // Set oncomplete on next tick
-const _origPut = mockObjectStore.put;
+const origPut = mockObjectStore.put;
 mockObjectStore.put = jest.fn((value: any, key: string) => {
   mockStore.set(key, value);
   setTimeout(() => mockTransaction.oncomplete?.(), 0);

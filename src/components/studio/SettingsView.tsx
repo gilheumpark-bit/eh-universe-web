@@ -14,7 +14,7 @@ import {
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { idbEstimateSize } from '@/lib/browser/idb-store';
-import { setNarrativeDepth as narrativeDepthSetter, _getNarrativeDepth } from '@/lib/noa/lora-swap';
+import { setNarrativeDepth as narrativeDepthSetter, getNarrativeDepth } from '@/lib/noa/lora-swap';
 
 interface VersionedBackup {
   timestamp: number;

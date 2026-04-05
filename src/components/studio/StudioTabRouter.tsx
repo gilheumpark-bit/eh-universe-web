@@ -8,7 +8,6 @@ import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritin
 import type { VersionedBackup } from '@/lib/indexeddb-backup';
 import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import { useStudioUIStore } from '@/store/studio-ui-store';
 import WorldTab from '@/components/studio/tabs/WorldTab';
 import CharacterTab from '@/components/studio/tabs/CharacterTab';
 import SettingsView from '@/components/studio/SettingsView';
@@ -46,10 +45,16 @@ interface StudioTabRouterProps {
   versionedBackups?: VersionedBackup[];
   doRestoreVersionedBackup?: (timestamp: number) => Promise<boolean>;
   refreshBackupList?: () => void;
+  writingMode: string;
   setWritingMode: (mode: string) => void;
+  editDraft: string;
   setEditDraft: (v: string) => void;
   editDraftRef: React.RefObject<HTMLTextAreaElement | null>;
+  canvasContent: string;
   setCanvasContent: (v: string) => void;
+  canvasPass: number;
+  setCanvasPass: React.Dispatch<React.SetStateAction<number>>;
+  promptDirective: string;
   setPromptDirective: (v: string) => void;
   isGenerating: boolean;
   lastReport: EngineReport | null;
@@ -64,6 +69,9 @@ interface StudioTabRouterProps {
   hasAiAccess: boolean;
   advancedSettings: AdvancedWritingSettings;
   setAdvancedSettings: React.Dispatch<React.SetStateAction<AdvancedWritingSettings>>;
+  showDashboard: boolean;
+  rightPanelOpen: boolean;
+  setRightPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
   directorReport: DirectorReport | null;
   hfcpState: HFCPStateType;
   handleNextEpisode: () => void;
@@ -96,40 +104,24 @@ interface StudioTabRouterProps {
 }
 
 export default function StudioTabRouter(props: StudioTabRouterProps) {
-
-  const {  
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     } = useStudioUIStore();
-
   const {
     activeTab, currentSession, currentSessionId, config,
     language, setConfig, updateCurrentSession, triggerSave, saveFlash,
     hostedProviders, showAiLock, setActiveTab,
     charSubTab, setCharSubTab, setUxError,
-    clearAllSessions,  versionedBackups, doRestoreVersionedBackup, refreshBackupList,
-        editDraftRef,
-         
+    clearAllSessions, setShowApiKeyModal, versionedBackups, doRestoreVersionedBackup, refreshBackupList,
+    writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef,
+    canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective,
     isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix,
-    messagesEndRef,  filteredMessages, hasAiAccess, advancedSettings, setAdvancedSettings,
-       directorReport, hfcpState, handleNextEpisode,
+    messagesEndRef, searchQuery, filteredMessages, hasAiAccess, advancedSettings, setAdvancedSettings,
+    showDashboard, rightPanelOpen, setRightPanelOpen, directorReport, hfcpState, handleNextEpisode,
     writingColumnShell, input, setInput,
     archiveScope, setArchiveScope, archiveFilter, setArchiveFilter, projects, sessions,
     currentProject, currentProjectId, setCurrentProjectId, setCurrentSessionId,
     startRename, renamingSessionId, setRenamingSessionId, renameValue, setRenameValue, confirmRename,
     moveSessionToProject, handlePrint, deleteSession,
-    suggestions, setSuggestions, pipelineResult } = props;
+    suggestions, setSuggestions, pipelineResult
+  } = props;
 
   return (
     <>

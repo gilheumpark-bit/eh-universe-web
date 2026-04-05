@@ -78,22 +78,14 @@ export async function executeGeminiHostedFirst<T>(
     throw new Error('Gemini server credentials are not configured');
   }
 
-  // Hosted 우선 시도
-  if (hostedEnabled) {
-    try {
-      return { result: await operation('', 'hosted'), mode: 'hosted' };
-    } catch (e) {
-      if (userApiKey && isGeminiAllocationExhaustedError(e)) {
-        // 호스팅 쿼터 소진 시 유저 키로 폴백
-        return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
-      }
-      throw e;
-    }
-  }
-
-  // Hosted 없으면 무조건 BYOK
+  // BYOK 우선: 유저 키가 있으면 유저 키 사용
   if (userApiKey) {
     return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
+  }
+
+  // 유저 키 없을 때만 호스팅 키
+  if (hostedEnabled) {
+    return { result: await operation('', 'hosted'), mode: 'hosted' };
   }
 
   throw new Error('No API key available');

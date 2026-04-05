@@ -1,20 +1,20 @@
-import type { _User } from "firebase/auth";
+import type { User } from "firebase/auth";
 // Firebase Firestore — static import for data-layer modules.
 // Dynamic alternative: import('firebase/firestore') via lazyFirestore() in firebase.ts
 import {
-  _collection, _deleteDoc, _doc, _getDoc, _getDocs, _increment,
-  _limit, _orderBy, _query, _setDoc, _updateDoc, _writeBatch, _where,
-  type _QueryConstraint,
+  collection, deleteDoc, doc, getDoc, getDocs, increment,
+  limit, orderBy, query, setDoc, updateDoc, writeBatch, where,
+  type QueryConstraint,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import {
-  type _BoardType, type _BookmarkRecord, type _CommentRecord,
-  type _CreatePlanetWithFirstLogInput, type _CreateBoardPostInput,
-  type _CreatePostInput, type _CreateSettlementInput,
-  type _PlanetRecord, type PlanetStatus, type _PostRecord,
-  type _ReactionRecord, type _ReactionType, type _ReportReason,
-  type _ReportRecord, type _SettlementRecord, type UserRecord,
-  _REPORT_TYPE_TO_BOARD_TYPE,
+  type BoardType, type BookmarkRecord, type CommentRecord,
+  type CreatePlanetWithFirstLogInput, type CreateBoardPostInput,
+  type CreatePostInput, type CreateSettlementInput,
+  type PlanetRecord, type PlanetStatus, type PostRecord,
+  type ReactionRecord, type ReactionType, type ReportReason,
+  type ReportRecord, type SettlementRecord, type UserRecord,
+  REPORT_TYPE_TO_BOARD_TYPE,
 } from "@/lib/network-types";
 
 // ============================================================

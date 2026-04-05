@@ -7,7 +7,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, PenTool, ArrowRightLeft } from 'lucide-react';
-import { _TOOL_LINKS } from '@/lib/tool-links';
+import { TOOL_LINKS } from '@/lib/tool-links';
 
 interface Props {
   /** Current tool's display name */

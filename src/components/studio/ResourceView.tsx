@@ -27,7 +27,7 @@ interface ResourceViewProps {
 
 const ROLE_KEYS = ['hero', 'villain', 'ally', 'extra'] as const;
 
-const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig, _onError }) => {
+const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig, onError }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [expandedTiers, setExpandedTiers] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});

@@ -114,7 +114,7 @@ export function useWritingChat(novelContext?: NovelContext) {
       setChatLoading(false);
       abortControllerRef.current = null;
     }
-   
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chatMessagesRef avoids stale closure
   }, [chatLoading, novelContext]);
 
   const abortChat = useCallback(() => {

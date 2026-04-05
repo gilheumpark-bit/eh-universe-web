@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { act } from 'react';
-import { useStudioTheme, useStudioLanguage } from '@/hooks/useStudioTheme';
+import { useStudioTheme, useStudioLanguage, type ThemeLevel } from '@/hooks/useStudioTheme';
 
 // ============================================================
 // PART 1 — Test Harnesses
@@ -156,7 +156,7 @@ describe('useStudioTheme', () => {
   it('ignores invalid stored theme values', () => {
     localStorage.setItem('noa_theme_level', '99');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(1);
+    expect(get().themeLevel).toBe(2);
     cleanup();
   });
 

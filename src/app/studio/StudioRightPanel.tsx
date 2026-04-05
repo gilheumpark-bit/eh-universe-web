@@ -6,7 +6,7 @@
 import dynamic from 'next/dynamic';
 import type { ChatSession, AppTab, AppLanguage, ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
-import type { _EngineReport } from '@/engine/types';
+import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
 import { TRANSLATIONS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
@@ -165,7 +165,7 @@ export function StudioSaveSlotPanel({
 export function StudioWritingAssistantPanel({
   currentSession, language, rightPanelOpen, setRightPanelOpen,
   setActiveTab, setConfig,
-  _writingMode, _showDashboard,
+  writingMode, showDashboard,
   directorReport, hfcpState,
   suggestions, setSuggestions,
   pipelineResult, hostedProviders,

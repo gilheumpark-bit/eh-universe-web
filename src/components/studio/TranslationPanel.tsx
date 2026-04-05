@@ -43,7 +43,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const [showSegmentView, setShowSegmentView] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [glossaryCandidates, setGlossaryCandidates] = useState<any[]>([]);
-  const [_multiLangTargets, _setMultiLangTargets] = useState<string[]>(['EN']);
+  const [multiLangTargets, setMultiLangTargets] = useState<string[]>(['EN']);
   const [tmCount, setTmCount] = useState(0);
   const [mode, setMode] = useState<TranslationMode>("fidelity");
   const [targetLang, setTargetLang] = useState<TranslationTarget>("EN");
@@ -78,7 +78,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     localStorage.setItem('eh-novel-glossary', JSON.stringify(g));
   }, []);
 
-  const { translateEpisode, _translateBatch, progress, _batchProgress, isTranslating, abort } = useTranslation({
+  const { translateEpisode, translateBatch, progress, batchProgress, isTranslating, abort } = useTranslation({
     onProgress: (p) => {
       if (p.status === 'scoring') {
          setLogs(prev => [...prev.slice(-49), { id: Date.now(), type: 'info', text: `Analyzing metrics for chunk ${p.currentChunk + 1}...` }]);
