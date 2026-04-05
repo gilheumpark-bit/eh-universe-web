@@ -39,6 +39,9 @@ export { runFullLSPAnalysis, getDiagnostics, findReferences, buildCallGraph, fin
 export { isGitRepo, getCurrentBranch, getStatus, blame, diff, diffStat, autoStash, autoCommit, autoBranch, getRecentHistory, getFileHotspots } from './adapters/git-deep';
 export { runTasksParallel, runParallelVerify, type WorkerTask, type WorkerResult } from './adapters/worker-pool';
 
+// Terminal Compatibility
+export { detectTerminal, icons, colors, box, spinnerFrames, compatProgressBar, compatDivider, printHeader, printScore, printSection, type TerminalCapabilities } from './core/terminal-compat';
+
 // TUI
 export { progressBar, progressLine, ProgressTimer, Spinner } from './tui/progress';
 export { computeDiff, formatDiff, printDiffSummary } from './tui/diff-preview';
