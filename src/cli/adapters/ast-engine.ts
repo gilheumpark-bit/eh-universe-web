@@ -14,42 +14,114 @@ export async function analyzeWithTypeScript(code: string, fileName: string = 'te
   const sourceFile = ts.createSourceFile(fileName, code, ts.ScriptTarget.Latest, true);
   const findings: Array<{ line: number; message: string; severity: string }> = [];
 
+  const lineOf = (node: import('typescript').Node) =>
+    sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+
+  // ── 구조 통계 ──
+  let fnCount = 0;
+  let maxDepth = 0;
+  let maxFnLines = 0;
+  const declaredVars = new Set<string>();
+  const usedVars = new Set<string>();
+
+  function measureDepth(node: import('typescript').Node, depth: number): void {
+    if (ts.isBlock(node)) {
+      if (depth > maxDepth) maxDepth = depth;
+      depth++;
+    }
+    ts.forEachChild(node, child => measureDepth(child, depth));
+  }
+  measureDepth(sourceFile, 0);
+
   function visit(node: import('typescript').Node): void {
-    // Detect potential null dereference
-    if (ts.isPropertyAccessExpression(node)) {
-      const text = node.expression.getText(sourceFile);
-      // Heuristic: accessing property on result of function call without null check
-      if (ts.isCallExpression(node.expression)) {
-        findings.push({
-          line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-          message: `Property access on function call result without null check: ${text.slice(0, 50)}`,
-          severity: 'warning',
-        });
+    // 1. 빈 함수 탐지
+    if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node) || ts.isArrowFunction(node)) {
+      fnCount++;
+      const body = (node as any).body;
+      if (body && ts.isBlock(body)) {
+        const stmtCount = body.statements.length;
+        const fnLines = sourceFile.getLineAndCharacterOfPosition(body.getEnd()).line -
+                        sourceFile.getLineAndCharacterOfPosition(body.getStart()).line;
+        if (fnLines > maxFnLines) maxFnLines = fnLines;
+
+        if (stmtCount === 0) {
+          const name = (node as any).name?.getText?.(sourceFile) ?? 'anonymous';
+          findings.push({ line: lineOf(node), message: `빈 함수: ${name}()`, severity: 'error' });
+        }
+        // 긴 함수 탐지
+        if (fnLines > 60) {
+          const name = (node as any).name?.getText?.(sourceFile) ?? 'anonymous';
+          findings.push({ line: lineOf(node), message: `함수 ${name}() ${fnLines}줄 — 60줄 초과`, severity: 'warning' });
+        }
       }
     }
 
-    // Detect await without try-catch
-    if (ts.isAwaitExpression(node)) {
-      let parent = node.parent;
-      let hasTryCatch = false;
-      while (parent) {
-        if (ts.isTryStatement(parent)) { hasTryCatch = true; break; }
-        parent = parent.parent;
+    // 2. eval() / new Function() 탐지 — AST 기반이므로 규칙 정의 문자열과 혼동 없음
+    if (ts.isCallExpression(node)) {
+      const expr = node.expression;
+      if (ts.isIdentifier(expr) && expr.text === 'eval') {
+        findings.push({ line: lineOf(node), message: 'eval() 호출 — 보안 위험', severity: 'error' });
       }
-      if (!hasTryCatch) {
-        findings.push({
-          line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-          message: 'await without try-catch — unhandled rejection risk',
-          severity: 'warning',
-        });
+      if (ts.isNewExpression(node.parent) && ts.isIdentifier((node.parent as any).expression) &&
+          (node.parent as any).expression.text === 'Function') {
+        findings.push({ line: lineOf(node), message: 'new Function() — eval 동등', severity: 'error' });
       }
+    }
+    // new Function() 직접 탐지
+    if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'Function') {
+      findings.push({ line: lineOf(node), message: 'new Function() — eval 동등', severity: 'error' });
+    }
+
+    // 3. == / != 탐지 (=== / !== 권장)
+    if (ts.isBinaryExpression(node)) {
+      const op = node.operatorToken.kind;
+      if (op === ts.SyntaxKind.EqualsEqualsToken) {
+        findings.push({ line: lineOf(node), message: '== 사용 — === 권장', severity: 'warning' });
+      }
+      if (op === ts.SyntaxKind.ExclamationEqualsToken) {
+        findings.push({ line: lineOf(node), message: '!= 사용 — !== 권장', severity: 'warning' });
+      }
+    }
+
+    // 4. any 타입 탐지
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && node.typeName.text === 'any') {
+      findings.push({ line: lineOf(node), message: 'TypeScript any 타입 — 타입 안전성 저하', severity: 'warning' });
+    }
+
+    // 5. console.log 탐지
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const obj = node.expression.expression;
+      const prop = node.expression.name;
+      if (ts.isIdentifier(obj) && obj.text === 'console' &&
+          (prop.text === 'log' || prop.text === 'debug')) {
+        findings.push({ line: lineOf(node), message: `console.${prop.text}() 발견`, severity: 'info' });
+      }
+    }
+
+    // 6. 변수 선언/사용 추적 (미사용 변수)
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+      declaredVars.add(node.name.text);
+    }
+    if (ts.isIdentifier(node) && !ts.isVariableDeclaration(node.parent)) {
+      usedVars.add(node.text);
+    }
+
+    // 7. 파라미터 5개 초과
+    if ((ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node) || ts.isArrowFunction(node)) && node.parameters.length > 5) {
+      findings.push({ line: lineOf(node), message: `파라미터 ${node.parameters.length}개 — 5개 초과`, severity: 'warning' });
     }
 
     ts.forEachChild(node, visit);
   }
 
   visit(sourceFile);
-  return { findings, nodeCount: sourceFile.getChildCount() };
+
+  // 구조 경고
+  if (maxDepth > 5) {
+    findings.push({ line: 1, message: `최대 중첩 깊이 ${maxDepth} — 5 초과`, severity: 'warning' });
+  }
+
+  return { findings: findings.slice(0, 30), nodeCount: sourceFile.getChildCount(), fnCount, maxDepth, maxFnLines };
 }
 
 // IDENTITY_SEAL: PART-1 | role=typescript-analysis | inputs=code | outputs=findings

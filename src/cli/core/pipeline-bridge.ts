@@ -24,19 +24,38 @@ export async function runStaticPipeline(code: string, language: string): Promise
   // Team 1: Regex (표면 패턴 — 항상 실행, 1차 필터)
   teams.push(runRegexTeam(code, language));
 
-  // Team 2: AST (구조 분석 — ts-morph/acorn 실체 엔진)
+  // Team 2: AST (구조 분석 — typescript 컴파일러 API 필수, ts-morph 선택)
   try {
-    const { analyzeWithTypeScript, analyzeWithTsMorph } = await import('../adapters/ast-engine');
+    const { analyzeWithTypeScript } = await import('../adapters/ast-engine');
     const tsResult = await analyzeWithTypeScript(code, 'analysis.ts');
-    const tsMorphResult = await analyzeWithTsMorph(code, 'analysis.ts');
     const tsFindings = Array.isArray(tsResult) ? tsResult : (tsResult?.findings ?? []);
-    const tsMorphFindings = Array.isArray(tsMorphResult) ? tsMorphResult : (tsMorphResult?.findings ?? []);
-    const allFindings = [...tsFindings, ...tsMorphFindings].map((f: any) => ({
-      line: f.line ?? 0, message: f.message, severity: (f.severity === 'error' ? 'error' : 'warning') as 'error' | 'warning',
-    }));
+
+    // ts-morph 추가 분석 (있으면 병합, 없으면 typescript 단독)
+    let tsMorphFindings: Array<{ line: number; message: string; severity: string }> = [];
+    try {
+      const { analyzeWithTsMorph } = await import('../adapters/ast-engine');
+      const tsMorphResult = await analyzeWithTsMorph(code, 'analysis.ts');
+      tsMorphFindings = Array.isArray(tsMorphResult) ? tsMorphResult : (tsMorphResult?.findings ?? []);
+    } catch { /* ts-morph 미설치 — typescript 단독 진행 */ }
+
+    // 중복 메시지 제거
+    const seen = new Set<string>();
+    const allFindings = [...tsFindings, ...tsMorphFindings]
+      .map((f: any) => ({
+        line: f.line ?? 0, message: f.message,
+        severity: (f.severity === 'error' || f.severity === 'critical' ? 'error' : f.severity === 'info' ? 'info' : 'warning') as 'error' | 'warning' | 'info',
+      }))
+      .filter(f => {
+        const key = `${f.line}:${f.message}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
     const score = Math.max(0, 100 - allFindings.filter(f => f.severity === 'error').length * 15 - allFindings.filter(f => f.severity === 'warning').length * 5);
     teams.push({ name: 'ast', score, findings: allFindings.slice(0, 20) });
   } catch {
+    // typescript 자체가 없는 극단적 환경 → 정규식 fallback
     teams.push(runASTFallback(code, language));
   }
 
@@ -249,10 +268,12 @@ function runCognitiveLoadCheck(code: string): PipelineResult['teams'][0] {
   const findings: PipelineResult['teams'][0]['findings'] = [];
   const lines = code.split('\n');
 
-  // 긴 줄
+  // 긴 줄 — 파일당 최대 3건 (동일 유형 500건 폭발 방지)
+  let lineWarnCount = 0;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].length > 120) {
+    if (lines[i].length > 120 && lineWarnCount < 3) {
       findings.push({ line: i + 1, message: `줄 길이 ${lines[i].length}자 — 120자 초과`, severity: 'info' as unknown });
+      lineWarnCount++;
     }
   }
 

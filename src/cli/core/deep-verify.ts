@@ -35,7 +35,9 @@ export interface DeepVerifyResult {
 
 function checkDeclarationOrder(code: string, fileName: string): DeepFinding[] {
   const findings: DeepFinding[] = [];
-  const lines = code.split('\n');
+  // 멀티라인 블록 주석 제거 (/* ... */ 내 식별자 오탐 방지)
+  const cleaned = code.replace(/\/\*[\s\S]*?\*\//g, '');
+  const lines = cleaned.split('\n');
 
   // Common property/builtin names that cause massive false positives
   const IGNORE_NAMES = new Set([
