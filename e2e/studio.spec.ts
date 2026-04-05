@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   dismissOnboarding,
-  dismissApiKeyModal,
+  _dismissApiKeyModal,
   ensureSession,
   switchToFreeMode,
 } from './helpers/studio-flow';

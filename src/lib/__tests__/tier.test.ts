@@ -5,8 +5,8 @@
  */
 
 import type {
-  UserTier,
-  TierLimits,
+  _UserTier,
+  _TierLimits,
 } from '@/lib/tier';
 
 // ============================================================

@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef } from "react";
-import { Database, Play, Clock, Table2, Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
+import { Database, Play, Clock, Table2, _Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 
 export interface DBConnection {
   id: string;
@@ -179,7 +179,7 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
 
 export default function DatabasePanel({
   connections,
-  onConnect,
+  _onConnect,
   onExecuteQuery,
   tables = [],
 }: DatabasePanelProps) {

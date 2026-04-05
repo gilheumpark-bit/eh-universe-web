@@ -1,5 +1,5 @@
 import { buildContinuityReport } from '../continuity-tracker';
-import type { ContinuityReport } from '../continuity-tracker';
+import type { _ContinuityReport } from '../continuity-tracker';
 import type { Character, EpisodeManuscript } from '@/lib/studio-types';
 
 // ============================================================

@@ -15,7 +15,7 @@ import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
-import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
+import { evaluateQuality, _getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
 import { getNarrativeDepth } from '@/lib/noa/lora-swap';
@@ -287,7 +287,7 @@ export function useStudioAI({
             }
           };
           updateCurrentSession({ config: updatedWorldSync });
-        } catch (e) {
+        } catch (_e) {
           // Sync fail is advisory, do not block pipeline
         }
       }

@@ -1,15 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { BookA, Search, Plus, Trash2, Edit2, Check, X, Sparkles } from 'lucide-react';
+import { BookA, Search, Plus, Trash2, Edit2, Check, X, _Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useWebFeatures } from '@/hooks/useWebFeatures';
 
 export function GlossaryPanel() {
   const { glossary, setGlossary, source } = useTranslator();
-  const web = useWebFeatures();
+  const _web = useWebFeatures();
   const [extracting, setExtracting] = useState(false);
 
   // AI 용어 자동 추출
-  const handleAutoExtract = useCallback(async () => {
+  const _handleAutoExtract = useCallback(async () => {
     if (!source?.trim() || extracting) return;
     setExtracting(true);
     try {

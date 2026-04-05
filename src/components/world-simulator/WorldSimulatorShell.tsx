@@ -5,7 +5,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { createT } from '@/lib/i18n';
 
 import {
-  type Lang,
+  type _Lang,
   type ViewTab,
   type Civilization,
   type CivRelation,

@@ -317,7 +317,7 @@ function _obfuscateKeySync(plain: string): string {
 // ── Unified encrypt/decrypt (async, with sync fallback) ──
 
 /** Encrypt: AES-GCM preferred, v3 XOR fallback */
-async function encryptKey(plain: string): Promise<string> {
+export async function encryptApiKey(plain: string): Promise<string> {
   if (!plain) return '';
   if (_isSubtleCryptoAvailable()) {
     try {
@@ -335,7 +335,7 @@ function obfuscateKey(plain: string): string {
 }
 
 /** Decrypt: detects version prefix and dispatches accordingly */
-async function decryptKey(stored: string): Promise<string> {
+export async function decryptApiKey(stored: string): Promise<string> {
   if (!stored) return '';
   // v4: AES-GCM
   if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
@@ -462,7 +462,7 @@ export async function getApiKeyAsync(providerId: ProviderId): Promise<string> {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
   const stored = localStorage.getItem(def.storageKey) || "";
-  const plain = await decryptKey(stored);
+  const plain = await decryptApiKey(stored);
   // Cache plaintext for sync getApiKey() access
   if (plain && stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
     _v4PlainCache.set(def.storageKey, plain);
@@ -502,7 +502,7 @@ export async function setApiKeyAsync(providerId: ProviderId, key: string): Promi
     window.dispatchEvent(new Event('noa-keys-changed'));
     return;
   }
-  const encrypted = await encryptKey(key);
+  const encrypted = await encryptApiKey(key);
   localStorage.setItem(def.storageKey, encrypted);
   localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
   // Populate sync cache if v4 was used

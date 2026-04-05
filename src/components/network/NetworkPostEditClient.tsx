@@ -96,7 +96,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
     setError(null);
 
     try {
-      const updated = await updatePost({
+      const _updated = await updatePost({
         postId: post.id,
         updaterId: user.uid,
         title: value.title,

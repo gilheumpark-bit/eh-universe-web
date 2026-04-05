@@ -92,7 +92,7 @@ export function useStudioSync({
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- projectsRef.current avoids stale closure
+   
   }, [accessToken, refreshAccessToken, setProjects, setUxError]);
 
   return {

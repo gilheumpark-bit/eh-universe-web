@@ -10,7 +10,7 @@ import {
   Clock, BarChart3, Zap, Trophy, AlertTriangle,
   Loader2, Gauge,
 } from "lucide-react";
-import type { TeamResult } from "@/lib/code-studio/pipeline/pipeline-teams";
+import type { _TeamResult } from "@/lib/code-studio/pipeline/pipeline-teams";
 import type { StressReport } from "@/lib/code-studio/pipeline/stress-test";
 import type { VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
 

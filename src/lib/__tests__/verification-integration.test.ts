@@ -7,11 +7,11 @@
 import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
 import type { BugReport } from '@/lib/code-studio/pipeline/bugfinder';
 import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
-import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
+import type { _Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
 import {
   runVerificationLoop,
-  type VerificationConfig,
-  type VerificationResult,
+  type _VerificationConfig,
+  type _VerificationResult,
 } from '@/lib/code-studio/pipeline/verification-loop';
 import {
   canTransition,
@@ -148,7 +148,7 @@ describe('Verification Integration', () => {
 
     test('failing code with fixable issues improves across rounds', async () => {
       const codeV1 = 'import { foo } from "bar";\nconst x = 1;\n';
-      const codeV2 = 'const x = 1;\n';
+      const _codeV2 = 'const x = 1;\n';
 
       // Round 1: score 60, one finding with fix
       runStaticPipeline

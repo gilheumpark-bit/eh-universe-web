@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { logger } from "@/lib/logger";
-import { netT } from "@/lib/network-translations";
+import { _netT } from "@/lib/network-translations";
 import { L4 } from "@/lib/i18n";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
 import { CommentSection } from "@/components/network/CommentSection";

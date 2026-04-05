@@ -24,12 +24,12 @@ const target = Math.min(100_000, Math.max(TESTS_PER_ROUND, parseInt(raw, 10) || 
 const repeatEach = Math.min(2000, Math.ceil(target / TESTS_PER_ROUND));
 const approx = repeatEach * TESTS_PER_ROUND;
 
-// eslint-disable-next-line no-console
+ 
 console.log(
   `[commercial-e2e-stress] target≈${target} → --repeat-each=${repeatEach} × ${TESTS_PER_ROUND} tests ≈ ${approx} invocations`,
 );
 if (repeatEach >= 100) {
-  // eslint-disable-next-line no-console
+   
   console.warn(
     "[commercial-e2e-stress] High repeat count: expect long wall time (build + next start + tests). Prefer CI sharding or smaller targets for inner loops.",
   );
@@ -42,7 +42,7 @@ const args = ["playwright", "test", SPEC, `--repeat-each=${repeatEach}`, "--repo
 // /api/chat is 30 req/min per IP — parallel workers × high repeat-each trips 429 on contract tests.
 if (repeatEach >= 8 && !userSetWorkers) {
   args.push("--workers=1");
-  // eslint-disable-next-line no-console
+   
   console.log("[commercial-e2e-stress] forcing --workers=1 to avoid /api/chat rate-limit flakes under repeat-each.");
 }
 args.push(...extraArgs);

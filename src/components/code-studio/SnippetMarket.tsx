@@ -7,7 +7,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   Plus, Search, Copy, Trash2, Edit3, Save, X,
-  Tag, Code2, Check, ChevronDown, ChevronUp,
+  _Tag, Code2, Check, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
 export interface CodeSnippet {

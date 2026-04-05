@@ -48,18 +48,20 @@ export async function createWebContainer(): Promise<WebContainerInstance> {
 
 async function bootRealContainer(): Promise<WebContainerInstance | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let api: any;
+  let WebContainerAPI: any = null;
   try {
-    // dynamic import 대신 globalThis 캐시 활용 — new Function() eval 위험 제거
-    const moduleName = "@webcontainer/api";
-    api = await import(/* webpackIgnore: true */ moduleName);
+    // eval() 위험성이 있는 동적 import() 대체: 글로벌 객체 주입(CDN 등) 혹은 정적 번들링만 허용.
+    // WebContainer는 브라우저 전용이므로 window 객체에서 검증.
+    if (typeof window !== "undefined" && "WebContainer" in window) {
+      WebContainerAPI = (window as unknown).WebContainer;
+    }
   } catch {
     return null;
   }
 
-  if (!api?.WebContainer?.boot) return null;
+  if (!WebContainerAPI?.boot) return null;
 
-  const container = await api.WebContainer.boot();
+  const container = await WebContainerAPI.boot();
   let disposed = false;
 
   return {
@@ -245,7 +247,7 @@ function createSimulatedContainer(): WebContainerInstance {
 function simulateCommand(
   command: string,
   fs: Map<string, string>,
-  isServerRunning: () => boolean,
+  _isServerRunning: () => boolean,
 ): SimProcess {
   const parts = command.trim().split(/\s+/);
   const cmd = parts[0] ?? "";

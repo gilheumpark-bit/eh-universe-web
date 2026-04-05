@@ -22,7 +22,7 @@ const REQUIRED_STATES = [
 ] as const;
 
 /** 5-State 분기 누락 검사 — 데이터 패칭 컴포넌트에서만 */
-export function scan5States(code: string, fileName: string = 'unknown'): FrontendGateFinding[] {
+export function scan5States(code: string, _fileName: string = 'unknown'): FrontendGateFinding[] {
   const findings: FrontendGateFinding[] = [];
 
   // 데이터 패칭 패턴이 있는지 (fetch, useQuery, axios, API 호출)
@@ -46,7 +46,7 @@ export function scan5States(code: string, fileName: string = 'unknown'): Fronten
 
 // ── Dead DOM Scanner ──
 
-interface DOMElement {
+interface _DOMElement {
   tag: string;
   line: number;
   hasOnClick: boolean;
@@ -57,7 +57,7 @@ interface DOMElement {
 }
 
 /** JSX에서 인터랙티브 요소 추출 + Dead DOM 감지 */
-export function scanDeadDOM(code: string, fileName: string = 'unknown'): FrontendGateFinding[] {
+export function scanDeadDOM(code: string, _fileName: string = 'unknown'): FrontendGateFinding[] {
   const findings: FrontendGateFinding[] = [];
   const lines = code.split('\n');
 

@@ -4,8 +4,8 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useMemo, useCallback } from 'react';
-import { GitCompare, CheckCircle, XCircle, AlertTriangle, Plus, Copy } from 'lucide-react';
+import { useState, _useMemo, useCallback } from 'react';
+import { GitCompare, CheckCircle, XCircle, AlertTriangle, Plus, _Copy } from 'lucide-react';
 import {
   auditMigration,
   type MigrationAuditResult,

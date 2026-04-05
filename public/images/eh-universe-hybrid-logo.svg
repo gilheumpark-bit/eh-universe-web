@@ -1,0 +1,22 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#F5F3EE"/>
+  <g transform="translate(0 12)">
+    <rect x="480" y="96" width="240" height="240" rx="58" fill="url(#badgeBg)"/>
+    <rect x="499" y="115" width="202" height="202" rx="42" fill="#F4EFE7" fill-opacity="0.82" stroke="#6A776B" stroke-width="4"/>
+    <ellipse cx="600" cy="214" rx="78" ry="34" transform="rotate(-22 600 214)" stroke="#758473" stroke-width="8"/>
+    <ellipse cx="602" cy="218" rx="71" ry="29" transform="rotate(16 602 218)" stroke="#D6C4A0" stroke-width="4" stroke-opacity="0.82"/>
+    <circle cx="600" cy="216" r="66" fill="#5C6B5E" stroke="#48574A" stroke-width="5"/>
+    <circle cx="655" cy="160" r="10" fill="#D6C4A0"/>
+    <circle cx="536" cy="146" r="4.5" fill="#71806F"/>
+    <circle cx="536" cy="300" r="3.5" fill="#8D9A88"/>
+    <text x="600" y="241" text-anchor="middle" fill="#F8F4ED" font-size="82" font-weight="700" font-family="Georgia, 'Times New Roman', serif" letter-spacing="-3">EH</text>
+  </g>
+  <text x="600" y="444" text-anchor="middle" fill="#1A1814" font-size="48" font-weight="700" font-family="Georgia, 'Times New Roman', serif" letter-spacing="8">EH UNIVERSE</text>
+  <text x="600" y="492" text-anchor="middle" fill="#7A7570" font-size="18" font-family="Georgia, 'Times New Roman', serif" letter-spacing="3">A NARRATIVE ENGINE THAT PREVENTS STORY COLLAPSE</text>
+  <defs>
+    <linearGradient id="badgeBg" x1="600" y1="96" x2="600" y2="336" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8F4ED"/>
+      <stop offset="1" stop-color="#E7DFD3"/>
+    </linearGradient>
+  </defs>
+</svg>

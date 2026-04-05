@@ -4,7 +4,7 @@
  * genre presets, and scoring functions.
  */
 
-import { buildGenrePreset, postProcessResponse, buildSystemInstruction } from '@/engine/pipeline';
+import { buildGenrePreset, postProcessResponse, _buildSystemInstruction } from '@/engine/pipeline';
 import { calculateEOSScore, calculateGrade, generateEngineReport } from '@/engine/scoring';
 import { GENRE_PRESETS } from '@/engine/genre-presets';
 import type { StoryConfig } from '@/lib/studio-types';
@@ -168,7 +168,7 @@ describe('GENRE_PRESETS', () => {
   });
 
   test('each preset has required fields', () => {
-    for (const [key, preset] of Object.entries(GENRE_PRESETS)) {
+    for (const [_key, preset] of Object.entries(GENRE_PRESETS)) {
       expect(preset.rules).toBeDefined();
       expect(preset.pacing).toBeDefined();
       expect(typeof preset.tensionBase).toBe('number');

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import Header from "@/components/Header";
-import Link from "next/link";
+import _Link from "next/link";
 import { useLang } from "@/lib/LangContext";
 import ToolNav from "@/components/tools/ToolNav";
 

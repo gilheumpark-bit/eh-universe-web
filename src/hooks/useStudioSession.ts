@@ -5,8 +5,8 @@
 
 import { useState, useCallback } from 'react';
 import type { AppLanguage, AppTab, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
-import { Genre } from '@/lib/studio-types';
-import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { _Genre } from '@/lib/studio-types';
+import { _INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { createT } from '@/lib/i18n';
 import { DEMO_PRESETS, buildDemoSession } from '@/lib/demo-presets';
 

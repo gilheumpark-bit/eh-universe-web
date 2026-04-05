@@ -55,7 +55,7 @@ interface Props {
 // PART 2 — Component
 // ============================================================
 
-export function InlineEditWidget({ selectedText, fullCode, language, onApply, onCancel, onUndo, canUndo }: Props) {
+export function InlineEditWidget({ selectedText, fullCode, _language, onApply, onCancel, onUndo, canUndo }: Props) {
   const [prompt, setPrompt] = useState("");
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
+ 
 /**
  * Unit tests for design-lint — all 14 rules + 4 bonus + utilities
  */
@@ -52,7 +52,7 @@ describe('Rule 2: RAW_TAILWIND_COLOR', () => {
   });
 
   it('catches text-red-600', () => {
-    const code = '<span className="text-red-600">Error</span>';
+    const code = '<span className="text-red-600">Something</span>';
     const result = runDesignLint(code);
     expect(result.issues.find(i => i.rule === 'RAW_TAILWIND_COLOR')).toBeDefined();
   });

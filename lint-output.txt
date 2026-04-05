@@ -1,51 +1,43 @@
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\image-gen\route.ts
-  48:79  warning  'referenceImageUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+> eh-universe-web@1.2.1 lint
+> eslint
+
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\coverage\lcov-report\block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\e2e\studio.spec.ts
+  4:3  warning  'dismissApiKeyModal' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\public\games\warp-gate\app.js
+  1616:12  warning  'formatRequirementValue' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1626:51  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:43  warning  'metrics' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  1775:52  warning  'systems' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+  2268:14  warning  'error' is defined but never used                                                         @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\scripts\e2e-commercial-stress.mjs
+  27:1  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  32:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  45:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\__tests__\studio-integration.test.ts
+    7:49  warning  'buildSystemInstruction' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+  171:17  warning  'key' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\chat\route.ts
+  192:9  warning  'tierLimits' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\local-proxy\route.ts
   11:7  warning  'MAX_REQUEST_SIZE' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\api\upload\route.ts
-  154:24  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
-  161:20  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
-  166:18  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
-  167:18  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
-  168:20  error    A `require()` style import is forbidden                                   @typescript-eslint/no-require-imports
-  172:42  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
-  172:59  warning  'reject' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  175:31  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
-  179:34  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
-  180:53  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx
-  120:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\page.tsx:120:7
-  118 |   useEffect(() => {
-  119 |     if (stellarWhite) {
-> 120 |       setSplashState("hide");
-      |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
-  121 |     } else {
-  122 |       queueMicrotask(() => setSplashState("show"));
-  123 |     }  react-hooks/set-state-in-effect
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\studio\StudioMainContent.tsx
+  7:10  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\studio\StudioRightPanel.tsx
     9:15  warning  'EngineReport' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
   168:3   warning  'writingMode' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
   168:16  warning  'showDashboard' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\galaxy-map\page.tsx
-  4:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\soundtrack\page.tsx
-    5:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                             @typescript-eslint/no-unused-vars
-  122:31  warning  The ref value 'audioRefs.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'audioRefs.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\tools\vessel\page.tsx
   5:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -55,6 +47,195 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\app\world\[id]\page.tsx
   8:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\ast-engine.ts
+  131:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  183:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\debug-adapter.ts
+   96:16  warning  'cdpHttpRequest' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   96:53  warning  'method' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+   96:69  warning  'params' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+  120:32  warning  'reject' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+  127:35  error    Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\dep-analyzer.ts
+   86:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\git-enhanced.ts
+  132:11  warning  'prompt' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\lint-engine.ts
+  68:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\lsp-adapter.ts
+  9:36  warning  'writeFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\multi-lang.ts
+  169:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\perf-engine.ts
+  25:34  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  76:11  warning  'output' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\sandbox.ts
+  7:56  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  9:20  warning  'spawn' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\search-engine.ts
+  8:23  warning  'statSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  9:26  warning  'extname' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\security-engine.ts
+   24:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\terminal-integration.ts
+  34:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\test-engine.ts
+   27:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\adapters\web-quality.ts
+  22:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\bin\cs.ts
+  63:29  warning  'readdirSync' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  64:15  warning  'join' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  64:21  warning  'extname' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  64:30  warning  'relative' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\audit.ts
+  7:37  warning  'statSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\bench.ts
+  7:16  warning  'basename' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\compliance.ts
+   8:10  warning  'runIpScan' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   9:10  warning  'runVerify' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  19:37  warning  'opts' is defined but never used. Allowed unused args must match /^_/u                    @typescript-eslint/no-unused-vars
+  73:7   error    'outdatedCount' is never reassigned. Use 'const' instead                                  prefer-const
+  73:7   warning  'outdatedCount' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\config.ts
+  8:44  warning  'KeyConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\generate.ts
+  13:27  warning  'PlanResult' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  15:10  warning  'TEAM_LEAD_SYSTEM_PROMPT' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  15:35  warning  'buildTeamLeadPrompt' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  15:56  warning  'parseVerdict' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  16:10  warning  'CROSS_JUDGE_SYSTEM_PROMPT' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  16:37  warning  'buildJudgePrompt' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  16:55  warning  'parseJudgeResult' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\init.ts
+  8:51  warning  'CSConfig' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  8:66  warning  'KeyConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\ip-scan.ts
+    9:37  warning  'statSync' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   10:16  warning  'extname' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  149:33  warning  'path' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+  202:9   warning  'infos' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\playground.ts
+  42:38  warning  'statSync' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  43:17  warning  'extname' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\serve.ts
+  7:10  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\stress.ts
+  8:10  warning  'extname' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\suggest.ts
+  7:16  warning  'extname' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\commands\verify.ts
+   17:38  error    A `require()` style import is forbidden                                           @typescript-eslint/no-require-imports
+   69:10  warning  'detectLanguage' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   95:11  warning  'VerifyResult' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  274:29  error    Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\ai-bridge.ts
+    8:10  warning  'routeTask' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   54:28  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+   68:28  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+   81:28  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+   95:28  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  109:28  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  215:32  error    A `require()` style import is forbidden                                      @typescript-eslint/no-require-imports
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\ast-bridge.ts
+  120:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\cfg-engine.ts
+  253:14  warning  'func' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\data-flow.ts
+  167:13  warning  'readFileSync' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  167:40  warning  'statSync' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  168:19  warning  'extname' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\deep-verify.ts
+  141:25  warning  'bracketDepth' is assigned a value but never used. Allowed unused vars must match /^_/u                              @typescript-eslint/no-unused-vars
+  263:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  455:41  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  456:27  warning  'extname' is assigned a value but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
+  456:39  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\pipeline-bridge.ts
+   29:13   warning  'runESLint' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   71:37   warning  'language' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+   77:79   error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+   85:104  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  100:39   warning  'language' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+  177:78   error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  211:103  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  232:43   warning  'language' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+  238:124  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  240:93   error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  243:112  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  258:48   warning  'language' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+  266:94   error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  267:74   error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  295:50   warning  'language' is assigned a value but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\plugin-system.ts
+    7:62  warning  'readdirSync' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   44:10  warning  'getPluginDir' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  163:69  error    Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\reference-db.ts
+  7:62  warning  'readdirSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\style-learning.ts
+  57:56  error  'kebabCount' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\core\task-runner.ts
+   32:25  warning  'cmd' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+  114:15  error    Unexpected any. Specify a different type                                                                   @typescript-eslint/no-explicit-any
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\cli\formatters\receipt.ts
+  7:10  warning  'createHash' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\__tests__\CodeStudioEditor.test.tsx
   7:10  warning  'render' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -73,32 +254,84 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\__tests__\WelcomeScreen.test.tsx
   5:18  warning  'screen' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\AgentPanel.tsx
+  317:6  warning  React Hook useCallback has a missing dependency: 'agentPreset'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  439:6  warning  React Hook useCallback has a missing dependency: 'code'. Either include it or remove the dependency array         react-hooks/exhaustive-deps
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\CanvasPanel.tsx
   8:62  warning  'Move' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ChatPanel.tsx
+  240:34  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `onTerminalCommand`, but the source dependencies were [input, chat]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ChatPanel.tsx:240:34
+  238 |   }, [renameValue]);
+  239 |
+> 240 |   const handleSend = useCallback(async () => {
+      |                                  ^^^^^^^^^^^^^
+> 241 |     const text = input.trim();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 242 |     if (!text || chat.isStreaming) return;
+      ??      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 324 |     await chat.sendMessage(presetHint ? `${text}${presetHint}` : text);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 325 |   }, [input, chat]);
+      | ^^^^ Could not preserve existing manual memoization
+  326 |
+  327 |   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  328 |     const value = e.target.value;  react-hooks/preserve-manual-memoization
+  240:34  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `onFileAction`, but the source dependencies were [input, chat]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ChatPanel.tsx:240:34
+  238 |   }, [renameValue]);
+  239 |
+> 240 |   const handleSend = useCallback(async () => {
+      |                                  ^^^^^^^^^^^^^
+> 241 |     const text = input.trim();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 242 |     if (!text || chat.isStreaming) return;
+      ??      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 324 |     await chat.sendMessage(presetHint ? `${text}${presetHint}` : text);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 325 |   }, [input, chat]);
+      | ^^^^ Could not preserve existing manual memoization
+  326 |
+  327 |   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  328 |     const value = e.target.value;       react-hooks/preserve-manual-memoization
+  325:6   warning  React Hook useCallback has missing dependencies: 'onFileAction' and 'onTerminalCommand'. Either include them or remove the dependency array. If 'onTerminalCommand' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\CodeStudioEditor.tsx
    14:10  warning  'detectLanguage' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
-  134:20  warning  'isMobile' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
-  136:32  warning  'onDiffAccept' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
-  145:18  warning  'onSaveToast' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
-  222:9   warning  'navigateToLine' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\CodeStudioPanelManager.tsx
-   19:27  warning  'PanelGroup' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
-   19:39  warning  'PanelDef' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
-   20:10  warning  'PANEL_REGISTRY' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-   20:26  warning  'getPanelLabel' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-   20:41  warning  'getGroupLabel' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-  229:34  warning  'lang' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-  311:46  warning  'instruction' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\CodeStudioShell.tsx
-  21:28  warning  'ParsedError' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  139:20  warning  'isMobile' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  141:32  warning  'onDiffAccept' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  150:18  warning  'onSaveToast' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  257:9   warning  'navigateToLine' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\DatabasePanel.tsx
-    8:10  warning  'Database' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-    8:41  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-  179:3   warning  'onConnect' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   11:41  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  182:3   warning  'onConnect' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\DebugPanel.tsx
+  127:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\DebugPanel.tsx:127:5
+  125 |   // Refresh breakpoints on mount and periodically
+  126 |   useEffect(() => {
+> 127 |     setBps(getBreakpoints());
+      |     ^^^^^^ Avoid calling setState() directly within an effect
+  128 |     const interval = setInterval(() => {
+  129 |       setBps(getBreakpoints());
+  130 |     }, 2000);  react-hooks/set-state-in-effect
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\DiffEditorPanel.tsx
   71:55  warning  'language' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
@@ -110,34 +343,21 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\GitPanel.tsx
    12:3   warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
    28:10  warning  'generateCommitMessage' is defined but never used. Allowed unused vars must match /^_/u                              @typescript-eslint/no-unused-vars
-  384:9   warning  'ko' is assigned a value but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
-  400:10  warning  'gitStatusData' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+   34:18  warning  'engineGetBranches' is defined but never used. Allowed unused vars must match /^_/u                                  @typescript-eslint/no-unused-vars
+   35:13  warning  'engineGetLog' is defined but never used. Allowed unused vars must match /^_/u                                       @typescript-eslint/no-unused-vars
+  399:9   warning  'ko' is assigned a value but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
+  415:10  warning  'gitStatusData' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\InlineEditWidget.tsx
-  57:60  warning  'language' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  58:60  warning  'language' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MergeConflictEditor.tsx
   7:20  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
   8:20  warning  'Check' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MultiTerminal.tsx
-   8:45  warning  'Pencil' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
-  41:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MultiTerminal.tsx:41:5
-  39 |     if (didLocalizeTabs.current) return;
-  40 |     didLocalizeTabs.current = true;
-> 41 |     setTabs([{ id: "term-1", name: `${t.termShellLabel} 1` }]);
-     |     ^^^^^^^ Avoid calling setState() directly within an effect
-  42 |   }, [t.termShellLabel]);
-  43 |
-  44 |   const addTab = useCallback(() => {  react-hooks/set-state-in-effect
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\MigrationAuditPanel.tsx
+  7:20  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  8:65  warning  'Copy' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\PreviewNetworkTab.tsx
   7:29  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -145,12 +365,12 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ProgressDashboard.tsx
   13:15  warning  'TeamResult' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ProjectSpecForm.tsx
-  7:33  warning  'useMemo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ProjectSwitcher.tsx
   8:64  warning  'X' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
   8:67  warning  'Check' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\QuickVerify.tsx
+  21:58  warning  'onClose' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\RecentFiles.tsx
   3:10  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -159,27 +379,14 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ReviewCenter.tsx
   10:16  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\RhythmPanel.tsx
+  36:9  warning  'total' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SettingsPanel.tsx
-  116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 123) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
-  116:9  warning  The 'onChange' logical expression could make the dependencies of useCallback Hook (at line 128) change on every render. To fix this, wrap the initialization of 'onChange' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  10:25  warning  'getCodingMode' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SplitTerminal.tsx
-  32:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SplitTerminal.tsx:32:5
-  30 |     if (didLocalize.current) return;
-  31 |     didLocalize.current = true;
-> 32 |     setPanes([{ id: "t1", name: `${t.termShellLabel} 1` }]);
-     |     ^^^^^^^^ Avoid calling setState() directly within an effect
-  33 |   }, [t.termShellLabel]);
-  34 |
-  35 |   const addPane = useCallback(() => {  react-hooks/set-state-in-effect
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SnippetMarket.tsx
+  10:3  warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\SymbolPalette.tsx
   8:10  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -187,47 +394,25 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\Toolbar.tsx
   7:39  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\Tooltip.tsx
-  14:7  warning  'OFFSET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\code-studio\ui\Dropdown.tsx
+  131:9   warning  Elements with the ARIA role "combobox" must have the following attributes defined: aria-controls,aria-expanded  jsx-a11y/role-has-required-aria-props
+  171:30  warning  'idx' is defined but never used. Allowed unused args must match /^_/u                                           @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\BookmarkButton.tsx
-  84:6  warning  React Hook useCallback has a missing dependency: 'lang'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\home\UnifiedSettingsBar.tsx
+  43:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\NetworkPostEditClient.tsx
-  98:13  warning  'updated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  99:13  warning  'updated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\network\PlanetDetailClient.tsx
   9:10  warning  'netT' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\AuthorDashboard.tsx
-  96:57  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\AuthorDashboard.tsx:96:57
-  94 |
-  95 |   useEffect(() => {
-> 96 |     if (!flags.EPISODE_COMPARE && subTab === 'compare') setSubTab('overview');
-     |                                                         ^^^^^^^^^ Avoid calling setState() directly within an effect
-  97 |   }, [flags.EPISODE_COMPARE, subTab]);
-  98 |
-  99 |   const subTabEntries = useMemo(() => {  react-hooks/set-state-in-effect
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\ChatMessage.tsx
+  4:21  warning  'Copy' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\EpisodeCompare.tsx
    10:10  warning  'L4' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  454:38  warning  'i' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\MultiKeyPanel.tsx
-  5:8   warning  'Plus' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
-  7:27  warning  'Settings2' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\OnboardingGuide.tsx
-    6:10  warning  'createT' is defined but never used. Allowed unused vars must match /^_/u                                         @typescript-eslint/no-unused-vars
-  131:6   warning  React Hook useCallback has an unnecessary dependency: 'onDemo'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  458:38  warning  'i' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\ResourceView.tsx
   30:83  warning  'onError' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
@@ -236,9 +421,7 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
    13:52  warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
    14:15  warning  'Film' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
    20:31  warning  'adjustVoiceForEmotion' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
-  254:9   warning  'isKO' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
-  317:3   warning  'language' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
-  578:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  582:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\SceneTimeline.tsx
    12:31  warning  'Merge' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
@@ -250,18 +433,51 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   362:9   warning  'allWarnings' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
   483:15  warning  Expected an assignment or function call and instead saw an expression                   @typescript-eslint/no-unused-expressions
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\SettingsView.tsx
+  17:53  warning  'getNarrativeDepth' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\StudioOverlayManager.tsx
+  69:40  warning  'hostedProviders' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\StudioSidebar.tsx
   13:28  warning  'CloudOff' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\StudioToasts.tsx
-  175:58  warning  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  176:58  warning  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\StylePreview.tsx
   10:10  warning  'L4' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\TranslationPanel.tsx
+  46:10  warning  'multiLangTargets' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u     @typescript-eslint/no-unused-vars
+  46:28  warning  'setMultiLangTargets' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+  81:29  warning  'translateBatch' is assigned a value but never used. Allowed unused vars must match /^_/u                                  @typescript-eslint/no-unused-vars
+  81:55  warning  'batchProgress' is assigned a value but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
+
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\tabs\ManuscriptTab.tsx
-  140:26  warning  'si' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  140:30  warning  'bi' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   39:39  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `language`, but the source dependencies were [config.manuscripts, config.characters]. Inferred different dependency than source.
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\studio\tabs\ManuscriptTab.tsx:39:39
+  37 |
+  38 |   // ?꾩옱 ?좏깮???먰뵾?뚮뱶 ?먭퀬?먯꽌 ?λ㈃ ?뚯떛
+> 39 |   const handleSceneMode = useCallback((mode: 'radio' | 'visual' | 'edit') => {
+     |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |     const manuscripts = config.manuscripts ?? [];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |     const latestMs = manuscripts[manuscripts.length - 1];
+     ??     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |     setSceneMode(mode);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |   }, [config.manuscripts, config.characters]);
+     | ^^^^ Could not preserve existing manual memoization
+  51 |
+  52 |   const voiceMappings = useMemo(
+  53 |     () => generateVoiceMappings(config.characters ?? []),  react-hooks/preserve-manual-memoization
+   50:6   warning  React Hook useCallback has a missing dependency: 'language'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  143:26  warning  'si' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  143:30  warning  'bi' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\tools\ToolNav.tsx
   10:10  warning  'TOOL_LINKS' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -269,12 +485,20 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\translator\TranslatorStudioApp.tsx
   179:5  warning  React Hook useCallback has an unnecessary dependency: 'apiKeyRefresh'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
   187:6  warning  React Hook useMemo has an unnecessary dependency: 'apiKeyRefresh'. Either exclude it or remove the dependency array      react-hooks/exhaustive-deps
+  189:9  warning  'studioLanguage' is assigned a value but never used. Allowed unused vars must match /^_/u                                @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\translator\panels\GlossaryPanel.tsx
+   2:56  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   8:9   warning  'web' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  12:9   warning  'handleAutoExtract' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\ui\StatusIndicator.tsx
+   8:36  warning  'Cpu' is defined but never used. Allowed unused vars must match /^_/u                                                 @typescript-eslint/no-unused-vars
+  12:10  warning  'storagePercent' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+  13:10  warning  'storageLabel' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u    @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\world-simulator\WorldSimulatorShell.tsx
   8:8  warning  'Lang' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\components\world-simulator\types.ts
-  286:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\engine\__tests__\auto-pipeline.test.ts
   392:11  warning  'exec' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -293,15 +517,13 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   14:3  warning  'ArcPhase' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\engine\pipeline.ts
-    2:57  warning  'PublishPlatform' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
-    2:74  warning  'PLATFORM_PRESETS' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
-    2:92  warning  'PRISM_MODE_PRESETS' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  658:14  warning  'e' is defined but never used                                                         @typescript-eslint/no-unused-vars
-  675:13  warning  'e' is defined but never used                                                         @typescript-eslint/no-unused-vars
+  2:57  warning  'PublishPlatform' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  2:74  warning  'PLATFORM_PRESETS' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  2:92  warning  'PRISM_MODE_PRESETS' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\engine\scene-parser.ts
-  322:7  warning  'LOCATION_EXTRACT' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  624:7  warning  'currentUtterance' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  323:7  warning  'LOCATION_EXTRACT' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  625:7  warning  'currentUtterance' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\__tests__\useCodeStudioComposer.test.tsx
    13:8   warning  'ComposerChange' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -336,29 +558,10 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   404:26  warning  'setWsSharedMemory' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
   431:11  warning  'accumulated' is assigned a value but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useFeatureFlags.ts
-  14:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useFeatureFlags.ts:14:5
-  12 |
-  13 |   useEffect(() => {
-> 14 |     setFlags(getAllFlags());
-     |     ^^^^^^^^ Avoid calling setState() directly within an effect
-  15 |     const onStorage = (e: StorageEvent) => {
-  16 |       if (e.key?.startsWith("ff_")) setFlags(getAllFlags());
-  17 |     };  react-hooks/set-state-in-effect
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useStudioAI.ts
    18:27  warning  'getDefaultThresholds' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                      @typescript-eslint/no-unused-vars
-  247:98  warning  'e' is defined but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
-  284:18  warning  'e' is defined but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
-  389:6   warning  React Hook useCallback has missing dependencies: 'advancedSettings' and 'onPipelineUpdate'. Either include them or remove the dependency array. If 'onPipelineUpdate' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  290:18  warning  'e' is defined but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  395:6   warning  React Hook useCallback has missing dependencies: 'advancedSettings' and 'onPipelineUpdate'. Either include them or remove the dependency array. If 'onPipelineUpdate' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useStudioExport.ts
   371:6  warning  React Hook useCallback has unnecessary dependencies: 'setCurrentProjectId' and 'setProjects'. Either exclude them or remove the dependency array  react-hooks/exhaustive-deps
@@ -367,9 +570,11 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   8:10  warning  'Genre' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
   9:10  warning  'INITIAL_CONFIG' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useStudioWritingMode.ts
-  50:7  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/purity')
-  53:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useStudioSync.ts
+  95:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\hooks\useWritingChat.ts
+  117:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\AuthContext.tsx
   4:21  warning  'Auth' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -395,33 +600,45 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\ai\ai-features.ts
    69:10  warning  'safeParseJSON' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
-  449:7   warning  'TASK_COST_MAP' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  481:7   warning  'TASK_COST_MAP' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\ai\autopilot.ts
   5:22  warning  'getApiKey' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
   5:33  warning  'getActiveProvider' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\editor\auto-import.ts
-  27:7  warning  'IMPORT_REGEX' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\editor\editor-features.ts
-  454:7  warning  Unused eslint-disable directive (no problems were reported from 'no-bitwise')
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\editor\replace-engine.ts
-  72:9  warning  're' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\core\project-spec-bridge.ts
+  3:31  warning  'DESIGN_PRESETS' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  3:47  warning  'DESIGN_FALLBACK' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\features\sandbox.ts
   5:15  warning  'FileNode' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\features\trend-analyzer.ts
-  92:9  warning  'avgRecent' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\features\webcontainer.ts
-  247:3  warning  'isServerRunning' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   56:36  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  250:3   warning  'isServerRunning' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\harness\dynamic-executor.ts
+  13:15  warning  'GateResult' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  48:3   warning  'entryFunction' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\__tests__\design-lint.test.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-require-imports')
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\dead-code.ts
    44:25  warning  'braceDepth' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
   174:11  warning  'lines' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\design-lint.ts
+  40:7  warning  'SEMANTIC_BORDER' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  63:7  warning  'HEX_IN_JSX' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\frontend-gate1.ts
+  25:43  warning  'fileName' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  49:11  warning  'DOMElement' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  60:43  warning  'fileName' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\migration-audit.ts
+  40:7  warning  'FUNC_PATTERNS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\pipeline-utils.ts
   7:24  warning  'Severity' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -429,6 +646,10 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\pipeline.ts
   505:3  warning  'code' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
   753:3  warning  'category' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\code-studio\pipeline\quality-checklist.ts
+  63:40  warning  'fileName' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+  65:9   warning  'totalLines' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\multi-key-bridge.ts
    14:8  warning  'MultiKeyConfig' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
@@ -468,32 +689,6 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
   16:27  warning  'SettlementRecord' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
   17:3   warning  'REPORT_TYPE_TO_BOARD_TYPE' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
 
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\stripe.ts
-  4:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\studio-ai-backend-label.ts
-  56:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\studio-ai-backend-label.ts:56:5
-  54 |
-  55 |   useEffect(() => {
-> 56 |     refresh();
-     |     ^^^^^^^ Avoid calling setState() directly within an effect
-  57 |     const onKeys = () => refresh();
-  58 |     window.addEventListener('noa-keys-changed', onKeys);
-  59 |     window.addEventListener('storage', onKeys);  react-hooks/set-state-in-effect
-
-C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\supabase.ts
-  18:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  68:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  89:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\tools\noa-tower\types.ts
   1:15  warning  'Lang' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -504,6 +699,9 @@ C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\
 C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\visual-defaults.ts
   8:3  warning  'VisualShotType' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-??215 problems (19 errors, 196 warnings)
-  0 errors and 4 warnings potentially fixable with the `--fix` option.
+C:\Users\sung4\OneDrive\諛뷀깢 ?붾㈃\吏곷컯援щ━\eh-universe-web\src\lib\web-features\embed.ts
+  46:9  warning  'url' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+??337 problems (58 errors, 279 warnings)
+  1 error and 7 warnings potentially fixable with the `--fix` option.
 

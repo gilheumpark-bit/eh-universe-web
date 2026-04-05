@@ -4,7 +4,6 @@
 // PART 1 — Imports & Types
 // ============================================================
 import { type RefObject } from 'react';
-import { useState } from 'react';
 import {
   Menu, X,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
@@ -29,6 +28,7 @@ import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
 import { ShortcutsModal } from '@/components/studio/StudioModals';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';
+import { useStudioUIStore } from '@/store/studio-ui-store';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -42,31 +42,11 @@ type HostedAiAvailability = Record<string, boolean>;
 // PART 2 — Props Interface
 // ============================================================
 export interface StudioMainContentProps {
-  // Layout state
-  focusMode: boolean;
-  setFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // Theme
+  // Layout state  // Theme
   themeLevel: number;
   toggleTheme: () => void;
 
-  // Search
-  showSearch: boolean;
-  setShowSearch: React.Dispatch<React.SetStateAction<boolean>>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  showShortcuts: boolean;
-  setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // Global search
-  showGlobalSearch: boolean;
-  setShowGlobalSearch: React.Dispatch<React.SetStateAction<boolean>>;
-  globalSearchQuery: string;
-  setGlobalSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-
-  // Tab
+  // Search  // Global search  // Tab
   activeTab: AppTab;
   handleTabChange: (tab: AppTab) => void;
   setActiveTab: (tab: AppTab) => void;
@@ -86,20 +66,7 @@ export interface StudioMainContentProps {
   setConfig: (config: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   updateCurrentSession: (patch: Partial<ChatSession>) => void;
 
-  // Writing
-  writingMode: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setWritingMode: React.Dispatch<React.SetStateAction<any>>;
-  editDraft: string;
-  setEditDraft: React.Dispatch<React.SetStateAction<string>>;
-  editDraftRef: RefObject<HTMLTextAreaElement | null>;
-  canvasContent: string;
-  setCanvasContent: React.Dispatch<React.SetStateAction<string>>;
-  canvasPass: number;
-  setCanvasPass: React.Dispatch<React.SetStateAction<number>>;
-  promptDirective: string;
-  setPromptDirective: React.Dispatch<React.SetStateAction<string>>;
-  advancedSettings: AdvancedWritingSettings;
+  // Writing  // eslint-disable-next-line @typescript-eslint/no-explicit-any  editDraftRef: RefObject<HTMLTextAreaElement | null>;  advancedSettings: AdvancedWritingSettings;
   setAdvancedSettings: React.Dispatch<React.SetStateAction<AdvancedWritingSettings>>;
 
   // AI
@@ -118,19 +85,11 @@ export interface StudioMainContentProps {
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
 
-  // Display state
-  showDashboard: boolean;
-  setShowDashboard: React.Dispatch<React.SetStateAction<boolean>>;
-  rightPanelOpen: boolean;
-  setRightPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  showAiLock: boolean;
+  // Display state  showAiLock: boolean;
   hasAiAccess: boolean;
   aiCapabilitiesLoaded: boolean;
   bannerDismissed: boolean;
-  setBannerDismissed: React.Dispatch<React.SetStateAction<boolean>>;
-  showApiKeyModal: boolean;
-  setShowApiKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
-  showQuickStartLock: boolean;
+  setBannerDismissed: React.Dispatch<React.SetStateAction<boolean>>;  showQuickStartLock: boolean;
   hostedProviders: HostedAiAvailability;
 
   // Save
@@ -198,31 +157,33 @@ export interface StudioMainContentProps {
 // PART 3 — Main Content Component (header + tabs + writing input)
 // ============================================================
 export default function StudioMainContent(props: StudioMainContentProps) {
+
+  const { } = useStudioUIStore();
+
   const {
-  focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
+     
   themeLevel, toggleTheme,
-  showSearch, setShowSearch, searchQuery, setSearchQuery,
-    showShortcuts, setShowShortcuts,
-    showGlobalSearch, setShowGlobalSearch, globalSearchQuery, setGlobalSearchQuery,
+     
+     
+       
     activeTab, handleTabChange, setActiveTab,
     currentSession, currentSessionId, currentProjectId, currentProject,
     sessions, projects, setCurrentSessionId, setCurrentProjectId,
     hydrated,
     setConfig, updateCurrentSession,
-    writingMode, setWritingMode,
-    editDraft, setEditDraft, editDraftRef,
-    canvasContent, setCanvasContent, canvasPass, setCanvasPass,
-    promptDirective, setPromptDirective,
+     
+      editDraftRef,
+       
+     
     advancedSettings, setAdvancedSettings,
     isGenerating, lastReport, directorReport,
     doHandleSend, handleCancel, handleRegenerate,
     handleVersionSwitch, handleTypoFix, hfcpState,
     input, setInput,
-    showDashboard, setShowDashboard,
-    rightPanelOpen, setRightPanelOpen,
-    showAiLock, hasAiAccess, aiCapabilitiesLoaded,
+     
+     showAiLock, hasAiAccess, aiCapabilitiesLoaded,
     bannerDismissed, setBannerDismissed,
-    setShowApiKeyModal,
+    
     showQuickStartLock, hostedProviders,
     saveFlash, triggerSave,
     setUxError, messagesEndRef, filteredMessages, searchMatchesEditDraft,
@@ -238,8 +199,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     versionedBackups, doRestoreVersionedBackup, refreshBackupList,
     clearAllSessions,
     suggestions, setSuggestions, pipelineResult,
-    children,
-  } = props;
+    children, } = props;
 
   const t = createT(language);
 

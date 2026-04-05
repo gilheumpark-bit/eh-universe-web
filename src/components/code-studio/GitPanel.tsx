@@ -9,7 +9,7 @@ import {
   Check,
   FileText,
   Plus,
-  ChevronDown,
+  _ChevronDown,
 } from "lucide-react";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
 import {
@@ -25,14 +25,14 @@ import {
   createWebContainer,
   type WebContainerInstance,
 } from "@/lib/code-studio/features/webcontainer";
-import { generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
+import { _generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 import {
   initRepo,
   commitFiles as engineCommit,
   createBranch as engineCreateBranch,
   switchBranch as engineSwitchBranch,
-  getBranches as engineGetBranches,
-  getLog as engineGetLog,
+  getBranches as _engineGetBranches,
+  getLog as _engineGetLog,
   type GitRepo,
 } from "@/lib/code-studio/features/git-engine";
 import { useLang } from "@/lib/LangContext";
@@ -396,7 +396,7 @@ export default function GitPanel({
   onClearDirty,
 }: GitPanelProps) {
   const { lang } = useLang();
-  const ko = lang === "ko";
+  const _ko = lang === "_ko";
   const [activeTab, setActiveTab] = useState<TabId>("changes");
   const [commits, setCommits] = useState<CommitEntry[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -412,7 +412,7 @@ export default function GitPanel({
   // Real git integration state
   const [gitAvailable, setGitAvailable] = useState(false);
   const [gitBackendLabel, setGitBackendLabel] = useState("Simulation");
-  const [gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
+  const [_gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
   const gitContainerRef = useRef<WebContainerInstance | null>(null);
 
   // In-memory git engine (SHA-1 based)

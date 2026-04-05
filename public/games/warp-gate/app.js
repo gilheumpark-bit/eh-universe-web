@@ -1613,7 +1613,7 @@
     }
   }
 
-  function formatRequirementValue(value) {
+  function _formatRequirementValue(value) {
     if (typeof value === "number") {
       if (value >= 1000) {
         return String(Math.round(value));
@@ -1623,7 +1623,7 @@
     return String(value);
   }
 
-  function buildCampaignChecks(campaign, metrics, systems) {
+  function buildCampaignChecks(campaign, metrics, _systems) {
     const requirements = campaign.requirements || {};
     const checks = [];
     const situation = activeSituation();
@@ -1772,7 +1772,7 @@
     };
   }
 
-  function applyCampaignSuccess(campaign, metrics, systems) {
+  function applyCampaignSuccess(campaign, _metrics, _systems) {
     const firstClear = !state.completedCampaignIds.includes(campaign.id);
     if (firstClear) {
       state.completedCampaignIds.push(campaign.id);
@@ -2265,7 +2265,7 @@
         return null;
       }
       return normalizeState(JSON.parse(raw));
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

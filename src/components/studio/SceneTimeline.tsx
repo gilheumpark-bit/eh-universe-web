@@ -9,8 +9,8 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
-  Play, GripVertical, Trash2, Merge, Split, AlertTriangle,
-  Eye, RotateCcw, Save, Wand2, ChevronDown, ChevronRight,
+  Play, GripVertical, Trash2, _Merge, _Split, AlertTriangle,
+  _Eye, RotateCcw, Save, _Wand2, ChevronDown, ChevronRight,
 } from "lucide-react";
 import type { ParsedScene, SceneBeat, BeatType } from "@/engine/scene-parser";
 import type { AppLanguage } from "@/lib/studio-types";
@@ -128,8 +128,8 @@ function detectTimelineWarnings(scenes: ParsedScene[]): TimelineWarning[] {
 
 function BeatBlock({
   beat,
-  sceneIndex,
-  beatIndex,
+  _sceneIndex,
+  _beatIndex,
   isSelected,
   warning,
   onSelect,
@@ -359,7 +359,7 @@ export default function SceneTimeline({
   const [undoStack, setUndoStack] = useState<ParsedScene[][]>([]);
 
   const timelineWarnings = useMemo(() => detectTimelineWarnings(scenes), [scenes]);
-  const allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
+  const _allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
 
   // Undo 지원
   const pushUndo = useCallback(() => {

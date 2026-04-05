@@ -317,6 +317,88 @@ export default function WritingTabInline(props: Props) {
                 />
               </div>
             )}
+
+            {writingMode === 'canvas' && (
+              <div className="flex-1 space-y-6 flex flex-col items-center justify-center p-8 text-center bg-bg-secondary/20 border border-border rounded-xl">
+                <div className="w-16 h-16 rounded-full bg-accent-green/10 flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-accent-green" />
+                </div>
+                <h3 className="text-xl font-bold text-text-primary">3-Step Canvas</h3>
+                <p className="text-text-secondary text-sm max-w-md">
+                  {isKO ? '캔버스 모드에서는 스토리보드, 장면 뼈대, 세부 묘사를 3단계에 걸쳐 시각적으로 작성할 수 있습니다.' : 'In Canvas Mode, you can visually write storyboards, scene outlines, and detailed descriptions in 3 steps.'}
+                </p>
+                <div className="w-full max-w-2xl mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-bold text-text-tertiary uppercase tracking-wider">Pass {props.canvasPass}</span>
+                  </div>
+                  <textarea
+                    value={props.canvasContent}
+                    onChange={(e) => props.setCanvasContent(e.target.value)}
+                    className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none transition-all resize-none shadow-inner"
+                    placeholder={isKO ? '여기에 캔버스 내용을 작성하세요...' : 'Write your canvas content here...'}
+                  />
+                </div>
+              </div>
+            )}
+
+            {writingMode === 'refine' && (
+              <div className="flex-1 space-y-6 flex flex-col items-center justify-center p-8 text-center bg-bg-secondary/20 border border-border rounded-xl">
+                <div className="w-16 h-16 rounded-full bg-accent-blue/10 flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-accent-blue animate-pulse" />
+                </div>
+                <h3 className="text-xl font-bold text-text-primary">Auto Refine</h3>
+                <p className="text-text-secondary text-sm max-w-md">
+                  {isKO ? '강력한 윤문 엔진이 초안을 기반으로 최대 30%까지 품질을 자동 개선합니다.' : 'A powerful refinement engine automatically improves your draft quality by up to 30%.'}
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center mt-6">
+                  <button className="px-6 py-3 rounded-xl bg-accent-blue text-bg-primary font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+                    {isKO ? '품질 개선 실행' : 'Run Refinement'}
+                  </button>
+                  <button className="px-6 py-3 rounded-xl border border-border text-text-secondary hover:text-text-primary hover:border-text-primary transition-all">
+                    {isKO ? '옵션 설정' : 'Settings'}
+                  </button>
+                </div>
+                {props.lastReport && (
+                  <div className="mt-8 p-4 bg-bg-primary border border-border rounded-lg text-left w-full max-w-2xl text-sm">
+                    <strong className="text-text-primary block mb-2">{isKO ? '최근 리포트' : 'Last Report'}</strong>
+                    <pre className="text-[10px] text-text-secondary overflow-auto whitespace-pre-wrap font-mono">
+                      {JSON.stringify(props.lastReport, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {writingMode === 'advanced' && (
+              <div className="flex-1 space-y-6 flex flex-col p-8 bg-bg-secondary/20 border border-border rounded-xl">
+                <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
+                  <Key className="w-5 h-5 text-accent-red" />
+                  Advanced Mode
+                </h3>
+                <p className="text-text-secondary text-sm">
+                  {isKO ? '내부 프롬프트 지시어, 에이전트 파라미터 및 원시 컨텍스트를 제어합니다.' : 'Control internal prompt directives, agent parameters, and raw context.'}
+                </p>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-bold text-text-tertiary uppercase tracking-wider mb-2">Prompt Directive</label>
+                    <textarea
+                      value={props.promptDirective}
+                      onChange={(e) => props.setPromptDirective(e.target.value)}
+                      className="w-full bg-bg-primary border border-border rounded-xl p-4 text-sm font-mono text-text-primary focus:border-accent-red outline-none transition-all shadow-inner h-32 resize-none"
+                      placeholder={isKO ? '컨텍스트 프롬프트를 직렬로 오버라이드 합니다...' : 'Override context prompt in sequence...'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-text-tertiary uppercase tracking-wider mb-2">Internal Payload State</label>
+                    <div className="bg-bg-primary border border-border rounded-xl p-4 h-48 overflow-auto">
+                      <pre className="text-[10px] text-text-secondary font-mono">
+                        {JSON.stringify(props.advancedSettings || {}, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div ref={messagesEndRef} className="h-32" />
         </div>

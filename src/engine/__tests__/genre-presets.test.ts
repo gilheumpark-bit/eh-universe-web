@@ -19,7 +19,7 @@ describe('GENRE_PRESETS', () => {
   });
 
   it('all presets have required fields', () => {
-    for (const [key, preset] of Object.entries(GENRE_PRESETS)) {
+    for (const [_key, preset] of Object.entries(GENRE_PRESETS)) {
       expect(preset.rules).toBeTruthy();
       expect(preset.pacing).toBeTruthy();
       expect(typeof preset.tensionBase).toBe('number');

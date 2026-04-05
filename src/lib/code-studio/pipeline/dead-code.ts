@@ -171,7 +171,7 @@ function findUnusedExports(
   for (const file of allFiles) {
     const exportRe = /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g;
     let m: RegExpExecArray | null;
-    const lines = file.content.split('\n');
+    const _lines = file.content.split('\n');
     while ((m = exportRe.exec(file.content)) !== null) {
       const sym = m[1];
       if (!allImportedSymbols.has(sym) && sym !== 'default') {

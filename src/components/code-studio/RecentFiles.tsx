@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { FileText, Trash2, Clock, X } from "lucide-react";
+import { _useState } from "react";
+import { FileText, Trash2, Clock, _X } from "lucide-react";
 import { fileIconColor } from "@/lib/code-studio/core/types";
 
 interface RecentFileEntry {

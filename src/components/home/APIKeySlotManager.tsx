@@ -83,8 +83,20 @@ export function APIKeySlotManager({ onClose }: Props) {
       });
       setTestResult(res.ok || res.status === 200);
     } catch {
-      // [시뮬레이션] 네트워크 에러 시 길이 기반 폴백
-      setTestResult(keyInput.trim().length > 5);
+      // 오프라인이거나 /api/chat 라우트로 네트워크 접근이 불가한 경우, 
+      // 로컬 정규식 패턴으로 fallback 검증 (길이만 보던 스텁 수정)
+      const tKey = keyInput.trim();
+      let isValidPattern = false;
+      switch (addingProvider) {
+        case "gemini": isValidPattern = /^AIza[a-zA-Z0-9_\\-]{35}$/.test(tKey); break;
+        case "openai": isValidPattern = /^sk-[a-zA-Z0-9]{32,}$/.test(tKey) || /^sk-proj-[a-zA-Z0-9\-_]+$/.test(tKey); break;
+        case "claude": isValidPattern = /^sk-ant-[a-zA-Z0-9\-_]+$/.test(tKey); break;
+        case "groq": isValidPattern = /^gsk_[a-zA-Z0-9]{20,}$/.test(tKey); break;
+        case "mistral": isValidPattern = /^[a-zA-Z0-9_]{32}$/.test(tKey); break;
+        case "lmstudio": isValidPattern = /^https?:\/\/.+/.test(tKey); break;
+        default: isValidPattern = tKey.length > 5; break;
+      }
+      setTestResult(isValidPattern);
     }
     setTesting(false);
   }

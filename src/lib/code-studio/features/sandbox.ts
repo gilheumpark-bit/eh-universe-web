@@ -2,7 +2,7 @@
 // Code Studio — Code Sandbox (isolated execution)
 // ============================================================
 
-import type { FileNode } from '../core/types';
+import type { _FileNode } from '../core/types';
 import { streamChat } from '@/lib/ai-providers';
 
 // ============================================================
@@ -167,22 +167,30 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
 
     window.addEventListener('message', handler);
 
-    // 코드 인젝션 방지: script 태그 탈출 차단 + base64 인코딩으로 격리
-    const safeCode = code.replace(/<\/script/gi, '<\\/script');
-    const encoded = btoa(unescape(encodeURIComponent(safeCode)));
-    const html = `<!doctype html><html><body><script>
+    // 코드 인젝션 방지: script 태그 탈출 차단 대신 Blob URL 방식으로 스크립트를 격리하여 로드합니다.
+    const encoded = btoa(unescape(encodeURIComponent(code)));
+    const runnerSource = `
       try {
         var __out = [];
         var _log = console.log;
-        console.log = function() { __out.push(Array.from(arguments).join(' ')); };
+        console.log = function() { __out.push(Array.from(arguments).join(' ')); _log.apply(console, arguments); };
         var __code = decodeURIComponent(escape(atob("${encoded}")));
-        (new Function(__code))();
-        parent.postMessage({ output: __out.join('\\n') }, '*');
+        // Blob 실행(우회적 eval이나 스코프 한정)
+        var __blob = new Blob([__code], { type: 'application/javascript' });
+        var __url = URL.createObjectURL(__blob);
+        var __script = document.createElement('script');
+        __script.src = __url;
+        __script.onload = function() { parent.postMessage({ output: __out.join('\\n') }, '*'); };
+        __script.onerror = function(e) { parent.postMessage({ error: 'Script Error', output: __out.join('\\n') }, '*'); };
+        document.body.appendChild(__script);
       } catch(e) {
         parent.postMessage({ error: e.message, output: '' }, '*');
       }
-    <\/script></body></html>`;
+    `;
+    const runnerBlob = new Blob([runnerSource], { type: 'application/javascript' });
+    const runnerUrl = URL.createObjectURL(runnerBlob);
 
+    const html = `<!doctype html><html><body><script src="${runnerUrl}"></script></body></html>`;
     iframe.srcdoc = html;
   });
 }

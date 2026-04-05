@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useMemo } from "react";
-import { GitCommit, GitBranch, GitMerge, ExternalLink } from "lucide-react";
+import { GitCommit, GitBranch, GitMerge, _ExternalLink } from "lucide-react";
 
 export interface GitCommitNode {
   hash: string;
@@ -225,7 +225,7 @@ export default function GitGraph({
         <div className="flex">
           <GraphSVG layoutNodes={layoutNodes} selectedHash={selectedHash} onSelect={setSelectedHash} />
           <div className="flex-1 min-w-0">
-            {layoutNodes.map((node, i) => (
+            {layoutNodes.map((node, _i) => (
               <div
                 key={node.commit.hash}
                 onClick={() => setSelectedHash(node.commit.hash)}

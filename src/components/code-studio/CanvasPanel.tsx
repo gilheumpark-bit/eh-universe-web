@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useRef, useCallback, useEffect, type MouseEvent as ReactMouseEvent, useMemo } from "react";
-import { ZoomIn, ZoomOut, Maximize2, Download, Plus, Trash2, Move } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Download, Plus, Trash2, _Move } from "lucide-react";
 import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface CanvasNode {

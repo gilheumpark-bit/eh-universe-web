@@ -37,7 +37,7 @@ export interface DesignLintResult {
 const SEMANTIC_BG = /\bbg-bg-(primary|secondary|tertiary)\b/;
 const SEMANTIC_TEXT = /\btext-text-(primary|secondary|tertiary)\b/;
 const SEMANTIC_ACCENT = /\btext-accent-(purple|red|green|amber|blue)\b|\bbg-accent-(purple|red|green|amber|blue)/;
-const SEMANTIC_BORDER = /\bborder-border\b/;
+const _SEMANTIC_BORDER = /\bborder-border\b/;
 
 /** Raw Tailwind colors that should NOT appear in production code */
 const RAW_TAILWIND_COLORS = /\b(?:bg|text|border|ring|from|to|via)-(?:red|blue|green|yellow|purple|pink|indigo|teal|cyan|orange|lime|emerald|violet|fuchsia|rose|sky|slate|gray|zinc|neutral|stone)-\d{2,3}\b/;
@@ -60,7 +60,7 @@ const INTERACTIVE_TAGS = /<(?:button|a|input|select|textarea)\b/gi;
 const MIN_HEIGHT_44 = /min-h-\[(\d+)px\]|min-height\s*:\s*(\d+)px/;
 
 /** Hex hardcoding in className or style */
-const HEX_IN_JSX = /#[0-9a-fA-F]{6}\b/;
+const _HEX_IN_JSX = /#[0-9a-fA-F]{6}\b/;
 const HEX_IN_STYLE = /style\s*=\s*\{\{[^}]*#[0-9a-fA-F]{6}/;
 
 /** Color-only status (no icon/text companion) */
@@ -438,7 +438,7 @@ function lintRule14_ResponsiveOverflow(code: string): DesignLintIssue[] {
   const issues: DesignLintIssue[] = [];
 
   // Fixed width that could overflow on mobile
-  const fixedWidthMatch = code.match(/w-\[(\d+)px\]/g);
+  const fixedWidthMatch = code.match(/(?:^|["'\s])w-\[(\d+)px\]/g);
   if (fixedWidthMatch) {
     for (const match of fixedWidthMatch) {
       const px = parseInt(match.match(/\d+/)?.[0] ?? '0', 10);

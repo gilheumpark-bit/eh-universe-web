@@ -186,7 +186,7 @@ export default function TranslatorStudioApp() {
     return false;
   }, [provider, hostedGemini, getEffectiveApiKeyForProvider, apiKeyRefresh]);
 
-  const studioLanguage: AppLanguage = useMemo(() => {
+  const _studioLanguage: AppLanguage = useMemo(() => {
     if (lang === 'ko') return 'KO';
     if (lang === 'ja') return 'JP';
     if (lang === 'zh') return 'CN';

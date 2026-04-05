@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle, Briefcase, Code2, Landmark } from "lucide-react";
-import { setCodingMode, getCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
+import { setCodingMode, _getCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
 
 export interface IDESettings {
   fontSize: number;

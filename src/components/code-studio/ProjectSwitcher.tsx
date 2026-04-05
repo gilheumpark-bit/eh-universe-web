@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { FolderOpen, Plus, Trash2, Search, ChevronDown, Clock, X, Check, AlertTriangle } from "lucide-react";
+import { FolderOpen, Plus, Trash2, Search, ChevronDown, Clock, _X, _Check, AlertTriangle } from "lucide-react";
 
 interface ProjectMeta { id: string; name: string; description: string; fileCount: number; updatedAt: number }
 

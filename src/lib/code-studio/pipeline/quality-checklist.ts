@@ -60,9 +60,9 @@ function check(
   return { id, tier: 'basic', domain, label, description: desc, status, detail, metric, threshold, autoFixable };
 }
 
-export function runTier1(code: string, fileName: string): CheckItem[] {
+export function runTier1(code: string, _fileName: string): CheckItem[] {
   const lines = code.split('\n');
-  const totalLines = lines.length;
+  const _totalLines = lines.length;
   const results: CheckItem[] = [];
 
   // ── Safety ──

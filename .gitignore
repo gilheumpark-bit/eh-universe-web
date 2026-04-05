@@ -123,3 +123,13 @@ audit-report.txt
 
 # Panic logs
 next-panic-*.log
+
+# Scratch / one-off outputs
+auto-fix.js
+check-lint.js
+lint-results.json
+out.txt
+test.out
+test2.out
+test3.out
+tmp/

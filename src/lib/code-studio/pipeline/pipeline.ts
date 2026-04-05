@@ -502,7 +502,7 @@ async function loadTS(): Promise<typeof import('typescript') | null> {
 function detectUnusedImportsAST(
   ts: typeof import('typescript'),
   sourceFile: import('typescript').SourceFile,
-  code: string,
+  _code: string,
 ): PipelineFinding[] {
   const findings: PipelineFinding[] = [];
   const importedNames = new Map<string, { line: number; node: import('typescript').Node }>();
@@ -750,7 +750,7 @@ async function runASTAnalysis(
 function mergeASTFindings(
   stage: PipelineStage,
   astFindings: PipelineFinding[],
-  category: string,
+  _category: string,
 ): PipelineStage {
   if (astFindings.length === 0) return stage;
 

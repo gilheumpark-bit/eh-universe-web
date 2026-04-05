@@ -189,7 +189,7 @@ function resolveAuth(
   }
 
   // 티어별 기능 제한 적용 (OPEN_BETA=true면 모두 Pro급)
-  const tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
+  const _tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
 
   const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
 

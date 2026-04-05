@@ -6,7 +6,7 @@
 
 import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
 import type { PipelineResult } from '@/lib/code-studio/pipeline/pipeline';
-import { runVerificationLoop, type SafeFixCategory } from '@/lib/code-studio/pipeline/verification-loop';
+import { runVerificationLoop, type _SafeFixCategory } from '@/lib/code-studio/pipeline/verification-loop';
 
 // ============================================================
 // PART 1 — Mocks

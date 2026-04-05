@@ -68,7 +68,7 @@ function parseHunks(original: string, modified: string): DiffHunk[] {
 // PART 3 — Component
 // ============================================================
 
-export function DiffEditorPanel({ original, modified, language = "typescript", fileName, onAccept, onReject, onAcceptHunk, readOnly = false }: Props) {
+export function DiffEditorPanel({ original, modified, _language = "typescript", fileName, onAccept, onReject, onAcceptHunk, readOnly = false }: Props) {
   const [renderSideBySide, setRenderSideBySide] = useState(true);
   const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
   const [hunks, setHunks] = useState<DiffHunk[]>(() => parseHunks(original, modified));

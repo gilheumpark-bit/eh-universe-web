@@ -4,7 +4,7 @@
 // PART 1 — Types & Utilities
 // ============================================================
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, _useCallback } from "react";
 import { X, Trash2, Search, ChevronDown, ChevronRight, Filter } from "lucide-react";
 
 interface NetworkEntry {

@@ -10,14 +10,14 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
-  Maximize2, Minimize2, BarChart3, X, ChevronLeft, ChevronRight,
-  Headphones, Film,
+  Maximize2, Minimize2, BarChart3, X, ChevronLeft, _ChevronRight,
+  Headphones, _Film,
 } from "lucide-react";
 import type {
   ParsedScene, SceneBeat, VoiceMapping, ParticleType,
   TTSController, Emotion,
 } from "@/engine/scene-parser";
-import { createTTSController, adjustVoiceForEmotion } from "@/engine/scene-parser";
+import { createTTSController, _adjustVoiceForEmotion } from "@/engine/scene-parser";
 import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
 import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
