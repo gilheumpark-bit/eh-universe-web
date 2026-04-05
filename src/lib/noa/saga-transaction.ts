@@ -172,7 +172,8 @@ export function createAIWorkSaga(config: {
       return snapshot;
     },
     compensate: async () => {
-      // 스냅샷 단계는 보상 불필요
+      // 의도적 no-op: 스냅샷 찍기 자체는 되돌릴 대상 아님.
+      // 스냅샷 복원은 ai-execute compensate에서 수행.
     },
   });
 

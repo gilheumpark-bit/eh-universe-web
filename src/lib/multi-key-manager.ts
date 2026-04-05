@@ -139,7 +139,8 @@ export function loadMultiKeyConfig(): MultiKeyConfig {
  * For real encryption, API keys should migrate to the ai-providers.ts v4
  * AES-GCM encryption flow (see encryptApiKey / decryptApiKey in that module).
  *
- * TODO: Migrate multi-key-manager storage to ai-providers.ts v4 encryption.
+ * TODO(P3): Migrate multi-key-manager storage to ai-providers.ts v4 AES-GCM encryption.
+ * 현재 obfuscate(XOR+base64)로 동작 중 — 기능상 문제 없음, 보안 강화 시 전환.
  */
 function obfuscate(key: string): string {
   const salt = 'ehsu';

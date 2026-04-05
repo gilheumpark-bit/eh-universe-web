@@ -87,6 +87,9 @@ export default function WritingTabInline(props: Props) {
     language, currentSession, currentSessionId,
     writingMode, setWritingMode,
     editDraft, setEditDraft, editDraftRef,
+    canvasContent, setCanvasContent,
+    canvasPass, setCanvasPass,
+    promptDirective, setPromptDirective,
     isGenerating, lastReport,
     handleSend, handleRegenerate,
     messagesEndRef, searchQuery, filteredMessages,
@@ -314,6 +317,60 @@ export default function WritingTabInline(props: Props) {
                   onContextMenu={textMenu.openMenu}
                   className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-purple outline-none transition-all resize-none shadow-inner"
                   placeholder={t('writingMode.typeManuscript')}
+                />
+              </div>
+            )}
+
+            {writingMode === 'canvas' && (
+              <div className="flex-1 space-y-4">
+                <div className="bg-accent-green/5 border border-accent-green/20 rounded-xl p-6">
+                  <h3 className="text-sm font-bold text-accent-green mb-2">{isKO ? '3단계 캔버스 모드' : 'Three-Step Canvas'}</h3>
+                  <p className="text-xs text-text-secondary mb-4">{isKO ? '구조 → 초안 → 다듬기 3단계로 글을 완성합니다.' : 'Complete your writing in 3 steps: Structure → Draft → Polish.'}</p>
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                    <span className={`px-2 py-1 rounded ${canvasPass >= 1 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '1. 구조' : '1. Structure'}</span>
+                    <span className="text-text-quaternary">→</span>
+                    <span className={`px-2 py-1 rounded ${canvasPass >= 2 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '2. 초안' : '2. Draft'}</span>
+                    <span className="text-text-quaternary">→</span>
+                    <span className={`px-2 py-1 rounded ${canvasPass >= 3 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '3. 다듬기' : '3. Polish'}</span>
+                  </div>
+                </div>
+                <textarea
+                  value={canvasContent}
+                  onChange={e => setCanvasContent(e.target.value)}
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none transition-all resize-none"
+                  placeholder={isKO ? '캔버스에 구조를 작성하세요...' : 'Write your structure on the canvas...'}
+                />
+              </div>
+            )}
+
+            {writingMode === 'refine' && (
+              <div className="flex-1 space-y-4">
+                <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6">
+                  <h3 className="text-sm font-bold text-accent-blue mb-2">{isKO ? '자동 30% 다듬기' : 'Auto 30% Refine'}</h3>
+                  <p className="text-xs text-text-secondary mb-3">{isKO ? 'AI가 현재 원고를 분석하고 약 30%를 자동으로 개선합니다.' : 'AI analyzes your manuscript and automatically improves ~30%.'}</p>
+                  {promptDirective && <p className="text-xs text-accent-blue font-mono bg-accent-blue/5 rounded px-3 py-2">{isKO ? '지시:' : 'Directive:'} {promptDirective}</p>}
+                </div>
+                <textarea
+                  value={editDraft}
+                  onChange={e => setEditDraft(e.target.value)}
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-blue outline-none transition-all resize-none"
+                  placeholder={isKO ? '다듬을 원고를 붙여넣으세요...' : 'Paste your manuscript to refine...'}
+                />
+              </div>
+            )}
+
+            {writingMode === 'advanced' && (
+              <div className="flex-1 space-y-4">
+                <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-6">
+                  <h3 className="text-sm font-bold text-accent-red mb-2">{isKO ? '고급 모드' : 'Advanced Mode'}</h3>
+                  <p className="text-xs text-text-secondary">{isKO ? '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.' : 'Direct control over engine parameters, genre presets, and HFCP settings.'}</p>
+                </div>
+                <textarea
+                  ref={editDraftRef}
+                  value={editDraft}
+                  onChange={e => setEditDraft(e.target.value)}
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-red outline-none transition-all resize-none"
+                  placeholder={isKO ? '고급 모드에서 직접 작성하세요...' : 'Write directly in advanced mode...'}
                 />
               </div>
             )}

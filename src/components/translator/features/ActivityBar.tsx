@@ -68,7 +68,7 @@ export function ActivityBar() {
         <button
           className="lg:hidden flex h-12 w-full items-center justify-center text-text-tertiary hover:text-text-primary pointer-events-auto transition-colors"
           onClick={() => {
-            // Trigger mobile drawer if needed
+            layout.setActiveLeftPanel(layout.activeLeftPanel ? null : 'explorer');
           }}
         >
           <Menu className="h-5 w-5" />
