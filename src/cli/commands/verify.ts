@@ -101,15 +101,17 @@ interface VerifyResult {
 }
 
 export async function runVerify(path: string, opts: VerifyOptions): Promise<void> {
-  const threshold = parseInt(opts.threshold, 10);
+  const threshold = Math.max(0, Math.min(100, parseInt(opts.threshold, 10) || 77));
   const startTime = performance.now();
+  const { printHeader, printScore, printSection, icons, colors } = await import('../core/terminal-compat');
 
-  console.log('🦔 CS Quill — 8팀 검증\n');
+  printHeader('8팀 검증');
+  console.log('');
 
   // Discover files
   const files = discoverFiles(path);
   if (files.length === 0) {
-    console.log('  ⚠️  검증할 파일이 없습니다.');
+    console.log(`  ${icons.warn}  검증할 파일이 없습니다.`);
     return;
   }
   console.log(`  📁 ${files.length}개 파일 발견\n`);
@@ -208,19 +210,16 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   }
 
   // Table format
-  const statusIcon = overallStatus === 'pass' ? '✅' : overallStatus === 'warn' ? '⚠️' : '❌';
-
   for (const team of teams) {
-    const icon = team.passed ? '✅' : team.blocking ? '❌' : '⚠️';
-    const bar = '█'.repeat(Math.round(team.score / 5)) + '░'.repeat(20 - Math.round(team.score / 5));
-    const blockTag = team.blocking ? ' [BLOCKING]' : '';
-    console.log(`  ${icon} ${team.name.padEnd(14)} ${bar} ${team.score}/100  (${team.findings}건)${blockTag}`);
+    const blockTag = team.blocking ? colors.red(' [BLOCKING]') : '';
+    printScore(`${team.name} (${team.findings})${blockTag}`, team.score);
   }
 
-  console.log('');
-  console.log(`  ─`.repeat(26));
-  console.log(`  ${statusIcon} 종합: ${overallScore}/100 | ${files.length}파일 | ${totalFindings}건 | ${duration}ms`);
-  console.log(`  기준: ${threshold}점 | 상태: ${overallStatus.toUpperCase()}`);
+  printSection('종합');
+  const statusIcon = overallStatus === 'pass' ? icons.pass : overallStatus === 'warn' ? icons.warn : icons.fail;
+  const scoreColor = overallScore >= 80 ? colors.green : overallScore >= 60 ? colors.yellow : colors.red;
+  console.log(`  ${statusIcon} ${scoreColor(`${overallScore}/100`)} | ${files.length}파일 | ${totalFindings}건 | ${duration}ms`);
+  console.log(`  기준: ${threshold}점 | 상태: ${colors.bold(overallStatus.toUpperCase())}`);
 
   // Improvement hints for lowest scoring teams
   const worstTeams = [...teams].sort((a, b) => a.score - b.score).slice(0, 2);

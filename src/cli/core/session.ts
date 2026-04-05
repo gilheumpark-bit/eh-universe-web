@@ -150,7 +150,7 @@ export function recordReceipt(receiptId: string): void {
   updateSession(session.id, { receipts });
 }
 
-export function recordScore(type: 'verify' | 'playground', score: number): void {
+export function recordScore(type: 'verify' | 'audit' | 'playground' | 'stress' | 'bench', score: number): void {
   const session = ensureSession();
   if (type === 'verify') updateSession(session.id, { lastVerifyScore: score });
   else updateSession(session.id, { lastPlaygroundScore: score });

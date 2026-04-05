@@ -361,8 +361,115 @@ program
   });
 
 // ============================================================
-// PART 8 — Alias Resolution & Execute
+// PART 8 — Doctor (환경 진단)
 // ============================================================
+
+program
+  .command('doctor')
+  .description('🩺 환경 진단 — Node, npm, git, AI 키 상태 확인')
+  .action(async () => {
+    const { printHeader, printScore, icons, colors } = await import('../core/terminal-compat');
+    const { execSync } = await import('child_process');
+    const { existsSync } = await import('fs');
+    const { join } = await import('path');
+
+    printHeader('환경 진단');
+    console.log('');
+
+    const checks: Array<{ name: string; score: number; detail: string }> = [];
+
+    // Node.js
+    const nodeVer = process.version;
+    const nodeMajor = parseInt(nodeVer.slice(1), 10);
+    checks.push({ name: 'Node.js', score: nodeMajor >= 18 ? 100 : nodeMajor >= 16 ? 70 : 30, detail: nodeVer });
+
+    // npm
+    try {
+      const npmVer = execSync('npm --version', { encoding: 'utf-8', stdio: 'pipe' }).trim();
+      checks.push({ name: 'npm', score: 100, detail: `v${npmVer}` });
+    } catch { checks.push({ name: 'npm', score: 0, detail: '미설치' }); }
+
+    // git
+    try {
+      const gitVer = execSync('git --version', { encoding: 'utf-8', stdio: 'pipe' }).trim().replace('git version ', '');
+      checks.push({ name: 'git', score: 100, detail: `v${gitVer}` });
+    } catch { checks.push({ name: 'git', score: 0, detail: '미설치' }); }
+
+    // TypeScript
+    try {
+      const tsVer = execSync('npx tsc --version', { encoding: 'utf-8', stdio: 'pipe', timeout: 10000 }).trim();
+      checks.push({ name: 'TypeScript', score: 100, detail: tsVer });
+    } catch { checks.push({ name: 'TypeScript', score: 50, detail: '미설치 (선택)' }); }
+
+    // AI 키
+    const { loadMergedConfig } = await import('../core/config');
+    const config = loadMergedConfig();
+    const keyCount = Object.keys(config.keys ?? {}).length;
+    checks.push({ name: 'AI 키', score: keyCount > 0 ? 100 : 30, detail: keyCount > 0 ? `${keyCount}개 설정됨` : `미설정 — cs config set-key` });
+
+    // 프로젝트
+    const hasPkg = existsSync(join(process.cwd(), 'package.json'));
+    checks.push({ name: '프로젝트', score: hasPkg ? 100 : 50, detail: hasPkg ? 'package.json 발견' : 'package.json 없음' });
+
+    // CS 설정
+    const hasCS = existsSync(join(process.cwd(), '.cs'));
+    checks.push({ name: 'CS 설정', score: hasCS ? 100 : 50, detail: hasCS ? '.cs/ 디렉토리 존재' : `미초기화 — cs init` });
+
+    for (const c of checks) {
+      printScore(c.name, c.score);
+      console.log(`${' '.repeat(22)}${colors.dim(c.detail)}`);
+    }
+
+    const avg = Math.round(checks.reduce((s, c) => s + c.score, 0) / checks.length);
+    console.log(`\n  ${avg >= 80 ? icons.pass : icons.warn} 종합: ${avg}/100\n`);
+
+    if (keyCount === 0) console.log(`  ${icons.info} AI 기능 활성화: ${colors.cyan('cs config set-key <provider> <key>')}\n`);
+    if (!hasCS) console.log(`  ${icons.info} 프로젝트 초기화: ${colors.cyan('cs init')}\n`);
+  });
+
+// ============================================================
+// PART 9 — Completion (자동완성)
+// ============================================================
+
+program
+  .command('completion [shell]')
+  .description('셸 자동완성 스크립트 출력 (bash|zsh|fish)')
+  .action(async (shell) => {
+    const detected = shell ?? (process.env.SHELL?.includes('zsh') ? 'zsh' : process.env.SHELL?.includes('fish') ? 'fish' : 'bash');
+    const commands = program.commands.map(c => c.name()).filter(Boolean);
+
+    if (detected === 'zsh') {
+      console.log(`#compdef cs
+_cs() {
+  local -a commands
+  commands=(${commands.map(c => `'${c}:CS Quill command'`).join(' ')})
+  _describe 'cs commands' commands
+}
+compdef _cs cs`);
+    } else if (detected === 'fish') {
+      for (const c of commands) {
+        console.log(`complete -c cs -n '__fish_use_subcommand' -a '${c}' -d 'CS Quill command'`);
+      }
+    } else {
+      console.log(`_cs_completions() {
+  local cur=\${COMP_WORDS[COMP_CWORD]}
+  COMPREPLY=( $(compgen -W "${commands.join(' ')}" -- "$cur") )
+}
+complete -F _cs_completions cs`);
+    }
+
+    console.error(`\n# 적용: eval "$(cs completion ${detected})"`);
+  });
+
+// ============================================================
+// PART 10 — Global Flags + Alias Resolution + Execute
+// ============================================================
+
+program
+  .option('--verbose', '상세 로그 출력')
+  .option('--quiet', '최소 출력')
+  .option('--no-color', '색상 비활성화')
+  .option('--lang <lang>', '출력 언어 (ko|en|ja|zh)');
 
 // 다국어 alias 처리: "cs 생성" → "cs generate", "cs 검증" → "cs verify"
 const args = process.argv.slice(2);
@@ -375,4 +482,4 @@ if (args.length > 0) {
 
 program.parse();
 
-// IDENTITY_SEAL: PART-1~8 | role=CLI-entrypoint | inputs=process.argv | outputs=command-execution
+// IDENTITY_SEAL: PART-1~10 | role=CLI-entrypoint | inputs=process.argv | outputs=command-execution

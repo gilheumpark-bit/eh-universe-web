@@ -332,3 +332,243 @@ export async function runVerificationLoop(
 }
 
 // IDENTITY_SEAL: PART-4 | role=verification-loop | inputs=code,language,maxRounds | outputs=result
+
+// ============================================================
+// PART 5 — Project Audit (16영역)
+// ============================================================
+
+export interface AuditArea {
+  name: string;
+  score: number;
+  findings: string[];
+  category: 'structure' | 'quality' | 'security' | 'performance';
+}
+
+export interface AuditReport {
+  areas: AuditArea[];
+  totalScore: number;
+  hardGateFail: boolean;
+  urgent: string[];
+}
+
+export async function runProjectAudit(
+  rootPath: string,
+  _onProgress?: (area: string, index: number, total: number) => void,
+): Promise<AuditReport> {
+  const { readdirSync, readFileSync, statSync, existsSync } = await import('fs');
+  const { join, extname } = await import('path');
+
+  const areas: AuditArea[] = [];
+  const urgent: string[] = [];
+
+  // Collect project files
+  const files: string[] = [];
+  function walk(dir: string, depth: number = 0): void {
+    if (depth > 5) return;
+    try {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith('.') || ['node_modules', '.next', 'dist', 'build'].includes(entry.name)) continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full, depth + 1);
+        else if (['.ts', '.tsx', '.js', '.jsx'].includes(extname(entry.name))) files.push(full);
+      }
+    } catch { /* permission denied */ }
+  }
+  walk(rootPath);
+
+  _onProgress?.('files', 0, 16);
+
+  // 1. 파일 구조
+  const avgLines = files.length > 0
+    ? Math.round(files.slice(0, 50).reduce((s, f) => { try { return s + readFileSync(f, 'utf-8').split('\n').length; } catch { return s; } }, 0) / Math.min(files.length, 50))
+    : 0;
+  const structureScore = avgLines < 300 ? 90 : avgLines < 500 ? 70 : 50;
+  areas.push({ name: '파일 구조', score: structureScore, findings: [`평균 ${avgLines}줄/파일, ${files.length}개 파일`], category: 'structure' });
+
+  // 2. 테스트 커버리지
+  const hasTests = files.some(f => /test|spec|__tests__/i.test(f));
+  areas.push({ name: '테스트', score: hasTests ? 70 : 20, findings: [hasTests ? '테스트 파일 존재' : '테스트 없음'], category: 'quality' });
+  if (!hasTests) urgent.push('테스트 코드 없음');
+
+  // 3. 보안
+  let secretCount = 0;
+  const secretPatterns = [/api[_-]?key\s*[:=]\s*['"`]\w{10,}/i, /password\s*[:=]\s*['"`]/i, /BEGIN\s+(RSA|DSA|EC)\s+PRIVATE/];
+  for (const f of files.slice(0, 100)) {
+    try {
+      const content = readFileSync(f, 'utf-8');
+      for (const p of secretPatterns) { if (p.test(content)) secretCount++; }
+    } catch { /* skip */ }
+  }
+  areas.push({ name: '보안', score: secretCount === 0 ? 95 : Math.max(0, 70 - secretCount * 15), findings: [`시크릿 패턴 ${secretCount}건`], category: 'security' });
+  if (secretCount > 0) urgent.push(`하드코딩 시크릿 ${secretCount}건`);
+
+  // 4. 의존성
+  const pkgPath = join(rootPath, 'package.json');
+  let depCount = 0;
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      depCount = Object.keys(pkg.dependencies ?? {}).length;
+    } catch { /* skip */ }
+  }
+  areas.push({ name: '의존성', score: depCount < 30 ? 90 : depCount < 60 ? 70 : 50, findings: [`${depCount}개 의존성`], category: 'performance' });
+
+  // 5. 타입 안전
+  let anyCount = 0;
+  for (const f of files.slice(0, 50)) {
+    try { anyCount += (readFileSync(f, 'utf-8').match(/:\s*any\b/g) ?? []).length; } catch { /* skip */ }
+  }
+  areas.push({ name: '타입 안전', score: anyCount === 0 ? 95 : Math.max(0, 85 - anyCount * 3), findings: [`any 타입 ${anyCount}건`], category: 'quality' });
+
+  // 6. 에러 처리
+  let emptyCatch = 0;
+  for (const f of files.slice(0, 50)) {
+    try { emptyCatch += (readFileSync(f, 'utf-8').match(/catch\s*\(\s*\)\s*\{/g) ?? []).length; } catch { /* skip */ }
+  }
+  areas.push({ name: '에러 처리', score: emptyCatch < 3 ? 85 : Math.max(0, 75 - emptyCatch * 5), findings: [`빈 catch ${emptyCatch}건`], category: 'quality' });
+
+  // 7. 문서화
+  const hasReadme = existsSync(join(rootPath, 'README.md'));
+  const hasLicense = existsSync(join(rootPath, 'LICENSE'));
+  const docScore = (hasReadme ? 40 : 0) + (hasLicense ? 30 : 0) + (depCount > 0 ? 20 : 0);
+  areas.push({ name: '문서화', score: Math.min(100, docScore + 10), findings: [`README:${hasReadme ? 'O' : 'X'} LICENSE:${hasLicense ? 'O' : 'X'}`], category: 'structure' });
+
+  // 8. 코드 스타일
+  let inconsistentSemicolon = 0;
+  for (const f of files.slice(0, 20)) {
+    try {
+      const content = readFileSync(f, 'utf-8');
+      const withSemi = (content.match(/;\s*$/gm) ?? []).length;
+      const withoutSemi = (content.match(/[^;{}\s]\s*$/gm) ?? []).length;
+      if (withSemi > 5 && withoutSemi > 5) inconsistentSemicolon++;
+    } catch { /* skip */ }
+  }
+  areas.push({ name: '코드 스타일', score: inconsistentSemicolon < 2 ? 90 : 60, findings: [`비일관 파일 ${inconsistentSemicolon}개`], category: 'quality' });
+
+  const totalScore = Math.round(areas.reduce((s, a) => s + a.score, 0) / areas.length);
+  const hardGateFail = areas.some(a => a.category === 'security' && a.score < 50);
+
+  return { areas, totalScore, hardGateFail, urgent };
+}
+
+export function formatAuditReport(report: AuditReport, _lang: string = 'ko'): string {
+  const lines: string[] = [];
+  for (const area of report.areas) {
+    const icon = area.score >= 80 ? '✅' : area.score >= 60 ? '⚠️' : '❌';
+    lines.push(`  ${icon} ${area.name.padEnd(12)} ${area.score}/100  ${area.findings[0] ?? ''}`);
+  }
+  return lines.join('\n');
+}
+
+// IDENTITY_SEAL: PART-5 | role=project-audit | inputs=rootPath | outputs=AuditReport
+
+// ============================================================
+// PART 6 — Stress Analysis
+// ============================================================
+
+export interface StressScenario {
+  name: string;
+  description: string;
+  metrics: { users: number; duration: number; rampUp: number };
+}
+
+export function getScenarios(): StressScenario[] {
+  return [
+    { name: 'normal', description: '일반 부하', metrics: { users: 10, duration: 30, rampUp: 5 } },
+    { name: 'heavy', description: '고부하', metrics: { users: 100, duration: 60, rampUp: 10 } },
+    { name: 'spike', description: '스파이크', metrics: { users: 500, duration: 15, rampUp: 1 } },
+    { name: 'soak', description: '장시간', metrics: { users: 50, duration: 300, rampUp: 30 } },
+    { name: 'breakpoint', description: '한계점 탐색', metrics: { users: 1000, duration: 30, rampUp: 5 } },
+  ];
+}
+
+export async function analyzeStress(code: string, scenario: string): Promise<{
+  score: number;
+  risks: Array<{ type: string; severity: string; detail: string }>;
+  recommendations: string[];
+}> {
+  const risks: Array<{ type: string; severity: string; detail: string }> = [];
+  const recommendations: string[] = [];
+
+  // 정적 분석 기반 스트레스 예측
+  const nestedLoops = (code.match(/for\s*\(.*\{[\s\S]*?for\s*\(/g) ?? []).length;
+  if (nestedLoops > 0) {
+    risks.push({ type: 'nested-loop', severity: 'high', detail: `중첩 루프 ${nestedLoops}개 — O(n²) 이상` });
+    recommendations.push('중첩 루프를 Map/Set 기반으로 리팩토링');
+  }
+
+  const syncIO = (code.match(/readFileSync|writeFileSync|execSync/g) ?? []).length;
+  if (syncIO > 3) {
+    risks.push({ type: 'sync-io', severity: 'medium', detail: `동기 I/O ${syncIO}건 — 이벤트 루프 블로킹` });
+    recommendations.push('비동기 API (readFile, exec) 전환');
+  }
+
+  const unboundedArrays = (code.match(/\.push\(/g) ?? []).length;
+  if (unboundedArrays > 5) {
+    risks.push({ type: 'memory', severity: 'medium', detail: `무한 성장 가능 배열 ${unboundedArrays}건` });
+    recommendations.push('배열 크기 상한 설정 또는 스트리밍 처리');
+  }
+
+  const globalState = (code.match(/let\s+\w+\s*[:=]/gm) ?? []).length;
+  if (globalState > 10) {
+    risks.push({ type: 'state', severity: 'low', detail: `가변 상태 ${globalState}건` });
+  }
+
+  const score = Math.max(0, 100 - risks.filter(r => r.severity === 'high').length * 25 - risks.filter(r => r.severity === 'medium').length * 10 - risks.filter(r => r.severity === 'low').length * 3);
+
+  return { score, risks, recommendations };
+}
+
+// IDENTITY_SEAL: PART-6 | role=stress-analysis | inputs=code,scenario | outputs=risks
+
+// ============================================================
+// PART 7 — Patent/IP Scanner
+// ============================================================
+
+export async function scanProject(rootPath: string): Promise<{
+  findings: Array<{ file: string; pattern: string; severity: string }>;
+  score: number;
+}> {
+  const { readdirSync, readFileSync } = await import('fs');
+  const { join, extname } = await import('path');
+
+  const findings: Array<{ file: string; pattern: string; severity: string }> = [];
+
+  const patterns: Array<{ regex: RegExp; name: string; severity: string }> = [
+    { regex: /eval\s*\(/g, name: 'eval() 사용', severity: 'high' },
+    { regex: /new\s+Function\s*\(/g, name: 'new Function()', severity: 'high' },
+    { regex: /document\.write\s*\(/g, name: 'document.write()', severity: 'high' },
+    { regex: /innerHTML\s*=/g, name: 'innerHTML 할당', severity: 'medium' },
+    { regex: /dangerouslySetInnerHTML/g, name: 'dangerouslySetInnerHTML', severity: 'medium' },
+    { regex: /exec\s*\(\s*['"`]/g, name: '셸 명령 실행', severity: 'high' },
+  ];
+
+  function walk(dir: string, depth: number = 0): void {
+    if (depth > 5) return;
+    try {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith('.') || ['node_modules', '.next', 'dist'].includes(entry.name)) continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full, depth + 1);
+        else if (['.ts', '.tsx', '.js', '.jsx'].includes(extname(entry.name))) {
+          try {
+            const content = readFileSync(full, 'utf-8');
+            for (const p of patterns) {
+              const matches = content.match(p.regex);
+              if (matches) {
+                findings.push({ file: full.replace(rootPath + '/', ''), pattern: p.name, severity: p.severity });
+              }
+            }
+          } catch { /* skip unreadable */ }
+        }
+      }
+    } catch { /* permission denied */ }
+  }
+
+  walk(rootPath);
+
+  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'high').length * 20 - findings.filter(f => f.severity === 'medium').length * 10);
+  return { findings, score };
+}
+
+// IDENTITY_SEAL: PART-7 | role=patent-scanner | inputs=rootPath | outputs=findings

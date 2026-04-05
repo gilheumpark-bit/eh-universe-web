@@ -138,7 +138,7 @@ export async function runAudit(opts: AuditOptions): Promise<void> {
   try {
     const { recordCommand, recordScore } = await import('../core/session');
     recordCommand('audit');
-    recordScore('verify', report.totalScore);
+    recordScore('audit', report.totalScore);
   } catch { /* skip */ }
 
   // Set exit code if hard gate failed

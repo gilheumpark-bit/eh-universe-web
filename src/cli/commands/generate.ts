@@ -116,7 +116,10 @@ function deduplicateImports(code: string): string {
 // ============================================================
 
 export async function runGenerate(prompt: string, opts: GenerateOptions): Promise<void> {
-  console.log('🦔 CS Quill — 코드 생성\n');
+  const { printHeader, colors, icons } = await import('../core/terminal-compat');
+  const { Spinner } = await import('../tui/progress');
+  printHeader('코드 생성');
+  console.log('');
 
   // ── Pre-check: Patent DB ──
   const { checkPatentPatterns } = await import('../core/patent-db');

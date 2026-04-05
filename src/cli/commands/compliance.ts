@@ -5,8 +5,7 @@
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { runIpScan } from './ip-scan';
-import { runVerify } from './verify';
+// runIpScan, runVerify: 필요 시 동적 import
 
 // ============================================================
 // PART 1 — Compliance Runner
@@ -70,7 +69,7 @@ export async function runCompliance(opts: ComplianceOptions): Promise<void> {
 
   // Check 3: Dependencies
   console.log('  [3/5] 📦 Dependencies...');
-  let outdatedCount = 0;
+  const outdatedCount = 0;
   const pkgLockPath = join(process.cwd(), 'package-lock.json');
   const hasPkgLock = existsSync(pkgLockPath);
   results.push({ check: 'Dependencies', passed: hasPkgLock, detail: hasPkgLock ? 'lockfile 존재' : 'lockfile 없음!' });
