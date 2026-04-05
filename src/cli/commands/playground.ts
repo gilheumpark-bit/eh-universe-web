@@ -3,8 +3,7 @@
 // ============================================================
 // 44엔진 풀벤치마크. 3DMark 스타일 코드 점수.
 
-import { runVerify } from './verify';
-import { runAudit } from './audit';
+// Verify/Audit engines imported dynamically via @/lib/code-studio/* below
 
 // ============================================================
 // PART 1 — Category Scoring
@@ -170,6 +169,48 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   console.log(`  │  ${totalDuration}ms | ${totalFiles} files | $0         │`);
   console.log('  │                                     │');
   console.log('  └─────────────────────────────────────┘\n');
+
+  // --challenge: show challenges
+  if (opts.challenge) {
+    const { evaluateChallenges } = await import('../core/badges');
+    const challenges = evaluateChallenges();
+    console.log('  🎮 챌린지:\n');
+    for (const c of challenges) {
+      const pct = Math.round((c.progress / Math.max(1, c.total)) * 100);
+      const bar = '█'.repeat(Math.round(pct / 5)) + '░'.repeat(20 - Math.round(pct / 5));
+      console.log(`    ${c.challenge.icon} ${c.challenge.name} [${bar}] ${c.progress}/${c.total}`);
+      console.log(`       ${c.challenge.description}\n`);
+    }
+  }
+
+  // --share: generate share card
+  if (opts.share) {
+    const { generateShareCard, generateReadmeBadge, evaluateBadges } = await import('../core/badges');
+    const { allEarned } = evaluateBadges();
+    const badgeIcons = BADGES_LIST.filter(b => allEarned.includes(b.id)).map(b => b.icon);
+    const projectName = process.cwd().split('/').pop() ?? 'project';
+    console.log('\n' + generateShareCard(projectName, weightedScore, badgeIcons));
+    console.log('\n  README 뱃지:');
+    console.log(`  ${generateReadmeBadge(projectName, weightedScore)}\n`);
+  }
+
+  // Check for new badges
+  const { evaluateBadges: evalBadges } = await import('../core/badges');
+  const { newBadges } = evalBadges();
+  if (newBadges.length > 0) {
+    console.log('  🏆 새 뱃지 획득!');
+    for (const b of newBadges) {
+      console.log(`     ${b.icon} ${b.name} — ${b.description}`);
+    }
+    console.log('');
+  }
 }
+
+// Needed for --share
+const BADGES_LIST = [
+  { id: 'first-blood', icon: '✨' }, { id: 'guardian', icon: '🛡️' }, { id: 'clean-code', icon: '🧹' },
+  { id: 'sub-10', icon: '⚡' }, { id: 'top-10', icon: '🔥' }, { id: 'improver', icon: '📈' },
+  { id: 'streak-5', icon: '🎯' }, { id: 'streak-10', icon: '💎' }, { id: 'centurion', icon: '💯' }, { id: 'perfect', icon: '🌟' },
+];
 
 // IDENTITY_SEAL: PART-2 | role=playground-runner | inputs=opts | outputs=console

@@ -39,14 +39,19 @@ export async function runVibe(prompt: string): Promise<void> {
   // Step 1: Parse vibe into spec
   console.log('  뭘 만들지 정리할게요...\n');
 
-  const { streamChat } = await import('@/lib/ai-providers');
-
   let specRaw = '';
-  await streamChat({
-    systemInstruction: VIBE_SPEC_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-    onChunk: (t: string) => { specRaw += t; },
-  });
+  try {
+    const { streamChat } = await import('@/lib/ai-providers');
+    await streamChat({
+      systemInstruction: VIBE_SPEC_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+      onChunk: (t: string) => { specRaw += t; },
+    });
+  } catch {
+    console.log('  ⚠️  AI 연결 실패. 직접 생성으로 전환합니다.\n');
+    await runGenerate(prompt, { mode: 'full', structure: 'auto' });
+    return;
+  }
 
   // Parse spec
   let spec: { features: string[]; techStack: string; estimatedFiles: number; prompt: string };

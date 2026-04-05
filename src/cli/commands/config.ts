@@ -77,6 +77,54 @@ export async function runConfig(action: string): Promise<void> {
       break;
     }
 
+    case 'keys-add': {
+      const { createInterface } = await import('readline');
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const prompt = (q: string, def?: string): Promise<string> => new Promise(r => {
+        rl.question(`  ${q}${def ? ` [${def}]` : ''}: `, a => r(a.trim() || def || ''));
+      });
+
+      const provider = await prompt('Provider (anthropic/openai/google/groq/ollama)', 'anthropic');
+      const key = await prompt('API Key');
+      const model = await prompt('Model', provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-5.4-mini');
+      const roles = await prompt('Roles (comma-separated)', 'generate,verify');
+      const budget = await prompt('Budget (optional)', '');
+      rl.close();
+
+      if (!key) { console.log('  ⚠️  키가 비어있습니다.'); break; }
+
+      addKey(config, {
+        id: `${provider}-${config.keys.length + 1}`,
+        provider: provider as never,
+        key, model,
+        roles: roles.split(',').map(r => r.trim()),
+        budget: budget || undefined,
+      });
+      saveGlobalConfig(config);
+      console.log(`  ✅ 키 추가됨: ${provider} → [${roles}]`);
+      break;
+    }
+
+    case 'keys-remove': {
+      if (config.keys.length === 0) { console.log('  ⚠️  삭제할 키 없음'); break; }
+      for (const [i, k] of config.keys.entries()) {
+        console.log(`  [${i + 1}] ${k.id} (${k.provider})`);
+      }
+      const { createInterface: createRL } = await import('readline');
+      const rl2 = createRL({ input: process.stdin, output: process.stdout });
+      const idx = await new Promise<string>(r => rl2.question('  삭제할 번호: ', a => { rl2.close(); r(a.trim()); }));
+      const num = parseInt(idx, 10) - 1;
+      if (num >= 0 && num < config.keys.length) {
+        const removed = config.keys[num];
+        removeKey(config, removed.id);
+        saveGlobalConfig(config);
+        console.log(`  🗑️  ${removed.id} 삭제됨`);
+      } else {
+        console.log('  ⚠️  잘못된 번호');
+      }
+      break;
+    }
+
     case 'structure': {
       // MVP: toggle through auto → on → off
       const next = config.structure === 'auto' ? 'on' : config.structure === 'on' ? 'off' : 'auto';

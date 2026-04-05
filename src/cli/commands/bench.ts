@@ -72,7 +72,13 @@ interface BenchResult {
 export async function runBench(path: string, opts: BenchOptions): Promise<void> {
   console.log('🦔 CS Quill — 함수 벤치마크\n');
 
-  const code = readFileSync(path, 'utf-8');
+  let code: string;
+  try {
+    code = readFileSync(path, 'utf-8');
+  } catch {
+    console.log(`  ❌ 파일을 읽을 수 없습니다: ${path}`);
+    return;
+  }
   const functions = extractFunctions(code);
 
   if (functions.length === 0) {

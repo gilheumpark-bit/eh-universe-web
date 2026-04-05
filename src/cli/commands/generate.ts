@@ -348,25 +348,29 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   console.log('\n' + formatReceipt(receipt, 'ko'));
 
   // Deprecation check
-  const { checkDeprecations, formatDeprecationReport } = await import('../core/deprecation-checker');
-  const deprecations = checkDeprecations(finalCode, fileName, process.cwd());
-  if (deprecations.length > 0) {
-    console.log('\n' + formatDeprecationReport(deprecations));
-  }
+  try {
+    const { checkDeprecations, formatDeprecationReport } = await import('../core/deprecation-checker');
+    const deprecations = checkDeprecations(finalCode, fileName, process.cwd());
+    if (deprecations.length > 0) {
+      console.log('\n' + formatDeprecationReport(deprecations));
+    }
+  } catch { /* deprecation check optional */ }
 
   // Record to Fix Memory
-  const { recordFix } = await import('../core/fix-memory');
-  for (const stage of pipelineResult.stages) {
-    for (const finding of stage.findings) {
-      recordFix({
-        category: stage.name,
-        description: finding.message,
-        beforePattern: '',
-        afterPattern: '',
-        confidence: 0.5,
-      });
+  try {
+    const { recordFix } = await import('../core/fix-memory');
+    for (const stage of pipelineResult.stages) {
+      for (const finding of stage.findings) {
+        recordFix({
+          category: stage.name,
+          description: finding.message,
+          beforePattern: '',
+          afterPattern: '',
+          confidence: 0.5,
+        });
     }
   }
+  } catch { /* fix memory recording optional */ }
 
   // --with-tests: auto generate tests
   if (opts.withTests) {

@@ -210,7 +210,7 @@ program
   .description('마지막 수정 되돌리기')
   .option('--all', '전부 되돌리기')
   .action(async (opts) => {
-    const { runUndo } = await import('../commands/undo');
+    const { runUndo } = await import('../commands/apply');
     await runUndo(opts);
   });
 
