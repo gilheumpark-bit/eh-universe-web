@@ -251,13 +251,50 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     console.log(`\n  🔬 AST 심층분석: ${astFindingsTotal}건 추가 발견 (Level 2 정밀도)`);
   }
 
+  // ── AI Orchestrator: team-lead + cross-judge 오탐 필터 ──
+  let aiVerified = false;
+  let falsePositivesRemoved = 0;
+  try {
+    const { orchestrateVerify } = await import('../ai/verify-orchestrator');
+    const staticTeams = teams.map(t => ({
+      name: t.name,
+      score: t.score,
+      findings: t.details.length > 0
+        ? t.details.map(d => ({ line: d.line, message: d.message, severity: d.severity }))
+        : Array.from({ length: t.findings }, (_, i) => ({ line: 0, message: `finding-${i}`, severity: 'warning' })),
+    }));
+    const sampleCode = files.slice(0, 3).map(f => f.content).join('\n').slice(0, 8000);
+    const aiResult = await orchestrateVerify(sampleCode, {
+      teams: staticTeams,
+      overallScore: Math.round(teams.reduce((s, t) => s + t.score, 0) / Math.max(teams.length, 1)),
+      overallStatus: 'unknown',
+    }, files[0]?.relativePath ?? 'unknown');
+
+    if (aiResult.aiVerified) {
+      aiVerified = true;
+      falsePositivesRemoved = aiResult.falsePositivesRemoved;
+      // AI 결과로 팀 점수 갱신
+      for (const refined of aiResult.teams) {
+        const existing = teams.find(t => t.name === refined.name);
+        if (existing) {
+          existing.score = refined.score;
+          existing.findings = refined.findings.length;
+          existing.details = refined.findings.map(f => ({ line: f.line, message: f.message, severity: f.severity }));
+          existing.passed = existing.blocking ? refined.score >= threshold : true;
+        }
+      }
+    }
+  } catch {
+    // AI 미설정 또는 호출 실패 → static 결과 유지
+  }
+
   const overallScore = Math.round(teams.reduce((s, t) => s + t.score, 0) / Math.max(teams.length, 1));
   const overallStatus = overallScore >= 80 ? 'pass' as const : overallScore >= 60 ? 'warn' as const : 'fail' as const;
   const duration = Math.round(performance.now() - startTime);
 
   // Output
   if (opts.format === 'json') {
-    console.log(JSON.stringify({ files: files.length, teams, overallScore, overallStatus, duration }, null, 2));
+    console.log(JSON.stringify({ files: files.length, teams, overallScore, overallStatus, duration, aiVerified, falsePositivesRemoved }, null, 2));
     return;
   }
 
@@ -271,6 +308,9 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   const statusIcon = overallStatus === 'pass' ? icons.pass : overallStatus === 'warn' ? icons.warn : icons.fail;
   const scoreColor = overallScore >= 80 ? colors.green : overallScore >= 60 ? colors.yellow : colors.red;
   console.log(`  ${statusIcon} ${scoreColor(`${overallScore}/100`)} | ${files.length}파일 | ${totalFindings}건 | ${duration}ms`);
+  if (aiVerified) {
+    console.log(`  🤖 AI 검증 완료 — 오탐 ${falsePositivesRemoved}건 제거 (team-lead + cross-judge)`);
+  }
   console.log(`  기준: ${threshold}점 | 상태: ${colors.bold(overallStatus.toUpperCase())}`);
 
   // Improvement hints for lowest scoring teams
