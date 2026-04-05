@@ -65,7 +65,48 @@ const DEFAULT_CONFIG: DaemonConfig = {
   analysisTimeout: 30000,
 };
 
-// IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=DaemonConfig,ClientSession,WSMessage
+// Step 9: 분석 결과 → VS Code Diagnostic 포맷 변환기
+export function formatFindingsForVSCode(
+  teams: Array<{ name: string; score: number; findings: Array<unknown> }>,
+  source: string = 'CS Quill',
+): AnalysisResult['findings'] {
+  const result: AnalysisResult['findings'] = [];
+
+  for (const team of teams) {
+    for (const f of team.findings) {
+      const finding = f as Record<string, unknown>;
+      result.push({
+        line: Math.max(0, Number(finding.line ?? 0)),
+        column: Number(finding.column ?? 0) || undefined,
+        endLine: Number(finding.endLine ?? finding.line ?? 0) || undefined,
+        endColumn: Number(finding.endColumn ?? 0) || undefined,
+        message: String(finding.message ?? f),
+        severity: mapSeverity(String(finding.severity ?? ''), team.score),
+        source: `${source} (${team.name})`,
+        code: String(finding.code ?? finding.rule ?? ''),
+        fix: finding.fix ? {
+          range: {
+            startLine: Number((finding.fix as any).range?.startLine ?? finding.line ?? 0),
+            endLine: Number((finding.fix as any).range?.endLine ?? finding.line ?? 0),
+          },
+          newText: String((finding.fix as any).newText ?? ''),
+        } : undefined,
+      });
+    }
+  }
+
+  return result;
+}
+
+function mapSeverity(severity: string, teamScore: number): 'error' | 'warning' | 'info' {
+  if (severity === 'P0' || severity === 'error' || severity === 'critical') return 'error';
+  if (severity === 'P1' || severity === 'warning') return 'warning';
+  if (severity === 'P2' || severity === 'info') return 'info';
+  // 팀 점수 기반 폴백
+  return teamScore < 50 ? 'error' : teamScore < 80 ? 'warning' : 'info';
+}
+
+// IDENTITY_SEAL: PART-1 | role=types+formatter | inputs=none | outputs=DaemonConfig,ClientSession,WSMessage
 
 // ============================================================
 // PART 2 — Session Tracker
@@ -242,6 +283,22 @@ async function handleMessage(
   tracker.touch(session.id);
   const requestId = msg.id ?? `req-${Date.now().toString(36)}`;
 
+  // Step 12: 에러 복구 — 분석 엔진이 뻗어도 소켓은 안 죽음
+  try { await _handleMessageInner(msg, session, tracker, requestId); }
+  catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    console.error(`  ⚠️  [${session.id}] 핸들러 에러: ${errMsg}`);
+    sendWS(session.socket, { type: 'error', id: requestId, payload: { message: `Internal error: ${errMsg}` } });
+  }
+}
+
+async function _handleMessageInner(
+  msg: WSMessage,
+  session: ClientSession,
+  tracker: SessionTracker,
+  requestId: string,
+): Promise<void> {
+
   switch (msg.type) {
     case 'ping': {
       sendWS(session.socket, { type: 'pong', id: requestId, payload: { ts: Date.now() } });
@@ -259,23 +316,21 @@ async function handleMessage(
       const { filePath, content, language } = msg.payload as { filePath: string; content: string; language?: string };
       const start = performance.now();
 
+      // Step 7: 분석 엔진 비동기 래핑 + 타임아웃 (30초)
+      const analyzeWithTimeout = async <T>(fn: () => Promise<T>, timeoutMs: number = 30000): Promise<T> => {
+        return Promise.race([
+          fn(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)),
+        ]);
+      };
+
       try {
         // pipeline-bridge의 8팀 파이프라인 호출
         const { runStaticPipeline } = await import('./core/pipeline-bridge');
-        const result = await runStaticPipeline(content, language ?? 'typescript');
+        const result = await analyzeWithTimeout(() => runStaticPipeline(content, language ?? 'typescript'));
 
-        // finding을 VS Code Diagnostic 호환 포맷으로 변환
-        const findings: AnalysisResult['findings'] = [];
-        for (const team of result.teams) {
-          for (const f of team.findings) {
-            findings.push({
-              line: typeof f === 'object' && 'line' in f ? (f as any).line : 0,
-              message: typeof f === 'object' && 'message' in f ? (f as any).message : String(f),
-              severity: team.score < 50 ? 'error' : team.score < 80 ? 'warning' : 'info',
-              source: `CS Quill (${team.name})`,
-            });
-          }
-        }
+        // Step 9: finding을 VS Code Diagnostic 호환 포맷으로 변환
+        const findings = formatFindingsForVSCode(result.teams);
 
         // deep-verify 추가
         try {
@@ -308,6 +363,117 @@ async function handleMessage(
           id: requestId,
           payload: { filePath, error: (e as Error).message },
         });
+      }
+      break;
+    }
+
+    // ── Step 6: 확장 라우트 ──
+
+    case 'analyze_batch': {
+      // 여러 파일 일괄 분석 (프로젝트 전체 검증)
+      const { files } = msg.payload as { files: Array<{ filePath: string; content: string; language?: string }> };
+      sendWS(session.socket, { type: 'batch_start', id: requestId, payload: { total: files.length } });
+
+      const batchResults: AnalysisResult[] = [];
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const { runStaticPipeline } = await import('./core/pipeline-bridge');
+          const start = performance.now();
+          const result = await runStaticPipeline(files[i].content, files[i].language ?? 'typescript');
+          const findings = result.teams.flatMap(t => t.findings.map((f: any) => ({
+            line: typeof f === 'object' ? f.line ?? 0 : 0,
+            message: typeof f === 'object' ? f.message ?? String(f) : String(f),
+            severity: t.score < 50 ? 'error' as const : t.score < 80 ? 'warning' as const : 'info' as const,
+            source: `CS Quill (${t.name})`,
+          })));
+          batchResults.push({ requestId: `${requestId}-${i}`, filePath: files[i].filePath, findings, score: result.score, duration: Math.round(performance.now() - start) });
+
+          // 진행률 스트리밍
+          sendWS(session.socket, { type: 'batch_progress', id: requestId, payload: { completed: i + 1, total: files.length, filePath: files[i].filePath, score: result.score } });
+        } catch { /* skip failed file */ }
+      }
+
+      sendWS(session.socket, { type: 'batch_result', id: requestId, payload: { results: batchResults, avgScore: batchResults.length > 0 ? Math.round(batchResults.reduce((s, r) => s + r.score, 0) / batchResults.length) : 0 } });
+      break;
+    }
+
+    case 'get_fix': {
+      // Step 10: 특정 finding에 대한 수리 코드 요청
+      const { filePath, content, findingIndex, findingMessage } = msg.payload as { filePath: string; content: string; findingIndex?: number; findingMessage?: string };
+      try {
+        const { streamChat } = await import('./core/ai-bridge');
+        let fixCode = '';
+        await streamChat({
+          systemInstruction: 'You are a code fixer. Fix ONLY the specific issue. Output ONLY the fixed code snippet (not full file). No explanation.',
+          messages: [{ role: 'user', content: `File: ${filePath}\nIssue: ${findingMessage ?? 'Fix issues'}\n\nCode:\n\`\`\`\n${content.slice(0, 4000)}\n\`\`\`\n\nFixed code:` }],
+          onChunk: (t: string) => { fixCode += t; },
+          task: 'conflict',
+        });
+        fixCode = fixCode.replace(/^```\w*\n?/gm, '').replace(/```$/gm, '').trim();
+        sendWS(session.socket, { type: 'fix_result', id: requestId, payload: { filePath, fixCode, findingIndex } });
+      } catch (e) {
+        sendWS(session.socket, { type: 'fix_error', id: requestId, payload: { error: (e as Error).message } });
+      }
+      break;
+    }
+
+    case 'explain_code': {
+      // 코드 해설 요청 (VS Code 호버 확장용)
+      const { content: codeSnippet, line: codeLine } = msg.payload as { content: string; line?: number };
+      try {
+        const { streamChat } = await import('./core/ai-bridge');
+        let explanation = '';
+        await streamChat({
+          systemInstruction: 'Explain this code briefly in Korean. 2-3 sentences max.',
+          messages: [{ role: 'user', content: codeSnippet.slice(0, 2000) }],
+          onChunk: (t: string) => { explanation += t; },
+          task: 'explain',
+        });
+        sendWS(session.socket, { type: 'explain_result', id: requestId, payload: { explanation, line: codeLine } });
+      } catch {
+        sendWS(session.socket, { type: 'explain_result', id: requestId, payload: { explanation: '해설 불가 (AI 미연결)', line: codeLine } });
+      }
+      break;
+    }
+
+    case 'get_config': {
+      // 설정 조회
+      try {
+        const { loadMergedConfig } = await import('./core/config');
+        const config = loadMergedConfig();
+        sendWS(session.socket, { type: 'config', id: requestId, payload: { ...config, keys: config.keys?.map((k: any) => ({ ...k, key: '***' })) } });
+      } catch (e) {
+        sendWS(session.socket, { type: 'error', id: requestId, payload: { message: (e as Error).message } });
+      }
+      break;
+    }
+
+    case 'subscribe_file': {
+      // Step 8: 파일 워치 구독 (데몬이 파일 변경 감지 → 자동 분석)
+      const { filePath: watchPath } = msg.payload as { filePath: string };
+      try {
+        const { watch } = await import('fs');
+        const watcher = watch(watchPath, { persistent: false }, async () => {
+          try {
+            const { readFileSync } = await import('fs');
+            const content = readFileSync(watchPath, 'utf-8');
+            const { runStaticPipeline } = await import('./core/pipeline-bridge');
+            const start = performance.now();
+            const result = await runStaticPipeline(content, 'typescript');
+            const findings = result.teams.flatMap(t => t.findings.map((f: any) => ({
+              line: typeof f === 'object' ? f.line ?? 0 : 0,
+              message: typeof f === 'object' ? f.message ?? String(f) : String(f),
+              severity: t.score < 50 ? 'error' as const : 'warning' as const,
+              source: `CS Quill (${t.name})`,
+            })));
+            sendWS(session.socket, { type: 'file_changed', payload: { filePath: watchPath, score: result.score, findings: findings.slice(0, 50), duration: Math.round(performance.now() - start) } });
+          } catch { /* skip */ }
+        });
+        // 세션 종료 시 워처 정리
+        session.socket.on('close', () => watcher.close());
+        sendWS(session.socket, { type: 'subscribed', id: requestId, payload: { filePath: watchPath } });
+      } catch (e) {
+        sendWS(session.socket, { type: 'error', id: requestId, payload: { message: (e as Error).message } });
       }
       break;
     }
