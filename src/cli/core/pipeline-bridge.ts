@@ -154,16 +154,19 @@ function runASTFallback(code: string, _language: string): PipelineResult['teams'
     }
   }
 
-  // 중첩 깊이 검사
+  // 중첩 깊이 검사 — 블록 진입 시 1회만 보고 (빠져나올 때까지 skip)
   let maxDepth = 0;
   let depth = 0;
+  let deepBlockReported = false;
   for (let i = 0; i < lines.length; i++) {
     depth += (lines[i].match(/\{/g) ?? []).length;
     depth -= (lines[i].match(/\}/g) ?? []).length;
     if (depth > maxDepth) maxDepth = depth;
-    if (depth > 5) {
+    if (depth > 5 && !deepBlockReported) {
       findings.push({ line: i + 1, message: `중첩 깊이 ${depth} — 5 초과`, severity: 'warning' });
+      deepBlockReported = true;
     }
+    if (depth <= 5) deepBlockReported = false;
   }
 
   // 파라미터 수 검사
