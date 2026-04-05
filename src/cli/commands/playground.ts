@@ -151,10 +151,52 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   categories.push({ name: 'Arch', icon: '🏗️', score: archScore, engines: 3, duration: Math.round(performance.now() - archStart) });
   console.log(`        → ${archScore}/100 (${partCount} PARTs, ${sealCount} SEALs) ${categories[3].duration}ms`);
 
+  // Phase 5: Security Score (security-engine)
+  console.log('  [Phase 5] Shield 엔진 (심층)...');
+  const shieldDeepStart = performance.now();
+  try {
+    const { runFullSecurityAnalysis } = await import('../adapters/security-engine');
+    const secResult = await runFullSecurityAnalysis(process.cwd());
+    // Override shield score with deep analysis if available
+    if (secResult.avgScore > 0) {
+      categories[2] = { ...categories[2], score: secResult.avgScore, engines: secResult.engines, duration: Math.round(performance.now() - shieldDeepStart) };
+      console.log(`        → ${secResult.avgScore}/100 (${secResult.engines} engines) ${categories[2].duration}ms`);
+    }
+  } catch {
+    console.log('        → 기본 스캔 유지 (보안 도구 미설치)');
+  }
+
+  // Phase 6: Test Score (test-engine)
+  console.log('  [Phase 6] Test 엔진...');
+  const testStart = performance.now();
+  try {
+    const { runFullTestAnalysis } = await import('../adapters/test-engine');
+    const testResult = await runFullTestAnalysis(process.cwd());
+    categories.push({ name: 'Test', icon: '🧪', score: testResult.avgScore, engines: testResult.engines, duration: Math.round(performance.now() - testStart) });
+    console.log(`        → ${testResult.avgScore}/100 (${testResult.engines} engines) ${categories[categories.length - 1].duration}ms`);
+  } catch {
+    categories.push({ name: 'Test', icon: '🧪', score: 0, engines: 0, duration: 0 });
+    console.log('        → 테스트 없음');
+  }
+
+  // Phase 7: Perf Score (perf-engine)
+  console.log('  [Phase 7] Perf 엔진...');
+  const perfStart = performance.now();
+  try {
+    const { runFullPerfAnalysis } = await import('../adapters/perf-engine');
+    const perfResult = await runFullPerfAnalysis(process.cwd());
+    categories.push({ name: 'Turbo', icon: '⚡', score: perfResult.avgScore, engines: perfResult.engines, duration: Math.round(performance.now() - perfStart) });
+    console.log(`        → ${perfResult.avgScore}/100 ${categories[categories.length - 1].duration}ms`);
+  } catch {
+    categories.push({ name: 'Turbo', icon: '⚡', score: 0, engines: 0, duration: 0 });
+    console.log('        → 성능 측정 불가');
+  }
+
   // Calculate total
   const totalDuration = Math.round(performance.now() - startTime);
-  const weights = [0.2, 0.3, 0.25, 0.25];
+  const weights = categories.map(() => 1 / categories.length); // Equal weights for all categories
   const weightedScore = Math.round(categories.reduce((s, c, i) => s + c.score * weights[i], 0));
+  const totalEngines = categories.reduce((s, c) => s + c.engines, 0);
   const csScore = Math.round(weightedScore * 100);
 
   // Display

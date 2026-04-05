@@ -149,6 +149,19 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     });
   }
 
+  // AST deep analysis on first 10 files (Level 1-2 정밀도)
+  try {
+    const { runFullASTAnalysis } = await import('../adapters/ast-engine');
+    let astFindings = 0;
+    for (const file of files.slice(0, 10)) {
+      const astResult = await runFullASTAnalysis(file.content, file.relativePath);
+      astFindings += astResult.findings.length;
+    }
+    if (astFindings > 0) {
+      console.log(`\n  🔬 AST 심층분석: ${astFindings}건 추가 발견 (${Math.min(10, files.length)}파일 샘플)`);
+    }
+  } catch { /* AST engines not installed — skip */ }
+
   const overallScore = Math.round(teams.reduce((s, t) => s + t.score, 0) / Math.max(teams.length, 1));
   const overallStatus = overallScore >= 80 ? 'pass' as const : overallScore >= 60 ? 'warn' as const : 'fail' as const;
   const duration = Math.round(performance.now() - startTime);

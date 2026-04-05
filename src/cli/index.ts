@@ -27,6 +27,11 @@ export { checkDeprecations, formatDeprecationReport, type DeprecationFinding } f
 // Adapters
 export { storeGet, storeSet, storeDelete, storeKeys, readFileTree, cacheGet, cacheSet, type CLIFileNode } from './adapters/fs-adapter';
 export { getLocalModelConfig, isLocalModelAvailable, streamLocalChat, streamWithFallback } from './adapters/local-model';
+export { runFullASTAnalysis, analyzeWithTypeScript, analyzeWithTsMorph, analyzeWithAcorn, analyzeWithBabel } from './adapters/ast-engine';
+export { runFullLintAnalysis, runESLint, checkPrettier, runJSCPD, runMadge } from './adapters/lint-engine';
+export { runFullSecurityAnalysis, runNpmAudit, runLockfileLint, runRetireJS, runSnyk } from './adapters/security-engine';
+export { runFullPerfAnalysis, runAutocannon, runTinybench, runC8, measureMemoryGrowth } from './adapters/perf-engine';
+export { runFullTestAnalysis, runVitest, runFastCheck, runStryker } from './adapters/test-engine';
 
 // TUI
 export { progressBar, progressLine, ProgressTimer, Spinner } from './tui/progress';
