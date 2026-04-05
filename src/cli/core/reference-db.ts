@@ -308,6 +308,62 @@ export const SEED_PATTERNS: Array<Omit<ReferencePattern, 'id' | 'createdAt' | 'u
     bestPractices: ['Cookie > Authorization header', 'Role-based checks', 'Token refresh', 'Typed user context'],
     antiPatterns: ['Token in query params', 'No role check', 'Catch-all 500', 'User data in JWT payload'],
   },
+  {
+    category: 'file', name: 'File Upload', description: '파일 업로드 + 검증 + 저장',
+    framework: 'Next.js', language: 'typescript', tags: ['upload', 'file', 'multipart', '업로드', '파일'],
+    sources: [],
+    mergedPattern: `// Pattern: File Upload
+// 1. Multipart form parsing (formidable or multer)
+// 2. File type validation (magic bytes, not just extension)
+// 3. Size limit enforcement
+// 4. Sanitize filename (path traversal prevention)
+// 5. Store to cloud (S3/GCS) or local with unique name
+// 6. Return URL + metadata`,
+    bestPractices: ['Magic byte validation', 'Unique file names (UUID)', 'Size limits', 'Cloud storage'],
+    antiPatterns: ['Trust file extension', 'Store in public dir', 'No size limit', 'Original filename'],
+  },
+  {
+    category: 'testing', name: 'Unit Test Pattern', description: 'Vitest/Jest 유닛 테스트',
+    framework: 'React', language: 'typescript', tags: ['test', 'jest', 'vitest', '테스트', 'unit'],
+    sources: [],
+    mergedPattern: `// Pattern: Unit Test
+// 1. describe block per function/component
+// 2. it/test for each behavior (not implementation)
+// 3. Arrange → Act → Assert pattern
+// 4. Mock external deps (API, DB)
+// 5. Edge cases: null, empty, boundary values
+// 6. Snapshot for UI components`,
+    bestPractices: ['AAA pattern', 'Mock externals only', 'Test behavior not implementation', 'Edge cases'],
+    antiPatterns: ['Test implementation details', 'Shared mutable state', 'No cleanup', 'Skip edge cases'],
+  },
+  {
+    category: 'validation', name: 'Zod Schema', description: 'Zod 스키마 검증 패턴',
+    framework: 'TypeScript', language: 'typescript', tags: ['zod', 'validation', 'schema', '검증', '유효성'],
+    sources: [],
+    mergedPattern: `// Pattern: Zod Validation
+// 1. Define schema with z.object()
+// 2. Infer TypeScript type from schema
+// 3. Parse at API boundary (safeParse for errors)
+// 4. Custom error messages (Korean/English)
+// 5. Compose schemas (extend, merge, pick, omit)
+// 6. Transform/preprocess (trim, lowercase)`,
+    bestPractices: ['Infer types from schema', 'safeParse over parse', 'Custom messages', 'Reuse with extend'],
+    antiPatterns: ['Manual validation', 'typeof checks', 'No error messages', 'Duplicate schemas'],
+  },
+  {
+    category: 'database', name: 'Prisma CRUD', description: 'Prisma ORM 데이터베이스 작업',
+    framework: 'Node.js', language: 'typescript', tags: ['prisma', 'database', 'db', 'orm', '데이터베이스'],
+    sources: [],
+    mergedPattern: `// Pattern: Prisma CRUD
+// 1. Schema definition (schema.prisma)
+// 2. Client singleton (prevent connection exhaustion)
+// 3. Type-safe queries (findUnique, findMany, create, update, delete)
+// 4. Relations (include, select)
+// 5. Transactions for multi-step operations
+// 6. Error handling (PrismaClientKnownRequestError)`,
+    bestPractices: ['Client singleton', 'Select only needed fields', 'Transactions', 'Typed error handling'],
+    antiPatterns: ['New client per request', 'Select all fields', 'No transactions', 'Raw SQL without parameterization'],
+  },
 ];
 
 export function seedDB(): number {

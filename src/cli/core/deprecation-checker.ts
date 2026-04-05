@@ -39,6 +39,18 @@ const RULES: DeprecationRule[] = [
 
   // TypeScript 5+
   { framework: 'typescript', minVersion: '5', pattern: /\benum\s+\w+/g, message: 'enum 사용 주의', replacement: 'const object + as const 추천', severity: 'warning' },
+
+  // Node.js 18+
+  { framework: 'node', minVersion: '18', pattern: /require\s*\(/g, message: 'require() → ESM import 권장 (Node 18+)', replacement: 'import ... from ...', severity: 'warning' },
+  { framework: 'node', minVersion: '18', pattern: /new Buffer\s*\(/g, message: 'new Buffer() deprecated', replacement: 'Buffer.from() 또는 Buffer.alloc()', severity: 'error' },
+
+  // Vue 3+
+  { framework: 'vue', minVersion: '3', pattern: /Vue\.component/g, message: 'Vue.component deprecated (Vue 3)', replacement: 'defineComponent + <script setup>', severity: 'error' },
+  { framework: 'vue', minVersion: '3', pattern: /new Vue\(/g, message: 'new Vue() deprecated (Vue 3)', replacement: 'createApp()', severity: 'error' },
+
+  // Express 5+
+  { framework: 'express', minVersion: '5', pattern: /app\.del\(/g, message: 'app.del() removed (Express 5)', replacement: 'app.delete()', severity: 'error' },
+  { framework: 'express', minVersion: '5', pattern: /res\.sendfile\(/g, message: 'res.sendfile() removed (Express 5)', replacement: 'res.sendFile()', severity: 'error' },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=rules | inputs=none | outputs=DeprecationRule[]

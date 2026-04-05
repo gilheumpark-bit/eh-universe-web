@@ -32,6 +32,9 @@ export async function runSprint(tasksInput: string): Promise<void> {
   }
 
   console.log(`🦔 CS Quill — Sprint 모드 (${tasks.length}개 태스크)\n`);
+  console.log('  태스크:');
+  for (const [i, t] of tasks.entries()) console.log(`    ${i + 1}. ${t}`);
+  console.log('');
 
   const results: Array<{ task: string; success: boolean; duration: number }> = [];
 
@@ -58,7 +61,13 @@ export async function runSprint(tasksInput: string): Promise<void> {
 
   console.log('  ─'.repeat(26));
   console.log(`  🦔 Sprint 완료: ${successCount}/${tasks.length} 성공 (${Math.round(totalDuration / 1000)}초)`);
+  if (successCount < tasks.length) {
+    const failed = results.filter(r => !r.success);
+    console.log(`\n  ❌ 실패 ${failed.length}건:`);
+    for (const f of failed) console.log(`     - ${f.task}`);
+  }
   console.log('');
+  try { const { recordCommand } = await import('../core/session'); recordCommand(`sprint ${tasks.length}`); } catch {}
 }
 
 // IDENTITY_SEAL: PART-2 | role=sprint-runner | inputs=tasksInput | outputs=console

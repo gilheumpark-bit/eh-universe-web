@@ -161,6 +161,37 @@ export async function runConfig(action: string): Promise<void> {
       break;
     }
 
+    case 'ai-profile': {
+      const { printAIProfileSummary } = await import('../core/ai-config');
+      console.log(printAIProfileSummary());
+      break;
+    }
+
+    case 'recommend': {
+      if (config.keys.length === 0) {
+        console.log('  ⚠️  키가 없어 추천 불가. cs config keys-add 먼저.');
+        break;
+      }
+      const { recommendSecondKey, getSingleKeyStrategy } = await import('../core/ai-config');
+      const firstKey = config.keys[0];
+      console.log(`\n  현재: ${firstKey.provider}/${firstKey.model}\n`);
+
+      if (config.keys.length === 1) {
+        const rec = recommendSecondKey(firstKey.provider);
+        console.log(`  💡 크로스모델 추천: ${rec.provider}/${rec.model}`);
+        console.log(`     이유: ${rec.reason}\n`);
+      }
+
+      const strategy = getSingleKeyStrategy(firstKey.provider, firstKey.model);
+      console.log('  태스크별 전략:');
+      for (const [task, s] of Object.entries(strategy)) {
+        const tip = s.tip ? ` — ${s.tip}` : '';
+        console.log(`    ${task.padEnd(12)} temp:${s.temperature}${tip}`);
+      }
+      console.log('');
+      break;
+    }
+
     default:
       showHelp();
   }

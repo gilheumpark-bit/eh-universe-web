@@ -95,6 +95,31 @@ export async function runReport(opts: ReportOptions): Promise<void> {
     console.log(`\n  💡 개선 포인트: ${sorted[0].name} (${sorted[0].avg}/100) 이 가장 낮습니다.`);
   }
 
+  // Fix Memory stats
+  try {
+    const { getStats } = await import('../core/fix-memory');
+    const fixStats = getStats();
+    if (fixStats.total > 0) {
+      console.log(`\n  🧠 Fix Memory:`);
+      console.log(`     패턴 ${fixStats.total}개 | 평균 신뢰도 ${Math.round(fixStats.avgConfidence * 100)}%`);
+      for (const cat of fixStats.topCategories.slice(0, 3)) {
+        console.log(`     ${cat.category}: ${cat.count}회`);
+      }
+    }
+  } catch {}
+
+  // Badge check
+  try {
+    const { evaluateBadges } = await import('../core/badges');
+    const { newBadges, allEarned } = evaluateBadges();
+    if (allEarned.length > 0) {
+      console.log(`\n  🏆 뱃지: ${allEarned.length}개 획득`);
+    }
+    if (newBadges.length > 0) {
+      for (const b of newBadges) console.log(`     🆕 ${b.icon} ${b.name}`);
+    }
+  } catch {}
+
   console.log('');
 }
 

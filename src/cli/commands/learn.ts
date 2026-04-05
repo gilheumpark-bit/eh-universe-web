@@ -12,8 +12,27 @@ import type { ReceiptData } from '../formatters/receipt';
 // PART 1 — Learn Runner
 // ============================================================
 
-export async function runLearn(): Promise<void> {
+export async function runLearn(topic?: string): Promise<void> {
   console.log('🦔 CS Quill — 학습 모드\n');
+
+  // Topic-specific learning
+  if (topic) {
+    try {
+      const { streamChat } = await import('@/lib/ai-providers');
+      const { getTemperature } = await import('../core/ai-config');
+      console.log(`  📚 "${topic}" 학습 중...\n  `);
+      await streamChat({
+        systemInstruction: 'You are a friendly Korean coding mentor. Explain the given topic with examples. Use 💡 for tips. Keep it under 20 lines.',
+        messages: [{ role: 'user', content: `Explain: ${topic}` }],
+        onChunk: (t: string) => { process.stdout.write(t); },
+        temperature: getTemperature('explain'),
+      });
+      console.log('\n');
+      return;
+    } catch {
+      console.log('  ⚠️  AI 연결 실패. 최근 검증 기록 기반으로 학습합니다.\n');
+    }
+  }
 
   // Load latest receipt
   const receiptDir = join(process.cwd(), '.cs', 'receipts');

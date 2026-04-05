@@ -55,6 +55,13 @@ export const BADGES: Badge[] = [
   { id: 'streak-10', name: 'Perfect Streak', icon: '💎', description: '10회 ��속 통과', condition: ctx => ctx.consecutivePasses >= 10 },
   { id: 'centurion', name: 'Centurion', icon: '💯', description: '100회 생성', condition: ctx => ctx.totalGenerations >= 100 },
   { id: 'perfect', name: 'Perfect Score', icon: '🌟', description: '종합 95+ 달성', condition: ctx => ctx.maxScore >= 95 },
+  { id: 'marathon', name: 'Marathon', icon: '🏃', description: '50회 생성', condition: ctx => ctx.totalGenerations >= 50 },
+  { id: 'iron-wall', name: 'Iron Wall', icon: '🧱', description: '검증 통과율 95%+', condition: ctx => ctx.passRate >= 0.95 && ctx.totalGenerations >= 10 },
+  { id: 'zero-bug', name: 'Zero Bug', icon: '🐛', description: '검증 발견 0건 3회 연속', condition: ctx => {
+    return ctx.receipts.slice(0, 3).every(r => r.pipeline.teams.every(t => t.findings === 0));
+  }},
+  { id: 'polyglot', name: 'Polyglot', icon: '🌍', description: '3개+ 언어 프로젝트', condition: () => false /* needs project scan */ },
+  { id: 'night-owl', name: 'Night Owl', icon: '🦉', description: '새벽 2-5시 코딩', condition: () => { const h = new Date().getHours(); return h >= 2 && h <= 5; }},
 ];
 
 export const CHALLENGES: Challenge[] = [

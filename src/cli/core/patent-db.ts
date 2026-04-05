@@ -89,6 +89,34 @@ export const PATENT_PATTERNS: PatentPattern[] = [
     alternative: 'Use bcrypt, scrypt, or Argon2 for passwords. SHA-256+ for checksums.',
     severity: 'block',
   },
+  {
+    id: 'sha1-auth', name: 'SHA-1 for Authentication',
+    description: 'SHA-1 해시를 인증에 사용 (충돌 발견됨)',
+    keywords: ['sha1 password', 'sha1 hash auth', 'sha1 login', 'createHash("sha1")'],
+    alternative: 'Use bcrypt, scrypt, or Argon2 for passwords. SHA-256+ for checksums.',
+    severity: 'block',
+  },
+  {
+    id: 'des-encrypt', name: 'DES Encryption',
+    description: 'DES 56비트 암호화 (무차별 공격 가능)',
+    keywords: ['des encrypt', 'des cipher', 'createCipheriv("des'],
+    alternative: 'Use AES-256-GCM or ChaCha20-Poly1305',
+    severity: 'block',
+  },
+  {
+    id: 'jwt-none', name: 'JWT None Algorithm',
+    description: 'JWT alg:none 허용 시 서명 우회 가능',
+    keywords: ['algorithm: "none"', 'alg: "none"', 'algorithms: ["none"]'],
+    alternative: 'Always verify JWT with RS256 or HS256. Never allow none.',
+    severity: 'block',
+  },
+  {
+    id: 'cors-star', name: 'CORS Allow All',
+    description: 'Access-Control-Allow-Origin: * 는 보안 위험',
+    keywords: ['Access-Control-Allow-Origin: *', "cors({ origin: '*'", 'origin: true'],
+    alternative: 'Specify exact origins. Use environment-based allowlist.',
+    severity: 'warn',
+  },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=patent-patterns | inputs=none | outputs=PATENT_PATTERNS

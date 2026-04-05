@@ -18,6 +18,16 @@ export async function runApply(file: string | undefined, opts: ApplyOptions): Pr
   const generatedDir = join(process.cwd(), '.cs', 'generated');
   const backupDir = join(process.cwd(), '.cs', 'backup');
 
+  // Check file mode
+  try {
+    const { loadMergedConfig } = await import('../core/config');
+    const config = loadMergedConfig();
+    if (config.fileMode === 'yolo' && !opts.all) {
+      opts.all = true; // Yolo = auto apply all
+      console.log('  ⚡ Yolo 모드 — 전체 자동 적용\n');
+    }
+  } catch {}
+
   if (!existsSync(generatedDir)) {
     console.log('  ⚠️  적용할 파일이 없습니다. (.cs/generated/ 비어있음)');
     return;

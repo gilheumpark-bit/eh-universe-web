@@ -141,9 +141,10 @@ export function recordFix(pattern: Omit<FixPattern, 'id' | 'appliedCount' | 'acc
     });
   }
 
-  // Prune old patterns
+  // Prune: remove low confidence + old patterns
+  db.patterns = db.patterns.filter(p => p.confidence > 0.1 || Date.now() - p.lastApplied < 30 * 24 * 60 * 60 * 1000);
   if (db.patterns.length > MAX_PATTERNS) {
-    db.patterns.sort((a, b) => b.lastApplied - a.lastApplied);
+    db.patterns.sort((a, b) => b.confidence * b.appliedCount - a.confidence * a.appliedCount);
     db.patterns = db.patterns.slice(0, MAX_PATTERNS);
   }
 
