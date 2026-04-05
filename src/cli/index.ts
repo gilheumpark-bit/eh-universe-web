@@ -24,6 +24,7 @@ export { evaluateBadges, evaluateChallenges, generateShareCard, generateReadmeBa
 export { checkPatentPatterns, PATENT_PATTERNS, type PatentCheckResult } from './core/patent-db';
 export { checkDeprecations, formatDeprecationReport, type DeprecationFinding } from './core/deprecation-checker';
 export { runEnhancedPipeline, type ASTFinding, type EnhancedPipelineResult } from './core/ast-bridge';
+export { runFullDataFlowAnalysis, trackNullFlow, trackCrossFileFlow, trackTaintFlow, type FlowChain, type DataFlowResult } from './core/data-flow';
 
 // Adapters
 export { storeGet, storeSet, storeDelete, storeKeys, readFileTree, cacheGet, cacheSet, type CLIFileNode } from './adapters/fs-adapter';

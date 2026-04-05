@@ -158,6 +158,65 @@ export async function runEnhancedPipeline(
     }
   } catch { /* skip */ }
 
+  // Phase 5: Data Flow Analysis (Level 3 — null flow + taint)
+  try {
+    const { trackNullFlow, trackTaintFlow } = await import('./data-flow');
+
+    const nullFlow = await trackNullFlow(code, fileName);
+    if (nullFlow.findings.length > 0) {
+      engines.push('data-flow-null');
+      for (const f of nullFlow.findings) {
+        findings.push({
+          engine: 'data-flow', line: f.line, message: f.message,
+          severity: f.severity === 'error' ? 'error' : 'warning',
+          team: 'validation', confidence: 0.9,
+        });
+      }
+    }
+
+    const taint = await trackTaintFlow(code, fileName);
+    if (taint.findings.length > 0) {
+      engines.push('taint-analysis');
+      for (const f of taint.findings) {
+        findings.push({
+          engine: 'taint', line: f.line, message: f.message,
+          severity: 'critical', team: 'release-ip', confidence: 0.92,
+        });
+      }
+    }
+  } catch { /* data-flow not available */ }
+
+  // Phase 6: Cross-File Analysis (Level 4 — call graph + circular deps)
+  try {
+    const { buildCallGraph, findCircularDeps } = await import('../adapters/lsp-adapter');
+    const graph = buildCallGraph(process.cwd());
+    const circles = findCircularDeps(graph);
+
+    if (circles.length > 0) {
+      engines.push('call-graph');
+      for (const circle of circles.slice(0, 5)) {
+        findings.push({
+          engine: 'call-graph', line: 0,
+          message: `Circular dependency: ${circle.join(' → ')}`,
+          severity: 'warning', team: 'governance', confidence: 0.95,
+        });
+      }
+    }
+
+    // Cross-file null flow (Level 4)
+    const { trackCrossFileFlow } = await import('./data-flow');
+    const crossFile = await trackCrossFileFlow(process.cwd());
+    if (crossFile.findings.length > 0) {
+      engines.push('cross-file-null');
+      for (const f of crossFile.findings) {
+        findings.push({
+          engine: 'cross-file', line: f.line, message: f.message,
+          severity: 'error', team: 'validation', confidence: 0.88,
+        });
+      }
+    }
+  } catch { /* cross-file analysis not available */ }
+
   // Deduplicate: same line + same team = keep higher confidence
   const deduped = deduplicateFindings(findings);
 
