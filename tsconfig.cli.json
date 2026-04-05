@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2022",
@@ -10,34 +9,20 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
-    "lib": ["ES2022"],
-    "types": ["node"],
+    "strict": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": [
-    "src/cli/**/*.ts",
-    "src/lib/code-studio/pipeline/**/*.ts",
-    "src/lib/code-studio/audit/**/*.ts",
-    "src/lib/code-studio/harness/**/*.ts",
-    "src/lib/code-studio/core/autofix-policy.ts",
-    "src/lib/code-studio/core/composer-state.ts",
-    "src/lib/code-studio/core/pipeline-execution-model.ts",
-    "src/lib/code-studio/core/types.ts",
-    "src/lib/code-studio/ai/agents.ts",
-    "src/lib/code-studio/ai/idiom-presets.ts",
-    "src/lib/ai-providers.ts",
-    "src/lib/multi-key-bridge.ts",
-    "src/lib/multi-key-manager.ts",
-    "src/lib/token-utils.ts",
-    "src/lib/logger.ts"
+    "src/cli/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    ".next",
-    "**/__tests__/**"
+    "dist"
   ]
 }

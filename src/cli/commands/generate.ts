@@ -363,7 +363,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
       for (const finding of stage.findings) {
         recordFix({
           category: stage.name,
-          description: finding.message,
+          description: typeof finding === 'string' ? finding : (finding as { message?: string }).message ?? String(finding),
           beforePattern: '',
           afterPattern: '',
           confidence: 0.5,
