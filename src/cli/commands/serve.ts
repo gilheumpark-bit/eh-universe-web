@@ -34,8 +34,36 @@ async function handleDesignLint(body: string): Promise<object> {
   return runDesignLint(code ?? '');
 }
 
+async function handleCognitiveLoad(body: string): Promise<object> {
+  const { code } = JSON.parse(body);
+  const { analyzeCognitiveLoad } = await import('@/lib/code-studio/pipeline/cognitive-load');
+  return analyzeCognitiveLoad(code ?? '');
+}
+
+async function handleBugfinder(body: string): Promise<object> {
+  const { code } = JSON.parse(body);
+  const { findBugsStatic } = await import('@/lib/code-studio/pipeline/bugfinder');
+  return { bugs: findBugsStatic(code ?? '') };
+}
+
+async function handleIPScan(body: string): Promise<object> {
+  const { files } = JSON.parse(body);
+  const { scanProject } = await import('@/lib/code-studio/features/patent-scanner');
+  return scanProject(files ?? []);
+}
+
 async function handleHealth(): Promise<object> {
-  return { status: 'ok', version: '0.1.0', engine: 'CS Quill 🦔' };
+  const { loadMergedConfig } = await import('../core/config');
+  const config = loadMergedConfig();
+  return {
+    status: 'ok',
+    version: '0.1.0',
+    engine: 'CS Quill 🦔',
+    language: config.language,
+    level: config.level,
+    keys: config.keys.length,
+    uptime: Math.round(process.uptime()),
+  };
 }
 
 // IDENTITY_SEAL: PART-1 | role=route-handlers | inputs=body | outputs=object
@@ -53,6 +81,9 @@ export async function runServe(port: string): Promise<void> {
     '/hollow': handleHollow,
     '/dead-code': handleDeadCode,
     '/design-lint': handleDesignLint,
+    '/cognitive-load': handleCognitiveLoad,
+    '/bugfinder': handleBugfinder,
+    '/ip-scan': handleIPScan,
   };
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {

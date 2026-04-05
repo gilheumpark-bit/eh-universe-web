@@ -191,9 +191,21 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     temperature: getTemperature('plan'),
   });
 
-  const plan = parsePlanResult(planRaw);
+  let plan = parsePlanResult(planRaw);
+  // Retry once on plan failure
   if (!plan) {
-    console.log('  ❌ 계획 생성 실패. 다시 시도하세요.');
+    console.log('        ⚠️  첫 시도 실패, 재시도...');
+    planRaw = '';
+    await streamChat({
+      systemInstruction: PLANNER_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: planPrompt + '\n\nIMPORTANT: Output ONLY valid JSON.' }],
+      onChunk: (t: string) => { planRaw += t; },
+      temperature: 0.2,
+    });
+    plan = parsePlanResult(planRaw);
+  }
+  if (!plan) {
+    console.log('  ❌ 계획 생성 실패. 프롬프트를 더 구체적으로 해보세요.');
     return;
   }
 
@@ -206,8 +218,18 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   // Dry-run: show plan and exit
   if (opts.dryRun) {
     const totalLines = plan.contracts.reduce((s, c) => s + c.estimatedLines, 0);
-    console.log(`\n  📊 예상: ~${totalLines}줄, ${plan.totalParts}회 API, 구조: ${opts.structure}`);
-    console.log('  (--dry-run: 실행하지 않음)');
+    const estimatedTokens = totalLines * 15; // ~15 tokens per line
+    const estimatedCostUsd = (estimatedTokens / 1000) * 0.003; // rough Sonnet pricing
+    const apiCalls = plan.totalParts + 1 + (opts.mode !== 'fast' ? 2 : 0); // plan + parts + verify + crosscheck
+    console.log(`\n  📊 실행 계획:`);
+    console.log(`     코드:      ~${totalLines}줄`);
+    console.log(`     PART:      ${plan.totalParts}개 (${buildExecutionWaves(plan.contracts).length} wave 병렬)`);
+    console.log(`     API 호출:  ~${apiCalls}회`);
+    console.log(`     예상 비용: ~$${estimatedCostUsd.toFixed(3)}`);
+    console.log(`     구조:      ${opts.structure}`);
+    console.log(`     모드:      ${opts.mode}`);
+    if (references.length > 0) console.log(`     레퍼런스:  ${references.length}개`);
+    console.log('\n  (--dry-run: 실행하지 않음)');
     return;
   }
 
@@ -306,6 +328,43 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     console.log(`        ${icon} ${stage.name.padEnd(14)} ${stage.score}/100`);
   }
   console.log(`        종합: ${pipelineResult.overallScore}/100 (${pipelineResult.overallStatus})`);
+
+  // ── Step 4.5: Cross-Model Verification (full/strict only) ──
+  if (opts.mode !== 'fast' && csConfig.keys.length >= 2) {
+    console.log('\n  [4.5/6] 🔍 크로스모델 검증...');
+    try {
+      const { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } = await import('../ai/cross-judge');
+
+      const judgeFindings = pipelineResult.stages.flatMap((s, si) =>
+        (s.findings as string[]).map((f, fi) => ({
+          id: `${s.name}-${fi}`, severity: 'warning', message: typeof f === 'string' ? f : String(f),
+          file: fileName, line: 0, team: s.name, confidence: 0.7,
+        })),
+      );
+
+      if (judgeFindings.length > 0) {
+        const judgePrompt = buildJudgePrompt(mergedCode, judgeFindings);
+        let judgeRaw = '';
+        await streamChat({
+          systemInstruction: CROSS_JUDGE_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: judgePrompt }],
+          onChunk: (t: string) => { judgeRaw += t; },
+          temperature: getTemperature('judge'),
+        });
+
+        const judgeResult = parseJudgeResult(judgeRaw);
+        if (judgeResult) {
+          const agreed = judgeResult.findings.filter(f => f.verdict === 'agree').length;
+          const dismissed = judgeResult.findings.filter(f => f.verdict === 'dismiss').length;
+          console.log(`        합의: ${agreed}건 | 기각: ${dismissed}건 (신뢰도: ${Math.round(judgeResult.overallAgreement * 100)}%)`);
+        }
+      } else {
+        console.log('        → 발견 사항 없어 크로스체크 스킵');
+      }
+    } catch {
+      console.log('        → 크로스체크 스킵 (키 부족 또는 API 오류)');
+    }
+  }
 
   // ── Step 5: Auto-fix loop ──
   const guard = createLoopGuard({ passThreshold: opts.mode === 'strict' ? 85 : 77 });

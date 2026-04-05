@@ -153,6 +153,17 @@ export async function runStress(path: string, opts: StressOptions): Promise<void
   }
 
   const duration = Math.round(performance.now() - startTime);
+
+  // Quick fix suggestions based on static metrics
+  if (warnings.length > 0) {
+    console.log('\n  🔧 빠른 수정:');
+    if (metrics.nestedLoopDepth >= 2) console.log('     → 중첩 루프를 Map/Set 조회로 교체');
+    if (metrics.asyncWithoutTryCatch > 0) console.log('     → 미보호 await에 try-catch 추가');
+    if (metrics.eventListenerCount > 3) console.log('     → removeEventListener 또는 AbortController 사용');
+    if (metrics.recursiveFunctionCount > 0) console.log('     → 재귀에 depth limit 추가');
+  }
+
+  try { const { recordCommand } = await import('../core/session'); recordCommand(`stress ${path}`); } catch {}
   console.log(`\n  완료: ${duration}ms\n`);
 }
 

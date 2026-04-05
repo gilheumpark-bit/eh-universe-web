@@ -224,6 +224,19 @@ export async function runIpScan(path: string, _opts: Record<string, unknown>): P
   console.log(`  ${icon} IP Score: ${score}/100 (${grade})`);
   console.log(`  의존성: ${depLicenses.length}개 | 소스 패턴: ${findings.length}건 | Copyleft: ${copyleftDeps.length}개`);
 
+  // Actionable recommendations
+  if (copyleftDeps.length > 0) {
+    console.log('\n  🔧 조치 추천:');
+    for (const dep of copyleftDeps.slice(0, 3)) {
+      console.log(`     ${dep.name} (${dep.license}) → MIT 대안 패키지 검색 필요`);
+    }
+  }
+  if (unknownDeps.length > 0) {
+    console.log('     미확인 라이선스 → npm info <패키지명> license 로 확인');
+  }
+
+  try { const { recordCommand } = await import('../core/session'); recordCommand('ip-scan'); } catch {}
+
   if (criticals.length > 0 || copyleftDeps.length > 0) {
     process.exitCode = 1;
   }

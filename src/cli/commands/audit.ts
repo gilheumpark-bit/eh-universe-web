@@ -126,6 +126,21 @@ export async function runAudit(opts: AuditOptions): Promise<void> {
   console.log(formatAuditReport(report, 'ko'));
   console.log(`\n  소요 시간: ${duration}ms`);
 
+  // Improvement suggestions
+  if (report.urgent && report.urgent.length > 0) {
+    console.log('\n  💡 가장 시급한 조치:');
+    for (const item of report.urgent.slice(0, 3)) {
+      console.log(`     ${item.rank}. [${item.area}] ${item.message}`);
+    }
+  }
+
+  // Session recording
+  try {
+    const { recordCommand, recordScore } = await import('../core/session');
+    recordCommand('audit');
+    recordScore('verify', report.totalScore);
+  } catch { /* skip */ }
+
   // Set exit code if hard gate failed
   if (report.hardGateFail) {
     process.exitCode = 1;

@@ -234,9 +234,20 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   }
   console.log('  │                                     │');
   console.log(`  │  🦔 CS SCORE: ${csScore.toString().padStart(6)}              │`);
-  console.log(`  │  ${totalDuration}ms | ${totalFiles} files | $0         │`);
+  console.log(`  │  ${totalEngines} engines | ${totalDuration}ms | $0      │`);
   console.log('  │                                     │');
-  console.log('  └─────────────────────────────────────┘\n');
+  console.log('  └─────────────────────────────────────┘');
+
+  // Quill mood
+  const { getQuillMood } = await import('./fun');
+  console.log(getQuillMood(weightedScore));
+
+  // Session recording
+  try {
+    const { recordCommand, recordScore } = await import('../core/session');
+    recordCommand('playground');
+    recordScore('playground', weightedScore);
+  } catch { /* skip */ }
 
   // --challenge: show challenges
   if (opts.challenge) {

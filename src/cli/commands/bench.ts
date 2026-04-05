@@ -110,7 +110,18 @@ export async function runBench(path: string, opts: BenchOptions): Promise<void> 
 
   const avgScore = Math.round(scored.reduce((s, f) => s + f.score, 0) / scored.length);
   console.log('  ' + '─'.repeat(46));
-  console.log(`  평균: ${avgScore}/100\n`);
+  console.log(`  평균: ${avgScore}/100`);
+
+  // Worst function hint
+  const worst = scored.sort((a, b) => a.score - b.score)[0];
+  if (worst && worst.score < 70) {
+    console.log(`\n  💡 ${worst.name}() (${worst.length}줄, 복잡도 ${worst.complexity}) 개선 추천`);
+    if (worst.length > 50) console.log('     → 함수 분리 (PART 구조)');
+    if (worst.complexity > 10) console.log('     → early return 패턴으로 중첩 줄이기');
+  }
+  console.log('');
+
+  try { const { recordCommand } = await import('../core/session'); recordCommand(`bench ${path}`); } catch {}
 
   const result: BenchResult = { functions: scored, timestamp: Date.now() };
 

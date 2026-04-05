@@ -222,6 +222,59 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   console.log(`  ${statusIcon} 종합: ${overallScore}/100 | ${files.length}파일 | ${totalFindings}건 | ${duration}ms`);
   console.log(`  기준: ${threshold}점 | 상태: ${overallStatus.toUpperCase()}`);
 
+  // Improvement hints for lowest scoring teams
+  const worstTeams = [...teams].sort((a, b) => a.score - b.score).slice(0, 2);
+  if (worstTeams.length > 0 && worstTeams[0].score < 80) {
+    console.log('\n  💡 개선 포인트:');
+    const hints: Record<string, string> = {
+      simulation: 'cs explain 으로 루프/재귀 구조 확인',
+      generation: 'cs fun challenge 로 빈 함수 채우기 연습',
+      validation: '--mode strict 로 null 가드 자동 적용',
+      'size-density': 'PART 구조로 파일 분리 추천',
+      'asset-trace': 'cs search --symbols 로 미사용 코드 ���색',
+      stability: 'try-catch 자동 추가: cs generate "에러 핸들링"',
+      'release-ip': 'cs ip-scan 으로 상세 보안 검사',
+      governance: 'cs audit 으로 아키텍처 전체 검진',
+    };
+    for (const t of worstTeams) {
+      if (hints[t.name]) console.log(`     ${t.name}: ${hints[t.name]}`);
+    }
+  }
+
+  // Session recording
+  try {
+    const { recordCommand, recordScore } = await import('../core/session');
+    recordCommand(`verify ${path}`);
+    recordScore('verify', overallScore);
+  } catch { /* session not available */ }
+
+  // Auto receipt
+  try {
+    const { computeReceiptHash, chainReceipt, type ReceiptData } = await import('../formatters/receipt');
+    const { createHash } = await import('crypto');
+    const { writeFileSync, mkdirSync } = await import('fs');
+    const { join } = await import('path');
+
+    const receiptDir = join(process.cwd(), '.cs', 'receipts');
+    mkdirSync(receiptDir, { recursive: true });
+
+    const receipt = {
+      id: `cs-v-${Date.now().toString(36)}`,
+      timestamp: Date.now(),
+      codeHash: createHash('sha256').update(String(totalFindings)).digest('hex'),
+      pipeline: {
+        teams: teams.map(t => ({ name: t.name, score: t.score, blocking: t.blocking, findings: t.findings, passed: t.passed })),
+        overallScore,
+        overallStatus,
+      },
+      verification: { rounds: 0, fixesApplied: 0, stopReason: 'verify-only' },
+      receiptHash: '',
+    };
+    receipt.receiptHash = computeReceiptHash(receipt);
+    chainReceipt(receipt as any);
+    writeFileSync(join(receiptDir, `${receipt.id}.json`), JSON.stringify(receipt, null, 2));
+  } catch { /* receipt optional */ }
+
   if (overallStatus === 'fail') {
     process.exitCode = 1;
   }

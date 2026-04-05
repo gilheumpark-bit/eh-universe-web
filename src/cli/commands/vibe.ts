@@ -78,13 +78,36 @@ export async function runVibe(prompt: string): Promise<void> {
   console.log(`\n  🛠️  ${spec.techStack}`);
   console.log(`  📁 약 ${spec.estimatedFiles}개 파일\n`);
 
-  // Step 2: Generate (delegates to cs generate)
+  // Confirmation (대화형)
+  const { createInterface } = await import('readline');
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise<string>(r => rl.question('  이대로 만들까요? (Y/n/수정): ', a => { rl.close(); r(a.trim()); }));
+
+  if (answer.toLowerCase() === 'n') {
+    console.log('  취소됨.\n');
+    return;
+  }
+
+  let finalPrompt = spec.prompt;
+  if (answer && answer.toLowerCase() !== 'y' && answer !== '') {
+    // User wants to modify
+    finalPrompt = `${spec.prompt}. Additional: ${answer}`;
+    console.log(`\n  📝 수정 반영: "${answer}"\n`);
+  }
+
+  // Step 2: Generate
   console.log('  🦔 만드는 중... ☕ 잠깐 쉬세요\n');
 
-  await runGenerate(spec.prompt, {
+  await runGenerate(finalPrompt, {
     mode: 'full',
     structure: 'auto',
   });
+
+  console.log('  🦔 바이브 완료! 결과는 .cs/generated/ 에 있어요.\n');
+  console.log('  다음 단계:');
+  console.log('    cs apply --all        → 원본에 적용');
+  console.log('    cs verify ./src       → 검증');
+  console.log('    cs vibe "수정사항"     → 추가 수정\n');
 }
 
 // IDENTITY_SEAL: PART-2 | role=vibe-runner | inputs=prompt | outputs=generated-code
