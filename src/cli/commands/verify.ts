@@ -139,9 +139,10 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   let useEnhanced = true;
   let enhancedImport: typeof import('../core/ast-bridge') | null = null;
   try {
-    enhancedImport = await import('../core/ast-bridge');
-  } catch {
+    enhancedImport = require('../core/ast-bridge');
+  } catch (e) {
     useEnhanced = false;
+    if (process.env.CS_DEBUG) console.error('  [DEBUG] ast-bridge load failed:', (e as Error).message);
   }
 
   const { runStaticPipeline } = await import('../core/pipeline-bridge');
@@ -155,7 +156,9 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   async function verifyOneFile(file: SourceFile) {
     if (useEnhanced && enhancedImport) {
       try {
-        const enhanced = await enhancedImport.runEnhancedPipeline(file.content, file.language, file.relativePath);
+        // static 결과를 먼저 구하고 enhanced에 전달 (순환 import 방지)
+        const staticResult = await runStaticPipeline(file.content, file.language);
+        const enhanced = await enhancedImport.runEnhancedPipeline(file.content, file.language, file.relativePath, staticResult);
         astFindingsTotal += enhanced.astFindings;
         const result = {
           teams: [] as Array<{ name: string; score: number; findings: string[] }>,
@@ -182,7 +185,8 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
           result.teams.push({ name, score: data.score, findings: data.findings });
         }
         return result;
-      } catch {
+      } catch (enhErr) {
+        if (process.env.CS_DEBUG) console.error(`  [DEBUG] enhanced failed for ${file.relativePath}:`, (enhErr as Error).message?.slice(0, 100));
         return await runStaticPipeline(file.content, file.language);
       }
     }

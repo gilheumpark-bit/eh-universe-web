@@ -9,7 +9,7 @@
 // ============================================================
 
 export async function analyzeWithTypeScript(code: string, fileName: string = 'temp.ts') {
-  const ts = await import('typescript');
+  const ts = require('typescript');
 
   const sourceFile = ts.createSourceFile(fileName, code, ts.ScriptTarget.Latest, true);
   const findings: Array<{ line: number; message: string; severity: string }> = [];
@@ -131,7 +131,7 @@ export async function analyzeWithTypeScript(code: string, fileName: string = 'te
 // ============================================================
 
 export async function analyzeWithTsMorph(code: string, fileName: string = 'temp.ts') {
-  const { Project, SyntaxKind } = await import('ts-morph');
+  const { Project, SyntaxKind } = require('ts-morph');
 
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile(fileName, code);
@@ -184,9 +184,9 @@ export async function analyzeWithTsMorph(code: string, fileName: string = 'temp.
 // ============================================================
 
 export async function analyzeWithAcorn(code: string) {
-  const acorn = await import('acorn');
-  const { traverse } = await import('estraverse');
-  const esquery = await import('esquery');
+  const acorn = require('acorn');
+  const { traverse } = require('estraverse');
+  const esquery = require('esquery');
 
   const findings: Array<{ line: number; message: string; severity: string }> = [];
 
@@ -240,7 +240,7 @@ export async function analyzeWithAcorn(code: string) {
 // ============================================================
 
 export async function analyzeWithBabel(code: string) {
-  const { parse } = await import('@babel/parser');
+  const { parse } = require('@babel/parser');
   const findings: Array<{ line: number; message: string; severity: string }> = [];
 
   try {

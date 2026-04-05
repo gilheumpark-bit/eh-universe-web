@@ -82,33 +82,33 @@ export async function runEnhancedPipeline(
   code: string,
   language: string,
   fileName: string,
+  regexResult?: { score: number; teams: Array<{ name: string; score: number; findings: Array<{ line: number; message: string; severity: string }> }> },
 ): Promise<EnhancedPipelineResult> {
   const findings: ASTFinding[] = [];
   const engines: string[] = [];
 
-  // Phase 1: Original regex pipeline
-  const { runStaticPipeline } = await import('../core/pipeline-bridge');
-  const regexResult = await runStaticPipeline(code, language);
-  engines.push('regex-pipeline');
-
+  // Phase 1: Static pipeline 결과 병합 (순환 import 방지 — 호출자가 전달)
   let regexFindingCount = 0;
-  for (const stage of regexResult.teams) {
-    for (const finding of stage.findings) {
-      regexFindingCount++;
-      findings.push({
-        engine: 'regex',
-        line: 0,
-        message: typeof finding === 'string' ? finding : String(finding),
-        severity: 'warning',
-        team: stage.name,
-        confidence: 0.6,
-      });
+  if (regexResult) {
+    engines.push('regex-pipeline');
+    for (const stage of regexResult.teams) {
+      for (const finding of stage.findings) {
+        regexFindingCount++;
+        findings.push({
+          engine: 'regex',
+          line: typeof finding === 'object' ? (finding as any).line ?? 0 : 0,
+          message: typeof finding === 'string' ? finding : (finding as any).message ?? String(finding),
+          severity: 'warning',
+          team: stage.name,
+          confidence: 0.6,
+        });
+      }
     }
   }
 
   // Phase 2: AST analysis
   try {
-    const { runFullASTAnalysis } = await import('../adapters/ast-engine');
+    const { runFullASTAnalysis } = require('../adapters/ast-engine');
     const astResult = await runFullASTAnalysis(code, fileName);
 
     for (const eng of astResult.results) {
@@ -129,7 +129,7 @@ export async function runEnhancedPipeline(
 
   // Phase 3: LSP diagnostics
   try {
-    const { getDiagnostics } = await import('../adapters/lsp-adapter');
+    const { getDiagnostics } = require('../adapters/lsp-adapter');
     const diagnostics = getDiagnostics(process.cwd());
 
     if (diagnostics.length > 0) {
@@ -160,7 +160,7 @@ export async function runEnhancedPipeline(
 
   // Phase 5: Data Flow Analysis (Level 3 — null flow + taint)
   try {
-    const { trackNullFlow, trackTaintFlow } = await import('./data-flow');
+    const { trackNullFlow, trackTaintFlow } = require('./data-flow');
 
     const nullFlow = await trackNullFlow(code, fileName);
     if (nullFlow.findings.length > 0) {
@@ -188,7 +188,7 @@ export async function runEnhancedPipeline(
 
   // Phase 6: Cross-File Analysis (Level 4 — call graph + circular deps)
   try {
-    const { buildCallGraph, findCircularDeps } = await import('../adapters/lsp-adapter');
+    const { buildCallGraph, findCircularDeps } = require('../adapters/lsp-adapter');
     const graph = buildCallGraph(process.cwd());
     const circles = findCircularDeps(graph);
 
@@ -204,7 +204,7 @@ export async function runEnhancedPipeline(
     }
 
     // Cross-file null flow (Level 4)
-    const { trackCrossFileFlow } = await import('./data-flow');
+    const { trackCrossFileFlow } = require('./data-flow');
     const crossFile = await trackCrossFileFlow(process.cwd());
     if (crossFile.findings.length > 0) {
       engines.push('cross-file-null');
@@ -219,7 +219,7 @@ export async function runEnhancedPipeline(
 
   // Phase 7: Deep Verify (P0~P2 논리 버그)
   try {
-    const { runDeepVerify } = await import('./deep-verify');
+    const { runDeepVerify } = require('./deep-verify');
     const deepResult = runDeepVerify(code, fileName);
     if (deepResult.findings.length > 0) {
       engines.push('deep-verify');
@@ -240,7 +240,7 @@ export async function runEnhancedPipeline(
 
   // Phase 8: CFG Brain Analysis (제어 흐름 그래프 기반 위험 경로)
   try {
-    const { runBrainAnalysis } = await import('./cfg-engine');
+    const { runBrainAnalysis } = require('./cfg-engine');
     const brain = await runBrainAnalysis(code, fileName);
     if (brain.riskPaths.length > 0) {
       engines.push(`cfg-engine(${brain.stats.reductionPercent}% 컨텍스트 절감)`);
@@ -290,7 +290,7 @@ export async function runASTHollowScan(code: string, fileName: string): Promise<
   const findings: ASTFinding[] = [];
 
   try {
-    const { Project, SyntaxKind } = await import('ts-morph');
+    const { Project, SyntaxKind } = require('ts-morph');
     const project = new Project({ useInMemoryFileSystem: true });
     const sourceFile = project.createSourceFile(fileName, code);
 

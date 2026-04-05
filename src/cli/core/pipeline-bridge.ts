@@ -59,17 +59,8 @@ export async function runStaticPipeline(code: string, language: string): Promise
     teams.push(runASTFallback(code, language));
   }
 
-  // Team 3: Hollow (빈깡통 — AST hollow scan 실체)
-  try {
-    const { runASTHollowScan } = await import('./ast-bridge');
-    const hollow = await runASTHollowScan(code, 'analysis.ts');
-    const findings = hollow.findings.map((f: { message: string; line?: number }) => ({
-      line: f.line ?? 0, message: f.message, severity: 'error' as const,
-    }));
-    teams.push({ name: 'hollow', score: Math.max(0, 100 - findings.length * 20), findings });
-  } catch {
-    teams.push(runHollowCheck(code));
-  }
+  // Team 3: Hollow (빈깡통 — typescript API로 빈 함수 탐지, ast-bridge 순환 제거)
+  teams.push(runHollowCheck(code));
 
   // Team 4: Dead Code (regex 유지 — 인메모리 코드용)
   teams.push(runDeadCodeCheck(code));
