@@ -88,7 +88,7 @@ export async function runEnhancedPipeline(
 
   // Phase 1: Original regex pipeline
   const { runStaticPipeline } = await import('../core/pipeline-bridge');
-  const regexResult = runStaticPipeline(code, language);
+  const regexResult = await runStaticPipeline(code, language);
   engines.push('regex-pipeline');
 
   let regexFindingCount = 0;

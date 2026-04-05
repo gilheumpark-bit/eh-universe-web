@@ -323,7 +323,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   } catch {
     // Fallback to regex-only
     const { runStaticPipeline } = await import('../core/pipeline-bridge');
-    pipelineResult = runStaticPipeline(mergedCode, 'typescript');
+    pipelineResult = await runStaticPipeline(mergedCode, 'typescript');
   }
 
   for (const stage of pipelineResult.stages) {

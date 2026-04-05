@@ -138,7 +138,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
         astFindingsTotal += enhanced.astFindings;
         // Map enhanced findings to pipeline format
         result = {
-          stages: [] as Array<{ name: string; score: number; findings: string[] }>,
+          teams: [] as Array<{ name: string; score: number; findings: string[] }>,
           overallScore: enhanced.combinedScore,
           overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
         };
@@ -154,16 +154,16 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
           teamMap.set(f.team, team);
         }
         for (const [name, data] of teamMap) {
-          result.stages.push({ name, score: data.score, findings: data.findings });
+          result.teams.push({ name, score: data.score, findings: data.findings });
         }
       } catch {
-        result = runStaticPipeline(file.content, file.language);
+        result = await runStaticPipeline(file.content, file.language);
       }
     } else {
-      result = runStaticPipeline(file.content, file.language);
+      result = await runStaticPipeline(file.content, file.language);
     }
 
-    for (const stage of result.stages) {
+    for (const stage of result.teams ?? result.stages ?? []) {
       const scores = allTeamScores.get(stage.name) ?? [];
       scores.push(stage.score);
       allTeamScores.set(stage.name, scores);
@@ -250,7 +250,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   // Auto receipt
   try {
-    const { computeReceiptHash, chainReceipt, type ReceiptData } = await import('../formatters/receipt');
+    const { computeReceiptHash, chainReceipt } = await import('../formatters/receipt');
     const { createHash } = await import('crypto');
     const { writeFileSync, mkdirSync } = await import('fs');
     const { join } = await import('path');

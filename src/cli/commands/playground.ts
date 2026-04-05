@@ -87,7 +87,7 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
         try {
           const code = readFileSync(p, 'utf-8');
           if (code.length < 50) continue;
-          const result = runStaticPipeline(code, 'typescript');
+          const result = await runStaticPipeline(code, 'typescript');
           qualScoreSum += result.overallScore;
           qualCount++;
         } catch { /* skip */ }

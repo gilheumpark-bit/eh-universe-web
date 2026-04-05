@@ -48,7 +48,7 @@ export async function collectEvidence(code: string, fileName: string): Promise<E
   // 1. Static pipeline
   try {
     const { runStaticPipeline } = await import('../core/pipeline-bridge');
-    const result = runStaticPipeline(code, 'typescript');
+    const result = await runStaticPipeline(code, 'typescript');
     evidence.push({
       type: 'lint', source: '8-team-pipeline', score: result.overallScore,
       data: { stages: result.stages.map(s => ({ name: s.name, score: s.score, findings: s.findings.length })) },

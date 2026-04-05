@@ -13,7 +13,7 @@ import { readFileSync } from 'fs';
 async function handleVerify(body: string): Promise<object> {
   const { code, language } = JSON.parse(body);
   const { runStaticPipeline } = await import('../core/pipeline-bridge');
-  return runStaticPipeline(code ?? '', language ?? 'typescript');
+  return await runStaticPipeline(code ?? '', language ?? 'typescript');
 }
 
 async function handleHollow(body: string): Promise<object> {
