@@ -17,10 +17,16 @@ export { formatReceipt, toJSON, toSARIF, computeReceiptHash, chainReceipt, type 
 // Config
 export { loadMergedConfig, saveGlobalConfig, addKey, removeKey, getKeyForRole, type CSConfig, type KeyConfig } from './core/config';
 
+// Adapters
+export { storeGet, storeSet, storeDelete, storeKeys, readFileTree, cacheGet, cacheSet, type CLIFileNode } from './adapters/fs-adapter';
+
+// TUI
+export { progressBar, progressLine, ProgressTimer, Spinner } from './tui/progress';
+export { computeDiff, formatDiff, printDiffSummary } from './tui/diff-preview';
+
 // Commands (lazy — import at call site, listed here for discoverability)
-// import { runInit } from './commands/init';
-// import { runGenerate } from './commands/generate';
-// import { runVerify } from './commands/verify';
-// import { runAudit } from './commands/audit';
+// runInit, runGenerate, runVerify, runAudit, runVibe, runStress,
+// runBench, runPlayground, runIpScan, runCompliance, runExplain,
+// runSprint, runServe, runReport, runApply, runUndo, runConfig
 
 // IDENTITY_SEAL: role=barrel-export | inputs=none | outputs=all-public-APIs
