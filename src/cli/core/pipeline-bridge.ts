@@ -99,7 +99,7 @@ export async function runStaticPipeline(code: string, language: string): Promise
       line: f.line ?? 0, message: f.message,
       severity: (f.severity === 'P0' ? 'error' : 'warning') as 'error' | 'warning',
     }));
-    const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 20 - findings.filter(f => f.severity === 'warning').length * 5);
+    const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 10 - findings.filter(f => f.severity === 'warning').length * 2);
     teams.push({ name: 'bug-pattern', score, findings: findings.slice(0, 20) });
   } catch {
     teams.push(runBugPatternCheck(code, language));
@@ -144,17 +144,23 @@ function runRegexTeam(code: string, _language: string): PipelineResult['teams'][
   ];
 
   const ruleLinePat = /regex\s*:|\/.*\/[gimsuy]*\s*,|severity\s*:/;
+  // 패턴별 최대 3건, 전체 최대 20건 — 점수 왜곡 방지
+  const patternCounts = new Map<string, number>();
   for (let i = 0; i < lines.length; i++) {
     if (ruleLinePat.test(lines[i])) continue;
+    if (findings.length >= 20) break;
     for (const p of patterns) {
+      const cnt = patternCounts.get(p.msg) ?? 0;
+      if (cnt >= 3) continue;
       if (p.regex.test(lines[i])) {
         findings.push({ line: i + 1, message: p.msg, severity: p.severity });
+        patternCounts.set(p.msg, cnt + 1);
       }
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 15 - findings.filter(f => f.severity === 'warning').length * 5);
-  return { name: 'regex', score, findings: findings.slice(0, 20) };
+  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 10 - findings.filter(f => f.severity === 'warning').length * 2);
+  return { name: 'regex', score, findings };
 }
 
 function runASTFallback(code: string, _language: string): PipelineResult['teams'][0] {
@@ -197,8 +203,9 @@ function runASTFallback(code: string, _language: string): PipelineResult['teams'
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 15 - findings.filter(f => f.severity === 'warning').length * 5);
-  return { name: 'ast', score, findings: findings.slice(0, 15) };
+  const capped = findings.slice(0, 15);
+  const score = Math.max(0, 100 - capped.filter(f => f.severity === 'error').length * 15 - capped.filter(f => f.severity === 'warning').length * 5);
+  return { name: 'ast', score, findings: capped };
 }
 
 function runHollowCheck(code: string): PipelineResult['teams'][0] {
@@ -222,7 +229,7 @@ function runHollowCheck(code: string): PipelineResult['teams'][0] {
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 20 - findings.filter(f => f.severity === 'warning').length * 10);
+  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 10 - findings.filter(f => f.severity === 'warning').length * 3);
   return { name: 'hollow', score, findings };
 }
 
@@ -241,8 +248,9 @@ function runDeadCodeCheck(code: string): PipelineResult['teams'][0] {
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'warning').length * 10);
-  return { name: 'dead-code', score, findings: findings.slice(0, 10) };
+  const cappedDead = findings.slice(0, 10);
+  const score = Math.max(0, 100 - cappedDead.filter(f => f.severity === 'warning').length * 10);
+  return { name: 'dead-code', score, findings: cappedDead };
 }
 
 function runDesignLintCheck(code: string): PipelineResult['teams'][0] {
@@ -290,8 +298,9 @@ function runCognitiveLoadCheck(code: string): PipelineResult['teams'][0] {
     findings.push({ line: 0, message: `파일 ${lines.length}줄 — 300줄 초과, 분리 권장`, severity: 'warning' });
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'warning').length * 5);
-  return { name: 'cognitive-load', score, findings: findings.slice(0, 10) };
+  const cappedCog = findings.slice(0, 10);
+  const score = Math.max(0, 100 - cappedCog.filter(f => f.severity === 'warning').length * 5);
+  return { name: 'cognitive-load', score, findings: cappedCog };
 }
 
 function runBugPatternCheck(code: string, _language: string): PipelineResult['teams'][0] {
@@ -316,8 +325,9 @@ function runBugPatternCheck(code: string, _language: string): PipelineResult['te
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 15 - findings.filter(f => f.severity === 'warning').length * 5);
-  return { name: 'bug-pattern', score, findings: findings.slice(0, 15) };
+  const cappedBug = findings.slice(0, 15);
+  const score = Math.max(0, 100 - cappedBug.filter(f => f.severity === 'error').length * 15 - cappedBug.filter(f => f.severity === 'warning').length * 5);
+  return { name: 'bug-pattern', score, findings: cappedBug };
 }
 
 function runSecurityPatternCheck(code: string, _language: string): PipelineResult['teams'][0] {
@@ -345,8 +355,9 @@ function runSecurityPatternCheck(code: string, _language: string): PipelineResul
     }
   }
 
-  const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 20 - findings.filter(f => f.severity === 'warning').length * 10);
-  return { name: 'security', score, findings: findings.slice(0, 15) };
+  const cappedSec = findings.slice(0, 15);
+  const score = Math.max(0, 100 - cappedSec.filter(f => f.severity === 'error').length * 20 - cappedSec.filter(f => f.severity === 'warning').length * 10);
+  return { name: 'security', score, findings: cappedSec };
 }
 
 // IDENTITY_SEAL: PART-2 | role=team-impls | inputs=code | outputs=findings

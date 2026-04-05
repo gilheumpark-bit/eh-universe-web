@@ -60,8 +60,8 @@ program
   .action(async (path, opts) => {
     // Precision mode: AI-powered review
     if (opts.precision || opts.precisionQuick) {
-      const { readFileSync, _readdirSync, statSync } = await import('fs');
-      const { _join, _extname, _relative } = await import('path');
+      const { readFileSync, readdirSync, statSync } = await import('fs');
+      const { join, extname, relative } = await import('path');
       const { runPrecisionReview } = await import('../ai/precision-checklist');
       const targetPath = path ?? './src';
       const stat = statSync(targetPath);
@@ -190,9 +190,8 @@ program
   });
 
 program
-  .command('sprint')
+  .command('sprint <tasks>')
   .description('목록 순차 자동 생성')
-  .argument('<tasks>', '태스크 목록 (줄바꿈 구분)')
   .action(async (tasks) => {
     const { runSprint } = await import('../commands/sprint');
     await runSprint(tasks);
@@ -378,7 +377,7 @@ program
     } else {
       const { launchDebug } = await import('../adapters/debug-adapter');
       console.log(`  🐛 Node Inspector 시작: ${file}`);
-      const session = launchDebug(file);
+      const session = await launchDebug(file);
       if (session) {
         console.log(`  PID: ${session.pid}`);
         console.log(`  Inspector: ${session.inspectorUrl}`);

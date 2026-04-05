@@ -163,12 +163,18 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
           overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
         };
         const teamMap = new Map<string, { score: number; findings: string[] }>();
+        // 팀당 findings 캡 — 과도한 감점 방지
+        const MAX_FINDINGS_PER_TEAM = 10;
         for (const f of enhanced.findings) {
           const team = teamMap.get(f.team) ?? { score: 100, findings: [] };
+          if (team.findings.length >= MAX_FINDINGS_PER_TEAM) {
+            teamMap.set(f.team, team);
+            continue;
+          }
           team.findings.push(f.message);
-          if (f.severity === 'critical') team.score -= 25;
-          else if (f.severity === 'error') team.score -= 10;
-          else if (f.severity === 'warning') team.score -= 3;
+          if (f.severity === 'critical') team.score -= 15;
+          else if (f.severity === 'error') team.score -= 8;
+          else if (f.severity === 'warning') team.score -= 2;
           team.score = Math.max(0, team.score);
           teamMap.set(f.team, team);
         }
