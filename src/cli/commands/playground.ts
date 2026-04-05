@@ -192,6 +192,32 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
     console.log('        → 성능 측정 불가');
   }
 
+  // Phase 8: Dependency Score (dep-analyzer)
+  console.log('  [Phase 8] Dep 엔진...');
+  const depStart = performance.now();
+  try {
+    const { runFullDepAnalysis } = await import('../adapters/dep-analyzer');
+    const depResult = await runFullDepAnalysis(process.cwd());
+    categories.push({ name: 'Deps', icon: '📦', score: depResult.avgScore, engines: depResult.engines, duration: Math.round(performance.now() - depStart) });
+    console.log(`        → ${depResult.avgScore}/100 (${depResult.engines} engines) ${categories[categories.length - 1].duration}ms`);
+  } catch {
+    categories.push({ name: 'Deps', icon: '📦', score: 0, engines: 0, duration: 0 });
+    console.log('        → 의존성 분석 불가');
+  }
+
+  // Phase 9: Web Quality (a11y + bundle)
+  console.log('  [Phase 9] Web 엔진...');
+  const webStart = performance.now();
+  try {
+    const { runFullWebQualityAnalysis } = await import('../adapters/web-quality');
+    const webResult = await runFullWebQualityAnalysis(process.cwd());
+    categories.push({ name: 'Web', icon: '🌐', score: webResult.avgScore, engines: webResult.engines, duration: Math.round(performance.now() - webStart) });
+    console.log(`        → ${webResult.avgScore}/100 (${webResult.engines} engines) ${categories[categories.length - 1].duration}ms`);
+  } catch {
+    categories.push({ name: 'Web', icon: '🌐', score: 0, engines: 0, duration: 0 });
+    console.log('        → 웹 분석 불가');
+  }
+
   // Calculate total
   const totalDuration = Math.round(performance.now() - startTime);
   const weights = categories.map(() => 1 / categories.length); // Equal weights for all categories
