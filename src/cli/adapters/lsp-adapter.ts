@@ -111,10 +111,41 @@ export async function getTypeInfo(filePath: string, line: number, column: number
 
     const text = (targetNode as import('typescript').Node).getText(sourceFile);
 
+    // 실제 타입 해석: Program + TypeChecker 사용
+    let typeStr = 'unknown';
+    let nullable = false;
+    try {
+      const program = ts.createProgram([filePath], {
+        target: ts.ScriptTarget.Latest,
+        module: ts.ModuleKind.ESNext,
+        strict: true,
+        noEmit: true,
+      });
+      const checker = program.getTypeChecker();
+      const sf = program.getSourceFile(filePath);
+      if (sf) {
+        // 동일 위치의 노드를 Program 컨텍스트에서 재탐색
+        let progNode: import('typescript').Node | null = null;
+        function findInProg(node: import('typescript').Node): void {
+          if (node.getStart() <= pos && pos <= node.getEnd()) {
+            progNode = node;
+            ts.forEachChild(node, findInProg);
+          }
+        }
+        findInProg(sf);
+
+        if (progNode) {
+          const type = checker.getTypeAtLocation(progNode);
+          typeStr = checker.typeToString(type);
+          nullable = typeStr.includes('null') || typeStr.includes('undefined');
+        }
+      }
+    } catch { /* Program 생성 실패 시 'unknown' 유지 */ }
+
     return {
       symbol: text.slice(0, 50),
-      type: 'unknown', // Full type resolution needs program context
-      nullable: false,
+      type: typeStr,
+      nullable,
       file: filePath,
       line,
     };

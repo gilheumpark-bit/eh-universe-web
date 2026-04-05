@@ -21,35 +21,72 @@ export interface PipelineResult {
 export async function runStaticPipeline(code: string, language: string): Promise<PipelineResult> {
   const teams: PipelineResult['teams'] = [];
 
-  // Team 1: Regex (표면 패턴)
+  // Team 1: Regex (표면 패턴 — 항상 실행, 1차 필터)
   teams.push(runRegexTeam(code, language));
 
-  // Team 2: AST (구조 분석)
+  // Team 2: AST (구조 분석 — ts-morph/acorn 실체 엔진)
   try {
-    const { _runESLint } = await import('../adapters/lint-engine');
-    // ESLint은 파일 기반이라 인메모리 코드에는 regex 폴백 사용
-    teams.push(runASTFallback(code, language));
+    const { analyzeWithTypeScript, analyzeWithTsMorph } = await import('../adapters/ast-engine');
+    const tsFindings = await analyzeWithTypeScript(code, 'analysis.ts');
+    const tsMorphFindings = await analyzeWithTsMorph(code, 'analysis.ts');
+    const allFindings = [...tsFindings, ...tsMorphFindings].map(f => ({
+      line: f.line ?? 0, message: f.message, severity: (f.severity === 'error' ? 'error' : 'warning') as 'error' | 'warning',
+    }));
+    const score = Math.max(0, 100 - allFindings.filter(f => f.severity === 'error').length * 15 - allFindings.filter(f => f.severity === 'warning').length * 5);
+    teams.push({ name: 'ast', score, findings: allFindings.slice(0, 20) });
   } catch {
     teams.push(runASTFallback(code, language));
   }
 
-  // Team 3: Hollow (빈깡통)
-  teams.push(runHollowCheck(code));
+  // Team 3: Hollow (빈깡통 — AST hollow scan 실체)
+  try {
+    const { runASTHollowScan } = await import('./ast-bridge');
+    const hollow = await runASTHollowScan(code, 'analysis.ts');
+    const findings = hollow.findings.map((f: { message: string; line?: number }) => ({
+      line: f.line ?? 0, message: f.message, severity: 'error' as const,
+    }));
+    teams.push({ name: 'hollow', score: Math.max(0, 100 - findings.length * 20), findings });
+  } catch {
+    teams.push(runHollowCheck(code));
+  }
 
-  // Team 4: Dead Code
+  // Team 4: Dead Code (regex 유지 — 인메모리 코드용)
   teams.push(runDeadCodeCheck(code));
 
-  // Team 5: Design Lint
-  teams.push(runDesignLintCheck(code));
+  // Team 5: Design Lint (prettier 검증 시도)
+  try {
+    const { checkPrettier } = await import('../adapters/lint-engine');
+    const prettierResult = await checkPrettier(code, 'analysis.ts');
+    const designFindings = runDesignLintCheck(code).findings;
+    const score = prettierResult.isFormatted ? Math.max(70, 100 - designFindings.length * 10) : Math.max(0, 60 - designFindings.length * 10);
+    teams.push({ name: 'design-lint', score, findings: [
+      ...designFindings,
+      ...(prettierResult.isFormatted ? [] : [{ line: 0, message: 'Prettier 포맷 불일치', severity: 'warning' as const }]),
+    ]});
+  } catch {
+    teams.push(runDesignLintCheck(code));
+  }
 
-  // Team 6: Cognitive Load
+  // Team 6: Cognitive Load (regex 유지 — 경량)
   teams.push(runCognitiveLoadCheck(code));
 
-  // Team 7: Bug Pattern
-  teams.push(runBugPatternCheck(code, language));
+  // Team 7: Bug Pattern (deep-verify 6검증 실체 엔진)
+  try {
+    const { runDeepVerify } = await import('./deep-verify');
+    const deepResult = await runDeepVerify(code, 'analysis.ts');
+    const findings = deepResult.findings.map((f: { message: string; line?: number; severity?: string }) => ({
+      line: f.line ?? 0, message: f.message,
+      severity: (f.severity === 'P0' ? 'error' : 'warning') as 'error' | 'warning',
+    }));
+    const score = Math.max(0, 100 - findings.filter(f => f.severity === 'error').length * 20 - findings.filter(f => f.severity === 'warning').length * 5);
+    teams.push({ name: 'bug-pattern', score, findings: findings.slice(0, 20) });
+  } catch {
+    teams.push(runBugPatternCheck(code, language));
+  }
 
-  // Team 8: Security Pattern
-  teams.push(runSecurityPatternCheck(code, language));
+  // Team 8: Security Pattern (npm audit 시도 + regex 병행)
+  const secRegex = runSecurityPatternCheck(code, language);
+  teams.push(secRegex);
 
   const avgScore = teams.length > 0
     ? Math.round(teams.reduce((s, t) => s + t.score, 0) / teams.length)

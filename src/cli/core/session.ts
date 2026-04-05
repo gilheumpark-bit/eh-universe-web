@@ -86,16 +86,30 @@ export function deleteSession(id: string): boolean {
   return true;
 }
 
+const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30일
+
 export function listSessions(): Session[] {
   const dir = getSessionDir();
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
+  const now = Date.now();
+  const sessions = readdirSync(dir)
     .filter(f => f.endsWith('.json'))
     .map(f => {
-      try { return JSON.parse(readFileSync(join(dir, f), 'utf-8')) as Session; } catch { return null; }
+      try { return { session: JSON.parse(readFileSync(join(dir, f), 'utf-8')) as Session, file: f }; } catch { return null; }
     })
-    .filter((s): s is Session => s !== null)
-    .sort((a, b) => b.updatedAt - a.updatedAt);
+    .filter((s): s is { session: Session; file: string } => s !== null);
+
+  // 만료 세션 자동 정리
+  const active: Session[] = [];
+  for (const { session, file } of sessions) {
+    if (now - session.updatedAt > SESSION_TTL) {
+      try { unlinkSync(join(dir, file)); } catch { /* skip */ }
+    } else {
+      active.push(session);
+    }
+  }
+
+  return active.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 // IDENTITY_SEAL: PART-3 | role=crud | inputs=Session | outputs=Session

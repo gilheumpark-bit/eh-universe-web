@@ -116,8 +116,26 @@ export async function runStress(path: string, opts: StressOptions): Promise<void
     for (const w of warnings) console.log(`        ${w}`);
   }
 
-  // Phase 2: AI virtual simulation (delegates to existing stress-test.ts)
-  console.log('\n  [Phase 2] AI 가상 시뮬레이션...');
+  // Phase 2: 실측 부하 테스트 (autocannon) 또는 AI 시뮬레이션
+  const targetUrl = (opts as any).url as string | undefined;
+  if (targetUrl) {
+    console.log(`\n  [Phase 2] 🔥 실측 부하 테스트 (autocannon → ${targetUrl})...`);
+    try {
+      const { runAutocannon } = await import('../adapters/perf-engine');
+      const result = await runAutocannon(targetUrl, {
+        connections: parseInt(opts.users, 10) || 10,
+        duration: parseInt(opts.duration, 10) || 10,
+      });
+      console.log(`        RPS: ${result.rps} | Latency avg: ${result.latencyAvg}ms`);
+      console.log(`        p50: ${result.latencyP50}ms | p95: ${result.latencyP95}ms | p99: ${result.latencyP99}ms`);
+      console.log(`        Errors: ${result.errors} | Timeouts: ${result.timeouts} | Total: ${result.totalRequests}`);
+      const grade = result.latencyP95 < 100 ? '🟢 A' : result.latencyP95 < 500 ? '🟡 B' : result.latencyP95 < 2000 ? '🟠 C' : '🔴 D';
+      console.log(`        Grade: ${grade}`);
+    } catch (e) {
+      console.log(`        ❌ autocannon 실패: ${(e as Error).message}`);
+    }
+  } else {
+    console.log('\n  [Phase 2] AI 가상 시뮬레이션... (--url <endpoint>로 실측 가능)');
 
   try {
     const { analyzeStress, getScenarios } = await import('../core/pipeline-bridge');
@@ -154,6 +172,7 @@ export async function runStress(path: string, opts: StressOptions): Promise<void
     console.log('        ⚠️  AI 시뮬레이션 스킵 (API 키 없음 또는 네트워크 오류)');
     console.log('        정적 메트릭만 표시합니다.');
   }
+  } // close else (no --url)
 
   const duration = Math.round(performance.now() - startTime);
 

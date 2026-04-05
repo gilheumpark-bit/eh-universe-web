@@ -15,7 +15,10 @@ type MsgKey =
   | 'done' | 'error' | 'saved' | 'deleted'
   | 'generating' | 'verifying' | 'scanning' | 'analyzing'
   | 'addKey' | 'removeKey' | 'selectLang' | 'selectLevel'
-  | 'improvement' | 'recommendation';
+  | 'improvement' | 'recommendation'
+  | 'auditing' | 'benchmarking' | 'stressTesting' | 'checking'
+  | 'learning' | 'explaining' | 'healing' | 'judging'
+  | 'noAIKey' | 'offlineMode' | 'sessionExpired' | 'badgeEarned';
 
 const MESSAGES: Record<string, Record<MsgKey, string>> = {
   ko: {
@@ -29,6 +32,9 @@ const MESSAGES: Record<string, Record<MsgKey, string>> = {
     addKey: 'API 키를 추가하세요', removeKey: '키를 삭제하세요',
     selectLang: '언어를 선택하세요', selectLevel: '경험 수준을 선택하세요',
     improvement: '개선 포인트', recommendation: '추천',
+    auditing: '감사 중...', benchmarking: '벤치마크 중...', stressTesting: '부하 테스트 중...', checking: '점검 중...',
+    learning: '학습 모드...', explaining: '코드 해설 중...', healing: '자동 수정 중...', judging: '판정 중...',
+    noAIKey: 'AI 키 없음. cs config set-key 로 추가하세요.', offlineMode: '오프라인 모드', sessionExpired: '세션 만료됨', badgeEarned: '배지 획득!',
   },
   en: {
     noFiles: 'No files to verify.',
@@ -41,6 +47,9 @@ const MESSAGES: Record<string, Record<MsgKey, string>> = {
     addKey: 'Add an API key', removeKey: 'Remove a key',
     selectLang: 'Select language', selectLevel: 'Select experience level',
     improvement: 'Improvement', recommendation: 'Recommendation',
+    auditing: 'Auditing...', benchmarking: 'Benchmarking...', stressTesting: 'Stress testing...', checking: 'Checking...',
+    learning: 'Learning mode...', explaining: 'Explaining code...', healing: 'Auto-healing...', judging: 'Judging...',
+    noAIKey: 'No AI key. Add with: cs config set-key', offlineMode: 'Offline mode', sessionExpired: 'Session expired', badgeEarned: 'Badge earned!',
   },
   ja: {
     noFiles: '検証するファイルがありません。',
@@ -53,6 +62,9 @@ const MESSAGES: Record<string, Record<MsgKey, string>> = {
     addKey: 'APIキーを追加', removeKey: 'キーを削除',
     selectLang: '言語を選択', selectLevel: 'レベルを選択',
     improvement: '改善ポイント', recommendation: 'おすすめ',
+    auditing: '監査中...', benchmarking: 'ベンチマーク中...', stressTesting: '負荷テスト中...', checking: 'チェック中...',
+    learning: '学習モード...', explaining: 'コード解説中...', healing: '自動修正中...', judging: '判定中...',
+    noAIKey: 'AIキーなし。cs config set-keyで追加', offlineMode: 'オフラインモード', sessionExpired: 'セッション期限切れ', badgeEarned: 'バッジ獲得!',
   },
   zh: {
     noFiles: '没有可验证的文件。',
@@ -65,6 +77,9 @@ const MESSAGES: Record<string, Record<MsgKey, string>> = {
     addKey: '添加API密钥', removeKey: '删除密钥',
     selectLang: '选择语言', selectLevel: '选择级别',
     improvement: '改进建议', recommendation: '推荐',
+    auditing: '审计中...', benchmarking: '基准测试中...', stressTesting: '压力测试中...', checking: '检查中...',
+    learning: '学习模式...', explaining: '代码解说中...', healing: '自动修复中...', judging: '判定中...',
+    noAIKey: '无AI密钥。使用cs config set-key添加', offlineMode: '离线模式', sessionExpired: '会话已过期', badgeEarned: '获得徽章!',
   },
 };
 

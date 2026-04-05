@@ -49,7 +49,145 @@ export interface VariableState {
 let nodeCounter = 0;
 function newNodeId(): string { return `n${++nodeCounter}`; }
 
-export function buildCFG(code: string, fileName: string): CFGGraph {
+export async function buildCFG(code: string, fileName: string): Promise<CFGGraph> {
+  // AST 기반 CFG 시도, 실패 시 regex fallback
+  try {
+    return await buildCFGWithAST(code, fileName);
+  } catch {
+    return buildCFGRegex(code, fileName);
+  }
+}
+
+// ── AST 기반 CFG (TypeScript Compiler API) ──
+async function buildCFGWithAST(code: string, fileName: string): Promise<CFGGraph> {
+  const ts = await import('typescript');
+  nodeCounter = 0;
+  const nodes = new Map<string, CFGNode>();
+  const exits: string[] = [];
+  const functions: CFGGraph['functions'] = [];
+
+  const sourceFile = ts.createSourceFile(fileName, code, ts.ScriptTarget.Latest, true);
+  const entryId = newNodeId();
+  nodes.set(entryId, { id: entryId, type: 'entry', line: 0, code: `// entry: ${fileName}`, edges: [], variables: { defined: [], used: [], modified: [] } });
+
+  function addNode(type: CFGNode['type'], node: import('typescript').Node, codeSnippet: string): string {
+    const id = newNodeId();
+    const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    nodes.set(id, { id, type, line, code: codeSnippet.slice(0, 120), edges: [], variables: extractVariables(codeSnippet) });
+    return id;
+  }
+
+  function visitBlock(stmts: import('typescript').NodeArray<import('typescript').Statement>, parentId: string): string {
+    let prevId = parentId;
+    for (const stmt of stmts) {
+      const id = visitStatement(stmt, prevId);
+      if (id) prevId = id;
+    }
+    return prevId;
+  }
+
+  function visitStatement(stmt: import('typescript').Node, prevId: string): string | null {
+    const text = stmt.getText(sourceFile).slice(0, 120);
+
+    if (ts.isIfStatement(stmt)) {
+      const branchId = addNode('branch', stmt, `if (${stmt.expression.getText(sourceFile).slice(0, 50)})`);
+      nodes.get(prevId)?.edges.push(branchId);
+      // true 분기
+      const thenEnd = ts.isBlock(stmt.thenStatement)
+        ? visitBlock((stmt.thenStatement as import('typescript').Block).statements, branchId)
+        : (() => { const id = addNode('statement', stmt.thenStatement, stmt.thenStatement.getText(sourceFile)); nodes.get(branchId)?.edges.push(id); return id; })();
+      // false 분기
+      const mergeId = addNode('statement', stmt, '// merge');
+      if (stmt.elseStatement) {
+        const elseEnd = ts.isBlock(stmt.elseStatement)
+          ? visitBlock((stmt.elseStatement as import('typescript').Block).statements, branchId)
+          : (() => { const id = addNode('statement', stmt.elseStatement, stmt.elseStatement.getText(sourceFile)); nodes.get(branchId)?.edges.push(id); return id; })();
+        nodes.get(elseEnd)?.edges.push(mergeId);
+      } else {
+        nodes.get(branchId)?.edges.push(mergeId); // no else → direct merge
+      }
+      nodes.get(thenEnd)?.edges.push(mergeId);
+      return mergeId;
+
+    } else if (ts.isForStatement(stmt) || ts.isWhileStatement(stmt) || ts.isForOfStatement(stmt) || ts.isForInStatement(stmt) || ts.isDoStatement(stmt)) {
+      const loopId = addNode('loop', stmt, text.slice(0, 60));
+      nodes.get(prevId)?.edges.push(loopId);
+      if (stmt.statement && ts.isBlock(stmt.statement)) {
+        const bodyEnd = visitBlock((stmt.statement as import('typescript').Block).statements, loopId);
+        nodes.get(bodyEnd)?.edges.push(loopId); // back edge
+      }
+      return loopId;
+
+    } else if (ts.isTryStatement(stmt)) {
+      const tryId = addNode('try', stmt, 'try');
+      nodes.get(prevId)?.edges.push(tryId);
+      let lastId = tryId;
+      if (stmt.tryBlock) lastId = visitBlock(stmt.tryBlock.statements, tryId);
+      if (stmt.catchClause?.block) {
+        const catchId = addNode('catch', stmt.catchClause, 'catch');
+        nodes.get(tryId)?.edges.push(catchId); // exceptional edge
+        lastId = visitBlock(stmt.catchClause.block.statements, catchId);
+      }
+      if (stmt.finallyBlock) {
+        const finallyId = addNode('statement', stmt.finallyBlock, 'finally');
+        nodes.get(lastId)?.edges.push(finallyId);
+        lastId = visitBlock(stmt.finallyBlock.statements, finallyId);
+      }
+      return lastId;
+
+    } else if (ts.isSwitchStatement(stmt)) {
+      const switchId = addNode('branch', stmt, `switch (${stmt.expression.getText(sourceFile).slice(0, 40)})`);
+      nodes.get(prevId)?.edges.push(switchId);
+      const mergeId = addNode('statement', stmt, '// switch-merge');
+      for (const clause of stmt.caseBlock.clauses) {
+        const caseId = addNode('branch', clause, ts.isCaseClause(clause) ? `case ${clause.expression.getText(sourceFile).slice(0, 30)}` : 'default');
+        nodes.get(switchId)?.edges.push(caseId);
+        const caseEnd = visitBlock(clause.statements as unknown as import('typescript').NodeArray<import('typescript').Statement>, caseId);
+        nodes.get(caseEnd)?.edges.push(mergeId);
+      }
+      return mergeId;
+
+    } else if (ts.isReturnStatement(stmt)) {
+      const retId = addNode('return', stmt, text);
+      nodes.get(prevId)?.edges.push(retId);
+      exits.push(retId);
+      return null; // no next
+
+    } else if (ts.isThrowStatement(stmt)) {
+      const throwId = addNode('throw', stmt, text);
+      nodes.get(prevId)?.edges.push(throwId);
+      return null;
+
+    } else if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+      const fnName = stmt.name.getText(sourceFile);
+      const params = stmt.parameters.map(p => p.name.getText(sourceFile));
+      const fnId = addNode('statement', stmt, `function ${fnName}`);
+      nodes.get(prevId)?.edges.push(fnId);
+      functions.push({ name: fnName, startNode: fnId, endNode: '', params });
+      if (stmt.body) visitBlock(stmt.body.statements, fnId);
+      return fnId;
+
+    } else {
+      // 일반 statement
+      const type: CFGNode['type'] = /await\s|\.then\(|\bfetch\(/.test(text) ? 'call' : 'statement';
+      const id = addNode(type, stmt, text);
+      nodes.get(prevId)?.edges.push(id);
+      return id;
+    }
+  }
+
+  // Top-level statements
+  ts.forEachChild(sourceFile, (child) => {
+    if (ts.isStatement(child)) {
+      visitStatement(child, entryId);
+    }
+  });
+
+  return { nodes, entry: entryId, exits, functions };
+}
+
+// ── Regex Fallback CFG (기존 호환) ──
+function buildCFGRegex(code: string, fileName: string): CFGGraph {
   nodeCounter = 0;
   const nodes = new Map<string, CFGNode>();
   const lines = code.split('\n');

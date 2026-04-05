@@ -87,7 +87,9 @@ function detectVersions(rootPath: string): DetectedVersions {
 
 function majorVersion(version: string | undefined): number {
   if (!version) return 0;
-  const match = version.match(/^(\d+)/);
+  // semver range 안전 파싱: "^17.0.0", ">=17 <19", "*", "~5.3" 등 처리
+  const cleaned = version.replace(/[\^~>=<\s]/g, '');
+  const match = cleaned.match(/^(\d+)/);
   return match ? parseInt(match[1], 10) : 0;
 }
 

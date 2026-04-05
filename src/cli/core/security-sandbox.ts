@@ -80,20 +80,28 @@ export function checkPathAccess(filePath: string): { allowed: boolean; reason?: 
   return { allowed: true };
 }
 
+function extractHostname(input: string): string {
+  try {
+    const url = new URL(input.startsWith('http') ? input : `https://${input}`);
+    return url.hostname;
+  } catch { return input.split('/')[0].split(':')[0]; }
+}
+
 export function checkDomainAccess(domain: string): { allowed: boolean; reason?: string } {
+  const hostname = extractHostname(domain);
   if (_activePolicy.blockedDomains.includes('*')) {
     return { allowed: false, reason: 'All outbound blocked (strict mode)' };
   }
-  if (_activePolicy.blockedDomains.some(d => domain.includes(d))) {
-    return { allowed: false, reason: `Blocked domain: ${domain}` };
+  if (_activePolicy.blockedDomains.some(d => hostname === d || hostname.endsWith(`.${d}`))) {
+    return { allowed: false, reason: `Blocked domain: ${hostname}` };
   }
   if (_activePolicy.allowedDomains.includes('*')) {
     return { allowed: true };
   }
-  if (_activePolicy.allowedDomains.some(d => domain.includes(d))) {
+  if (_activePolicy.allowedDomains.some(d => hostname === d || hostname.endsWith(`.${d}`))) {
     return { allowed: true };
   }
-  return { allowed: false, reason: `Domain not in allowlist: ${domain}` };
+  return { allowed: false, reason: `Domain not in allowlist: ${hostname}` };
 }
 
 // IDENTITY_SEAL: PART-2 | role=checker | inputs=permission | outputs=boolean

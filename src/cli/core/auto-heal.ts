@@ -182,6 +182,66 @@ try {
         }
       }
 
+      // Rule 4: 빈 catch에 에러 로깅 주입
+      if (!localFixed && /catch\s*\(\s*\)\s*\{/.test(currentCode)) {
+        currentCode = currentCode.replace(/catch\s*\(\s*\)\s*\{/g, 'catch (e) { console.error(e);');
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] 빈 catch에 에러 로깅 주입', success: true });
+        localFixed = true;
+      }
+
+      // Rule 5: any → unknown 교체
+      if (!localFixed && /:\s*any\b/.test(currentCode)) {
+        currentCode = currentCode.replace(/:\s*any\b/g, ': unknown');
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] any → unknown 교체', success: true });
+        localFixed = true;
+      }
+
+      // Rule 6: Promise.all 에러 처리
+      if (!localFixed && /Promise\.all\(/.test(currentCode) && !/\.catch\(/.test(currentCode)) {
+        currentCode = currentCode.replace(/(Promise\.all\([^)]+\))/g, '$1.catch(e => { throw e; })');
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] Promise.all catch 추가', success: true });
+        localFixed = true;
+      }
+
+      // Rule 7: parseInt radix 추가
+      if (!localFixed && /parseInt\(\s*\w+\s*\)/.test(currentCode)) {
+        currentCode = currentCode.replace(/parseInt\(\s*(\w+)\s*\)/g, 'parseInt($1, 10)');
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] parseInt radix 10 추가', success: true });
+        localFixed = true;
+      }
+
+      // Rule 8: === NaN → Number.isNaN
+      if (!localFixed && /===?\s*NaN/.test(currentCode)) {
+        currentCode = currentCode.replace(/(\w+)\s*===?\s*NaN/g, 'Number.isNaN($1)');
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] === NaN → Number.isNaN', success: true });
+        localFixed = true;
+      }
+
+      // Rule 9: forEach(async → for...of
+      if (!localFixed && /\.forEach\(\s*async/.test(currentCode)) {
+        fixes.push({ round, error: errorMsg, fix: '[OFFLINE] forEach(async) 감지 — for...of 전환 필요 (수동)', success: false });
+        localFixed = true;
+      }
+
+      // Rule 10: 미사용 import 제거 (간단 패턴)
+      if (!localFixed) {
+        const importNames = [...currentCode.matchAll(/import\s+\{([^}]+)\}\s+from/g)].flatMap(m => m[1].split(',').map(s => s.trim().replace(/\s+as\s+\w+/, '')));
+        const unused = importNames.filter(name => {
+          const count = (currentCode.match(new RegExp(`\\b${name}\\b`, 'g')) ?? []).length;
+          return count <= 1; // import 선언 1회만
+        });
+        if (unused.length > 0) {
+          for (const name of unused.slice(0, 3)) {
+            currentCode = currentCode.replace(new RegExp(`\\b${name}\\b,?\\s*`, 'g'), (match, offset) => {
+              const before = currentCode.slice(Math.max(0, offset - 10), offset);
+              return before.includes('import') ? '' : match;
+            });
+          }
+          fixes.push({ round, error: 'cleanup', fix: `[OFFLINE] 미사용 import ${unused.length}개 제거`, success: true });
+          localFixed = true;
+        }
+      }
+
       if (!localFixed) {
         fixes.push({ round, error: errorMsg, fix: 'AI+로컬 모두 실패', success: false });
       }

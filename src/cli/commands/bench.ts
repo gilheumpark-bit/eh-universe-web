@@ -88,16 +88,44 @@ export async function runBench(path: string, opts: BenchOptions): Promise<void> 
 
   console.log(`  📄 ${path} — ${functions.length}개 함수\n`);
 
-  // Score each function (static analysis based — no runtime)
+  // Score: 정적 분석 + 런타임 벤치마크 (tinybench)
   const scored = functions.map(fn => {
     let score = 100;
     if (fn.length > 50) score -= 10;
     if (fn.length > 100) score -= 15;
     if (fn.complexity > 10) score -= 20;
     if (fn.complexity > 20) score -= 20;
-    if (fn.isAsync) score -= 5; // Async has overhead
-    return { ...fn, score: Math.max(0, score) };
+    if (fn.isAsync) score -= 5;
+    return { ...fn, score: Math.max(0, score), opsPerSec: 0, avgMs: 0 };
   });
+
+  // 런타임 벤치마크 (tinybench 연동)
+  try {
+    const { runTinybench } = await import('../adapters/perf-engine');
+    const { runInVM } = await import('../adapters/sandbox');
+
+    // 순수 함수만 벤치마크 (side-effect 없는 것)
+    const benchable = scored.filter(fn => !fn.isAsync && fn.length < 30);
+    if (benchable.length > 0) {
+      console.log(`  ⚡ 런타임 벤치마크 (${benchable.length}개 함수)...\n`);
+      const benchmarks = benchable.map(fn => {
+        const fnCode = code.split('\n').slice(fn.line - 1, fn.line - 1 + fn.length).join('\n');
+        return {
+          name: fn.name,
+          fn: () => { runInVM(`${fnCode}\n${fn.name}();`, { timeout: 500 }); },
+        };
+      });
+
+      const results = await runTinybench(benchmarks);
+      for (const r of results) {
+        const target = scored.find(s => s.name === r.name);
+        if (target) {
+          target.opsPerSec = r.opsPerSec;
+          target.avgMs = r.avgMs;
+        }
+      }
+    }
+  } catch { /* tinybench not available, static only */ }
 
   // Display
   console.log(`  ${'Function'.padEnd(24)} ${'Lines'.padStart(6)} ${'Cmplx'.padStart(6)} ${'Score'.padStart(6)}`);

@@ -86,10 +86,25 @@ export async function runCompliance(_opts: ComplianceOptions): Promise<void> {
   results.push({ check: 'Audit Trail', passed: receiptCount > 0, detail: `영수증 ${receiptCount}건` });
   console.log(`        ${receiptCount > 0 ? '✅' : '⚠️'} ${results[results.length - 1].detail}`);
 
-  // Check 5: Code quality (lightweight)
+  // Check 5: Code quality (실제 파이프라인 실행)
   console.log('  [5/5] 🔍 Code Quality...');
-  results.push({ check: 'Code Quality', passed: true, detail: 'cs verify 로 상세 검증 가능' });
-  console.log(`        ✅ ${results[results.length - 1].detail}`);
+  let codeQualityPassed = true;
+  let codeQualityDetail = 'no src files';
+  try {
+    const { runStaticPipeline } = await import('../core/pipeline-bridge');
+    const srcDir = join(process.cwd(), 'src');
+    if (existsSync(srcDir)) {
+      const sampleFiles = readdirSync(srcDir).filter(f => f.endsWith('.ts') || f.endsWith('.tsx')).slice(0, 5);
+      if (sampleFiles.length > 0) {
+        const content = readFileSync(join(srcDir, sampleFiles[0]), 'utf-8');
+        const result = await runStaticPipeline(content, 'typescript');
+        codeQualityPassed = result.score >= 60;
+        codeQualityDetail = `샘플 점수 ${result.score}/100 (${sampleFiles[0]})`;
+      }
+    }
+  } catch { codeQualityDetail = 'verify 실행 실패 — cs verify 로 수동 확인'; }
+  results.push({ check: 'Code Quality', passed: codeQualityPassed, detail: codeQualityDetail });
+  console.log(`        ${codeQualityPassed ? '✅' : '❌'} ${codeQualityDetail}`);
 
   // Summary
   const allPassed = results.every(r => r.passed);

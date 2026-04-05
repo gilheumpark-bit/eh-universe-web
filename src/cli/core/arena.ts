@@ -192,22 +192,48 @@ export async function runArena(
     };
   }
 
-  // Phase 3: Attack
-  onProgress?.('attack', 'Attacker reviewing code with evidence...');
-  const attacker = await getAgentOpinion(code, evidence, 'attacker');
+  // Phase 3~5: AI 에이전트 (또는 오프라인 증거 기반 판정)
+  let opinions: AgentOpinion[] = [];
 
-  // Phase 4: Defend (if attack found issues)
+  const attacker = await getAgentOpinion(code, evidence, 'attacker');
   let defender: AgentOpinion | null = null;
   if (attacker && attacker.critiques.length > 0) {
     onProgress?.('defend', `Defending against ${attacker.critiques.length} critiques...`);
     defender = await getAgentOpinion(code, evidence, 'defender');
   }
-
-  // Phase 5: Judge
-  onProgress?.('judge', 'Final judgment...');
   const judge = await getAgentOpinion(code, evidence, 'judge');
+  opinions = [attacker, defender, judge].filter((o): o is AgentOpinion => o !== null);
 
-  const opinions = [attacker, defender, judge].filter((o): o is AgentOpinion => o !== null);
+  // ── 오프라인 Fallback: AI 에이전트 0명이면 증거 기반 자동 판정 ──
+  if (opinions.length === 0) {
+    onProgress?.('offline', 'AI 미연결 — 증거 기반 자동 판정...');
+    const evidenceScore = evidence.pipelineScore;
+    const criticalFindings = evidence.findings.filter(f => f.severity === 'critical' || f.severity === 'P0');
+    const highFindings = evidence.findings.filter(f => f.severity === 'error' || f.severity === 'P1');
+
+    // 증거 기반 판정 로직
+    let offlineVerdict: 'approve' | 'reject' | 'fix-required' = 'approve';
+    const offlineCritiques: string[] = [];
+
+    if (criticalFindings.length > 0) {
+      offlineVerdict = 'reject';
+      offlineCritiques.push(...criticalFindings.slice(0, 5).map(f => `[P0] ${f.message}`));
+    } else if (highFindings.length > 3 || evidenceScore < 50) {
+      offlineVerdict = 'reject';
+      offlineCritiques.push(`증거 점수 ${evidenceScore}/100, P1 ${highFindings.length}건`);
+    } else if (highFindings.length > 0 || evidenceScore < 80) {
+      offlineVerdict = 'fix-required';
+      offlineCritiques.push(...highFindings.slice(0, 3).map(f => f.message));
+    }
+
+    opinions = [{
+      role: 'judge' as const,
+      verdict: offlineVerdict,
+      critiques: offlineCritiques,
+      suggestedFixes: offlineCritiques.map(c => `Fix: ${c}`),
+      confidence: 0.6,
+    }];
+  }
 
   // Determine consensus
   let consensus: ArenaResult['consensus'] = 'approved';
