@@ -115,7 +115,7 @@ try {
     onProgress?.(round, 'fixing');
 
     try {
-      const { streamChat } = await import('@/lib/ai-providers');
+      const { streamChat } = await import('./ai-bridge');
       const { getTemperature } = await import('./ai-config');
 
       const errorSummary = errors.slice(0, 5).map(e => `- Input: ${e.input} → ${e.error}`).join('\n');

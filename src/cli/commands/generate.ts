@@ -180,7 +180,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   const planPrompt = buildPlannerPrompt(prompt, extraContext || undefined);
 
   // Dynamic import to avoid loading AI at startup
-  const { streamChat } = await import('@/lib/ai-providers');
+  const { streamChat } = await import('../core/ai-bridge');
   const { getTemperature } = await import('../core/ai-config');
 
   let planRaw = '';
@@ -322,7 +322,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     };
   } catch {
     // Fallback to regex-only
-    const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+    const { runStaticPipeline } = await import('../core/pipeline-bridge');
     pipelineResult = runStaticPipeline(mergedCode, 'typescript');
   }
 
@@ -378,7 +378,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   if (pipelineResult.overallStatus !== 'pass' && opts.mode !== 'fast') {
     console.log('\n  [5/6] 🔧 자동수정 루프...');
 
-    const { runVerificationLoop } = await import('@/lib/code-studio/pipeline/verification-loop');
+    const { runVerificationLoop } = await import('../core/pipeline-bridge');
 
     try {
       const verifyResult = await runVerificationLoop(

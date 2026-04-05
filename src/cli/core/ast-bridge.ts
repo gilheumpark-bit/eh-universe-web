@@ -87,7 +87,7 @@ export async function runEnhancedPipeline(
   const engines: string[] = [];
 
   // Phase 1: Original regex pipeline
-  const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+  const { runStaticPipeline } = await import('../core/pipeline-bridge');
   const regexResult = runStaticPipeline(code, language);
   engines.push('regex-pipeline');
 

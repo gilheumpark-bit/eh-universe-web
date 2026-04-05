@@ -86,7 +86,7 @@ export async function runAudit(opts: AuditOptions): Promise<void> {
   };
 
   // Run audit engine
-  const { runProjectAudit, formatAuditReport } = await import('@/lib/code-studio/audit/audit-engine');
+  const { runProjectAudit, formatAuditReport } = await import('../core/pipeline-bridge');
 
   const report = runProjectAudit(ctx as never, (area, index, total) => {
     const bar = '█'.repeat(Math.round((index / total) * 20)) + '░'.repeat(20 - Math.round((index / total) * 20));

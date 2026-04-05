@@ -47,7 +47,7 @@ export async function collectEvidence(code: string, fileName: string): Promise<E
 
   // 1. Static pipeline
   try {
-    const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+    const { runStaticPipeline } = await import('../core/pipeline-bridge');
     const result = runStaticPipeline(code, 'typescript');
     evidence.push({
       type: 'lint', source: '8-team-pipeline', score: result.overallScore,
@@ -120,7 +120,7 @@ export async function getAgentOpinion(
   evidence: Evidence[],
   agentRole: 'attacker' | 'defender' | 'judge',
 ): Promise<AgentOpinion | null> {
-  const { streamChat } = await import('@/lib/ai-providers');
+  const { streamChat } = await import('./ai-bridge');
   const { getTemperature } = await import('./ai-config');
 
   const evidenceSummary = evidence.map(e =>
@@ -225,7 +225,7 @@ export async function runArena(
       // Apply suggested fixes via AI
       if (judge.suggestedFixes.length > 0) {
         try {
-          const { streamChat } = await import('@/lib/ai-providers');
+          const { streamChat } = await import('./ai-bridge');
           let fixedCode = '';
           await streamChat({
             systemInstruction: 'Apply the following fixes to the code. Output ONLY the fixed code.',

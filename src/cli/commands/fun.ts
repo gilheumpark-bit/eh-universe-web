@@ -45,7 +45,7 @@ export async function generateCodePoem(topic: string): Promise<void> {
   console.log('🦔 CS Quill — 코드 포엠 ✨\n');
 
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
 
     process.stdout.write('  ');
     await streamChat({
@@ -158,7 +158,7 @@ export async function generateCodeArt(subject: string): Promise<void> {
   console.log('🦔 CS Quill — 코드 아트 🎨\n');
 
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
 
     process.stdout.write('  ');
     await streamChat({
@@ -216,7 +216,7 @@ export async function createApp(description: string): Promise<void> {
   console.log(`  "${description}" 만드는 중...\n`);
 
   try {
-    const { generateApp } = await import('@/lib/code-studio/features/app-generator');
+    const { generateApp } = await import('../core/pipeline-bridge');
 
     const result = await generateApp(description, (status: string) => {
       console.log(`  ⏳ ${status}`);

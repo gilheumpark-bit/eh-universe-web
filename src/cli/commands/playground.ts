@@ -71,7 +71,7 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   console.log('  [Phase 2] Quality 엔진...');
   const qualStart = performance.now();
   // Run pipeline on a sample of files
-  const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+  const { runStaticPipeline } = await import('../core/pipeline-bridge');
   let qualScoreSum = 0;
   let qualCount = 0;
   function sampleVerify(dir: string, limit: number): void {

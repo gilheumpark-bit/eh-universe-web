@@ -51,7 +51,7 @@ export async function runExplain(path: string): Promise<void> {
 
   // AI explanation
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
 
     process.stdout.write('  ');
     await streamChat({

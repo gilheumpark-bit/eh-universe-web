@@ -41,7 +41,7 @@ export async function runVibe(prompt: string): Promise<void> {
 
   let specRaw = '';
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
     await streamChat({
       systemInstruction: VIBE_SPEC_PROMPT,
       messages: [{ role: 'user', content: prompt }],

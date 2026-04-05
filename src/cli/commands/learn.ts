@@ -18,7 +18,7 @@ export async function runLearn(topic?: string): Promise<void> {
   // Topic-specific learning
   if (topic) {
     try {
-      const { streamChat } = await import('@/lib/ai-providers');
+      const { streamChat } = await import('../core/ai-bridge');
       const { getTemperature } = await import('../core/ai-config');
       console.log(`  📚 "${topic}" 학습 중...\n  `);
       await streamChat({
@@ -61,7 +61,7 @@ export async function runLearn(topic?: string): Promise<void> {
 
   // AI explanation for each problem team
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
 
     for (const team of problemTeams) {
       console.log(`  ─── ${team.name} (${team.score}/100) ───\n`);

@@ -431,7 +431,7 @@ export async function runPrecisionReview(
   const prompt = buildPrecisionReviewPrompt(code, fileName, mode);
 
   try {
-    const { streamChat } = await import('@/lib/ai-providers');
+    const { streamChat } = await import('../core/ai-bridge');
     const { getTemperature } = await import('../core/ai-config');
 
     let raw = '';

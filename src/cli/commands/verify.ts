@@ -123,7 +123,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     useEnhanced = false;
   }
 
-  const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+  const { runStaticPipeline } = await import('../core/pipeline-bridge');
 
   const allTeamScores: Map<string, number[]> = new Map();
   const allTeamFindings: Map<string, number> = new Map();

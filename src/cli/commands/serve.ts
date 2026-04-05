@@ -12,43 +12,43 @@ import { readFileSync } from 'fs';
 
 async function handleVerify(body: string): Promise<object> {
   const { code, language } = JSON.parse(body);
-  const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+  const { runStaticPipeline } = await import('../core/pipeline-bridge');
   return runStaticPipeline(code ?? '', language ?? 'typescript');
 }
 
 async function handleHollow(body: string): Promise<object> {
   const { code, fileName } = JSON.parse(body);
-  const { scanForHollowCode } = await import('@/lib/code-studio/pipeline/ast-hollow-scanner');
+  const { scanForHollowCode } = await import('../core/pipeline-bridge');
   return { findings: scanForHollowCode(code ?? '', fileName ?? 'unknown') };
 }
 
 async function handleDeadCode(body: string): Promise<object> {
   const { code, language } = JSON.parse(body);
-  const { scanDeadCode } = await import('@/lib/code-studio/pipeline/dead-code');
+  const { scanDeadCode } = await import('../core/pipeline-bridge');
   return { findings: scanDeadCode(code ?? '', language ?? 'typescript') };
 }
 
 async function handleDesignLint(body: string): Promise<object> {
   const { code } = JSON.parse(body);
-  const { runDesignLint } = await import('@/lib/code-studio/pipeline/design-lint');
+  const { runDesignLint } = await import('../core/pipeline-bridge');
   return runDesignLint(code ?? '');
 }
 
 async function handleCognitiveLoad(body: string): Promise<object> {
   const { code } = JSON.parse(body);
-  const { analyzeCognitiveLoad } = await import('@/lib/code-studio/pipeline/cognitive-load');
+  const { analyzeCognitiveLoad } = await import('../core/pipeline-bridge');
   return analyzeCognitiveLoad(code ?? '');
 }
 
 async function handleBugfinder(body: string): Promise<object> {
   const { code } = JSON.parse(body);
-  const { findBugsStatic } = await import('@/lib/code-studio/pipeline/bugfinder');
+  const { findBugsStatic } = await import('../core/pipeline-bridge');
   return { bugs: findBugsStatic(code ?? '') };
 }
 
 async function handleIPScan(body: string): Promise<object> {
   const { files } = JSON.parse(body);
-  const { scanProject } = await import('@/lib/code-studio/features/patent-scanner');
+  const { scanProject } = await import('../core/pipeline-bridge');
   return scanProject(files ?? []);
 }
 

@@ -120,7 +120,7 @@ export async function runStress(path: string, opts: StressOptions): Promise<void
   console.log('\n  [Phase 2] AI 가상 시뮬레이션...');
 
   try {
-    const { analyzeStress, getScenarios } = await import('@/lib/code-studio/pipeline/stress-test');
+    const { analyzeStress, getScenarios } = await import('../core/pipeline-bridge');
     const scenarios = getScenarios();
     const targetScenario = opts.scenario
       ? scenarios.find(s => s.id.includes(opts.scenario!) || s.type === opts.scenario)
