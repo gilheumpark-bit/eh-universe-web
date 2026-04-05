@@ -11,7 +11,12 @@ import { join, extname, relative } from 'path';
 // PART 1 — File Discovery
 // ============================================================
 
-const SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
+// Dynamic: detect from multi-lang registry if available, fallback to TS/JS
+let SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
+try {
+  const { getSupportedExtensions } = require('../adapters/multi-lang');
+  SUPPORTED_EXTENSIONS = new Set(getSupportedExtensions());
+} catch { /* multi-lang not available, TS/JS only */ }
 const IGNORE_DIRS = new Set(['node_modules', '.next', '.git', 'dist', 'build', '.cs', '__tests__']);
 
 interface SourceFile {
