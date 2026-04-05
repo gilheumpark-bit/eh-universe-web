@@ -5,7 +5,7 @@
 // ai-config.ts 설정 기반으로 curl/fetch로 직접 호출.
 
 import { getAIConfig } from './config';
-import { routeTask, getTemperature, type AITask } from './ai-config';
+import { _routeTask, getTemperature, type AITask } from './ai-config';
 
 // ============================================================
 // PART 1 — Types
@@ -51,7 +51,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
       system: opts.systemInstruction,
       messages: opts.messages.filter(m => m.role !== 'system'),
     }),
-    extractContent: (data: any) => data?.content?.[0]?.text ?? '',
+    extractContent: (data: unknown) => data?.content?.[0]?.text ?? '',
   },
   openai: {
     baseUrl: 'https://api.openai.com/v1/chat/completions',
@@ -65,7 +65,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
         ...opts.messages,
       ],
     }),
-    extractContent: (data: any) => data?.choices?.[0]?.message?.content ?? '',
+    extractContent: (data: unknown) => data?.choices?.[0]?.message?.content ?? '',
   },
   google: {
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
@@ -78,7 +78,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
       systemInstruction: opts.systemInstruction ? { parts: [{ text: opts.systemInstruction }] } : undefined,
       generationConfig: { temperature: opts.temperature, maxOutputTokens: opts.maxTokens ?? 4096 },
     }),
-    extractContent: (data: any) => data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
+    extractContent: (data: unknown) => data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
   },
   groq: {
     baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
@@ -92,7 +92,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
         ...opts.messages,
       ],
     }),
-    extractContent: (data: any) => data?.choices?.[0]?.message?.content ?? '',
+    extractContent: (data: unknown) => data?.choices?.[0]?.message?.content ?? '',
   },
   ollama: {
     baseUrl: 'http://localhost:11434/api/chat',
@@ -106,7 +106,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
       ],
       options: { temperature: opts.temperature },
     }),
-    extractContent: (data: any) => data?.message?.content ?? '',
+    extractContent: (data: unknown) => data?.message?.content ?? '',
   },
 };
 
@@ -133,32 +133,34 @@ export async function streamChat(opts: StreamChatOptions): Promise<ChatResult> {
     return { content: msg, model: config.provider, durationMs: 0 };
   }
 
-  // Temperature: task 기반 자동 설정 or 수동
   const temperature = opts.temperature ?? (opts.task ? getTemperature(opts.task) : 0.3);
   const optsWithTemp = { ...opts, temperature };
-
   const model = config.model ?? 'default';
-  const body = JSON.stringify(provider.bodyBuilder(optsWithTemp, model));
+
+  // 스트리밍 가능 프로바이더: openai, groq, ollama, anthropic
+  const canStream = ['openai', 'groq', 'ollama', 'anthropic'].includes(config.provider);
+
+  // 스트리밍용 body (stream: true 추가)
+  const bodyObj = provider.bodyBuilder(optsWithTemp, model);
+  if (canStream) (bodyObj as Record<string, unknown>).stream = true;
+  const body = JSON.stringify(bodyObj);
+
+  let url = provider.baseUrl;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...provider.authHeader(config.apiKey),
+  };
+
+  if (config.provider === 'google') {
+    url = `${provider.baseUrl}/${model}:generateContent?key=${config.apiKey}`;
+  }
+  if (config.baseUrl) {
+    url = config.provider === 'google'
+      ? `${config.baseUrl}/${model}:generateContent?key=${config.apiKey}`
+      : config.baseUrl;
+  }
 
   try {
-    // Google은 URL에 key 포함
-    let url = provider.baseUrl;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...provider.authHeader(config.apiKey),
-    };
-
-    if (config.provider === 'google') {
-      url = `${provider.baseUrl}/${model}:generateContent?key=${config.apiKey}`;
-    }
-
-    // Custom base URL 지원
-    if (config.baseUrl) {
-      url = config.provider === 'google'
-        ? `${config.baseUrl}/${model}:generateContent?key=${config.apiKey}`
-        : config.baseUrl;
-    }
-
     const response = await fetch(url, { method: 'POST', headers, body });
 
     if (!response.ok) {
@@ -168,9 +170,51 @@ export async function streamChat(opts: StreamChatOptions): Promise<ChatResult> {
       return { content: msg, model, durationMs: Math.round(performance.now() - start) };
     }
 
+    // ── 리얼타임 SSE 스트리밍 ──
+    if (canStream && response.body) {
+      let content = '';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+          try {
+            const json = JSON.parse(line.slice(6));
+            let chunk = '';
+
+            if (config.provider === 'anthropic') {
+              // Anthropic SSE: content_block_delta
+              chunk = json.delta?.text ?? '';
+            } else if (config.provider === 'ollama') {
+              chunk = json.message?.content ?? '';
+            } else {
+              // OpenAI / Groq SSE
+              chunk = json.choices?.[0]?.delta?.content ?? '';
+            }
+
+            if (chunk) {
+              content += chunk;
+              opts.onChunk?.(chunk);
+            }
+          } catch { /* malformed SSE line */ }
+        }
+      }
+
+      return { content, model, durationMs: Math.round(performance.now() - start) };
+    }
+
+    // ── Non-streaming fallback (Google 등) ──
     const data = await response.json();
     const content = provider.extractContent(data);
-
     opts.onChunk?.(content);
 
     return {
@@ -186,7 +230,7 @@ export async function streamChat(opts: StreamChatOptions): Promise<ChatResult> {
   }
 }
 
-// IDENTITY_SEAL: PART-3 | role=stream-chat | inputs=StreamChatOptions | outputs=ChatResult
+// IDENTITY_SEAL: PART-3 | role=stream-chat-realtime | inputs=StreamChatOptions | outputs=ChatResult
 
 // ============================================================
 // PART 4 — Convenience: Quick Ask

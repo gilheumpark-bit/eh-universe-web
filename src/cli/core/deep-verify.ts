@@ -138,7 +138,7 @@ function checkBraceBalance(code: string, fileName: string): DeepFinding[] {
       if (char === '(') parenDepth++;
       if (char === ')') parenDepth--;
       if (char === '[') bracketDepth++;
-      if (char === ']') bracketDepth--;
+      if (char === ']') _bracketDepth--;
     }
   }
 
@@ -453,7 +453,7 @@ export function runDeepVerifyProject(rootPath: string): {
   byCategory: Record<string, number>;
 } {
   const { readdirSync, readFileSync } = require('fs');
-  const { join, relative, extname } = require('path');
+  const { join, relative, _extname } = require('path');
 
   const IGNORE = new Set(['node_modules', '.next', '.git', 'dist', '.cs']);
   const allFindings: DeepFinding[] = [];

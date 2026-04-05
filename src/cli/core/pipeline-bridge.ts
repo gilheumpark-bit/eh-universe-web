@@ -26,7 +26,7 @@ export async function runStaticPipeline(code: string, language: string): Promise
 
   // Team 2: AST (구조 분석)
   try {
-    const { runESLint } = await import('../adapters/lint-engine');
+    const { _runESLint } = await import('../adapters/lint-engine');
     // ESLint은 파일 기반이라 인메모리 코드에는 regex 폴백 사용
     teams.push(runASTFallback(code, language));
   } catch {
@@ -68,13 +68,13 @@ export async function runStaticPipeline(code: string, language: string): Promise
 // PART 2 — Team Implementations
 // ============================================================
 
-function runRegexTeam(code: string, language: string): PipelineResult['teams'][0] {
+function runRegexTeam(code: string, _language: string): PipelineResult['teams'][0] {
   const findings: PipelineResult['teams'][0]['findings'] = [];
   const lines = code.split('\n');
 
   const patterns: Array<{ regex: RegExp; msg: string; severity: 'error' | 'warning' }> = [
     { regex: /console\.(log|debug)\(/, msg: 'console.log 발견', severity: 'warning' },
-    { regex: /TODO|FIXME|HACK|XXX/, msg: 'TODO/FIXME 주석', severity: 'info' as any },
+    { regex: /TODO|FIXME|HACK|XXX/, msg: 'TODO/FIXME 주석', severity: 'info' as unknown },
     { regex: /eval\s*\(/, msg: 'eval() 사용 (보안 위험)', severity: 'error' },
     { regex: /document\.(write|writeln)\(/, msg: 'document.write (XSS)', severity: 'error' },
     { regex: /innerHTML\s*=/, msg: 'innerHTML 직접 할당 (XSS)', severity: 'warning' },
@@ -82,7 +82,7 @@ function runRegexTeam(code: string, language: string): PipelineResult['teams'][0
     { regex: /\/\/\s*@ts-ignore/, msg: '@ts-ignore 사용', severity: 'warning' },
     { regex: /password\s*=\s*['"`]/, msg: '하드코딩된 패스워드', severity: 'error' },
     { regex: /\.then\(.*\.catch\(\s*\)/, msg: '빈 catch (에러 무시)', severity: 'warning' },
-    { regex: /new\s+Date\(\)\.getTime/, msg: 'Date.now() 대신 new Date().getTime()', severity: 'info' as any },
+    { regex: /new\s+Date\(\)\.getTime/, msg: 'Date.now() 대신 new Date().getTime()', severity: 'info' as unknown },
   ];
 
   for (let i = 0; i < lines.length; i++) {
@@ -97,7 +97,7 @@ function runRegexTeam(code: string, language: string): PipelineResult['teams'][0
   return { name: 'regex', score, findings: findings.slice(0, 20) };
 }
 
-function runASTFallback(code: string, language: string): PipelineResult['teams'][0] {
+function runASTFallback(code: string, _language: string): PipelineResult['teams'][0] {
   const findings: PipelineResult['teams'][0]['findings'] = [];
   const lines = code.split('\n');
 
@@ -174,7 +174,7 @@ function runDeadCodeCheck(code: string): PipelineResult['teams'][0] {
     }
     // 주석 처리된 코드
     if (/^\s*\/\/\s*(const|let|var|function|if|for|while|return|import)\s/.test(lines[i])) {
-      findings.push({ line: i + 1, message: '주석 처리된 코드', severity: 'info' as any });
+      findings.push({ line: i + 1, message: '주석 처리된 코드', severity: 'info' as unknown });
     }
   }
 
@@ -208,7 +208,7 @@ function runCognitiveLoadCheck(code: string): PipelineResult['teams'][0] {
   // 긴 줄
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].length > 120) {
-      findings.push({ line: i + 1, message: `줄 길이 ${lines[i].length}자 — 120자 초과`, severity: 'info' as any });
+      findings.push({ line: i + 1, message: `줄 길이 ${lines[i].length}자 — 120자 초과`, severity: 'info' as unknown });
     }
   }
 
@@ -229,18 +229,18 @@ function runCognitiveLoadCheck(code: string): PipelineResult['teams'][0] {
   return { name: 'cognitive-load', score, findings: findings.slice(0, 10) };
 }
 
-function runBugPatternCheck(code: string, language: string): PipelineResult['teams'][0] {
+function runBugPatternCheck(code: string, _language: string): PipelineResult['teams'][0] {
   const findings: PipelineResult['teams'][0]['findings'] = [];
   const lines = code.split('\n');
 
   const bugPatterns: Array<{ regex: RegExp; msg: string; severity: 'error' | 'warning' }> = [
     { regex: /===?\s*NaN/, msg: '=== NaN 비교 (Number.isNaN 사용)', severity: 'error' },
-    { regex: /typeof\s+\w+\s*===?\s*['"`]undefined['"`]/, msg: 'typeof undefined 비교 대신 nullish 체크 권장', severity: 'info' as any },
+    { regex: /typeof\s+\w+\s*===?\s*['"`]undefined['"`]/, msg: 'typeof undefined 비교 대신 nullish 체크 권장', severity: 'info' as unknown },
     { regex: /parseInt\(\s*\w+\s*\)/, msg: 'parseInt radix 인수 누락', severity: 'warning' },
-    { regex: /new\s+Array\(\d+\)/, msg: 'new Array(n) → Array.from 권장', severity: 'info' as any },
+    { regex: /new\s+Array\(\d+\)/, msg: 'new Array(n) → Array.from 권장', severity: 'info' as unknown },
     { regex: /catch\s*\(\s*\)\s*\{/, msg: '에러 변수 없는 catch', severity: 'warning' },
     { regex: /\.forEach\(async/, msg: 'forEach(async) — for...of 사용 권장', severity: 'error' },
-    { regex: /==\s+null[^=]|!=\s+null[^=]/, msg: '== null (=== null || === undefined 권장)', severity: 'info' as any },
+    { regex: /==\s+null[^=]|!=\s+null[^=]/, msg: '== null (=== null || === undefined 권장)', severity: 'info' as unknown },
   ];
 
   for (let i = 0; i < lines.length; i++) {
@@ -255,7 +255,7 @@ function runBugPatternCheck(code: string, language: string): PipelineResult['tea
   return { name: 'bug-pattern', score, findings: findings.slice(0, 15) };
 }
 
-function runSecurityPatternCheck(code: string, language: string): PipelineResult['teams'][0] {
+function runSecurityPatternCheck(code: string, _language: string): PipelineResult['teams'][0] {
   const findings: PipelineResult['teams'][0]['findings'] = [];
   const lines = code.split('\n');
 
@@ -263,8 +263,8 @@ function runSecurityPatternCheck(code: string, language: string): PipelineResult
     { regex: /eval\(/, msg: 'eval() 사용', severity: 'error' },
     { regex: /new\s+Function\(/, msg: 'new Function() (eval 동등)', severity: 'error' },
     { regex: /dangerouslySetInnerHTML/, msg: 'dangerouslySetInnerHTML (XSS)', severity: 'warning' },
-    { regex: /process\.env\.\w+/, msg: 'process.env 직접 접근 — 환경변수 노출 주의', severity: 'info' as any },
-    { regex: /https?:\/\/[^\s'"]+/, msg: 'URL 하드코딩', severity: 'info' as any },
+    { regex: /process\.env\.\w+/, msg: 'process.env 직접 접근 — 환경변수 노출 주의', severity: 'info' as unknown },
+    { regex: /https?:\/\/[^\s'"]+/, msg: 'URL 하드코딩', severity: 'info' as unknown },
     { regex: /BEGIN\s+(RSA|DSA|EC)\s+PRIVATE/, msg: '개인키 하드코딩', severity: 'error' },
     { regex: /api[_-]?key\s*[:=]\s*['"`]\w{10,}/, msg: 'API 키 하드코딩 의심', severity: 'error' },
   ];
@@ -292,7 +292,7 @@ export async function scanForHollowCode(code: string, fileName: string = 'unknow
   return { fileName, ...result };
 }
 
-export async function scanDeadCode(code: string, language: string = 'typescript') {
+export async function scanDeadCode(code: string, _language: string = 'typescript') {
   return runDeadCodeCheck(code);
 }
 
@@ -355,7 +355,7 @@ export async function runProjectAudit(
   rootPath: string,
   _onProgress?: (area: string, index: number, total: number) => void,
 ): Promise<AuditReport> {
-  const { readdirSync, readFileSync, statSync, existsSync } = await import('fs');
+  const { readdirSync, readFileSync, _statSync, existsSync } = await import('fs');
   const { join, extname } = await import('path');
 
   const areas: AuditArea[] = [];
@@ -482,7 +482,7 @@ export function getScenarios(): StressScenario[] {
   ];
 }
 
-export async function analyzeStress(code: string, scenario: string): Promise<{
+export async function analyzeStress(code: string, _scenario: string): Promise<{
   score: number;
   risks: Array<{ type: string; severity: string; detail: string }>;
   recommendations: string[];

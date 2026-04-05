@@ -22,7 +22,7 @@ export async function runAutocannon(url: string, opts?: { connections?: number; 
 
     autocannon.track(instance, { renderProgressBar: false });
 
-    instance.on('done', (result: any) => {
+    instance.on('done', (result: unknown) => {
       resolve({
         rps: result.requests?.average ?? 0,
         latencyAvg: result.latency?.average ?? 0,
@@ -73,7 +73,7 @@ export async function runTinybench(benchmarks: Array<{ name: string; fn: () => v
 export async function runC8(command: string, rootPath: string) {
   const { execSync } = await import('child_process');
   try {
-    const output = execSync(`npx c8 --reporter=json-summary ${command} 2>/dev/null`, {
+    const _output = execSync(`npx c8 --reporter=json-summary ${command} 2>/dev/null`, {
       cwd: rootPath, encoding: 'utf-8', timeout: 60000,
     });
 

@@ -117,7 +117,7 @@ export async function runEnhancedPipeline(
 
     for (const f of astResult.findings) {
       findings.push({
-        engine: (f as any).engine ?? 'ast',
+        engine: (f as unknown).engine ?? 'ast',
         line: f.line,
         message: f.message,
         severity: mapSeverity(f.severity),

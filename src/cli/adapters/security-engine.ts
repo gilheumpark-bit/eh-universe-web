@@ -21,7 +21,7 @@ export async function runNpmAudit(rootPath: string) {
     };
   } catch (e) {
     try {
-      const output = (e as any).stdout ?? '{}';
+      const output = (e as unknown).stdout ?? '{}';
       const data = JSON.parse(output);
       return {
         vulnerabilities: data.metadata?.vulnerabilities ?? {},
@@ -49,7 +49,7 @@ export async function runLockfileLint(rootPath: string) {
     });
     return { passed: true, issues: 0, detail: 'lockfile valid' };
   } catch (e) {
-    const output = (e as any).stdout ?? (e as any).stderr ?? '';
+    const output = (e as unknown).stdout ?? (e as unknown).stderr ?? '';
     const issues = (output.match(/ERROR/g) ?? []).length;
     return { passed: false, issues, detail: output.slice(0, 200) };
   }
@@ -70,7 +70,7 @@ export async function runRetireJS(rootPath: string) {
     const data = JSON.parse(output || '[]');
     return {
       vulnerableCount: Array.isArray(data) ? data.length : 0,
-      findings: Array.isArray(data) ? data.slice(0, 10).map((d: any) => ({
+      findings: Array.isArray(data) ? data.slice(0, 10).map((d: unknown) => ({
         component: d.component ?? 'unknown',
         version: d.version ?? '?',
         severity: d.severity ?? 'unknown',
@@ -97,7 +97,7 @@ export async function runSnyk(rootPath: string) {
     return {
       ok: data.ok ?? false,
       vulnerabilities: data.vulnerabilities?.length ?? 0,
-      critical: data.vulnerabilities?.filter((v: any) => v.severity === 'critical').length ?? 0,
+      critical: data.vulnerabilities?.filter((v: unknown) => v.severity === 'critical').length ?? 0,
     };
   } catch {
     return { ok: true, vulnerabilities: 0, critical: 0 };

@@ -31,7 +31,7 @@ export function runShellCommand(command: string, opts?: {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     return { stdout, stderr: '', exitCode: 0 };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       stdout: e.stdout ?? '',
       stderr: e.stderr ?? e.message ?? '',

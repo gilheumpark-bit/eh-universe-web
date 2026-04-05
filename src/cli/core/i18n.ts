@@ -92,4 +92,8 @@ export function setLang(lang: string): void {
   _cachedLang = lang;
 }
 
+// Aliases for context-builder compatibility
+export const t = msg;
+export const setLanguage = setLang;
+
 // IDENTITY_SEAL: PART-2 | role=getter | inputs=MsgKey | outputs=string

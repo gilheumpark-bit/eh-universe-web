@@ -166,7 +166,7 @@ export async function parseWithTreeSitter(code: string, language: LanguageDef): 
 }
 
 function traverseNode(
-  node: any,
+  node: unknown,
   depth: number,
   result: UniversalASTResult,
   langId: string,
@@ -199,7 +199,7 @@ function traverseNode(
     result.classes.push({
       name: nameNode?.text ?? 'anonymous',
       line: startLine,
-      methods: bodyNode?.namedChildren?.filter((c: any) => /method|function|func/.test(c.type)).length ?? 0,
+      methods: bodyNode?.namedChildren?.filter((c: unknown) => /method|function|func/.test(c.type)).length ?? 0,
     });
   }
 

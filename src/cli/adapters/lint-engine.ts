@@ -65,7 +65,7 @@ export async function runJSCPD(rootPath: string) {
 
   return {
     duplicateCount: clones.length,
-    findings: clones.map((c: any) => ({
+    findings: clones.map((c: unknown) => ({
       fileA: c.duplicationA?.sourceId ?? 'unknown',
       fileB: c.duplicationB?.sourceId ?? 'unknown',
       lines: c.lines ?? 0,

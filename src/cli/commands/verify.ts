@@ -66,7 +66,7 @@ function discoverFiles(rootPath: string): SourceFile[] {
   return files;
 }
 
-function detectLanguage(ext: string): string {
+function _detectLanguage(ext: string): string {
   return ext === '.ts' || ext === '.tsx' ? 'typescript' : 'javascript';
 }
 
@@ -92,7 +92,7 @@ interface TeamResult {
   details: Array<{ line: number; message: string; severity: string }>;
 }
 
-interface VerifyResult {
+interface _VerifyResult {
   files: number;
   teams: TeamResult[];
   overallScore: number;
@@ -114,7 +114,10 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     console.log(`  ${icons.warn}  검증할 파일이 없습니다.`);
     return;
   }
-  console.log(`  📁 ${files.length}개 파일 발견\n`);
+  console.log(`  ${icons.folder} ${files.length}개 파일 발견`);
+  const useParallel = opts.parallel && files.length > 3;
+  if (useParallel) console.log(`  ${icons.rocket} 워커풀 병렬 모드 (${Math.min(files.length, 4)} workers)`);
+  console.log('');
 
   // Run pipeline on each file — try enhanced (AST) first, fallback to regex
   let useEnhanced = true;
@@ -132,19 +135,17 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   let totalFindings = 0;
   let astFindingsTotal = 0;
 
-  for (const file of files) {
-    let result;
+  // ── 파일 검증 함수 ──
+  async function verifyOneFile(file: SourceFile) {
     if (useEnhanced && enhancedImport) {
       try {
         const enhanced = await enhancedImport.runEnhancedPipeline(file.content, file.language, file.relativePath);
         astFindingsTotal += enhanced.astFindings;
-        // Map enhanced findings to pipeline format
-        result = {
+        const result = {
           teams: [] as Array<{ name: string; score: number; findings: string[] }>,
           overallScore: enhanced.combinedScore,
           overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
         };
-        // Group by team
         const teamMap = new Map<string, { score: number; findings: string[] }>();
         for (const f of enhanced.findings) {
           const team = teamMap.get(f.team) ?? { score: 100, findings: [] };
@@ -158,21 +159,56 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
         for (const [name, data] of teamMap) {
           result.teams.push({ name, score: data.score, findings: data.findings });
         }
+        return result;
       } catch {
-        result = await runStaticPipeline(file.content, file.language);
+        return await runStaticPipeline(file.content, file.language);
       }
-    } else {
-      result = await runStaticPipeline(file.content, file.language);
     }
+    return await runStaticPipeline(file.content, file.language);
+  }
 
-    for (const stage of result.teams ?? result.stages ?? []) {
-      const scores = allTeamScores.get(stage.name) ?? [];
-      scores.push(stage.score);
-      allTeamScores.set(stage.name, scores);
+  // ── 병렬 or 순차 실행 ──
+  if (useParallel) {
+    const { runTasksInProcess, registerTaskHandler } = await import('../adapters/worker-pool');
+    registerTaskHandler('verify-file', async (payload) => {
+      const { content, language, relativePath } = payload as { content: string; language: string; relativePath: string };
+      return await runStaticPipeline(content, language);
+    });
 
-      const findings = allTeamFindings.get(stage.name) ?? 0;
-      allTeamFindings.set(stage.name, findings + stage.findings.length);
-      totalFindings += stage.findings.length;
+    const tasks = files.map((f, i) => ({
+      id: `v-${i}`,
+      type: 'verify-file',
+      payload: { content: f.content, language: f.language, relativePath: f.relativePath },
+    }));
+
+    const results = await runTasksInProcess(tasks, { maxWorkers: 4 }, (completed, total) => {
+      process.stdout.write(`\r  ${icons.clock} ${completed}/${total} 파일 검증 완료`);
+    });
+    console.log('');
+
+    for (const wr of results) {
+      const result = wr.success ? wr.result as { teams?: Array<{ name: string; score: number; findings: string[] }>; stages?: Array<{ name: string; score: number; findings: string[] }> } : null;
+      if (!result) continue;
+      for (const stage of result.teams ?? result.stages ?? []) {
+        const scores = allTeamScores.get(stage.name) ?? [];
+        scores.push(stage.score);
+        allTeamScores.set(stage.name, scores);
+        const findings = allTeamFindings.get(stage.name) ?? 0;
+        allTeamFindings.set(stage.name, findings + stage.findings.length);
+        totalFindings += stage.findings.length;
+      }
+    }
+  } else {
+    for (const file of files) {
+      const result = await verifyOneFile(file);
+      for (const stage of result.teams ?? (result as any).stages ?? []) {
+        const scores = allTeamScores.get(stage.name) ?? [];
+        scores.push(stage.score);
+        allTeamScores.set(stage.name, scores);
+        const findings = allTeamFindings.get(stage.name) ?? 0;
+        allTeamFindings.set(stage.name, findings + stage.findings.length);
+        totalFindings += stage.findings.length;
+      }
     }
   }
 
@@ -270,7 +306,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
       receiptHash: '',
     };
     receipt.receiptHash = computeReceiptHash(receipt);
-    chainReceipt(receipt as any);
+    chainReceipt(receipt as unknown);
     writeFileSync(join(receiptDir, `${receipt.id}.json`), JSON.stringify(receipt, null, 2));
   } catch { /* receipt optional */ }
 

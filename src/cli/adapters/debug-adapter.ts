@@ -93,7 +93,7 @@ export async function launchDebug(
 // PART 3 — CDP HTTP Client (WebSocket 없이 HTTP로 통신)
 // ============================================================
 
-async function cdpHttpRequest(inspectorUrl: string, method: string, params?: Record<string, unknown>): Promise<CDPResponse['result']> {
+async function _cdpHttpRequest(inspectorUrl: string, _method: string, _params?: Record<string, unknown>): Promise<CDPResponse['result']> {
   // Inspector /json/list로 debugger URL 확보
   const listUrl = `${inspectorUrl}/json/list`;
 
@@ -117,14 +117,14 @@ async function cdpHttpRequest(inspectorUrl: string, method: string, params?: Rec
 export async function getDebugTargets(inspectorUrl: string): Promise<Array<{ id: string; title: string; url: string; wsUrl: string }>> {
   const listUrl = `${inspectorUrl}/json/list`;
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     http.get(listUrl, (res) => {
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
         try {
           const targets = JSON.parse(data);
-          resolve(targets.map((t: any) => ({
+          resolve(targets.map((t: unknown) => ({
             id: t.id,
             title: t.title ?? '',
             url: t.url ?? '',

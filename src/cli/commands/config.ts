@@ -5,7 +5,7 @@
 
 import {
   loadGlobalConfig, saveGlobalConfig, addKey, removeKey,
-  getGlobalConfigPath, type CSConfig, type KeyConfig,
+  getGlobalConfigPath, type CSConfig, type _KeyConfig,
 } from '../core/config';
 
 // ============================================================

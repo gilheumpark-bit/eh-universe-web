@@ -60,8 +60,8 @@ program
   .action(async (path, opts) => {
     // Precision mode: AI-powered review
     if (opts.precision || opts.precisionQuick) {
-      const { readFileSync, readdirSync, statSync } = await import('fs');
-      const { join, extname, relative } = await import('path');
+      const { readFileSync, _readdirSync, statSync } = await import('fs');
+      const { _join, _extname, _relative } = await import('path');
       const { runPrecisionReview } = await import('../ai/precision-checklist');
       const targetPath = path ?? './src';
       const stat = statSync(targetPath);
@@ -153,7 +153,18 @@ program
   .command('compliance')
   .description('배포 전 컴플라이언스 원스톱 체크')
   .option('--pre-release', '릴리즈 전 전체 검사')
+  .option('--sbom <format>', 'SBOM 생성 (cyclonedx|spdx)')
   .action(async (opts) => {
+    if (opts.sbom) {
+      const { generateSBOM } = await import('../commands/compliance');
+      const { writeFileSync } = await import('fs');
+      const format = opts.sbom === 'spdx' ? 'spdx' : 'cyclonedx';
+      const sbom = await generateSBOM(format as 'cyclonedx' | 'spdx');
+      const filename = `sbom-${format}.json`;
+      writeFileSync(filename, sbom);
+      console.log(`  📋 SBOM 생성 완료: ${filename} (${format.toUpperCase()})`);
+      return;
+    }
     const { runCompliance } = await import('../commands/compliance');
     await runCompliance(opts);
   });

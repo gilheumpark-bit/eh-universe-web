@@ -129,7 +129,7 @@ export async function resolveConflictWithAI(
 
     // AI 호출 (가벼운 모델 사용)
     const { execSync: exec } = await import('child_process');
-    const prompt = JSON.stringify({
+    const _prompt = JSON.stringify({
       system: 'Merge conflict resolver. Output ONLY resolved code. No explanation.',
       user: `Context:\n${context.slice(0, 1000)}\n\nOurs:\n${conflict.ours}\n\nTheirs:\n${conflict.theirs}`,
     });

@@ -128,26 +128,26 @@ export async function analyzeWithAcorn(code: string) {
   // Esquery: find eval() calls
   const evalCalls = esquery.query(ast as never, 'CallExpression[callee.name="eval"]');
   for (const node of evalCalls) {
-    findings.push({ line: (node as any).loc?.start?.line ?? 1, message: 'eval() detected — security risk', severity: 'critical' });
+    findings.push({ line: (node as unknown).loc?.start?.line ?? 1, message: 'eval() detected — security risk', severity: 'critical' });
   }
 
   // Esquery: find console.log
   const consoleLogs = esquery.query(ast as never, 'CallExpression[callee.object.name="console"]');
   for (const node of consoleLogs) {
-    findings.push({ line: (node as any).loc?.start?.line ?? 1, message: 'console.log detected — remove before production', severity: 'info' });
+    findings.push({ line: (node as unknown).loc?.start?.line ?? 1, message: 'console.log detected — remove before production', severity: 'info' });
   }
 
   // Estraverse: count loop nesting
   let loopDepth = 0;
   let maxLoopDepth = 0;
   traverse(ast as never, {
-    enter(node: any) {
+    enter(node: unknown) {
       if (['ForStatement', 'WhileStatement', 'DoWhileStatement', 'ForInStatement', 'ForOfStatement'].includes(node.type)) {
         loopDepth++;
         if (loopDepth > maxLoopDepth) maxLoopDepth = loopDepth;
       }
     },
-    leave(node: any) {
+    leave(node: unknown) {
       if (['ForStatement', 'WhileStatement', 'DoWhileStatement', 'ForInStatement', 'ForOfStatement'].includes(node.type)) {
         loopDepth--;
       }
@@ -180,7 +180,7 @@ export async function analyzeWithBabel(code: string) {
 
     // Check for JSX without key prop in map
     for (const error of ast.errors ?? []) {
-      findings.push({ line: (error as any).loc?.line ?? 1, message: `Syntax: ${error.message}`, severity: 'error' });
+      findings.push({ line: (error as unknown).loc?.line ?? 1, message: `Syntax: ${error.message}`, severity: 'error' });
     }
   } catch (e) {
     findings.push({ line: 1, message: `Babel parse error: ${(e as Error).message}`, severity: 'error' });

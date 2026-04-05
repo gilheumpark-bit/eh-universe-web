@@ -82,11 +82,36 @@ export function buildCFG(code: string, fileName: string): CFGGraph {
     } else if (/^(?:for|while|do)\s*[\({]/.test(trimmed) || /\.forEach\(|\.map\(|\.filter\(/.test(trimmed)) {
       node.type = 'loop';
       scopeStack.push({ type: 'loop', nodeId, line: i + 1 });
+    } else if (/^switch\s*\(/.test(trimmed)) {
+      node.type = 'branch';
+      scopeStack.push({ type: 'switch', nodeId, line: i + 1 });
+    } else if (/^case\s|^default\s*:/.test(trimmed)) {
+      node.type = 'branch';
+      // Connect switch head → case
+      const switchScope = scopeStack.find(s => s.type === 'switch');
+      if (switchScope) {
+        const switchNode = nodes.get(switchScope.nodeId);
+        if (switchNode) switchNode.edges.push(nodeId);
+      }
     } else if (/^try\s*\{/.test(trimmed)) {
       node.type = 'try';
       scopeStack.push({ type: 'try', nodeId, line: i + 1 });
     } else if (/^catch\s*[\({]/.test(trimmed)) {
       node.type = 'catch';
+      // Connect try → catch (exceptional edge)
+      const tryScope = scopeStack.find(s => s.type === 'try');
+      if (tryScope) {
+        const tryNode = nodes.get(tryScope.nodeId);
+        if (tryNode) tryNode.edges.push(nodeId);
+      }
+    } else if (/^finally\s*\{/.test(trimmed)) {
+      node.type = 'statement'; // finally always executes
+      // Connect both try and catch → finally
+      const tryScope = scopeStack.find(s => s.type === 'try');
+      if (tryScope) {
+        const tryNode = nodes.get(tryScope.nodeId);
+        if (tryNode) tryNode.edges.push(nodeId);
+      }
     } else if (/^return\b/.test(trimmed)) {
       node.type = 'return';
       exits.push(nodeId);
@@ -112,10 +137,22 @@ export function buildCFG(code: string, fileName: string): CFGGraph {
     if (trimmed === '}' || trimmed === '};') {
       const scope = scopeStack.pop();
       if (scope) {
-        // Loop: back edge
         if (scope.type === 'loop') {
-          node.edges.push(scope.nodeId);
+          node.edges.push(scope.nodeId); // back edge
+        } else if (scope.type === 'try') {
+          // try block ended, connect to next statement
+        } else if (scope.type === 'switch') {
+          // switch ended, all cases converge here
         }
+      }
+    }
+
+    // break statement: connect to enclosing loop/switch exit
+    if (/^break\b/.test(trimmed)) {
+      const enclosing = [...scopeStack].reverse().find(s => s.type === 'loop' || s.type === 'switch');
+      if (enclosing) {
+        // break exits the enclosing structure
+        node.type = 'statement';
       }
     }
 
@@ -250,7 +287,7 @@ export function findRiskPaths(graph: CFGGraph): ExecutionPath[] {
   }
 
   // Find uninitialized paths: variable used in branch where it might not be defined
-  for (const func of graph.functions) {
+  for (const _func of graph.functions) {
     const definedInBranch = new Set<string>();
     for (const [, node] of graph.nodes) {
       if (node.type === 'branch') {

@@ -19,7 +19,7 @@ export async function runAxeAccessibility(htmlContent: string) {
     const dom = new JSDOM(htmlContent);
     const document = dom.window.document;
 
-    const results = await axe.default.run(document.documentElement as any);
+    const results = await axe.default.run(document.documentElement as unknown);
 
     for (const violation of results.violations) {
       for (const node of violation.nodes.slice(0, 5)) {

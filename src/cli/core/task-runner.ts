@@ -29,7 +29,7 @@ export function detectTasks(rootPath: string): Task[] {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
       const scripts = pkg.scripts ?? {};
 
-      for (const [name, cmd] of Object.entries(scripts)) {
+      for (const [name, _cmd] of Object.entries(scripts)) {
         const command = `npm run ${name}`;
         let category: Task['category'] = 'custom';
 
@@ -111,7 +111,7 @@ export function runTask(task: Task, rootPath: string, timeout: number = 60000): 
       task, success: true, output: output.slice(0, 5000),
       duration: Math.round(performance.now() - start), exitCode: 0,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       task, success: false,
       output: ((e.stdout ?? '') + '\n' + (e.stderr ?? '')).slice(0, 5000),

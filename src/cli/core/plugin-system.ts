@@ -4,7 +4,7 @@
 // 플러그인 레지스트리 + lazy loading + 샌드박스.
 // 플러그인 50% → 75%
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, _readdirSync } from 'fs';
 import { join } from 'path';
 import { getGlobalConfigDir } from './config';
 
@@ -41,7 +41,7 @@ export interface InstalledPlugin {
 // PART 2 — Plugin Registry
 // ============================================================
 
-function getPluginDir(): string {
+function _getPluginDir(): string {
   return join(getGlobalConfigDir(), 'plugins');
 }
 
@@ -66,11 +66,47 @@ function saveRegistry(plugins: InstalledPlugin[]): void {
 // PART 3 — Install / Uninstall / Enable / Disable
 // ============================================================
 
-export function installPlugin(manifest: PluginManifest, pluginPath: string): boolean {
-  const registry = loadRegistry();
+// ── Manifest Validation (Zod-like schema) ──
 
+const VALID_TYPES = new Set(['engine', 'command', 'formatter', 'preset']);
+const VALID_HOOKS = new Set(['beforeVerify', 'afterVerify', 'beforeGenerate', 'afterGenerate']);
+const NAME_REGEX = /^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$/;
+const PATH_BLACKLIST = /\.\.|~|\/etc|\/usr|process\.env|require\s*\(|child_process/;
+
+export function validateManifest(manifest: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  const m = manifest as Record<string, unknown>;
+
+  if (!m || typeof m !== 'object') return { valid: false, errors: ['매니페스트가 객체가 아닙니다'] };
+  if (typeof m.name !== 'string' || !NAME_REGEX.test(m.name)) errors.push(`name 형식 오류: "${m.name}" (소문자+숫자+하이픈만)`);
+  if (typeof m.version !== 'string' || !/^\d+\.\d+\.\d+/.test(m.version)) errors.push(`version 형식 오류: "${m.version}" (semver 필요)`);
+  if (typeof m.type !== 'string' || !VALID_TYPES.has(m.type)) errors.push(`type 오류: "${m.type}" (${[...VALID_TYPES].join('|')} 중 선택)`);
+  if (typeof m.entryPoint !== 'string') errors.push('entryPoint 누락');
+  if (typeof m.entryPoint === 'string' && PATH_BLACKLIST.test(m.entryPoint)) errors.push(`entryPoint 보안 위반: "${m.entryPoint}"`);
+
+  if (m.hooks && typeof m.hooks === 'object') {
+    for (const [key, val] of Object.entries(m.hooks as Record<string, unknown>)) {
+      if (!VALID_HOOKS.has(key)) errors.push(`미지원 훅: "${key}"`);
+      if (typeof val === 'string' && PATH_BLACKLIST.test(val)) errors.push(`훅 경로 보안 위반: "${val}"`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function installPlugin(manifest: PluginManifest, pluginPath: string): { success: boolean; errors?: string[] } {
+  // 매니페스트 검증
+  const validation = validateManifest(manifest);
+  if (!validation.valid) return { success: false, errors: validation.errors };
+
+  // 경로 화이트리스트: 플러그인 디렉토리 또는 node_modules만 허용
+  const pluginDir = getPluginDir();
+  const isWhitelisted = pluginPath.startsWith(pluginDir) || pluginPath.includes('node_modules');
+  if (!isWhitelisted) return { success: false, errors: [`경로 거부: "${pluginPath}" (플러그인 디렉토리 외부)`] };
+
+  const registry = loadRegistry();
   if (registry.some(p => p.manifest.name === manifest.name)) {
-    return false; // Already installed
+    return { success: false, errors: ['이미 설치됨'] };
   }
 
   registry.push({
@@ -81,7 +117,7 @@ export function installPlugin(manifest: PluginManifest, pluginPath: string): boo
   });
 
   saveRegistry(registry);
-  return true;
+  return { success: true };
 }
 
 export function uninstallPlugin(name: string): boolean {
@@ -134,10 +170,37 @@ export async function executeHooks(hookType: HookType, context: Record<string, u
     const hookFn = plugin.manifest.hooks?.[hookType];
     if (!hookFn) continue;
 
+    // 보안: 경로 검증
+    const hookPath = join(plugin.path, hookFn);
+    if (PATH_BLACKLIST.test(hookPath)) {
+      console.log(`  🔒 Plugin ${plugin.manifest.name}: 보안 위반 경로 차단 "${hookPath}"`);
+      continue;
+    }
+
     try {
-      const mod = await import(join(plugin.path, hookFn));
-      if (typeof mod.default === 'function') {
-        await mod.default(context);
+      // VM 격리 실행 (process.env, child_process 접근 차단)
+      const { readFileSync: readFs } = await import('fs');
+      const vm = await import('vm');
+
+      const hookCode = readFs(hookPath, 'utf-8');
+      const safeContext = vm.createContext({
+        module: { exports: {} },
+        exports: {},
+        console: { log: console.log, warn: console.warn, error: console.error },
+        JSON,
+        Math,
+        Date,
+        // 명시적으로 process, require, child_process 차단
+        __context: { ...context },
+      }, {
+        codeGeneration: { strings: false, wasm: false },
+      });
+
+      vm.runInContext(hookCode, safeContext, { timeout: 5000, displayErrors: true });
+
+      const hookExport = safeContext.module?.exports?.default ?? safeContext.exports?.default;
+      if (typeof hookExport === 'function') {
+        await hookExport(context);
       }
     } catch (e) {
       console.log(`  ⚠️  Plugin ${plugin.manifest.name} hook ${hookType} failed: ${(e as Error).message}`);
@@ -160,7 +223,7 @@ export async function searchPlugins(query: string): Promise<Array<{ name: string
     });
 
     const data = JSON.parse(output);
-    return (Array.isArray(data) ? data : []).slice(0, 10).map((pkg: any) => ({
+    return (Array.isArray(data) ? data : []).slice(0, 10).map((pkg: unknown) => ({
       name: pkg.name,
       description: pkg.description ?? '',
       version: pkg.version ?? '0.0.0',

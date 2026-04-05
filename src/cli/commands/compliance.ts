@@ -15,7 +15,7 @@ interface ComplianceOptions {
   preRelease?: boolean;
 }
 
-export async function runCompliance(opts: ComplianceOptions): Promise<void> {
+export async function runCompliance(_opts: ComplianceOptions): Promise<void> {
   console.log('🦔 CS Quill — 배포 전 컴플라이언스 체크\n');
   const results: Array<{ check: string; passed: boolean; detail: string }> = [];
 
@@ -69,7 +69,7 @@ export async function runCompliance(opts: ComplianceOptions): Promise<void> {
 
   // Check 3: Dependencies
   console.log('  [3/5] 📦 Dependencies...');
-  const outdatedCount = 0;
+  const _outdatedCount = 0;
   const pkgLockPath = join(process.cwd(), 'package-lock.json');
   const hasPkgLock = existsSync(pkgLockPath);
   results.push({ check: 'Dependencies', passed: hasPkgLock, detail: hasPkgLock ? 'lockfile 존재' : 'lockfile 없음!' });
@@ -104,3 +104,78 @@ export async function runCompliance(opts: ComplianceOptions): Promise<void> {
 }
 
 // IDENTITY_SEAL: PART-1 | role=compliance-runner | inputs=opts | outputs=console
+
+// ============================================================
+// PART 2 — SBOM Generator (CycloneDX)
+// ============================================================
+
+export async function generateSBOM(format: 'cyclonedx' | 'spdx' = 'cyclonedx'): Promise<string> {
+  const pkgPath = join(process.cwd(), 'package.json');
+  if (!existsSync(pkgPath)) return JSON.stringify({ error: 'package.json not found' });
+
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  const deps = pkg.dependencies ?? {};
+  const devDeps = pkg.devDependencies ?? {};
+
+  if (format === 'cyclonedx') {
+    const components = Object.entries({ ...deps, ...devDeps }).map(([name, version]) => {
+      const ver = String(version).replace(/[\^~>=<]/g, '');
+      const isDevOnly = !deps[name];
+      let license = 'NOASSERTION';
+
+      // 라이선스 탐지 (node_modules에서)
+      try {
+        const modPkg = join(process.cwd(), 'node_modules', name, 'package.json');
+        if (existsSync(modPkg)) {
+          const m = JSON.parse(readFileSync(modPkg, 'utf-8'));
+          license = typeof m.license === 'string' ? m.license : (m.license?.type ?? 'NOASSERTION');
+        }
+      } catch { /* skip */ }
+
+      return {
+        type: 'library',
+        name,
+        version: ver,
+        scope: isDevOnly ? 'optional' : 'required',
+        licenses: [{ license: { id: license } }],
+        purl: `pkg:npm/${name}@${ver}`,
+      };
+    });
+
+    return JSON.stringify({
+      bomFormat: 'CycloneDX',
+      specVersion: '1.5',
+      version: 1,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        tools: [{ vendor: 'CS Quill', name: 'cs-quill-cli', version: '0.1.0' }],
+        component: { type: 'application', name: pkg.name ?? 'unknown', version: pkg.version ?? '0.0.0' },
+      },
+      components,
+    }, null, 2);
+  }
+
+  // SPDX format
+  const packages = Object.entries({ ...deps, ...devDeps }).map(([name, version]) => ({
+    SPDXID: `SPDXRef-Package-${name.replace(/[^a-zA-Z0-9]/g, '-')}`,
+    name,
+    versionInfo: String(version).replace(/[\^~>=<]/g, ''),
+    downloadLocation: `https://registry.npmjs.org/${name}`,
+    filesAnalyzed: false,
+  }));
+
+  return JSON.stringify({
+    spdxVersion: 'SPDX-2.3',
+    dataLicense: 'CC0-1.0',
+    SPDXID: 'SPDXRef-DOCUMENT',
+    name: `${pkg.name ?? 'unknown'}-sbom`,
+    creationInfo: {
+      created: new Date().toISOString(),
+      creators: ['Tool: CS Quill CLI 0.1.0'],
+    },
+    packages,
+  }, null, 2);
+}
+
+// IDENTITY_SEAL: PART-2 | role=sbom-generator | inputs=format | outputs=JSON
+

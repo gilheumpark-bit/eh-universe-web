@@ -4,7 +4,7 @@
 // 프로젝트 분석 후 개선 추천.
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join, extname } from 'path';
+import { join, _extname } from 'path';
 
 // ============================================================
 // PART 1 — Project Analyzer

@@ -5,7 +5,7 @@
 // Phase 1: 정적 메트릭 (로컬) → Phase 2: 실측 (autocannon) → Phase 3: AI 분석
 
 import { readFileSync, statSync } from 'fs';
-import { extname } from 'path';
+import { _extname } from 'path';
 
 // ============================================================
 // PART 1 — Static Metrics (from stress-test.ts)

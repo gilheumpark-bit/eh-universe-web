@@ -24,7 +24,7 @@ export async function runVitest(rootPath: string): Promise<VitestResult> {
     const vitest = await startVitest('test', [], {
       root: rootPath,
       watch: false,
-      reporters: [{ onInit() {}, onFinished() {} } as any],
+      reporters: [{ onInit() {}, onFinished() {} } as unknown],
       passWithNoTests: true,
     });
 
@@ -78,9 +78,9 @@ export async function runVitest(rootPath: string): Promise<VitestResult> {
       skipped: data.numPendingTests ?? 0,
       duration: data.testResults?.[0]?.perfStats?.runtime ?? 0,
       failures: (data.testResults ?? [])
-        .flatMap((tr: any) => (tr.assertionResults ?? [])
-          .filter((ar: any) => ar.status === 'failed')
-          .map((ar: any) => ({
+        .flatMap((tr: unknown) => (tr.assertionResults ?? [])
+          .filter((ar: unknown) => ar.status === 'failed')
+          .map((ar: unknown) => ({
             name: ar.fullName ?? ar.title ?? 'unknown',
             error: ar.failureMessages?.[0]?.slice(0, 200) ?? 'unknown',
             file: tr.name ?? '',
@@ -272,7 +272,7 @@ export async function runStryker(rootPath: string): Promise<MutationResult> {
         let killed = 0, survived = 0, noCoverage = 0, timeoutCount = 0;
         const details: MutationResult['details'] = [];
 
-        for (const [file, fileData] of Object.entries(data.files as Record<string, any>)) {
+        for (const [file, fileData] of Object.entries(data.files as Record<string, unknown>)) {
           for (const mutant of (fileData.mutants ?? [])) {
             if (mutant.status === 'Killed') killed++;
             else if (mutant.status === 'Survived') {

@@ -83,14 +83,14 @@ export async function runDependencyCruiser(rootPath: string) {
     const data = JSON.parse(output);
     const violations = data.summary?.violations ?? [];
     const totalModules = data.summary?.totalCruised ?? 0;
-    const circular = violations.filter((v: any) => v.rule?.severity === 'error' && v.cycle);
+    const circular = violations.filter((v: unknown) => v.rule?.severity === 'error' && v.cycle);
 
     return {
       totalModules,
       violations: violations.length,
       circular: circular.length,
       orphans: data.summary?.orphans ?? 0,
-      details: violations.slice(0, 10).map((v: any) => ({
+      details: violations.slice(0, 10).map((v: unknown) => ({
         from: v.from,
         to: v.to,
         rule: v.rule?.name ?? 'unknown',
@@ -120,13 +120,13 @@ export async function runPublint(rootPath: string) {
 
     const data = JSON.parse(output);
     const messages = data.messages ?? [];
-    const errors = messages.filter((m: any) => m.type === 'error');
-    const warnings = messages.filter((m: any) => m.type === 'warning');
+    const errors = messages.filter((m: unknown) => m.type === 'error');
+    const warnings = messages.filter((m: unknown) => m.type === 'warning');
 
     return {
       errors: errors.length,
       warnings: warnings.length,
-      messages: messages.slice(0, 10).map((m: any) => ({ type: m.type, message: m.message ?? String(m) })),
+      messages: messages.slice(0, 10).map((m: unknown) => ({ type: m.type, message: m.message ?? String(m) })),
       score: Math.max(0, 100 - errors.length * 20 - warnings.length * 5),
       engine: 'publint',
     };
@@ -154,7 +154,7 @@ export async function runAttw(rootPath: string) {
 
     return {
       problemCount: problems.length,
-      problems: problems.slice(0, 10).map((p: any) => ({ kind: p.kind, entrypoint: p.entrypoint, resolution: p.resolution })),
+      problems: problems.slice(0, 10).map((p: unknown) => ({ kind: p.kind, entrypoint: p.entrypoint, resolution: p.resolution })),
       score: Math.max(0, 100 - problems.length * 15),
       engine: 'attw',
     };
