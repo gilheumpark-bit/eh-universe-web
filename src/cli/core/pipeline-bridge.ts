@@ -27,9 +27,11 @@ export async function runStaticPipeline(code: string, language: string): Promise
   // Team 2: AST (구조 분석 — ts-morph/acorn 실체 엔진)
   try {
     const { analyzeWithTypeScript, analyzeWithTsMorph } = await import('../adapters/ast-engine');
-    const tsFindings = await analyzeWithTypeScript(code, 'analysis.ts');
-    const tsMorphFindings = await analyzeWithTsMorph(code, 'analysis.ts');
-    const allFindings = [...tsFindings, ...tsMorphFindings].map(f => ({
+    const tsResult = await analyzeWithTypeScript(code, 'analysis.ts');
+    const tsMorphResult = await analyzeWithTsMorph(code, 'analysis.ts');
+    const tsFindings = Array.isArray(tsResult) ? tsResult : (tsResult?.findings ?? []);
+    const tsMorphFindings = Array.isArray(tsMorphResult) ? tsMorphResult : (tsMorphResult?.findings ?? []);
+    const allFindings = [...tsFindings, ...tsMorphFindings].map((f: any) => ({
       line: f.line ?? 0, message: f.message, severity: (f.severity === 'error' ? 'error' : 'warning') as 'error' | 'warning',
     }));
     const score = Math.max(0, 100 - allFindings.filter(f => f.severity === 'error').length * 15 - allFindings.filter(f => f.severity === 'warning').length * 5);

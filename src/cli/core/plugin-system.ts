@@ -4,7 +4,7 @@
 // 플러그인 레지스트리 + lazy loading + 샌드박스.
 // 플러그인 50% → 75%
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, _readdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { getGlobalConfigDir } from './config';
 

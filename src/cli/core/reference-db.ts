@@ -4,7 +4,7 @@
 // 5대 AI가 생성한 코드의 평균 패턴을 저장.
 // 생성 시 레퍼런스로 주입해서 품질/속도 향상.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, _readdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { getGlobalConfigDir } from './config';
 

@@ -542,14 +542,14 @@ export function buildCFGReviewPrompt(
 // PART 6 — Unified Brain Runner
 // ============================================================
 
-export function runBrainAnalysis(code: string, fileName: string): {
+export async function runBrainAnalysis(code: string, fileName: string): Promise<{
   graph: CFGGraph;
   riskPaths: ExecutionPath[];
   slicedContext: string;
   prompt: string;
   stats: { nodes: number; edges: number; functions: number; risks: number; contextLines: number; reductionPercent: number };
-} {
-  const graph = buildCFG(code, fileName);
+}> {
+  const graph = await buildCFG(code, fileName);
   const riskPaths = findRiskPaths(graph);
   const slicedContext = sliceContext(code, graph, riskPaths);
   const prompt = buildCFGReviewPrompt(fileName, riskPaths, slicedContext, graph);

@@ -149,7 +149,7 @@ export function getAIConfig(): { provider: string; model: string; apiKey: string
   return {
     provider: primaryKey?.provider ?? config.provider ?? 'groq',
     model: primaryKey?.model ?? config.model ?? 'llama-3.3-70b-versatile',
-    apiKey: primaryKey?.apiKey ?? process.env.CS_API_KEY ?? '',
+    apiKey: primaryKey?.key ?? process.env.CS_API_KEY ?? '',
     baseUrl: config.baseUrl,
   };
 }

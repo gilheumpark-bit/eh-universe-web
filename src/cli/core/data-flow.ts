@@ -164,8 +164,8 @@ export async function trackCrossFileFlow(rootPath: string): Promise<DataFlowResu
 
   try {
     const { Project, SyntaxKind } = await import('ts-morph');
-    const { _readFileSync, readdirSync, _statSync } = await import('fs');
-    const { join, _extname } = await import('path');
+    const { readdirSync } = await import('fs');
+    const { join } = await import('path');
 
     const project = new Project({
       tsConfigFilePath: join(rootPath, 'tsconfig.json'),

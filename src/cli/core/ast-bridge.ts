@@ -92,7 +92,7 @@ export async function runEnhancedPipeline(
   engines.push('regex-pipeline');
 
   let regexFindingCount = 0;
-  for (const stage of regexResult.stages) {
+  for (const stage of regexResult.teams) {
     for (const finding of stage.findings) {
       regexFindingCount++;
       findings.push({
@@ -241,7 +241,7 @@ export async function runEnhancedPipeline(
   // Phase 8: CFG Brain Analysis (제어 흐름 그래프 기반 위험 경로)
   try {
     const { runBrainAnalysis } = await import('./cfg-engine');
-    const brain = runBrainAnalysis(code, fileName);
+    const brain = await runBrainAnalysis(code, fileName);
     if (brain.riskPaths.length > 0) {
       engines.push(`cfg-engine(${brain.stats.reductionPercent}% 컨텍스트 절감)`);
       for (const path of brain.riskPaths) {
@@ -266,10 +266,10 @@ export async function runEnhancedPipeline(
   const warningCount = deduped.filter(f => f.severity === 'warning').length;
 
   const astScore = Math.max(0, 100 - criticalCount * 25 - errorCount * 10 - warningCount * 3);
-  const combinedScore = Math.round((regexResult.overallScore * 0.4 + astScore * 0.6));
+  const combinedScore = Math.round((regexResult.score * 0.4 + astScore * 0.6));
 
   return {
-    regexScore: regexResult.overallScore,
+    regexScore: regexResult.score,
     astScore,
     combinedScore,
     regexFindings: regexFindingCount,
@@ -286,7 +286,7 @@ export async function runEnhancedPipeline(
 // PART 4 — AST-Enhanced Hollow Code Scanner
 // ============================================================
 
-async function runASTHollowScan(code: string, fileName: string): Promise<ASTFinding[]> {
+export async function runASTHollowScan(code: string, fileName: string): Promise<ASTFinding[]> {
   const findings: ASTFinding[] = [];
 
   try {

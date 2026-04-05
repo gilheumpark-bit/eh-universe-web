@@ -4,9 +4,9 @@
 // 2계층 샌드박스: vm 모듈(경량) + child_process(중량).
 // vm: 빠른 코드 검증, child_process: 파일 I/O 필요한 프로젝트 실행.
 
-import { mkdirSync, writeFileSync, rmSync, existsSync, _readFileSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
-import { execSync, _spawn } from 'child_process';
+import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import * as vm from 'vm';

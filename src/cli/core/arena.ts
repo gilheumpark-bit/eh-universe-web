@@ -50,9 +50,9 @@ export async function collectEvidence(code: string, fileName: string): Promise<E
     const { runStaticPipeline } = await import('../core/pipeline-bridge');
     const result = await runStaticPipeline(code, 'typescript');
     evidence.push({
-      type: 'lint', source: '8-team-pipeline', score: result.overallScore,
-      data: { stages: result.stages.map(s => ({ name: s.name, score: s.score, findings: s.findings.length })) },
-      findings: result.stages.flatMap(s => s.findings.map(f => typeof f === 'string' ? f : String(f))).slice(0, 20),
+      type: 'lint', source: '8-team-pipeline', score: result.score,
+      data: { stages: result.teams.map(s => ({ name: s.name, score: s.score, findings: s.findings.length })) },
+      findings: result.teams.flatMap(s => s.findings.map(f => typeof f === 'string' ? f : String(f))).slice(0, 20),
     });
   } catch { /* skip */ }
 
@@ -70,7 +70,7 @@ export async function collectEvidence(code: string, fileName: string): Promise<E
   // 3. CFG analysis
   try {
     const { runBrainAnalysis } = await import('./cfg-engine');
-    const result = runBrainAnalysis(code, fileName);
+    const result = await runBrainAnalysis(code, fileName);
     evidence.push({
       type: 'ast', source: 'cfg-engine', score: Math.max(0, 100 - result.riskPaths.length * 15),
       data: { nodes: result.stats.nodes, risks: result.stats.risks, reductionPercent: result.stats.reductionPercent },
@@ -207,23 +207,27 @@ export async function runArena(
   // ── 오프라인 Fallback: AI 에이전트 0명이면 증거 기반 자동 판정 ──
   if (opinions.length === 0) {
     onProgress?.('offline', 'AI 미연결 — 증거 기반 자동 판정...');
-    const evidenceScore = evidence.pipelineScore;
-    const criticalFindings = evidence.findings.filter(f => f.severity === 'critical' || f.severity === 'P0');
-    const highFindings = evidence.findings.filter(f => f.severity === 'error' || f.severity === 'P1');
+    // evidence는 Evidence[] 배열 — 평균 점수 산출
+    const evidenceScore = evidence.length > 0
+      ? Math.round(evidence.reduce((s, e) => s + e.score, 0) / evidence.length) : 0;
+    // evidence.data 안의 findings를 추출
+    const allDataFindings: string[] = evidence.flatMap(e => {
+      const data = e.data as Record<string, unknown>;
+      if (Array.isArray(data?.stages)) return (data.stages as Array<{ findings: number }>).filter(s => s.findings > 3).map(s => `${(s as any).name}: ${s.findings}건`);
+      if (typeof data?.message === 'string') return [data.message as string];
+      return [];
+    });
 
-    // 증거 기반 판정 로직
     let offlineVerdict: 'approve' | 'reject' | 'fix-required' = 'approve';
     const offlineCritiques: string[] = [];
 
-    if (criticalFindings.length > 0) {
+    if (evidenceScore < 50) {
       offlineVerdict = 'reject';
-      offlineCritiques.push(...criticalFindings.slice(0, 5).map(f => `[P0] ${f.message}`));
-    } else if (highFindings.length > 3 || evidenceScore < 50) {
-      offlineVerdict = 'reject';
-      offlineCritiques.push(`증거 점수 ${evidenceScore}/100, P1 ${highFindings.length}건`);
-    } else if (highFindings.length > 0 || evidenceScore < 80) {
+      offlineCritiques.push(`증거 평균 ${evidenceScore}/100`);
+      offlineCritiques.push(...allDataFindings.slice(0, 5));
+    } else if (evidenceScore < 80) {
       offlineVerdict = 'fix-required';
-      offlineCritiques.push(...highFindings.slice(0, 3).map(f => f.message));
+      offlineCritiques.push(...allDataFindings.slice(0, 3));
     }
 
     opinions = [{
