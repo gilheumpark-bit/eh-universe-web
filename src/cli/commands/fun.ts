@@ -135,6 +135,7 @@ const QUIZZES: Quiz[] = [
 ];
 
 export function runQuiz(): void {
+  if (QUIZZES.length === 0) { console.log('  퀴즈가 없습니다.\n'); return; }
   const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
 
   console.log('🦔 CS Quill — 코드 퀴즈 🎯\n');

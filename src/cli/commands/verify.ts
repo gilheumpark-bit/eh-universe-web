@@ -283,10 +283,18 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   if (opts.watch) {
     const { watch } = await import('fs');
     console.log('\n  👀 워치 모드 — 파일 변경 감시 중 (Ctrl+C 종료)\n');
-    watch(path, { recursive: true }, async (_, filename) => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let isRunning = false;
+    watch(path, { recursive: true }, (_, filename) => {
       if (!filename || !SUPPORTED_EXTENSIONS.has(extname(filename))) return;
-      console.log(`  [${new Date().toLocaleTimeString()}] ${filename} 변경 감지`);
-      await runVerify(path, { ...opts, watch: false });
+      if (isRunning) return; // Skip if already verifying
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        isRunning = true;
+        console.log(`  [${new Date().toLocaleTimeString()}] ${filename} 변경 감지`);
+        await runVerify(path, { ...opts, watch: false });
+        isRunning = false;
+      }, 500);
     });
   }
 }

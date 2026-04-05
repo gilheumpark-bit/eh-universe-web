@@ -169,11 +169,12 @@ export function getSessionSummary(id?: string): string {
   const age = Date.now() - session.createdAt;
   const days = Math.floor(age / (24 * 60 * 60 * 1000));
   const hours = Math.floor((age % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const minutes = Math.floor((age % (60 * 60 * 1000)) / (60 * 1000));
 
   const lines: string[] = [
     `  📂 ${session.projectName}`,
     `  ID: ${session.id}`,
-    `  기간: ${days}일 ${hours}시간`,
+    `  기간: ${days > 0 ? days + '일 ' : ''}${hours > 0 ? hours + '시간 ' : ''}${minutes}분`,
     `  마지막: ${session.lastCommand}`,
     `  파일: ${session.openFiles.length}개`,
     `  영수증: ${session.receipts.length}개`,

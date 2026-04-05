@@ -4,7 +4,7 @@
 // formatAuditReport (audit-engine.ts) 스타일 기반.
 // Pipeline, Harness, CrossModel 결과를 통합 영수증으로 포맷.
 
-import { createHash } from 'crypto';
+import { createHash, createHmac } from 'crypto';
 
 // ============================================================
 // PART 1 — Types
@@ -51,10 +51,17 @@ export interface ReceiptData {
 // ============================================================
 
 let _lastReceiptHash: string | null = null;
+const HMAC_SECRET = 'cs-quill-receipt-chain-v1'; // Production: use env var
 
 export function computeReceiptHash(data: Omit<ReceiptData, 'receiptHash'>): string {
   const payload = JSON.stringify(data) + (_lastReceiptHash ?? 'GENESIS');
-  return createHash('sha256').update(payload).digest('hex');
+  return createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+}
+
+export function verifyReceiptHash(receipt: ReceiptData, previousHash: string | null): boolean {
+  const payload = JSON.stringify({ ...receipt, receiptHash: undefined }) + (previousHash ?? 'GENESIS');
+  const expected = createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+  return expected === receipt.receiptHash;
 }
 
 export function chainReceipt(receipt: ReceiptData): void {

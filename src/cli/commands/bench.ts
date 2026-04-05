@@ -113,7 +113,7 @@ export async function runBench(path: string, opts: BenchOptions): Promise<void> 
   console.log(`  평균: ${avgScore}/100`);
 
   // Worst function hint
-  const worst = scored.sort((a, b) => a.score - b.score)[0];
+  const worst = [...scored].sort((a, b) => a.score - b.score)[0];
   if (worst && worst.score < 70) {
     console.log(`\n  💡 ${worst.name}() (${worst.length}줄, 복잡도 ${worst.complexity}) 개선 추천`);
     if (worst.length > 50) console.log('     → 함수 분리 (PART 구조)');

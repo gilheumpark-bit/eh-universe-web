@@ -285,6 +285,9 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     }
   }
 
+  // Define fileName early (used in verify + receipt)
+  const fileName = prompt.replace(/[^a-zA-Z0-9가-힣]/g, '-').slice(0, 40) + '.ts';
+
   // ── Step 3: Merge ──
   console.log('\n  [3/6] 🔗 Merge (import 통합 + PART 조립)...');
   let mergedCode = mergeGeneratedParts(generated, opts.structure);
@@ -407,7 +410,6 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   const csDir = join(process.cwd(), '.cs', 'generated');
   mkdirSync(csDir, { recursive: true });
 
-  const fileName = prompt.replace(/[^a-zA-Z0-9가-힣]/g, '-').slice(0, 40) + '.ts';
   const filePath = join(csDir, fileName);
   writeFileSync(filePath, finalCode, 'utf-8');
   console.log(`        → ${filePath}`);

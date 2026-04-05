@@ -30,11 +30,14 @@ function computeStaticMetrics(code: string): StaticMetrics {
   let maxLoopDepth = 0;
   let currentLoopDepth = 0;
   for (const line of lines) {
-    if (/^\s*(?:for\s*\(|while\s*\(|\.forEach\(|\.map\()/.test(line.trim())) {
+    const trimmed = line.trim();
+    if (/^\s*(?:for\s*\(|while\s*\(|\.forEach\(|\.map\()/.test(trimmed)) {
       currentLoopDepth++;
       if (currentLoopDepth > maxLoopDepth) maxLoopDepth = currentLoopDepth;
     }
-    if (line.trim().includes('}') && currentLoopDepth > 0) currentLoopDepth--;
+    const opens = (trimmed.match(/\{/g) ?? []).length;
+    const closes = (trimmed.match(/\}/g) ?? []).length;
+    if (closes > opens && currentLoopDepth > 0) currentLoopDepth -= Math.min(closes - opens, currentLoopDepth);
   }
 
   let asyncWithoutTryCatch = 0;

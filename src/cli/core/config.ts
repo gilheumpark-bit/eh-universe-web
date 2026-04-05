@@ -77,7 +77,8 @@ export function loadGlobalConfig(): CSConfig {
   try {
     const raw = readFileSync(configPath, 'utf-8');
     return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
-  } catch {
+  } catch (e) {
+    console.error(`  ⚠️  설정 파일 손상 (${configPath}): ${(e as Error).message}. 기본값 사용.`);
     return { ...DEFAULT_CONFIG };
   }
 }

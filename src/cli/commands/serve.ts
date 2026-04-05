@@ -74,6 +74,10 @@ async function handleHealth(): Promise<object> {
 
 export async function runServe(port: string): Promise<void> {
   const portNum = parseInt(port, 10);
+  if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+    console.log(`  ❌ 유효하지 않은 포트: ${port} (1-65535)`);
+    return;
+  }
 
   const ROUTES: Record<string, (body: string) => Promise<object>> = {
     '/health': async () => handleHealth(),
