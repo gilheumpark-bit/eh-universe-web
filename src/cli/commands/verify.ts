@@ -26,41 +26,57 @@ interface SourceFile {
   language: string;
 }
 
+const MAX_FILE_SIZE = 512 * 1024; // 512KB
+const MAX_DEPTH = 15;
+const MAX_FILES = 2000;
+
 function discoverFiles(rootPath: string): SourceFile[] {
   const files: SourceFile[] = [];
 
-  function walk(dir: string): void {
-    const entries = readdirSync(dir, { withFileTypes: true });
+  function walk(dir: string, depth: number = 0): void {
+    if (depth > MAX_DEPTH || files.length >= MAX_FILES) return;
+    let entries;
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
     for (const entry of entries) {
+      if (files.length >= MAX_FILES) break;
       if (entry.name.startsWith('.') || IGNORE_DIRS.has(entry.name)) continue;
+      if (entry.isSymbolicLink()) continue; // symlink 공격 방지
 
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
-        walk(fullPath);
+        walk(fullPath, depth + 1);
       } else if (SUPPORTED_EXTENSIONS.has(extname(entry.name))) {
-        const content = readFileSync(fullPath, 'utf-8');
-        const ext = extname(entry.name);
-        files.push({
-          path: fullPath,
-          relativePath: relative(rootPath, fullPath),
-          content,
-          language: ext === '.ts' || ext === '.tsx' ? 'typescript' : 'javascript',
-        });
+        try {
+          const stat = statSync(fullPath);
+          if (stat.size > MAX_FILE_SIZE) continue; // 대용량 파일 스킵
+          const content = readFileSync(fullPath, 'utf-8');
+          const ext = extname(entry.name);
+          files.push({
+            path: fullPath,
+            relativePath: relative(rootPath, fullPath),
+            content,
+            language: ext === '.ts' || ext === '.tsx' ? 'typescript' : 'javascript',
+          });
+        } catch { /* 읽기 실패 시 스킵 */ }
       }
     }
   }
 
-  const stat = statSync(rootPath);
-  if (stat.isFile()) {
-    const content = readFileSync(rootPath, 'utf-8');
-    const ext = extname(rootPath);
-    return [{
-      path: rootPath,
-      relativePath: rootPath,
-      content,
-      language: ext === '.ts' || ext === '.tsx' ? 'typescript' : 'javascript',
-    }];
-  }
+  try {
+    const stat = statSync(rootPath);
+    if (stat.isFile()) {
+      if (stat.size > MAX_FILE_SIZE) return [];
+      const content = readFileSync(rootPath, 'utf-8');
+      const ext = extname(rootPath);
+      return [{
+        path: rootPath,
+        relativePath: rootPath,
+        content,
+        language: ext === '.ts' || ext === '.tsx' ? 'typescript' : 'javascript',
+      }];
+    }
+  } catch { return []; }
 
   walk(rootPath);
   return files;

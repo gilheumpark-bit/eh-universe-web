@@ -99,10 +99,12 @@ export function installPlugin(manifest: PluginManifest, pluginPath: string): { s
   const validation = validateManifest(manifest);
   if (!validation.valid) return { success: false, errors: validation.errors };
 
-  // 경로 화이트리스트: 플러그인 디렉토리 또는 node_modules만 허용
+  // 경로 화이트리스트: resolve() 후 canonical path 비교 (traversal 방지)
+  const { resolve } = require('path');
   const pluginDir = getPluginDir();
-  const isWhitelisted = pluginPath.startsWith(pluginDir) || pluginPath.includes('node_modules');
-  if (!isWhitelisted) return { success: false, errors: [`경로 거부: "${pluginPath}" (플러그인 디렉토리 외부)`] };
+  const canonical = resolve(pluginPath);
+  const isWhitelisted = canonical.startsWith(resolve(pluginDir)) || canonical.includes(`${require('path').sep}node_modules${require('path').sep}`);
+  if (!isWhitelisted || canonical.includes('..')) return { success: false, errors: [`경로 거부: "${pluginPath}" (플러그인 디렉토리 외부)`] };
 
   const registry = loadRegistry();
   if (registry.some(p => p.manifest.name === manifest.name)) {

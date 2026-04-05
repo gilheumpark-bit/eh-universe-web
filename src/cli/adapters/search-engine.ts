@@ -33,7 +33,7 @@ export function ripgrepSearch(query: string, rootPath: string, opts?: {
 
   try {
     const output = execSync(
-      `rg ${caseFlag} ${regexFlag} ${globFlag} --json --max-count ${maxResults} "${query.replace(/"/g, '\\"')}" "${rootPath}" 2>/dev/null`,
+      `rg ${caseFlag} ${regexFlag} ${globFlag} --json --max-count ${maxResults} -- "${query.replace(/["\\`$]/g, '\\$&')}" "${rootPath}" 2>/dev/null`,
       { encoding: 'utf-8', timeout: 10000, maxBuffer: 5 * 1024 * 1024 },
     );
 

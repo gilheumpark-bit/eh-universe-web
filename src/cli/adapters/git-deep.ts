@@ -6,6 +6,11 @@
 
 import { execSync } from 'child_process';
 
+// Shell argument sanitizer — injection 방지
+function sanitize(arg: string): string {
+  return arg.replace(/[`$\\!;"'|&<>(){}]/g, '');
+}
+
 // ============================================================
 // PART 1 — Git Info
 // ============================================================
@@ -103,14 +108,14 @@ export function blame(rootPath: string, filePath: string): BlameLine[] {
 
 export function diff(rootPath: string, ref?: string): string {
   try {
-    const cmd = ref ? `git diff ${ref}` : 'git diff';
+    const cmd = ref ? `git diff "${sanitize(ref)}"` : 'git diff';
     return execSync(cmd, { cwd: rootPath, encoding: 'utf-8', stdio: 'pipe' });
   } catch { return ''; }
 }
 
 export function diffStat(rootPath: string, ref?: string): Array<{ file: string; added: number; removed: number }> {
   try {
-    const cmd = ref ? `git diff --numstat ${ref}` : 'git diff --numstat';
+    const cmd = ref ? `git diff --numstat "${sanitize(ref)}"` : 'git diff --numstat';
     const output = execSync(cmd, { cwd: rootPath, encoding: 'utf-8', stdio: 'pipe' });
 
     return output.split('\n').filter(Boolean).map(line => {
@@ -128,7 +133,7 @@ export function diffStat(rootPath: string, ref?: string): Array<{ file: string; 
 
 export function autoStash(rootPath: string, message: string = 'cs-quill-auto'): boolean {
   try {
-    execSync(`git stash push -m "${message}"`, { cwd: rootPath, stdio: 'pipe' });
+    execSync(`git stash push -m "${sanitize(message)}"`, { cwd: rootPath, stdio: 'pipe' });
     return true;
   } catch { return false; }
 }
@@ -143,16 +148,17 @@ export function autoStashPop(rootPath: string): boolean {
 export function autoCommit(rootPath: string, files: string[], message: string): boolean {
   try {
     for (const file of files) {
-      execSync(`git add "${file}"`, { cwd: rootPath, stdio: 'pipe' });
+      execSync(`git add "${sanitize(file)}"`, { cwd: rootPath, stdio: 'pipe' });
     }
-    execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: rootPath, stdio: 'pipe' });
+    execSync(`git commit -m "${sanitize(message)}"`, { cwd: rootPath, stdio: 'pipe' });
     return true;
   } catch { return false; }
 }
 
 export function autoBranch(rootPath: string, branchName: string): boolean {
   try {
-    execSync(`git checkout -b "${branchName}" 2>/dev/null || git checkout "${branchName}"`, { cwd: rootPath, stdio: 'pipe' });
+    const safe = sanitize(branchName);
+    execSync(`git checkout -b "${safe}" 2>/dev/null || git checkout "${safe}"`, { cwd: rootPath, stdio: 'pipe' });
     return true;
   } catch { return false; }
 }

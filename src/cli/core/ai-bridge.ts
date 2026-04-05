@@ -161,7 +161,10 @@ export async function streamChat(opts: StreamChatOptions): Promise<ChatResult> {
   }
 
   try {
-    const response = await fetch(url, { method: 'POST', headers, body });
+    const response = await fetch(url, {
+      method: 'POST', headers, body,
+      signal: AbortSignal.timeout(opts.maxTokens && opts.maxTokens > 4000 ? 120000 : 60000),
+    });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
