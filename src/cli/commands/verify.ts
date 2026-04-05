@@ -292,12 +292,21 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     }
   }
 
-  // Session recording
+  // Session recording + Badge auto-trigger
   try {
     const { recordCommand, recordScore } = await import('../core/session');
     recordCommand(`verify ${path}`);
     recordScore('verify', overallScore);
   } catch { /* session not available */ }
+
+  try {
+    const { evaluateBadges } = await import('../core/badges');
+    const { newBadges } = evaluateBadges();
+    if (newBadges.length > 0) {
+      console.log('');
+      for (const b of newBadges) console.log(`  🏆 ${b.icon} ${b.name} 획득! — ${b.description}`);
+    }
+  } catch { /* badges optional */ }
 
   // Auto receipt
   try {

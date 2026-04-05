@@ -68,13 +68,28 @@ export async function runCompliance(_opts: ComplianceOptions): Promise<void> {
   results.push({ check: 'Secrets', passed: secretCount === 0, detail: secretCount === 0 ? '하드코딩 시크릿 없음' : `시크릿 ${secretCount}건 감지!` });
   console.log(`        ${secretCount === 0 ? '✅' : '❌'} ${results[results.length - 1].detail}`);
 
-  // Check 3: Dependencies
+  // Check 3: Dependencies (lockfile + npm audit + retire.js)
   console.log('  [3/5] 📦 Dependencies...');
-  const _outdatedCount = 0;
   const pkgLockPath = join(process.cwd(), 'package-lock.json');
   const hasPkgLock = existsSync(pkgLockPath);
-  results.push({ check: 'Dependencies', passed: hasPkgLock, detail: hasPkgLock ? 'lockfile 존재' : 'lockfile 없음!' });
-  console.log(`        ${hasPkgLock ? '✅' : '⚠️'} ${results[results.length - 1].detail}`);
+  let depDetail = hasPkgLock ? 'lockfile ✓' : 'lockfile ✗';
+  let depPassed = hasPkgLock;
+
+  try {
+    const { runNpmAudit } = await import('../core/pipeline-bridge');
+    const audit = await runNpmAudit(process.cwd());
+    if (audit.critical > 0) { depPassed = false; depDetail += ` | critical ${audit.critical}건`; }
+    else depDetail += ` | 취약점 없음`;
+  } catch { depDetail += ' | audit 스킵'; }
+
+  try {
+    const { runRetireJS } = await import('../adapters/security-engine');
+    const retire = await runRetireJS(process.cwd());
+    if (retire.vulnerableCount > 0) { depPassed = false; depDetail += ` | retire ${retire.vulnerableCount}건`; }
+  } catch { /* retire optional */ }
+
+  results.push({ check: 'Dependencies', passed: depPassed, detail: depDetail });
+  console.log(`        ${depPassed ? '✅' : '❌'} ${depDetail}`);
 
   // Check 4: Audit trail
   console.log('  [4/5] 📜 Audit Trail...');

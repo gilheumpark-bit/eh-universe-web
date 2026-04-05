@@ -61,19 +61,55 @@ export async function runExplain(path: string): Promise<void> {
     });
     console.log('\n');
   } catch {
-    console.log('  ⚠️  AI 해설 불가 (API 키 없음). 정적 분석만 표시:\n');
+    console.log('  ⚠️  AI 해설 불가. AST 정적 분석으로 대체:\n');
 
-    // Fallback: static analysis summary
-    const imports = (code.match(/^import /gm) ?? []).length;
-    const functions = (code.match(/(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_]\w*)\s*=>)/g) ?? []).length;
-    const exports = (code.match(/^export /gm) ?? []).length;
-    const todos = (code.match(/TODO|FIXME|HACK/g) ?? []).length;
+    // Fallback: AST 기반 심층 분석 (ast-engine 연동)
+    try {
+      const { analyzeWithTypeScript, analyzeWithTsMorph } = await import('../adapters/ast-engine');
+      const tsFindings = await analyzeWithTypeScript(code, path);
+      const tsMorphFindings = await analyzeWithTsMorph(code, path);
 
-    console.log(`  📦 Import: ${imports}개`);
-    console.log(`  📝 함수: ${functions}개`);
-    console.log(`  📤 Export: ${exports}개`);
-    if (todos > 0) console.log(`  ⚠️  TODO/FIXME: ${todos}개`);
-    console.log('');
+      // 함수 목록 + 복잡도
+      const funcRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)|(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?\(/g;
+      const funcs: string[] = [];
+      let m;
+      while ((m = funcRegex.exec(code)) !== null) funcs.push(m[1] ?? m[2]);
+
+      console.log(`  📐 구조:`);
+      console.log(`     Import: ${(code.match(/^import /gm) ?? []).length}개`);
+      console.log(`     함수: ${funcs.length}개 ${funcs.length > 0 ? `(${funcs.slice(0, 5).join(', ')}${funcs.length > 5 ? '...' : ''})` : ''}`);
+      console.log(`     Export: ${(code.match(/^export /gm) ?? []).length}개`);
+      console.log(`     PART: ${Math.ceil(partCount)}개`);
+
+      // AST 분석 결과
+      const allFindings = [...tsFindings, ...tsMorphFindings];
+      if (allFindings.length > 0) {
+        console.log(`\n  🔬 AST 분석 (${allFindings.length}건):`);
+        for (const f of allFindings.slice(0, 8)) {
+          const icon = f.severity === 'error' ? '🔴' : '🟡';
+          console.log(`     ${icon} :${f.line ?? 0} ${f.message}`);
+        }
+      }
+
+      // PART별 요약
+      const partMatches = [...code.matchAll(/\/\/\s*PART\s*(\d+)\s*—\s*(.+)/g)];
+      if (partMatches.length > 0) {
+        console.log(`\n  📋 PART 구조:`);
+        for (const pm of partMatches) {
+          console.log(`     PART ${pm[1]}: ${pm[2].trim()}`);
+        }
+      }
+
+      const todos = (code.match(/TODO|FIXME|HACK/g) ?? []).length;
+      if (todos > 0) console.log(`\n  ⚠️  TODO/FIXME: ${todos}개`);
+      console.log('');
+    } catch {
+      // 최소 fallback
+      console.log(`  📦 Import: ${(code.match(/^import /gm) ?? []).length}개`);
+      console.log(`  📝 함수: ${(code.match(/function\s+\w+/g) ?? []).length}개`);
+      console.log(`  📤 Export: ${(code.match(/^export /gm) ?? []).length}개`);
+      console.log('');
+    }
   }
 }
 

@@ -111,6 +111,16 @@ export async function runStress(path: string, opts: StressOptions): Promise<void
   console.log(`        Fetch: ${metrics.fetchCallCount} | Async unguarded: ${metrics.asyncWithoutTryCatch}`);
   console.log(`        EventListeners: ${metrics.eventListenerCount} | Recursive: ${metrics.recursiveFunctionCount}`);
 
+  // 정적 등급 산출
+  const staticScore = Math.max(0, 100
+    - metrics.nestedLoopDepth * 15
+    - metrics.asyncWithoutTryCatch * 10
+    - metrics.eventListenerCount * 5
+    - metrics.recursiveFunctionCount * 10
+    - (metrics.cyclomaticEstimate > 20 ? 20 : metrics.cyclomaticEstimate > 10 ? 10 : 0));
+  const staticGrade = staticScore >= 80 ? '🟢 A' : staticScore >= 60 ? '🟡 B' : staticScore >= 40 ? '🟠 C' : '🔴 D';
+  console.log(`\n        정적 등급: ${staticGrade} (${staticScore}/100)`);
+
   if (warnings.length > 0) {
     console.log('');
     for (const w of warnings) console.log(`        ${w}`);

@@ -89,21 +89,33 @@ Use Korean. Be encouraging. Use 💡 for tips. Keep it SHORT (3-5 lines per sect
       console.log('\n');
     }
   } catch {
-    // Fallback: static explanation
-    const explanations: Record<string, string> = {
-      simulation: '💡 무한루프나 재귀 위험이 감지됐어요. 루프에 종료 조건이 있는지 확인하세요.',
-      generation: '💡 TODO/빈함수가 남아있어요. 구현을 완성하세요.',
-      validation: '💡 타입 안전이나 null 체크가 부족해요. ?. (옵셔널 체이닝)을 활용하세요.',
-      'size-density': '💡 함수가 너무 길거나 복잡해요. 작은 함수로 나눠보세요.',
-      'asset-trace': '💡 사용하지 않는 코드가 있어요. 정리하면 깔끔해져요.',
-      stability: '💡 에러 처리가 부족해요. try-catch를 추가하세요.',
-      'release-ip': '💡 보안 이슈가 감지됐어요. 하드코딩된 비밀번호/키를 환경변수로 옮기세요.',
-      governance: '💡 아키텍처 규칙 위반이에요. 프로젝트 구조를 확인하세요.',
+    // Fallback: 동적 해설 (영수증 finding 기반 + 정적 팁 매핑)
+    const teamTips: Record<string, { what: string; why: string; howPrefix: string }> = {
+      regex: { what: '표면 패턴 검사 (console.log, eval, TODO)', why: '프로덕션에 디버그 코드가 남으면 보안+성능 문제', howPrefix: '해당 라인에서' },
+      ast: { what: 'AST 구조 분석 (함수 길이, 중첩 깊이, 미사용 파라미터)', why: '복잡한 코드는 버그 확률이 높고 리뷰가 어려움', howPrefix: '함수를 50줄 이하로 분리하고' },
+      hollow: { what: '빈 함수/스텁 감지', why: '미구현 코드가 런타임에 예상치 못한 동작', howPrefix: '빈 함수에 실제 로직을 채우거나' },
+      'dead-code': { what: 'return 이후 코드, 주석 처리된 코드', why: '데드코드는 혼란을 주고 번들 크기 증가', howPrefix: '사용하지 않는 코드를 삭제하고' },
+      'design-lint': { what: 'z-index 하드코딩, 매직넘버 색상, 포맷 불일치', why: '디자인 시스템 없으면 UI 일관성 파괴', howPrefix: 'CSS 변수/디자인 토큰을 사용하고' },
+      'cognitive-load': { what: '줄 길이 초과, 중첩 삼항, 파일 크기', why: '읽기 어려운 코드 = 유지보수 비용 증가', howPrefix: '긴 줄을 분리하고 삼항을 if로 변경' },
+      'bug-pattern': { what: '=== NaN, parseInt radix, forEach(async), 빈 catch', why: '자바스크립트 함정 패턴으로 런타임 버그 발생', howPrefix: '' },
+      security: { what: 'eval, innerHTML, 하드코딩 키, 개인키 노출', why: '보안 취약점은 서비스 전체를 위험에 빠뜨림', howPrefix: '' },
     };
 
     for (const team of problemTeams) {
-      console.log(`  ${team.name} (${team.score}/100)`);
-      console.log(`  ${explanations[team.name] ?? '💡 이 영역을 개선해보세요.'}\n`);
+      const tip = teamTips[team.name];
+      console.log(`  ─── ${team.name} (${team.score}/100) ───`);
+      if (tip) {
+        console.log(`  📋 검사 항목: ${tip.what}`);
+        console.log(`  ⚡ 왜 중요: ${tip.why}`);
+        console.log(`  💡 수정법: ${tip.howPrefix} cs verify --precision ${team.name} 으로 상세 확인`);
+      } else {
+        console.log(`  💡 cs verify 로 상세 확인 후 개선하세요.`);
+      }
+      // 실제 finding 수 기반 동적 메시지
+      if (typeof team.findings === 'number' && team.findings > 5) {
+        console.log(`  📊 ${team.findings}건 — 가장 빈번한 문제부터 순차 해결 추천`);
+      }
+      console.log('');
     }
   }
 }

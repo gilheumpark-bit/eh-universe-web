@@ -482,6 +482,84 @@ export async function runProjectAudit(
   }
   areas.push({ name: '코드 스타일', score: inconsistentSemicolon < 2 ? 90 : 60, findings: [`비일관 파일 ${inconsistentSemicolon}개`], category: 'quality' });
 
+  // ── 추가 8영역 (어댑터 연동) ──
+  _onProgress?.('adapters', 8, 16);
+
+  // 9. ESLint 점수
+  try {
+    const { runFullLintAnalysis } = await import('../adapters/lint-engine');
+    const lint = await runFullLintAnalysis(rootPath, files[0]);
+    areas.push({ name: 'ESLint', score: lint.avgScore, findings: lint.results.map(r => `${r.engine}: ${r.detail}`), category: 'quality' });
+  } catch { areas.push({ name: 'ESLint', score: 70, findings: ['lint-engine 미설치'], category: 'quality' }); }
+
+  // 10. 미사용 의존성
+  try {
+    const { runDepcheck } = await import('../adapters/dep-analyzer');
+    const dep = await runDepcheck(rootPath);
+    areas.push({ name: '미사용 의존성', score: dep.score, findings: [`unused: ${dep.unused.length}, missing: ${dep.missing.length}`], category: 'performance' });
+  } catch { areas.push({ name: '미사용 의존성', score: 80, findings: ['depcheck 미설치'], category: 'performance' }); }
+
+  // 11. 심층 버그 (deep-verify)
+  try {
+    const { runDeepVerify } = await import('./deep-verify');
+    const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
+    if (sampleCode) {
+      const deep = await runDeepVerify(sampleCode, files[0]);
+      const p0 = deep.findings.filter((f: { severity?: string }) => f.severity === 'P0').length;
+      areas.push({ name: '심층 버그', score: Math.max(0, 100 - p0 * 25), findings: [`P0: ${p0}건`], category: 'quality' });
+      if (p0 > 0) urgent.push(`P0 심층 버그 ${p0}건`);
+    }
+  } catch { /* skip */ }
+
+  // 12. 보안 취약점 (npm audit)
+  try {
+    const { runNpmAudit } = await import('../adapters/security-engine');
+    const audit = await runNpmAudit(rootPath);
+    const score = Math.max(0, 100 - audit.critical * 30 - audit.high * 15);
+    areas.push({ name: 'npm 취약점', score, findings: [`critical: ${audit.critical}, high: ${audit.high}`], category: 'security' });
+    if (audit.critical > 0) urgent.push(`npm audit critical ${audit.critical}건`);
+  } catch { /* skip */ }
+
+  // 13. 접근성 (axe-core, HTML 파일 있을 때)
+  try {
+    const htmlFiles = files.filter(f => f.endsWith('.html') || f.endsWith('.tsx') || f.endsWith('.jsx'));
+    if (htmlFiles.length > 0) {
+      const { runAxeAccessibility } = await import('../adapters/web-quality');
+      const sample = readFileSync(htmlFiles[0], 'utf-8');
+      const axe = await runAxeAccessibility(sample);
+      areas.push({ name: '접근성', score: axe.score, findings: axe.findings.slice(0, 3).map(f => f.message), category: 'quality' });
+    }
+  } catch { /* skip */ }
+
+  // 14. 코드 복잡도 (AST)
+  try {
+    const { analyzeWithTsMorph } = await import('../adapters/ast-engine');
+    const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
+    if (sampleCode) {
+      const findings = await analyzeWithTsMorph(sampleCode, files[0]);
+      const score = Math.max(0, 100 - findings.length * 10);
+      areas.push({ name: 'AST 복잡도', score, findings: findings.slice(0, 3).map((f: { message: string }) => f.message), category: 'quality' });
+    }
+  } catch { /* skip */ }
+
+  // 15. 구버전 API
+  try {
+    const { checkDeprecations } = await import('./deprecation-checker');
+    const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
+    if (sampleCode) {
+      const deps = checkDeprecations(sampleCode, files[0], rootPath);
+      const score = Math.max(0, 100 - deps.length * 15);
+      areas.push({ name: '구버전 API', score, findings: deps.slice(0, 3).map((d: { message: string }) => d.message), category: 'quality' });
+    }
+  } catch { /* skip */ }
+
+  // 16. 번들 크기
+  try {
+    const { checkBundleSize } = await import('../adapters/web-quality');
+    const bundle = await checkBundleSize(rootPath);
+    areas.push({ name: '번들 크기', score: bundle.score, findings: [`heavy: ${bundle.heavyCount}, total deps: ${bundle.totalDeps}`], category: 'performance' });
+  } catch { /* skip */ }
+
   const totalScore = Math.round(areas.reduce((s, a) => s + a.score, 0) / areas.length);
   const hardGateFail = areas.some(a => a.category === 'security' && a.score < 50);
 

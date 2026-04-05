@@ -527,6 +527,15 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     }
   }
 
+  // Badge auto-trigger
+  try {
+    const { evaluateBadges } = await import('../core/badges');
+    const { newBadges } = evaluateBadges();
+    if (newBadges.length > 0) {
+      for (const b of newBadges) console.log(`  🏆 ${b.icon} ${b.name} 획득! — ${b.description}`);
+    }
+  } catch { /* badges optional */ }
+
   console.log('\n  🦔 완료!\n');
 }
 

@@ -66,10 +66,20 @@ Language: match user's language (Korean/English). Make it beautiful AND valid sy
     });
     console.log('\n');
   } catch {
-    // Fallback: pre-written poems
+    // Fallback: pre-written poems (12개)
     const poems = [
       `// ${topic}에 대하여\nwhile (life.continues()) {\n  const meaning = search(everywhere);\n  if (meaning === undefined) continue;\n  return meaning; // 찾았다\n}`,
       `// ${topic}\ntry {\n  await love.find();\n} catch (heartbreak) {\n  heal(time);\n  await love.find(); // 다시\n}`,
+      `// ${topic}\nconst dreams = new Set();\nfor (const day of lifetime) {\n  dreams.add(day.wish);\n  if (dreams.size > 1000) break;\n}\n// 충분히 꿨다`,
+      `// ${topic}\nclass Developer {\n  constructor() { this.coffee = Infinity; }\n  code() { return this.coffee-- > 0 ? '✨' : '💤'; }\n}`,
+      `// ${topic}\nconst stack = ['배움', '실패', '성장'];\nwhile (stack.length) {\n  const lesson = stack.pop();\n  console.log(lesson); // 모두 필요했다\n}`,
+      `// ${topic}\nasync function journey() {\n  const start = Date.now();\n  await Promise.all([learn(), fail(), grow()]);\n  return Date.now() - start; // 시간이 답이다\n}`,
+      `// ${topic}\nconst me = { bugs: 99, fixes: 0 };\nwhile (me.bugs > 0) {\n  me.fixes++;\n  me.bugs += Math.random() > 0.5 ? -1 : 1;\n}\n// 결국 고쳤다`,
+      `// ${topic}\nif (today.isHard()) {\n  tomorrow.willBeBetter();\n} else {\n  celebrate();\n}\n// 어느 쪽이든 괜찮다`,
+      `// ${topic}\nconst errors = [];\ntry { riskyThing(); }\ncatch (e) { errors.push(e); learn(e); }\nfinally { keepGoing(); }`,
+      `// ${topic}\nfunction recursion(depth = 0) {\n  if (depth > 100) return '깨달음';\n  return recursion(depth + 1); // 계속 파고들어\n}`,
+      `// ${topic}\nconst map = new Map();\nmap.set('문제', '해결');\nmap.set('버그', '기능');\nmap.set('실패', '경험');\n// 관점의 전환`,
+      `// ${topic}\nPromise.race([\n  sleep(8 * 60 * 60 * 1000),\n  code(Infinity),\n]).then(() => '개발자의 하루');`,
     ];
     console.log('  ' + poems[Math.floor(Math.random() * poems.length)] + '\n');
   }
