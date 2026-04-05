@@ -87,7 +87,7 @@ export async function buildCommandContext(cwd?: string): Promise<CommandContext>
     const { getTopPatterns } = await import('./fix-memory');
     const patterns = getTopPatterns(5);
     if (patterns.length > 0) {
-      pastMistakes = '[AVOID_MISTAKES]\n' + patterns.map(p => `- ${p.pattern}: ${p.fix} (신뢰도: ${p.confidence}%)`).join('\n');
+      pastMistakes = '[AVOID_MISTAKES]\n' + patterns.map(p => `- ${p.description}: ${p.beforePattern} → ${p.afterPattern} (신뢰도: ${Math.round(p.confidence * 100)}%)`).join('\n');
     }
   } catch { /* no memory */ }
 

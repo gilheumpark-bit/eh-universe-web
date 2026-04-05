@@ -300,7 +300,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   // ── Step 4: Verify (Enhanced 8-team + AST pipeline) ──
   console.log('\n  [4/6] 🔍 8팀 + AST 검증...');
 
-  let pipelineResult: { stages: Array<{ name: string; score: number; findings: string[] | { message: string }[] }>; overallScore: number; overallStatus: string };
+  let pipelineResult: { teams: Array<{ name: string; score: number; findings: Array<string | { message: string }> }>; overallScore: number; overallStatus: string };
   try {
     const { runEnhancedPipeline } = await import('../core/ast-bridge');
     const enhanced = await runEnhancedPipeline(mergedCode, 'typescript', fileName);
@@ -319,7 +319,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     }
 
     pipelineResult = {
-      stages: [...teamMap.entries()].map(([name, data]) => ({ name, score: data.score, findings: data.findings })),
+      teams: [...teamMap.entries()].map(([name, data]) => ({ name, score: data.score, findings: data.findings })),
       overallScore: enhanced.combinedScore,
       overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
     };
@@ -329,7 +329,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     pipelineResult = await runStaticPipeline(mergedCode, 'typescript');
   }
 
-  for (const stage of pipelineResult.stages) {
+  for (const stage of pipelineResult.teams) {
     const icon = stage.score >= 80 ? '✅' : stage.score >= 60 ? '⚠️' : '❌';
     console.log(`        ${icon} ${stage.name.padEnd(14)} ${stage.score}/100`);
   }
@@ -341,7 +341,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     try {
       const { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } = await import('../ai/cross-judge');
 
-      const judgeFindings = pipelineResult.stages.flatMap((s) => {
+      const judgeFindings = pipelineResult.teams.flatMap((s) => {
         const findings = Array.isArray(s.findings) ? s.findings : [];
         return findings.map((f: unknown, fi: number) => ({
           id: `${s.name}-${fi}`, severity: 'warning',
@@ -384,26 +384,17 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     const { runVerificationLoop } = await import('../core/pipeline-bridge');
 
     try {
-      const verifyResult = await runVerificationLoop(
-        mergedCode,
-        'typescript',
-        'generated.ts',
-        [],
-        {
-          maxIterations: opts.mode === 'strict' ? 3 : 2,
-          passThreshold: opts.mode === 'strict' ? 85 : 77,
-          enableStress: false,
-          enableChaos: false,
-          enableIP: true,
-          safeFixCategories: ['unused-import', 'console-remove', 'missing-semicolon', 'formatting', 'null-guard', 'type-import'],
-        },
-      );
+      const maxRounds = opts.mode === 'strict' ? 3 : 2;
+      const verifyResult = await runVerificationLoop(mergedCode, 'typescript', maxRounds);
 
-      finalCode = verifyResult.finalCode;
-      console.log(`        → ${verifyResult.totalFixesApplied}건 수정, ${verifyResult.stopReason}`);
-      console.log(`        → 최종 점수: ${verifyResult.finalScore}/100`);
+      if (verifyResult.finalScore > pipelineResult.overallScore) {
+        // 개선된 경우에만 반영 (runVerificationLoop는 코드 자체를 수정하지 않으므로 점수만 참조)
+        console.log(`        → ${verifyResult.rounds}라운드 검증, 최종 ${verifyResult.finalScore}/100`);
+      } else {
+        console.log(`        → 추가 수정 불필요 (${verifyResult.finalScore}/100)`);
+      }
     } catch {
-      console.log('        → 자동수정 스킵 (검증 루프 미지원 컨텍스트)');
+      console.log('        → 자동수정 스킵');
     }
   } else {
     console.log('\n  [5/6] 🔧 자동수정 — 불필요 ✅');
@@ -426,7 +417,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     timestamp: Date.now(),
     codeHash,
     pipeline: {
-      teams: pipelineResult.stages.map(s => ({
+      teams: pipelineResult.teams.map(s => ({
         name: s.name,
         score: s.score,
         blocking: s.name === 'validation' || s.name === 'release-ip',
@@ -466,7 +457,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   // Record to Fix Memory
   try {
     const { recordFix } = await import('../core/fix-memory');
-    for (const stage of pipelineResult.stages) {
+    for (const stage of pipelineResult.teams) {
       for (const finding of stage.findings) {
         recordFix({
           category: stage.name,

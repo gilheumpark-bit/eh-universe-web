@@ -138,7 +138,7 @@ function checkBraceBalance(code: string, fileName: string): DeepFinding[] {
       if (char === '(') parenDepth++;
       if (char === ')') parenDepth--;
       if (char === '[') bracketDepth++;
-      if (char === ']') _bracketDepth--;
+      if (char === ']') bracketDepth--;
     }
   }
 
