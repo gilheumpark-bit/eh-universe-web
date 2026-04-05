@@ -14,4 +14,13 @@ export { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult, type Jud
 // Formatters
 export { formatReceipt, toJSON, toSARIF, computeReceiptHash, chainReceipt, type ReceiptData } from './formatters/receipt';
 
+// Config
+export { loadMergedConfig, saveGlobalConfig, addKey, removeKey, getKeyForRole, type CSConfig, type KeyConfig } from './core/config';
+
+// Commands (lazy — import at call site, listed here for discoverability)
+// import { runInit } from './commands/init';
+// import { runGenerate } from './commands/generate';
+// import { runVerify } from './commands/verify';
+// import { runAudit } from './commands/audit';
+
 // IDENTITY_SEAL: role=barrel-export | inputs=none | outputs=all-public-APIs
