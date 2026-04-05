@@ -124,7 +124,9 @@ function runRegexTeam(code: string, _language: string): PipelineResult['teams'][
     { regex: /new\s+Date\(\)\.getTime/, msg: 'Date.now() 대신 new Date().getTime()', severity: 'info' as unknown },
   ];
 
+  const ruleLinePat = /regex\s*:|\/.*\/[gimsuy]*\s*,|severity\s*:/;
   for (let i = 0; i < lines.length; i++) {
+    if (ruleLinePat.test(lines[i])) continue;
     for (const p of patterns) {
       if (p.regex.test(lines[i])) {
         findings.push({ line: i + 1, message: p.msg, severity: p.severity });
@@ -308,7 +310,10 @@ function runSecurityPatternCheck(code: string, _language: string): PipelineResul
     { regex: /api[_-]?key\s*[:=]\s*['"`]\w{10,}/, msg: 'API 키 하드코딩 의심', severity: 'error' },
   ];
 
+  // Skip lines that are regex/rule definitions to avoid self-detection
+  const ruleDefPattern = /regex\s*:|\/.*\/[gimsuy]*\s*,|severity\s*:/;
   for (let i = 0; i < lines.length; i++) {
+    if (ruleDefPattern.test(lines[i])) continue;
     for (const p of secPatterns) {
       if (p.regex.test(lines[i])) {
         findings.push({ line: i + 1, message: p.msg, severity: p.severity });
@@ -668,6 +673,8 @@ export async function scanProject(rootPath: string): Promise<{
         const full = join(dir, entry.name);
         if (entry.isDirectory()) walk(full, depth + 1);
         else if (['.ts', '.tsx', '.js', '.jsx'].includes(extname(entry.name))) {
+          // Skip pipeline/lint rule files to avoid self-detection false positives
+          if (entry.name === 'pipeline-bridge.ts' || entry.name === 'pipeline-bridge.js') continue;
           try {
             const content = readFileSync(full, 'utf-8');
             for (const p of patterns) {

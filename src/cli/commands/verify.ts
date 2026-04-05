@@ -278,17 +278,30 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   if (worstTeams.length > 0 && worstTeams[0].score < 80) {
     console.log('\n  💡 개선 포인트:');
     const hints: Record<string, string> = {
+      // enhanced pipeline teams (ast-bridge)
       simulation: 'cs explain 으로 루프/재귀 구조 확인',
       generation: 'cs fun challenge 로 빈 함수 채우기 연습',
       validation: '--mode strict 로 null 가드 자동 적용',
       'size-density': 'PART 구조로 파일 분리 추천',
-      'asset-trace': 'cs search --symbols 로 미사용 코드 ���색',
+      'asset-trace': 'cs search --symbols 로 미사용 코드 탐색',
       stability: 'try-catch 자동 추가: cs generate "에러 핸들링"',
       'release-ip': 'cs ip-scan 으로 상세 보안 검사',
       governance: 'cs audit 으로 아키텍처 전체 검진',
+      // static pipeline teams (pipeline-bridge)
+      ast: 'cs explain 으로 함수 복잡도 및 중첩 구조 점검',
+      hollow: 'cs verify --mode strict 로 빈 함수 및 스텁 전수 탐지',
+      'bug-pattern': 'cs audit 으로 ==, 미사용 변수, 위험 패턴 정밀 검사',
+      'design-lint': 'Design System v8.0 시맨틱 토큰 규칙 확인',
     };
+    let hintPrinted = false;
     for (const t of worstTeams) {
-      if (hints[t.name]) console.log(`     ${t.name}: ${hints[t.name]}`);
+      if (hints[t.name]) {
+        console.log(`     ${t.name}: ${hints[t.name]}`);
+        hintPrinted = true;
+      }
+    }
+    if (!hintPrinted) {
+      console.log(`     ${worstTeams.map(t => t.name).join(', ')}: cs audit 으로 상세 검진 권장`);
     }
   }
 
