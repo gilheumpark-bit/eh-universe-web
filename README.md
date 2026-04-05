@@ -213,6 +213,22 @@ EH Universe Web includes **CS Quill**, a 56-engine autonomous AI coding agent wi
 
 **Verified:** 274/274 tests PASS | 1000-req load test 252 RPS | Multi-key fallback | SBOM | Offline mode
 
+### 📥 Install VS Code Extension
+
+<a href="https://github.com/gilheumpark-bit/eh-universe-vscode/releases/latest/download/eh-universe-vscode-1.0.0.vsix">
+  <img src="https://img.shields.io/badge/Download-VS%20Code%20Extension%20(.vsix)-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white" alt="Download VSIX" />
+</a>
+
+```bash
+# Option 1: CLI install
+code --install-extension eh-universe-vscode-1.0.0.vsix
+
+# Option 2: VS Code UI
+# Ctrl+Shift+P → "Extensions: Install from VSIX..." → select file
+```
+
+> **Requires daemon:** `cs daemon --port 8443` must be running for real-time diagnostics.
+
 ### Quick Start
 
 ```bash
