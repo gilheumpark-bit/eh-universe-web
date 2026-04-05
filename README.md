@@ -198,6 +198,75 @@ Central dictionary with identical leaf counts across all languages. Fallback: JP
 
 ---
 
+---
+
+## CS Quill 🦔 — Integrated Code Quality CLI
+
+EH Universe Web includes **CS Quill**, a 56-engine autonomous AI coding agent, built into `src/cli/`.
+
+```
+    /\_/\
+   ( o.o )  CS Quill — Code Quality Guardian
+    > ^ <   77 files | 18,238 lines | 56 engines
+  /||||||\\
+```
+
+### Quick Start
+
+```bash
+# Use via npm script
+npm run cs -- init
+npm run cs -- generate "REST API with auth"
+npm run cs -- verify ./src
+npm run cs -- daemon --port 8443
+```
+
+### 3-Tier Architecture
+
+```
+eh-universe-web  ←── REST ───→  CS Quill CLI (Daemon)
+                                ↕ WebSocket
+eh-universe-vscode ←── WS ──→  CS Quill CLI (Daemon)
+```
+
+| Component | Repository | Purpose |
+|-----------|-----------|---------|
+| **Web App** | [eh-universe-web](https://github.com/gilheumpark-bit/eh-universe-web) | Next.js app with Code Studio (this repo) |
+| **CLI** | [cs-quill-cli](https://github.com/gilheumpark-bit/cs-quill-cli) | Standalone 56-engine CLI + WebSocket daemon |
+| **VS Code** | [eh-universe-vscode](https://github.com/gilheumpark-bit/eh-universe-vscode) | Extension with diagnostics + quick-fix |
+
+### Commands (28)
+
+| Command | Description |
+|---------|-------------|
+| `cs init` | Project initialization & onboarding |
+| `cs generate <prompt>` | SEAL contract parallel code generation |
+| `cs verify [path]` | 8-team parallel verification |
+| `cs audit` | 16-area project health audit |
+| `cs daemon --port 8443` | WebSocket daemon server |
+| `cs stress --url <endpoint>` | HTTP load testing (autocannon) |
+| `cs bench [path]` | Function benchmarking (tinybench) |
+| `cs compliance --sbom cyclonedx` | SBOM generation |
+| `cs doctor` | Environment diagnostics |
+| `cs vibe <prompt>` | Natural language mode |
+| ...and 18 more | `cs --help` for full list |
+
+### Verification Pipeline
+
+```
+8 Teams: Regex → AST → Hollow → Dead-Code → Design → Cognitive → Bug → Security
+Receipt: HMAC-SHA256 hash chain (tamper-proof audit trail)
+Offline: 10 self-healing rules (no AI required)
+```
+
+### 56 Engines
+
+AST(6) + Lint(6) + Security(6) + Performance(5) + Testing(3) + TUI(10) + IP(3) + Formal(1) + Data(3) + Extended(13) = **56 open-source packages**
+
+Full engine list: [cs-quill-cli README](https://github.com/gilheumpark-bit/cs-quill-cli#56-integrated-engines)
+
+---
+
 ## License
 
 [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — Free to use for non-commercial purposes.
@@ -208,6 +277,6 @@ Central dictionary with identical leaf counts across all languages. Fallback: JP
 
 *"Where are you headed?"*
 
-Built with Next.js, TypeScript, and seven AI providers.
+Built with Next.js, TypeScript, seven AI providers, and CS Quill 🦔.
 
 </div>
