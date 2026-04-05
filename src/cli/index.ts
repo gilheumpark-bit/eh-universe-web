@@ -30,6 +30,7 @@ export { getCachedFiles, setCachedFiles, invalidateCache } from './core/file-cac
 export * from './core/constants';
 export { searchPatterns, buildReferencePrompt, addPattern, seedDB, getRefStats, CATEGORIES, SEED_PATTERNS, type ReferencePattern, type ReferenceDB } from './core/reference-db';
 export { runEnhancedPipeline, type ASTFinding, type EnhancedPipelineResult } from './core/ast-bridge';
+export { runDeepVerify, runDeepVerifyProject, type DeepFinding, type DeepVerifyResult } from './core/deep-verify';
 export { runFullDataFlowAnalysis, trackNullFlow, trackCrossFileFlow, trackTaintFlow, type FlowChain, type DataFlowResult } from './core/data-flow';
 
 // Adapters

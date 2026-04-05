@@ -217,6 +217,27 @@ export async function runEnhancedPipeline(
     }
   } catch { /* cross-file analysis not available */ }
 
+  // Phase 7: Deep Verify (P0~P2 논리 버그)
+  try {
+    const { runDeepVerify } = await import('./deep-verify');
+    const deepResult = runDeepVerify(code, fileName);
+    if (deepResult.findings.length > 0) {
+      engines.push('deep-verify');
+      for (const f of deepResult.findings) {
+        findings.push({
+          engine: 'deep-verify', line: f.line, message: `[${f.severity}] ${f.message}`,
+          severity: f.severity === 'P0' ? 'critical' : f.severity === 'P1' ? 'error' : 'warning',
+          team: f.category === 'brace-balance' || f.category === 'declaration-order' ? 'validation' :
+                f.category === 'async-pattern' ? 'stability' :
+                f.category === 'unsafe-cast' ? 'validation' :
+                f.category === 'resource-leak' ? 'stability' :
+                f.category === 'math-logic' ? 'simulation' : 'governance',
+          confidence: f.severity === 'P0' ? 0.95 : f.severity === 'P1' ? 0.85 : 0.75,
+        });
+      }
+    }
+  } catch { /* deep-verify optional */ }
+
   // Deduplicate: same line + same team = keep higher confidence
   const deduped = deduplicateFindings(findings);
 
