@@ -325,6 +325,14 @@ program
     }
   });
 
+program
+  .command('fun [action] [args...]')
+  .description('🎮 재미 기능 (poem|quiz|art|fortune|create|challenge|quill)')
+  .action(async (action, args) => {
+    const { runFun } = await import('../commands/fun');
+    await runFun(action ?? 'help', args);
+  });
+
 // ============================================================
 // PART 8 — Alias Resolution & Execute
 // ============================================================
