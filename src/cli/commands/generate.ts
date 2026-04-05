@@ -338,12 +338,14 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
     try {
       const { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } = await import('../ai/cross-judge');
 
-      const judgeFindings = pipelineResult.stages.flatMap((s, si) =>
-        (s.findings as string[]).map((f, fi) => ({
-          id: `${s.name}-${fi}`, severity: 'warning', message: typeof f === 'string' ? f : String(f),
+      const judgeFindings = pipelineResult.stages.flatMap((s) => {
+        const findings = Array.isArray(s.findings) ? s.findings : [];
+        return findings.map((f: unknown, fi: number) => ({
+          id: `${s.name}-${fi}`, severity: 'warning',
+          message: typeof f === 'string' ? f : typeof f === 'object' && f !== null && 'message' in f ? String((f as { message: unknown }).message) : String(f),
           file: fileName, line: 0, team: s.name, confidence: 0.7,
-        })),
-      );
+        }));
+      });
 
       if (judgeFindings.length > 0) {
         const judgePrompt = buildJudgePrompt(mergedCode, judgeFindings);
@@ -470,8 +472,8 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
           afterPattern: '',
           confidence: 0.5,
         });
+      }
     }
-  }
   } catch { /* fix memory recording optional */ }
 
   // --with-tests: auto generate tests

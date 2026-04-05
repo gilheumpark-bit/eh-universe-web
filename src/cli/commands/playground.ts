@@ -223,7 +223,7 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   const weights = categories.map(() => 1 / categories.length); // Equal weights for all categories
   const weightedScore = Math.round(categories.reduce((s, c, i) => s + c.score * weights[i], 0));
   const totalEngines = categories.reduce((s, c) => s + c.engines, 0);
-  const csScore = Math.round(weightedScore * 100);
+  const csScore = weightedScore; // 이미 0-100 범위, ×100 하면 안 됨
 
   // Display
   console.log('\n  ┌─────────────────────────────────────┐');

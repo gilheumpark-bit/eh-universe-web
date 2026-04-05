@@ -28,7 +28,7 @@ export interface DebugSession {
 // PART 2 — Node Inspector Launch
 // ============================================================
 
-export function launchDebug(filePath: string, breakpoints?: BreakpointInfo[]): DebugSession | null {
+export async function launchDebug(filePath: string, breakpoints?: BreakpointInfo[]): Promise<DebugSession | null> {
   try {
     // Insert debugger statements at breakpoint lines
     if (breakpoints && breakpoints.length > 0) {
@@ -36,7 +36,9 @@ export function launchDebug(filePath: string, breakpoints?: BreakpointInfo[]): D
       const code = readFileSync(filePath, 'utf-8');
       const lines = code.split('\n');
 
-      for (const bp of breakpoints) {
+      // Insert in reverse order to preserve line numbers
+      const sorted = [...breakpoints].sort((a, b) => b.line - a.line);
+      for (const bp of sorted) {
         if (bp.line > 0 && bp.line <= lines.length) {
           const indent = lines[bp.line - 1].match(/^\s*/)?.[0] ?? '';
           lines.splice(bp.line - 1, 0, `${indent}debugger; // CS Quill breakpoint`);
@@ -60,11 +62,8 @@ export function launchDebug(filePath: string, breakpoints?: BreakpointInfo[]): D
       if (match) inspectorUrl = match[0];
     });
 
-    // Wait briefly for inspector to start
-    const startWait = Date.now();
-    while (!inspectorUrl && Date.now() - startWait < 3000) {
-      execSync('sleep 0.1');
-    }
+    // Wait briefly for inspector to start (non-blocking)
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     return {
       pid: child.pid ?? 0,

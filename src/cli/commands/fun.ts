@@ -235,8 +235,9 @@ export async function createApp(description: string): Promise<void> {
 
     for (const file of result.files) {
       const filePath = join(createdDir, file.path);
-      const fileDir = filePath.substring(0, filePath.lastIndexOf('/'));
-      mkdirSync(fileDir, { recursive: true });
+      const { dirname } = await import('path');
+      const fileDir = dirname(filePath);
+      if (fileDir && fileDir !== '.') mkdirSync(fileDir, { recursive: true });
       writeFileSync(filePath, file.content, 'utf-8');
     }
 

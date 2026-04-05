@@ -81,7 +81,16 @@ export async function runVibe(prompt: string): Promise<void> {
   // Confirmation (대화형)
   const { createInterface } = await import('readline');
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const answer = await new Promise<string>(r => rl.question('  이대로 만들까요? (Y/n/수정): ', a => { rl.close(); r(a.trim()); }));
+  let answer = '';
+  try {
+    answer = await new Promise<string>((resolve, reject) => {
+      rl.question('  이대로 만들까요? (Y/n/수정): ', a => resolve(a.trim()));
+      rl.on('error', reject);
+      rl.on('close', () => resolve('y')); // Default on pipe close
+    });
+  } finally {
+    rl.close();
+  }
 
   if (answer.toLowerCase() === 'n') {
     console.log('  취소됨.\n');
