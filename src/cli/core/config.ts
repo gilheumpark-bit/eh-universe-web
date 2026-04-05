@@ -138,3 +138,20 @@ export function getKeyForRole(config: CSConfig, role: string): KeyConfig | undef
 }
 
 // IDENTITY_SEAL: PART-4 | role=key-management | inputs=CSConfig,KeyConfig | outputs=CSConfig
+
+// ============================================================
+// PART 5 — AI Config Helper
+// ============================================================
+
+export function getAIConfig(): { provider: string; model: string; apiKey: string; baseUrl?: string } {
+  const config = loadMergedConfig();
+  const primaryKey = config.keys?.[0];
+  return {
+    provider: primaryKey?.provider ?? config.provider ?? 'groq',
+    model: primaryKey?.model ?? config.model ?? 'llama-3.3-70b-versatile',
+    apiKey: primaryKey?.apiKey ?? process.env.CS_API_KEY ?? '',
+    baseUrl: config.baseUrl,
+  };
+}
+
+// IDENTITY_SEAL: PART-5 | role=ai-config-helper | inputs=none | outputs=config

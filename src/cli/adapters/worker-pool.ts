@@ -156,7 +156,9 @@ export function runTasksParallel(
       if (nextTaskIndex >= tasks.length) return;
 
       const task = tasks[nextTaskIndex++];
-      const worker = new Worker(__filename, {
+      // ESM/CJS 호환: __filename 또는 import.meta.url 사용
+      const workerPath = typeof __filename !== 'undefined' ? __filename : new URL(import.meta.url).pathname;
+      const worker = new Worker(workerPath, {
         workerData: { ...task, handlerCode: undefined },
       });
 

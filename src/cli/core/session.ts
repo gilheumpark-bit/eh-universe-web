@@ -53,7 +53,7 @@ export function createSession(projectPath: string): Session {
   const session: Session = {
     id: generateSessionId(),
     projectPath,
-    projectName: projectPath.split('/').pop() ?? 'unknown',
+    projectName: projectPath.split(/[/\\]/).pop() ?? 'unknown',
     createdAt: Date.now(),
     updatedAt: Date.now(),
     lastCommand: 'init',

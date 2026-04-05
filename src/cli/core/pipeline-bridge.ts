@@ -169,7 +169,7 @@ function runDeadCodeCheck(code: string): PipelineResult['teams'][0] {
 
   for (let i = 0; i < lines.length; i++) {
     // return 이후 코드
-    if (/^\s*return\b/.test(lines[i]) && i + 1 < lines.length && !/^\s*[}\])]/. test(lines[i + 1]) && lines[i + 1].trim() !== '') {
+    if (/^\s*return\b/.test(lines[i]) && i + 1 < lines.length && !/^\s*[})\]]/.test(lines[i + 1]) && lines[i + 1].trim() !== '') {
       findings.push({ line: i + 2, message: 'return 이후 도달 불가 코드', severity: 'warning' });
     }
     // 주석 처리된 코드

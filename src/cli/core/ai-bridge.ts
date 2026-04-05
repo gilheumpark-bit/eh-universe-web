@@ -5,7 +5,7 @@
 // ai-config.ts 설정 기반으로 curl/fetch로 직접 호출.
 
 import { getAIConfig } from './config';
-import { _routeTask, getTemperature, type AITask } from './ai-config';
+import { getTemperature, type AITask } from './ai-config';
 
 // ============================================================
 // PART 1 — Types
@@ -255,15 +255,7 @@ export async function quickAsk(
 // PART 5 — getAIConfig re-export (호환성)
 // ============================================================
 
-export function getAIConfig(): { provider: string; model: string; apiKey: string; baseUrl?: string } {
-  const { loadMergedConfig } = require('./config');
-  const config = loadMergedConfig();
-  return {
-    provider: config.provider ?? 'groq',
-    model: config.model ?? 'llama-3.3-70b-versatile',
-    apiKey: config.keys?.[config.provider ?? 'groq'] ?? process.env.CS_API_KEY ?? '',
-    baseUrl: config.baseUrl,
-  };
-}
+// config.ts의 getAIConfig를 그대로 re-export (순환 import 방지)
+export { getAIConfig } from './config';
 
 // IDENTITY_SEAL: PART-5 | role=config-reexport | inputs=none | outputs=config

@@ -127,14 +127,8 @@ export async function resolveConflictWithAI(
       return conflict.ours;
     }
 
-    // AI 호출 (가벼운 모델 사용)
-    const { execSync: exec } = await import('child_process');
-    const _prompt = JSON.stringify({
-      system: 'Merge conflict resolver. Output ONLY resolved code. No explanation.',
-      user: `Context:\n${context.slice(0, 1000)}\n\nOurs:\n${conflict.ours}\n\nTheirs:\n${conflict.theirs}`,
-    });
-
-    // curl로 AI 호출 (의존성 최소화)
+    // AI 호출 (fetch 기반, shell injection 방지)
+    const baseUrl = aiConfig.baseUrl ?? 'https://api.groq.com/openai/v1';
     const body = JSON.stringify({
       model: aiConfig.model ?? 'llama-3.3-70b-versatile',
       messages: [
@@ -144,12 +138,17 @@ export async function resolveConflictWithAI(
       max_tokens: 2000,
     });
 
-    const curlResult = exec(
-      `curl -s -X POST "${aiConfig.baseUrl ?? 'https://api.groq.com/openai/v1'}/chat/completions" -H "Authorization: Bearer ${aiConfig.apiKey}" -H "Content-Type: application/json" -d '${body.replace(/'/g, "'\\''")}'`,
-      { encoding: 'utf-8', timeout: 15000 },
-    );
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${aiConfig.apiKey}`,
+      },
+      body,
+      signal: AbortSignal.timeout(15000),
+    });
 
-    const data = JSON.parse(curlResult);
+    const data = await response.json();
     resolved = data.choices?.[0]?.message?.content ?? '';
     return resolved.replace(/^```\w*\n?/gm, '').replace(/```$/gm, '').trim() || conflict.ours;
   } catch {

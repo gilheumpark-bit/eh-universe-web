@@ -32,7 +32,8 @@ export async function runCompliance(_opts: ComplianceOptions): Promise<void> {
         if (!existsSync(pkgPath)) continue;
         try {
           const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-          if (/GPL|AGPL/i.test(typeof pkg.license === 'string' ? pkg.license : '')) copyleftCount++;
+          const lic = typeof pkg.license === 'string' ? pkg.license : (pkg.license?.type ?? '');
+          if (/\b(A?GPL)\b/i.test(lic) && !/LGPL/i.test(lic)) copyleftCount++;
         } catch { /* skip */ }
       }
     }

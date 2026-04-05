@@ -51,7 +51,7 @@ export interface ReceiptData {
 // ============================================================
 
 let _lastReceiptHash: string | null = null;
-const HMAC_SECRET = 'cs-quill-receipt-chain-v1'; // Production: use env var
+const HMAC_SECRET = process.env.CS_RECEIPT_SECRET ?? 'cs-quill-receipt-chain-v1';
 
 export function computeReceiptHash(data: Omit<ReceiptData, 'receiptHash'>): string {
   const payload = JSON.stringify(data) + (_lastReceiptHash ?? 'GENESIS');

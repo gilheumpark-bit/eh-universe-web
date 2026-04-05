@@ -114,9 +114,16 @@ export async function runServe(port: string): Promise<void> {
     try {
       let body = '';
       if (req.method === 'POST') {
-        for await (const chunk of req) body += chunk;
+        body = await new Promise<string>((resolve) => {
+          const chunks: Buffer[] = [];
+          req.on('data', (c: Buffer) => chunks.push(c));
+          req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+          setTimeout(() => resolve('{}'), 10000); // 10s timeout
+        });
       }
-      const result = await handler(body || '{}');
+      const parsed = body || '{}';
+      try { JSON.parse(parsed); } catch { body = '{}'; }
+      const result = await handler(parsed);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (err) {
