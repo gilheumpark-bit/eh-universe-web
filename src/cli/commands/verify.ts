@@ -109,16 +109,54 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   }
   console.log(`  📁 ${files.length}개 파일 발견\n`);
 
-  // Run pipeline on each file
-  // Dynamic import to avoid loading heavy modules at startup
+  // Run pipeline on each file — try enhanced (AST) first, fallback to regex
+  let useEnhanced = true;
+  let enhancedImport: typeof import('../core/ast-bridge') | null = null;
+  try {
+    enhancedImport = await import('../core/ast-bridge');
+  } catch {
+    useEnhanced = false;
+  }
+
   const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
 
   const allTeamScores: Map<string, number[]> = new Map();
   const allTeamFindings: Map<string, number> = new Map();
   let totalFindings = 0;
+  let astFindingsTotal = 0;
 
   for (const file of files) {
-    const result = runStaticPipeline(file.content, file.language);
+    let result;
+    if (useEnhanced && enhancedImport) {
+      try {
+        const enhanced = await enhancedImport.runEnhancedPipeline(file.content, file.language, file.relativePath);
+        astFindingsTotal += enhanced.astFindings;
+        // Map enhanced findings to pipeline format
+        result = {
+          stages: [] as Array<{ name: string; score: number; findings: string[] }>,
+          overallScore: enhanced.combinedScore,
+          overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
+        };
+        // Group by team
+        const teamMap = new Map<string, { score: number; findings: string[] }>();
+        for (const f of enhanced.findings) {
+          const team = teamMap.get(f.team) ?? { score: 100, findings: [] };
+          team.findings.push(f.message);
+          if (f.severity === 'critical') team.score -= 25;
+          else if (f.severity === 'error') team.score -= 10;
+          else if (f.severity === 'warning') team.score -= 3;
+          team.score = Math.max(0, team.score);
+          teamMap.set(f.team, team);
+        }
+        for (const [name, data] of teamMap) {
+          result.stages.push({ name, score: data.score, findings: data.findings });
+        }
+      } catch {
+        result = runStaticPipeline(file.content, file.language);
+      }
+    } else {
+      result = runStaticPipeline(file.content, file.language);
+    }
 
     for (const stage of result.stages) {
       const scores = allTeamScores.get(stage.name) ?? [];
@@ -149,18 +187,10 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     });
   }
 
-  // AST deep analysis on first 10 files (Level 1-2 정밀도)
-  try {
-    const { runFullASTAnalysis } = await import('../adapters/ast-engine');
-    let astFindings = 0;
-    for (const file of files.slice(0, 10)) {
-      const astResult = await runFullASTAnalysis(file.content, file.relativePath);
-      astFindings += astResult.findings.length;
-    }
-    if (astFindings > 0) {
-      console.log(`\n  🔬 AST 심층분석: ${astFindings}건 추가 발견 (${Math.min(10, files.length)}파일 샘플)`);
-    }
-  } catch { /* AST engines not installed — skip */ }
+  // AST summary (already included in enhanced pipeline if available)
+  if (useEnhanced && astFindingsTotal > 0) {
+    console.log(`\n  🔬 AST 심층분석: ${astFindingsTotal}건 추가 발견 (Level 2 정밀도)`);
+  }
 
   const overallScore = Math.round(teams.reduce((s, t) => s + t.score, 0) / Math.max(teams.length, 1));
   const overallStatus = overallScore >= 80 ? 'pass' as const : overallScore >= 60 ? 'warn' as const : 'fail' as const;

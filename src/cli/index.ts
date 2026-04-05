@@ -23,6 +23,7 @@ export { scanProjectStyle, saveProfile, loadProfile, recordSuggestionResult, bui
 export { evaluateBadges, evaluateChallenges, generateShareCard, generateReadmeBadge, BADGES, CHALLENGES } from './core/badges';
 export { checkPatentPatterns, PATENT_PATTERNS, type PatentCheckResult } from './core/patent-db';
 export { checkDeprecations, formatDeprecationReport, type DeprecationFinding } from './core/deprecation-checker';
+export { runEnhancedPipeline, type ASTFinding, type EnhancedPipelineResult } from './core/ast-bridge';
 
 // Adapters
 export { storeGet, storeSet, storeDelete, storeKeys, readFileTree, cacheGet, cacheSet, type CLIFileNode } from './adapters/fs-adapter';

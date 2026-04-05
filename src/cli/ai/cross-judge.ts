@@ -65,7 +65,7 @@ OUTPUT FORMAT (JSON only):
 
 export function buildJudgePrompt(
   code: string,
-  findings: Array<{ id: string; severity: string; message: string; file: string; line: number }>,
+  findings: Array<{ id: string; severity: string; message: string; file: string; line: number; engine?: string; confidence?: number; team?: string }>,
 ): string {
   const lines: string[] = [
     '=== GENERATED CODE ===',
@@ -74,15 +74,34 @@ export function buildJudgePrompt(
     '```',
     '',
     '=== VERIFICATION FINDINGS ===',
+    '',
+    'Each finding includes: source engine, confidence level, and team classification.',
+    'Higher confidence (>0.8) = more likely real issue. Lower (<0.5) = more likely false positive.',
+    '',
   ];
 
+  // Group by team for better structure
+  const byTeam = new Map<string, typeof findings>();
   for (const f of findings) {
-    lines.push(`[${f.id}] ${f.severity.toUpperCase()} — ${f.file}:${f.line}`);
-    lines.push(`  ${f.message}`);
+    const team = f.team ?? 'unknown';
+    const group = byTeam.get(team) ?? [];
+    group.push(f);
+    byTeam.set(team, group);
   }
 
-  lines.push('');
-  lines.push(`Total: ${findings.length} findings. Judge each one.`);
+  for (const [team, teamFindings] of byTeam) {
+    lines.push(`--- ${team.toUpperCase()} ---`);
+    for (const f of teamFindings) {
+      const conf = f.confidence ? ` (confidence: ${f.confidence})` : '';
+      const eng = f.engine ? ` [${f.engine}]` : '';
+      lines.push(`[${f.id}] ${f.severity.toUpperCase()} — ${f.file}:${f.line}${eng}${conf}`);
+      lines.push(`  ${f.message}`);
+    }
+    lines.push('');
+  }
+
+  lines.push(`Total: ${findings.length} findings across ${byTeam.size} teams. Judge each one.`);
+  lines.push('IMPORTANT: Findings from AST engines (ts-morph, typescript) with confidence >0.8 are structurally verified — dismiss only with strong reason.');
 
   return lines.join('\n');
 }

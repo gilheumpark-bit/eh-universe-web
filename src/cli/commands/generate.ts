@@ -255,10 +255,37 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   mergedCode = deduplicateImports(mergedCode);
   console.log(`        → ${mergedCode.split('\n').length}줄 완성`);
 
-  // ── Step 4: Verify (8-team pipeline) ──
-  console.log('\n  [4/6] 🔍 8팀 검증...');
-  const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
-  const pipelineResult = runStaticPipeline(mergedCode, 'typescript');
+  // ── Step 4: Verify (Enhanced 8-team + AST pipeline) ──
+  console.log('\n  [4/6] 🔍 8팀 + AST 검증...');
+
+  let pipelineResult: { stages: Array<{ name: string; score: number; findings: string[] | { message: string }[] }>; overallScore: number; overallStatus: string };
+  try {
+    const { runEnhancedPipeline } = await import('../core/ast-bridge');
+    const enhanced = await runEnhancedPipeline(mergedCode, 'typescript', fileName);
+    console.log(`        엔진: ${enhanced.engines.join(', ')}`);
+
+    // Map to pipeline format
+    const teamMap = new Map<string, { score: number; findings: string[] }>();
+    for (const f of enhanced.findings) {
+      const team = teamMap.get(f.team) ?? { score: 100, findings: [] };
+      team.findings.push(f.message);
+      if (f.severity === 'critical') team.score -= 25;
+      else if (f.severity === 'error') team.score -= 10;
+      else if (f.severity === 'warning') team.score -= 3;
+      team.score = Math.max(0, team.score);
+      teamMap.set(f.team, team);
+    }
+
+    pipelineResult = {
+      stages: [...teamMap.entries()].map(([name, data]) => ({ name, score: data.score, findings: data.findings })),
+      overallScore: enhanced.combinedScore,
+      overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
+    };
+  } catch {
+    // Fallback to regex-only
+    const { runStaticPipeline } = await import('@/lib/code-studio/pipeline/pipeline');
+    pipelineResult = runStaticPipeline(mergedCode, 'typescript');
+  }
 
   for (const stage of pipelineResult.stages) {
     const icon = stage.score >= 80 ? '✅' : stage.score >= 60 ? '⚠️' : '❌';
