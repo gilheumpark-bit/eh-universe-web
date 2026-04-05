@@ -273,7 +273,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
-      setError(language === 'KO' ? 'API 키가 필요합니다. 설정에서 등록해주세요.' : 'API key required. Please add one in Settings.');
+      alert(language === 'KO' ? 'API 키가 필요합니다. 설정에서 등록해주세요.' : 'API key required. Please add one in Settings.');
       return;
     }
 
