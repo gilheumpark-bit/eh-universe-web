@@ -55,7 +55,34 @@ program
   .option('--format <fmt>', '출력 포맷: table | json | sarif', 'table')
   .option('--watch', '파일 변경 시 자동 검증')
   .option('--parallel', 'worker_threads 병렬 실행', true)
+  .option('--precision', 'AI 정밀 검증 (48항목 체크리스트, API 키 필요)')
+  .option('--precision-quick', 'AI 정밀 검증 P0만 (17항목)')
   .action(async (path, opts) => {
+    // Precision mode: AI-powered review
+    if (opts.precision || opts.precisionQuick) {
+      const { readFileSync, readdirSync, statSync } = await import('fs');
+      const { join, extname, relative } = await import('path');
+      const { runPrecisionReview } = await import('../ai/precision-checklist');
+      const targetPath = path ?? './src';
+      const stat = statSync(targetPath);
+
+      console.log(`🦔 CS Quill — 정밀 검증 (${opts.precisionQuick ? '17' : '48'}항목)\n`);
+
+      if (stat.isFile()) {
+        const code = readFileSync(targetPath, 'utf-8');
+        const findings = await runPrecisionReview(code, targetPath, opts.precisionQuick ? 'quick' : 'full');
+        for (const f of findings) {
+          const icon = f.severity === 'P0' ? '🔴' : f.severity === 'P1' ? '🟠' : '🟡';
+          console.log(`  ${icon} [${f.id}] ${targetPath}:${f.line} — ${f.message}`);
+          if (f.fix) console.log(`     fix: ${f.fix}`);
+        }
+        console.log(`\n  총: ${findings.length}건 (P0:${findings.filter(f=>f.severity==='P0').length} P1:${findings.filter(f=>f.severity==='P1').length} P2:${findings.filter(f=>f.severity==='P2').length})\n`);
+      } else {
+        console.log('  ⚠️  정밀 검증은 단일 파일에서 실행하세요: cs verify file.ts --precision\n');
+      }
+      return;
+    }
+
     const { runVerify } = await import('../commands/verify');
     await runVerify(path ?? './src', opts);
   });
