@@ -48,6 +48,15 @@ export { runFullLSPAnalysis, getDiagnostics, findReferences, buildCallGraph, fin
 export { isGitRepo, getCurrentBranch, getStatus, blame, diff, diffStat, autoStash, autoCommit, autoBranch, getRecentHistory, getFileHotspots } from './adapters/git-deep';
 export { runTasksParallel, runParallelVerify, type WorkerTask, type WorkerResult } from './adapters/worker-pool';
 
+// Terminal Integration
+export { getDefaultShell, runShellCommand, startREPL, getSupportedREPLs, startBackground, listJobs, killJob, findProcessOnPort } from './adapters/terminal-integration';
+export { detectConflicts, resolveConflictWithAI, generateCommitMessage, suggestBranchName, getStaleLocalBranches } from './adapters/git-enhanced';
+
+// Core — Task/Plugin/Security
+export { detectTasks, runTask, runBuild, runTests, runLint, type Task, type TaskResult } from './core/task-runner';
+export { installPlugin, uninstallPlugin, enablePlugin, disablePlugin, listPlugins, getEnabledPlugins, executeHooks, searchPlugins, type PluginManifest, type InstalledPlugin } from './core/plugin-system';
+export { setPolicy, checkPermission, checkPathAccess, checkDomainAccess, scanForSecrets, POLICIES, type SecurityPolicy, type Permission, type SecretFinding } from './core/security-sandbox';
+
 // Terminal Compatibility
 export { detectTerminal, icons, colors, box, spinnerFrames, compatProgressBar, compatDivider, printHeader, printScore, printSection, type TerminalCapabilities } from './core/terminal-compat';
 
