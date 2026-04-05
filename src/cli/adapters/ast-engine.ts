@@ -268,41 +268,68 @@ export async function analyzeWithBabel(code: string) {
 // ============================================================
 
 export async function runFullASTAnalysis(code: string, fileName: string = 'temp.ts') {
-  const isTS = fileName.endsWith('.ts') || fileName.endsWith('.tsx');
   const results: Array<{ engine: string; findings: Array<{ line: number; message: string; severity: string }> }> = [];
 
-  // Always run acorn (works on JS)
+  // 메인 엔진: TypeScript 컴파일러 API (TS/JS/JSX/TSX 전부 지원)
   try {
-    const acornResult = await analyzeWithAcorn(code);
-    results.push({ engine: 'acorn+estraverse+esquery', findings: acornResult.findings });
+    const tsResult = await analyzeWithTypeScript(code, fileName);
+    results.push({ engine: 'typescript', findings: tsResult.findings });
   } catch { /* skip */ }
 
-  // TS files: run TypeScript + ts-morph
-  if (isTS) {
-    try {
-      const tsResult = await analyzeWithTypeScript(code, fileName);
-      results.push({ engine: 'typescript', findings: tsResult.findings });
-    } catch { /* skip */ }
+  // 보조 엔진: esquery (CSS 셀렉터 기반 AST 패턴 매칭 — typescript에 없는 고유 기능)
+  try {
+    const esqFindings = await analyzeWithEsquery(code);
+    if (esqFindings.findings.length > 0) {
+      results.push({ engine: 'esquery', findings: esqFindings.findings });
+    }
+  } catch { /* skip */ }
 
-    try {
-      const morphResult = await analyzeWithTsMorph(code, fileName);
-      results.push({ engine: 'ts-morph', findings: morphResult.findings });
-    } catch { /* skip */ }
+  // 중복 제거: 같은 라인 + 같은 메시지
+  const seen = new Set<string>();
+  const allFindings = results.flatMap(r => r.findings.map(f => ({ ...f, engine: r.engine })))
+    .filter(f => {
+      const key = `${f.line}:${f.message}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  return { engines: results.length, findings: allFindings, results };
+}
+
+// esquery 전용 분석 (acorn으로 파싱 후 esquery로 검색 — typescript에 없는 CSS 셀렉터 패턴)
+async function analyzeWithEsquery(code: string) {
+  const acorn = require('acorn');
+  const esquery = require('esquery');
+  const findings: Array<{ line: number; message: string; severity: string }> = [];
+
+  let ast;
+  try {
+    ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+  } catch {
+    return { findings };
   }
 
-  // JSX/TSX: run Babel
-  if (fileName.endsWith('.tsx') || fileName.endsWith('.jsx')) {
-    try {
-      const babelResult = await analyzeWithBabel(code);
-      results.push({ engine: '@babel/parser', findings: babelResult.findings });
-    } catch { /* skip */ }
+  // eval() 호출 (CSS 셀렉터로 정확히 잡음)
+  const evalCalls = esquery.query(ast as never, 'CallExpression[callee.name="eval"]');
+  for (const node of evalCalls) {
+    findings.push({ line: (node as any).loc?.start?.line ?? 1, message: 'eval() 호출 — 보안 위험', severity: 'critical' });
   }
 
-  // Merge and deduplicate
-  const allFindings = results.flatMap(r => r.findings.map(f => ({ ...f, engine: r.engine })));
-  const engines = results.length;
+  // new Function()
+  const newFn = esquery.query(ast as never, 'NewExpression[callee.name="Function"]');
+  for (const node of newFn) {
+    findings.push({ line: (node as any).loc?.start?.line ?? 1, message: 'new Function() — eval 동등', severity: 'critical' });
+  }
 
-  return { engines, findings: allFindings, results };
+  // 3중 루프 탐지
+  const tripleLoop = esquery.query(ast as never,
+    ':matches(ForStatement, WhileStatement, ForOfStatement) :matches(ForStatement, WhileStatement, ForOfStatement) :matches(ForStatement, WhileStatement, ForOfStatement)');
+  if (tripleLoop.length > 0) {
+    findings.push({ line: (tripleLoop[0] as any).loc?.start?.line ?? 1, message: '3중 중첩 루프 — O(n³) 복잡도', severity: 'warning' });
+  }
+
+  return { findings };
 }
 
 // IDENTITY_SEAL: PART-5 | role=unified-runner | inputs=code,fileName | outputs=findings

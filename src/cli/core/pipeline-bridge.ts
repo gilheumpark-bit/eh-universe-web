@@ -8,14 +8,29 @@
 // PART 1 — Static Pipeline (8팀 통합)
 // ============================================================
 
+export type FindingLevel = 'hard-fail' | 'review-required' | 'style-note';
+
+export interface Finding {
+  ruleId: string;
+  line: number;
+  level: FindingLevel;
+  confidence: 'high' | 'medium' | 'low';
+  message: string;
+}
+
 export interface PipelineResult {
-  score: number;
+  verdict: 'pass' | 'review' | 'fail';
   teams: Array<{
     name: string;
-    score: number;
-    findings: Array<{ line: number; message: string; severity: 'error' | 'warning' | 'info' }>;
+    findings: Finding[];
   }>;
-  summary: string;
+  summary: {
+    hardFail: number;
+    reviewRequired: number;
+    styleNote: number;
+  };
+  // 하위 호환: 기존 코드가 score를 참조하는 곳 대비
+  score: number;
 }
 
 export async function runStaticPipeline(code: string, language: string): Promise<PipelineResult> {
@@ -100,15 +115,49 @@ export async function runStaticPipeline(code: string, language: string): Promise
   const secRegex = runSecurityPatternCheck(code, language);
   teams.push(secRegex);
 
-  const avgScore = teams.length > 0
-    ? Math.round(teams.reduce((s, t) => s + t.score, 0) / teams.length)
-    : 0;
+  // ── Verdict 변환: score 기반 → level 기반 ──
+  const verdictTeams: PipelineResult['teams'] = teams.map(t => ({
+    name: t.name,
+    findings: (t.findings as any[]).slice(0, 15).map((f: any) => ({
+      ruleId: `${t.name}/${(f.message || '').slice(0, 30).replace(/\s+/g, '-').toLowerCase()}`,
+      line: f.line ?? 0,
+      level: mapSeverityToLevel(f.severity ?? 'warning'),
+      confidence: mapSeverityToConfidence(f.severity ?? 'warning'),
+      message: f.message ?? String(f),
+    })),
+  }));
+
+  const allFindings = verdictTeams.flatMap(t => t.findings);
+  const hardFail = allFindings.filter(f => f.level === 'hard-fail').length;
+  const reviewRequired = allFindings.filter(f => f.level === 'review-required').length;
+  const styleNote = allFindings.filter(f => f.level === 'style-note').length;
+
+  const verdict: PipelineResult['verdict'] = hardFail > 0 ? 'fail' : reviewRequired > 0 ? 'review' : 'pass';
+
+  // 하위 호환 score
+  const avgScore = verdict === 'pass' ? 100
+    : verdict === 'review' ? Math.max(60, 100 - reviewRequired * 3)
+    : Math.max(0, 50 - hardFail * 10);
 
   return {
+    verdict,
     score: avgScore,
-    teams,
-    summary: `${teams.filter(t => t.score >= 80).length}/${teams.length} teams passed (avg: ${avgScore})`,
+    teams: verdictTeams,
+    summary: { hardFail, reviewRequired, styleNote },
   };
+}
+
+// ── Level/Confidence 변환 헬퍼 ──
+function mapSeverityToLevel(severity: string): FindingLevel {
+  if (severity === 'error' || severity === 'critical') return 'hard-fail';
+  if (severity === 'warning') return 'review-required';
+  return 'style-note';
+}
+
+function mapSeverityToConfidence(severity: string): 'high' | 'medium' | 'low' {
+  if (severity === 'error' || severity === 'critical') return 'high';
+  if (severity === 'warning') return 'medium';
+  return 'low';
 }
 
 // IDENTITY_SEAL: PART-1 | role=pipeline | inputs=code,language | outputs=PipelineResult

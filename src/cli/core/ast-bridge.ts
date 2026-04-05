@@ -36,33 +36,35 @@ export interface EnhancedPipelineResult {
 // AST 분석 결과를 8팀에 매핑하는 규칙.
 
 function mapFindingToTeam(finding: { message: string; severity: string }): string {
-  const msg = finding.message.toLowerCase();
+  const msg = finding.message;
+
+  // Team7 Release-IP: 보안 (가장 먼저 — 보안은 최우선)
+  if (/eval|security|xss|injection|secret|credential|보안|개인키|API 키|password|패스워드/i.test(msg)) return 'release-ip';
 
   // Team1 Simulation: 무한루프, 재귀
-  if (/loop|recursive|infinite|stack overflow/i.test(msg)) return 'simulation';
+  if (/loop|recursive|infinite|stack overflow|루프|재귀/i.test(msg)) return 'simulation';
 
-  // Team2 Generation: TODO, 빈함수, console
-  if (/empty function|todo|fixme|console\./i.test(msg)) return 'generation';
+  // Team6 Stability: 에러핸들링, try-catch, await
+  if (/try.?catch|exception|reject|await.*without|빈 catch|unhandled/i.test(msg)) return 'stability';
 
-  // Team3 Validation: 타입, null, 파라미터
-  if (/null|undefined|type|parameter|nullable|optional/i.test(msg)) return 'validation';
-
-  // Team4 Size-Density: 복잡도, 중첩, 길이
-  if (/nest|depth|complex|cognitive|length/i.test(msg)) return 'size-density';
+  // Team4 Size-Density: 복잡도, 중첩, 길이, 파일 크기
+  if (/nest|depth|complex|cognitive|줄 초과|줄 길이|중첩|깊이|함수.*줄|파일.*줄|파라미터.*개|삼항/i.test(msg)) return 'size-density';
 
   // Team5 Asset-Trace: 미사용, 데드코드
-  if (/unused|dead|unreachable|orphan/i.test(msg)) return 'asset-trace';
+  if (/unused|dead|unreachable|orphan|미사용|@ts-ignore/i.test(msg)) return 'asset-trace';
 
-  // Team6 Stability: 에러핸들링, try-catch
-  if (/try.?catch|error|exception|reject|await.*without/i.test(msg)) return 'stability';
+  // Team3 Validation: 타입, null, ===/!==
+  if (/null|undefined|any 타입|===|!==|==\s|!=\s|타입.*안전|nullable|optional/i.test(msg)) return 'validation';
 
-  // Team7 Release-IP: 보안, eval, secrets
-  if (/eval|security|xss|injection|secret|credential/i.test(msg)) return 'release-ip';
+  // Team2 Generation: 빈함수, TODO, console
+  if (/empty function|빈 함수|todo|fixme|hack|console\.|stub|스텁/i.test(msg)) return 'generation';
 
   // Team8 Governance: 아키텍처, 의존성
-  if (/import|dependency|circular|architecture/i.test(msg)) return 'governance';
+  if (/import|dependency|circular|architecture|의존/i.test(msg)) return 'governance';
 
-  return 'generation'; // default
+  // Default: 메시지에 error 포함이면 stability, 아니면 governance
+  if (/error/i.test(msg)) return 'stability';
+  return 'governance';
 }
 
 function mapSeverity(severity: string): ASTFinding['severity'] {
@@ -260,13 +262,14 @@ export async function runEnhancedPipeline(
   // Deduplicate: same line + same team = keep higher confidence
   const deduped = deduplicateFindings(findings);
 
-  // Score calculation
+  // Score calculation — 감점 캡 적용 (최대 50점 감점)
   const astFindingCount = deduped.filter(f => f.engine !== 'regex').length;
-  const criticalCount = deduped.filter(f => f.severity === 'critical').length;
-  const errorCount = deduped.filter(f => f.severity === 'error').length;
-  const warningCount = deduped.filter(f => f.severity === 'warning').length;
+  const criticalCount = Math.min(deduped.filter(f => f.severity === 'critical').length, 3);
+  const errorCount = Math.min(deduped.filter(f => f.severity === 'error').length, 5);
+  const warningCount = Math.min(deduped.filter(f => f.severity === 'warning').length, 10);
 
-  const astScore = Math.max(0, 100 - criticalCount * 15 - errorCount * 8 - warningCount * 2);
+  const penalty = criticalCount * 10 + errorCount * 5 + warningCount * 1;
+  const astScore = Math.max(50, 100 - Math.min(penalty, 50));
   const regexScore = regexResult?.score ?? 50;
   const combinedScore = Math.round(regexScore * 0.3 + astScore * 0.7);
 

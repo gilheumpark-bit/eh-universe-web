@@ -165,24 +165,20 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
           overallScore: enhanced.combinedScore,
           overallStatus: enhanced.combinedScore >= 80 ? 'pass' : enhanced.combinedScore >= 60 ? 'warn' : 'fail',
         };
-        const teamMap = new Map<string, { score: number; findings: string[] }>();
-        // 팀당 findings 캡 — 과도한 감점 방지
-        const MAX_FINDINGS_PER_TEAM = 10;
+        // enhanced의 combinedScore를 신뢰하고 팀별 findings만 집계
+        const teamMap = new Map<string, { findings: string[] }>();
         for (const f of enhanced.findings) {
-          const team = teamMap.get(f.team) ?? { score: 100, findings: [] };
-          if (team.findings.length >= MAX_FINDINGS_PER_TEAM) {
-            teamMap.set(f.team, team);
-            continue;
-          }
-          team.findings.push(f.message);
-          if (f.severity === 'critical') team.score -= 15;
-          else if (f.severity === 'error') team.score -= 8;
-          else if (f.severity === 'warning') team.score -= 2;
-          team.score = Math.max(0, team.score);
+          const team = teamMap.get(f.team) ?? { findings: [] };
+          if (team.findings.length < 10) team.findings.push(f.message);
           teamMap.set(f.team, team);
         }
+        // 팀별 점수: combinedScore를 기반으로 findings 비율에 따라 분배
+        const totalFindingCount = enhanced.findings.length || 1;
         for (const [name, data] of teamMap) {
-          result.teams.push({ name, score: data.score, findings: data.findings });
+          const teamRatio = data.findings.length / totalFindingCount;
+          // findings가 많은 팀일수록 낮은 점수, 적은 팀일수록 높은 점수
+          const teamScore = Math.max(0, Math.round(enhanced.combinedScore * (1 - teamRatio * 0.5)));
+          result.teams.push({ name, score: teamScore, findings: data.findings });
         }
         return result;
       } catch (enhErr) {
@@ -268,30 +264,48 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     // AI 미설정 또는 호출 실패 → static 결과 유지
   }
 
-  const overallScore = Math.round(teams.reduce((s, t) => s + t.score, 0) / Math.max(teams.length, 1));
-  const overallStatus = overallScore >= 80 ? 'pass' as const : overallScore >= 60 ? 'warn' as const : 'fail' as const;
+  // ── Verdict 집계 ──
+  const allHardFail = teams.reduce((s, t) => s + (t.details?.filter(d => d.severity === 'error' || d.severity === 'critical').length ?? 0), 0);
+  const allReview = teams.reduce((s, t) => s + (t.details?.filter(d => d.severity === 'warning').length ?? 0), 0);
+  const allNote = totalFindings - allHardFail - allReview;
+
+  const overallVerdict = allHardFail > 0 ? 'FAIL' : allReview > 5 ? 'REVIEW' : 'PASS';
+  const overallScore = overallVerdict === 'PASS' ? 100
+    : overallVerdict === 'REVIEW' ? Math.max(60, 100 - allReview * 2)
+    : Math.max(0, 50 - allHardFail * 5);
+  const overallStatus = overallVerdict.toLowerCase() as 'pass' | 'review' | 'fail';
   const duration = Math.round(performance.now() - startTime);
 
   // Output
   if (opts.format === 'json') {
-    console.log(JSON.stringify({ files: files.length, teams, overallScore, overallStatus, duration, aiVerified, falsePositivesRemoved }, null, 2));
+    console.log(JSON.stringify({
+      files: files.length, verdict: overallVerdict, teams,
+      summary: { hardFail: allHardFail, reviewRequired: allReview, styleNote: allNote },
+      duration, aiVerified, falsePositivesRemoved,
+    }, null, 2));
     return;
   }
 
-  // Table format
+  // Verdict format — 팀별 findings 수 + level 표시
   for (const team of teams) {
-    const blockTag = team.blocking ? colors.red(' [BLOCKING]') : '';
-    printScore(`${team.name} (${team.findings})${blockTag}`, team.score);
+    const hf = team.details?.filter(d => d.severity === 'error' || d.severity === 'critical').length ?? 0;
+    const rr = team.details?.filter(d => d.severity === 'warning').length ?? 0;
+    const label = hf > 0 ? colors.red(`✖ ${team.name}`) : rr > 0 ? colors.yellow(`△ ${team.name}`) : colors.green(`✔ ${team.name}`);
+    const counts = [
+      hf > 0 ? colors.red(`${hf} hard-fail`) : '',
+      rr > 0 ? colors.yellow(`${rr} review`) : '',
+    ].filter(Boolean).join(', ') || colors.green('clean');
+    console.log(`  ${label.padEnd(35)} ${counts}`);
   }
 
   printSection('종합');
-  const statusIcon = overallStatus === 'pass' ? icons.pass : overallStatus === 'warn' ? icons.warn : icons.fail;
-  const scoreColor = overallScore >= 80 ? colors.green : overallScore >= 60 ? colors.yellow : colors.red;
-  console.log(`  ${statusIcon} ${scoreColor(`${overallScore}/100`)} | ${files.length}파일 | ${totalFindings}건 | ${duration}ms`);
+  const verdictIcon = overallVerdict === 'PASS' ? icons.pass : overallVerdict === 'REVIEW' ? icons.warn : icons.fail;
+  const verdictColor = overallVerdict === 'PASS' ? colors.green : overallVerdict === 'REVIEW' ? colors.yellow : colors.red;
+  console.log(`  ${verdictIcon} ${verdictColor(overallVerdict)} | ${files.length}파일 | ${duration}ms`);
+  console.log(`  hard-fail: ${allHardFail}건 | review: ${allReview}건 | note: ${allNote > 0 ? allNote : 0}건`);
   if (aiVerified) {
-    console.log(`  🤖 AI 검증 완료 — 오탐 ${falsePositivesRemoved}건 제거 (team-lead + cross-judge)`);
+    console.log(`  🤖 AI 검증 — 오탐 ${falsePositivesRemoved}건 제거`);
   }
-  console.log(`  기준: ${threshold}점 | 상태: ${colors.bold(overallStatus.toUpperCase())}`);
 
   // Improvement hints for lowest scoring teams
   const worstTeams = [...teams].sort((a, b) => a.score - b.score).slice(0, 2);
