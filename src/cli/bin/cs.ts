@@ -160,6 +160,38 @@ program
     await runSprint(tasks);
   });
 
+program
+  .command('learn')
+  .description('🎓 학습 모드 — 수정 이유 해설')
+  .action(async () => {
+    const { runLearn } = await import('../commands/learn');
+    await runLearn();
+  });
+
+program
+  .command('suggest')
+  .description('💡 프로젝트 개선 추천')
+  .action(async () => {
+    const { runSuggest } = await import('../commands/suggest');
+    await runSuggest();
+  });
+
+program
+  .command('bookmark <action> [args...]')
+  .description('🔖 프롬프트 즐겨찾기 (list|add|remove|run)')
+  .action(async (action, args) => {
+    const { runBookmark } = await import('../commands/bookmark');
+    await runBookmark(action, args);
+  });
+
+program
+  .command('preset <action> [args...]')
+  .description('📦 커뮤니티 프리셋 (list|show|install|remove)')
+  .action(async (action, args) => {
+    const { runPreset } = await import('../commands/preset');
+    await runPreset(action, args);
+  });
+
 // ============================================================
 // PART 6 — File Management
 // ============================================================

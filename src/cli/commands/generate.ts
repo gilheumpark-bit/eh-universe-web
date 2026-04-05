@@ -118,6 +118,36 @@ function deduplicateImports(code: string): string {
 export async function runGenerate(prompt: string, opts: GenerateOptions): Promise<void> {
   console.log('🦔 CS Quill — 코드 생성\n');
 
+  // ── Pre-check: Patent DB ──
+  const { checkPatentPatterns } = await import('../core/patent-db');
+  const patentCheck = checkPatentPatterns(prompt);
+  if (!patentCheck.safe) {
+    console.log('  🚫 특허/보안 위험 감지:');
+    for (const b of patentCheck.blocks) {
+      console.log(`     ❌ ${b.name} — ${b.alternative}`);
+    }
+    console.log('  생성을 차단합니다.\n');
+    return;
+  }
+  if (patentCheck.warnings.length > 0) {
+    console.log('  ⚠️  IP 경고:');
+    for (const w of patentCheck.warnings) {
+      console.log(`     ${w.name} — ${w.alternative}`);
+    }
+    console.log('  대안 패턴으로 생성합니다.\n');
+  }
+
+  // ── Pre-check: Yolo mode git stash ──
+  const { loadMergedConfig } = await import('../core/config');
+  const csConfig = loadMergedConfig();
+  if (csConfig.fileMode === 'yolo') {
+    try {
+      const { execSync } = await import('child_process');
+      execSync('git stash push -m "cs-quill-yolo-backup"', { stdio: 'pipe' });
+      console.log('  ⚡ Yolo 모드 — git stash 자동 백업 완료\n');
+    } catch { /* no git or nothing to stash */ }
+  }
+
   // Read project context
   const pkgPath = join(process.cwd(), 'package.json');
   const context = existsSync(pkgPath) ? readFileSync(pkgPath, 'utf-8').slice(0, 2000) : undefined;
@@ -125,7 +155,17 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   // ── Step 1: Plan ──
   console.log('  [1/6] 📐 계획 수립 (SEAL 계약 생성)...');
 
-  const planPrompt = buildPlannerPrompt(prompt, context);
+  // Inject patent directive + style + presets into context
+  const { loadProfile, buildStyleDirective } = await import('../core/style-learning');
+  const { getPresetsForFramework, buildPresetDirective } = await import('./preset');
+  const projectId = process.cwd().split('/').pop() ?? 'unknown';
+  const styleProfile = loadProfile(projectId);
+  const styleDir = styleProfile ? buildStyleDirective(styleProfile) : '';
+  const presets = csConfig.framework ? getPresetsForFramework(csConfig.framework) : [];
+  const presetDir = buildPresetDirective(presets);
+
+  const extraContext = [context, patentCheck.directive, styleDir, presetDir].filter(Boolean).join('\n\n');
+  const planPrompt = buildPlannerPrompt(prompt, extraContext || undefined);
 
   // Dynamic import to avoid loading AI at startup
   const { streamChat } = await import('@/lib/ai-providers');
@@ -307,15 +347,81 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
 
   console.log('\n' + formatReceipt(receipt, 'ko'));
 
-  // Git commit
+  // Deprecation check
+  const { checkDeprecations, formatDeprecationReport } = await import('../core/deprecation-checker');
+  const deprecations = checkDeprecations(finalCode, fileName, process.cwd());
+  if (deprecations.length > 0) {
+    console.log('\n' + formatDeprecationReport(deprecations));
+  }
+
+  // Record to Fix Memory
+  const { recordFix } = await import('../core/fix-memory');
+  for (const stage of pipelineResult.stages) {
+    for (const finding of stage.findings) {
+      recordFix({
+        category: stage.name,
+        description: finding.message,
+        beforePattern: '',
+        afterPattern: '',
+        confidence: 0.5,
+      });
+    }
+  }
+
+  // --with-tests: auto generate tests
+  if (opts.withTests) {
+    console.log('\n  🧪 테스트 생성 중...');
+    try {
+      let testCode = '';
+      await streamChat({
+        systemInstruction: 'Generate unit tests for the given code. Use vitest or jest syntax. Output only test code, no explanation.',
+        messages: [{ role: 'user', content: `Generate tests for:\n\`\`\`\n${finalCode.slice(0, 4000)}\n\`\`\`` }],
+        onChunk: (t: string) => { testCode += t; },
+      });
+      testCode = testCode.replace(/^```\w*\n?/gm, '').replace(/```$/gm, '').trim();
+      const testPath = join(csDir, fileName.replace('.ts', '.test.ts'));
+      writeFileSync(testPath, testCode, 'utf-8');
+      console.log(`        → ${testPath}`);
+    } catch {
+      console.log('        ⚠️  테스트 생성 실패');
+    }
+  }
+
+  // Git commit with AI message
   if (opts.commit) {
     const { execSync } = await import('child_process');
     try {
+      let commitMsg = `feat(cs): ${prompt.slice(0, 50)}`;
+      try {
+        let aiMsg = '';
+        await streamChat({
+          systemInstruction: 'Generate a concise git commit message (1 line, imperative mood, max 72 chars) for the given code. Output only the message, nothing else.',
+          messages: [{ role: 'user', content: `Code:\n${finalCode.slice(0, 2000)}\n\nTask: ${prompt}` }],
+          onChunk: (t: string) => { aiMsg += t; },
+        });
+        if (aiMsg.trim().length > 5) commitMsg = aiMsg.trim().split('\n')[0];
+      } catch { /* fallback to default */ }
+
       execSync(`git add "${filePath}"`, { stdio: 'pipe' });
-      execSync(`git commit -m "feat(cs): ${prompt.slice(0, 50)}"`, { stdio: 'pipe' });
-      console.log('\n  📝 커밋 완료');
+      execSync(`git commit -m "${commitMsg.replace(/"/g, '\\"')}"`, { stdio: 'pipe' });
+      console.log(`\n  📝 커밋: ${commitMsg}`);
     } catch {
-      console.log('\n  ⚠️  커밋 실패 (변경사항 없음?)');
+      console.log('\n  ⚠️  커밋 실패');
+    }
+  }
+
+  // --pr: create PR (requires gh CLI)
+  if (opts.pr) {
+    const { execSync } = await import('child_process');
+    try {
+      const branchName = `cs/${prompt.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 30)}`;
+      execSync(`git checkout -b "${branchName}" 2>/dev/null || true`, { stdio: 'pipe' });
+      execSync(`git push -u origin "${branchName}"`, { stdio: 'pipe' });
+      const prTitle = `feat(cs): ${prompt.slice(0, 60)}`;
+      execSync(`gh pr create --title "${prTitle}" --body "Generated by CS Quill 🦔\n\nScore: ${pipelineResult.overallScore}/100\nReceipt: ${receipt.id}"`, { stdio: 'pipe' });
+      console.log(`\n  🔗 PR 생성: ${prTitle}`);
+    } catch {
+      console.log('\n  ⚠️  PR 생성 실패 (gh CLI 필요)');
     }
   }
 

@@ -17,16 +17,25 @@ export { formatReceipt, toJSON, toSARIF, computeReceiptHash, chainReceipt, type 
 // Config
 export { loadMergedConfig, saveGlobalConfig, addKey, removeKey, getKeyForRole, type CSConfig, type KeyConfig } from './core/config';
 
+// Core — Advanced
+export { recordFix, recordAcceptance, findSimilarFixes, getTopPatterns, getStats, type FixPattern } from './core/fix-memory';
+export { scanProjectStyle, saveProfile, loadProfile, recordSuggestionResult, buildStyleDirective, type StyleProfile } from './core/style-learning';
+export { evaluateBadges, evaluateChallenges, generateShareCard, generateReadmeBadge, BADGES, CHALLENGES } from './core/badges';
+export { checkPatentPatterns, PATENT_PATTERNS, type PatentCheckResult } from './core/patent-db';
+export { checkDeprecations, formatDeprecationReport, type DeprecationFinding } from './core/deprecation-checker';
+
 // Adapters
 export { storeGet, storeSet, storeDelete, storeKeys, readFileTree, cacheGet, cacheSet, type CLIFileNode } from './adapters/fs-adapter';
+export { getLocalModelConfig, isLocalModelAvailable, streamLocalChat, streamWithFallback } from './adapters/local-model';
 
 // TUI
 export { progressBar, progressLine, ProgressTimer, Spinner } from './tui/progress';
 export { computeDiff, formatDiff, printDiffSummary } from './tui/diff-preview';
 
-// Commands (lazy — import at call site, listed here for discoverability)
+// Commands (lazy — import at call site)
 // runInit, runGenerate, runVerify, runAudit, runVibe, runStress,
 // runBench, runPlayground, runIpScan, runCompliance, runExplain,
-// runSprint, runServe, runReport, runApply, runUndo, runConfig
+// runSprint, runServe, runReport, runApply, runUndo, runConfig,
+// runLearn, runSuggest, runBookmark, runPreset
 
 // IDENTITY_SEAL: role=barrel-export | inputs=none | outputs=all-public-APIs

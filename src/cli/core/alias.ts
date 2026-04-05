@@ -25,6 +25,10 @@ const ALIAS_MAP: Record<string, string> = {
   '스프린트': 'sprint',
   '영수증': 'receipt',
   '컴플라이언스': 'compliance',
+  '학습': 'learn',
+  '추천': 'suggest',
+  '북마크': 'bookmark',
+  '프리셋': 'preset',
 
   // 日本語
   '初期化': 'init',
