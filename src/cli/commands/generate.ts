@@ -169,11 +169,22 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   const presets = csConfig.framework ? getPresetsForFramework(csConfig.framework) : [];
   const presetDir = buildPresetDirective(presets);
 
-  // Reference search — 유사 패턴 찾아서 주입
-  const references = searchPatterns(prompt, csConfig.framework ?? undefined, 3);
+  // Reference search — 유사 패턴 찾아서 주입 (외부 레퍼런스 자동 로드 포함)
+  try {
+    const { loadExternalReferences } = await import('../core/reference-db');
+    const refPath = join(process.cwd(), '..', 'new1');
+    const { existsSync: refExists } = await import('fs');
+    // 프로젝트 상위 또는 직박구리 내 new1 폴더 탐색
+    const candidates = [refPath, join(process.cwd(), 'new1'), join(process.cwd(), '..', '..', 'new1')];
+    for (const p of candidates) {
+      if (refExists(p)) { loadExternalReferences(p); break; }
+    }
+  } catch { /* 외부 레퍼런스 없으면 스킵 */ }
+
+  const references = searchPatterns(prompt, csConfig.framework ?? undefined, 5);
   const refDir = buildReferencePrompt(references);
   if (references.length > 0) {
-    console.log(`        📚 레퍼런스 ${references.length}개 발견: ${references.map(r => r.name).join(', ')}`);
+    console.log(`        📚 레퍼런스 ${references.length}개 매칭: ${references.map(r => r.name).join(', ')}`);
     for (const ref of references) {
       recordUsage(ref.category, ref.id);
     }

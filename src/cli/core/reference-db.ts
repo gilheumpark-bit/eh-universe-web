@@ -394,3 +394,98 @@ export function getRefStats(): { total: number; byCategory: Record<string, numbe
 }
 
 // IDENTITY_SEAL: PART-7 | role=stats | inputs=none | outputs=stats
+
+// ============================================================
+// PART 8 — External Reference Loader (new1/ 레퍼런스 자동 적재)
+// ============================================================
+
+const WORKFLOW_MAP: Record<string, { category: string; tags: string[] }> = {
+  '01-zero-to-one': { category: 'ui-component', tags: ['zero-to-one', 'ui', 'shell', 'dashboard', 'layout', 'signup', 'kanban', 'table', 'modal'] },
+  '02-feature-logic': { category: 'api', tags: ['feature', 'api', 'auth', 'webhook', 'rate-limit', 'server-action', 'fetch'] },
+  '03-refactoring-optimization': { category: 'state', tags: ['refactoring', 'memo', 'reducer', 'compound', 'lazy', 'hook', 'barrel'] },
+  '04-debugging-healing': { category: 'testing', tags: ['debugging', 'hydration', 'error-boundary', 'ssr', 'lcp', 'stacking'] },
+  '05-chore-typing': { category: 'validation', tags: ['chore', 'typing', 'zod', 'enum', 'jest', 'eslint', 'branded'] },
+};
+
+const DATASET_MAP: Record<string, { category: string; tags: string[] }> = {
+  'Zero-to-One': { category: 'ui-component', tags: ['zero-to-one', 'express', 'server', 'starter'] },
+  'Feature': { category: 'crud', tags: ['feature', 'controller', 'crud', 'api'] },
+  'Refactoring': { category: 'state', tags: ['refactoring', 'simplify', 'optimize'] },
+  'Debugging': { category: 'testing', tags: ['debugging', 'fix', 'error', 'logging'] },
+  'Chore': { category: 'middleware', tags: ['chore', 'config', 'setup', 'ci'] },
+};
+
+export function loadExternalReferences(basePath: string): { loaded: number; skipped: number } {
+  const { readdirSync, statSync } = require('fs');
+  let loaded = 0;
+  let skipped = 0;
+
+  // 1. ai-reference-by-workflow
+  const workflowDir = join(basePath, 'ai-reference-by-workflow');
+  if (existsSync(workflowDir)) {
+    for (const [dirName, meta] of Object.entries(WORKFLOW_MAP)) {
+      const dir = join(workflowDir, dirName);
+      if (!existsSync(dir)) continue;
+
+      for (const file of readdirSync(dir).filter((f: string) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.css'))) {
+        const filePath = join(dir, file);
+        const code = readFileSync(filePath, 'utf-8');
+        const name = file.replace(/\.\w+$/, '').replace(/^\d+-/, '');
+
+        // 중복 체크
+        const existing = loadCategory(meta.category);
+        if (existing.some(p => p.name === `wf:${name}`)) { skipped++; continue; }
+
+        addPattern({
+          category: meta.category,
+          name: `wf:${name}`,
+          description: `워크플로우 레퍼런스: ${dirName}/${file}`,
+          framework: file.endsWith('.tsx') ? 'React' : 'TypeScript',
+          language: 'typescript',
+          tags: [...meta.tags, ...name.split('-')],
+          sources: [{ ai: 'human-curated', code: code.slice(0, 3000) }],
+          mergedPattern: code.slice(0, 2000),
+          bestPractices: [],
+          antiPatterns: [],
+        });
+        loaded++;
+      }
+    }
+  }
+
+  // 2. reference-dataset
+  const datasetDir = join(basePath, 'reference-dataset');
+  if (existsSync(datasetDir)) {
+    for (const [dirName, meta] of Object.entries(DATASET_MAP)) {
+      const dir = join(datasetDir, dirName);
+      if (!existsSync(dir)) continue;
+
+      for (const file of readdirSync(dir).filter((f: string) => f.endsWith('.ts') || f.endsWith('.js'))) {
+        const filePath = join(dir, file);
+        const code = readFileSync(filePath, 'utf-8');
+        const name = file.replace(/\.\w+$/, '');
+
+        const existing = loadCategory(meta.category);
+        if (existing.some(p => p.name === `ds:${name}`)) { skipped++; continue; }
+
+        addPattern({
+          category: meta.category,
+          name: `ds:${name}`,
+          description: `데이터셋 레퍼런스: ${dirName}/${file}`,
+          framework: 'TypeScript',
+          language: 'typescript',
+          tags: [...meta.tags, ...name.split('-').filter(s => s.length > 2)],
+          sources: [{ ai: 'dataset', code }],
+          mergedPattern: code.slice(0, 1500),
+          bestPractices: [],
+          antiPatterns: [],
+        });
+        loaded++;
+      }
+    }
+  }
+
+  return { loaded, skipped };
+}
+
+// IDENTITY_SEAL: PART-8 | role=external-loader | inputs=basePath | outputs={loaded,skipped}

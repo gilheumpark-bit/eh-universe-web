@@ -192,11 +192,23 @@ export async function runInit(): Promise<void> {
   saveGlobalConfig(config);
   console.log(`  ✅ ${l.saved}: ~/.cs/config.json`);
 
-  // Seed reference DB
-  const { seedDB } = await import('../core/reference-db');
+  // Seed reference DB + 외부 레퍼런스 로드
+  const { seedDB, loadExternalReferences } = await import('../core/reference-db');
   const seeded = seedDB();
-  if (seeded > 0) {
-    console.log(`  📚 레퍼런스 DB 초기화: ${seeded}개 패턴 추가`);
+  if (seeded > 0) console.log(`  📚 내장 레퍼런스: ${seeded}개 패턴 추가`);
+
+  // new1/ 외부 레퍼런스 자동 탐색
+  const refCandidates = [
+    join(process.cwd(), 'new1'),
+    join(process.cwd(), '..', 'new1'),
+    join(process.cwd(), '..', '..', 'new1'),
+  ];
+  for (const refPath of refCandidates) {
+    if (existsSync(refPath)) {
+      const ext = loadExternalReferences(refPath);
+      if (ext.loaded > 0) console.log(`  📚 외부 레퍼런스: ${ext.loaded}개 로드 (${refPath.split(/[/\\]/).pop()})`);
+      break;
+    }
   }
 
   // Auto-scan style profile
