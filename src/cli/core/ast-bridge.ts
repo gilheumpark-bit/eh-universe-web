@@ -238,6 +238,24 @@ export async function runEnhancedPipeline(
     }
   } catch { /* deep-verify optional */ }
 
+  // Phase 8: CFG Brain Analysis (제어 흐름 그래프 기반 위험 경로)
+  try {
+    const { runBrainAnalysis } = await import('./cfg-engine');
+    const brain = runBrainAnalysis(code, fileName);
+    if (brain.riskPaths.length > 0) {
+      engines.push(`cfg-engine(${brain.stats.reductionPercent}% 컨텍스트 절감)`);
+      for (const path of brain.riskPaths) {
+        findings.push({
+          engine: 'cfg', line: path.nodes[0]?.line ?? 0,
+          message: `[CFG-${path.risk}] ${path.description}`,
+          severity: path.risk === 'tainted' ? 'critical' : path.risk === 'nullable' ? 'error' : 'warning',
+          team: path.risk === 'tainted' ? 'release-ip' : 'validation',
+          confidence: 0.88,
+        });
+      }
+    }
+  } catch { /* cfg optional */ }
+
   // Deduplicate: same line + same team = keep higher confidence
   const deduped = deduplicateFindings(findings);
 

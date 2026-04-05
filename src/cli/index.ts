@@ -31,6 +31,9 @@ export * from './core/constants';
 export { searchPatterns, buildReferencePrompt, addPattern, seedDB, getRefStats, CATEGORIES, SEED_PATTERNS, type ReferencePattern, type ReferenceDB } from './core/reference-db';
 export { runEnhancedPipeline, type ASTFinding, type EnhancedPipelineResult } from './core/ast-bridge';
 export { runDeepVerify, runDeepVerifyProject, type DeepFinding, type DeepVerifyResult } from './core/deep-verify';
+export { buildCFG, findRiskPaths, sliceContext, runBrainAnalysis, type CFGNode, type CFGGraph, type ExecutionPath } from './core/cfg-engine';
+export { runAutoHeal, healFile, type HealResult } from './core/auto-heal';
+export { collectEvidence, getAgentOpinion, runArena, type Evidence, type AgentOpinion, type ArenaResult } from './core/arena';
 export { PRECISION_CHECKLIST, buildPrecisionReviewPrompt, parsePrecisionResult, runPrecisionReview, getChecklistStats, type CheckItem, type PrecisionFinding } from './ai/precision-checklist';
 export { runFullDataFlowAnalysis, trackNullFlow, trackCrossFileFlow, trackTaintFlow, type FlowChain, type DataFlowResult } from './core/data-flow';
 
