@@ -32,6 +32,10 @@ export { runFullLintAnalysis, runESLint, checkPrettier, runJSCPD, runMadge } fro
 export { runFullSecurityAnalysis, runNpmAudit, runLockfileLint, runRetireJS, runSnyk } from './adapters/security-engine';
 export { runFullPerfAnalysis, runAutocannon, runTinybench, runC8, measureMemoryGrowth } from './adapters/perf-engine';
 export { runFullTestAnalysis, runVitest, runFastCheck, runStryker } from './adapters/test-engine';
+export { runInSandbox, runProjectInSandbox, fuzzInSandbox, type SandboxConfig, type SandboxResult } from './adapters/sandbox';
+export { runFullLSPAnalysis, getDiagnostics, findReferences, buildCallGraph, findCircularDeps } from './adapters/lsp-adapter';
+export { isGitRepo, getCurrentBranch, getStatus, blame, diff, diffStat, autoStash, autoCommit, autoBranch, getRecentHistory, getFileHotspots } from './adapters/git-deep';
+export { runTasksParallel, runParallelVerify, type WorkerTask, type WorkerResult } from './adapters/worker-pool';
 
 // TUI
 export { progressBar, progressLine, ProgressTimer, Spinner } from './tui/progress';
