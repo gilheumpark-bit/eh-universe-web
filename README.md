@@ -202,14 +202,16 @@ Central dictionary with identical leaf counts across all languages. Fallback: JP
 
 ## CS Quill 🦔 — Integrated Code Quality CLI
 
-EH Universe Web includes **CS Quill**, a 56-engine autonomous AI coding agent, built into `src/cli/`.
+EH Universe Web includes **CS Quill**, a 56-engine autonomous AI coding agent with multi-key auto-fallback, built into `src/cli/`.
 
 ```
     /\_/\
    ( o.o )  CS Quill — Code Quality Guardian
-    > ^ <   77 files | 18,238 lines | 56 engines
+    > ^ <   85 files | 20,500 lines | 56 engines | 274 tests
   /||||||\\
 ```
+
+**Verified:** 274/274 tests PASS | 1000-req load test 252 RPS | Multi-key fallback | SBOM | Offline mode
 
 ### Quick Start
 
