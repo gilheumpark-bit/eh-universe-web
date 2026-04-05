@@ -245,6 +245,86 @@ program
     await runReport(opts);
   });
 
+program
+  .command('search <query>')
+  .description('🔍 프로젝트 내 코드/파일/심볼 검색')
+  .option('--files', '파일명 퍼지 검색')
+  .option('--symbols', '함수/클래스/타입 검색')
+  .option('--glob <pattern>', '파일 필터')
+  .action(async (query, opts) => {
+    const rootPath = process.cwd();
+    if (opts.files) {
+      const { fuzzyFileSearch } = await import('../adapters/search-engine');
+      const results = fuzzyFileSearch(query, rootPath);
+      for (const r of results) console.log(`  ${r.file} (score: ${r.score})`);
+    } else if (opts.symbols) {
+      const { symbolSearch } = await import('../adapters/search-engine');
+      const results = symbolSearch(query, rootPath);
+      for (const r of results) console.log(`  ${r.type.padEnd(10)} ${r.name.padEnd(30)} ${r.file}:${r.line}`);
+    } else {
+      const { ripgrepSearch } = await import('../adapters/search-engine');
+      const results = ripgrepSearch(query, rootPath, { glob: opts.glob });
+      for (const r of results) console.log(`  ${r.file}:${r.line}  ${r.content.slice(0, 80)}`);
+    }
+  });
+
+program
+  .command('session [action]')
+  .description('📋 세션 관리 (list|show|delete)')
+  .action(async (action) => {
+    const { listSessions, getSessionSummary, getCurrentSession, deleteSession } = await import('../core/session');
+    switch (action) {
+      case 'list': {
+        const sessions = listSessions();
+        if (sessions.length === 0) { console.log('  📭 세션 없음\n'); return; }
+        console.log('🦔 세션 목록\n');
+        for (const s of sessions.slice(0, 10)) {
+          console.log(`  ${s.id} — ${s.projectName} (${s.lastCommand}) ${new Date(s.updatedAt).toLocaleDateString()}`);
+        }
+        console.log('');
+        break;
+      }
+      case 'show': {
+        console.log('🦔 현재 세션\n');
+        console.log(getSessionSummary());
+        console.log('');
+        break;
+      }
+      case 'delete': {
+        const current = getCurrentSession();
+        if (current) { deleteSession(current.id); console.log(`  🗑️ ${current.id} 삭제됨`); }
+        break;
+      }
+      default:
+        console.log(getSessionSummary());
+    }
+  });
+
+program
+  .command('debug <file>')
+  .description('🐛 기본 디버깅 (Node.js inspector)')
+  .option('--inspect <expression>', '변수/표현식 값 확인')
+  .action(async (file, opts) => {
+    if (opts.inspect) {
+      const { readFileSync } = await import('fs');
+      const { quickInspect } = await import('../adapters/debug-adapter');
+      const code = readFileSync(file, 'utf-8');
+      const result = await quickInspect(code, opts.inspect);
+      console.log(`  🔍 ${opts.inspect} = ${result}`);
+    } else {
+      const { launchDebug } = await import('../adapters/debug-adapter');
+      console.log(`  🐛 Node Inspector 시작: ${file}`);
+      const session = launchDebug(file);
+      if (session) {
+        console.log(`  PID: ${session.pid}`);
+        console.log(`  Inspector: ${session.inspectorUrl}`);
+        console.log('  Chrome DevTools에서 열기: chrome://inspect');
+      } else {
+        console.log('  ❌ 디버깅 시작 실패');
+      }
+    }
+  });
+
 // ============================================================
 // PART 8 — Alias Resolution & Execute
 // ============================================================

@@ -29,6 +29,9 @@ const ALIAS_MAP: Record<string, string> = {
   '추천': 'suggest',
   '북마크': 'bookmark',
   '프리셋': 'preset',
+  '검색': 'search',
+  '세션': 'session',
+  '디버그': 'debug',
 
   // 日本語
   '初期化': 'init',

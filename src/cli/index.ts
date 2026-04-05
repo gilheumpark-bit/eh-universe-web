@@ -38,6 +38,11 @@ export { runFullTestAnalysis, runVitest, runFastCheck, runStryker } from './adap
 export { LANGUAGE_REGISTRY, detectLanguage, detectProjectLanguages, parseWithTreeSitter, analyzeAnyLanguage, runExternalLinter, getLanguageStats, type LanguageDef, type UniversalASTResult } from './adapters/multi-lang';
 export { runAxeAccessibility, checkBundleSize, runLighthouse, runFullWebQualityAnalysis } from './adapters/web-quality';
 export { runDepcheck, runKnip, runDependencyCruiser, runPublint, runAttw, runOxlint, detectCodemodOpportunities, runFullDepAnalysis } from './adapters/dep-analyzer';
+export { ripgrepSearch, fuzzyFileSearch, symbolSearch, type SearchResult, type FuzzyResult, type SymbolResult } from './adapters/search-engine';
+export { launchDebug, quickInspect, profileRun, type DebugSession, type BreakpointInfo } from './adapters/debug-adapter';
+
+// Core — Session
+export { createSession, loadSession, updateSession, listSessions, getCurrentSession, ensureSession, recordCommand, recordFile, recordReceipt, recordScore, getSessionSummary, type Session } from './core/session';
 export { runInSandbox, runProjectInSandbox, fuzzInSandbox, type SandboxConfig, type SandboxResult } from './adapters/sandbox';
 export { runFullLSPAnalysis, getDiagnostics, findReferences, buildCallGraph, findCircularDeps } from './adapters/lsp-adapter';
 export { isGitRepo, getCurrentBranch, getStatus, blame, diff, diffStat, autoStash, autoCommit, autoBranch, getRecentHistory, getFileHotspots } from './adapters/git-deep';
