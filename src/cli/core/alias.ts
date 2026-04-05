@@ -64,7 +64,7 @@ const ALIAS_MAP: Record<string, string> = {
 // ============================================================
 
 export function resolveAlias(input: string): string {
-  return ALIAS_MAP[input] ?? input;
+  return ALIAS_MAP[input] ?? ALIAS_MAP[input.toLowerCase()] ?? input;
 }
 
 export function getAllAliases(): Record<string, string> {

@@ -105,7 +105,12 @@ export async function runBookmark(action: string, args?: string[]): Promise<void
       bookmark.usedCount++;
       saveBookmarks(db);
       console.log(`  🔖 "${bookmark.name}" 실행\n`);
-      await runGenerate(bookmark.prompt, { mode: 'full', structure: 'auto' });
+      const opts = bookmark.options ?? {};
+      await runGenerate(bookmark.prompt, {
+        mode: (opts.mode as 'fast' | 'full' | 'strict') ?? 'full',
+        structure: (opts.structure as 'auto' | 'on' | 'off') ?? 'auto',
+        withTests: opts.withTests === 'true',
+      });
       break;
     }
 

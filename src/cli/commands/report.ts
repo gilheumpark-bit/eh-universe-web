@@ -95,6 +95,12 @@ export async function runReport(opts: ReportOptions): Promise<void> {
     console.log(`\n  💡 개선 포인트: ${sorted[0].name} (${sorted[0].avg}/100) 이 가장 낮습니다.`);
   }
 
+  // Cost tracking
+  try {
+    const { formatCostSummary } = await import('../core/cost-tracker');
+    console.log(`\n${formatCostSummary()}`);
+  } catch {}
+
   // Fix Memory stats
   try {
     const { getStats } = await import('../core/fix-memory');

@@ -55,8 +55,25 @@ export async function runApply(file: string | undefined, opts: ApplyOptions): Pr
       continue;
     }
 
-    // Backup original if exists
+    // Show diff before applying (safe/auto mode)
     if (existsSync(targetPath)) {
+      try {
+        const { loadMergedConfig } = await import('../core/config');
+        const cfg = loadMergedConfig();
+        if (cfg.fileMode !== 'yolo') {
+          const { computeDiff, formatDiff, printDiffSummary } = await import('../tui/diff-preview');
+          const original = readFileSync(targetPath, 'utf-8');
+          const modified = readFileSync(generatedPath, 'utf-8');
+          const diff = computeDiff(original, modified);
+          const changed = diff.filter(d => d.type !== 'unchanged').length;
+          if (changed > 0) {
+            console.log(`\n  📊 ${f}: ${printDiffSummary(diff)}`);
+            if (changed < 30) console.log(formatDiff(diff));
+          }
+        }
+      } catch { /* diff optional */ }
+
+      // Backup
       const backupName = `${f}.${Date.now()}`;
       copyFileSync(targetPath, join(backupDir, backupName));
       console.log(`  📋 ${f} 백업 → .cs/backup/${backupName}`);

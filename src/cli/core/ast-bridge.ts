@@ -255,7 +255,7 @@ async function runASTHollowScan(code: string, fileName: string): Promise<ASTFind
     const project = new Project({ useInMemoryFileSystem: true });
     const sourceFile = project.createSourceFile(fileName, code);
 
-    // 1. Empty functions (AST precise)
+    // 1. Empty functions (AST precise) — both declarations and const arrows
     for (const fn of sourceFile.getFunctions()) {
       const body = fn.getBody();
       if (body && body.getStatements().length === 0) {
@@ -264,6 +264,27 @@ async function runASTHollowScan(code: string, fileName: string): Promise<ASTFind
           message: `Empty function: ${fn.getName() ?? 'anonymous'} — body has 0 statements`,
           severity: 'error', team: 'generation', confidence: 0.95,
         });
+      }
+    }
+
+    // 1b. Empty const arrow functions (const foo = () => {})
+    for (const decl of sourceFile.getVariableDeclarations()) {
+      const init = decl.getInitializer();
+      if (!init) continue;
+      if (init.getKind() === SyntaxKind.ArrowFunction) {
+        const arrow = init.asKind(SyntaxKind.ArrowFunction);
+        if (!arrow) continue;
+        const body = arrow.getBody();
+        if (body.getKind() === SyntaxKind.Block) {
+          const block = body.asKind(SyntaxKind.Block);
+          if (block && block.getStatements().length === 0) {
+            findings.push({
+              engine: 'ts-morph', line: decl.getStartLineNumber(),
+              message: `Empty arrow function: const ${decl.getName()} = () => {}`,
+              severity: 'error', team: 'generation', confidence: 0.95,
+            });
+          }
+        }
       }
     }
 
