@@ -273,6 +273,32 @@ program
   });
 
 program
+  .command('daemon')
+  .description('🦔 백그라운드 데몬 서버 (VS Code/Web 연동)')
+  .option('--port <port>', '포트 번호', '8443')
+  .option('--host <host>', '호스트', '127.0.0.1')
+  .option('--detach', '백그라운드 실행 (분리 모드)')
+  .action(async (opts) => {
+    const { startDaemon } = await import('../daemon');
+    const port = parseInt(opts.port, 10) || 8443;
+
+    if (opts.detach) {
+      // 백그라운드 실행
+      const { spawn } = await import('child_process');
+      const child = spawn(process.execPath, [__filename, 'daemon', '--port', String(port)], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+      console.log(`  🦔 데몬 시작 (PID: ${child.pid}, port: ${port})`);
+      console.log(`  상태 확인: curl http://${opts.host}:${port}/health`);
+      return;
+    }
+
+    startDaemon({ port, host: opts.host });
+  });
+
+program
   .command('report')
   .description('일일/팀 리포트')
   .option('--today', '오늘 리포트')
