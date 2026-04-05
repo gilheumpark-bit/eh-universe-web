@@ -192,6 +192,13 @@ export async function runInit(): Promise<void> {
   saveGlobalConfig(config);
   console.log(`  ✅ ${l.saved}: ~/.cs/config.json`);
 
+  // Seed reference DB
+  const { seedDB } = await import('../core/reference-db');
+  const seeded = seedDB();
+  if (seeded > 0) {
+    console.log(`  📚 레퍼런스 DB 초기화: ${seeded}개 패턴 추가`);
+  }
+
   // Auto-scan style profile
   const { scanProjectStyle, saveProfile } = await import('../core/style-learning');
   const profile = scanProjectStyle(process.cwd());

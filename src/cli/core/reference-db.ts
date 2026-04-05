@@ -1,0 +1,340 @@
+// ============================================================
+// CS Quill 🦔 — Reference DB (AI 레퍼런스 패턴 저장소)
+// ============================================================
+// 5대 AI가 생성한 코드의 평균 패턴을 저장.
+// 생성 시 레퍼런스로 주입해서 품질/속도 향상.
+
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { join } from 'path';
+import { getGlobalConfigDir } from './config';
+
+// ============================================================
+// PART 1 — Types
+// ============================================================
+
+export interface ReferencePattern {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  framework: string;
+  language: string;
+  tags: string[];
+  sources: Array<{
+    ai: string;
+    code: string;
+    score?: number;
+  }>;
+  mergedPattern: string;
+  bestPractices: string[];
+  antiPatterns: string[];
+  createdAt: number;
+  usedCount: number;
+}
+
+export interface ReferenceDB {
+  version: 1;
+  patterns: ReferencePattern[];
+}
+
+// Categories
+export const CATEGORIES = [
+  'auth', 'crud', 'api', 'ui-component', 'state', 'file',
+  'payment', 'email', 'search', 'websocket', 'testing',
+  'middleware', 'database', 'cache', 'validation',
+] as const;
+
+export type ReferenceCategory = typeof CATEGORIES[number];
+
+// IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=ReferencePattern,ReferenceDB
+
+// ============================================================
+// PART 2 — Storage
+// ============================================================
+
+function getDBDir(): string {
+  return join(getGlobalConfigDir(), 'references');
+}
+
+function getDBPath(category: string): string {
+  return join(getDBDir(), `${category}.json`);
+}
+
+function loadCategory(category: string): ReferencePattern[] {
+  const path = getDBPath(category);
+  if (!existsSync(path)) return [];
+  try {
+    const db: ReferenceDB = JSON.parse(readFileSync(path, 'utf-8'));
+    return db.patterns;
+  } catch { return []; }
+}
+
+function saveCategory(category: string, patterns: ReferencePattern[]): void {
+  mkdirSync(getDBDir(), { recursive: true });
+  const db: ReferenceDB = { version: 1, patterns };
+  writeFileSync(getDBPath(category), JSON.stringify(db, null, 2));
+}
+
+export function loadAllPatterns(): ReferencePattern[] {
+  const all: ReferencePattern[] = [];
+  for (const cat of CATEGORIES) {
+    all.push(...loadCategory(cat));
+  }
+  return all;
+}
+
+// IDENTITY_SEAL: PART-2 | role=storage | inputs=category | outputs=ReferencePattern[]
+
+// ============================================================
+// PART 3 — Pattern CRUD
+// ============================================================
+
+export function addPattern(pattern: Omit<ReferencePattern, 'id' | 'createdAt' | 'usedCount'>): ReferencePattern {
+  const full: ReferencePattern = {
+    ...pattern,
+    id: `ref-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    createdAt: Date.now(),
+    usedCount: 0,
+  };
+
+  const patterns = loadCategory(pattern.category);
+  patterns.push(full);
+  saveCategory(pattern.category, patterns);
+  return full;
+}
+
+export function removePattern(category: string, patternId: string): boolean {
+  const patterns = loadCategory(category);
+  const idx = patterns.findIndex(p => p.id === patternId);
+  if (idx < 0) return false;
+  patterns.splice(idx, 1);
+  saveCategory(category, patterns);
+  return true;
+}
+
+export function recordUsage(category: string, patternId: string): void {
+  const patterns = loadCategory(category);
+  const pattern = patterns.find(p => p.id === patternId);
+  if (pattern) {
+    pattern.usedCount++;
+    saveCategory(category, patterns);
+  }
+}
+
+// IDENTITY_SEAL: PART-3 | role=crud | inputs=pattern | outputs=ReferencePattern
+
+// ============================================================
+// PART 4 — Search (태스크 → 레퍼런스 매칭)
+// ============================================================
+
+export function searchPatterns(query: string, framework?: string, limit: number = 3): ReferencePattern[] {
+  const all = loadAllPatterns();
+  const queryLower = query.toLowerCase();
+  const queryWords = queryLower.split(/\s+/);
+
+  const scored = all.map(pattern => {
+    let score = 0;
+
+    // Name match
+    if (pattern.name.toLowerCase().includes(queryLower)) score += 10;
+
+    // Tag match
+    for (const tag of pattern.tags) {
+      if (queryWords.some(w => tag.toLowerCase().includes(w))) score += 5;
+    }
+
+    // Description match
+    for (const word of queryWords) {
+      if (pattern.description.toLowerCase().includes(word)) score += 3;
+    }
+
+    // Category match (from query keywords)
+    const categoryKeywords: Record<string, string[]> = {
+      auth: ['로그인', 'login', '회원가입', 'register', 'jwt', 'oauth', '인증', 'auth', 'password'],
+      crud: ['crud', '목록', 'list', '생성', 'create', '수정', 'update', '삭제', 'delete', '상세', 'detail'],
+      api: ['api', 'route', 'endpoint', 'rest', 'middleware', '라우트'],
+      'ui-component': ['버튼', 'button', '폼', 'form', '모달', 'modal', '테이블', 'table', '탭', 'tab', '드롭다운', 'dropdown'],
+      state: ['상태', 'state', 'store', 'context', 'redux', 'zustand'],
+      file: ['업로드', 'upload', '다운로드', 'download', '파일', 'file', '이미지', 'image'],
+      payment: ['결제', 'payment', 'stripe', '구독', 'subscription', '웹훅', 'webhook'],
+      validation: ['검증', 'validation', 'zod', 'schema', '유효성'],
+      database: ['db', 'database', 'prisma', 'drizzle', 'query', '쿼리'],
+      testing: ['테스트', 'test', 'jest', 'vitest', 'mock'],
+    };
+
+    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+      if (cat === pattern.category && keywords.some(k => queryLower.includes(k))) {
+        score += 8;
+      }
+    }
+
+    // Framework match
+    if (framework && pattern.framework.toLowerCase().includes(framework.toLowerCase())) {
+      score += 5;
+    }
+
+    // Usage popularity boost
+    score += Math.min(5, pattern.usedCount);
+
+    return { pattern, score };
+  });
+
+  return scored
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(s => s.pattern);
+}
+
+// IDENTITY_SEAL: PART-4 | role=search | inputs=query,framework | outputs=ReferencePattern[]
+
+// ============================================================
+// PART 5 — Reference Prompt Builder
+// ============================================================
+
+export function buildReferencePrompt(patterns: ReferencePattern[]): string {
+  if (patterns.length === 0) return '';
+
+  const lines: string[] = [
+    '[REFERENCE PATTERNS — 참고만 하고 복사하지 마라]',
+    'Below are reference patterns from multiple AI sources.',
+    'Use the STRUCTURE and APPROACH as inspiration, but write entirely new code.',
+    'Do NOT copy variable names, function names, or logic verbatim.',
+    '',
+  ];
+
+  for (const [i, pattern] of patterns.entries()) {
+    lines.push(`--- Reference ${i + 1}: ${pattern.name} (${pattern.framework}) ---`);
+
+    // Show merged pattern (average of AI outputs)
+    if (pattern.mergedPattern) {
+      lines.push('Pattern:');
+      lines.push(pattern.mergedPattern.slice(0, 1500));
+    }
+
+    // Best practices
+    if (pattern.bestPractices.length > 0) {
+      lines.push('Best practices: ' + pattern.bestPractices.join(', '));
+    }
+
+    // Anti-patterns
+    if (pattern.antiPatterns.length > 0) {
+      lines.push('AVOID: ' + pattern.antiPatterns.join(', '));
+    }
+
+    lines.push('');
+  }
+
+  lines.push('[END REFERENCES — Write new code inspired by above, do NOT copy]');
+
+  return lines.join('\n');
+}
+
+// IDENTITY_SEAL: PART-5 | role=prompt-builder | inputs=ReferencePattern[] | outputs=string
+
+// ============================================================
+// PART 6 — Built-in Seed Patterns (빈 껍데기 — 나중에 채움)
+// ============================================================
+
+export const SEED_PATTERNS: Array<Omit<ReferencePattern, 'id' | 'createdAt' | 'usedCount'>> = [
+  {
+    category: 'auth', name: 'JWT Login API', description: 'JWT 기반 로그인 API Route',
+    framework: 'Next.js', language: 'typescript', tags: ['login', 'jwt', 'auth', 'api', '로그인'],
+    sources: [], // 나중에 AI 5개로 채움
+    mergedPattern: `// Pattern: JWT Login
+// 1. Input validation (Zod schema)
+// 2. User lookup (DB query)
+// 3. Password verify (bcrypt.compare)
+// 4. Token generation (jose/jsonwebtoken)
+// 5. HttpOnly cookie set
+// 6. Error handling (try-catch + typed errors)`,
+    bestPractices: ['HttpOnly cookie for token', 'bcrypt for password', 'Zod for input validation', 'Rate limiting'],
+    antiPatterns: ['localStorage for JWT', 'plain text password comparison', 'no input validation', 'hardcoded secrets'],
+  },
+  {
+    category: 'crud', name: 'REST CRUD API', description: 'RESTful CRUD API with validation',
+    framework: 'Next.js', language: 'typescript', tags: ['crud', 'rest', 'api', 'create', 'read', 'update', 'delete'],
+    sources: [],
+    mergedPattern: `// Pattern: REST CRUD
+// 1. GET /items — list with pagination (page, limit, cursor)
+// 2. GET /items/:id — single item with 404 handling
+// 3. POST /items — create with Zod validation + 201 response
+// 4. PUT /items/:id — update with partial validation
+// 5. DELETE /items/:id — soft delete with 204 response
+// 6. Error middleware (typed errors, no stack in prod)`,
+    bestPractices: ['Pagination on list', 'Zod input validation', 'Proper HTTP status codes', 'Soft delete'],
+    antiPatterns: ['No pagination', 'No input validation', 'Returning stack traces', 'Hard delete'],
+  },
+  {
+    category: 'ui-component', name: 'React Form', description: 'React Hook Form + Zod validation',
+    framework: 'React', language: 'typescript', tags: ['form', 'validation', 'react', 'zod', '폼', '검증'],
+    sources: [],
+    mergedPattern: `// Pattern: React Form
+// 1. Zod schema definition
+// 2. useForm with zodResolver
+// 3. Controlled inputs with register()
+// 4. Error display per field (formState.errors)
+// 5. Loading state on submit
+// 6. Success/error toast feedback
+// 7. Accessibility: label htmlFor, aria-describedby`,
+    bestPractices: ['Zod + React Hook Form combo', 'Field-level error display', 'Loading state', 'Accessible labels'],
+    antiPatterns: ['Manual validation', 'alert() for errors', 'No loading state', 'Missing labels'],
+  },
+  {
+    category: 'state', name: 'Global State (Zustand)', description: 'Zustand store with persistence',
+    framework: 'React', language: 'typescript', tags: ['state', 'zustand', 'store', 'global', '상태'],
+    sources: [],
+    mergedPattern: `// Pattern: Zustand Store
+// 1. Interface for state shape
+// 2. create() with typed state + actions
+// 3. Selectors for derived state
+// 4. persist middleware for localStorage
+// 5. devtools middleware for debugging
+// 6. Separate slice per domain`,
+    bestPractices: ['Typed state interface', 'Selectors over direct access', 'Persist for user preferences', 'Slice pattern'],
+    antiPatterns: ['Single massive store', 'No types', 'Direct mutation', 'No persistence for user data'],
+  },
+  {
+    category: 'middleware', name: 'Auth Middleware', description: 'JWT verification middleware',
+    framework: 'Next.js', language: 'typescript', tags: ['middleware', 'auth', 'jwt', 'protect', '미들웨어', '인증'],
+    sources: [],
+    mergedPattern: `// Pattern: Auth Middleware
+// 1. Extract token from cookie/header
+// 2. Verify with jose/jsonwebtoken
+// 3. Attach user to request context
+// 4. Role-based access control (RBAC)
+// 5. 401 for missing token, 403 for insufficient role
+// 6. Token refresh if near expiry`,
+    bestPractices: ['Cookie > Authorization header', 'Role-based checks', 'Token refresh', 'Typed user context'],
+    antiPatterns: ['Token in query params', 'No role check', 'Catch-all 500', 'User data in JWT payload'],
+  },
+];
+
+export function seedDB(): number {
+  let count = 0;
+  for (const seed of SEED_PATTERNS) {
+    const existing = loadCategory(seed.category);
+    if (existing.some(p => p.name === seed.name)) continue;
+    addPattern(seed);
+    count++;
+  }
+  return count;
+}
+
+// IDENTITY_SEAL: PART-6 | role=seeds | inputs=none | outputs=SEED_PATTERNS
+
+// ============================================================
+// PART 7 — Stats
+// ============================================================
+
+export function getRefStats(): { total: number; byCategory: Record<string, number>; topUsed: ReferencePattern[] } {
+  const all = loadAllPatterns();
+  const byCategory: Record<string, number> = {};
+  for (const p of all) {
+    byCategory[p.category] = (byCategory[p.category] ?? 0) + 1;
+  }
+  const topUsed = [...all].sort((a, b) => b.usedCount - a.usedCount).slice(0, 5);
+  return { total: all.length, byCategory, topUsed };
+}
+
+// IDENTITY_SEAL: PART-7 | role=stats | inputs=none | outputs=stats

@@ -155,16 +155,28 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
   // ── Step 1: Plan ──
   console.log('  [1/6] 📐 계획 수립 (SEAL 계약 생성)...');
 
-  // Inject patent directive + style + presets into context
+  // Inject patent directive + style + presets + references into context
   const { loadProfile, buildStyleDirective } = await import('../core/style-learning');
   const { getPresetsForFramework, buildPresetDirective } = await import('./preset');
+  const { searchPatterns, buildReferencePrompt, recordUsage } = await import('../core/reference-db');
+
   const projectId = process.cwd().split('/').pop() ?? 'unknown';
   const styleProfile = loadProfile(projectId);
   const styleDir = styleProfile ? buildStyleDirective(styleProfile) : '';
   const presets = csConfig.framework ? getPresetsForFramework(csConfig.framework) : [];
   const presetDir = buildPresetDirective(presets);
 
-  const extraContext = [context, patentCheck.directive, styleDir, presetDir].filter(Boolean).join('\n\n');
+  // Reference search — 유사 패턴 찾아서 주입
+  const references = searchPatterns(prompt, csConfig.framework ?? undefined, 3);
+  const refDir = buildReferencePrompt(references);
+  if (references.length > 0) {
+    console.log(`        📚 레퍼런스 ${references.length}개 발견: ${references.map(r => r.name).join(', ')}`);
+    for (const ref of references) {
+      recordUsage(ref.category, ref.id);
+    }
+  }
+
+  const extraContext = [context, patentCheck.directive, styleDir, presetDir, refDir].filter(Boolean).join('\n\n');
   const planPrompt = buildPlannerPrompt(prompt, extraContext || undefined);
 
   // Dynamic import to avoid loading AI at startup
