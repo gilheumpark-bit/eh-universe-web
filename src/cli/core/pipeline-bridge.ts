@@ -26,14 +26,14 @@ export async function runStaticPipeline(code: string, language: string): Promise
 
   // Team 2: AST (구조 분석 — typescript 컴파일러 API 필수, ts-morph 선택)
   try {
-    const { analyzeWithTypeScript } = await import('../adapters/ast-engine');
+    const { analyzeWithTypeScript } = require('../adapters/ast-engine');
     const tsResult = await analyzeWithTypeScript(code, 'analysis.ts');
     const tsFindings = Array.isArray(tsResult) ? tsResult : (tsResult?.findings ?? []);
 
     // ts-morph 추가 분석 (있으면 병합, 없으면 typescript 단독)
     let tsMorphFindings: Array<{ line: number; message: string; severity: string }> = [];
     try {
-      const { analyzeWithTsMorph } = await import('../adapters/ast-engine');
+      const { analyzeWithTsMorph } = require('../adapters/ast-engine');
       const tsMorphResult = await analyzeWithTsMorph(code, 'analysis.ts');
       tsMorphFindings = Array.isArray(tsMorphResult) ? tsMorphResult : (tsMorphResult?.findings ?? []);
     } catch { /* ts-morph 미설치 — typescript 단독 진행 */ }
@@ -67,7 +67,7 @@ export async function runStaticPipeline(code: string, language: string): Promise
 
   // Team 5: Design Lint (prettier 검증 시도)
   try {
-    const { checkPrettier } = await import('../adapters/lint-engine');
+    const { checkPrettier } = require('../adapters/lint-engine');
     const prettierResult = await checkPrettier(code, 'analysis.ts');
     const designFindings = runDesignLintCheck(code).findings;
     const score = prettierResult.isFormatted ? Math.max(70, 100 - designFindings.length * 10) : Math.max(0, 60 - designFindings.length * 10);
@@ -84,7 +84,7 @@ export async function runStaticPipeline(code: string, language: string): Promise
 
   // Team 7: Bug Pattern (deep-verify 6검증 실체 엔진)
   try {
-    const { runDeepVerify } = await import('./deep-verify');
+    const { runDeepVerify } = require('./deep-verify');
     const deepResult = await runDeepVerify(code, 'analysis.ts');
     const findings = deepResult.findings.map((f: { message: string; line?: number; severity?: string }) => ({
       line: f.line ?? 0, message: f.message,
@@ -425,8 +425,8 @@ export async function runProjectAudit(
   rootPath: string,
   _onProgress?: (area: string, index: number, total: number) => void,
 ): Promise<AuditReport> {
-  const { readdirSync, readFileSync, _statSync, existsSync } = await import('fs');
-  const { join, extname } = await import('path');
+  const { readdirSync, readFileSync, _statSync, existsSync } = require('fs');
+  const { join, extname } = require('path');
 
   const areas: AuditArea[] = [];
   const urgent: string[] = [];
@@ -520,21 +520,21 @@ export async function runProjectAudit(
 
   // 9. ESLint 점수
   try {
-    const { runFullLintAnalysis } = await import('../adapters/lint-engine');
+    const { runFullLintAnalysis } = require('../adapters/lint-engine');
     const lint = await runFullLintAnalysis(rootPath, files[0]);
     areas.push({ name: 'ESLint', score: lint.avgScore, findings: lint.results.map(r => `${r.engine}: ${r.detail}`), category: 'quality' });
   } catch { areas.push({ name: 'ESLint', score: 70, findings: ['lint-engine 미설치'], category: 'quality' }); }
 
   // 10. 미사용 의존성
   try {
-    const { runDepcheck } = await import('../adapters/dep-analyzer');
+    const { runDepcheck } = require('../adapters/dep-analyzer');
     const dep = await runDepcheck(rootPath);
     areas.push({ name: '미사용 의존성', score: dep.score, findings: [`unused: ${dep.unused.length}, missing: ${dep.missing.length}`], category: 'performance' });
   } catch { areas.push({ name: '미사용 의존성', score: 80, findings: ['depcheck 미설치'], category: 'performance' }); }
 
   // 11. 심층 버그 (deep-verify)
   try {
-    const { runDeepVerify } = await import('./deep-verify');
+    const { runDeepVerify } = require('./deep-verify');
     const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
     if (sampleCode) {
       const deep = await runDeepVerify(sampleCode, files[0]);
@@ -546,7 +546,7 @@ export async function runProjectAudit(
 
   // 12. 보안 취약점 (npm audit)
   try {
-    const { runNpmAudit } = await import('../adapters/security-engine');
+    const { runNpmAudit } = require('../adapters/security-engine');
     const audit = await runNpmAudit(rootPath);
     const score = Math.max(0, 100 - audit.critical * 30 - audit.high * 15);
     areas.push({ name: 'npm 취약점', score, findings: [`critical: ${audit.critical}, high: ${audit.high}`], category: 'security' });
@@ -557,7 +557,7 @@ export async function runProjectAudit(
   try {
     const htmlFiles = files.filter(f => f.endsWith('.html') || f.endsWith('.tsx') || f.endsWith('.jsx'));
     if (htmlFiles.length > 0) {
-      const { runAxeAccessibility } = await import('../adapters/web-quality');
+      const { runAxeAccessibility } = require('../adapters/web-quality');
       const sample = readFileSync(htmlFiles[0], 'utf-8');
       const axe = await runAxeAccessibility(sample);
       areas.push({ name: '접근성', score: axe.score, findings: axe.findings.slice(0, 3).map(f => f.message), category: 'quality' });
@@ -566,7 +566,7 @@ export async function runProjectAudit(
 
   // 14. 코드 복잡도 (AST)
   try {
-    const { analyzeWithTsMorph } = await import('../adapters/ast-engine');
+    const { analyzeWithTsMorph } = require('../adapters/ast-engine');
     const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
     if (sampleCode) {
       const findings = await analyzeWithTsMorph(sampleCode, files[0]);
@@ -577,7 +577,7 @@ export async function runProjectAudit(
 
   // 15. 구버전 API
   try {
-    const { checkDeprecations } = await import('./deprecation-checker');
+    const { checkDeprecations } = require('./deprecation-checker');
     const sampleCode = files[0] ? readFileSync(files[0], 'utf-8') : '';
     if (sampleCode) {
       const deps = checkDeprecations(sampleCode, files[0], rootPath);
@@ -588,7 +588,7 @@ export async function runProjectAudit(
 
   // 16. 번들 크기
   try {
-    const { checkBundleSize } = await import('../adapters/web-quality');
+    const { checkBundleSize } = require('../adapters/web-quality');
     const bundle = await checkBundleSize(rootPath);
     areas.push({ name: '번들 크기', score: bundle.score, findings: [`heavy: ${bundle.heavyCount}, total deps: ${bundle.totalDeps}`], category: 'performance' });
   } catch { /* skip */ }
@@ -677,8 +677,8 @@ export async function scanProject(rootPath: string): Promise<{
   findings: Array<{ file: string; pattern: string; severity: string }>;
   score: number;
 }> {
-  const { readdirSync, readFileSync } = await import('fs');
-  const { join, extname } = await import('path');
+  const { readdirSync, readFileSync } = require('fs');
+  const { join, extname } = require('path');
 
   const findings: Array<{ file: string; pattern: string; severity: string }> = [];
 

@@ -8,7 +8,7 @@
 // ============================================================
 
 export async function runESLint(filePath: string) {
-  const { ESLint } = await import('eslint');
+  const { ESLint } = require('eslint');
   const eslint = new ESLint({ fix: false, overrideConfigFile: undefined });
 
   const results = await eslint.lintFiles([filePath]);
@@ -32,7 +32,7 @@ export async function runESLint(filePath: string) {
 // ============================================================
 
 export async function checkPrettier(code: string, filePath: string = 'temp.ts') {
-  const prettier = await import('prettier');
+  const prettier = require('prettier');
   const options = await prettier.resolveConfig(filePath) ?? {};
 
   const formatted = await prettier.format(code, { ...options, filepath: filePath });
@@ -51,7 +51,7 @@ export async function checkPrettier(code: string, filePath: string = 'temp.ts') 
 // ============================================================
 
 export async function runJSCPD(rootPath: string) {
-  const { detectClones } = await import('jscpd');
+  const { detectClones } = require('jscpd');
 
   const clones = await detectClones({
     path: [rootPath],
@@ -81,7 +81,7 @@ export async function runJSCPD(rootPath: string) {
 // ============================================================
 
 export async function runMadge(rootPath: string) {
-  const madge = (await import('madge')).default;
+  const madge = (require('madge')).default;
 
   const result = await madge(rootPath, {
     fileExtensions: ['ts', 'tsx', 'js', 'jsx'],
@@ -122,7 +122,7 @@ export async function runFullLintAnalysis(rootPath: string, sampleFile?: string)
   // Prettier
   if (sampleFile) {
     try {
-      const { readFileSync } = await import('fs');
+      const { readFileSync } = require('fs');
       const code = readFileSync(sampleFile, 'utf-8');
       const prettierResult = await checkPrettier(code, sampleFile);
       results.push({ engine: 'prettier', score: prettierResult.isFormatted ? 100 : 70, detail: prettierResult.isFormatted ? 'formatted' : 'needs formatting' });

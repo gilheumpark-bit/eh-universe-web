@@ -87,20 +87,21 @@ export async function runEnhancedPipeline(
   const findings: ASTFinding[] = [];
   const engines: string[] = [];
 
-  // Phase 1: Static pipeline 결과 병합 (순환 import 방지 — 호출자가 전달)
+  // Phase 1: Static pipeline 결과 병합 — 팀 이름을 enhanced 팀으로 re-map
   let regexFindingCount = 0;
   if (regexResult) {
     engines.push('regex-pipeline');
     for (const stage of regexResult.teams) {
       for (const finding of stage.findings) {
         regexFindingCount++;
+        const msg = typeof finding === 'string' ? finding : (finding as any).message ?? String(finding);
         findings.push({
           engine: 'regex',
           line: typeof finding === 'object' ? (finding as any).line ?? 0 : 0,
-          message: typeof finding === 'string' ? finding : (finding as any).message ?? String(finding),
+          message: msg,
           severity: 'warning',
-          team: stage.name,
-          confidence: 0.6,
+          team: mapFindingToTeam({ message: msg, severity: 'warning' }),
+          confidence: 0.5,
         });
       }
     }
@@ -265,11 +266,12 @@ export async function runEnhancedPipeline(
   const errorCount = deduped.filter(f => f.severity === 'error').length;
   const warningCount = deduped.filter(f => f.severity === 'warning').length;
 
-  const astScore = Math.max(0, 100 - criticalCount * 25 - errorCount * 10 - warningCount * 3);
-  const combinedScore = Math.round((regexResult.score * 0.4 + astScore * 0.6));
+  const astScore = Math.max(0, 100 - criticalCount * 15 - errorCount * 8 - warningCount * 2);
+  const regexScore = regexResult?.score ?? 50;
+  const combinedScore = Math.round(regexScore * 0.3 + astScore * 0.7);
 
   return {
-    regexScore: regexResult.score,
+    regexScore: regexScore,
     astScore,
     combinedScore,
     regexFindings: regexFindingCount,

@@ -141,7 +141,7 @@ export async function parseWithTreeSitter(code: string, language: LanguageDef): 
   };
 
   try {
-    const Parser = (await import('tree-sitter')).default;
+    const Parser = (require('tree-sitter')).default;
     const langModule = await import(language.treeSitterPackage);
 
     const parser = new Parser();
@@ -288,7 +288,7 @@ function fallbackRegexAnalysis(code: string, langId: string, result: UniversalAS
 export async function runExternalLinter(filePath: string, language: LanguageDef): Promise<Array<{ line: number; message: string; severity: string }>> {
   if (!language.linter) return [];
 
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   const findings: Array<{ line: number; message: string; severity: string }> = [];
 
   try {

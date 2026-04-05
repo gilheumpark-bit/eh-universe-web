@@ -78,10 +78,10 @@ export async function orchestrateVerify(
   },
   filePath: string,
 ): Promise<OrchestratedResult> {
-  const { streamChat } = await import('../core/ai-bridge');
-  const { getAIConfig } = await import('../core/config');
-  const { TEAM_LEAD_SYSTEM_PROMPT, buildTeamLeadPrompt, parseVerdict } = await import('./team-lead');
-  const { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } = await import('./cross-judge');
+  const { streamChat } = require('../core/ai-bridge');
+  const { getAIConfig } = require('../core/config');
+  const { TEAM_LEAD_SYSTEM_PROMPT, buildTeamLeadPrompt, parseVerdict } = require('./team-lead');
+  const { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } = require('./cross-judge');
 
   const config = getAIConfig();
 

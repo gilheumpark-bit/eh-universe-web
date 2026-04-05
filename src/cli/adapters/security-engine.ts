@@ -9,7 +9,7 @@
 // ============================================================
 
 export async function runNpmAudit(rootPath: string) {
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   try {
     const output = execSync('npm audit --json 2>/dev/null', { cwd: rootPath, encoding: 'utf-8', timeout: 30000 });
     const data = JSON.parse(output);
@@ -42,7 +42,7 @@ export async function runNpmAudit(rootPath: string) {
 // ============================================================
 
 export async function runLockfileLint(rootPath: string) {
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   try {
     execSync('npx lockfile-lint --path package-lock.json --type npm --allowed-hosts npm --validate-https 2>&1', {
       cwd: rootPath, encoding: 'utf-8', timeout: 15000,
@@ -62,7 +62,7 @@ export async function runLockfileLint(rootPath: string) {
 // ============================================================
 
 export async function runRetireJS(rootPath: string) {
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   try {
     const output = execSync('npx retire --outputformat json 2>/dev/null', {
       cwd: rootPath, encoding: 'utf-8', timeout: 30000,
@@ -88,7 +88,7 @@ export async function runRetireJS(rootPath: string) {
 // ============================================================
 
 export async function runSnyk(rootPath: string) {
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   try {
     const output = execSync('npx snyk test --json 2>/dev/null', {
       cwd: rootPath, encoding: 'utf-8', timeout: 60000,

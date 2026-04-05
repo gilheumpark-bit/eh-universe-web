@@ -67,7 +67,7 @@ export async function runAutoHeal(
     onProgress?.(round, 'fuzzing');
 
     // Step 1: Fuzz test
-    const { runInSandbox } = await import('../adapters/sandbox');
+    const { runInSandbox } = require('../adapters/sandbox');
     const errors: Array<{ input: string; error: string }> = [];
     fuzzResults = [];
 
@@ -115,8 +115,8 @@ try {
     onProgress?.(round, 'fixing');
 
     try {
-      const { streamChat } = await import('./ai-bridge');
-      const { getTemperature } = await import('./ai-config');
+      const { streamChat } = require('./ai-bridge');
+      const { getTemperature } = require('./ai-config');
 
       const errorSummary = errors.slice(0, 5).map(e => `- Input: ${e.input} → ${e.error}`).join('\n');
 

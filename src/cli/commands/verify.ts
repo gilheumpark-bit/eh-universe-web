@@ -119,7 +119,7 @@ interface _VerifyResult {
 export async function runVerify(path: string, opts: VerifyOptions): Promise<void> {
   const threshold = Math.max(0, Math.min(100, parseInt(opts.threshold, 10) || 77));
   const startTime = performance.now();
-  const { printHeader, printScore, printSection, icons, colors } = await import('../core/terminal-compat');
+  const { printHeader, printScore, printSection, icons, colors } = require('../core/terminal-compat');
 
   printHeader('8팀 검증');
   console.log('');
@@ -145,7 +145,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     if (process.env.CS_DEBUG) console.error('  [DEBUG] ast-bridge load failed:', (e as Error).message);
   }
 
-  const { runStaticPipeline } = await import('../core/pipeline-bridge');
+  const { runStaticPipeline } = require('../core/pipeline-bridge');
 
   const allTeamScores: Map<string, number[]> = new Map();
   const allTeamFindings: Map<string, number> = new Map();
@@ -193,38 +193,8 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     return await runStaticPipeline(file.content, file.language);
   }
 
-  // ── 병렬 or 순차 실행 ──
-  if (useParallel) {
-    const { runTasksInProcess, registerTaskHandler } = await import('../adapters/worker-pool');
-    registerTaskHandler('verify-file', async (payload) => {
-      const { content, language, relativePath } = payload as { content: string; language: string; relativePath: string };
-      return await runStaticPipeline(content, language);
-    });
-
-    const tasks = files.map((f, i) => ({
-      id: `v-${i}`,
-      type: 'verify-file',
-      payload: { content: f.content, language: f.language, relativePath: f.relativePath },
-    }));
-
-    const results = await runTasksInProcess(tasks, { maxWorkers: 4 }, (completed, total) => {
-      process.stdout.write(`\r  ${icons.clock} ${completed}/${total} 파일 검증 완료`);
-    });
-    console.log('');
-
-    for (const wr of results) {
-      const result = wr.success ? wr.result as { teams?: Array<{ name: string; score: number; findings: string[] }>; stages?: Array<{ name: string; score: number; findings: string[] }> } : null;
-      if (!result) continue;
-      for (const stage of result.teams ?? result.stages ?? []) {
-        const scores = allTeamScores.get(stage.name) ?? [];
-        scores.push(stage.score);
-        allTeamScores.set(stage.name, scores);
-        const findings = allTeamFindings.get(stage.name) ?? 0;
-        allTeamFindings.set(stage.name, findings + stage.findings.length);
-        totalFindings += stage.findings.length;
-      }
-    }
-  } else {
+  // ── 순차 실행 (enhanced pipeline 사용을 위해 순차로 통일) ──
+  {
     for (const file of files) {
       const result = await verifyOneFile(file);
       for (const stage of result.teams ?? (result as any).stages ?? []) {
@@ -265,7 +235,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   let aiVerified = false;
   let falsePositivesRemoved = 0;
   try {
-    const { orchestrateVerify } = await import('../ai/verify-orchestrator');
+    const { orchestrateVerify } = require('../ai/verify-orchestrator');
     const staticTeams = teams.map(t => ({
       name: t.name,
       score: t.score,
@@ -357,13 +327,13 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   // Session recording + Badge auto-trigger
   try {
-    const { recordCommand, recordScore } = await import('../core/session');
+    const { recordCommand, recordScore } = require('../core/session');
     recordCommand(`verify ${path}`);
     recordScore('verify', overallScore);
   } catch { /* session not available */ }
 
   try {
-    const { evaluateBadges } = await import('../core/badges');
+    const { evaluateBadges } = require('../core/badges');
     const { newBadges } = evaluateBadges();
     if (newBadges.length > 0) {
       console.log('');
@@ -373,10 +343,10 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   // Auto receipt
   try {
-    const { computeReceiptHash, chainReceipt } = await import('../formatters/receipt');
-    const { createHash } = await import('crypto');
-    const { writeFileSync, mkdirSync } = await import('fs');
-    const { join } = await import('path');
+    const { computeReceiptHash, chainReceipt } = require('../formatters/receipt');
+    const { createHash } = require('crypto');
+    const { writeFileSync, mkdirSync } = require('fs');
+    const { join } = require('path');
 
     const receiptDir = join(process.cwd(), '.cs', 'receipts');
     mkdirSync(receiptDir, { recursive: true });
@@ -404,7 +374,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   // Watch mode
   if (opts.watch) {
-    const { watch } = await import('fs');
+    const { watch } = require('fs');
     console.log('\n  👀 워치 모드 — 파일 변경 감시 중 (Ctrl+C 종료)\n');
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let isRunning = false;

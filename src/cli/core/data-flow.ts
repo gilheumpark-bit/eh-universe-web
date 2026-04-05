@@ -47,7 +47,7 @@ export async function trackNullFlow(code: string, fileName: string): Promise<Dat
   const findings: DataFlowResult['findings'] = [];
 
   try {
-    const { Project, SyntaxKind } = await import('ts-morph');
+    const { Project, SyntaxKind } = require('ts-morph');
     const project = new Project({ useInMemoryFileSystem: true });
     const sourceFile = project.createSourceFile(fileName, code);
 
@@ -163,9 +163,9 @@ export async function trackCrossFileFlow(rootPath: string): Promise<DataFlowResu
   const chains: FlowChain[] = [];
 
   try {
-    const { Project, SyntaxKind } = await import('ts-morph');
-    const { readdirSync } = await import('fs');
-    const { join } = await import('path');
+    const { Project, SyntaxKind } = require('ts-morph');
+    const { readdirSync } = require('fs');
+    const { join } = require('path');
 
     const project = new Project({
       tsConfigFilePath: join(rootPath, 'tsconfig.json'),
@@ -268,7 +268,7 @@ export async function trackTaintFlow(code: string, fileName: string): Promise<Da
   const chains: FlowChain[] = [];
 
   try {
-    const { Project, SyntaxKind } = await import('ts-morph');
+    const { Project, SyntaxKind } = require('ts-morph');
     const project = new Project({ useInMemoryFileSystem: true });
     const sourceFile = project.createSourceFile(fileName, code);
 
