@@ -9,8 +9,10 @@ import {
   Rocket, Play, Square, CheckCircle, AlertTriangle, XCircle,
   Loader2, ChevronDown, ChevronRight, Clock, Clipboard,
   Settings, RotateCcw, Shield, Zap, Bug, Wrench, BookOpen,
-  GitCommit, BrainCircuit, Eye, FlaskConical,
+  GitCommit, BrainCircuit, Eye, FlaskConical, RefreshCw,
 } from "lucide-react";
+import { runGenVerifyFixLoop } from "@/lib/code-studio/pipeline/gen-verify-fix-loop";
+import type { GenVerifyFixResult, GenVerifyFixIteration } from "@/lib/code-studio/pipeline/gen-verify-fix-loop";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -159,6 +161,8 @@ function ScoreCard({ label, score, icon }: { label: string; score: number; icon:
 // PART 4 — Main Component
 // ============================================================
 
+export type AutopilotMode = "autopilot" | "gen-verify-fix";
+
 export function AutopilotPanel({ code, language, fileName, onComplete, onClose }: Props) {
   const { lang } = useLang();
   const [prompt, setPrompt] = useState("");
@@ -169,6 +173,9 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
   const [result, setResult] = useState<AutopilotResult | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState(false);
+  const [mode, setMode] = useState<AutopilotMode>("autopilot");
+  const [gvfResult, setGvfResult] = useState<GenVerifyFixResult | null>(null);
+  const [gvfIterations, setGvfIterations] = useState<GenVerifyFixIteration[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -232,7 +239,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
     }
   }, [prompt, running, config, code, language, fileName, onComplete]);
 
-  const handleReset = useCallback(() => { setResult(null); setProgress(null); setPrompt(""); }, []);
+  const handleReset = useCallback(() => { setResult(null); setProgress(null); setPrompt(""); setGvfResult(null); setGvfIterations([]); }, []);
 
   const handleCopyReport = useCallback(() => {
     if (!result) return;
@@ -240,6 +247,88 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       ...result.logs.map((l) => `[${l.level}] ${l.message}`)].join("\n");
     navigator.clipboard.writeText(report).catch(() => {});
   }, [result]);
+
+  const handleStartGVF = useCallback(async () => {
+    if (!prompt.trim() || running) return;
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    setRunning(true);
+    setResult(null);
+    setGvfResult(null);
+    setGvfIterations([]);
+    setProgress(null);
+
+    const allLogs: AutopilotLog[] = [];
+    const startTime = Date.now();
+
+    const pushLog = (level: AutopilotLog["level"], message: string) => {
+      allLogs.push({ level, message, timestamp: Date.now() });
+      setProgress({
+        phase: "coding",
+        phaseIndex: 1,
+        phaseProgress: 0,
+        overallProgress: Math.min(95, Math.round((allLogs.length / 20) * 100)),
+        currentAction: message,
+        elapsedMs: Date.now() - startTime,
+        logs: [...allLogs],
+      });
+    };
+
+    try {
+      pushLog("info", L4(lang, { ko: "생성+검증+수정 루프 시작", en: "Starting gen+verify+fix loop" }));
+
+      const gvf = await runGenVerifyFixLoop(prompt, {
+        maxRounds: config.maxFixIterations,
+        targetScore: config.passThreshold,
+        language,
+        signal: ac.signal,
+        onProgress: (iter) => {
+          setGvfIterations((prev) => [...prev, iter]);
+          pushLog(
+            iter.score >= config.passThreshold ? "success" : "warning",
+            L4(lang, {
+              ko: `라운드 ${iter.round}: 점수 ${iter.score}, 발견 ${iter.findings}, 수정 ${iter.fixes}`,
+              en: `Round ${iter.round}: score ${iter.score}, findings ${iter.findings}, fixes ${iter.fixes}`,
+            }),
+          );
+        },
+      });
+
+      setGvfResult(gvf);
+
+      const elapsed = Date.now() - startTime;
+      pushLog(
+        gvf.finalScore >= config.passThreshold ? "success" : "warning",
+        L4(lang, {
+          ko: `완료: 최종 점수 ${gvf.finalScore}, ${gvf.iterations.length}회 반복, 사유: ${gvf.verificationReport.stopReason}`,
+          en: `Done: final score ${gvf.finalScore}, ${gvf.iterations.length} rounds, reason: ${gvf.verificationReport.stopReason}`,
+        }),
+      );
+
+      const autopilotResult: AutopilotResult = {
+        success: gvf.finalScore >= config.passThreshold,
+        pipelineScore: gvf.finalScore,
+        summary: `Gen+Verify+Fix: ${gvf.verificationReport.stopReason} (${gvf.iterations.length} rounds)`,
+        totalTimeMs: elapsed,
+        iterations: gvf.iterations.length,
+        logs: allLogs,
+        files: [{ path: fileName, isNew: false, content: gvf.finalCode }],
+      };
+
+      setResult(autopilotResult);
+      setProgress((p) => p ? { ...p, phase: "complete", overallProgress: 100 } : p);
+      setRunning(false);
+      onComplete(autopilotResult);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        pushLog("warning", L4(lang, { ko: "사용자에 의해 중단됨", en: "Aborted by user" }));
+      } else {
+        pushLog("error", L4(lang, { ko: "루프 실행 실패", en: "Loop execution failed" }));
+      }
+      setRunning(false);
+    }
+  }, [prompt, running, config, language, fileName, lang, onComplete]);
 
   return (
     <div className="flex flex-col h-full bg-[#0d1117]">
@@ -268,12 +357,31 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleStart(); }}
             />
             <div className="flex items-center justify-between">
-              <button onClick={() => setShowConfig(!showConfig)} className="flex items-center gap-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]">
-                <Settings size={10} /> {showConfig ? L4(lang, { ko: "설정 숨기기", en: "Hide Config" }) : L4(lang, { ko: "설정", en: "Config" })} {showConfig ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-              </button>
-              <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
-                <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot" })}
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowConfig(!showConfig)} className="flex items-center gap-1 text-[10px] text-[#8b949e] hover:text-[#e6edf3]">
+                  <Settings size={10} /> {showConfig ? L4(lang, { ko: "설정 숨기기", en: "Hide Config" }) : L4(lang, { ko: "설정", en: "Config" })} {showConfig ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                </button>
+                <button
+                  onClick={() => setMode(mode === "autopilot" ? "gen-verify-fix" : "autopilot")}
+                  className={`flex items-center gap-1 px-2 py-1 text-[10px] rounded-md border transition-colors ${
+                    mode === "gen-verify-fix"
+                      ? "border-blue-500 bg-blue-500/15 text-blue-400"
+                      : "border-[#30363d] text-[#8b949e] hover:text-[#e6edf3]"
+                  }`}
+                  title={L4(lang, { ko: "생성+검증+수정 모드", en: "Gen+Verify+Fix mode" })}
+                >
+                  <RefreshCw size={10} /> {L4(lang, { ko: "생성+검증+수정", en: "Gen+Verify+Fix" })}
+                </button>
+              </div>
+              {mode === "autopilot" ? (
+                <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
+                  <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot" })}
+                </button>
+              ) : (
+                <button onClick={handleStartGVF} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-700 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
+                  <RefreshCw size={12} /> {L4(lang, { ko: "생성+검증+수정 시작", en: "Start GVF Loop" })}
+                </button>
+              )}
             </div>
             {showConfig && (
               <div className="grid grid-cols-2 gap-2 p-2 bg-[#010409] rounded-lg border border-[#30363d]">
@@ -339,6 +447,28 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
               {result.stressTestScore != null && <ScoreCard label={L4(lang, { ko: "스트레스", en: "Stress" })} score={result.stressTestScore} icon={<FlaskConical size={12} />} />}
               {result.chaosResilience != null && <ScoreCard label={L4(lang, { ko: "카오스", en: "Chaos" })} score={result.chaosResilience} icon={<Bug size={12} />} />}
             </div>
+            {gvfResult && gvfResult.iterations.length > 0 && (
+              <div className="bg-[#010409] rounded-lg border border-[#30363d] p-2 space-y-1">
+                <span className="text-[10px] text-[#8b949e] flex items-center gap-1 mb-1"><RefreshCw size={10} />{L4(lang, { ko: "반복 이력", en: "Iteration History" })}</span>
+                <div className="grid grid-cols-4 gap-1 text-[9px] text-[#8b949e] font-semibold px-1">
+                  <span>{L4(lang, { ko: "라운드", en: "Round" })}</span>
+                  <span>{L4(lang, { ko: "점수", en: "Score" })}</span>
+                  <span>{L4(lang, { ko: "발견", en: "Findings" })}</span>
+                  <span>{L4(lang, { ko: "수정", en: "Fixes" })}</span>
+                </div>
+                {gvfResult.iterations.map((iter) => (
+                  <div key={iter.round} className="grid grid-cols-4 gap-1 text-[10px] px-1 py-0.5 rounded hover:bg-[#21262d]">
+                    <span className="text-[#e6edf3] font-mono">#{iter.round}</span>
+                    <span className="font-mono" style={{ color: iter.score >= config.passThreshold ? "#3fb950" : iter.score >= config.passThreshold - 15 ? "#d29922" : "#f85149" }}>{iter.score}</span>
+                    <span className="text-[#e6edf3] font-mono">{iter.findings}</span>
+                    <span className="text-[#e6edf3] font-mono">{iter.fixes}</span>
+                  </div>
+                ))}
+                <div className="text-[9px] text-[#8b949e] pt-1 border-t border-[#30363d]">
+                  {L4(lang, { ko: "종료 사유", en: "Stop reason" })}: <span className="text-[#e6edf3]">{gvfResult.verificationReport.stopReason}</span>
+                </div>
+              </div>
+            )}
             {result.files.length > 0 && (
               <div className="bg-[#010409] rounded-lg border border-[#30363d]">
                 <button onClick={() => setExpandedFiles(!expandedFiles)}

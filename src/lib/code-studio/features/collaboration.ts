@@ -26,7 +26,7 @@ export interface CollabState {
 }
 
 export interface CollabMessage {
-  type: "cursor" | "selection" | "edit" | "file-open" | "chat" | "join" | "leave" | "typing" | "activity";
+  type: "cursor" | "selection" | "edit" | "file-open" | "chat" | "join" | "leave" | "typing" | "activity" | "crdt-op" | "cursor-update" | "user-join" | "user-leave";
   userId: string;
   payload: unknown;
   timestamp: number;
@@ -125,6 +125,58 @@ export class CRDTDocument {
 
   getOperationsSince(remoteClock: VectorClock): CRDTOperation[] {
     return this.operationLog.filter((op) => op.timestamp > (remoteClock[op.origin] ?? 0));
+  }
+
+  getOperationLog(): CRDTOperation[] {
+    return [...this.operationLog];
+  }
+
+  getOperationCount(): number {
+    return this.operationLog.length;
+  }
+
+  /**
+   * Tombstone compression: removes redundant insert->delete pairs from
+   * the operation log and the char array after every COMPACT_THRESHOLD ops.
+   * Only compacts chars that are both (a) tombstoned and (b) not referenced
+   * by any surviving insert's `after` pointer, to preserve CRDT consistency.
+   */
+  compactTombstones(): number {
+    const deletedIds = new Set<string>();
+    for (const op of this.operationLog) {
+      if (op.type === "delete") deletedIds.add(this.charIndexKey(op.id));
+    }
+    if (deletedIds.size === 0) return 0;
+
+    // Collect `after` references that surviving inserts still depend on
+    const referencedIds = new Set<string>();
+    for (const op of this.operationLog) {
+      if (op.type === "insert" && op.after && !deletedIds.has(this.charIndexKey(op.id))) {
+        referencedIds.add(this.charIndexKey(op.after));
+      }
+    }
+
+    // Only compact tombstones that nothing references
+    const removableIds = new Set<string>();
+    Array.from(deletedIds).forEach((key) => {
+      if (!referencedIds.has(key)) removableIds.add(key);
+    });
+    if (removableIds.size === 0) return 0;
+
+    // Remove from char array
+    this.chars = this.chars.filter(
+      (c) => !(c.deleted && removableIds.has(this.charIndexKey(c.id))),
+    );
+
+    // Remove matching insert+delete pairs from operation log
+    this.operationLog = this.operationLog.filter((op) => {
+      const key = this.charIndexKey(op.id);
+      if (removableIds.has(key)) return false; // drop both insert and delete
+      return true;
+    });
+
+    this.rebuildCharIndex();
+    return removableIds.size;
   }
 
   serialize(): { chars: CRDTChar[]; clock: number; vectorClock: VectorClock } {
@@ -407,7 +459,14 @@ export class CollaborationManager {
   private onEditCallbacks: Array<(userId: string, file: string, content: string) => void> = [];
   private onChatCallbacks: Array<(userId: string, message: string) => void> = [];
   private onTypingCallbacks: Array<(userId: string, file: string) => void> = [];
+  private onCrdtOpCallbacks: Array<(op: CRDTOperation) => void> = [];
   private readonly roomId: string;
+
+  /** CRDT documents keyed by file path */
+  private documents = new Map<string, CRDTDocument>();
+
+  private static readonly COMPACT_THRESHOLD = 100;
+  private opsCountSinceCompact = new Map<string, number>();
 
   constructor(roomId: string, userName: string) {
     this.roomId = roomId;
@@ -483,6 +542,47 @@ export class CollaborationManager {
     this.broadcast({ type: "activity", userId: this.localUser.id, payload: { action, detail, userName: this.localUser.name }, timestamp: Date.now() });
   }
 
+  /** Get or create a CRDTDocument for a given file path */
+  getDocument(filePath: string): CRDTDocument {
+    let doc = this.documents.get(filePath);
+    if (!doc) {
+      doc = new CRDTDocument(this.localUser.id);
+      this.documents.set(filePath, doc);
+      this.opsCountSinceCompact.set(filePath, 0);
+    }
+    return doc;
+  }
+
+  /** Apply a local edit through CRDT and broadcast the ops */
+  localInsert(filePath: string, index: number, value: string): CRDTOperation[] {
+    const doc = this.getDocument(filePath);
+    const ops = doc.insert(index, value);
+    for (const op of ops) {
+      this.broadcast({ type: "crdt-op", userId: this.localUser.id, payload: { filePath, op }, timestamp: Date.now() });
+    }
+    this.maybeCompact(filePath, ops.length);
+    return ops;
+  }
+
+  /** Apply a local delete through CRDT and broadcast the ops */
+  localDelete(filePath: string, index: number, length: number): CRDTOperation[] {
+    const doc = this.getDocument(filePath);
+    const ops = doc.delete(index, length);
+    for (const op of ops) {
+      this.broadcast({ type: "crdt-op", userId: this.localUser.id, payload: { filePath, op }, timestamp: Date.now() });
+    }
+    this.maybeCompact(filePath, ops.length);
+    return ops;
+  }
+
+  /** Broadcast a cursor-update message (richer than legacy 'cursor') */
+  broadcastCursorUpdate(file: string, line: number, column: number, selection?: CollabUser["selection"]): void {
+    this.localUser.cursor = { file, line, column };
+    if (selection) this.localUser.selection = selection;
+    this.broadcast({ type: "cursor-update", userId: this.localUser.id, payload: { file, line, column, selection }, timestamp: Date.now() });
+  }
+
+  onCrdtOp(cb: (op: CRDTOperation) => void): void { this.onCrdtOpCallbacks.push(cb); }
   onUserJoin(cb: (user: CollabUser) => void): void { this.onJoinCallbacks.push(cb); }
   onUserLeave(cb: (userId: string) => void): void { this.onLeaveCallbacks.push(cb); }
   onCursorUpdate(cb: (userId: string, cursor: CollabUser["cursor"]) => void): void { this.onCursorCallbacks.push(cb); }
@@ -497,6 +597,17 @@ export class CollaborationManager {
   getRoomUrl(): string {
     const base = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
     return `${base}#collab=${this.roomId}`;
+  }
+
+  private maybeCompact(filePath: string, newOps: number): void {
+    const current = (this.opsCountSinceCompact.get(filePath) ?? 0) + newOps;
+    if (current >= CollaborationManager.COMPACT_THRESHOLD) {
+      const doc = this.documents.get(filePath);
+      if (doc) doc.compactTombstones();
+      this.opsCountSinceCompact.set(filePath, 0);
+    } else {
+      this.opsCountSinceCompact.set(filePath, current);
+    }
   }
 
   private broadcast(message: CollabMessage): void {
@@ -564,14 +675,257 @@ export class CollaborationManager {
         this.activityFeed.log(msg.userId, a.userName, a.action, a.detail);
         break;
       }
+      case "crdt-op": {
+        const crdtPayload = msg.payload as { filePath: string; op: CRDTOperation };
+        const doc = this.getDocument(crdtPayload.filePath);
+        doc.applyRemote(crdtPayload.op);
+        this.maybeCompact(crdtPayload.filePath, 1);
+        this.onCrdtOpCallbacks.forEach((cb) => cb(crdtPayload.op));
+        const crdtUser = this.remoteUsers.get(msg.userId);
+        if (crdtUser) crdtUser.lastSeen = msg.timestamp;
+        break;
+      }
+      case "cursor-update": {
+        const cu = msg.payload as { file: string; line: number; column: number; selection?: CollabUser["selection"] };
+        const cuUser = this.remoteUsers.get(msg.userId);
+        if (cuUser) { cuUser.cursor = { file: cu.file, line: cu.line, column: cu.column }; cuUser.selection = cu.selection; cuUser.lastSeen = msg.timestamp; }
+        this.cursorTrails.addPoint(msg.userId, cu.file, cu.line, cu.column);
+        this.onCursorCallbacks.forEach((cb) => cb(msg.userId, { file: cu.file, line: cu.line, column: cu.column }));
+        break;
+      }
+      case "user-join": {
+        const uj = msg.payload as { name: string; color: string };
+        const isNewUj = !this.remoteUsers.has(msg.userId);
+        const ujUser: CollabUser = { id: msg.userId, name: uj.name, color: uj.color, isOnline: true, lastSeen: msg.timestamp };
+        this.remoteUsers.set(msg.userId, ujUser);
+        if (isNewUj) {
+          this.activityFeed.log(msg.userId, uj.name, "joined", `${uj.name} joined`);
+          this.onJoinCallbacks.forEach((cb) => cb(ujUser));
+        }
+        break;
+      }
+      case "user-leave": {
+        const ulUser = this.remoteUsers.get(msg.userId);
+        if (ulUser) this.activityFeed.log(msg.userId, ulUser.name, "left", `${ulUser.name} left`);
+        this.remoteUsers.delete(msg.userId);
+        this.cursorTrails.clearUser(msg.userId);
+        this.typingIndicator.clearTyping(msg.userId);
+        this.onLeaveCallbacks.forEach((cb) => cb(msg.userId));
+        break;
+      }
     }
   }
 }
 
-// IDENTITY_SEAL: PART-4 | role=협업 매니저 | inputs=roomId, userName | outputs=CollabState, BroadcastChannel 동기화
+// IDENTITY_SEAL: PART-4 | role=협업 매니저 + CRDT 동기화 | inputs=roomId, userName | outputs=CollabState, BroadcastChannel 동기화, CRDT ops
 
 // ============================================================
-// PART 5 — Factory & Utilities
+// PART 5 — IndexedDB Persistence
+// ============================================================
+
+interface PersistedDocumentState {
+  content: string;
+  operations: CRDTOperation[];
+  version: number;
+  chars: CRDTChar[];
+  clock: number;
+  vectorClock: VectorClock;
+  updatedAt: number;
+}
+
+const IDB_NAME = "eh-collab-documents";
+const IDB_STORE = "documents";
+const IDB_VERSION = 1;
+
+function openCollabDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined") {
+      reject(new Error("IndexedDB not available"));
+      return;
+    }
+    const request = indexedDB.open(IDB_NAME, IDB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: "documentId" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export class CollabPersistence {
+  private db: IDBDatabase | null = null;
+  private pendingOps = new Map<string, number>(); // documentId -> ops since last save
+  private readonly batchSize: number;
+
+  constructor(batchSize = 10) {
+    this.batchSize = batchSize;
+  }
+
+  async init(): Promise<void> {
+    try {
+      this.db = await openCollabDB();
+    } catch {
+      // IndexedDB unavailable (SSR or privacy mode) — degrade gracefully
+      this.db = null;
+    }
+  }
+
+  async save(documentId: string, doc: CRDTDocument): Promise<void> {
+    if (!this.db) return;
+    const serialized = doc.serialize();
+    const state: PersistedDocumentState & { documentId: string } = {
+      documentId,
+      content: doc.getText(),
+      operations: doc.getOperationLog(),
+      version: serialized.clock,
+      chars: serialized.chars,
+      clock: serialized.clock,
+      vectorClock: serialized.vectorClock,
+      updatedAt: Date.now(),
+    };
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(state);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async load(documentId: string, siteId: string): Promise<CRDTDocument | null> {
+    if (!this.db) return null;
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(IDB_STORE, "readonly");
+      const request = tx.objectStore(IDB_STORE).get(documentId);
+      request.onsuccess = () => {
+        const data = request.result as (PersistedDocumentState & { documentId: string }) | undefined;
+        if (!data) { resolve(null); return; }
+        const doc = CRDTDocument.deserialize(siteId, {
+          chars: data.chars,
+          clock: data.clock,
+          vectorClock: data.vectorClock,
+        });
+        resolve(doc);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async delete(documentId: string): Promise<void> {
+    if (!this.db) return;
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).delete(documentId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  /**
+   * Track operations and batch-save: only persists every `batchSize` ops.
+   * Returns true if a save was triggered.
+   */
+  async trackAndMaybeSave(documentId: string, doc: CRDTDocument, newOps: number): Promise<boolean> {
+    const current = (this.pendingOps.get(documentId) ?? 0) + newOps;
+    if (current >= this.batchSize) {
+      this.pendingOps.set(documentId, 0);
+      await this.save(documentId, doc);
+      return true;
+    }
+    this.pendingOps.set(documentId, current);
+    return false;
+  }
+
+  /** Force-flush any pending ops for a document */
+  async flush(documentId: string, doc: CRDTDocument): Promise<void> {
+    this.pendingOps.set(documentId, 0);
+    await this.save(documentId, doc);
+  }
+
+  close(): void {
+    this.db?.close();
+    this.db = null;
+  }
+}
+
+// IDENTITY_SEAL: PART-5 | role=IndexedDB 지속성 | inputs=documentId, CRDTDocument | outputs=save, load, batch tracking
+
+// ============================================================
+// PART 6 — Conflict Resolution
+// ============================================================
+
+export interface ConflictResolutionResult {
+  winner: CRDTOperation;
+  loser: CRDTOperation;
+  reason: "lww-timestamp" | "lww-clock" | "site-order";
+}
+
+/**
+ * Last-Writer-Wins resolver using vector clock timestamps.
+ * When concurrent inserts target the same position, deterministic
+ * site-id ordering breaks the tie so all peers converge.
+ */
+export function resolveConflict(
+  localOp: CRDTOperation,
+  remoteOp: CRDTOperation,
+): ConflictResolutionResult {
+  // 1. Higher timestamp wins (LWW)
+  if (localOp.timestamp !== remoteOp.timestamp) {
+    const winner = localOp.timestamp > remoteOp.timestamp ? localOp : remoteOp;
+    const loser = winner === localOp ? remoteOp : localOp;
+    return { winner, loser, reason: "lww-timestamp" };
+  }
+
+  // 2. Same timestamp — compare vector clock maximums
+  // (meaningful when sites have different clock rates)
+  if (localOp.timestamp === remoteOp.timestamp && localOp.id.clock !== remoteOp.id.clock) {
+    const winner = localOp.id.clock > remoteOp.id.clock ? localOp : remoteOp;
+    const loser = winner === localOp ? remoteOp : localOp;
+    return { winner, loser, reason: "lww-clock" };
+  }
+
+  // 3. Deterministic tie-break: sort by userId (siteId) lexicographically
+  const winner = localOp.origin < remoteOp.origin ? localOp : remoteOp;
+  const loser = winner === localOp ? remoteOp : localOp;
+  return { winner, loser, reason: "site-order" };
+}
+
+/**
+ * For concurrent inserts at the same position, determine the correct
+ * ordering by sorting operations deterministically.
+ */
+export function orderConcurrentInserts(ops: CRDTOperation[]): CRDTOperation[] {
+  return [...ops].sort((a, b) => {
+    // Primary: by timestamp descending (later wins / comes first)
+    if (a.timestamp !== b.timestamp) return b.timestamp - a.timestamp;
+    // Secondary: by clock value descending
+    if (a.id.clock !== b.id.clock) return b.id.clock - a.id.clock;
+    // Tertiary: by siteId ascending for determinism
+    if (a.origin < b.origin) return -1;
+    if (a.origin > b.origin) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Checks whether two operations conflict (concurrent edits at the
+ * same logical position). Both ops must be inserts with the same
+ * `after` reference.
+ */
+export function areConflicting(a: CRDTOperation, b: CRDTOperation): boolean {
+  if (a.type !== "insert" || b.type !== "insert") return false;
+  if (a.origin === b.origin) return false;
+  if (!a.after && !b.after) return true;
+  if (!a.after || !b.after) return false;
+  return a.after.site === b.after.site && a.after.clock === b.after.clock;
+}
+
+// IDENTITY_SEAL: PART-6 | role=충돌 해결 (LWW + 사이트 순서) | inputs=localOp, remoteOp | outputs=winner, loser, reason
+
+// ============================================================
+// PART 7 — Factory & Utilities
 // ============================================================
 
 const SESSION_ROOM_KEY = "eh-collab-room-id";
@@ -607,4 +961,4 @@ export function generateUserAvatar(name: string, color: string): { initials: str
   return { initials, bgColor: color + "33", textColor: color };
 }
 
-// IDENTITY_SEAL: PART-5 | role=팩토리 및 유틸리티 | inputs=roomId, userName | outputs=CollaborationManager
+// IDENTITY_SEAL: PART-7 | role=팩토리 및 유틸리티 | inputs=roomId, userName | outputs=CollaborationManager

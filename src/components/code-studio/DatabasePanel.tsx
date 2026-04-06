@@ -3,37 +3,30 @@
 /**
  * @module DatabasePanel
  *
- * SIMULATED -- requires WebContainer/real backend for production use.
+ * HYBRID — sql.js (WebAssembly SQLite) integration with simulation fallback.
  *
- * What is simulated:
- *   - SQL query execution (delegates to parent via `onExecuteQuery` callback;
- *     no actual database engine runs in the browser)
- *   - Connection management (connect/disconnect state is UI-only)
- *   - Query history (stored in component state, not persisted)
- *   - Table listing (static list passed via props, not introspected from a real DB)
+ * What is real (when sql.js loads successfully):
+ *   - In-memory SQLite database via sql.js WebAssembly
+ *   - Real SQL query execution (CREATE TABLE, INSERT, SELECT, etc.)
+ *   - Table introspection from the live database
+ *   - Error handling for SQL syntax errors, missing tables, etc.
  *
- * What is real:
+ * What falls back to simulation (when sql.js unavailable):
+ *   - SQL query execution delegates to parent via `onExecuteQuery` callback
+ *   - Connection management is UI-only
+ *
+ * What is always real:
  *   - Full query editor UI with syntax-highlighted textarea
  *   - Results table rendering with column/row display
  *   - Keyboard shortcut (Ctrl+Enter) to execute queries
  *   - Query history navigation within the session
- *
- * To make fully functional:
- *   1. Integrate a WebContainer with an embedded SQLite/PostgreSQL instance
- *   2. Replace the `onExecuteQuery` callback with direct DB driver calls
- *   3. Introspect real table schemas from the running database
- *   4. Persist query history to localStorage or a backend service
- *   5. Add connection pooling and authentication for remote databases
  */
-
-// ⚠️ SIMULATED PANEL — 실제 DB 연결 없음.
-// 로컬 시뮬레이션 UI. WebContainer + SQLite 연동 시 실제 쿼리 실행으로 전환 가능.
 
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Database, Play, Clock, Table2, Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 
 export interface DBConnection {
@@ -67,6 +60,77 @@ interface DatabasePanelProps {
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=DBConnection,QueryResult
+
+// ============================================================
+// PART 1.5 — sql.js Engine (WebAssembly SQLite)
+// ============================================================
+
+// [확인 필요] sql.js may not be installed — dynamic import with fallback
+type SqlJsDatabase = {
+  run: (sql: string) => void;
+  exec: (sql: string) => Array<{ columns: string[]; values: unknown[][] }>;
+  close: () => void;
+};
+
+type SqlJsStatic = {
+  Database: new () => SqlJsDatabase;
+};
+
+let _sqlJsPromise: Promise<SqlJsStatic | null> | null = null;
+
+function loadSqlJs(): Promise<SqlJsStatic | null> {
+  if (_sqlJsPromise) return _sqlJsPromise;
+  _sqlJsPromise = (async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const initSqlJs = (await import("sql.js" as any)).default as (config?: Record<string, unknown>) => Promise<SqlJsStatic>;
+      const SQL = await initSqlJs({
+        locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+      });
+      return SQL;
+    } catch {
+      // sql.js not installed or failed to load — fall back to simulation
+      console.warn("[DatabasePanel] sql.js unavailable, using simulation fallback");
+      return null;
+    }
+  })();
+  return _sqlJsPromise;
+}
+
+function executeOnDb(db: SqlJsDatabase, sql: string): QueryResult {
+  const start = performance.now();
+  try {
+    const results = db.exec(sql);
+    const elapsed = Math.round(performance.now() - start);
+    if (results.length === 0) {
+      // DDL/DML statements that return no rows
+      return { columns: ["result"], rows: [{ result: "Query executed successfully" }], rowCount: 0, executionTime: elapsed };
+    }
+    const first = results[0];
+    const rows: Record<string, unknown>[] = first.values.map((row) => {
+      const obj: Record<string, unknown> = {};
+      first.columns.forEach((col, i) => { obj[col] = row[i]; });
+      return obj;
+    });
+    return { columns: first.columns, rows, rowCount: rows.length, executionTime: elapsed };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    const message = err instanceof Error ? err.message : String(err);
+    return { columns: [], rows: [], rowCount: 0, executionTime: elapsed, error: message };
+  }
+}
+
+function introspectTables(db: SqlJsDatabase): string[] {
+  try {
+    const results = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;");
+    if (results.length === 0) return [];
+    return results[0].values.map((row) => String(row[0]));
+  } catch {
+    return [];
+  }
+}
+
+// IDENTITY_SEAL: PART-1.5 | role=SqlJsEngine | inputs=sql | outputs=QueryResult,string[]
 
 // ============================================================
 // PART 2 — Sidebar (Tables & History)
@@ -209,13 +273,6 @@ export default function DatabasePanel({
   onExecuteQuery,
   tables = [],
 }: DatabasePanelProps) {
-  // ⚠️ Simulation badge — no real DB connection
-  const SIMULATION_BADGE = (
-    <div className="flex items-center gap-1.5 border-b border-border/30 bg-amber-950/30 px-3 py-1">
-      <Database size={12} className="text-amber-400" />
-      <span className="text-[9px] font-medium text-amber-300">(시뮬레이션 / Simulated)</span>
-    </div>
-  );
   const [activeConn, setActiveConn] = useState<string>(connections[0]?.id ?? "");
   const [query, setQuery] = useState("SELECT * FROM ");
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -223,11 +280,69 @@ export default function DatabasePanel({
   const [history, setHistory] = useState<QueryHistoryEntry[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // sql.js real database state
+  const [sqlJsReady, setSqlJsReady] = useState(false);
+  const [liveTables, setLiveTables] = useState<string[]>([]);
+  const dbRef = useRef<SqlJsDatabase | null>(null);
+
+  // Initialize sql.js on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const SQL = await loadSqlJs();
+      if (cancelled || !SQL) return;
+      try {
+        const db = new SQL.Database();
+        dbRef.current = db;
+        setSqlJsReady(true);
+      } catch {
+        // Failed to create DB — stay in simulation mode
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (dbRef.current) {
+        try { dbRef.current.close(); } catch { /* ignore */ }
+        dbRef.current = null;
+      }
+    };
+  }, []);
+
+  // Refresh live tables after each query execution
+  const refreshTables = useCallback(() => {
+    if (dbRef.current) {
+      setLiveTables(introspectTables(dbRef.current));
+    }
+  }, []);
+
+  // Mode badge
+  const MODE_BADGE = (
+    <div className={`flex items-center gap-1.5 border-b border-border/30 px-3 py-1 ${sqlJsReady ? "bg-emerald-950/30" : "bg-amber-950/30"}`}>
+      <Database size={12} className={sqlJsReady ? "text-emerald-400" : "text-amber-400"} />
+      <span className={`text-[9px] font-medium ${sqlJsReady ? "text-emerald-300" : "text-amber-300"}`}>
+        {sqlJsReady ? "sql.js SQLite (Real)" : "(시뮬레이션 / Simulated)"}
+      </span>
+    </div>
+  );
+
+  // Effective tables: live DB tables take priority over prop tables
+  const effectiveTables = sqlJsReady && liveTables.length > 0 ? liveTables : tables;
+
   const execute = useCallback(async () => {
-    if (!activeConn || !query.trim()) return;
+    if (!query.trim()) return;
+    if (!sqlJsReady && !activeConn) return;
     setRunning(true);
     try {
-      const res = await onExecuteQuery(activeConn, query);
+      let res: QueryResult;
+      if (sqlJsReady && dbRef.current) {
+        // Real sql.js execution
+        res = executeOnDb(dbRef.current, query);
+        // Refresh table list after DDL
+        refreshTables();
+      } else {
+        // Fallback to simulation callback
+        res = await onExecuteQuery(activeConn, query);
+      }
       setResult(res);
       setHistory((h) => [
         { id: `q-${Date.now()}`, query: query.trim(), timestamp: Date.now(), success: !res.error },
@@ -238,7 +353,7 @@ export default function DatabasePanel({
     } finally {
       setRunning(false);
     }
-  }, [activeConn, query, onExecuteQuery]);
+  }, [activeConn, query, onExecuteQuery, sqlJsReady, refreshTables]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -249,7 +364,7 @@ export default function DatabasePanel({
 
   return (
     <div className="flex h-full flex-col">
-      {SIMULATION_BADGE}
+      {MODE_BADGE}
       <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <div className="w-48 shrink-0 border-r border-border overflow-y-auto bg-bg-secondary/50">
@@ -264,7 +379,7 @@ export default function DatabasePanel({
             ))}
           </select>
         </div>
-        <TableList tables={tables} onSelect={(t) => setQuery(`SELECT * FROM ${t} LIMIT 100;`)} />
+        <TableList tables={effectiveTables} onSelect={(t) => setQuery(`SELECT * FROM ${t} LIMIT 100;`)} />
         <HistoryList history={history} onSelect={setQuery} />
       </div>
 
