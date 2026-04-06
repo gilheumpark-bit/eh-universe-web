@@ -1,5 +1,38 @@
 "use client";
 
+/**
+ * @module TerminalPanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - When WebContainer is unavailable, all commands run through a built-in
+ *     terminal emulator with stubbed responses (ls, cat, echo, cd, etc.)
+ *   - npm/node/git commands in simulation mode return mock output
+ *   - File system operations (ls, cat) read from the in-memory FileNode tree,
+ *     not from a real filesystem
+ *   - Shell features (pipes, env vars, job control) are partially emulated
+ *
+ * What is real:
+ *   - When WebContainer boots successfully, commands execute in a real
+ *     Node.js environment with actual npm, node, and git binaries
+ *   - ANSI color parsing for terminal output rendering
+ *   - Command history with arrow-key navigation (persistent per session)
+ *   - Tab auto-completion with smart suggestions (files, commands, env vars)
+ *   - AI-powered error analysis (streams failed command stderr to LLM for diagnosis)
+ *   - Command aliases (ni, nr, gs, ga, gc, etc.)
+ *   - Shell environment variables (export/unset)
+ *   - Scroll lock toggle and clipboard copy of output
+ *
+ * To make fully functional:
+ *   1. Ensure WebContainer API boots (requires COOP/COEP headers)
+ *   2. Add xterm.js or similar for full VT100 terminal emulation
+ *   3. Support PTY-based interactive programs (vim, less, top)
+ *   4. Implement real pipe/redirect operators via WebContainer shell
+ *   5. Add split-terminal and multi-tab terminal support
+ *   6. Persist shell history and environment across sessions
+ */
+
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================

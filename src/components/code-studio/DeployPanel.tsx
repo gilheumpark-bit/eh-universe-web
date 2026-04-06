@@ -1,5 +1,30 @@
 "use client";
 
+/**
+ * @module DeployPanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - Deploy pipeline steps (install, build, test, deploy) run on timers
+ *     with a 10% random failure chance on the final step -- no real build occurs
+ *   - Deploy history is kept in component state only (lost on unmount)
+ *   - No actual connection to Vercel, AWS, or any hosting provider
+ *
+ * What is real:
+ *   - JSON bundle export (creates a downloadable .json with all project files)
+ *   - File tree JSON export (downloads raw FileNode[] structure)
+ *   - Deploy history UI with success/error tracking per session
+ *   - Bilingual labels (KO/EN) driven by `language` prop
+ *
+ * To make fully functional:
+ *   1. Integrate WebContainer to run real `npm install && npm run build`
+ *   2. Connect to Vercel Deploy API or AWS Amplify for actual deployment
+ *   3. Stream real build logs into the step progress UI
+ *   4. Persist deploy history to a backend or localStorage
+ *   5. Add environment variable configuration and deploy target selection
+ */
+
 // ⚠️ SIMULATED PANEL — 실제 배포 기능 없음.
 // 브라우저 IDE 환경에서 배포 시뮬레이션 UI를 제공합니다.
 // WebContainer 연동 시 실제 빌드/배포로 전환 가능.

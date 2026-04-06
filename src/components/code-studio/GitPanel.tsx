@@ -1,5 +1,34 @@
 "use client";
 
+/**
+ * @module GitPanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - Git commits use an in-memory git-engine (SHA-1 hashes are real, but
+ *     no .git directory or object store exists on disk)
+ *   - Branch create/switch updates React state only; no working-tree checkout
+ *   - Diff preview shows line-count deltas, not actual unified diffs
+ *   - File staging is implicit (all dirty files are committed together)
+ *   - WebContainer git runner is attempted but falls back to simulation
+ *
+ * What is real:
+ *   - SHA-1 commit hashes via the git-engine module
+ *   - Dirty-file detection from `openFiles` prop (tracks actual editor state)
+ *   - AI-powered commit message generation (via `generateCommitMessage`)
+ *   - File restore from any previous commit snapshot
+ *   - Branch management UI (create, switch, visual selector)
+ *
+ * To make fully functional:
+ *   1. Use isomorphic-git for full .git object store in the browser
+ *   2. Or delegate to WebContainer `git` binary for native git operations
+ *   3. Implement real unified diff rendering (e.g., diff-match-patch)
+ *   4. Add selective file staging (git add individual files)
+ *   5. Support remote push/pull with authentication (GitHub/GitLab tokens)
+ *   6. Persist branch/commit state across page reloads
+ */
+
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   GitBranch,

@@ -1,5 +1,31 @@
 "use client";
 
+/**
+ * @module DatabasePanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - SQL query execution (delegates to parent via `onExecuteQuery` callback;
+ *     no actual database engine runs in the browser)
+ *   - Connection management (connect/disconnect state is UI-only)
+ *   - Query history (stored in component state, not persisted)
+ *   - Table listing (static list passed via props, not introspected from a real DB)
+ *
+ * What is real:
+ *   - Full query editor UI with syntax-highlighted textarea
+ *   - Results table rendering with column/row display
+ *   - Keyboard shortcut (Ctrl+Enter) to execute queries
+ *   - Query history navigation within the session
+ *
+ * To make fully functional:
+ *   1. Integrate a WebContainer with an embedded SQLite/PostgreSQL instance
+ *   2. Replace the `onExecuteQuery` callback with direct DB driver calls
+ *   3. Introspect real table schemas from the running database
+ *   4. Persist query history to localStorage or a backend service
+ *   5. Add connection pooling and authentication for remote databases
+ */
+
 // ⚠️ SIMULATED PANEL — 실제 DB 연결 없음.
 // 로컬 시뮬레이션 UI. WebContainer + SQLite 연동 시 실제 쿼리 실행으로 전환 가능.
 

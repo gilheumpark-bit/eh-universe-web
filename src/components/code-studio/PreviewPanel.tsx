@@ -1,5 +1,36 @@
 "use client";
 
+/**
+ * @module PreviewPanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - WebContainer boot and dev server start fall back to a simulated
+ *     runner when real WebContainer API is unavailable (most browsers)
+ *   - `npm install` and dependency resolution are stubbed in simulation mode
+ *   - HMR (Hot Module Replacement) bridge sends postMessage events but
+ *     actual module-level hot replacement requires a real bundler
+ *   - Console capture relies on iframe postMessage protocol; real console
+ *     interception needs injected runtime scripts
+ *
+ * What is real:
+ *   - Full preview infrastructure: iframe sandbox, URL bar, navigation
+ *   - Device simulation modes (responsive, mobile 375px, tablet 768px, desktop 1280px)
+ *   - Framework auto-detection from package.json (Next.js, React, Vue, Svelte, HTML)
+ *   - HMR bridge with debounced file-change notifications
+ *   - Console panel with log/warn/error/info filtering
+ *   - Navigation history (back/forward/refresh) and external open
+ *   - Automatic file sync to WebContainer on code changes
+ *
+ * To make fully functional:
+ *   1. Ensure WebContainer API availability (requires cross-origin isolation headers)
+ *   2. COOP/COEP headers are already configured in next.config.ts for /code-studio
+ *   3. Implement real `npm install` via WebContainer's package manager
+ *   4. Wire HMR bridge to Vite/Webpack HMR client for true hot updates
+ *   5. Inject console-capture runtime into the iframe for full console interception
+ */
+
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================

@@ -314,9 +314,10 @@ export const SnippetMarketComponent = dynamic(
 // ============================================================
 // PART 3 — Shared Utility Imports
 // ============================================================
-
-// Non-panel components frequently used alongside panels.
-// These are also lazy-loaded to keep the main Shell bundle lean.
+//
+// These are pre-registered lazy imports for non-panel components.
+// They may not be referenced via PI.* in PanelManager but are used
+// directly by other Shell/Editor components or available for future panels.
 
 export const MonacoEditorComponent = dynamic(
   () => import("@monaco-editor/react"),
@@ -366,12 +367,12 @@ export const QuickOpenComponent = dynamic(
 // IDENTITY_SEAL: PART-3 | role=SharedUtilImports | inputs=none | outputs=utility-dynamic-components
 
 // ============================================================
-// PART 4 — Internal Utility Components (18 components)
+// PART 4 — Internal Utility Components (13 components)
 // ============================================================
 //
-// Components used internally by panels or available for future
-// panel integration. Lazy-loaded to keep Shell bundle lean.
-//
+// These are pre-registered lazy imports for non-panel components.
+// They may not be referenced via PI.* in PanelManager but are used
+// directly by other Shell/Editor components or available for future panels.
 
 // ── file-explorer (named) ───────────────────────────────────
 export const FileExplorerComponent = dynamic(

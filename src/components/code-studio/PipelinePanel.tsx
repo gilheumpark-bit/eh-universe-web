@@ -1,5 +1,35 @@
 "use client";
 
+/**
+ * @module PipelinePanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - Pipeline execution is driven by the parent component; this panel
+ *     only renders pre-computed `TeamResult[]` data (no analysis runs here)
+ *   - The 8-team scores and findings come from a simplified static analysis
+ *     engine, not from full AST parsing or runtime verification
+ *   - Run/abort controls delegate to parent callbacks (`onRun`, `onAbort`)
+ *
+ * What is real:
+ *   - Full 8-team grid UI (Simulation, Generation, Validation, Size/Density,
+ *     Asset Trace, Stability, Release/IP, Governance)
+ *   - Per-team score bars, status badges, and expandable findings list
+ *   - Overall score aggregation and pass/warn/fail status display
+ *   - Markdown report generation, clipboard copy, and file download
+ *   - Bilingual labels (KO/EN) via LangContext
+ *   - Finding severity filtering (critical/major shown first when >10 items)
+ *
+ * To make fully functional:
+ *   1. Connect to real AST-based static analysis (ESLint, TypeScript compiler)
+ *   2. Run security scanning (dependency audit, secret detection)
+ *   3. Execute tests in WebContainer for stability/regression checks
+ *   4. Implement parallel team execution with real-time progress streaming
+ *   5. Add persistent pipeline history with trend analysis
+ *   6. Integrate CI/CD webhook triggers for automated pipeline runs
+ */
+
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================

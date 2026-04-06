@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * @module DependencyGraph
+ * Real import parsing with force-directed graph visualization.
+ *
+ * Unlike other simulated panels, this component performs actual import/export
+ * statement parsing from file contents to build a real dependency graph.
+ * Scope: client-side static analysis only (regex-based parsing of
+ * import/require statements). Does not resolve node_modules or dynamic imports.
+ */
+
 // ============================================================
 // PART 1 — Imports, Types & Import Parser
 // ============================================================

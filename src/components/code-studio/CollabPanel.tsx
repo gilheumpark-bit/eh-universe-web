@@ -1,5 +1,34 @@
 "use client";
 
+/**
+ * @module CollabPanel
+ *
+ * SIMULATED -- requires WebContainer/real backend for production use.
+ *
+ * What is simulated:
+ *   - Multi-user presence uses BroadcastChannel (same browser only;
+ *     different browsers/devices cannot connect to each other)
+ *   - Cursor position sharing is UI-only (no real editor binding)
+ *   - Room IDs are random UUIDs with no server-side persistence
+ *   - Chat messages are ephemeral (lost on page reload)
+ *   - Session restore reads from the collaboration manager's local storage
+ *
+ * What is real:
+ *   - Room create/join flow with shareable URL generation
+ *   - Real-time chat between tabs in the same browser via BroadcastChannel
+ *   - User presence list with color-coded avatars
+ *   - Session persistence/restore via collaboration manager
+ *   - Clipboard copy of share URL
+ *
+ * To make fully functional:
+ *   1. Replace BroadcastChannel with a WebSocket server (e.g., Socket.IO)
+ *   2. Integrate Yjs or Automerge for CRDT-based conflict-free editing
+ *   3. Bind cursor/selection state to the Monaco editor instance
+ *   4. Add authentication and user identity (Firebase Auth, OAuth)
+ *   5. Persist chat history and room state on the server
+ *   6. Support cross-browser and cross-device collaboration
+ */
+
 // ⚠️ SIMULATED PANEL — 실제 WebSocket/Yjs 협업 없음.
 // 로컬 시뮬레이션 UI. 실시간 협업은 WebSocket 서버 연동 시 전환 가능.
 
