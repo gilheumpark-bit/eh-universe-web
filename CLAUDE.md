@@ -3,6 +3,10 @@
 # NOA Rules — 강제 적용
 # 이 섹션의 모든 규칙은 선택이 아닌 강제. 코드 편집 시 반드시 수령증 출력.
 
+## 판단 체계 (Judgment Framework)
+- 신규 코드 생성 시: `/first-production-judgment` 스킬 적용 (4-GATE: Intent→Contract→Minimal→Simulation)
+- 기존 코드 수정 시: `/multi-agent-judgment-v2` 스킬 적용 (Builder→Critic→Arbiter 2-Pass)
+
 ---
 
 ## 언어 규칙

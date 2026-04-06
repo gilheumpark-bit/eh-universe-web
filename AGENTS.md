@@ -1,3 +1,7 @@
+## 판단 체계 (Judgment Framework)
+- 신규 코드: `/first-production-judgment` (4-GATE: Intent→Contract→Minimal→Simulation)
+- 기존 코드 수정: `/multi-agent-judgment-v2` (Builder→Critic→Arbiter 2-Pass)
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
