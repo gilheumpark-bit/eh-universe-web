@@ -7,6 +7,21 @@
 - 신규 코드 생성 시: `/first-production-judgment` 스킬 적용 (4-GATE: Intent→Contract→Minimal→Simulation)
 - 기존 코드 수정 시: `/multi-agent-judgment-v2` 스킬 적용 (Builder→Critic→Arbiter 2-Pass)
 
+## NOA Unified Stack v2.1
+9개 스킬이 단일 파이프라인으로 통합:
+- MODULE 1: noa-code-structure (PART 구조 강제)
+- MODULE 2: noa-3persona-inspection (3관점 검사)
+- MODULE 3: noa-confidence-gate (확신도 게이트)
+- MODULE 6: noa-repair-strategy (수리 에스컬레이션)
+- MODULE 8: noa-anti-repeat (반복 금지)
+- MODULE 9: noa-response-tuner (응답 튜닝)
++ first-production-judgment (신규 코드 4-GATE)
++ multi-agent-judgment-v2 (리웍 Builder/Critic)
+
+## ARI + Scope Policy
+- ARI Circuit Breaker: 모든 AI 호출에 적용 (EMA 감점, 자동 failover)
+- Scope Policy: Global > Workspace > Module 정책 우선순위
+
 ---
 
 ## 언어 규칙

@@ -1,6 +1,10 @@
-## 판단 체계 (Judgment Framework)
+## 판단 체계 (Judgment Framework) — NOA Unified Stack v2.1
+9개 스킬 단일 파이프라인 (noa-unified-anti-sycophancy-stack v2.1):
 - 신규 코드: `/first-production-judgment` (4-GATE: Intent→Contract→Minimal→Simulation)
 - 기존 코드 수정: `/multi-agent-judgment-v2` (Builder→Critic→Arbiter 2-Pass)
+- 코드 품질: noa-code-structure + noa-3persona-inspection + noa-confidence-gate
+- 수리/응답: noa-repair-strategy + noa-anti-repeat + noa-response-tuner
+- ARI Circuit Breaker + Scope Policy (Global > Workspace > Module) 적용
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
