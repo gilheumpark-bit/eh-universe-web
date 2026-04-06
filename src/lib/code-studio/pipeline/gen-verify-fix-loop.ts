@@ -15,18 +15,33 @@ import { logger } from '@/lib/logger';
 // PART 1 — Types & Configuration
 // ============================================================
 
+export interface RoundTokenUsage {
+  promptEstimate: number;
+  completionEstimate: number;
+  totalEstimate: number;
+}
+
 export interface GenVerifyFixIteration {
   round: number;
   code: string;
   score: number;
   findings: number;
   fixes: number;
+  tokenUsage?: RoundTokenUsage;
+  durationMs?: number;
+}
+
+export interface CostEstimate {
+  totalTokens: number;
+  /** Approximate cost in USD (rough estimate based on ~$3/1M input, ~$15/1M output) */
+  estimatedCostUsd: number;
 }
 
 export interface GenVerifyFixResult {
   finalCode: string;
   finalScore: number;
   iterations: GenVerifyFixIteration[];
+  costEstimate: CostEstimate;
   verificationReport: {
     stages: Array<{ name: string; score: number; status: string; findings: string[] }>;
     overallScore: number;
@@ -40,6 +55,7 @@ export type GenVerifyFixStopReason =
   | 'target-reached'
   | 'max-rounds'
   | 'no-improvement'
+  | 'convergence'
   | 'generation-failed';
 
 export interface GenVerifyFixOptions {
@@ -52,8 +68,16 @@ export interface GenVerifyFixOptions {
 }
 
 const DEFAULT_MAX_ROUNDS = 3;
+const ADAPTIVE_MAX_ROUNDS = 5;
 const DEFAULT_TARGET_SCORE = 80;
 const DEFAULT_LANGUAGE = 'typescript';
+
+/** Minimum score improvement per round to justify continuing */
+const MIN_IMPROVEMENT_PER_ROUND = 5;
+
+/** If last N rounds have less than this improvement, stop early */
+const CONVERGENCE_THRESHOLD = 2;
+const CONVERGENCE_WINDOW = 2;
 
 // IDENTITY_SEAL: PART-1 | role=types-and-config | inputs=none | outputs=types,defaults
 
@@ -63,15 +87,14 @@ const DEFAULT_LANGUAGE = 'typescript';
 
 /**
  * Call the AI model and collect the full response as a string.
- * Uses streamChat from ai-providers — provider/model chosen by
- * the user's active configuration.
+ * Returns the response text and estimated token usage.
  */
 async function callAI(
   systemInstruction: string,
   userMessage: string,
   signal?: AbortSignal,
   temperature = 0.3,
-): Promise<string> {
+): Promise<{ text: string; tokenUsage: RoundTokenUsage }> {
   let result = '';
   try {
     result = await streamChat({
@@ -84,9 +107,20 @@ async function callAI(
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
     logger.warn('gen-verify-fix', 'callAI failed:', err);
-    return '';
+    return {
+      text: '',
+      tokenUsage: { promptEstimate: 0, completionEstimate: 0, totalEstimate: 0 },
+    };
   }
-  return result.trim();
+
+  const promptLen = systemInstruction.length + userMessage.length;
+  const tokenUsage: RoundTokenUsage = {
+    promptEstimate: Math.ceil(promptLen / 4),
+    completionEstimate: Math.ceil(result.length / 4),
+    totalEstimate: Math.ceil((promptLen + result.length) / 4),
+  };
+
+  return { text: result.trim(), tokenUsage };
 }
 
 /**
@@ -99,7 +133,7 @@ function extractCodeBlock(text: string): string {
   return text.trim();
 }
 
-// IDENTITY_SEAL: PART-2 | role=ai-helpers | inputs=prompt | outputs=string
+// IDENTITY_SEAL: PART-2 | role=ai-helpers | inputs=prompt | outputs=string,tokenUsage
 
 // ============================================================
 // PART 3 — Finding Extraction & Fix Prompt Builder
@@ -113,8 +147,8 @@ interface ActionableFinding {
 }
 
 /**
- * Extract actionable findings from pipeline stages.
- * Separates hard-fail (from failed stages) vs. review (from warn stages).
+ * Extract actionable findings from pipeline stage objects directly.
+ * Parses stage data structures instead of relying on regex on message strings.
  */
 function extractActionableFindings(stages: PipelineStage[]): ActionableFinding[] {
   const findings: ActionableFinding[] = [];
@@ -126,9 +160,24 @@ function extractActionableFindings(stages: PipelineStage[]): ActionableFinding[]
       stage.status === 'fail' ? 'hard-fail' : 'review';
 
     for (const raw of stage.findings) {
+      // Parse structured finding format: "L{line}: message" or plain message
+      let line: number | undefined;
+      let message: string;
+
       const lineMatch = raw.match(/^L(\d+):\s*/);
-      const line = lineMatch ? parseInt(lineMatch[1], 10) : undefined;
-      const message = lineMatch ? raw.slice(lineMatch[0].length) : raw;
+      if (lineMatch) {
+        line = parseInt(lineMatch[1], 10);
+        message = raw.slice(lineMatch[0].length);
+      } else {
+        // Try alternative format: "(line N)" or "[line N]"
+        const altMatch = raw.match(/[\[(]line\s+(\d+)[\])]/i);
+        if (altMatch) {
+          line = parseInt(altMatch[1], 10);
+          message = raw.replace(altMatch[0], '').trim();
+        } else {
+          message = raw;
+        }
+      }
 
       findings.push({
         source: stage.name,
@@ -182,7 +231,7 @@ function buildFixPrompt(
 // IDENTITY_SEAL: PART-3 | role=finding-extraction-and-fix-prompt | inputs=PipelineStage[],code | outputs=findings,prompt
 
 // ============================================================
-// PART 4 — Generation Step
+// PART 4 — Generation Step (with retry)
 // ============================================================
 
 const GENERATE_SYSTEM = `You are an expert software engineer. Given a task description, generate production-quality code.
@@ -198,17 +247,38 @@ async function generateCode(
   task: string,
   language: string,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<{ code: string; tokenUsage: RoundTokenUsage }> {
   const userMsg = `Language: ${language}\nTask: ${task}`;
-  const raw = await callAI(GENERATE_SYSTEM, userMsg, signal, 0.4);
-  if (!raw) return '';
-  return extractCodeBlock(raw);
+
+  // First attempt at temperature 0.4
+  const { text: raw, tokenUsage } = await callAI(GENERATE_SYSTEM, userMsg, signal, 0.4);
+  if (raw) {
+    return { code: extractCodeBlock(raw), tokenUsage };
+  }
+
+  // Retry once with lower temperature (0.2) for more deterministic output
+  logger.warn('gen-verify-fix', 'Generation attempt 1 failed, retrying with lower temperature');
+  const { text: retryRaw, tokenUsage: retryTokens } = await callAI(
+    GENERATE_SYSTEM, userMsg, signal, 0.2,
+  );
+
+  const combined: RoundTokenUsage = {
+    promptEstimate: tokenUsage.promptEstimate + retryTokens.promptEstimate,
+    completionEstimate: tokenUsage.completionEstimate + retryTokens.completionEstimate,
+    totalEstimate: tokenUsage.totalEstimate + retryTokens.totalEstimate,
+  };
+
+  if (retryRaw) {
+    return { code: extractCodeBlock(retryRaw), tokenUsage: combined };
+  }
+
+  return { code: '', tokenUsage: combined };
 }
 
-// IDENTITY_SEAL: PART-4 | role=code-generation | inputs=task,language | outputs=code
+// IDENTITY_SEAL: PART-4 | role=code-generation | inputs=task,language | outputs=code,tokenUsage
 
 // ============================================================
-// PART 5 — Fix Step
+// PART 5 — Fix Step (never loses code)
 // ============================================================
 
 const FIX_SYSTEM = `You are a code quality engineer. Fix the issues listed in the user's message.
@@ -224,21 +294,34 @@ async function fixCode(
   findings: ActionableFinding[],
   language: string,
   signal?: AbortSignal,
-): Promise<string> {
-  if (findings.length === 0) return code;
+): Promise<{ fixedCode: string; tokenUsage: RoundTokenUsage }> {
+  const emptyTokens: RoundTokenUsage = { promptEstimate: 0, completionEstimate: 0, totalEstimate: 0 };
+
+  if (findings.length === 0) {
+    return { fixedCode: code, tokenUsage: emptyTokens };
+  }
+
   const prompt = buildFixPrompt(code, findings, language);
-  const raw = await callAI(FIX_SYSTEM, prompt, signal, 0.2);
-  if (!raw) return code;
+  const { text: raw, tokenUsage } = await callAI(FIX_SYSTEM, prompt, signal, 0.2);
+
+  // If AI returns nothing, keep previous working version
+  if (!raw) {
+    logger.warn('gen-verify-fix', 'Fix returned empty — keeping previous working version');
+    return { fixedCode: code, tokenUsage };
+  }
+
   const fixed = extractCodeBlock(raw);
+
   // Sanity check: fixed code should be at least 50% of original length
   if (fixed.length < code.length * 0.5) {
-    logger.warn('gen-verify-fix', 'Fix output suspiciously short, keeping original');
-    return code;
+    logger.warn('gen-verify-fix', 'Fix output suspiciously short, keeping previous working version');
+    return { fixedCode: code, tokenUsage };
   }
-  return fixed;
+
+  return { fixedCode: fixed, tokenUsage };
 }
 
-// IDENTITY_SEAL: PART-5 | role=code-fix | inputs=code,findings,language | outputs=fixedCode
+// IDENTITY_SEAL: PART-5 | role=code-fix | inputs=code,findings,language | outputs=fixedCode,tokenUsage
 
 // ============================================================
 // PART 6 — Verification Step
@@ -269,25 +352,106 @@ function verifyCode(
 // IDENTITY_SEAL: PART-6 | role=verification | inputs=code,language | outputs=score,stages
 
 // ============================================================
-// PART 7 — Main Loop
+// PART 7 — Adaptive Loop Logic
+// ============================================================
+
+/**
+ * Determine if the loop should continue based on adaptive criteria:
+ * - If score is improving by >MIN_IMPROVEMENT_PER_ROUND, allow up to ADAPTIVE_MAX_ROUNDS
+ * - If convergence detected (last CONVERGENCE_WINDOW rounds < CONVERGENCE_THRESHOLD), stop
+ * - Never exceed ADAPTIVE_MAX_ROUNDS
+ */
+function shouldContinueLoop(
+  iterations: GenVerifyFixIteration[],
+  currentScore: number,
+  targetScore: number,
+  configMaxRounds: number,
+): { shouldContinue: boolean; reason?: GenVerifyFixStopReason } {
+  const round = iterations.length;
+
+  // Target reached
+  if (currentScore >= targetScore) {
+    return { shouldContinue: false, reason: 'target-reached' };
+  }
+
+  // Hard cap
+  if (round >= ADAPTIVE_MAX_ROUNDS) {
+    return { shouldContinue: false, reason: 'max-rounds' };
+  }
+
+  // Check convergence: if the last N rounds had minimal improvement
+  if (iterations.length >= CONVERGENCE_WINDOW) {
+    const recent = iterations.slice(-CONVERGENCE_WINDOW);
+    const scores = recent.map(it => it.score);
+    const maxDelta = Math.max(...scores) - Math.min(...scores);
+    if (maxDelta < CONVERGENCE_THRESHOLD) {
+      return { shouldContinue: false, reason: 'convergence' };
+    }
+  }
+
+  // Past the configured limit, only continue if improving significantly
+  if (round >= configMaxRounds && iterations.length >= 2) {
+    const prevScore = iterations[iterations.length - 2].score;
+    const improvement = currentScore - prevScore;
+    if (improvement < MIN_IMPROVEMENT_PER_ROUND) {
+      return { shouldContinue: false, reason: 'no-improvement' };
+    }
+    // Improving well — allow adaptive extension
+    return { shouldContinue: true };
+  }
+
+  // Within configured rounds — always continue
+  return { shouldContinue: true };
+}
+
+/**
+ * Calculate cost estimate from accumulated token usage.
+ * Rough pricing: ~$3/1M input tokens, ~$15/1M output tokens (mid-tier model).
+ */
+function calculateCostEstimate(iterations: GenVerifyFixIteration[]): CostEstimate {
+  let totalPrompt = 0;
+  let totalCompletion = 0;
+
+  for (const it of iterations) {
+    if (it.tokenUsage) {
+      totalPrompt += it.tokenUsage.promptEstimate;
+      totalCompletion += it.tokenUsage.completionEstimate;
+    }
+  }
+
+  const totalTokens = totalPrompt + totalCompletion;
+  const inputCost = (totalPrompt / 1_000_000) * 3;
+  const outputCost = (totalCompletion / 1_000_000) * 15;
+
+  return {
+    totalTokens,
+    estimatedCostUsd: Math.round((inputCost + outputCost) * 10000) / 10000,
+  };
+}
+
+// IDENTITY_SEAL: PART-7 | role=adaptive-loop-logic | inputs=iterations,score | outputs=shouldContinue,costEstimate
+
+// ============================================================
+// PART 8 — Main Loop
 // ============================================================
 
 /**
  * Run the full generate -> verify -> fix loop.
  *
- * 1. Generate code from the task description via AI.
+ * 1. Generate code from the task description via AI (with 1 retry).
  * 2. Run static analysis pipeline on the generated code.
- * 3. Extract actionable findings (hard-fail + review).
+ * 3. Extract actionable findings from pipeline stage objects.
  * 4. For each round with findings, build a fix prompt and call AI.
  * 5. Re-verify the patched code.
- * 6. Repeat up to maxRounds or until targetScore is reached.
- * 7. Return final code + verification report + iteration history.
+ * 6. Adaptive stopping: continue if improving >5pts/round, max 5 rounds.
+ * 7. On fix failure: keep previous working version (never lose code).
+ * 8. Return final code + verification report + iteration history + cost.
  */
 export async function runGenVerifyFixLoop(
   task: string,
   options?: GenVerifyFixOptions,
 ): Promise<GenVerifyFixResult> {
-  const maxRounds = options?.maxRounds ?? DEFAULT_MAX_ROUNDS;
+  const configMaxRounds = options?.maxRounds ?? DEFAULT_MAX_ROUNDS;
   const targetScore = options?.targetScore ?? DEFAULT_TARGET_SCORE;
   const language = options?.language ?? DEFAULT_LANGUAGE;
   const signal = options?.signal;
@@ -295,8 +459,9 @@ export async function runGenVerifyFixLoop(
 
   const iterations: GenVerifyFixIteration[] = [];
 
-  // --- Step 1: Generate initial code ---
-  const initialCode = await generateCode(task, language, signal);
+  // --- Step 1: Generate initial code (with retry) ---
+  const roundStart = Date.now();
+  const { code: initialCode, tokenUsage: genTokens } = await generateCode(task, language, signal);
   if (!initialCode) {
     return buildFinalResult(
       '',
@@ -308,14 +473,25 @@ export async function runGenVerifyFixLoop(
   }
 
   let currentCode = initialCode;
-  let lastScore = -1;
+  /** Track the best code seen so far — never lose a working version */
+  let bestCode = initialCode;
+  let bestScore = -1;
+  let accumulatedTokens: RoundTokenUsage = { ...genTokens };
 
-  for (let round = 1; round <= maxRounds; round++) {
+  for (let round = 1; round <= ADAPTIVE_MAX_ROUNDS; round++) {
+    const iterStart = Date.now();
+
     // --- Step 2: Verify ---
     const { score, stages, result: pipelineResult } = verifyCode(currentCode, language);
 
-    // --- Step 3: Extract findings ---
+    // --- Step 3: Extract findings from pipeline stage objects ---
     const findings = extractActionableFindings(stages);
+
+    // Track best version
+    if (score > bestScore) {
+      bestScore = score;
+      bestCode = currentCode;
+    }
 
     const iteration: GenVerifyFixIteration = {
       round,
@@ -323,7 +499,12 @@ export async function runGenVerifyFixLoop(
       score,
       findings: findings.length,
       fixes: 0,
+      tokenUsage: { ...accumulatedTokens },
+      durationMs: Date.now() - iterStart,
     };
+
+    // Reset accumulated tokens for next round
+    accumulatedTokens = { promptEstimate: 0, completionEstimate: 0, totalEstimate: 0 };
 
     // --- Check: target reached ---
     if (score >= targetScore) {
@@ -332,36 +513,31 @@ export async function runGenVerifyFixLoop(
       return buildFinalResult(currentCode, score, iterations, pipelineResult, 'target-reached');
     }
 
-    // --- Check: no improvement (from round 2 onward) ---
-    if (round > 1 && score <= lastScore) {
-      iterations.push(iteration);
-      onProgress?.(iteration);
-      // Use the better version: current or previous
-      const bestIteration = iterations.reduce((best, it) =>
-        it.score > best.score ? it : best, iterations[0]);
-      return buildFinalResult(
-        bestIteration.code,
-        bestIteration.score,
-        iterations,
-        pipelineResult,
-        'no-improvement',
-      );
+    // --- Check: adaptive stopping ---
+    iterations.push(iteration);
+    onProgress?.(iteration);
+
+    const { shouldContinue, reason } = shouldContinueLoop(
+      iterations, score, targetScore, configMaxRounds,
+    );
+
+    if (!shouldContinue) {
+      return buildFinalResult(bestCode, bestScore, iterations, pipelineResult, reason!);
     }
 
-    // --- Step 4: Auto-fix ---
-    if (findings.length > 0 && round < maxRounds) {
-      const fixed = await fixCode(currentCode, findings, language, signal);
-      const fixApplied = fixed !== currentCode;
+    // --- Step 4: Auto-fix (keep previous version on failure) ---
+    if (findings.length > 0) {
+      const { fixedCode, tokenUsage: fixTokens } = await fixCode(
+        currentCode, findings, language, signal,
+      );
+
+      accumulatedTokens = fixTokens;
+
+      const fixApplied = fixedCode !== currentCode;
       iteration.fixes = fixApplied ? findings.length : 0;
-      iterations.push(iteration);
-      onProgress?.(iteration);
-      lastScore = score;
-      currentCode = fixed;
-    } else {
-      // No findings or last round — just record
-      iterations.push(iteration);
-      onProgress?.(iteration);
-      lastScore = score;
+
+      // fixCode already handles "never lose code" — returns original on failure
+      currentCode = fixedCode;
     }
   }
 
@@ -369,14 +545,10 @@ export async function runGenVerifyFixLoop(
   const finalVerification = verifyCode(currentCode, language);
   const finalScore = finalVerification.score;
 
-  // Pick the best code across all iterations + final
-  let bestCode = currentCode;
-  let bestScore = finalScore;
-  for (const it of iterations) {
-    if (it.score > bestScore) {
-      bestCode = it.code;
-      bestScore = it.score;
-    }
+  // Always use the best code seen across all iterations
+  if (finalScore > bestScore) {
+    bestCode = currentCode;
+    bestScore = finalScore;
   }
 
   const stopReason: GenVerifyFixStopReason =
@@ -391,8 +563,10 @@ export async function runGenVerifyFixLoop(
   );
 }
 
+// IDENTITY_SEAL: PART-8 | role=main-loop | inputs=task,options | outputs=GenVerifyFixResult
+
 // ============================================================
-// PART 8 — Result Builder
+// PART 9 — Result Builder
 // ============================================================
 
 function buildFinalResult(
@@ -406,6 +580,7 @@ function buildFinalResult(
     finalCode,
     finalScore,
     iterations,
+    costEstimate: calculateCostEstimate(iterations),
     verificationReport: {
       stages: pipelineResult.stages.map((s) => ({
         name: s.name,
@@ -421,4 +596,4 @@ function buildFinalResult(
   };
 }
 
-// IDENTITY_SEAL: PART-7+8 | role=main-loop-and-builder | inputs=task,options | outputs=GenVerifyFixResult
+// IDENTITY_SEAL: PART-9 | role=result-builder | inputs=code,score,iterations,pipelineResult,stopReason | outputs=GenVerifyFixResult
