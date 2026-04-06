@@ -1,8 +1,9 @@
 // ============================================================
-// Quality Checklist — 2-Tier Inspection System
+// Quality Checklist — 2-Tier Inspection System + Good Pattern Bonus
 // ============================================================
 // Tier 1 (기본): 모든 코드에 적용. 빠른 정적 체크. 실측 기반.
 // Tier 2 (정밀 타격): 문제 탐지 시 해당 영역만 깊이 파고듦. AI 보조.
+// Good Pattern Bonus: 양품 패턴 탐지 시 점수 가산 (penalty-only 보정).
 //
 // 사용자: 체크 결과를 리포트로 받음 (pass/warn/fail + 설명)
 // AI: 정밀 타격 시 이 체크리스트를 참조하여 구조적 분석 수행
@@ -240,6 +241,96 @@ export function runTier1(code: string, fileName: string): CheckItem[] {
     innerHtml > 0 ? `${innerHtml}건 — 입력 검증 필요` : undefined, innerHtml, 0,
   ));
 
+  // ── Good Pattern Bonus — 양품 패턴 가산 (penalty-only 보정) ──
+
+  // GP01: try-catch-finally 완전 쌍
+  let tryCatchFinally = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (/\btry\s*\{/.test(lines[i])) {
+      const block = lines.slice(i, Math.min(i + 50, lines.length)).join('\n');
+      if (/\bcatch\b/.test(block) && /\bfinally\b/.test(block)) tryCatchFinally++;
+    }
+  }
+  if (tryCatchFinally > 0) {
+    results.push(check('GP01', 'reliability',
+      { ko: 'try-catch-finally 완전 쌍', en: 'Complete try-catch-finally' },
+      { ko: '에러 처리 + 리소스 해제 보장', en: 'Error handling + resource cleanup guaranteed' },
+      'pass', `${tryCatchFinally}건 양품 패턴`, tryCatchFinally, 0,
+    ));
+  }
+
+  // GP02: const 우선 사용 (70%+ 비율)
+  const constDecls = (code.match(/\bconst\s+\w/g) ?? []).length;
+  const letDecls = (code.match(/\blet\s+\w/g) ?? []).length;
+  const varDecls = (code.match(/\bvar\s+\w/g) ?? []).length;
+  const totalDecls = constDecls + letDecls + varDecls;
+  const constRatio = totalDecls > 0 ? Math.round((constDecls / totalDecls) * 100) : 0;
+  if (totalDecls >= 3 && constRatio >= 70) {
+    results.push(check('GP02', 'reliability',
+      { ko: 'const 우선 사용', en: 'Const preference' },
+      { ko: '불변성 선호 — 안정성 향상', en: 'Immutability preference — improved stability' },
+      'pass', `${constRatio}% const 비율 (${constDecls}/${totalDecls})`, constRatio, 70,
+    ));
+  }
+
+  // GP03: 타입 narrowing (typeof/instanceof 가드)
+  let typeNarrowing = 0;
+  for (const line of lines) {
+    if (/typeof\s+\w+\s*(?:===|!==)\s*['"]/.test(line)) typeNarrowing++;
+    if (/\w+\s+instanceof\s+\w+/.test(line)) typeNarrowing++;
+  }
+  if (typeNarrowing > 0) {
+    results.push(check('GP03', 'safety',
+      { ko: '타입 narrowing 가드', en: 'Type narrowing guards' },
+      { ko: 'typeof/instanceof 런타임 타입 검사', en: 'Runtime type checking via typeof/instanceof' },
+      'pass', `${typeNarrowing}건 양품 패턴`, typeNarrowing, 0,
+    ));
+  }
+
+  // GP04: Optional chaining + Nullish coalescing
+  const optChain = (code.match(/\?\./g) ?? []).length;
+  const nullCoal = (code.match(/\?\?(?!=)/g) ?? []).length;
+  if (optChain >= 3 || nullCoal >= 2) {
+    results.push(check('GP04', 'safety',
+      { ko: '현대적 null 방어', en: 'Modern null defense' },
+      { ko: '?. ?? 연산자 적극 사용', en: 'Active use of ?. ?? operators' },
+      'pass', `?. ${optChain}건, ?? ${nullCoal}건`, optChain + nullCoal, 3,
+    ));
+  }
+
+  // GP05: Early return / Guard clause
+  let earlyReturns = 0;
+  for (const line of lines) {
+    if (/^\s*if\s*\(.*\)\s*(?:return|throw)\b/.test(line)) earlyReturns++;
+  }
+  if (earlyReturns >= 2) {
+    results.push(check('GP05', 'maintainability',
+      { ko: 'Early return 가드 절', en: 'Early return guard clauses' },
+      { ko: '중첩 감소 — 가독성 향상', en: 'Reduced nesting — improved readability' },
+      'pass', `${earlyReturns}건 가드 절`, earlyReturns, 2,
+    ));
+  }
+
+  // GP06: JSDoc 문서화
+  const jsdocBlocks = (code.match(/\/\*\*[\s\S]*?\*\//g) ?? []).length;
+  if (jsdocBlocks >= 2) {
+    results.push(check('GP06', 'maintainability',
+      { ko: 'JSDoc 문서화', en: 'JSDoc documentation' },
+      { ko: 'public API 문서화 존재', en: 'Public API documentation present' },
+      'pass', `${jsdocBlocks}건 JSDoc 블록`, jsdocBlocks, 2,
+    ));
+  }
+
+  // GP07: AbortController 사용 (fetch timeout 보호)
+  const abortControllers = (code.match(/AbortController|AbortSignal/g) ?? []).length;
+  if (abortControllers > 0 && fetchCalls > 0) {
+    results.push(check('GP07', 'reliability',
+      { ko: 'AbortController fetch 보호', en: 'AbortController fetch protection' },
+      { ko: 'fetch 호출의 타임아웃·취소 제어', en: 'Timeout/cancel control for fetch calls' },
+      'pass', `${abortControllers}건 AbortController 사용`, abortControllers, 0,
+    ));
+  }
+
   return results;
 }
 
@@ -321,10 +412,15 @@ export function generateChecklistReport(
   const total = all.length;
 
   // 점수: pass=100, warn=60, fail=0, skip=무시
-  const scored = all.filter(i => i.status !== 'skip');
-  const score = scored.length > 0
-    ? Math.round(scored.reduce((sum, i) => sum + (i.status === 'pass' ? 100 : i.status === 'warn' ? 60 : 0), 0) / scored.length)
+  // GP (Good Pattern) 보너스: penalty-only 체계 보정
+  const penaltyItems = all.filter(i => i.status !== 'skip' && !i.id.startsWith('GP'));
+  const bonusItems = all.filter(i => i.id.startsWith('GP') && i.status === 'pass');
+  const penaltyScore = penaltyItems.length > 0
+    ? penaltyItems.reduce((sum, i) => sum + (i.status === 'pass' ? 100 : i.status === 'warn' ? 60 : 0), 0) / penaltyItems.length
     : 100;
+  // 양품 보너스: GP pass 항목당 +2점, 최대 +12
+  const gpBonus = Math.min(12, bonusItems.length * 2);
+  const score = Math.min(100, Math.round(penaltyScore + gpBonus));
 
   const hasSecurityFail = all.some(i => i.domain === 'security' && i.status === 'fail');
   const hasSafetyFail = all.some(i => i.domain === 'safety' && i.status === 'fail');

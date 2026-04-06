@@ -47,11 +47,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 보안 주의 (전수 진단 결과)
 
-현재 P0 보안 이슈:
-1. `proxy.ts` 보안 헤더 미적용 — middleware.ts 부재
-2. `chat/route.ts:352` — PRO_LOCKED 하드코딩 인증 우회
-3. `sandbox.ts:170` — 사용자 코드 script 직접 삽입
-4. `webcontainer.ts:54` — new Function() eval 동등
+P0 보안 이슈 (2026-04-06 수정 완료):
+1. ~~`proxy.ts` 보안 헤더 미적용~~ — `next.config.ts` headers()로 적용 완료. proxy.ts는 참조용.
+2. ~~`chat/route.ts:352` — PRO_LOCKED 하드코딩 인증 우회~~ — Firebase custom claims(stripeRole)로 tier 판별
+3. ~~`sandbox.ts:170` — 사용자 코드 script 직접 삽입~~ — nonce 검증 + iframe sandbox 유지
+4. ~~`webcontainer.ts:54` — new Function() eval 동등~~ — 이미 dynamic import로 교체됨, 코멘트 정리
 
 ## AI 모델 현황 (2026-04)
 

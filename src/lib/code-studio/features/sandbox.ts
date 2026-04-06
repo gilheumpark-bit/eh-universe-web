@@ -143,6 +143,9 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
     iframe.sandbox.add('allow-scripts');
     document.body.appendChild(iframe);
 
+    // Nonce to validate postMessage authenticity (must be declared before handler)
+    const execNonce = crypto.randomUUID();
+
     const timer = setTimeout(() => {
       cleanup();
       resolve({ output: '', error: 'Execution timeout', exitCode: 1, durationMs: timeoutMs });
@@ -155,7 +158,9 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
     }
 
     function handler(e: MessageEvent) {
+      // Validate: must come from our iframe AND carry the correct nonce
       if (e.source !== iframe.contentWindow) return;
+      if (e.data?.__nonce !== execNonce) return;
       cleanup();
       resolve({
         output: e.data?.output ?? '',
@@ -167,9 +172,10 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
 
     window.addEventListener('message', handler);
 
-    // ⚠️ SECURITY: new Function() 사용 — iframe sandbox 내에서만 실행.
-    // iframe은 sandbox="allow-scripts" + srcdoc로 격리되어 메인 DOM 접근 불가.
-    // 코드 인젝션 방지: script 태그 탈출 차단 + base64 인코딩으로 격리
+    // SECURITY: User code runs inside a sandboxed iframe (sandbox="allow-scripts" + srcdoc).
+    // The iframe has no access to parent DOM, cookies, or storage.
+    // Code is base64-encoded to prevent script tag injection in the srcdoc HTML.
+    // The nonce (declared above) validates postMessage authenticity.
     const safeCode = code.replace(/<\/script/gi, '<\\/script');
     const encoded = btoa(unescape(encodeURIComponent(safeCode)));
     const html = `<!doctype html><html><body><script>
@@ -179,9 +185,9 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
         console.log = function() { __out.push(Array.from(arguments).join(' ')); };
         var __code = decodeURIComponent(escape(atob("${encoded}")));
         (new Function(__code))();
-        parent.postMessage({ output: __out.join('\\n') }, '*');
+        parent.postMessage({ __nonce: "${execNonce}", output: __out.join('\\n') }, '*');
       } catch(e) {
-        parent.postMessage({ error: e.message, output: '' }, '*');
+        parent.postMessage({ __nonce: "${execNonce}", error: e.message, output: '' }, '*');
       }
     <\/script></body></html>`;
 

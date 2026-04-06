@@ -349,10 +349,12 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get('Authorization') || '';
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1]?.trim() ?? '';
-      // PRO_LOCKED 하드코딩 인증 제거 — Firebase 토큰만 허용
+      // Firebase 토큰 검증 — custom claims에서 tier 판별 (hardcoded bypass 금지)
       if (token) {
         const verified = await verifyFirebaseIdToken(token);
-        if (verified) userTier = 'free';
+        if (verified) {
+          userTier = verified.tier === 'pro' ? 'pro' : 'free';
+        }
       }
     }
 

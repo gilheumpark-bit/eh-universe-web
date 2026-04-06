@@ -5,6 +5,7 @@
 
 import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
+import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
 
 // ============================================================
 // PART 1 — Types & Helpers
@@ -284,8 +285,10 @@ export async function lintCode(
   signal?: AbortSignal,
   totalLines?: number,
 ): Promise<LintResult[]> {
+  const _fpSuppression = buildFPSuppressionPrompt();
   return safeAICall<LintResult[]>({
     systemInstruction: `You are a strict code reviewer for ${language}. Analyze the code for bugs, anti-patterns, security issues, and style problems. Return a JSON array of objects: {"line": number, "message": string, "severity": "error"|"warning"|"info", "fix": string|null}. "line" is the 1-based line number. "fix" is a suggested replacement for that line or null. If the code is clean, return []. Return ONLY the JSON array.
+${_fpSuppression}
 
 Example 1 (null dereference):
 Input: "const x = null; console.log(x.name);"

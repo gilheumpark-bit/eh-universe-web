@@ -1,4 +1,0 @@
-src/components/translator/TranslatorStudioApp.tsx(168,11): error TS2304: Cannot find name 'setAiCapabilitiesLoaded'.
-src/components/translator/TranslatorStudioApp.tsx(172,25): error TS2304: Cannot find name 'setAiCapabilitiesLoaded'.
-src/components/translator/TranslatorStudioApp.tsx(320,53): error TS2448: Block-scoped variable 'patchActiveChapter' used before its declaration.
-src/components/translator/TranslatorStudioApp.tsx(320,53): error TS2454: Variable 'patchActiveChapter' is used before being assigned.

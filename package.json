@@ -24,6 +24,7 @@
     "verify:static": "npm run lint && npx tsc --noEmit --strict && npx jest --testPathPatterns=\"verification|composer-state|panel-registry|rate-limit|safe-fix|logger|server-ai\" --no-coverage",
     "verify:build": "npm run verify:static && npm run build",
     "verify": "npm run verify:build && npm run test:e2e",
+    "integrity:scan": "node scripts/project-integrity-scan.mjs",
     "cs": "ts-node --project tsconfig.cli.json src/cli/bin/cs.ts",
     "cs:build": "tsc --project tsconfig.cli.json"
   },
@@ -79,6 +80,7 @@
     "jest-environment-jsdom": "^30.3.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
+    "ts-morph": "^23.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }

@@ -4,6 +4,8 @@
 // Each team: (code, language, fileName) => TeamResult
 // Pure regex + heuristic based analysis.
 
+import { detectGoodPatterns, downgradeFindings } from './good-pattern-detector';
+
 // ============================================================
 // PART 1 — Shared Types
 // ============================================================
@@ -258,7 +260,7 @@ const VALIDATION_RULES: { pattern: RegExp; severity: Severity; message: string; 
   { pattern: /os\.system\s*\(/, severity: 'critical', message: 'os.system() 사용 감지', rule: 'NO_OS_SYSTEM' },
   { pattern: /\bpassword\s*=\s*["'][^"']+["']/, severity: 'critical', message: '하드코딩된 비밀번호 감지', rule: 'NO_HARDCODED_SECRET' },
   { pattern: /(?:api[_-]?key|secret|token)\s*=\s*["'][A-Za-z0-9_-]{16,}["']/, severity: 'critical', message: '하드코딩된 API 키/토큰', rule: 'NO_HARDCODED_KEY' },
-  { pattern: /\bTODO\b|\bFIXME\b|\bHACK\b|\bXXX\b/, severity: 'major', message: 'TODO/FIXME/HACK 잔존', rule: 'NO_TODO' },
+  { pattern: /\/\/\s*(?:TODO|FIXME|HACK|XXX)\b|\/\*\s*(?:TODO|FIXME|HACK|XXX)\b/, severity: 'major', message: 'TODO/FIXME/HACK 잔존', rule: 'NO_TODO' },
   { pattern: /debugger\s*;?/, severity: 'major', message: 'debugger 문 잔존', rule: 'NO_DEBUGGER' },
 ];
 
@@ -446,16 +448,25 @@ export function runTeam3Validation(code: string, _language: string, _fileName: s
   findings.push(...checkAsyncPatterns(code));
   findings.push(...checkRuntimeCompat(code, lines));
 
-  const criticals = findings.filter((f) => f.severity === 'critical').length;
-  const majors = findings.filter((f) => f.severity === 'major').length;
-  const minors = findings.filter((f) => f.severity === 'minor').length;
-  const score = Math.max(0, 100 - criticals * 25 - majors * 10 - minors * 3);
+  // ── Good Pattern Suppression — 양품 패턴으로 오탐 경감 ──
+  const goodReport = detectGoodPatterns(code);
+  const adjusted = goodReport.suppressedRules.length > 0
+    ? downgradeFindings(findings, goodReport)
+    : findings;
+
+  const criticals = adjusted.filter((f) => f.severity === 'critical').length;
+  const majors = adjusted.filter((f) => f.severity === 'major').length;
+  const minors = adjusted.filter((f) => f.severity === 'minor').length;
+  const baseScore = Math.max(0, 100 - criticals * 25 - majors * 10 - minors * 3);
+  // 양품 보너스: boost 패턴당 +1, 최대 +10
+  const score = Math.min(100, baseScore + Math.min(10, goodReport.scoreBonus));
 
   return {
     stage: 'validation',
     status: criticals > 0 ? 'fail' : majors > 2 ? 'warn' : 'pass',
     score,
-    findings,
+    findings: adjusted,
+    metrics: { goodPatternsDetected: goodReport.totalDetected, goodScoreBonus: goodReport.scoreBonus },
   };
 }
 
@@ -932,24 +943,35 @@ export function runTeam8Governance(code: string, _language: string, _fileName: s
   }
 
   // Trust scoring
-  const todoCount = (code.match(/\bTODO\b|\bFIXME\b|\bHACK\b/gi) ?? []).length;
-  const baseTrust = Math.max(0, 100 - findings.length * 15 - todoCount * 5) / 100;
-  const trustState = baseTrust < 0.3 ? 'untrusted' : baseTrust < 0.6 ? 'degraded' : 'trusted';
+  const todoCount = (code.match(/\/\/\s*(?:TODO|FIXME|HACK)\b|\/\*\s*(?:TODO|FIXME|HACK)\b/gi) ?? []).length;
+
+  // ── Good Pattern Boost — 양품 패턴으로 신뢰도 보정 ──
+  const govGoodReport = detectGoodPatterns(code);
+  const adjustedFindings = govGoodReport.suppressedRules.length > 0
+    ? downgradeFindings(findings, govGoodReport)
+    : findings;
+  // 양품 패턴이 많으면 finding 패널티 경감 (15 → 12)
+  const findingPenalty = govGoodReport.boostCount >= 5 ? 12 : 15;
+  const baseTrust = Math.max(0, 100 - adjustedFindings.length * findingPenalty - todoCount * 5) / 100;
+  // 양품 보너스: 신뢰도에 직접 가산 (최대 +0.1)
+  const goodTrustBonus = Math.min(0.1, govGoodReport.boostCount * 0.01);
+  const adjustedTrust = Math.min(1, baseTrust + goodTrustBonus);
+  const trustState = adjustedTrust < 0.3 ? 'untrusted' : adjustedTrust < 0.6 ? 'degraded' : 'trusted';
 
   if (trustState === 'untrusted') {
-    findings.push({ severity: 'critical', message: `신뢰도 저하: ${trustState} (${(baseTrust * 100).toFixed(0)}%)`, rule: 'TRUST_DEGRADATION' });
+    adjustedFindings.push({ severity: 'critical', message: `신뢰도 저하: ${trustState} (${(adjustedTrust * 100).toFixed(0)}%)`, rule: 'TRUST_DEGRADATION' });
   } else if (trustState === 'degraded') {
-    findings.push({ severity: 'major', message: `신뢰도 주의: ${trustState} (${(baseTrust * 100).toFixed(0)}%)`, rule: 'TRUST_DEGRADATION' });
+    adjustedFindings.push({ severity: 'major', message: `신뢰도 주의: ${trustState} (${(adjustedTrust * 100).toFixed(0)}%)`, rule: 'TRUST_DEGRADATION' });
   }
 
-  const score = Math.max(0, Math.min(100, Math.round(baseTrust * 100)));
+  const score = Math.max(0, Math.min(100, Math.round(adjustedTrust * 100)));
 
   return {
     stage: 'governance',
     status: trustState === 'untrusted' ? 'fail' : trustState === 'degraded' ? 'warn' : 'pass',
     score,
-    findings,
-    metrics: { cyclomaticComplexity: cc, maxNesting, longestFunction: longestFn, trustScore: Math.round(baseTrust * 100) },
+    findings: adjustedFindings,
+    metrics: { cyclomaticComplexity: cc, maxNesting, longestFunction: longestFn, trustScore: Math.round(adjustedTrust * 100), goodPatternsDetected: govGoodReport.totalDetected },
   };
 }
 

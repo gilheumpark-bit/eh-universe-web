@@ -89,6 +89,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Match /code-studio and /code-studio/* (both need COOP/COEP + unsafe-eval CSP)
         source: '/code-studio/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: cspCodeStudio },

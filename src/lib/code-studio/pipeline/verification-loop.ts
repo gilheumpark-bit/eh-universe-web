@@ -26,6 +26,10 @@ import {
 } from '@/lib/code-studio/core/autofix-policy';
 import { runDesignLint } from '@/lib/code-studio/pipeline/design-lint';
 import type { DesignLintResult } from '@/lib/code-studio/pipeline/design-lint';
+import {
+  GOOD_PATTERN_CATALOG,
+  getSuppressorsFor,
+} from '@/cli/core/good-pattern-catalog';
 
 // Re-export for existing consumers (`SafeFixCategory` was defined here).
 export type { SafeFixCategory } from '@/lib/code-studio/core/autofix-policy';
@@ -270,6 +274,71 @@ function extractFindings(stages: PipelineStage[]): (Finding & { file?: string })
 // IDENTITY_SEAL: PART-5 | role=finding-converter | inputs=PipelineStage[] | outputs=Finding[]
 
 // ============================================================
+// PART 5.5 — Good-Pattern False-Positive Filter
+// ============================================================
+
+/**
+ * Build a set of rule IDs that should be suppressed based on good patterns
+ * detected in the code. Mirrors the CLI false-positive-filter logic
+ * but runs directly from the catalog's suppresses field.
+ */
+function buildSuppressedRuleIds(code: string): Set<string> {
+  const suppressed = new Set<string>();
+
+  for (const pattern of GOOD_PATTERN_CATALOG) {
+    if (!pattern.suppresses || pattern.suppresses.length === 0) continue;
+    if (pattern.signal !== 'suppress-fp' && pattern.signal !== 'boost') continue;
+    if (pattern.confidence !== 'high') continue;
+
+    // Quick heuristic detection per pattern category
+    let detected = false;
+
+    if (pattern.id === 'GQ-FN-004' && /^\s*if\s*\([^)]*\)\s*(return|throw)\b/m.test(code)) detected = true;
+    else if (pattern.id === 'GQ-FN-009' && ((code.match(/\bconst\b/g) || []).length > (code.match(/\blet\b/g) || []).length * 3)) detected = true;
+    else if (pattern.id === 'GQ-FN-010' && /\{\s*\.\.\./.test(code)) detected = true;
+    else if (pattern.id === 'GQ-FN-012' && /\.slice\(|\.concat\(|\.map\(|\.filter\(/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-TS-001' && /strict.*true|"strict"\s*:\s*true/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-TS-004' && /:\s*unknown\b/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-TS-015' && /zod|io-ts|yup|superstruct/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-FN-008' && /\.filter\(.*\.map\(|\.map\(.*\.filter\(/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-AI-007' && !/\/\/\s*TODO|FIXME/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-NW-006' && /\.at\s*\(-?\d+\)/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-NW-007' && /structuredClone/.test(code)) detected = true;
+    else if (pattern.id === 'GQ-NW-010' && /noUncheckedIndexedAccess/.test(code)) detected = true;
+
+    if (detected) {
+      for (const ruleId of pattern.suppresses) {
+        suppressed.add(ruleId);
+      }
+    }
+  }
+
+  return suppressed;
+}
+
+/**
+ * Filter findings by removing those suppressed by good patterns in the code.
+ */
+function filterFalsePositives(
+  findings: (Finding & { file?: string })[],
+  code: string,
+): (Finding & { file?: string })[] {
+  const suppressed = buildSuppressedRuleIds(code);
+  if (suppressed.size === 0) return findings;
+
+  return findings.filter((f) => {
+    // Extract potential rule ID from the message (e.g., "[CMX-007] ..." or "CMX-007:")
+    const ruleMatch = f.message.match(/\b([A-Z]{2,4}-\d{3})\b/);
+    if (ruleMatch && suppressed.has(ruleMatch[1])) {
+      return false; // suppressed by good pattern
+    }
+    return true;
+  });
+}
+
+// IDENTITY_SEAL: PART-5.5 | role=good-pattern-fp-filter | inputs=findings,code | outputs=filteredFindings
+
+// ============================================================
 // PART 6 — Main Verification Loop
 // ============================================================
 
@@ -405,7 +474,8 @@ export async function runVerificationLoop(
     });
 
     // --- Step 7: Generate and filter fixes ---
-    const findings = extractFindings(pipelineResult.stages);
+    const rawFindings = extractFindings(pipelineResult.stages);
+    const findings = filterFalsePositives(rawFindings, currentCode);
     const fileContents = new Map<string, string>([[fileName, currentCode]]);
     let allFixes: FixSuggestion[];
     try {

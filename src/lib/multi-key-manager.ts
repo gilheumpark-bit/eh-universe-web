@@ -3,6 +3,8 @@
 // ============================================================
 // 최대 7개 API 키 슬롯. 에이전트별 키 할당. 병렬 처리. 과금 투명성.
 
+import { encryptKey, decryptKey } from './ai-providers';
+
 // ============================================================
 // PART 1 — Types
 // ============================================================
@@ -132,15 +134,9 @@ export function loadMultiKeyConfig(): MultiKeyConfig {
 }
 
 /**
- * WARNING: XOR obfuscation with a static salt is NOT cryptographic security.
- * This only prevents casual plaintext exposure in localStorage/devtools.
- * It does NOT protect against a determined attacker inspecting the page.
- *
- * For real encryption, API keys should migrate to the ai-providers.ts v4
- * AES-GCM encryption flow (see encryptApiKey / decryptApiKey in that module).
- *
- * TODO(P3): Migrate multi-key-manager storage to ai-providers.ts v4 AES-GCM encryption.
- * 현재 obfuscate(XOR+base64)로 동작 중 — 기능상 문제 없음, 보안 강화 시 전환.
+ * Legacy XOR obfuscation — kept for backward-compatible reads of existing
+ * `mk:`-prefixed values in localStorage. New writes go through AES-GCM via
+ * the async save/load variants below.
  */
 function obfuscate(key: string): string {
   const salt = 'ehsu';
@@ -152,6 +148,52 @@ function deobfuscate(encoded: string): string {
   const salt = 'ehsu';
   const decoded = atob(encoded.slice(3));
   return decoded.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ salt.charCodeAt(i % salt.length))).join('');
+}
+
+// ── AES-GCM async variants (v4 migration) ──
+// Uses the same AES-GCM flow as ai-providers.ts encryptKey/decryptKey.
+// decryptKey auto-detects format (v4 AES-GCM, v3 XOR, legacy, plaintext),
+// so existing mk:-prefixed or plaintext values are transparently upgraded
+// on the next async save cycle.
+
+/** Async save — encrypts API keys with AES-GCM (v4). Preferred over saveMultiKeyConfig. */
+export async function saveMultiKeyConfigAsync(config: MultiKeyConfig): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const encryptedSlots = await Promise.all(
+      config.slots.map(async (s) => ({
+        ...s,
+        apiKey: s.apiKey ? await encryptKey(s.apiKey) : '',
+      })),
+    );
+    const serializable = { ...config, slots: encryptedSlots };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+  } catch { /* quota or crypto failure — silent */ }
+}
+
+/** Async load — decrypts API keys (supports v4 AES-GCM + legacy mk: + plaintext). */
+export async function loadMultiKeyConfigAsync(): Promise<MultiKeyConfig> {
+  if (typeof window === 'undefined') return createDefaultConfig();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return createDefaultConfig();
+    const parsed = JSON.parse(raw) as MultiKeyConfig;
+    parsed.slots = await Promise.all(
+      parsed.slots.map(async (s) => {
+        if (!s.apiKey) return { ...s, apiKey: '' };
+        // decryptKey handles v4 (noa:4:), v3 (noa:3:), and plaintext.
+        // For legacy mk: prefix, fall back to local deobfuscate.
+        const key = s.apiKey.startsWith('mk:')
+          ? deobfuscate(s.apiKey)
+          : await decryptKey(s.apiKey);
+        return { ...s, apiKey: key };
+      }),
+    );
+    while (parsed.slots.length < 7) {
+      parsed.slots.push(createEmptySlot(parsed.slots.length + 1));
+    }
+    return parsed;
+  } catch { return createDefaultConfig(); }
 }
 
 // ============================================================

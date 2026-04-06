@@ -4,6 +4,7 @@
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+import { buildQualityRulesPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
 
 export interface StepValidation {
   passed: boolean;
@@ -39,11 +40,15 @@ Each step must produce exactly one complete function, component, or module.
 Respond ONLY with a JSON array of step descriptions. No markdown, no explanation.
 Example: ["Create the UserCard component with props interface","Create the fetchUser async function","Create the UserList component that uses UserCard and fetchUser"]`;
 
+const _QUALITY_RULES = buildQualityRulesPrompt(20);
+
 const STEP_SYSTEM_PROMPT_BASE = `You are an autonomous code generator.
 You receive a single atomic step description and project context.
 Output ONLY the code that implements the step. No explanations, no markdown fences, no comments about what you're doing.
 Produce a complete, self-contained function or component.
-Use TypeScript. Include necessary imports.`;
+Use TypeScript. Include necessary imports.
+
+${_QUALITY_RULES}`;
 
 /** Detect if a step description involves UI/component generation. */
 function isUIStep(description: string): boolean {

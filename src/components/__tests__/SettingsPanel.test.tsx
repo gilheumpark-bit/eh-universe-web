@@ -40,6 +40,7 @@ describe('SettingsPanel', () => {
       aiGhostText: true,
       aiAutoSuggestDelay: 800,
       pipelinePassThreshold: 77,
+      actionApprovalMode: 'normal' as const,
     };
     const onChange = jest.fn();
     const { container } = render(

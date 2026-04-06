@@ -13,6 +13,11 @@ import {
   type LucideIcon,
   Upload, Bug, Play, Shield, List, Layout,
   Package, BarChart3, Users, Wand2,
+  Terminal, Layers, Brain, BrainCircuit, Cpu, TrendingUp,
+  Network, GitMerge, GitFork, Database, GraduationCap,
+  FolderKanban, Keyboard, Key, ShieldCheck, GitCompareArrows,
+  BookA, Boxes, BookOpen, Code2, PenTool, Hash, Clock, Zap,
+  GitCompare,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
@@ -39,6 +44,11 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   MessageSquare, Activity, GitBranch, Upload, Bug, Search, Play,
   Shield, Edit3, AlertTriangle, Eye, List, Layout, Settings,
   Package, BarChart3, Users, Wand2,
+  Terminal, Layers, Brain, BrainCircuit, Cpu, TrendingUp,
+  Network, GitMerge, GitFork, Database, GraduationCap,
+  FolderKanban, Keyboard, Key, ShieldCheck, GitCompareArrows,
+  BookA, Boxes, BookOpen, Code2, PenTool, Hash, Clock, Zap,
+  GitCompare,
 };
 
 interface PipelineStage {
@@ -522,6 +532,11 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
     "code-rhythm": () => <PI.RhythmPanelComponent code={activeFile?.content ?? ''} />,
     "migration-audit": () => <PI.MigrationAuditPanelComponent />,
     "snippet-market": () => <PI.SnippetMarketComponent onImportToEditor={undefined} />,
+    "multi-diff": () => <PI.MultiFileDiffComponent files={openFiles.map(f => ({ path: f.name, original: '', modified: f.content }))} />,
+    "debugger": () => <PI.DebugPanelComponent />,
+    "naming-dict": () => <PI.NamingDictPanelComponent />,
+    "dep-graph": () => <PI.DependencyGraphComponent files={openFiles.reduce<Record<string, string>>((acc, f) => { acc[f.name] = f.content; return acc; }, {})} />,
+    "review-board": () => <PI.ReviewBoardComponent code={activeFile?.content ?? ''} />,
   };
 
   const renderer = panelPropsMap[rightPanel];

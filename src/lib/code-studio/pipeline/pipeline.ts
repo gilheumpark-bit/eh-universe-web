@@ -5,6 +5,7 @@
 // AI 호출 없이 로컬에서 즉시 실행.
 
 import { logger } from '@/lib/logger';
+import { detectGoodPatterns, type GoodPatternReport } from './good-pattern-detector';
 
 export interface PipelineStage {
   name: string;
@@ -19,6 +20,8 @@ export interface PipelineResult {
   overallScore: number;
   overallStatus: 'pass' | 'warn' | 'fail';
   timestamp: number;
+  /** 양품 패턴 탐지 결과 (good-pattern-catalog 기반) */
+  goodPatterns?: GoodPatternReport;
 }
 
 /** Structured finding for precise line-level reporting */
@@ -818,10 +821,13 @@ export function runStaticPipeline(code: string, language: string): PipelineResul
     analyzeGovernance(code, language),
   ].map(deduplicateFindings);
 
-  const overallScore = Math.round(stages.reduce((s, t) => s + t.score, 0) / stages.length);
+  // ── Good Pattern Detection — 양품 패턴 점수 보정 ──
+  const goodPatterns = detectGoodPatterns(code);
+  const baseScore = Math.round(stages.reduce((s, t) => s + t.score, 0) / stages.length);
+  const overallScore = Math.min(100, baseScore + goodPatterns.scoreBonus);
   const overallStatus = overallScore >= 80 ? 'pass' : overallScore >= 60 ? 'warn' : 'fail';
 
-  return { stages, overallScore, overallStatus, timestamp: Date.now() };
+  return { stages, overallScore, overallStatus, timestamp: Date.now(), goodPatterns };
 }
 
 /**
@@ -980,6 +986,8 @@ export interface FullPipelineResult {
   overallStatus: 'pass' | 'warn' | 'fail';
   overallScore: number;
   stages: FullTeamResult[];
+  /** 양품 패턴 탐지 결과 (good-pattern-catalog 기반) */
+  goodPatterns?: GoodPatternReport;
 }
 
 type TeamFn = (code: string, language: string, fileName: string) => FullTeamResult;
@@ -1058,9 +1066,13 @@ export async function runFullPipeline(
     }
   }
 
-  const avgScore = results.length > 0
+  // ── Good Pattern Detection — 양품 패턴 점수 보정 ──
+  const goodPatterns = detectGoodPatterns(code);
+
+  const baseAvg = results.length > 0
     ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
     : 0;
+  const avgScore = Math.min(100, baseAvg + goodPatterns.scoreBonus);
 
   const hasFail = results.some((r) => r.status === 'fail');
   const hasWarn = results.some((r) => r.status === 'warn');
@@ -1071,6 +1083,7 @@ export async function runFullPipeline(
     overallStatus: hasFail ? 'fail' : hasWarn ? 'warn' : 'pass',
     overallScore: avgScore,
     stages: results,
+    goodPatterns,
   };
 }
 

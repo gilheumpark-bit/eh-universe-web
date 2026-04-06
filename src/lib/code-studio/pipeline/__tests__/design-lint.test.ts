@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Unit tests for design-lint — all 14 rules + 4 bonus + utilities
  */
@@ -52,7 +51,7 @@ describe('Rule 2: RAW_TAILWIND_COLOR', () => {
   });
 
   it('catches text-red-600', () => {
-    const code = '<span className="text-red-600">Error</span>';
+    const code = '<span className="text-red-600">Bad Text</span>';
     const result = runDesignLint(code);
     expect(result.issues.find(i => i.rule === 'RAW_TAILWIND_COLOR')).toBeDefined();
   });
@@ -246,8 +245,8 @@ describe('Rule 10: ARBITRARY_ZINDEX', () => {
     expect(result.issues.find(i => i.rule === 'ARBITRARY_ZINDEX')).toBeDefined();
   });
 
-  it('catches z-[999]', () => {
-    const code = '<div className="z-[999] fixed inset-0">Overlay</div>';
+  it('catches z-999', () => {
+    const code = '<div className="z-999 fixed inset-0">Overlay</div>';
     const result = runDesignLint(code);
     expect(result.issues.find(i => i.rule === 'ARBITRARY_ZINDEX')).toBeDefined();
   });
@@ -402,7 +401,7 @@ describe('Scoring', () => {
       <div style={{ color: "#FF0000", background: "#1E1E1E" }}>
         <span className="bg-[#aabbcc]">hex</span>
         <span className="bg-[#ddeeff]">hex2</span>
-        <div className="z-[9999]" style={{ outline: "none;" }}>overlay</div>
+        <div className="z-9999" style={{ outline: "none;" }}>overlay</div>
       </div>
     `;
     const result = runDesignLint(code);

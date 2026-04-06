@@ -1,10 +1,12 @@
 // ============================================================
-// CSP Proxy — static-compatible security headers
+// CSP Proxy — REFERENCE ONLY (not active middleware)
 // ============================================================
-// Next.js 16 nonce-based CSP requires fully dynamic rendering.
-// This project relies on static generation for most pages, so
-// production uses a static-compatible CSP that still keeps the
-// rest of the hardening headers centralized here.
+// IMPORTANT: Security headers are applied via next.config.ts headers().
+// This file is kept as a reference for the header definitions.
+// Next.js 16 does not use middleware.ts for static pages; the
+// next.config.ts headers() function is the correct mechanism.
+// Do NOT create a middleware.ts that calls proxy() — it would
+// conflict with static generation and is unnecessary.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -19,7 +21,11 @@ function buildCSPHeader(isCodeStudio: boolean, isDevelopment: boolean): string {
     ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`
     : `script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`;
 
-  // style-src: 'unsafe-inline' retained — see TODO above
+  // style-src: 'unsafe-inline' is required — Next.js injects inline <style> tags
+  // for CSS Modules and Tailwind, and nonce-based style-src needs fully dynamic
+  // rendering (incompatible with static generation). This is the accepted trade-off
+  // for a statically-generated site. Nonce migration would require switching to
+  // fully dynamic rendering across all pages.
   const styleSrc = "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net";
 
   const directives = [

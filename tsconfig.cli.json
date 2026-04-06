@@ -12,7 +12,7 @@
     "strict": false,
     "noEmit": true,
     "jsx": "react-jsx",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "isolatedModules": true,
     "paths": {
       "@/*": ["./src/*"]

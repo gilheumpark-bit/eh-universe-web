@@ -19,8 +19,8 @@ import {
 // ============================================================
 
 describe('PANEL_REGISTRY', () => {
-  test('has exactly 38 entries', () => {
-    expect(PANEL_REGISTRY).toHaveLength(38);
+  test('has expected entry count (update when panels are added/removed)', () => {
+    expect(PANEL_REGISTRY).toHaveLength(51);
   });
 
   test('all IDs are unique', () => {

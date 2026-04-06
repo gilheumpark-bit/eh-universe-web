@@ -1,3 +1,0 @@
-src/components/translator/core/TranslatorContext.tsx(2,41): error TS2305: Module '"@/types/translator"' has no exported member 'WorkspaceTab'.
-src/components/translator/editor/BilateralEditor.tsx(5,25): error TS2307: Cannot find module '@/components/ui/Tooltip' or its corresponding type declarations.
-src/components/translator/TranslatorShell.tsx(110,8): error TS2740: Type '{}' is missing the following properties from type 'Props': open, onClose, tab, onTab, and 3 more.

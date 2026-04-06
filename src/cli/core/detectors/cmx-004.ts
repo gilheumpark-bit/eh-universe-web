@@ -1,24 +1,23 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
 
 /**
- * Phase / Rule Category: complexity
- * Severity: medium | Confidence: high
+ * CMX-004: 파일 1000줄 초과
+ * Detects source files exceeding 1000 lines.
  */
 export const cmx004Detector: RuleDetector = {
-  ruleId: 'CMX-004', // 파일 1000줄 초과
+  ruleId: 'CMX-004',
   detect: (sourceFile) => {
-    const findings: Array<{line: number, message: string}> = [];
-    
-    // TODO: Implement precise AST matching logic for 파일 1000줄 초과
-    /*
-    sourceFile.forEachDescendant(node => {
-      // if (node.getKind() === SyntaxKind.TargetNode) {
-      //   findings.push({ line: node.getStartLineNumber(), message: '파일 1000줄 초과 위반' });
-      // }
-    });
-    */
+    const findings: Array<{line: number; message: string}> = [];
+    const MAX_LINES = 1000;
+
+    const lineCount = sourceFile.getEndLineNumber();
+    if (lineCount > MAX_LINES) {
+      findings.push({
+        line: 1,
+        message: `파일이 ${lineCount}줄로 ${MAX_LINES}줄 제한을 초과합니다.`,
+      });
+    }
 
     return findings;
-  }
+  },
 };

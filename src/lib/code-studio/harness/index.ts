@@ -25,6 +25,9 @@ export { runHeadlessFirst, buildSkeletonPrompt, buildDesignPrompt, type Headless
 // Dynamic Executor (WebContainer 런타임 검증 — Spy/Fuzz/Mutation/Visual)
 export { runSpyTest, runFuzzTest, runMutationTest, runVisualTest, runDynamicSuite, type DynamicTestResult } from './dynamic-executor';
 
+// Good Pattern Detector (양품 패턴 탐지 — false-positive 억제 + 점수 가산)
+export { detectGoodPatterns, suppressFindings, downgradeFindings, type DetectedGoodPattern, type GoodPatternReport } from '../pipeline/good-pattern-detector';
+
 // ============================================================
 // Master Harness — Fail-Fast 단일 진입점
 // ============================================================
@@ -42,6 +45,8 @@ export interface MasterHarnessResult {
   results: GateResult[];
   feedback?: HarnessFeedback;
   totalDurationMs: number;
+  /** 양품 패턴 탐지 결과 (good-pattern-catalog 기반) */
+  goodPatterns?: import('../pipeline/good-pattern-detector').GoodPatternReport;
 }
 
 /**
@@ -172,9 +177,25 @@ export async function runMasterHarness(
     };
   }
 
+  // ── Good Pattern Detection — 양품 패턴으로 finding 억제 + 점수 보정 ──
+  const { detectGoodPatterns, downgradeFindings: downgrade } = await import('../pipeline/good-pattern-detector');
+  const goodReport = detectGoodPatterns(code);
+
+  // 양품 패턴이 탐지되면 각 게이트 findings를 다운그레이드
+  if (goodReport.suppressedRules.length > 0) {
+    for (const gate of results) {
+      gate.findings = downgrade(
+        gate.findings.map(f => ({ severity: 'warning' as string, message: f, rule: f.match(/\[([A-Z]+-\w+)\]/)?.[1] })),
+        goodReport,
+      ).map(f => f.message);
+      // 양품 보너스로 gate 점수 보정 (최대 +10)
+      gate.score = Math.min(100, gate.score + Math.min(10, goodReport.scoreBonus));
+    }
+  }
+
   // ── 모든 게이트 통과 ──
   return {
     approved: true, gatesRun: 3, gatesPassed: 3,
-    results, totalDurationMs: Date.now() - start,
+    results, goodPatterns: goodReport, totalDurationMs: Date.now() - start,
   };
 }

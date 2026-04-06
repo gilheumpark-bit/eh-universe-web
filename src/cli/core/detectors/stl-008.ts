@@ -1,23 +1,25 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
 
-/**
- * Phase / Rule Category: style
- * Severity: info | Confidence: high
- */
 export const stl008Detector: RuleDetector = {
-  ruleId: 'STL-008', // 빈 줄 과다 3줄+
+  ruleId: 'STL-008',
   detect: (sourceFile) => {
-    const findings: Array<{line: number, message: string}> = [];
-    
-    // TODO: Implement precise AST matching logic for 빈 줄 과다 3줄+
-    /*
-    sourceFile.forEachDescendant(node => {
-      // if (node.getKind() === SyntaxKind.TargetNode) {
-      //   findings.push({ line: node.getStartLineNumber(), message: '빈 줄 과다 3줄+ 위반' });
-      // }
-    });
-    */
+    const findings: Array<{line: number; message: string}> = [];
+    const lines = sourceFile.getFullText().split('\n');
+    let consecutiveEmpty = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === '') {
+        consecutiveEmpty++;
+        if (consecutiveEmpty === 3) {
+          findings.push({
+            line: i + 1,
+            message: '연속 빈 줄이 3줄 이상입니다. 최대 2줄까지만 허용하세요.',
+          });
+        }
+      } else {
+        consecutiveEmpty = 0;
+      }
+    }
 
     return findings;
   }

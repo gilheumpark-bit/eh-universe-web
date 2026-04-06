@@ -20,6 +20,7 @@ import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 import { runDesignLint, formatDesignLintReport } from "@/lib/code-studio/pipeline/design-lint";
 import { parseNLCommand } from "@/lib/code-studio/features/nl-terminal";
+import { buildQualityRulesPrompt } from "@/lib/code-studio/ai/quality-rules-from-catalog";
 
 interface ChatSession {
   id: string;
@@ -144,6 +145,8 @@ Rules:
 4. Never execute arbitrary commands or access external systems
 5. If unsure about an API or library version, say so explicitly
 6. When generating UI components, you MUST follow the Design System v8.0 rules below. Never output raw unstyled HTML.
+
+${buildQualityRulesPrompt(25)}
 
 ${DESIGN_SYSTEM_SPEC}
 

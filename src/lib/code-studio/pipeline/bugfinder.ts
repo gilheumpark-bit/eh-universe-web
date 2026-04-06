@@ -3,6 +3,7 @@
 // ============================================================
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
 
 export interface BugReport {
   id: string;
@@ -32,6 +33,8 @@ function nextId(): string {
 // PART 2 — AI-Powered Bug Detection (findBugs)
 // ============================================================
 
+const _FP_SUPPRESSION = buildFPSuppressionPrompt();
+
 const SYSTEM_PROMPT = `You are a senior code reviewer. Analyze the given source code and return a JSON array of bugs found.
 Each element must follow this exact schema:
 [{ "severity": "critical"|"high"|"medium"|"low"|"info", "line": <number>, "description": "<string>", "suggestion": "<string>", "category": "logic"|"security"|"performance"|"style"|"error-handling"|"type-safety" }]
@@ -40,7 +43,8 @@ Rules:
 - Return ONLY the JSON array. No markdown fences, no explanation text.
 - If no bugs are found, return an empty array: []
 - "line" must be a 1-based line number referencing the source code.
-- Be precise. Do not fabricate issues that do not exist in the code.`;
+- Be precise. Do not fabricate issues that do not exist in the code.
+${_FP_SUPPRESSION}`;
 
 function buildUserPrompt(code: string, language: string, fileName: string): string {
   return `File: ${fileName}
