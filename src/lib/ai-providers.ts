@@ -6,6 +6,7 @@ import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
+import { ariManager } from '@/lib/code-studio/ai/ari-engine';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -794,6 +795,38 @@ function getFallbackProviders(
  */
 export async function streamChat(opts: StreamOptions): Promise<string> {
   const provider = getActiveProvider();
+
+  // ARI gate: if current provider's circuit is open, try ARI-routed fallback
+  if (!ariManager.isAvailable(provider)) {
+    const fallbacks = getFallbackProviders(provider);
+    const candidateIds = fallbacks.map((f) => f.id);
+    if (candidateIds.length > 0) {
+      const bestId = ariManager.getBestProvider(candidateIds);
+      const best = fallbacks.find((f) => f.id === bestId);
+      if (best) {
+        logger.warn('ari-route', `Provider ${provider} circuit open (ARI=${ariManager.getScore(provider).toFixed(1)}). Routing to ${bestId}`);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('noa:provider-fallback', {
+            detail: { from: provider, to: bestId, reason: 'ari-circuit-open' },
+          }));
+        }
+        const { messages: trimmed, systemTokens: st, messageTokens: mt } =
+          truncateMessages(opts.systemInstruction, opts.messages, best.model);
+        const maxTok = getMaxOutputTokens(best.model, st, mt);
+        const t0 = Date.now();
+        try {
+          const result = await streamViaProxy(best.id, best.model, best.key, { ...opts, messages: trimmed, maxTokens: maxTok });
+          ariManager.updateAfterCall(bestId, true, Date.now() - t0);
+          return result;
+        } catch (err) {
+          ariManager.updateAfterCall(bestId, false, Date.now() - t0);
+          if (err instanceof DOMException && err.name === 'AbortError') throw err;
+          // Fall through to normal flow with primary provider as last resort
+        }
+      }
+    }
+  }
+
   // v4 AES-GCM 키 비동기 복호화 대기 — 동기 getApiKey 빈 문자열이면 async 폴백
   const apiKey = getApiKey(provider) || await getApiKeyAsync(provider);
   const model = getActiveModel();
@@ -815,16 +848,21 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) {
-      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-      await new Promise(r => setTimeout(r, delay));
+      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      await new Promise(r => setTimeout(r, backoff));
     }
 
+    const t0 = Date.now();
     try {
-      return await streamViaProxy(provider, model, apiKey, safeOpts);
+      const result = await streamViaProxy(provider, model, apiKey, safeOpts);
+      ariManager.updateAfterCall(provider, true, Date.now() - t0);
+      return result;
     } catch (proxyErr) {
       if (proxyErr instanceof DOMException && proxyErr.name === 'AbortError') throw proxyErr;
 
       const errMsg = proxyErr instanceof Error ? proxyErr.message : '';
+      ariManager.updateAfterCall(provider, false, Date.now() - t0);
+
       const isRetryable = /429|500|502|503|504|fetch|network/i.test(errMsg);
 
       if (isRetryable && attempt < MAX_RETRIES) {
@@ -838,27 +876,36 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     }
   }
 
-  // Primary provider exhausted — attempt fallback providers on quota/rate-limit errors only.
-  // Falls back in PROVIDER_LIST order, skipping providers without a stored API key.
+  // Primary provider exhausted — attempt ARI-ranked fallback providers on quota/rate-limit errors.
+  // Falls back in ARI score order, skipping providers without a stored API key.
   // Does NOT persist the switch to localStorage; active provider is unchanged.
   if (lastError && isQuotaError(lastError.message)) {
     const fallbacks = getFallbackProviders(provider);
-    for (const fallback of fallbacks) {
+    // Sort fallbacks by ARI score (healthiest first)
+    const ranked = [...fallbacks].sort(
+      (a, b) => ariManager.getScore(b.id) - ariManager.getScore(a.id),
+    );
+    for (const fallback of ranked) {
+      if (!ariManager.isAvailable(fallback.id)) continue;
+      const t0 = Date.now();
       try {
-        logger.warn('fallback', `${provider} quota/rate-limit hit. Switching to ${fallback.id}...`);
+        logger.warn('fallback', `${provider} quota/rate-limit hit. ARI-routing to ${fallback.id} (ARI=${ariManager.getScore(fallback.id).toFixed(1)})...`);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('noa:provider-fallback', {
-            detail: { from: provider, to: fallback.id },
+            detail: { from: provider, to: fallback.id, reason: 'quota-ari-fallback' },
           }));
         }
         const fallbackMaxTokens = getMaxOutputTokens(fallback.model, systemTokens, messageTokens);
-        return await streamViaProxy(
+        const result = await streamViaProxy(
           fallback.id,
           fallback.model,
           fallback.key,
           { ...safeOpts, maxTokens: fallbackMaxTokens },
         );
+        ariManager.updateAfterCall(fallback.id, true, Date.now() - t0);
+        return result;
       } catch (fallbackErr) {
+        ariManager.updateAfterCall(fallback.id, false, Date.now() - t0);
         if (fallbackErr instanceof DOMException && fallbackErr.name === 'AbortError') throw fallbackErr;
         logger.warn('fallback', `${fallback.id} also failed:`, fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
       }

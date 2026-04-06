@@ -6,6 +6,7 @@
 
 import { logger } from '@/lib/logger';
 import { detectGoodPatterns, type GoodPatternReport } from './good-pattern-detector';
+import { applyScopePolicy, PolicyManager } from '../core/scope-policy';
 
 export interface PipelineStage {
   name: string;
@@ -809,7 +810,7 @@ function deduplicateFindings(stage: PipelineStage): PipelineStage {
  * Synchronous pipeline runner (original behavior, no AST).
  * Use this when AST analysis is not needed or in sync contexts.
  */
-export function runStaticPipeline(code: string, language: string): PipelineResult {
+export function runStaticPipeline(code: string, language: string, filePath?: string): PipelineResult {
   const stages: PipelineStage[] = [
     analyzeSimulation(code, language),
     analyzeGeneration(code, language),
@@ -820,6 +821,13 @@ export function runStaticPipeline(code: string, language: string): PipelineResul
     analyzeReleaseIP(code, language),
     analyzeGovernance(code, language),
   ].map(deduplicateFindings);
+
+  // ── Scope Policy — suppress/warn 규칙 적용 (scoring 전) ──
+  if (filePath) {
+    for (const stage of stages) {
+      stage.findings = applyScopePolicy(stage.findings, filePath);
+    }
+  }
 
   // ── Good Pattern Detection — 양품 패턴 점수 보정 ──
   const goodPatterns = detectGoodPatterns(code);

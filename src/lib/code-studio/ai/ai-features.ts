@@ -6,6 +6,7 @@
 import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
 import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
+import { ariManager } from '@/lib/code-studio/ai/ari-engine';
 
 // ============================================================
 // PART 1 — Types & Helpers
@@ -129,7 +130,9 @@ interface SafeAICallOptions<T> {
 }
 
 /**
- * Resilient AI call wrapper with retry, JSON extraction, schema validation.
+ * Resilient AI call wrapper with retry, JSON extraction, schema validation, and ARI awareness.
+ * - Checks ARI availability before each retry attempt
+ * - If current provider is ARI-unavailable on retry, logs a warning (streamChat handles routing)
  * - Retries up to 2 times with exponential backoff (1s, 2s)
  * - extractJSON + JSON.parse with try/catch
  * - Schema validation: checks required fields exist + correct types
@@ -140,6 +143,14 @@ async function safeAICall<T>(opts: SafeAICallOptions<T>): Promise<T> {
   const backoffMs = [1000, 2000];
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // ARI pre-check: warn if provider circuit is open (streamChat will auto-route)
+    if (attempt > 0) {
+      const currentProvider = getActiveProvider();
+      if (!ariManager.isAvailable(currentProvider)) {
+        logger.warn('ai-features', `ARI: provider ${currentProvider} circuit open on retry ${attempt}/${maxRetries} — streamChat will route to healthier provider`);
+      }
+    }
+
     try {
       const raw = await callAI(
         opts.systemInstruction,

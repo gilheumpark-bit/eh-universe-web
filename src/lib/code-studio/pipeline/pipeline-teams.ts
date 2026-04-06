@@ -5,6 +5,7 @@
 // Pure regex + heuristic based analysis.
 
 import { detectGoodPatterns, downgradeFindings } from './good-pattern-detector';
+import { applyScopePolicyToFindings } from '../core/scope-policy';
 
 // ============================================================
 // PART 1 — Shared Types
@@ -976,3 +977,33 @@ export function runTeam8Governance(code: string, _language: string, _fileName: s
 }
 
 // IDENTITY_SEAL: PART-9 | role=Governance | inputs=code,lang,file | outputs=TeamResult
+
+// ============================================================
+// PART 10 — Scope Policy Filtering (Team Result Post-Processing)
+// ============================================================
+
+/**
+ * TeamResult의 findings에 scope policy를 적용.
+ * suppress 규칙의 finding 제거, warn 규칙은 severity 다운그레이드.
+ * 파이프라인 최종 결과 반환 전 호출.
+ */
+export function filterTeamResultByScope(
+  result: TeamResult,
+  filePath: string,
+): TeamResult {
+  const filtered = applyScopePolicyToFindings(result.findings, filePath);
+  if (filtered.length === result.findings.length) return result;
+
+  // finding 수 변동 시 score 재계산
+  const suppressedCount = result.findings.length - filtered.length;
+  const adjustedScore = Math.min(100, result.score + suppressedCount * 10);
+
+  return {
+    ...result,
+    findings: filtered,
+    score: adjustedScore,
+    status: adjustedScore >= 80 ? 'pass' : adjustedScore >= 60 ? 'warn' : 'fail',
+  };
+}
+
+// IDENTITY_SEAL: PART-10 | role=ScopePolicyFilter | inputs=TeamResult,filePath | outputs=TeamResult
