@@ -274,7 +274,7 @@ const origCreateElement = document.createElement.bind(document);
 beforeAll(() => {
   document.createElement = ((tagName: string, options?: ElementCreationOptions) => {
     const el = origCreateElement(tagName, options);
-    if (tagName.toLowerCase() === 'iframe' && !el.sandbox?.add) {
+    if (tagName.toLowerCase() === 'iframe' && !(el as HTMLIFrameElement).sandbox?.add) {
       const tokens = new Set<string>();
       Object.defineProperty(el, 'sandbox', {
         value: {

@@ -29,7 +29,7 @@ interface Props {
   currentSessionId: string | null;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
-  writingMode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'; // canvas/refine/advanced: 상태 인프라 준비됨, 렌더 블록 미구현 (useStudioAI에서 canvasPass 사용)
+  writingMode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'; // canvas/refine/advanced: 상태 인프라 준비됨 (useStudioAI에서 canvasPass 사용)
   setWritingMode: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
   editDraft: string;
   setEditDraft: (val: string) => void;

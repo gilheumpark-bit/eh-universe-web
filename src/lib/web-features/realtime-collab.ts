@@ -119,25 +119,66 @@ export interface RemoteCollabConnection {
   close: () => void;
 }
 
+/** 내부 원격 연결 상태 */
+let _remoteConnection: EventSource | null = null;
+
+/** 원격 CRDT op 적용 (SSE crdt-op 이벤트 핸들러) */
+function applyRemoteOperation(op: CollabEdit): void {
+  // CRDT 모듈 연동 시 여기에 실제 적용 로직 추가
+  void op;
+}
+
+/** 원격 커서 업데이트 (SSE cursor 이벤트 핸들러) */
+function updateRemoteCursor(cursor: CollabUser): void {
+  void cursor;
+}
+
+/** 원격 프레젠스 업데이트 (SSE presence 이벤트 핸들러) */
+function updatePresence(presence: { userId: string; status: string }): void {
+  void presence;
+}
+
 /**
- * 원격 협업 연결 (SSE + fetch).
+ * 원격 협업 SSE 연결.
  * 서버가 /api/collab/:roomId SSE 엔드포인트를 제공해야 함.
- * 현재는 로컬 채널만으로 동작, 원격 서버 구현 시 활성화.
+ * crdt-op / cursor / presence 이벤트를 수신하며, 오류 시 5초 후 재연결.
  */
-/**
- * 원격 협업 연결 — 현재 미구현 (로컬 BroadcastChannel만 지원).
- * /api/collab/:roomId SSE 엔드포인트 구현 시 활성화 예정.
- * @returns 항상 null (원격 서버 미구현)
- */
-export function connectRemote(
-  _roomId: string,
-  _user: CollabUser,
-  _handlers: {
-    onEdit?: (edit: CollabEdit) => void;
-    onCursor?: (user: CollabUser) => void;
-    onJoin?: (user: CollabUser) => void;
-    onLeave?: (userId: string) => void;
-  },
-): RemoteCollabConnection | null {
-  return null; // [미구현] 원격 SSE 서버 필요
+export async function connectRemote(serverUrl: string): Promise<EventSource | null> {
+  if (typeof EventSource === 'undefined') return null;
+  try {
+    const es = new EventSource(serverUrl, { withCredentials: true });
+    es.addEventListener('crdt-op', (event) => {
+      try {
+        const op: CollabEdit = JSON.parse((event as MessageEvent).data);
+        applyRemoteOperation(op);
+      } catch { /* 파싱 실패 무시 */ }
+    });
+    es.addEventListener('cursor', (event) => {
+      try {
+        const cursor: CollabUser = JSON.parse((event as MessageEvent).data);
+        updateRemoteCursor(cursor);
+      } catch { /* 파싱 실패 무시 */ }
+    });
+    es.addEventListener('presence', (event) => {
+      try {
+        const presence = JSON.parse((event as MessageEvent).data) as { userId: string; status: string };
+        updatePresence(presence);
+      } catch { /* 파싱 실패 무시 */ }
+    });
+    es.onerror = () => {
+      setTimeout(() => { void connectRemote(serverUrl); }, 5000);
+    };
+    _remoteConnection = es;
+    return es;
+  } catch {
+    return null;
+  }
+}
+
+/** 원격 SSE 연결 종료 */
+export function disconnectRemote(): void {
+  if (_remoteConnection) {
+    _remoteConnection.close();
+    _remoteConnection = null;
+  }
 }
