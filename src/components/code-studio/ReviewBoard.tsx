@@ -9,6 +9,7 @@ import {
   Shield, Eye, Accessibility, Code2, Gauge,
   Play, CheckCircle, Loader2, AlertTriangle,
 } from 'lucide-react';
+import { runStaticPipeline, type PipelineResult } from '@/lib/code-studio/pipeline/pipeline';
 
 /** Status of an individual reviewer run */
 type ReviewerStatus = 'pending' | 'reviewing' | 'done';
@@ -90,65 +91,59 @@ const REVIEWER_PERSONAS: ReviewerPersona[] = [
 // IDENTITY_SEAL: PART-1 | role=TypesAndPersonas | inputs=none | outputs=ReviewerPersona[],ReviewerResult
 
 // ============================================================
-// PART 2 — Placeholder Review Engine
+// PART 2 — Real Review Engine (Pipeline-Based)
 // ============================================================
 
 /**
- * Simulated review results per persona.
- * Structure is ready for real AI integration:
- * replace the body with an actual streamChat / runSingleAgent call.
+ * Maps pipeline stage indices to reviewer persona IDs.
+ * Pipeline stages: [Simulation, Generation, Validation, SizeDensity, AssetTrace, Stability, ReleaseIP, Governance]
+ * We map the 5 persona perspectives to the most relevant pipeline stages.
  */
-function generatePlaceholderResult(personaId: string): ReviewerResult {
-  const templates: Record<string, { score: number; findings: ReviewFinding[] }> = {
-    'react-expert': {
-      score: 82,
-      findings: [
-        { severity: 'warning', message: 'useState with object literal recreated every render; extract to useMemo or useRef' },
-        { severity: 'info', message: 'Consider extracting form logic into a custom useForm hook' },
-        { severity: 'warning', message: 'Missing useCallback on event handler passed to memoized child' },
-      ],
-    },
-    'security-auditor': {
-      score: 91,
-      findings: [
-        { severity: 'error', message: 'dangerouslySetInnerHTML used without DOMPurify sanitization' },
-        { severity: 'warning', message: 'API key referenced in client-side constant; move to server environment variable' },
-      ],
-    },
-    'a11y-inspector': {
-      score: 68,
-      findings: [
-        { severity: 'error', message: 'Interactive div without role="button" and keyboard handler' },
-        { severity: 'warning', message: 'Missing aria-label on icon-only button' },
-        { severity: 'warning', message: 'Color-only status indicator; add icon or text label' },
-        { severity: 'info', message: 'Focus order skips modal close button' },
-      ],
-    },
-    'ts-purist': {
-      score: 75,
-      findings: [
-        { severity: 'error', message: 'Type assertion `as any` bypasses type safety on API response' },
-        { severity: 'warning', message: 'Exported function missing explicit return type' },
-        { severity: 'warning', message: 'Generic <T> without constraint allows unexpected types' },
-      ],
-    },
-    'perf-engineer': {
-      score: 85,
-      findings: [
-        { severity: 'warning', message: 'Large library imported at top level; consider dynamic import()' },
-        { severity: 'info', message: 'List of 100+ items rendered without virtualization' },
-      ],
-    },
-  };
+const PERSONA_STAGE_MAP: Record<string, number[]> = {
+  'react-expert':     [1, 2],     // Generation + Validation
+  'security-auditor': [5, 6],     // Stability + ReleaseIP
+  'a11y-inspector':   [2, 7],     // Validation + Governance
+  'ts-purist':        [2, 3],     // Validation + SizeDensity
+  'perf-engineer':    [0, 3, 4],  // Simulation + SizeDensity + AssetTrace
+};
 
-  const template = templates[personaId];
-  if (!template) {
-    return { personaId, score: 50, findings: [], status: 'done' };
+/**
+ * Runs real static analysis via the code-studio pipeline and extracts
+ * results relevant to the given persona.
+ */
+function generateReviewResult(personaId: string, code: string): ReviewerResult {
+  const language = 'typescript'; // default; could be derived from file extension
+  const pipelineResult: PipelineResult = runStaticPipeline(code, language);
+  const stageIndices = PERSONA_STAGE_MAP[personaId];
+
+  if (!stageIndices || pipelineResult.stages.length === 0) {
+    return { personaId, score: pipelineResult.overallScore, findings: [], status: 'done' };
   }
-  return { personaId, ...template, status: 'done' };
+
+  // Gather findings from mapped stages
+  const findings: ReviewFinding[] = [];
+  let totalScore = 0;
+  let stageCount = 0;
+
+  for (const idx of stageIndices) {
+    const stage = pipelineResult.stages[idx];
+    if (!stage) continue;
+    totalScore += stage.score;
+    stageCount++;
+    for (const f of stage.findings) {
+      const severity: ReviewFinding['severity'] =
+        stage.status === 'fail' ? 'error' :
+        stage.status === 'warn' ? 'warning' : 'info';
+      findings.push({ severity, message: f });
+    }
+  }
+
+  const score = stageCount > 0 ? Math.round(totalScore / stageCount) : pipelineResult.overallScore;
+
+  return { personaId, score, findings, status: 'done' };
 }
 
-// IDENTITY_SEAL: PART-2 | role=PlaceholderEngine | inputs=personaId | outputs=ReviewerResult
+// IDENTITY_SEAL: PART-2 | role=RealReviewEngine | inputs=personaId,code | outputs=ReviewerResult
 
 // ============================================================
 // PART 3 — ReviewerCard Sub-Component
@@ -284,7 +279,7 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
         return () => clearTimeout(timer);
       });
 
-      const result = generatePlaceholderResult(persona.id);
+      const result = generateReviewResult(persona.id, code);
       setResults((prev) => ({
         ...prev,
         [persona.id]: result,
