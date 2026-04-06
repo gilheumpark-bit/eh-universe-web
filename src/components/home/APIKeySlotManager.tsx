@@ -47,7 +47,7 @@ export function APIKeySlotManager({ onClose }: Props) {
   }, []);
 
   // 인라인 추가 상태
-  const [addingProvider, setAddingProvider] = useState<string | null>(null);
+  const [addingProvider, setAddingProvider] = useState<string | null>("gemini");
   const [keyInput, setKeyInput] = useState("");
   const [modelSelect, setModelSelect] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -128,7 +128,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-bg-tertiary text-text-tertiary transition-colors">
+          <button data-testid="api-key-modal-close" onClick={onClose} className="p-1.5 rounded-lg hover:bg-bg-tertiary text-text-tertiary transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -151,7 +151,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   <button onClick={() => toggleSlot(slot.id)} className="p-1 rounded hover:bg-bg-tertiary transition-colors" title={slot.enabled ? "Disable" : "Enable"}>
                     {slot.enabled ? <ToggleRight size={16} className="text-accent-green" /> : <ToggleLeft size={16} className="text-text-tertiary" />}
                   </button>
-                  <button onClick={() => removeSlot(slot.id)} className="p-1 rounded hover:bg-bg-tertiary transition-colors text-text-tertiary hover:text-accent-red" title="Delete">
+                  <button data-testid="api-key-modal-delete" onClick={() => removeSlot(slot.id)} className="p-1 rounded hover:bg-bg-tertiary transition-colors text-text-tertiary hover:text-accent-red" title="Delete">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -172,6 +172,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               return (
                 <button
                   key={p.id}
+                  data-testid={`provider-chip-${p.id}`}
                   onClick={() => {
                     if (isActive) { resetAdd(); return; }
                     setAddingProvider(p.id);
@@ -205,6 +206,7 @@ export function APIKeySlotManager({ onClose }: Props) {
               <div className="flex items-center gap-2 bg-bg-primary border border-border rounded-lg px-3 py-2">
                 <Key size={13} className="text-text-tertiary shrink-0" />
                 <input
+                  data-testid="api-key-modal-secret-input"
                   type={showKey ? "text" : "password"}
                   value={keyInput}
                   onChange={(e) => { setKeyInput(e.target.value); setTestResult(null); }}
@@ -216,6 +218,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   {showKey ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
                 <button
+                  data-testid="api-key-modal-test"
                   onClick={handleTest}
                   disabled={testing || !keyInput.trim()}
                   className="px-2 py-0.5 text-[10px] rounded border border-border hover:bg-bg-tertiary disabled:opacity-30 flex items-center gap-1 text-text-secondary shrink-0"
@@ -240,6 +243,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
                 </div>
                 <button
+                  data-testid="api-key-modal-save"
                   onClick={handleAdd}
                   disabled={!keyInput.trim()}
                   className="px-4 py-2 bg-accent-amber text-white text-[12px] font-bold rounded-lg hover:opacity-90 disabled:opacity-30 transition-opacity shrink-0"
