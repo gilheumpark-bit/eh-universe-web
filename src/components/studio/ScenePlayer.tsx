@@ -7,7 +7,7 @@
 // Step 2: 라디오 드라마 → 어둠 + 음성 + 환경음 + 효과음 (상상)
 // Step 3: 비주얼 노벨 → 캐릭터 + 배경 + 음성 + 연출 (존재)
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
   Maximize2, Minimize2, BarChart3, X, ChevronLeft, ChevronRight,
@@ -312,6 +312,79 @@ function DialogueBox({
 // IDENTITY_SEAL: PART-6 | role=dialogue-box | inputs=SceneBeat,callbacks | outputs=dialogue-UI
 
 // ============================================================
+// PART 6.5 — 메모리 관리 유틸리티
+// ============================================================
+
+const IS_DEV = process.env.NODE_ENV === "development";
+
+/** Dev-mode memory monitor: tracks particle counts and audio contexts */
+function useMemoryMonitor(
+  audioRef: MutableRefObject<AudioEngine | null>,
+  particleType: ParticleType,
+) {
+  const warnedRef = useRef({ particles: false, audio: false });
+
+  useEffect(() => {
+    if (!IS_DEV) return;
+
+    const interval = setInterval(() => {
+      // Track active audio contexts (check via BaseAudioContext count heuristic)
+      const audioActive = audioRef.current ? 1 : 0;
+      if (audioActive > 3 && !warnedRef.current.audio) {
+        console.warn("[ScenePlayer Memory] Active audio contexts:", audioActive, "> 3 threshold");
+        warnedRef.current.audio = true;
+      }
+
+      // Particle count warning (based on type)
+      const estimatedParticles = particleType === "rain" ? 120
+        : particleType === "snow" ? 80
+        : particleType === "petals" ? 30
+        : particleType === "sparks" ? 50
+        : 0;
+      if (estimatedParticles > 1000 && !warnedRef.current.particles) {
+        console.warn("[ScenePlayer Memory] Particle count:", estimatedParticles, "> 1000 threshold");
+        warnedRef.current.particles = true;
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [audioRef, particleType]);
+}
+
+/** Dispose all scene resources: TTS, audio, timers */
+function disposeScene(
+  ttsRef: MutableRefObject<TTSController | null>,
+  audioRef: MutableRefObject<AudioEngine | null>,
+  autoPlayRef: MutableRefObject<ReturnType<typeof setTimeout> | undefined>,
+) {
+  // Cancel TTS speech
+  ttsRef.current?.stop();
+
+  // Stop ambient audio (without disposing the engine — it's reused)
+  audioRef.current?.stopAmbient();
+
+  // Clear autoplay timer
+  if (autoPlayRef.current !== undefined) {
+    clearTimeout(autoPlayRef.current);
+    autoPlayRef.current = undefined;
+  }
+}
+
+/** Debounce rapid scene index changes */
+function useDebouncedSceneIndex(rawIndex: number, delay = 150): number {
+  const [debouncedIndex, setDebouncedIndex] = useState(rawIndex);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedIndex(rawIndex), delay);
+    return () => clearTimeout(timer);
+  }, [rawIndex, delay]);
+
+  return debouncedIndex;
+}
+
+// IDENTITY_SEAL: PART-6.5 | role=memory-management | inputs=refs | outputs=cleanup-utils
+
+// ============================================================
 // PART 7 — 메인 플레이어
 // ============================================================
 
@@ -341,11 +414,15 @@ export default function ScenePlayer({
   const ttsRef = useRef<TTSController | null>(null);
   const autoPlayRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const audioRef = useRef<AudioEngine | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const prevSceneIndexRef = useRef<number>(state.sceneIndex);
+
+  // Debounce rapid scene switching (user clicking fast)
+  const debouncedSceneIndex = useDebouncedSceneIndex(state.sceneIndex);
 
   // P0#1 fix: 선언을 useEffect 위로 이동 (TDZ 방지)
-  const currentScene = scenes[state.sceneIndex];
+  const currentScene = scenes[debouncedSceneIndex];
   const currentBeat = currentScene?.beats[state.beatIndex];
 
   const totalBeats = useMemo(() => scenes.reduce((s, sc) => s + sc.beats.length, 0), [scenes]);
@@ -355,19 +432,49 @@ export default function ScenePlayer({
     return count + state.beatIndex + 1;
   }, [scenes, state.sceneIndex, state.beatIndex]);
 
-  // TTS + Audio 초기화
+  // TTS + Audio 초기화 + 완전 정리
   useEffect(() => {
     ttsRef.current = createTTSController();
     audioRef.current = createAudioEngine();
-    return () => { ttsRef.current?.stop(); audioRef.current?.dispose(); };
+
+    return () => {
+      // Dispose all scene resources on unmount
+      disposeScene(ttsRef, audioRef, autoPlayRef);
+
+      // Fully dispose audio engine (closes AudioContext)
+      audioRef.current?.dispose();
+      audioRef.current = null;
+
+      // Cancel any in-flight TTS abort controller
+      ttsAbortRef.current?.abort();
+      ttsAbortRef.current = null;
+
+      // Null out TTS ref
+      ttsRef.current = null;
+
+      if (IS_DEV) console.log("[ScenePlayer] Unmount cleanup complete");
+    };
   }, []);
 
-  // 장면 전환 시 환경음 변경
+  // 장면 전환 시: 이전 리소스 정리 → 새 환경음 로드
   useEffect(() => {
     if (!currentScene || !audioRef.current) return;
+
+    // Dispose previous scene resources BEFORE loading new ones
+    if (prevSceneIndexRef.current !== debouncedSceneIndex) {
+      disposeScene(ttsRef, audioRef, autoPlayRef);
+      prevSceneIndexRef.current = debouncedSceneIndex;
+      if (IS_DEV) console.log("[ScenePlayer] Scene transition cleanup:", debouncedSceneIndex);
+    }
+
     const ambient = detectAmbient(currentScene.mood, currentScene.timeOfDay);
     audioRef.current.playAmbient(ambient, isRadio ? 0.25 : 0.1);
-  }, [currentScene, isRadio]);
+
+    return () => {
+      // Stop ambient when scene changes or unmounts
+      audioRef.current?.stopAmbient();
+    };
+  }, [currentScene, isRadio, debouncedSceneIndex]);
 
   // 비트 전환 시 효과음
   useEffect(() => {
@@ -377,16 +484,31 @@ export default function ScenePlayer({
   }, [currentBeat]);
 
   // P0#3 fix: voice null 가드 추가
-  // TTS 재생
+  // TTS 재생 — AbortController로 비동기 취소
   useEffect(() => {
     if (!currentBeat || !state.voiceEnabled || !ttsRef.current) return;
     if (state.isPaused) return;
+
+    // Cancel previous TTS operation
+    ttsAbortRef.current?.abort();
+    const abort = new AbortController();
+    ttsAbortRef.current = abort;
 
     const voice = voiceMappings.find((v) => v.characterName === (currentBeat.speaker ?? "__narrator__"))
       ?? voiceMappings.find((v) => v.characterName === "__narrator__");
 
     if (!voice) return; // P0#3: voice가 없으면 무시
+
+    // Guard: if aborted before speak starts, skip
+    if (abort.signal.aborted) return;
+
     ttsRef.current.speak(currentBeat.text, voice, currentBeat.emotion).catch(() => {});
+
+    return () => {
+      // Cancel TTS when beat changes or component unmounts
+      abort.abort();
+      ttsRef.current?.stop();
+    };
   }, [currentBeat, state.voiceEnabled, state.isPaused, voiceMappings]);
 
   // P0#2 + P1#10 fix: currentBeat + goNext 의존성 추가
@@ -442,6 +564,22 @@ export default function ScenePlayer({
     else containerRef.current.requestFullscreen();
     setState((p) => ({ ...p, fullscreen: !p.fullscreen }));
   }, []);
+
+  // Sync fullscreen state with browser (user may press Esc to exit)
+  useEffect(() => {
+    const handler = () => {
+      const isFs = !!document.fullscreenElement;
+      setState((p) => (p.fullscreen !== isFs ? { ...p, fullscreen: isFs } : p));
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // Dev-mode memory monitoring
+  const particlesForMonitor = currentScene?.mood
+    ? (currentScene.mood === "rainy" ? "rain" : currentScene.mood === "snowy" ? "snow" : "none") as ParticleType
+    : "none";
+  useMemoryMonitor(audioRef, particlesForMonitor);
 
   const canPrev = state.sceneIndex > 0 || state.beatIndex > 0;
   const particles = currentScene?.mood

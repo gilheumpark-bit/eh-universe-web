@@ -49,6 +49,12 @@ interface UseTranslationParams {
   onSave?: (entry: TranslatedManuscriptEntry) => void;
   /** 번역 프로필 업데이트 콜백 — 오류 패턴 학습 */
   onProfileUpdate?: (profile: TranslatorProfile) => void;
+  /**
+   * Real-time glossary provider. When supplied, translateBatch reads fresh glossary
+   * before each episode instead of using the stale config snapshot.
+   * Return format: GlossaryEntry[] from the current GlossaryManager state.
+   */
+  getLatestGlossary?: () => import('@/engine/translation').GlossaryEntry[];
 }
 
 interface UseTranslationReturn {
@@ -269,6 +275,7 @@ export function useTranslation({
   onError,
   onSave,
   onProfileUpdate,
+  getLatestGlossary,
 }: UseTranslationParams = {}): UseTranslationReturn {
 
   const [progress, setProgress] = useState<TranslationProgress>({
@@ -520,8 +527,17 @@ export function useTranslation({
 
       // 자동 컨텍스트 브릿지: 이전 화 번역 결과에서 생성
       const episodeConfig = { ...baseConfig };
+
+      // Real-time glossary injection: read fresh glossary before each episode
+      if (getLatestGlossary) {
+        const freshGlossary = getLatestGlossary();
+        if (freshGlossary.length > 0) {
+          episodeConfig.glossary = freshGlossary;
+        }
+      }
+
       if (results.length > 0) {
-        episodeConfig.contextBridge = buildAutoBridge(results[results.length - 1], baseConfig.glossary);
+        episodeConfig.contextBridge = buildAutoBridge(results[results.length - 1], episodeConfig.glossary);
       }
 
       const result = await translateEpisode(manuscripts[i], episodeConfig, externalSignal, true);

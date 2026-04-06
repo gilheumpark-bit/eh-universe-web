@@ -41,6 +41,7 @@ import {
   buildReferenceBundle,
   splitTextIntoChunks,
 } from '@/lib/project-normalize';
+import { getGlossaryManager } from '@/lib/translation/glossary-manager';
 import type {
   ChapterEntry,
   ProjectSnapshot,
@@ -146,6 +147,39 @@ export default function TranslatorStudioApp() {
   const prevActiveChapterIndex = useRef<number | null>(activeChapterIndex);
   const storyBibleRequestCounter = useRef(0);
   const lastPrimaryTranslateAt = useRef(0);
+
+  // ── GlossaryManager: real-time glossary injection ──
+  const glossaryManagerRef = useRef(getGlossaryManager());
+  const [glossaryVersion, setGlossaryVersion] = useState(() => glossaryManagerRef.current.version);
+
+  // Sync: glossary state → GlossaryManager (when user edits via setGlossary)
+  useEffect(() => {
+    const mgr = glossaryManagerRef.current;
+    const current = mgr.toRecord();
+    const keys = new Set([...Object.keys(current), ...Object.keys(glossary)]);
+    let differs = false;
+    for (const k of keys) {
+      if (current[k] !== glossary[k]) { differs = true; break; }
+    }
+    if (differs) {
+      mgr.setAll(glossary);
+    }
+  }, [glossary]);
+
+  // Sync: GlossaryManager → glossary state + version (when manager fires onChange)
+  useEffect(() => {
+    const mgr = glossaryManagerRef.current;
+    const unsub = mgr.onChange((v) => {
+      setGlossaryVersion(v);
+      setGlossary(mgr.toRecord());
+      // Also update glossaryText for the translation payload
+      const injection = mgr.getPromptInjection();
+      if (injection) {
+        setGlossaryText(injection);
+      }
+    });
+    return unsub;
+  }, []);
 
   const patchChapterAtIndex = useCallback((index: number, patch: Record<string, unknown>) => {
     setChapters((previous) => {
@@ -710,7 +744,7 @@ export default function TranslatorStudioApp() {
       continuityNotes: continuity.continuityNotes,
       episodeContext: continuity.episodeContext,
       referenceIds,
-      glossary: glossaryText.trim() || undefined,
+      glossary: glossaryManagerRef.current.getPromptInjection() || glossaryText.trim() || undefined,
       domainPreset: translationMode === 'general' ? domainPreset : 'general',
       preserveDialogueLayout: translationMode === 'novel' ? preserveDialogueLayout : false,
       ...payload,
@@ -1128,6 +1162,8 @@ export default function TranslatorStudioApp() {
     let successCount = 0;
     let failCount = 0;
     let rollingStorySummary = storySummary;
+    const mgr = glossaryManagerRef.current;
+    let batchGlossaryVersion = mgr.version;
     try {
       for (let index = 0; index < chapters.length; index += 1) {
         const chapter = chapters[index];
@@ -1135,10 +1171,19 @@ export default function TranslatorStudioApp() {
           const redo = await confirm(`${chapter.name}은(는) 이미 완료되었습니다. 재번역할까요?`, '재번역');
           if (!redo) continue;
         }
-        
+
         openChapter(index);
-        setStatusMsg(`BATCH ${index + 1}/${chapters.length}`);
-        
+
+        // Real-time glossary: read fresh glossary from manager before each chapter
+        const currentGlossaryVersion = mgr.version;
+        if (currentGlossaryVersion !== batchGlossaryVersion) {
+          logger.info('TranslatorStudioApp', `Glossary updated mid-batch: v${batchGlossaryVersion} → v${currentGlossaryVersion}`);
+          batchGlossaryVersion = currentGlossaryVersion;
+        }
+        const freshGlossary = mgr.getPromptInjection();
+
+        setStatusMsg(`BATCH ${index + 1}/${chapters.length}${freshGlossary ? ` [GLOSSv${currentGlossaryVersion}]` : ''}`);
+
         try {
           const translated = await requestTranslation(
             buildTranslationPayload(
@@ -1149,6 +1194,8 @@ export default function TranslatorStudioApp() {
                 provider,
                 apiKey: getEffectiveApiKeyForProvider(provider),
                 mode: translationMode,
+                // Override glossary with fresh real-time version
+                glossary: freshGlossary || undefined,
               },
               { storySummaryBase: rollingStorySummary, chapterIndex: index }
             )

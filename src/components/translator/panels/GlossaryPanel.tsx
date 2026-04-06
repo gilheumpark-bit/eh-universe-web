@@ -1,12 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BookA, Search, Plus, Trash2, Edit2, Check, X, Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useWebFeatures } from '@/hooks/useWebFeatures';
+import { getGlossaryManager } from '@/lib/translation/glossary-manager';
 
 export function GlossaryPanel() {
   const { glossary, setGlossary, source } = useTranslator();
   const web = useWebFeatures();
   const [extracting, setExtracting] = useState(false);
+  const mgr = getGlossaryManager();
+  const [glossaryVersion, setGlossaryVersion] = useState(mgr.version);
+
+  // Subscribe to manager changes for version display
+  useEffect(() => {
+    return mgr.onChange((v) => setGlossaryVersion(v));
+  }, [mgr]);
 
   // AI 용어 자동 추출
   const handleAutoExtract = useCallback(async () => {
@@ -21,11 +29,12 @@ export function GlossaryPanel() {
         if (!glossary[c.term]) newTerms[c.term] = '';
       }
       if (Object.keys(newTerms).length > 0) {
-        setGlossary({ ...glossary, ...newTerms });
+        // Use manager for real-time propagation
+        mgr.merge(newTerms);
       }
     } catch { /* */ }
     setExtracting(false);
-  }, [source, glossary, setGlossary, extracting]);
+  }, [source, glossary, mgr, extracting]);
   const [searchQuery, setSearchQuery] = useState('');
   const [newOriginal, setNewOriginal] = useState('');
   const [newTranslation, setNewTranslation] = useState('');
@@ -37,7 +46,7 @@ export function GlossaryPanel() {
     const term = newOriginal.trim();
     const translation = newTranslation.trim();
     if (!term || !translation) return;
-    setGlossary({ ...glossary, [term]: translation });
+    mgr.addTerm(term, translation);
     setNewOriginal('');
     setNewTranslation('');
   };
@@ -59,17 +68,13 @@ export function GlossaryPanel() {
     const nextTerm = editOriginal.trim();
     const nextTrans = editTranslation.trim();
     if (!nextTerm || !nextTrans) return;
-    const next = { ...glossary };
-    if (nextTerm !== editingKey) delete next[editingKey];
-    next[nextTerm] = nextTrans;
-    setGlossary(next);
+    if (nextTerm !== editingKey) mgr.removeTerm(editingKey);
+    mgr.addTerm(nextTerm, nextTrans);
     cancelEdit();
   };
 
   const handleRemoveTerm = (term: string) => {
-    const nextGlossary = { ...glossary };
-    delete nextGlossary[term];
-    setGlossary(nextGlossary);
+    mgr.removeTerm(term);
     if (editingKey === term) cancelEdit();
   };
 
@@ -99,9 +104,16 @@ export function GlossaryPanel() {
             <BookA className="w-4 h-4 text-accent-cyan" />
             <span className="text-[13px] font-medium">Terms Dictionary</span>
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-text-tertiary border border-white/10">
-            {Object.keys(glossary || {}).length}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-text-tertiary border border-white/10">
+              {Object.keys(glossary || {}).length}
+            </span>
+            {glossaryVersion > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-cyan/10 text-accent-cyan/70 border border-accent-cyan/20">
+                v{glossaryVersion}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 relative">

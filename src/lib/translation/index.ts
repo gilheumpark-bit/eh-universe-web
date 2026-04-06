@@ -24,6 +24,9 @@ export { buildPartialRetranslatePrompt, buildSegmentScorePrompt, parseSegmentSco
 // ── Glossary Auto-Extraction ──
 export { buildGlossaryExtractionPrompt, parseGlossaryCandidates, extractTermsRuleBased, type GlossaryCandidate } from './glossary-extractor';
 
+// ── Glossary Manager (real-time injection) ──
+export { GlossaryManager, getGlossaryManager, type GlossaryEntry as GlossaryManagerEntry, type GlossarySnapshot } from './glossary-manager';
+
 // ── Translation Memory (TM) ──
 export { loadTM, saveTM, addToTM, addBatchToTM, searchTM, exportTM, importTM, tmStats, type TMEntry, type TMMatch } from './translation-memory';
 
