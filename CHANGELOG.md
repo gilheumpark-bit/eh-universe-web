@@ -3,6 +3,25 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0] - 2026-04-06
+### Added
+- 436-rule dual catalog (224 bad + 212 good patterns) wired to generation + verification
+- CRDT collaboration engine (7 PARTs, BroadcastChannel, IndexedDB persistence)
+- Gen-Verify-Fix loop (adaptive 5-round, convergence detection)
+- DatabasePanel: sql.js WebAssembly SQLite
+- GitPanel: isomorphic-git real operations
+- DeployPanel: build verification + ZIP export
+- 51 panel registry fully wired + LUCIDE_MAP complete
+- Good pattern detector (40 regex rules)
+- Quality rules from catalog (context-aware, memoized)
+### Fixed
+- P0 security: sandbox nonce, Firebase tier, next.config route gap
+- TODO regex: comment-only detection
+- 4 failing tests fixed (theme, writing mode, genai-server)
+### Changed
+- Pipeline scoring: goodBoost 20, filterBonus 15, teamHealthBonus 5
+- 7 simulated panels documented with JSDoc
+
 ## [2026-04-05] Quality Sweep + Design v8.0 + Content
 
 ### Added

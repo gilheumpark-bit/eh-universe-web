@@ -16,6 +16,19 @@ All API routes are served under `/api/`. Unless stated otherwise, responses use 
 8. [GET /api/local-proxy](#get-apilocal-proxy)
 9. [POST /api/local-proxy](#post-apilocal-proxy)
 10. [POST /api/error-report](#post-apierror-report)
+11. [POST /api/translate](#post-apitranslate)
+12. [GET /api/fetch-url](#get-apifetch-url)
+13. [POST /api/agent-search](#post-apiagent-search)
+14. [GET /api/agent-search/status](#get-apiagent-searchstatus)
+15. [POST /api/network-agent/search](#post-apinetwork-agentsearch)
+16. [POST /api/network-agent/ingest](#post-apinetwork-agentingest)
+17. [GET /api/npm-search](#get-apinpm-search)
+18. [POST /api/vitals](#post-apivitals)
+19. [POST /api/upload](#post-apiupload)
+20. [POST /api/checkout](#post-apicheckout)
+21. [POST /api/share](#post-apishare)
+22. [POST /api/code/autopilot](#post-apicodeautopilot)
+23. [GET /api/cron/universe-daily](#get-apicronuniverse-daily)
 
 ---
 
@@ -481,6 +494,188 @@ Client-side error ingestion endpoint. Logs structured error reports to stdout (q
 | 400 | Invalid JSON |
 | 413 | Body exceeds 4096 bytes |
 | 429 | Rate limit exceeded |
+
+---
+
+## POST /api/translate
+
+Multi-provider translation with streaming. Supports Gemini, OpenAI, Claude, DeepSeek, Mistral.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase ID token or BYOK |
+| **Rate Limit** | 120 req/min per IP |
+| **CSRF** | Origin required |
+
+---
+
+## GET /api/fetch-url
+
+Server-side URL fetch proxy. Validates URL against an allowlist (blocks private networks, dangerous schemes).
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | Per-IP (custom limiter) |
+
+### Query Parameters
+
+| Param | Type | Required | Notes |
+|---|---|---|---|
+| url | string | Yes | Must pass allowlist validation |
+
+---
+
+## POST /api/agent-search
+
+Agent Builder (Vertex AI Discovery Engine) search. Per-studio search across universe, novel, and code content.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None (server-side credentials) |
+| **Rate Limit** | 120 req/min per IP |
+
+### Request Body
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| studio | string | Yes | `universe`, `novel`, or `code` |
+| query | string | Yes | Search query |
+| pageSize | number | No | Results per page |
+| conversationId | string | No | Conversational follow-up |
+
+---
+
+## GET /api/agent-search/status
+
+Returns Agent Builder configuration status for each studio.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | 120 req/min per IP |
+
+---
+
+## POST /api/network-agent/search
+
+Multi-tenant search across Network content (planets, posts, translations).
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase ID token |
+| **Rate Limit** | 120 req/min per IP |
+
+---
+
+## POST /api/network-agent/ingest
+
+Ingests documents into the Network search index.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase ID token |
+| **Rate Limit** | 120 req/min per IP |
+
+---
+
+## GET /api/npm-search
+
+Proxies npm registry search. Used by Code Studio for package discovery.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | 120 req/min per IP |
+
+### Query Parameters
+
+| Param | Type | Required | Notes |
+|---|---|---|---|
+| q | string | Yes | Search query (max 200 chars) |
+
+---
+
+## POST /api/vitals
+
+Client-side Web Vitals ingestion. Logs performance metrics to stdout.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | 120 req/min per IP |
+| **CSRF** | Origin required |
+
+---
+
+## POST /api/upload
+
+File upload endpoint (DOCX manuscript import). Parses DOCX via mammoth and returns structured narrative text.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | 120 req/min per IP |
+
+---
+
+## POST /api/checkout
+
+Stripe Checkout session creation for subscription billing.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | None |
+
+Returns `{ url }` redirect to Stripe Checkout. Returns 501 if Stripe is not configured.
+
+---
+
+## POST /api/share
+
+Temporary shareable link creation. Stores payload in-memory with configurable expiry (default 72h).
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | None |
+| **Rate Limit** | None |
+
+---
+
+## POST /api/code/autopilot
+
+Code Studio autopilot endpoint. Generates structured JSON for code generation pipeline via Gemini.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Server env (Gemini) |
+| **Rate Limit** | 120 req/min per IP |
+| **CSRF** | Origin required |
+
+---
+
+## GET /api/cron/universe-daily
+
+Vercel Cron Job for daily universe maintenance (Gemini-powered content generation + Firestore writes).
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Bearer token (`CRON_SECRET` env) |
+| **Schedule** | `0 0 * * *` (daily midnight) |
 
 ---
 
