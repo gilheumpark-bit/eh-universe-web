@@ -156,7 +156,7 @@ describe('useStudioTheme', () => {
   it('ignores invalid stored theme values', () => {
     localStorage.setItem('noa_theme_level', '99');
     const { get, cleanup } = createThemeHarness();
-    expect(get().themeLevel).toBe(2);
+    expect(get().themeLevel).toBe(1); // invalid → default light
     cleanup();
   });
 
