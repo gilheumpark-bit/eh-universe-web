@@ -32,6 +32,23 @@
 /renderer/out/
 /renderer/build3.log
 
+# Monorepo Electron/Next build outputs
+apps/desktop/app/main.js
+apps/desktop/app/main.js.map
+apps/desktop/app/preload.js
+apps/desktop/app/preload.js.map
+apps/desktop/main/dist/
+apps/desktop/preload/dist/
+apps/desktop/renderer/.next/
+apps/desktop/renderer/out/
+apps/desktop/renderer/build3.log
+apps/desktop/dist/
+
+# Workspace caches
+.turbo/
+**/.turbo/
+**/node_modules/
+
 # Build logs
 /build*.log
 /out.log

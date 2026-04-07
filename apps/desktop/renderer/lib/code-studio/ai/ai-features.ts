@@ -5,8 +5,8 @@
 
 import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
-import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
-import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+import { ariManager } from '@eh/quill-engine/ari-engine';
 
 // ============================================================
 // PART 1 — Types & Helpers

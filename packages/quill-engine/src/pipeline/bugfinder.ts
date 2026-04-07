@@ -3,7 +3,7 @@
 // ============================================================
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
-import { buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
+import { buildFPSuppressionPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
 
 export interface BugReport {
   id: string;

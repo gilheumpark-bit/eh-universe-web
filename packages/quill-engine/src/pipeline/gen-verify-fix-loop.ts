@@ -6,8 +6,8 @@
 // re-verifies — up to N rounds until score target is met.
 // Pure async — no React hooks, no DOM.
 
-import { runStaticPipeline } from '@/lib/code-studio/pipeline/pipeline';
-import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
+import { runStaticPipeline } from '@eh/quill-engine/pipeline/pipeline';
+import type { PipelineResult, PipelineStage } from '@eh/quill-engine/pipeline/pipeline';
 import { streamChat } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
 

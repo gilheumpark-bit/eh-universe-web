@@ -9,9 +9,9 @@ import dynamic from "next/dynamic";
 import {
   Files, Columns2, Command, Settings, Loader2,
 } from "lucide-react";
-import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
+import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
-// import { detectLanguage } from "@/lib/code-studio/core/types";
+// import { detectLanguage } from "@eh/quill-engine/types";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai/ghost";
 import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
 import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";

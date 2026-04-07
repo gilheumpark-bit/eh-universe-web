@@ -11,7 +11,7 @@ import {
   Search, X, FileCode, ChevronDown, ChevronRight,
   Replace, History, Filter,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
 
 const FILE_TYPE_FILTERS = [
   { label: "All Files", value: "" },

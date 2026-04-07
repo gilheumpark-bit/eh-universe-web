@@ -19,9 +19,9 @@ import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-s
 import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
 import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
-import { runDesignLint, formatDesignLintReport } from "@/lib/code-studio/pipeline/design-lint";
+import { runDesignLint, formatDesignLintReport } from "@eh/quill-engine/pipeline/design-lint";
 import { parseNLCommand } from "@/lib/code-studio/features/nl-terminal";
-import { buildQualityRulesPrompt } from "@/lib/code-studio/ai/quality-rules-from-catalog";
+import { buildQualityRulesPrompt } from "@eh/quill-engine/quality-rules-from-catalog";
 
 interface ChatSession {
   id: string;

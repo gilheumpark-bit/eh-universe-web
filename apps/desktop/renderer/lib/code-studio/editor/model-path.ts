@@ -1,4 +1,4 @@
-import type { FileNode } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
 
 export function findFilePathById(
   nodes: FileNode[],

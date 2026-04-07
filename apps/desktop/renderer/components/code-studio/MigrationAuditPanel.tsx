@@ -10,7 +10,7 @@ import {
   auditMigration,
   type MigrationAuditResult,
   type FunctionSignature,
-} from '@/lib/code-studio/pipeline/migration-audit';
+} from '@eh/quill-engine/pipeline/migration-audit';
 
 // ============================================================
 // PART 2 — Signature Display

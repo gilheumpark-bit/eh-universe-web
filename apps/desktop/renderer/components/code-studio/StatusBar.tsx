@@ -13,7 +13,7 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
-import type { OpenFile } from "@/lib/code-studio/core/types";
+import type { OpenFile } from "@eh/quill-engine/types";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { L4 } from "@/lib/i18n";
 

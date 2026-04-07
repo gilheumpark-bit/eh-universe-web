@@ -33,7 +33,7 @@ import {
   FileText,
   Plus,
 } from "lucide-react";
-import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
+import type { FileNode, OpenFile } from "@eh/quill-engine/types";
 import {
   gitStatus,
   gitCommit as gitRealCommit,

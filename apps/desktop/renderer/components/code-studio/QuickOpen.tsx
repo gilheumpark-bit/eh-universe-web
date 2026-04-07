@@ -6,8 +6,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { FileCode, Search, Clock } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio/core/types";
-import { fileIconColor } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
+import { fileIconColor } from "@eh/quill-engine/types";
 
 interface Props {
   files: FileNode[];

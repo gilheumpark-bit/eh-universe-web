@@ -10,14 +10,14 @@ import {
   Files, Plus, FileText, FolderOpen, Folder,
   Edit3, Trash2, Loader2,
 } from "lucide-react";
-import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
-import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio/core/types";
+import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/types";
+import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@eh/quill-engine/types";
 import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio/core/store";
-import { runStaticPipeline } from "@/lib/code-studio/pipeline/pipeline";
-import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfinder";
-import { runStressReport, type StressReport } from "@/lib/code-studio/pipeline/stress-test";
-import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
-import { parseErrors } from "@/lib/code-studio/pipeline/error-parser";
+import { runStaticPipeline } from "@eh/quill-engine/pipeline/pipeline";
+import { findBugsStatic, type BugReport } from "@eh/quill-engine/pipeline/bugfinder";
+import { runStressReport, type StressReport } from "@eh/quill-engine/pipeline/stress-test";
+import { runVerificationLoop, type VerificationResult } from "@eh/quill-engine/pipeline/verification-loop";
+import { parseErrors } from "@eh/quill-engine/pipeline/error-parser";
 import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";

@@ -4,7 +4,7 @@
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
-import { buildQualityRulesPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
+import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
 
 export interface StepValidation {
   passed: boolean;

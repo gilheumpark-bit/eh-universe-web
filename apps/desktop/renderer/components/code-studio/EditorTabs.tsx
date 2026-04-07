@@ -6,7 +6,7 @@
 
 import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { X } from "lucide-react";
-import type { OpenFile } from "@/lib/code-studio/core/types";
+import type { OpenFile } from "@eh/quill-engine/types";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 

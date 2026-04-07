@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useLang } from '@/lib/LangContext';
-import type { AuditReport, AuditCategoryResult, AuditAreaResult, AuditSeverity } from '@/lib/code-studio/audit/audit-types';
-import { AUDIT_AREA_LABELS, CATEGORY_LABELS } from '@/lib/code-studio/audit/audit-types';
+import type { AuditReport, AuditCategoryResult, AuditAreaResult, AuditSeverity } from '@eh/quill-engine/audit/audit-types';
+import { AUDIT_AREA_LABELS, CATEGORY_LABELS } from '@eh/quill-engine/audit/audit-types';
 import { ScoreBar } from '@/components/code-studio/ui/ProgressBar';
 
 // ============================================================

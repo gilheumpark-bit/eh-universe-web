@@ -488,7 +488,7 @@ function lintRule14_ResponsiveOverflow(code: string): DesignLintIssue[] {
  * Returns a scored result with actionable issues.
  *
  * Usage:
- *   import { runDesignLint } from '@/lib/code-studio/pipeline/design-lint';
+ *   import { runDesignLint } from '@eh/quill-engine/pipeline/design-lint';
  *   const result = runDesignLint(generatedCode);
  *   if (!result.passed) { // show issues to user }
  */

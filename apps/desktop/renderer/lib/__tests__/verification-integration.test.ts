@@ -4,15 +4,15 @@
 // Full flow: verify -> fix -> re-verify -> stage -> apply -> rollback
 // Tests multiple modules working together.
 
-import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
-import type { BugReport } from '@/lib/code-studio/pipeline/bugfinder';
-import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
-import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
+import type { PipelineResult, PipelineStage } from '@eh/quill-engine/pipeline/pipeline';
+import type { BugReport } from '@eh/quill-engine/pipeline/bugfinder';
+import type { FixSuggestion } from '@eh/quill-engine/pipeline/pipeline-utils';
+import type { Finding } from '@eh/quill-engine/pipeline/pipeline-teams';
 import {
   runVerificationLoop,
   type VerificationConfig,
   type VerificationResult,
-} from '@/lib/code-studio/pipeline/verification-loop';
+} from '@eh/quill-engine/pipeline/verification-loop';
 import {
   canTransition,
   createModeTransition,

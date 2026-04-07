@@ -1,7 +1,7 @@
 import {
   classifyFixDescription,
   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,
-} from '@/lib/code-studio/core/autofix-policy';
+} from '@eh/quill-engine/autofix-policy';
 
 describe('autofix-policy', () => {
   it('classifies console removal as safe', () => {

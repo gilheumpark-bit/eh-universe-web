@@ -67,7 +67,7 @@ import {
   type HighlightedSpan,
 } from "@/lib/code-studio/features/terminal-emulator";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
-import type { FileNode } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
 
 export interface TerminalPanelProps {
   files?: FileNode[];

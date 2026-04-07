@@ -8,7 +8,7 @@ import { useState, useCallback } from "react";
 import {
   X, Loader2, BarChart3, TrendingUp, Shield, Wrench, Maximize2, Trophy,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
 
 interface EvalScore {
   overall: number;

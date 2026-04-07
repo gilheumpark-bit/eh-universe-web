@@ -31,7 +31,7 @@ import {
   ExternalLink,
   AlertTriangle,
 } from "lucide-react";
-import type { FileNode } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
 
 // ============================================================
 // PART 1 — Types & Constants

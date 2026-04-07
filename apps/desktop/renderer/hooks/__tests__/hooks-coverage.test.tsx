@@ -118,7 +118,7 @@ jest.mock('@/engine/validator', () => ({
 // ============================================================
 
 import { useCodeStudioPanels } from '../useCodeStudioPanels';
-import type { FileNode } from '@/lib/code-studio/core/types';
+import type { FileNode } from '@eh/quill-engine/types';
 
 const makeFiles = (): FileNode[] => [
   { id: 'f1', name: 'index.tsx', type: 'file', content: 'export function App() {}' },

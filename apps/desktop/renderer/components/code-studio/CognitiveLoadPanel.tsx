@@ -10,7 +10,7 @@ import {
   analyzeCognitiveLoad,
   type CognitiveLoadResult,
   type FunctionMetrics,
-} from '@/lib/code-studio/pipeline/cognitive-load';
+} from '@eh/quill-engine/pipeline/cognitive-load';
 
 interface Props {
   code?: string;

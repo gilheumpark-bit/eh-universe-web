@@ -11,7 +11,7 @@ import {
   type CodeRhythmResult,
   type RhythmSection,
   type CodeLineType,
-} from '@/lib/code-studio/pipeline/code-rhythm';
+} from '@eh/quill-engine/pipeline/code-rhythm';
 
 interface Props {
   code?: string;

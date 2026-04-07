@@ -20,13 +20,13 @@ import {
   GitCompare,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
-import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
+import type { FileNode, OpenFile } from "@eh/quill-engine/types";
 import type { RightPanel } from "@/lib/code-studio/core/panel-registry";
 import { getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
-import { detectLanguage } from "@/lib/code-studio/core/types";
-import type { BugReport } from "@/lib/code-studio/pipeline/bugfinder";
-import type { StressReport } from "@/lib/code-studio/pipeline/stress-test";
-import type { VerificationResult } from "@/lib/code-studio/pipeline/verification-loop";
+import { detectLanguage } from "@eh/quill-engine/types";
+import type { BugReport } from "@eh/quill-engine/pipeline/bugfinder";
+import type { StressReport } from "@eh/quill-engine/pipeline/stress-test";
+import type { VerificationResult } from "@eh/quill-engine/pipeline/verification-loop";
 import type { ComposerMode } from "@/lib/code-studio/core/composer-state";
 import { saveProjectSpec } from "@/lib/code-studio/core/project-spec";
 import {

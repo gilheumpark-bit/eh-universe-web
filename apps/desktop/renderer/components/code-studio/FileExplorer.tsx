@@ -13,8 +13,8 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { ContextMenu, buildFileExplorerMenu } from "./ContextMenu";
 import { InputDialog } from "./InputDialog";
-import type { FileNode } from "@/lib/code-studio/core/types";
-import { fileIconColor } from "@/lib/code-studio/core/types";
+import type { FileNode } from "@eh/quill-engine/types";
+import { fileIconColor } from "@eh/quill-engine/types";
 
 interface Props {
   files: FileNode[];

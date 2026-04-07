@@ -17,7 +17,7 @@ import {
   GOOD_PATTERN_CATALOG,
   type GoodPatternMeta,
   type IsoQuality,
-} from '@/cli/core/good-pattern-catalog';
+} from '@eh/quill-engine/good-pattern-catalog';
 
 // ============================================================
 // PART 1 — Severity & Ordering

@@ -7,8 +7,8 @@
 //
 // 카탈로그 원본: src/cli/core/good-pattern-catalog.ts
 
-import type { GoodPatternMeta, GoodSignal, IsoQuality } from '@/cli/core/good-pattern-catalog';
-import { GOOD_PATTERN_CATALOG, getSuppressorsFor } from '@/cli/core/good-pattern-catalog';
+import type { GoodPatternMeta, GoodSignal, IsoQuality } from '@eh/quill-engine/good-pattern-catalog';
+import { GOOD_PATTERN_CATALOG, getSuppressorsFor } from '@eh/quill-engine/good-pattern-catalog';
 
 // ============================================================
 // PART 1 — Types

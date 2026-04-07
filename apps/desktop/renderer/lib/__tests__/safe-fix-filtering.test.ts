@@ -4,9 +4,9 @@
 // Tests that the verification loop's safe fix classification
 // correctly allows/blocks auto-application of fixes.
 
-import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
-import type { PipelineResult } from '@/lib/code-studio/pipeline/pipeline';
-import { runVerificationLoop, type SafeFixCategory } from '@/lib/code-studio/pipeline/verification-loop';
+import type { FixSuggestion } from '@eh/quill-engine/pipeline/pipeline-utils';
+import type { PipelineResult } from '@eh/quill-engine/pipeline/pipeline';
+import { runVerificationLoop, type SafeFixCategory } from '@eh/quill-engine/pipeline/verification-loop';
 
 // ============================================================
 // PART 1 — Mocks

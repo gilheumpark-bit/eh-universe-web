@@ -6,7 +6,7 @@ import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
-import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { ariManager } from '@eh/quill-engine/ari-engine';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
