@@ -1,0 +1,123 @@
+# apps/desktop/electron-builder.yml
+#
+# 3-OS packaging configuration for EH Code Studio.
+# Used by `pnpm --filter @eh/desktop exec electron-builder`.
+
+appId: com.eh.codestudio
+productName: EH Code Studio
+copyright: Copyright © 2026 EH Universe
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+# ============================================================
+# Build outputs
+# ============================================================
+
+directories:
+  output: ../../dist/desktop
+  buildResources: build
+
+# ============================================================
+# Files included in the asar
+# ============================================================
+
+asar: true
+asarUnpack:
+  - "**/node-pty/**"     # native binary, must stay outside asar
+  - "**/quill-cli/**"    # CLI binary needs filesystem access
+
+files:
+  - app/**
+  - main/**
+  - preload/**
+  - renderer/out/**
+  - renderer/.next/standalone/**
+  - package.json
+  - "!**/*.{md,log,test.ts,test.tsx,spec.ts,spec.tsx}"
+  - "!**/__tests__/**"
+  - "!**/coverage/**"
+
+# Bundle the standalone CLI binary alongside the app
+extraResources:
+  - from: ../../packages/quill-cli/dist
+    to: bin
+    filter: ["**/*"]
+
+# ============================================================
+# Per-platform targets
+# ============================================================
+
+mac:
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  notarize: false              # turn on after Apple Developer ID is set up
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  icon: build/icon.icns
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  publisherName: EH Universe
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: portable
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: EH Code Studio
+
+linux:
+  category: Development
+  desktop:
+    Name: EH Code Studio
+    Comment: Verified Coding Studio
+    Categories: Development;IDE;
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+    - target: rpm
+      arch: [x64]
+  icon: build/icon.png
+
+# ============================================================
+# Auto-update (electron-updater)
+# ============================================================
+
+publish:
+  provider: github
+  owner: eh-universe
+  repo: code-studio
+  releaseType: release
+
+# ============================================================
+# Build hooks (sign / notarize / etc.)
+# ============================================================
+
+forceCodeSigning: false
+removePackageScripts: true
+buildDependenciesFromSource: false
+nodeGypRebuild: false
