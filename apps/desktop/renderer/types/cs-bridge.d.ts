@@ -107,6 +107,47 @@ declare global {
     available(): Promise<boolean>;
   }
 
+  interface CSShell {
+    create(opts: { id: string; cwd?: string; cols?: number; rows?: number }): Promise<{ ok: true; id: string; kind: 'pty' | 'child' }>;
+    write(id: string, data: string): void;
+    resize(id: string, cols: number, rows: number): void;
+    dispose(id: string): void;
+    onData(id: string, callback: (data: string) => void): () => void;
+    onExit(id: string, callback: (e: { exitCode: number }) => void): () => void;
+  }
+
+  interface GitStatusEntry {
+    path: string;
+    indexStatus: string;
+    workingStatus: string;
+  }
+  interface GitStatus {
+    ok: boolean;
+    branch?: string | null;
+    ahead?: number;
+    behind?: number;
+    files?: GitStatusEntry[];
+    error?: string;
+  }
+  interface GitCommit {
+    hash: string;
+    author: string;
+    email: string;
+    timestamp: number;
+    subject: string;
+  }
+
+  interface CSGit {
+    status(cwd: string): Promise<GitStatus>;
+    diff(cwd: string, file?: string): Promise<{ ok: boolean; diff?: string; error?: string }>;
+    log(cwd: string, opts?: { limit?: number; file?: string }): Promise<{ ok: boolean; commits?: GitCommit[]; error?: string }>;
+    branchList(cwd: string): Promise<{ ok: boolean; branches?: string[]; error?: string }>;
+    currentBranch(cwd: string): Promise<{ ok: boolean; branch?: string; error?: string }>;
+    add(cwd: string, paths: string[]): Promise<{ ok: boolean; error?: string }>;
+    commit(cwd: string, message: string, opts?: { signoff?: boolean }): Promise<{ ok: boolean; output?: string; error?: string }>;
+    show(cwd: string, ref: string): Promise<{ ok: boolean; content?: string; error?: string }>;
+  }
+
   interface CSMeta {
     getAppVersion(): Promise<string>;
   }
@@ -116,6 +157,8 @@ declare global {
     quill: CSQuill;
     ai: CSAi;
     keystore: CSKeystore;
+    shell: CSShell;
+    git: CSGit;
     meta: CSMeta;
   }
 

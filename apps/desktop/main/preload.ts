@@ -181,6 +181,53 @@ const keystore = {
 };
 
 // ============================================================
+// PART 2c — shell surface (PTY)
+// ============================================================
+
+const shell = {
+  create: (opts: { id: string; cwd?: string; cols?: number; rows?: number }): Promise<{ ok: true; id: string; kind: 'pty' | 'child' }> =>
+    ipcRenderer.invoke('shell:create', opts),
+  write: (id: string, data: string): void => {
+    ipcRenderer.send('shell:write', id, data);
+  },
+  resize: (id: string, cols: number, rows: number): void => {
+    ipcRenderer.send('shell:resize', id, cols, rows);
+  },
+  dispose: (id: string): void => {
+    ipcRenderer.send('shell:dispose', id);
+  },
+  onData: (id: string, callback: (data: string) => void): (() => void) => {
+    const channel = `shell:data:${id}`;
+    const sub = (_e: IpcRendererEvent, data: string) => callback(data);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+  onExit: (id: string, callback: (e: { exitCode: number }) => void): (() => void) => {
+    const channel = `shell:exit:${id}`;
+    const sub = (_e: IpcRendererEvent, ev: { exitCode: number }) => callback(ev);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+};
+
+// ============================================================
+// PART 2d — git surface
+// ============================================================
+
+const git = {
+  status: (cwd: string): Promise<unknown> => ipcRenderer.invoke('git:status', cwd),
+  diff: (cwd: string, file?: string): Promise<unknown> => ipcRenderer.invoke('git:diff', cwd, file),
+  log: (cwd: string, opts?: { limit?: number; file?: string }): Promise<unknown> =>
+    ipcRenderer.invoke('git:log', cwd, opts),
+  branchList: (cwd: string): Promise<unknown> => ipcRenderer.invoke('git:branch-list', cwd),
+  currentBranch: (cwd: string): Promise<unknown> => ipcRenderer.invoke('git:current-branch', cwd),
+  add: (cwd: string, paths: string[]): Promise<unknown> => ipcRenderer.invoke('git:add', cwd, paths),
+  commit: (cwd: string, message: string, opts?: { signoff?: boolean }): Promise<unknown> =>
+    ipcRenderer.invoke('git:commit', cwd, message, opts),
+  show: (cwd: string, ref: string): Promise<unknown> => ipcRenderer.invoke('git:show', cwd, ref),
+};
+
+// ============================================================
 // PART 3 — meta
 // ============================================================
 
@@ -192,7 +239,7 @@ const meta = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, meta };
+const cs = { fs, quill, ai, keystore, shell, git, meta };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

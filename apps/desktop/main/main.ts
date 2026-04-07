@@ -15,6 +15,8 @@ import { registerFsIpc, disposeAllWatchers } from './ipc/fs';
 import { registerQuillIpc } from './ipc/quill';
 import { registerKeystoreIpc } from './ipc/keystore';
 import { registerAiIpc } from './ipc/ai';
+import { registerShellIpc, disposeAllShellSessions } from './ipc/shell';
+import { registerGitIpc } from './ipc/git';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -83,6 +85,8 @@ function registerIpc(): void {
   registerQuillIpc();
   registerKeystoreIpc();
   registerAiIpc();
+  registerShellIpc();
+  registerGitIpc();
 
   // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
   ipcMain.handle('get-app-version', () => app.getVersion());
@@ -110,5 +114,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', async () => {
+  disposeAllShellSessions();
   await disposeAllWatchers();
 });
