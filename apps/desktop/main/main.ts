@@ -17,6 +17,7 @@ import { registerKeystoreIpc } from './ipc/keystore';
 import { registerAiIpc } from './ipc/ai';
 import { registerShellIpc, disposeAllShellSessions } from './ipc/shell';
 import { registerGitIpc } from './ipc/git';
+import { initAutoUpdate, disposeAutoUpdate, registerUpdaterIpc } from './services/updater';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -73,6 +74,9 @@ async function createWindow(): Promise<void> {
     shell.openExternal(details.url);
     return { action: 'deny' };
   });
+
+  // Auto-update (no-op in dev or when electron-updater is missing)
+  initAutoUpdate(mainWindow);
 }
 
 // ============================================================
@@ -87,6 +91,7 @@ function registerIpc(): void {
   registerAiIpc();
   registerShellIpc();
   registerGitIpc();
+  registerUpdaterIpc();
 
   // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
   ipcMain.handle('get-app-version', () => app.getVersion());
@@ -115,5 +120,6 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', async () => {
   disposeAllShellSessions();
+  disposeAutoUpdate();
   await disposeAllWatchers();
 });

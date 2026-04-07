@@ -228,6 +228,54 @@ const git = {
 };
 
 // ============================================================
+// PART 2g — updater surface
+// ============================================================
+
+interface UpdaterStatus {
+  version?: string;
+  releaseDate?: string;
+  releaseNotes?: string;
+}
+
+const updater = {
+  available: (): Promise<boolean> => ipcRenderer.invoke('updater:available?'),
+  check: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('updater:check'),
+  download: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('updater:download'),
+  install: (): Promise<{ ok: true }> => ipcRenderer.invoke('updater:install'),
+
+  onChecking: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('updater:checking', sub);
+    return () => ipcRenderer.removeListener('updater:checking', sub);
+  },
+  onAvailable: (cb: (info: UpdaterStatus) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, info: UpdaterStatus) => cb(info);
+    ipcRenderer.on('updater:available', sub);
+    return () => ipcRenderer.removeListener('updater:available', sub);
+  },
+  onNotAvailable: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('updater:not-available', sub);
+    return () => ipcRenderer.removeListener('updater:not-available', sub);
+  },
+  onError: (cb: (err: { message: string }) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, err: { message: string }) => cb(err);
+    ipcRenderer.on('updater:error', sub);
+    return () => ipcRenderer.removeListener('updater:error', sub);
+  },
+  onProgress: (cb: (progress: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, p: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => cb(p);
+    ipcRenderer.on('updater:progress', sub);
+    return () => ipcRenderer.removeListener('updater:progress', sub);
+  },
+  onDownloaded: (cb: (info: UpdaterStatus) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, info: UpdaterStatus) => cb(info);
+    ipcRenderer.on('updater:downloaded', sub);
+    return () => ipcRenderer.removeListener('updater:downloaded', sub);
+  },
+};
+
+// ============================================================
 // PART 3 — meta
 // ============================================================
 
@@ -239,7 +287,7 @@ const meta = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, meta };
+const cs = { fs, quill, ai, keystore, shell, git, updater, meta };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);
