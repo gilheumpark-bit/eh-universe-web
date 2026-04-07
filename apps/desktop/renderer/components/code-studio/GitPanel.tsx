@@ -565,8 +565,68 @@ export default function GitPanel({
     };
   }, [syncGitWorkspace]);
 
-  // Initialize isomorphic-git on mount
+  // Desktop git backend (cs.git via Electron IPC) — preferred when available.
+  // Falls back to isomorphic-git for non-Electron contexts (Storybook, web).
+  const desktopGitProjectPath = useRef<string | null>(null);
+  const [desktopGitReady, setDesktopGitReady] = useState(false);
+
   useEffect(() => {
+    if (typeof window === "undefined" || !window.cs?.git) return;
+
+    let cancelled = false;
+    (async () => {
+      // Pull last opened project from local storage (set by useDesktopProject)
+      const lastProject =
+        typeof window !== "undefined" ? window.localStorage.getItem("cs:last-project") : null;
+      if (!lastProject) return;
+
+      try {
+        const status = await window.cs.git.status(lastProject);
+        if (cancelled || !status.ok) return;
+
+        desktopGitProjectPath.current = lastProject;
+        setDesktopGitReady(true);
+        setGitBackendLabel("desktop-git");
+        if (status.branch) setCurrentBranch(status.branch);
+
+        // Populate branch list from real git
+        const branchResult = await window.cs.git.branchList(lastProject);
+        if (!cancelled && branchResult.ok && branchResult.branches) {
+          // Filter remote duplicates and HEAD pointers
+          const local = branchResult.branches
+            .filter((b) => !b.startsWith("origin/HEAD") && !b.includes("->"))
+            .map((b) => b.replace(/^origin\//, ""));
+          const unique = Array.from(new Set(local));
+          if (unique.length > 0) setBranches(unique);
+        }
+
+        // Populate commit history from real git
+        const logResult = await window.cs.git.log(lastProject, { limit: 30 });
+        if (!cancelled && logResult.ok && logResult.commits) {
+          const realCommits: CommitEntry[] = logResult.commits.map((c) => ({
+            id: c.hash,
+            hash: c.hash,
+            message: c.subject,
+            timestamp: c.timestamp,
+            author: c.author,
+            files: [],
+            parentHash: undefined,
+          }));
+          setCommits(realCommits);
+        }
+      } catch {
+        // Desktop git unavailable or project not a git repo — fall through
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Initialize isomorphic-git on mount (only when desktop bridge unavailable)
+  useEffect(() => {
+    if (desktopGitReady) return; // desktop is already handling git
     let cancelled = false;
     (async () => {
       const engine = await loadIsomorphicGit();
@@ -576,13 +636,13 @@ export default function GitPanel({
         await engine.git.init({ fs: engine.fs, dir: ISO_GIT_DIR });
         isoGitRef.current = engine;
         setIsoGitReady(true);
-        setGitBackendLabel("isomorphic-git");
+        if (!desktopGitReady) setGitBackendLabel("isomorphic-git");
       } catch {
         // isomorphic-git init failed — stay in simulation mode
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [desktopGitReady]);
 
   const flatFileMap = useMemo(() => {
     const map = new Map<string, FileNode>();
