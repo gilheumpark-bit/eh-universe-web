@@ -93,7 +93,7 @@
   /* Foreground / text */
   --text-primary:   #1f2328;     /* GitHub fg-default */
   --text-secondary: #656d76;     /* fg-muted */
-  --text-muted:     #8c959f;     /* fg-subtle */
+  --text-muted:     #6e7781;     /* darker than fg-subtle to clear AA-large */
   --text-inverse:   #ffffff;     /* on accent buttons */
 
   /* Borders / dividers */
