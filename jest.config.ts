@@ -7,11 +7,11 @@ const config: Config = {
       displayName: 'unit',
       preset: 'ts-jest',
       testEnvironment: 'jest-environment-jsdom',
-      roots: ['<rootDir>/src'],
+      roots: ['<rootDir>/renderer'],
       moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
-        '^@vercel/analytics$': '<rootDir>/src/test-utils/vercel-analytics.ts',
-        '^@vercel/analytics/next$': '<rootDir>/src/test-utils/vercel-analytics.ts',
+        '^@/(.*)$': '<rootDir>/renderer/$1',
+        '^@vercel/analytics$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
+        '^@vercel/analytics/next$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
       },
       testMatch: ['**/__tests__/**/*.test.ts'],
       setupFiles: ['<rootDir>/jest.setup.js'],
@@ -24,11 +24,11 @@ const config: Config = {
       displayName: 'components',
       preset: 'ts-jest',
       testEnvironment: 'jest-environment-jsdom',
-      roots: ['<rootDir>/src'],
+      roots: ['<rootDir>/renderer'],
       moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
-        '^@vercel/analytics$': '<rootDir>/src/test-utils/vercel-analytics.ts',
-        '^@vercel/analytics/next$': '<rootDir>/src/test-utils/vercel-analytics.ts',
+        '^@/(.*)$': '<rootDir>/renderer/$1',
+        '^@vercel/analytics$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
+        '^@vercel/analytics/next$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
       },
       testMatch: ['**/__tests__/**/*.test.tsx'],
       setupFiles: ['<rootDir>/jest.setup.components.js'],
@@ -38,11 +38,11 @@ const config: Config = {
     },
   ],
   collectCoverageFrom: [
-    'src/engine/**/*.ts',
-    'src/lib/**/*.ts',
-    'src/services/**/*.ts',
-    '!src/**/__tests__/**',
-    '!src/**/*.d.ts',
+    'renderer/engine/**/*.ts',
+    'renderer/lib/**/*.ts',
+    'renderer/services/**/*.ts',
+    '!renderer/**/__tests__/**',
+    '!renderer/**/*.d.ts',
   ],
   coverageThreshold: {
     global: {
@@ -51,7 +51,7 @@ const config: Config = {
       lines: 20,
       statements: 20,
     },
-    './src/lib/rate-limit.ts': {
+    './renderer/lib/rate-limit.ts': {
       lines: 90,
       functions: 90,
     },

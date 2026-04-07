@@ -2,10 +2,10 @@
  * Flatten studio translation trees and report parity vs EN (same-criteria for all locales).
  * Run: npx tsx scripts/i18n-translation-audit.ts
  */
-import ko from '../src/lib/translations-ko';
-import en from '../src/lib/translations-en';
-import ja from '../src/lib/translations-ja';
-import zh from '../src/lib/translations-zh';
+import ko from '../renderer/lib/translations-ko';
+import en from '../renderer/lib/translations-en';
+import ja from '../renderer/lib/translations-ja';
+import zh from '../renderer/lib/translations-zh';
 import * as fs from 'fs';
 import * as path from 'path';
 
