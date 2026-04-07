@@ -29,7 +29,8 @@ import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { useIsMobile } from "@/components/code-studio/MobileLayout";
 import { useCodeStudioFileSystem } from "@/hooks/useCodeStudioFileSystem";
-import { isElectron, loadLocalDirectory } from "@/lib/electron/fs-bridge";
+import { hasBridge } from "@/lib/desktop-bridge";
+const isElectron = (): boolean => hasBridge();
 import { useCodeStudioComposer } from "@/hooks/useCodeStudioComposer";
 import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
@@ -573,12 +574,12 @@ function CodeStudioShellInner() {
 
     let content = node.content ?? "";
 
-    // Lazy load local file content
-    if (node.id.startsWith("local-") && node.content === undefined && isElectron) {
+    // Lazy load local file content (desktop bridge)
+    if (node.id.startsWith("local-") && node.content === undefined && isElectron()) {
       try {
         const filePath = node.id.replace("local-", "");
-        if (window.electron) {
-          content = await window.electron.fs.readFile(filePath);
+        if (typeof window !== "undefined" && window.cs?.fs) {
+          content = await window.cs.fs.readFile(filePath);
           fsUpdateContent(node.id, content);
         }
       } catch {
@@ -721,16 +722,72 @@ function CodeStudioShellInner() {
   const handleWelcomeNewFile = useCallback(() => { setShowNewFile(true); setHasEverOpened(true); }, []);
 
   const handleOpenLocalFolder = useCallback(async () => {
+    if (typeof window === "undefined" || !window.cs?.fs) {
+      toast(L4(lang, { ko: "데스크탑 환경에서만 사용 가능합니다.", en: "Desktop only feature." }), "error");
+      return;
+    }
     try {
-      const rootNode = await loadLocalDirectory();
+      const selected = await window.cs.fs.openDirectory();
+      if (!selected) return;
+
+      // Recursive scan with depth + ignore guards
+      const IGNORED = new Set([".git", "node_modules", ".next", "dist", "coverage", "out", ".turbo"]);
+      const scan = async (absPath: string, depth: number): Promise<FileNode | null> => {
+        if (depth > 8) return null;
+        try {
+          const entries = await window.cs!.fs.readDir(absPath);
+          const segments = absPath.split(/[\\/]/).filter(Boolean);
+          const name = segments[segments.length - 1] ?? absPath;
+          const children: FileNode[] = [];
+          for (const entry of entries) {
+            if (IGNORED.has(entry.name) || entry.name.startsWith(".DS_Store")) continue;
+            if (entry.isDirectory) {
+              const child = await scan(entry.path, depth + 1);
+              if (child) children.push(child);
+            } else {
+              children.push({
+                id: `local-${entry.path}`,
+                name: entry.name,
+                type: "file",
+              } as FileNode);
+            }
+          }
+          children.sort((a, b) => {
+            if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          });
+          return {
+            id: `local-${absPath}`,
+            name,
+            type: "folder",
+            children,
+          } as FileNode;
+        } catch {
+          return null;
+        }
+      };
+
+      const rootNode = await scan(selected, 0);
       if (rootNode) {
         setFiles([rootNode]);
         setHasEverOpened(true);
-        toast(L4(lang, { ko: "로컬 폴더가 마운트되었습니다.", en: "Local folder mounted." }), "success");
+        // Persist for GitPanel desktop-git backend (Step 3)
+        try {
+          window.localStorage.setItem("cs:last-project", selected);
+        } catch {
+          /* localStorage may be blocked */
+        }
+        toast(
+          L4(lang, { ko: "로컬 폴더가 마운트되었습니다.", en: "Local folder mounted." }),
+          "success",
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast(L4(lang, { ko: `폴더 열기 실패: ${message}`, en: `Failed to open folder: ${message}` }), "error");
+      toast(
+        L4(lang, { ko: `폴더 열기 실패: ${message}`, en: `Failed to open folder: ${message}` }),
+        "error",
+      );
     }
   }, [setFiles, setHasEverOpened, toast, lang]);
 

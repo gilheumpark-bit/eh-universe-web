@@ -43,7 +43,9 @@ export default function WelcomeScreen({
   const [visible, setVisible] = useState(false);
   const [hasProjects, setHasProjects] = useState(false);
   const [showExtras, setShowExtras] = useState(false);
-  const isElectron = typeof window !== 'undefined' && !!(window as { electron?: unknown }).electron;
+  const isElectron =
+    typeof window !== "undefined" &&
+    (!!(window as { cs?: unknown }).cs || !!(window as { electron?: unknown }).electron);
 
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 100);
