@@ -27,7 +27,12 @@
     "@eh/quill-engine": "workspace:*",
     "@eh/quill-cli": "workspace:*",
     "@eh/shared-types": "workspace:*",
-    "electron-serve": "^3.0.1"
+    "chokidar": "^3.6.0",
+    "electron-serve": "^3.0.1",
+    "electron-updater": "^6.3.9"
+  },
+  "optionalDependencies": {
+    "node-pty": "^1.1.0-beta22"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
