@@ -50,6 +50,34 @@ declare global {
     ): Promise<() => void>;
   }
 
+  interface QuillVerifyResult {
+    filePath: string;
+    tier: 'A' | 'B' | 'C';
+    issues: Array<{
+      ruleId: string;
+      severity: 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+      line: number;
+      column?: number;
+      message: string;
+    }>;
+    durationMs: number;
+    engineVersion: string;
+  }
+
+  interface CSQuill {
+    verify(req: { filePath: string; tier?: 'A' | 'B' | 'C' }): Promise<QuillVerifyResult>;
+    engineVersion(): Promise<string>;
+    fullScan(rootPath: string): Promise<{ scanned: number; issues: number }>;
+
+    autoStart(opts: { rootPath: string; sessionId: string }): Promise<{ ok: true }>;
+    autoStop(sessionId: string): Promise<{ ok: true }>;
+    autoPause(sessionId: string): Promise<{ ok: true }>;
+    autoResume(sessionId: string): Promise<{ ok: true }>;
+
+    onAutoReport(callback: (result: QuillVerifyResult) => void): () => void;
+    onAutoError(callback: (error: { filePath: string; error: string }) => void): () => void;
+  }
+
   interface CSAi {
     request(request: Record<string, unknown>): Promise<unknown>;
     onChunk(requestId: string, callback: (chunk: string) => void): () => void;
@@ -63,6 +91,7 @@ declare global {
 
   interface CSBridge {
     fs: CSFs;
+    quill: CSQuill;
     ai: CSAi;
     meta: CSMeta;
   }

@@ -71,6 +71,57 @@ const fs = {
 };
 
 // ============================================================
+// PART 2a — quill surface
+// ============================================================
+
+interface QuillVerifyRequest {
+  filePath: string;
+  tier?: 'A' | 'B' | 'C';
+}
+
+interface QuillVerifyResult {
+  filePath: string;
+  tier: 'A' | 'B' | 'C';
+  issues: Array<{
+    ruleId: string;
+    severity: 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+    line: number;
+    column?: number;
+    message: string;
+  }>;
+  durationMs: number;
+  engineVersion: string;
+}
+
+const quill = {
+  verify: (req: QuillVerifyRequest): Promise<QuillVerifyResult> =>
+    ipcRenderer.invoke('quill:verify', req),
+  engineVersion: (): Promise<string> => ipcRenderer.invoke('quill:engine-version'),
+  fullScan: (rootPath: string): Promise<{ scanned: number; issues: number }> =>
+    ipcRenderer.invoke('quill:full-scan', rootPath),
+
+  autoStart: (opts: { rootPath: string; sessionId: string }): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('quill:auto-start', opts),
+  autoStop: (sessionId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('quill:auto-stop', sessionId),
+  autoPause: (sessionId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('quill:auto-pause', sessionId),
+  autoResume: (sessionId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('quill:auto-resume', sessionId),
+
+  onAutoReport: (callback: (result: QuillVerifyResult) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, result: QuillVerifyResult) => callback(result);
+    ipcRenderer.on('quill:auto-report', sub);
+    return () => ipcRenderer.removeListener('quill:auto-report', sub);
+  },
+  onAutoError: (callback: (error: { filePath: string; error: string }) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, err: { filePath: string; error: string }) => callback(err);
+    ipcRenderer.on('quill:auto-error', sub);
+    return () => ipcRenderer.removeListener('quill:auto-error', sub);
+  },
+};
+
+// ============================================================
 // PART 2 — ai surface (legacy compat, will migrate in C-3)
 // ============================================================
 
@@ -108,7 +159,7 @@ const meta = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, ai, meta };
+const cs = { fs, quill, ai, meta };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);
