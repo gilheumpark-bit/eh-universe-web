@@ -16,20 +16,21 @@ export interface ThemeTokenColor {
   fontStyle?: string;
 }
 
+// Aligned with apps/desktop/renderer/styles/theme.css PART 1 (dark)
 const DARK_THEME_COLORS: Record<string, string> = {
-  'editor.background': '#0d1117',
-  'editor.foreground': '#c9d1d9',
-  'editor.lineHighlightBackground': '#161b22',
-  'editor.selectionBackground': '#264f78',
-  'editorCursor.foreground': '#58a6ff',
-  'editorWhitespace.foreground': '#484f58',
-  'editorIndentGuide.background': '#21262d',
-  'editorIndentGuide.activeBackground': '#30363d',
-  'editorLineNumber.foreground': '#484f58',
-  'editorLineNumber.activeForeground': '#c9d1d9',
-  'editor.selectionHighlightBackground': '#3b5070',
-  'editorBracketMatch.background': '#264f7833',
-  'editorBracketMatch.border': '#58a6ff',
+  'editor.background': '#0a0e1a',                  // --bg-primary
+  'editor.foreground': '#e6edf3',                  // --text-primary
+  'editor.lineHighlightBackground': '#131826',     // --bg-secondary
+  'editor.selectionBackground': '#2a4a7f',         // tinted from --accent-blue
+  'editorCursor.foreground': '#4a9eff',            // --accent-blue
+  'editorWhitespace.foreground': '#3b4458',        // --border-strong
+  'editorIndentGuide.background': '#1c2333',       // --bg-tertiary
+  'editorIndentGuide.activeBackground': '#2d3748', // --border
+  'editorLineNumber.foreground': '#6b7280',        // --text-muted
+  'editorLineNumber.activeForeground': '#e6edf3',  // --text-primary
+  'editor.selectionHighlightBackground': '#1f3358',
+  'editorBracketMatch.background': '#4a9eff22',
+  'editorBracketMatch.border': '#4a9eff',
 };
 
 const DARK_TOKEN_COLORS: ThemeTokenColor[] = [
@@ -48,24 +49,41 @@ const DARK_TOKEN_COLORS: ThemeTokenColor[] = [
   { token: 'attribute.value', foreground: '#a5d6ff' },
 ];
 
+// Aligned with apps/desktop/renderer/styles/theme.css PART 2 (light)
+// Note: editor.background uses #fbfcfd (warm off-white), NOT pure #ffffff,
+// matching the global --bg-primary token. Pure white is reserved for
+// elevated surfaces only.
 const LIGHT_THEME_COLORS: Record<string, string> = {
-  'editor.background': '#ffffff',
-  'editor.foreground': '#24292f',
-  'editor.lineHighlightBackground': '#f6f8fa',
+  'editor.background': '#fbfcfd',                  // --bg-primary (warm off-white)
+  'editor.foreground': '#1f2328',                  // --text-primary
+  'editor.lineHighlightBackground': '#f6f8fa',     // --bg-secondary
   'editor.selectionBackground': '#b6d7ff',
-  'editorCursor.foreground': '#0969da',
-  'editorLineNumber.foreground': '#8c959f',
-  'editorLineNumber.activeForeground': '#24292f',
+  'editor.selectionHighlightBackground': '#dbe7f5',
+  'editorCursor.foreground': '#0969da',            // --accent-blue
+  'editorWhitespace.foreground': '#d0d7de',        // --border
+  'editorIndentGuide.background': '#eaeef2',       // --bg-tertiary
+  'editorIndentGuide.activeBackground': '#d0d7de', // --border
+  'editorLineNumber.foreground': '#8c959f',        // --text-muted
+  'editorLineNumber.activeForeground': '#1f2328',  // --text-primary
+  'editorBracketMatch.background': '#0969da22',
+  'editorBracketMatch.border': '#0969da',
 };
 
+// Aligned with apps/desktop/renderer/styles/theme.css PART 5 (light syntax)
 const LIGHT_TOKEN_COLORS: ThemeTokenColor[] = [
   { token: 'comment', foreground: '#6e7781', fontStyle: 'italic' },
   { token: 'keyword', foreground: '#cf222e' },
   { token: 'string', foreground: '#0a3069' },
   { token: 'number', foreground: '#0550ae' },
-  { token: 'type', foreground: '#953800' },
-  { token: 'function', foreground: '#8250df' },
-  { token: 'variable', foreground: '#24292f' },
+  { token: 'type', foreground: '#116329' },        // --syntax-type
+  { token: 'function', foreground: '#8250df' },    // --syntax-function
+  { token: 'variable', foreground: '#953800' },    // --syntax-variable
+  { token: 'constant', foreground: '#0550ae' },
+  { token: 'operator', foreground: '#cf222e' },
+  { token: 'delimiter', foreground: '#1f2328' },
+  { token: 'tag', foreground: '#116329' },
+  { token: 'attribute.name', foreground: '#0550ae' },
+  { token: 'attribute.value', foreground: '#0a3069' },
 ];
 
 export function registerThemes(monaco: typeof Monaco): void {
