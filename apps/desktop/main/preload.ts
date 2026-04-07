@@ -276,6 +276,44 @@ const updater = {
 };
 
 // ============================================================
+// PART 2h — cli installer surface
+// ============================================================
+
+const cli = {
+  status: (): Promise<{ installed: boolean; target: string }> =>
+    ipcRenderer.invoke('cli:status'),
+  install: (): Promise<{ ok: true }> => ipcRenderer.invoke('cli:install'),
+  uninstall: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('cli:uninstall'),
+};
+
+// ============================================================
+// PART 2i — menu event listeners (renderer subscribes)
+// ============================================================
+
+const menu = {
+  onOpenFolder: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('menu:open-folder', sub);
+    return () => ipcRenderer.removeListener('menu:open-folder', sub);
+  },
+  onCliInstall: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('menu:cli-install', sub);
+    return () => ipcRenderer.removeListener('menu:cli-install', sub);
+  },
+  onCliUninstall: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('menu:cli-uninstall', sub);
+    return () => ipcRenderer.removeListener('menu:cli-uninstall', sub);
+  },
+  onCheckUpdates: (cb: () => void): (() => void) => {
+    const sub = () => cb();
+    ipcRenderer.on('menu:check-updates', sub);
+    return () => ipcRenderer.removeListener('menu:check-updates', sub);
+  },
+};
+
+// ============================================================
 // PART 3 — meta
 // ============================================================
 
@@ -287,7 +325,7 @@ const meta = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, updater, meta };
+const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

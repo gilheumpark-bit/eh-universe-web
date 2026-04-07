@@ -7,7 +7,7 @@
  */
 
 import path from 'node:path';
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 import serve from 'electron-serve';
 
 import { handleAiChatRequest, type ChatRequest } from './services/ai-service';
@@ -18,6 +18,7 @@ import { registerAiIpc } from './ipc/ai';
 import { registerShellIpc, disposeAllShellSessions } from './ipc/shell';
 import { registerGitIpc } from './ipc/git';
 import { initAutoUpdate, disposeAutoUpdate, registerUpdaterIpc } from './services/updater';
+import { registerCliInstallerIpc } from './services/cli-installer';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -92,6 +93,7 @@ function registerIpc(): void {
   registerShellIpc();
   registerGitIpc();
   registerUpdaterIpc();
+  registerCliInstallerIpc();
 
   // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
   ipcMain.handle('get-app-version', () => app.getVersion());
@@ -105,8 +107,100 @@ function registerIpc(): void {
 // PART 3 — App lifecycle
 // ============================================================
 
+function buildMenu(): void {
+  const isMac = process.platform === 'darwin';
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' as const },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              { role: 'quit' as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Open Folder…',
+          accelerator: isMac ? 'Cmd+O' : 'Ctrl+O',
+          click: (_item, win) => {
+            if (win) (win as BrowserWindow).webContents.send('menu:open-folder');
+          },
+        },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' },
+      ],
+    },
+    { label: 'Edit', submenu: [
+        { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
+        { role: 'cut' }, { role: 'copy' }, { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+    { label: 'View', submenu: [
+        { role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Tools',
+      submenu: [
+        {
+          label: 'Install Command Line Tools (cs)',
+          click: (_item, win) => {
+            if (!win) return;
+            (win as BrowserWindow).webContents.send('menu:cli-install');
+          },
+        },
+        {
+          label: 'Uninstall Command Line Tools',
+          click: (_item, win) => {
+            if (!win) return;
+            (win as BrowserWindow).webContents.send('menu:cli-uninstall');
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Check for Updates…',
+          click: (_item, win) => {
+            if (!win) return;
+            (win as BrowserWindow).webContents.send('menu:check-updates');
+          },
+        },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'EH Code Studio Website',
+          click: () => shell.openExternal('https://github.com/eh-universe/code-studio'),
+        },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(() => {
   registerIpc();
+  buildMenu();
   void createWindow();
 
   app.on('activate', () => {
