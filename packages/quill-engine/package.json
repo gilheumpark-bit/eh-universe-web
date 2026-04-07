@@ -1,0 +1,21 @@
+{
+  "name": "@eh/quill-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EH Code Studio verification engine — pure TS, no Node API deps",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@eh/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5"
+  }
+}

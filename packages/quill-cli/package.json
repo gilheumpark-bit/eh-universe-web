@@ -1,0 +1,23 @@
+{
+  "name": "@eh/quill-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EH Code Studio CLI — `cs` command",
+  "main": "./dist/index.js",
+  "bin": {
+    "cs": "./dist/bin/cs.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@eh/quill-engine": "workspace:*",
+    "@eh/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}
