@@ -20,6 +20,29 @@
 # production
 /build
 
+# Electron / Nextron build outputs
+/dist/
+/app/main.js
+/app/main.js.map
+/app/preload.js
+/app/preload.js.map
+/main/dist/
+/preload/dist/
+/renderer/.next/
+/renderer/out/
+/renderer/build3.log
+
+# Build logs
+/build*.log
+/out.log
+/build_err.txt
+/tsc-errors.txt
+/verify_output.txt
+/tmp_*.txt
+/e2e_out*.log
+/test_*.log
+/test_frontend.log
+
 # misc
 .DS_Store
 *.pem
