@@ -13,21 +13,12 @@ import { ipcMain, type WebContents } from 'electron';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-// NOTE: @eh/quill-engine is workspace-linked. The actual import wires up
-// once the engine package exports a runtime API. For now we lazy-import
-// to keep the surface stable even while the engine is being moved.
-type QuillEngine = {
-  ENGINE_VERSION: string;
-  // Will expand: runVerify, runDeepVerify, ARICircuitBreaker, etc.
-};
-
-let engineCache: QuillEngine | null = null;
-async function getEngine(): Promise<QuillEngine> {
-  if (engineCache) return engineCache;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  engineCache = require('@eh/quill-engine') as QuillEngine;
-  return engineCache;
-}
+import {
+  runVerify as engineRunVerify,
+  ENGINE_VERSION,
+  type EngineFinding,
+  type VerifyOutcome,
+} from '@eh/quill-engine';
 
 // ============================================================
 // PART 1 — Verify request shapes
@@ -54,6 +45,16 @@ interface VerifyResult {
   engineVersion: string;
 }
 
+function findingToIssue(f: EngineFinding): VerifyResultIssue {
+  return {
+    ruleId: f.ruleId,
+    severity: f.severity as VerifyResultIssue['severity'],
+    line: f.line,
+    column: (f as unknown as { col?: number }).col,
+    message: f.message,
+  };
+}
+
 async function verifyFile(req: VerifyFileRequest): Promise<VerifyResult> {
   const t0 = Date.now();
   const tier = req.tier ?? 'A';
@@ -75,23 +76,40 @@ async function verifyFile(req: VerifyFileRequest): Promise<VerifyResult> {
         },
       ],
       durationMs: Date.now() - t0,
-      engineVersion: 'unknown',
+      engineVersion: ENGINE_VERSION,
     };
   }
 
-  const engine = await getEngine();
-
-  // STUB: detector dispatch by tier. Real wiring lands when engine
-  // exports `runVerify(file, options)`. For now we return an empty
-  // pass to keep the IPC contract stable.
-  const issues: VerifyResultIssue[] = [];
+  // Real engine call (B-2 wired in Step 2)
+  let outcome: VerifyOutcome;
+  try {
+    outcome = engineRunVerify(content, {
+      fileName: path.basename(req.filePath),
+      tier,
+    });
+  } catch (err) {
+    return {
+      filePath: req.filePath,
+      tier,
+      issues: [
+        {
+          ruleId: 'engine-error',
+          severity: 'P1',
+          line: 0,
+          message: `Quill engine threw: ${(err as Error).message}`,
+        },
+      ],
+      durationMs: Date.now() - t0,
+      engineVersion: ENGINE_VERSION,
+    };
+  }
 
   return {
     filePath: req.filePath,
     tier,
-    issues,
+    issues: outcome.findings.map(findingToIssue),
     durationMs: Date.now() - t0,
-    engineVersion: engine.ENGINE_VERSION,
+    engineVersion: ENGINE_VERSION,
   };
 }
 
@@ -181,10 +199,7 @@ export function registerQuillIpc(): void {
 
   ipcMain.handle('quill:verify', async (_event, req: VerifyFileRequest) => verifyFile(req));
 
-  ipcMain.handle('quill:engine-version', async () => {
-    const engine = await getEngine();
-    return engine.ENGINE_VERSION;
-  });
+  ipcMain.handle('quill:engine-version', () => ENGINE_VERSION);
 
   ipcMain.handle('quill:full-scan', async (_event, rootPath: string) => runFullProjectScan(rootPath));
 
