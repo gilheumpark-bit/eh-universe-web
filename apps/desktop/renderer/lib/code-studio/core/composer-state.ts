@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 // ============================================================
 // PART 1 — Composer Mode Types & Transition Map

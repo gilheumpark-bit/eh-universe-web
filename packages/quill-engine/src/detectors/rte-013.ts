@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { CallExpression, SyntaxKind } from 'ts-morph';
 
 /** 동일 인자로 중첩된 자기 호출 foo(foo(...)) — 스택 위험 휴리스틱 */

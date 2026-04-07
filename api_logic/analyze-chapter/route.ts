@@ -1,6 +1,6 @@
 import { Type } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createServerGeminiClient, executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';

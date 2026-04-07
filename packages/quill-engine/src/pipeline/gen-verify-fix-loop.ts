@@ -6,10 +6,10 @@
 // re-verifies — up to N rounds until score target is met.
 // Pure async — no React hooks, no DOM.
 
-import { runStaticPipeline } from '@eh/quill-engine/pipeline/pipeline';
-import type { PipelineResult, PipelineStage } from '@eh/quill-engine/pipeline/pipeline';
-import { streamChat } from '@/lib/ai-providers';
-import { logger } from '@/lib/logger';
+import { runStaticPipeline } from './pipeline';
+import type { PipelineResult, PipelineStage } from './pipeline';
+import { streamChat } from '../_stubs/ai-providers';
+import { logger } from '../_stubs/logger';
 
 // ============================================================
 // PART 1 — Types & Configuration
@@ -97,13 +97,13 @@ async function callAI(
 ): Promise<{ text: string; tokenUsage: RoundTokenUsage }> {
   let result = '';
   try {
-    result = await streamChat({
+    result = (await streamChat({
       systemInstruction,
       messages: [{ role: 'user', content: userMessage }],
       temperature,
       onChunk: () => {},
       signal,
-    });
+    })) as string;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
     logger.warn('gen-verify-fix', 'callAI failed:', err);

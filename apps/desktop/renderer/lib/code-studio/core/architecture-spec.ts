@@ -28,7 +28,7 @@ export const CODE_STUDIO_ARCHITECTURE_APPENDIX = `
 - Long operations should respect \`AbortSignal\` when provided.
 
 ### Logging
-- Never add \`console.log\` / \`console.warn\` / \`console.error\` in new code; use \`import { logger } from '@/lib/logger'\`.
+- Never add \`console.log\` / \`console.warn\` / \`console.error\` in new code; use \`import { logger } from '../_stubs/logger'\`.
 - Verification may propose \`console-remove\` safe-fixes on existing code.
 
 ### Security & Next.js

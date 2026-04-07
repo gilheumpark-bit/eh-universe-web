@@ -10,7 +10,7 @@ import {
   truncateMessages,
   HISTORY_LIMITS,
 } from '@/lib/token-utils';
-import type { ChatMsg } from '@/lib/ai-providers';
+import type { ChatMsg } from '../_stubs/ai-providers';
 
 // ============================================================
 // PART 1 — estimateTokens

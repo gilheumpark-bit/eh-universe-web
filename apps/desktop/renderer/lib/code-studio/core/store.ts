@@ -4,7 +4,7 @@
 
 import type { FileNode, CodeStudioSettings } from './types';
 import { DEFAULT_SETTINGS, detectLanguage } from './types';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 const DB_NAME = 'eh-code-studio';
 const DB_VERSION = 2;

@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { CatchClause, NewExpression, SyntaxKind, ThrowStatement } from 'ts-morph';
 
 function argsIncludeCause(args: readonly { getText(): string }[]): boolean {

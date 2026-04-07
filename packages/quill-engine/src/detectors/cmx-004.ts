@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 
 /**
  * CMX-004: 파일 1000줄 초과

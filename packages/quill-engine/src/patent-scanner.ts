@@ -2,7 +2,7 @@
 // Code Studio — Patent/IP Scanner
 // ============================================================
 
-import type { FileNode } from '../core/types';
+import type { FileNode } from './types';
 
 // ============================================================
 // PART 1 — Types

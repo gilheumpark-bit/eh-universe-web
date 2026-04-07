@@ -2,7 +2,7 @@
 // Code Studio — Virtual Chaos Simulation (가상 장애 시뮬레이션)
 // ============================================================
 
-import { streamChat } from '@/lib/ai-providers';
+import { streamChat } from '../_stubs/ai-providers';
 
 // ============================================================
 // PART 1 — Types

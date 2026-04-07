@@ -3,7 +3,7 @@
 // ============================================================
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
 import { ariManager } from '@eh/quill-engine/ari-engine';

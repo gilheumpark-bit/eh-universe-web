@@ -2,8 +2,8 @@
 // PART 1 — Types & Constants
 // ============================================================
 
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
-import { buildFPSuppressionPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+import { streamChat, getApiKey, getActiveProvider } from '../_stubs/ai-providers';
+import { buildFPSuppressionPrompt } from '../quality-rules-from-catalog';
 
 export interface BugReport {
   id: string;

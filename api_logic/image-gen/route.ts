@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 // BYOK mode: user-provided API key. No server fallback for image gen.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { isFeatureEnabledServer } from '@/lib/feature-flags';
 

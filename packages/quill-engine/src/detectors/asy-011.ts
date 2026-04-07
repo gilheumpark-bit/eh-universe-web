@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, CallExpression, PropertyAccessExpression } from 'ts-morph';
 
 const SYNC_BLOCKING = new Set([

@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 
 /**
  * CMX-005: 클래스 메서드 20개 초과

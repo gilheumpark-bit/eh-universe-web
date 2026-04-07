@@ -7,7 +7,7 @@
 // Falls back to /api/gemini-structured for Gemini-specific tasks
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { hasServerProviderCredentials, resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import type { AppLanguage } from '@/lib/studio-types';

@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, ExpressionStatement, Block, Statement } from 'ts-morph';
 
 function stmtIsBareAwait(stmt: Statement): boolean {

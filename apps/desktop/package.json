@@ -18,7 +18,7 @@
     "cs:build": "tsc --project tsconfig.cli.json",
     "dev:electron": "nextron",
     "build:electron": "nextron build",
-    "postinstall": "electron-builder install-app-deps"
+    "electron:rebuild": "electron-builder install-app-deps"
   },
   "bin": {
     "cs": "./dist/cli/cli/bin/cs.js"

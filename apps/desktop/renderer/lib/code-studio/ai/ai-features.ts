@@ -3,8 +3,8 @@
 // Unified module consuming streamChat from @/lib/ai-providers
 // ============================================================
 
-import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
-import { logger } from '@/lib/logger';
+import { streamChat, getActiveProvider, PROVIDERS } from '../_stubs/ai-providers';
+import { logger } from '../_stubs/logger';
 import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
 import { ariManager } from '@eh/quill-engine/ari-engine';
 

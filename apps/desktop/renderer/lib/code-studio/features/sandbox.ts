@@ -2,8 +2,8 @@
 // Code Studio — Code Sandbox (isolated execution)
 // ============================================================
 
-import type { FileNode } from '../core/types';
-import { streamChat } from '@/lib/ai-providers';
+import type { FileNode } from '../types';
+import { streamChat } from '../_stubs/ai-providers';
 
 // ============================================================
 // PART 1 — Types

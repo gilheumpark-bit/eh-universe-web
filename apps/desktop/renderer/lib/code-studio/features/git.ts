@@ -4,7 +4,7 @@
 // WebContainer 기반 또는 API 호출을 통한 Git 작업 래퍼.
 // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
 
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 // ============================================================
 // PART 1 — Types

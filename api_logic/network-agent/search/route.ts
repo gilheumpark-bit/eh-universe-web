@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchNetworkAgent, isNetworkAgentConfigured } from '@/lib/vertex-network-agent';
 import { getClientIp, checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
 
 export async function OPTIONS(req: NextRequest) {

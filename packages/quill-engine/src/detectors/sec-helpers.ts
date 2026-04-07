@@ -17,7 +17,7 @@ import {
   SyntaxKind,
   TemplateExpression,
 } from 'ts-morph';
-import type { RuleFinding } from '../detector-registry';
+import type { RuleFinding } from '../registry';
 
 const CAP = 8;
 

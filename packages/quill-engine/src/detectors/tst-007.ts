@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, VariableDeclarationKind, type SourceFile } from 'ts-morph';
 
 /**

@@ -1,4 +1,4 @@
-import { detectorRegistry } from '../detector-registry';
+import { detectorRegistry } from '../registry';
 
 import { syn001Detector } from './syn-001';
 import { syn002Detector } from './syn-002';

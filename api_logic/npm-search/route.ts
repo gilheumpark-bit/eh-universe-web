@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
+import { logger } from "../_stubs/logger";
 import { checkRateLimit, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
 
 const NPM = "https://registry.npmjs.org/-/v1/search";

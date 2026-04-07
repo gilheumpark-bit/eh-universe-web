@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, TryStatement } from 'ts-morph';
 
 /** priority-implementation-spec 3.2: try 블록 50줄+ 과도 */

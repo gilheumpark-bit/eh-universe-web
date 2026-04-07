@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 
 export const stl007Detector: RuleDetector = {
   ruleId: 'STL-007',

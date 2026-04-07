@@ -4,8 +4,8 @@
 // Terminal AI: analyze command errors via streamChat,
 // suggest fixes, explain error messages, auto-retry.
 
-import { streamChat } from '@/lib/ai-providers';
-import { logger } from '@/lib/logger';
+import { streamChat } from '../_stubs/ai-providers';
+import { logger } from '../_stubs/logger';
 
 export interface TerminalAISuggestion {
   type: 'command' | 'code-fix' | 'explanation';

@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, CallExpression, PropertyAccessExpression } from 'ts-morph';
 
 function isAddEventListenerCall(node: import('ts-morph').Node): node is CallExpression {

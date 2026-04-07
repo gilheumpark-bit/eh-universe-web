@@ -2,7 +2,7 @@
 // PART 1 — Environment Variable Validation
 // ============================================================
 
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 /**
  * Validates required environment variables at module load time.

@@ -3,7 +3,7 @@
 // ============================================================
 // 미사용 exports, return 이후 도달 불가 코드, 미사용 변수 탐지.
 
-import type { FileNode } from '../core/types';
+import type { FileNode } from '../types';
 
 // ============================================================
 // PART 1 — Types

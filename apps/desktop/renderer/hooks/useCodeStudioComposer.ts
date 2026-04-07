@@ -3,8 +3,8 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { streamChat } from '@/lib/ai-providers';
-import { logger } from '@/lib/logger';
+import { streamChat } from '../_stubs/ai-providers';
+import { logger } from '../_stubs/logger';
 import type { FileNode } from '@eh/quill-engine/types';
 import {
   type ComposerMode,

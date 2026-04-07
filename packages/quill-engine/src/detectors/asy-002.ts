@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { ForOfStatement, SyntaxKind } from 'ts-morph';
 
 /**

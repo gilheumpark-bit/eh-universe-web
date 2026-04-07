@@ -5,7 +5,7 @@
 // Pure regex + heuristic based analysis.
 
 import { detectGoodPatterns, downgradeFindings } from './good-pattern-detector';
-import { applyScopePolicyToFindings } from '../core/scope-policy';
+import { applyScopePolicyToFindings } from '../scope-policy';
 
 // ============================================================
 // PART 1 — Shared Types

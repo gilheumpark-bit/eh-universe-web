@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { detectSec004 } from './sec-helpers';
 
 export const sec004Detector: RuleDetector = {

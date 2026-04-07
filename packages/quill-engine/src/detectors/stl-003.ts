@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 const BOOLEAN_PREFIXES = /^(is|has|can|should|will|did|was|are|need|allow|enable|disable|show|hide|include|exclude|with|without|use)/i;

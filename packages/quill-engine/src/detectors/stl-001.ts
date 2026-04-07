@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 // Single-character variable names that cause confusion (excluding common idioms like i, j, k, _, e, x, y)

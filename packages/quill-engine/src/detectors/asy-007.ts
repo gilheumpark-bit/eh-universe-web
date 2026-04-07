@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, CallExpression, ArrayLiteralExpression } from 'ts-morph';
 
 const TIMEOUT_HINT = /setTimeout|setInterval|AbortSignal|timeout|delay|sleep|deadline|after\(/i;

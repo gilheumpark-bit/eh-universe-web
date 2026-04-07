@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { isParseIntCall } from './rte-helpers';
 
 /** parseInt 인자 1개 — radix 누락(8진수 혼동 등) 및 NaN 가능 */

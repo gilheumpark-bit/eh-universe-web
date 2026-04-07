@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 const POOL_METHODS = ['getConnection', 'connect', 'pool.query', 'createConnection', 'createPool'];

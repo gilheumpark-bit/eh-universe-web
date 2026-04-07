@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { CallExpression, SyntaxKind, TryStatement } from 'ts-morph';
 import { isUnawaitedPromiseCall } from './err-helpers';
 

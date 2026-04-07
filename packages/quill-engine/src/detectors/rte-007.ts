@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { BindingElement, SyntaxKind, VariableDeclaration } from 'ts-morph';
 
 /** 외부 데이터로부터 구조분해 시 기본값 없음 */

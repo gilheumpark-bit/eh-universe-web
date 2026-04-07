@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, Block, IfStatement, ReturnStatement, Statement, ArrowFunction, MethodDeclaration } from 'ts-morph';
 
 function branchReturnsWithValue(stmt: Statement): boolean {

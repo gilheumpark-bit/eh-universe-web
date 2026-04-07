@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { assertUrlAllowedForFetch, rateLimitFetchUrl } from '@/lib/fetch-url-guard';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

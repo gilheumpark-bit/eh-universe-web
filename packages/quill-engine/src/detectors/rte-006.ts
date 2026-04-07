@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { ElementAccessExpression, SyntaxKind } from 'ts-morph';
 import { hasQuestionDotToken } from './rte-helpers';
 

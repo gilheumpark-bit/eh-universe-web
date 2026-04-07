@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 function peelExpr(node: import('ts-morph').Node): import('ts-morph').Node {

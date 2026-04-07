@@ -4,35 +4,35 @@
 // Pipeline → Auto-fix → Re-verify, up to 3 rounds.
 // Pure async — no React hooks, no DOM, no side effects.
 
-import { runStaticPipeline } from '@eh/quill-engine/pipeline/pipeline';
-import type { PipelineResult, PipelineStage } from '@eh/quill-engine/pipeline/pipeline';
-import { findBugsStatic } from '@eh/quill-engine/pipeline/bugfinder';
-import type { BugReport } from '@eh/quill-engine/pipeline/bugfinder';
-import { generateFixes } from '@eh/quill-engine/pipeline/pipeline-utils';
-import type { FixSuggestion } from '@eh/quill-engine/pipeline/pipeline-utils';
-import type { Finding } from '@eh/quill-engine/pipeline/pipeline-teams';
-import { runStressReport } from '@eh/quill-engine/pipeline/stress-test';
-import type { StressReport } from '@eh/quill-engine/pipeline/stress-test';
-import { runChaosReport } from '@eh/quill-engine/pipeline/chaos-engineering';
-import type { ChaosReport } from '@eh/quill-engine/pipeline/chaos-engineering';
-import { scanProject } from '@eh/quill-engine/patent-scanner';
-import type { IPReport } from '@eh/quill-engine/patent-scanner';
-import type { FileNode } from '@eh/quill-engine/types';
-import { runProjectAudit } from '@eh/quill-engine/audit/audit-engine';
-import type { AuditContext } from '@eh/quill-engine/audit/audit-types';
+import { runStaticPipeline } from './pipeline';
+import type { PipelineResult, PipelineStage } from './pipeline';
+import { findBugsStatic } from './bugfinder';
+import type { BugReport } from './bugfinder';
+import { generateFixes } from './pipeline-utils';
+import type { FixSuggestion } from './pipeline-utils';
+import type { Finding } from './pipeline-teams';
+import { runStressReport } from './stress-test';
+import type { StressReport } from './stress-test';
+import { runChaosReport } from './chaos-engineering';
+import type { ChaosReport } from './chaos-engineering';
+import { scanProject } from '../patent-scanner';
+import type { IPReport } from '../patent-scanner';
+import type { FileNode } from '../types';
+import { runProjectAudit } from '../audit/audit-engine';
+import type { AuditContext } from '../audit/audit-types';
 import {
   type SafeFixCategory,
   classifyFixDescription,
-} from '@eh/quill-engine/autofix-policy';
-import { runDesignLint } from '@eh/quill-engine/pipeline/design-lint';
-import type { DesignLintResult } from '@eh/quill-engine/pipeline/design-lint';
+} from '../autofix-policy';
+import { runDesignLint } from './design-lint';
+import type { DesignLintResult } from './design-lint';
 import {
   GOOD_PATTERN_CATALOG,
   getSuppressorsFor,
-} from '@eh/quill-engine/good-pattern-catalog';
+} from '../good-pattern-catalog';
 
 // Re-export for existing consumers (`SafeFixCategory` was defined here).
-export type { SafeFixCategory } from '@eh/quill-engine/autofix-policy';
+export type { SafeFixCategory } from '../autofix-policy';
 
 // ============================================================
 // PART 1 — Types & Configuration

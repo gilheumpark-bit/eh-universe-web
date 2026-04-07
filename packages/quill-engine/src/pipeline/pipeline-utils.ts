@@ -4,7 +4,7 @@
 // Combines: auto-fix, report-generator, cache, review-checklist,
 // compare, beacon, pipeline-config into a single utility module.
 
-import type { Finding, Severity, TeamResult } from '@eh/quill-engine/pipeline/pipeline-teams';
+import type { Finding, Severity, TeamResult } from './pipeline-teams';
 
 // ── Pipeline Config ──
 

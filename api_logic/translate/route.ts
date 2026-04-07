@@ -19,7 +19,7 @@ import {
   normalizeUserApiKey,
 } from '@/lib/google-genai-server';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';

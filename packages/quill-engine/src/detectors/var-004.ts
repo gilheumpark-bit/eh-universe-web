@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 export const var004Detector: RuleDetector = {
   ruleId: 'VAR-004',

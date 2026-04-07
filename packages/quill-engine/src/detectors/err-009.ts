@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { PropertyAccessExpression, SyntaxKind } from 'ts-morph';
 import { isUserFacingStackLeak } from './err-helpers';
 

@@ -9,7 +9,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef } from 'react';
-import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+import { streamChat, type ChatMsg } from '../_stubs/ai-providers';
 import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
 import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
 

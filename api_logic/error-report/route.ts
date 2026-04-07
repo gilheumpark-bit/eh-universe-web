@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 

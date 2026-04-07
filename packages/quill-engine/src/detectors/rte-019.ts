@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { findUnreachableInBlocks } from './rte-helpers';
 
 export const rte019Detector: RuleDetector = {

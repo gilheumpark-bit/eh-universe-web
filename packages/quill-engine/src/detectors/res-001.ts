@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 const STREAM_CREATORS = ['createReadStream', 'createWriteStream', 'openSync', 'open'];

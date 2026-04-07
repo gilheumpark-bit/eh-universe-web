@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestNetworkDocument, isNetworkAgentConfigured } from '@/lib/vertex-network-agent';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 

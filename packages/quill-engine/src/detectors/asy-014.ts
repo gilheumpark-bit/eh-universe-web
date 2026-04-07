@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, ForOfStatement } from 'ts-morph';
 
 const ASYNC_ITER_HINT = /Async|asyncIterator|AsyncIterable|stream|readable|generator/i;

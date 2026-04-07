@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { Block, ForStatement, SyntaxKind, WhileStatement } from 'ts-morph';
 import { isWhileTrueOrForEver, loopBodyLacksExit } from './rte-helpers';
 

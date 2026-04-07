@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { IfStatement, SyntaxKind } from 'ts-morph';
 import { isDeadBranchCondition } from './rte-helpers';
 

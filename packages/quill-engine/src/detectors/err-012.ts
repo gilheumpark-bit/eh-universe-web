@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { CatchClause, SyntaxKind } from 'ts-morph';
 import { reactBusyNotResetInCatch } from './err-helpers';
 

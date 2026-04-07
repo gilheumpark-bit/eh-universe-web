@@ -12,7 +12,7 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import {
   canTransition,
   createModeTransition,

@@ -4,9 +4,9 @@
 // 코드 변경 시 8개 팀이 정적 분석을 수행, AST 기반 정밀 분석 병합, AI 리뷰 지원.
 // AI 호출 없이 로컬에서 즉시 실행.
 
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { detectGoodPatterns, type GoodPatternReport } from './good-pattern-detector';
-import { applyScopePolicy, PolicyManager } from '../core/scope-policy';
+import { applyScopePolicy, PolicyManager } from '../scope-policy';
 
 export interface PipelineStage {
   name: string;

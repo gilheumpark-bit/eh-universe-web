@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 export const var007Detector: RuleDetector = {
   ruleId: 'VAR-007',
   detect: (sourceFile) => {

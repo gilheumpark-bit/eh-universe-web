@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { createServerGeminiClient } from '@/lib/google-genai-server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { collectionName } from '@/lib/firebase';
 import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
 

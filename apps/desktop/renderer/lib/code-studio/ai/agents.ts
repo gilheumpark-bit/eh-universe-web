@@ -2,7 +2,7 @@
 // PART 1 — Types & Constants
 // ============================================================
 
-import { streamChat } from '@/lib/ai-providers';
+import { streamChat } from '../_stubs/ai-providers';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
 import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
@@ -11,7 +11,7 @@ import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
 import { buildIdiomDirective, detectFramework, type FrameworkId } from '@/lib/code-studio/ai/idiom-presets';
 
 // Re-export for consumers that need provider info alongside agent sessions.
-export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
+export { getApiKey, getActiveProvider } from '../_stubs/ai-providers';
 
 import { type AgentRole, AGENT_REGISTRY } from '@/types/code-studio-agent';
 

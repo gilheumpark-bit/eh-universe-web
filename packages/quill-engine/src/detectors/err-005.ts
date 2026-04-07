@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, ThrowStatement } from 'ts-morph';
 
 export const err005Detector: RuleDetector = {

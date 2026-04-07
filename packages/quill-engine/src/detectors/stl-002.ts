@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind } from 'ts-morph';
 
 const VERB_PREFIXES = /^(get|set|is|has|can|should|will|did|was|create|make|build|fetch|load|save|update|delete|remove|add|insert|find|search|check|validate|compute|calculate|handle|on|init|parse|format|render|transform|convert|process|map|filter|reduce|sort|merge|split|join|compare|test|assert|verify|ensure|enable|disable|show|hide|open|close|start|stop|run|execute|apply|reset|clear|read|write|send|receive|emit|dispatch|subscribe|unsubscribe|listen|trigger|notify|log|print|debug|warn|throw)/i;

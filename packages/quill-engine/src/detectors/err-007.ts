@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, TryStatement } from 'ts-morph';
 import { tryNestingDepth } from './err-helpers';
 

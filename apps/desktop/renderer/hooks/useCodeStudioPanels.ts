@@ -10,7 +10,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useMemo } from "react";
-import { streamChat, type ChatMsg } from "@/lib/ai-providers";
+import { streamChat, type ChatMsg } from "../_stubs/ai-providers";
 import type { AgentRole } from "@/lib/code-studio/ai/agents";
 import type { FileNode } from "@eh/quill-engine/types";
 import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";

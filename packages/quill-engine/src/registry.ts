@@ -1,5 +1,5 @@
 import { SourceFile } from 'ts-morph';
-import { getRule, RuleMeta } from './rule-catalog';
+import { getRule, RuleMeta } from './catalog';
 
 export interface RuleFinding {
   line: number;

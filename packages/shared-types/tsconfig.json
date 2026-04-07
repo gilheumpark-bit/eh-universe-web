@@ -8,7 +8,9 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "declaration": true,
-    "noEmit": true,
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "lib": ["ES2022"]
   },
   "include": ["src/**/*"]

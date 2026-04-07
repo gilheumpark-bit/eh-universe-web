@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy

@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { BinaryExpression, CallExpression, SyntaxKind } from 'ts-morph';
 import { isSuspiciousBarBar } from './rte-helpers';
 

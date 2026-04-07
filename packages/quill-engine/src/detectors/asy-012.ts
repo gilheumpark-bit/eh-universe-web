@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { SyntaxKind, CallExpression, ArrowFunction, FunctionExpression, Block } from 'ts-morph';
 
 /**

@@ -2,7 +2,7 @@
 // Code Studio — App Scaffold Generator
 // ============================================================
 
-import { streamChat } from '@/lib/ai-providers';
+import { streamChat } from '../_stubs/ai-providers';
 import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
 import { detectPreset, buildPresetPrompt } from '@/lib/code-studio/core/design-presets';
 

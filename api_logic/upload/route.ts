@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mammoth from 'mammoth';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';

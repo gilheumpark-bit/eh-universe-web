@@ -1,4 +1,4 @@
-import { RuleDetector } from '../detector-registry';
+import { RuleDetector } from '../registry';
 import { BinaryExpression, ForStatement, PropertyAccessExpression, SyntaxKind } from 'ts-morph';
 
 /** for (i <= arr.length) 스타일 off-by-one */

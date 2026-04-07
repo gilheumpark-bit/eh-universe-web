@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeSession } from '@/lib/stripe';
-import { logger } from '@/lib/logger';
+import { logger } from '../_stubs/logger';
 
 /**
  * Stripe Checkout for subscription (optional). Requires STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PRICE_ID in env.
