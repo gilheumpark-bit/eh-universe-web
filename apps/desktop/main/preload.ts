@@ -122,11 +122,26 @@ const quill = {
 };
 
 // ============================================================
-// PART 2 — ai surface (legacy compat, will migrate in C-3)
+// PART 2 — ai surface (keystore-backed BYOK)
 // ============================================================
 
+interface AIChatRequest {
+  provider: 'gemini' | 'openai' | 'claude' | 'groq';
+  model: string;
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  temperature?: number;
+  maxTokens?: number;
+  stream?: boolean;
+}
+
 const ai = {
-  request: (request: Record<string, unknown>) => ipcRenderer.invoke('ai:chat-request', request),
+  // New canonical streaming API
+  chatStream: (req: AIChatRequest): Promise<{ requestId: string }> =>
+    ipcRenderer.invoke('ai:chat-stream', req),
+  ariState: (): Promise<unknown[]> => ipcRenderer.invoke('ai:ari-state'),
+  ariReset: (provider?: string): Promise<{ ok: true }> => ipcRenderer.invoke('ai:ari-reset', provider),
+
+  // Stream listeners
   onChunk: (requestId: string, callback: (chunk: string) => void) => {
     const channel = `ai:chat-chunk:${requestId}`;
     const sub = (_e: IpcRendererEvent, chunk: string) => callback(chunk);
@@ -145,6 +160,24 @@ const ai = {
     ipcRenderer.on(channel, sub);
     return () => ipcRenderer.removeListener(channel, sub);
   },
+
+  // Legacy compat for renderer migration period
+  request: (request: Record<string, unknown>) => ipcRenderer.invoke('ai:chat-request', request),
+};
+
+// ============================================================
+// PART 2b — keystore surface (renderer can SET/HAS/LIST/DELETE — never GET)
+// ============================================================
+
+const keystore = {
+  set: (provider: string, key: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('keystore:set', provider, key),
+  has: (provider: string): Promise<boolean> => ipcRenderer.invoke('keystore:has', provider),
+  list: (): Promise<string[]> => ipcRenderer.invoke('keystore:list'),
+  delete: (provider: string): Promise<boolean> => ipcRenderer.invoke('keystore:delete', provider),
+  clear: (): Promise<{ ok: true }> => ipcRenderer.invoke('keystore:clear'),
+  available: (): Promise<boolean> => ipcRenderer.invoke('keystore:available'),
+  // Intentionally no `get` — keys never leave main.
 };
 
 // ============================================================
@@ -159,7 +192,7 @@ const meta = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, meta };
+const cs = { fs, quill, ai, keystore, meta };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

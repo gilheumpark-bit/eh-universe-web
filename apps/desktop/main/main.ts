@@ -13,6 +13,8 @@ import serve from 'electron-serve';
 import { handleAiChatRequest, type ChatRequest } from './services/ai-service';
 import { registerFsIpc, disposeAllWatchers } from './ipc/fs';
 import { registerQuillIpc } from './ipc/quill';
+import { registerKeystoreIpc } from './ipc/keystore';
+import { registerAiIpc } from './ipc/ai';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -79,6 +81,8 @@ function registerIpc(): void {
   // Modular handlers
   registerFsIpc();
   registerQuillIpc();
+  registerKeystoreIpc();
+  registerAiIpc();
 
   // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
   ipcMain.handle('get-app-version', () => app.getVersion());

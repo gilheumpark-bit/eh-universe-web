@@ -78,11 +78,33 @@ declare global {
     onAutoError(callback: (error: { filePath: string; error: string }) => void): () => void;
   }
 
+  interface AIChatRequest {
+    provider: 'gemini' | 'openai' | 'claude' | 'groq';
+    model: string;
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+    temperature?: number;
+    maxTokens?: number;
+    stream?: boolean;
+  }
+
   interface CSAi {
-    request(request: Record<string, unknown>): Promise<unknown>;
+    chatStream(req: AIChatRequest): Promise<{ requestId: string }>;
+    ariState(): Promise<unknown[]>;
+    ariReset(provider?: string): Promise<{ ok: true }>;
     onChunk(requestId: string, callback: (chunk: string) => void): () => void;
     onError(requestId: string, callback: (error: unknown) => void): () => void;
     onEnd(requestId: string, callback: () => void): () => void;
+    /** @deprecated use chatStream */
+    request(request: Record<string, unknown>): Promise<unknown>;
+  }
+
+  interface CSKeystore {
+    set(provider: string, key: string): Promise<{ ok: true }>;
+    has(provider: string): Promise<boolean>;
+    list(): Promise<string[]>;
+    delete(provider: string): Promise<boolean>;
+    clear(): Promise<{ ok: true }>;
+    available(): Promise<boolean>;
   }
 
   interface CSMeta {
@@ -93,6 +115,7 @@ declare global {
     fs: CSFs;
     quill: CSQuill;
     ai: CSAi;
+    keystore: CSKeystore;
     meta: CSMeta;
   }
 
