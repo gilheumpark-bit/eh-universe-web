@@ -1,33 +1,132 @@
-import { contextBridge, ipcRenderer } from 'electron';
+/**
+ * apps/desktop/main/preload.ts — preload bridge
+ *
+ * Exposes a safe `window.cs` API to the renderer.
+ *
+ * Rules:
+ *   - Only typed, narrow methods.
+ *   - NEVER expose `ipcRenderer` directly.
+ *   - NEVER expose API keys (those live in keystore IPC, main-only).
+ */
 
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+
+// ============================================================
+// PART 1 — fs surface
+// ============================================================
+
+interface FsEntry {
+  name: string;
+  isDirectory: boolean;
+  path: string;
+}
+
+interface FsStat {
+  size: number;
+  mtimeMs: number;
+  ctimeMs: number;
+  isFile: boolean;
+  isDirectory: boolean;
+}
+
+interface FsWatchEvent {
+  kind: 'add' | 'change' | 'unlink' | 'addDir' | 'unlinkDir' | 'error';
+  path: string;
+}
+
+const fs = {
+  openDirectory: (): Promise<string | null> => ipcRenderer.invoke('fs:open-directory'),
+  openFile: (opts?: { filters?: { name: string; extensions: string[] }[] }): Promise<string | null> =>
+    ipcRenderer.invoke('fs:open-file', opts),
+  saveAs: (opts: { defaultPath?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null> =>
+    ipcRenderer.invoke('fs:save-as', opts),
+
+  readFile: (filePath: string): Promise<string> => ipcRenderer.invoke('fs:read-file', filePath),
+  writeFile: (filePath: string, content: string): Promise<void> =>
+    ipcRenderer.invoke('fs:write-file', filePath, content),
+
+  readDir: (dirPath: string): Promise<FsEntry[]> => ipcRenderer.invoke('fs:readdir', dirPath),
+  exists: (filePath: string): Promise<boolean> => ipcRenderer.invoke('fs:exists', filePath),
+  stat: (filePath: string): Promise<FsStat> => ipcRenderer.invoke('fs:stat', filePath),
+
+  rename: (from: string, to: string): Promise<void> => ipcRenderer.invoke('fs:rename', from, to),
+  delete: (target: string): Promise<void> => ipcRenderer.invoke('fs:delete', target),
+  mkdir: (dirPath: string): Promise<void> => ipcRenderer.invoke('fs:mkdir', dirPath),
+
+  watch: (
+    opts: { rootPath: string; ignored?: string[]; watchId: string },
+    callback: (event: FsWatchEvent) => void,
+  ): Promise<() => void> => {
+    const channel = `fs:watch-event:${opts.watchId}`;
+    const listener = (_e: IpcRendererEvent, ev: FsWatchEvent) => callback(ev);
+    ipcRenderer.on(channel, listener);
+
+    return ipcRenderer.invoke('fs:watch', opts).then(() => {
+      return () => {
+        ipcRenderer.removeListener(channel, listener);
+        void ipcRenderer.invoke('fs:unwatch', opts.watchId);
+      };
+    });
+  },
+};
+
+// ============================================================
+// PART 2 — ai surface (legacy compat, will migrate in C-3)
+// ============================================================
+
+const ai = {
+  request: (request: Record<string, unknown>) => ipcRenderer.invoke('ai:chat-request', request),
+  onChunk: (requestId: string, callback: (chunk: string) => void) => {
+    const channel = `ai:chat-chunk:${requestId}`;
+    const sub = (_e: IpcRendererEvent, chunk: string) => callback(chunk);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+  onError: (requestId: string, callback: (error: unknown) => void) => {
+    const channel = `ai:chat-error:${requestId}`;
+    const sub = (_e: IpcRendererEvent, error: unknown) => callback(error);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+  onEnd: (requestId: string, callback: () => void) => {
+    const channel = `ai:chat-end:${requestId}`;
+    const sub = () => callback();
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+};
+
+// ============================================================
+// PART 3 — meta
+// ============================================================
+
+const meta = {
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke('get-app-version'),
+};
+
+// ============================================================
+// PART 4 — Public bridge
+// ============================================================
+
+const cs = { fs, ai, meta };
+
+// New canonical surface
+contextBridge.exposeInMainWorld('cs', cs);
+
+// Backwards-compat: keep `window.electron` until renderer migration is done in C-5
 contextBridge.exposeInMainWorld('electron', {
-  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getAppVersion: meta.getAppVersion,
   fs: {
-    openDirectory: () => ipcRenderer.invoke('fs:open-directory'),
-    readFile: (filePath: string) => ipcRenderer.invoke('fs:read-file', filePath),
-    writeFile: (filePath: string, content: string) => ipcRenderer.invoke('fs:write-file', filePath, content),
-    readdir: (dirPath: string) => ipcRenderer.invoke('fs:readdir', dirPath),
-    exists: (filePath: string) => ipcRenderer.invoke('fs:exists', filePath),
+    openDirectory: fs.openDirectory,
+    readFile: fs.readFile,
+    writeFile: fs.writeFile,
+    readdir: fs.readDir,
+    exists: fs.exists,
   },
   aiChat: {
-    request: (request: Record<string, unknown>) => ipcRenderer.invoke('ai:chat-request', request),
-    onChunk: (requestId: string, callback: (chunk: string) => void) => {
-      const channel = `ai:chat-chunk:${requestId}`;
-      const subscription = (_event: Electron.IpcRendererEvent, chunk: string) => callback(chunk);
-      ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
-    },
-    onError: (requestId: string, callback: (error: unknown) => void) => {
-      const channel = `ai:chat-error:${requestId}`;
-      const subscription = (_event: Electron.IpcRendererEvent, error: unknown) => callback(error);
-      ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
-    },
-    onEnd: (requestId: string, callback: () => void) => {
-      const channel = `ai:chat-end:${requestId}`;
-      const subscription = () => callback();
-      ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
-    }
-  }
+    request: ai.request,
+    onChunk: ai.onChunk,
+    onError: ai.onError,
+    onEnd: ai.onEnd,
+  },
 });

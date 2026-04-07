@@ -1,0 +1,91 @@
+/**
+ * Type definitions for `window.cs` exposed by main/preload.ts
+ *
+ * This file is renderer-only. It does NOT import from electron
+ * (renderer doesn't have node integration).
+ */
+
+declare global {
+  interface FsEntry {
+    name: string;
+    isDirectory: boolean;
+    path: string;
+  }
+
+  interface FsStat {
+    size: number;
+    mtimeMs: number;
+    ctimeMs: number;
+    isFile: boolean;
+    isDirectory: boolean;
+  }
+
+  interface FsWatchEvent {
+    kind: 'add' | 'change' | 'unlink' | 'addDir' | 'unlinkDir' | 'error';
+    path: string;
+  }
+
+  interface CSFs {
+    openDirectory(): Promise<string | null>;
+    openFile(opts?: { filters?: { name: string; extensions: string[] }[] }): Promise<string | null>;
+    saveAs(opts: {
+      defaultPath?: string;
+      filters?: { name: string; extensions: string[] }[];
+    }): Promise<string | null>;
+
+    readFile(filePath: string): Promise<string>;
+    writeFile(filePath: string, content: string): Promise<void>;
+
+    readDir(dirPath: string): Promise<FsEntry[]>;
+    exists(filePath: string): Promise<boolean>;
+    stat(filePath: string): Promise<FsStat>;
+
+    rename(from: string, to: string): Promise<void>;
+    delete(target: string): Promise<void>;
+    mkdir(dirPath: string): Promise<void>;
+
+    watch(
+      opts: { rootPath: string; ignored?: string[]; watchId: string },
+      callback: (event: FsWatchEvent) => void,
+    ): Promise<() => void>;
+  }
+
+  interface CSAi {
+    request(request: Record<string, unknown>): Promise<unknown>;
+    onChunk(requestId: string, callback: (chunk: string) => void): () => void;
+    onError(requestId: string, callback: (error: unknown) => void): () => void;
+    onEnd(requestId: string, callback: () => void): () => void;
+  }
+
+  interface CSMeta {
+    getAppVersion(): Promise<string>;
+  }
+
+  interface CSBridge {
+    fs: CSFs;
+    ai: CSAi;
+    meta: CSMeta;
+  }
+
+  interface Window {
+    cs: CSBridge;
+    electron?: {
+      getAppVersion: () => Promise<string>;
+      fs: {
+        openDirectory: () => Promise<string | null>;
+        readFile: (path: string) => Promise<string>;
+        writeFile: (path: string, content: string) => Promise<void>;
+        readdir: (path: string) => Promise<FsEntry[]>;
+        exists: (path: string) => Promise<boolean>;
+      };
+      aiChat: {
+        request: (req: Record<string, unknown>) => Promise<unknown>;
+        onChunk: (id: string, cb: (chunk: string) => void) => () => void;
+        onError: (id: string, cb: (err: unknown) => void) => () => void;
+        onEnd: (id: string, cb: () => void) => () => void;
+      };
+    };
+  }
+}
+
+export {};

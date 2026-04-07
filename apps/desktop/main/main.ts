@@ -1,10 +1,26 @@
-import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
-import fs from 'fs/promises';
-import serve from 'electron-serve';
-import { handleAiChatRequest, type ChatRequest } from './services/ai-service';
+/**
+ * apps/desktop/main/main.ts — Electron main process entry
+ *
+ * PART 1 — Environment + window creation
+ * PART 2 — IPC registration (delegated to main/ipc/*)
+ * PART 3 — App lifecycle
+ */
 
-const isProd = process.env.NODE_FILE_ENV === 'production' || !process.env.NODE_ENV || process.env.NODE_ENV === 'production';
+import path from 'node:path';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import serve from 'electron-serve';
+
+import { handleAiChatRequest, type ChatRequest } from './services/ai-service';
+import { registerFsIpc, disposeAllWatchers } from './ipc/fs';
+
+// ============================================================
+// PART 1 — Environment + window
+// ============================================================
+
+const isProd =
+  process.env.NODE_FILE_ENV === 'production' ||
+  !process.env.NODE_ENV ||
+  process.env.NODE_ENV === 'production';
 
 if (isProd) {
   serve({ directory: 'renderer/out' });
@@ -12,16 +28,20 @@ if (isProd) {
   app.setPath('userData', `${app.getPath('userData')} (development)`);
 }
 
-async function createWindow() {
+async function createWindow(): Promise<void> {
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: false, // preload needs Node APIs (chokidar etc.)
       preload: path.join(__dirname, 'preload.js'),
     },
     titleBarStyle: 'hiddenInset',
+    backgroundColor: '#0a0e1a',
   });
 
   // WebContainer requirements: COOP/COEP
@@ -43,18 +63,39 @@ async function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  // Open external links in default browser
+  // External links open in default browser
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
   });
 }
 
+// ============================================================
+// PART 2 — IPC registration
+// ============================================================
+
+function registerIpc(): void {
+  // Modular handlers
+  registerFsIpc();
+
+  // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
+  ipcMain.handle('ai:chat-request', async (event, request: ChatRequest) => {
+    return handleAiChatRequest(event.sender, request);
+  });
+}
+
+// ============================================================
+// PART 3 — App lifecycle
+// ============================================================
+
 app.whenReady().then(() => {
-  createWindow();
+  registerIpc();
+  void createWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) void createWindow();
   });
 });
 
@@ -62,43 +103,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC Handlers
-ipcMain.handle('get-app-version', () => app.getVersion());
-
-ipcMain.handle('ai:chat-request', async (event, request: ChatRequest) => {
-    return handleAiChatRequest(event.sender, request);
-});
-
-ipcMain.handle('fs:open-directory', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-        properties: ['openDirectory']
-    });
-    if (canceled) return null;
-    return filePaths[0];
-});
-
-ipcMain.handle('fs:read-file', async (_, filePath: string) => {
-    return await fs.readFile(filePath, 'utf-8');
-});
-
-ipcMain.handle('fs:write-file', async (_, filePath: string, content: string) => {
-    await fs.writeFile(filePath, content, 'utf-8');
-});
-
-ipcMain.handle('fs:readdir', async (_, dirPath: string) => {
-    const entries = await fs.readdir(dirPath, { withFileTypes: true });
-    return entries.map(entry => ({
-        name: entry.name,
-        isDirectory: entry.isDirectory(),
-        path: path.join(dirPath, entry.name)
-    }));
-});
-
-ipcMain.handle('fs:exists', async (_, filePath: string) => {
-    try {
-        await fs.access(filePath);
-        return true;
-    } catch {
-        return false;
-    }
+app.on('before-quit', async () => {
+  await disposeAllWatchers();
 });
