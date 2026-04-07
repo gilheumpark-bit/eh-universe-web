@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage } from "@/types/i18n";
 import { CodeStudioSkeleton } from "@/components/SkeletonLoader";
 
 function CodeStudioLoading() {

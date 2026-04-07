@@ -11,7 +11,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { listProjects } from "@/lib/code-studio/core/store";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage } from "@/types/i18n";
 import "./welcome-screen.css";
 
 

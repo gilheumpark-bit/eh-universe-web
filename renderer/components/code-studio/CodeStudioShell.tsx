@@ -23,7 +23,7 @@ import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionResto
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { L4 } from "@/lib/i18n";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage } from "@/types/i18n";
 
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
