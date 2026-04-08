@@ -52,7 +52,7 @@ export const BADGES: Badge[] = [
     return last - first >= 20;
   }},
   { id: 'streak-5', name: 'Clean Streak', icon: '🎯', description: '5회 연속 통과', condition: ctx => ctx.consecutivePasses >= 5 },
-  { id: 'streak-10', name: 'Perfect Streak', icon: '💎', description: '10회 ��속 통과', condition: ctx => ctx.consecutivePasses >= 10 },
+  { id: 'streak-10', name: 'Perfect Streak', icon: '💎', description: '10회 연속 통과', condition: ctx => ctx.consecutivePasses >= 10 },
   { id: 'centurion', name: 'Centurion', icon: '💯', description: '100회 생성', condition: ctx => ctx.totalGenerations >= 100 },
   { id: 'perfect', name: 'Perfect Score', icon: '🌟', description: '종합 95+ 달성', condition: ctx => ctx.maxScore >= 95 },
   { id: 'marathon', name: 'Marathon', icon: '🏃', description: '50회 생성', condition: ctx => ctx.totalGenerations >= 50 },
@@ -71,7 +71,7 @@ export const CHALLENGES: Challenge[] = [
     check: ctx => ({ progress: ctx.hollowCount === 0 ? 1 : 0, total: 1 }),
   },
   {
-    id: 'speed-demon', name: 'Speed Demon', icon: '��',
+    id: 'speed-demon', name: 'Speed Demon', icon: '⚡',
     description: '평균 점수 90+ 달성', goal: '⚡ Turbo Badge',
     check: ctx => ({ progress: Math.min(ctx.avgScore, 90), total: 90 }),
   },

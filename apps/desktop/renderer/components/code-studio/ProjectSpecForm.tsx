@@ -85,7 +85,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
       inferredPreset = "대시보드 / 어드민"; inferredTheme = "라이트";
     } else if (/쇼핑|shopping|이커머스|e-?commerce|상품|product|장바구니|주문/i.test(lower)) {
       inferredPreset = "이커머스 / 쇼핑몰"; inferredTheme = "라이트 (Bright)";
-    } else if (/saas|서비스|구독|pricing|온보딩|폼|회원|로그��|가입/i.test(lower)) {
+    } else if (/saas|서비스|구독|pricing|온보딩|폼|회원|로그인|가입/i.test(lower)) {
       inferredPreset = "SaaS / 웹 서비스"; inferredTheme = "라이트";
     } else if (catLower === "api") {
       inferredPreset = "대시보드 / 어드민"; inferredTheme = "다크 (Night)";

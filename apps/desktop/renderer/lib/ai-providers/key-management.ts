@@ -6,7 +6,7 @@
 // Supports 4 encryption layers: v1 (Base64), v2 (XOR), v3 (Salt+XOR), v4 (AES-GCM).
 
 import { logger } from '@/lib/logger';
-import { PROVIDERS, normalizeProviderId, type ProviderId } from './types';
+import { PROVIDERS, normalizeProviderId, type ProviderId, supportsStructuredOutput } from './types';
 
 // Re-export for downstream consumers that import key helpers
 export { normalizeProviderId } from './types';
@@ -280,7 +280,6 @@ export function setActiveProvider(id: ProviderId): void {
 
 /** 현재 활성 provider가 structured output을 지원하는지 */
 export function activeSupportsStructured(): boolean {
-  const { supportsStructuredOutput } = require('./types');
   return supportsStructuredOutput(getActiveProvider());
 }
 

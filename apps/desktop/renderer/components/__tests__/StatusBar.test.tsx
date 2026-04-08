@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * StatusBar (code-studio) �� renders status bar with file info and scores
+ * StatusBar (code-studio) - renders status bar with file info and scores
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';

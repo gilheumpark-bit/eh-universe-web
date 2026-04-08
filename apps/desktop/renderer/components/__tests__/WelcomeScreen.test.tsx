@@ -15,7 +15,7 @@ jest.mock('@/lib/studio-translations', () => ({
   TRANSLATIONS: {
     KO: {
       codeStudio: {
-        welcomeTitle: '코드 스튜��오',
+        welcomeTitle: '코드 스튜디오',
         welcomeDesc: '설명',
         newFile: '새 파일',
         newFileDesc: '설명',
