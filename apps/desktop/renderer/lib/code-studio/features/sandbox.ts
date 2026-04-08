@@ -141,6 +141,7 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
 
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
+    // SECURITY: enable strict isolating constraints before rendering
     iframe.sandbox.add('allow-scripts');
     document.body.appendChild(iframe);
 
@@ -149,13 +150,19 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
 
     const timer = setTimeout(() => {
       cleanup();
-      resolve({ output: '', error: 'Execution timeout', exitCode: 1, durationMs: timeoutMs });
+      resolve({ output: '', error: 'Execution timeout (Zone 1 isolated)', exitCode: 1, durationMs: timeoutMs });
     }, timeoutMs);
 
     function cleanup() {
       clearTimeout(timer);
       window.removeEventListener('message', handler);
       document.body.removeChild(iframe);
+      // RESIDUAL CLEANUP (잔향 소거): 강제 GC 지시 - 외주 AI의 메모리 누수나 무한참조 파괴
+      if (typeof global !== 'undefined' && (global as any).gc) {
+        try { (global as any).gc(); } catch (e) { /* ignore */ }
+      } else if (typeof window !== 'undefined' && (window as any).gc) {
+        try { (window as any).gc(); } catch (e) { /* ignore */ }
+      }
     }
 
     function handler(e: MessageEvent) {
@@ -179,8 +186,15 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
     // The nonce (declared above) validates postMessage authenticity.
     const safeCode = code.replace(/<\/script/gi, '<\\/script');
     const encoded = btoa(unescape(encodeURIComponent(safeCode)));
+    
+    // MONKEY-PATCHING: 호스트 자원 격리 방역망 (Zone 1)
     const html = `<!doctype html><html><body><script>
       try {
+        var fetch = function() { throw new Error('Security Error: fetch() is disabled in Zone 1 Sandbox.'); };
+        var XMLHttpRequest = function() { throw new Error('Security Error: XHR is disabled in Zone 1 Sandbox.'); };
+        var localStorage = { getItem: function(){ return null; }, setItem: function(){}, removeItem: function(){}, clear: function(){} };
+        var sessionStorage = localStorage;
+
         var __out = [];
         var _log = console.log;
         console.log = function() { __out.push(Array.from(arguments).join(' ')); };

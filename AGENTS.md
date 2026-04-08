@@ -2,6 +2,7 @@
 9개 스킬 단일 파이프라인 (noa-unified-anti-sycophancy-stack v2.1):
 - 신규 코드: `/first-production-judgment` (4-GATE: Intent→Contract→Minimal→Simulation)
 - 기존 코드 수정: `/multi-agent-judgment-v2` (Builder→Critic→Arbiter 2-Pass)
+- 정밀 진단: "정밀 진단 실시" 명령 시 발동 → 4-Phase 퇴로 차단 기법 (팩트 해체 → MECE 스캐닝 → 레드팀 자가 반증 → 실행 아키텍처)
 - 코드 품질: noa-code-structure + noa-3persona-inspection + noa-confidence-gate
 - 수리/응답: noa-repair-strategy + noa-anti-repeat + noa-response-tuner
 - ARI Circuit Breaker + Scope Policy (Global > Workspace > Module) 적용

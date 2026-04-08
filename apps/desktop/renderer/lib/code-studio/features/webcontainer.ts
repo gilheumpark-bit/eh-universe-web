@@ -247,7 +247,7 @@ function createSimulatedContainer(): WebContainerInstance {
 function simulateCommand(
   command: string,
   fs: Map<string, string>,
-  isServerRunning: () => boolean,
+  _isServerRunning: () => boolean,
 ): SimProcess {
   const parts = command.trim().split(/\s+/);
   const cmd = parts[0] ?? "";

@@ -109,6 +109,108 @@ export function Toolbar({
   onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
   onToggleSidebar, onToggleSearch, onNewFile, onOpenSettings,
   onOpenPalette, onToggleProblems, onRunBugFinder, onDeploy, onToggleSplit,
+import { L4 } from "@/lib/i18n";
+import {
+  MessageSquare, Terminal, Activity, Settings, Code2, Bot, Columns2,
+  Search, AlertTriangle, Bug, Undo2, Redo2, ZoomIn, ZoomOut, Rocket,
+} from "lucide-react";
+
+interface MenuItemDef {
+  label: string;
+  shortcut?: string;
+  action?: () => void;
+  divider?: boolean;
+}
+
+interface Props {
+  onToggleChat: () => void;
+  onToggleTerminal: () => void;
+  onTogglePipeline: () => void;
+  onToggleAgent: () => void;
+  onToggleSidebar?: () => void;
+  onToggleSearch?: () => void;
+  onNewFile?: () => void;
+  onOpenSettings?: () => void;
+  onOpenPalette?: () => void;
+  onToggleProblems?: () => void;
+  onRunBugFinder?: () => void;
+  onDeploy?: () => void;
+  onToggleSplit?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onZoomReset?: () => void;
+  fontSize?: number;
+  showChat: boolean;
+  showAgent: boolean;
+  showTerminal: boolean;
+  showPipeline: boolean;
+}
+
+// IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=Props,MenuItemDef
+
+// ============================================================
+// PART 2 — ToolbarMenu Sub-component
+// ============================================================
+
+function ToolbarMenu({ label, items }: { label: string; items: MenuItemDef[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handle(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen((v) => !v)} className="px-2 py-1 rounded text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary transition-colors">{label}</button>
+      {open && (
+        <div className="absolute top-full left-0 mt-0.5 z-50 min-w-[200px] bg-bg-primary border border-border rounded-lg shadow-xl py-1 backdrop-blur-xl">
+          {items.map((item, i) => item.divider ? (
+            <div key={i} className="h-px bg-border my-1" />
+          ) : (
+            <button key={i} onClick={() => { item.action?.(); setOpen(false); }}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary transition-colors">
+              <span>{item.label}</span>
+              {item.shortcut && <kbd className="text-[10px] text-text-tertiary font-mono">{item.shortcut}</kbd>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=Menu | inputs=label,items | outputs=JSX
+
+// ============================================================
+// PART 3 — Toolbar Component
+// ============================================================
+
+function ToolbarButton({ icon, label, active, onClick, accent = "purple" }: {
+  icon: React.ReactNode; label: string; active: boolean; onClick: () => void; accent?: "purple" | "green" | "blue";
+}) {
+  const colors = {
+    purple: "bg-accent-amber/15 text-accent-amber",
+    green: "bg-accent-green/15 text-accent-green",
+    blue: "bg-accent-purple/15 text-accent-purple",
+  };
+  return (
+    <button onClick={onClick} title={label}
+      className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${active ? colors[accent] : "text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary"}`}>
+      {icon}<span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
+
+export function Toolbar({
+  onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
+  onToggleSidebar, onToggleSearch, onNewFile, onOpenSettings,
+  onOpenPalette, onToggleProblems, onRunBugFinder, onDeploy, onToggleSplit,
   onUndo, onRedo, onZoomIn, onZoomOut, onZoomReset, fontSize,
   showChat, showAgent, showTerminal, showPipeline,
 }: Props) {
@@ -140,8 +242,6 @@ export function Toolbar({
       { label: L4(lang, { ko: "버그 파인더", en: "Bug Finder", ja: "バグファインダー", zh: "查找 Bug" }), action: onRunBugFinder },
     ]
   }), [lang, onNewFile, onOpenPalette, onOpenSettings, onUndo, onRedo, onToggleSearch, onToggleSidebar, onToggleTerminal, onToggleSplit, onToggleChat, onToggleAgent, onTogglePipeline, onRunBugFinder]);
-
-  return (
     <div className="flex items-center justify-between px-3 py-1.5 bg-bg-primary border-b border-border">
       <div className="flex items-center gap-2">
         <Code2 size={18} className="text-accent-amber" />

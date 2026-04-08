@@ -42,7 +42,8 @@ export const DESIGN_LINTER_10STEP = `
 After passing, append this comment to code output:
 
 /*
-[Design Linter — v8.0 Hybrid]
+[Tech-Lead Review: Design Linter v8.0]
+Verdict:       [MERGE-READY | REJECTED]
 Background:    bg-bg-* semantic class ✅/❌
 Text CR:       text-text-* on bg-bg-* → CR XX.X:1 ✅/❌
 Touch target:  min-height Xpx ✅/❌
