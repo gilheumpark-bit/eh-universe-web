@@ -321,11 +321,26 @@ const meta = {
   getAppVersion: (): Promise<string> => ipcRenderer.invoke('get-app-version'),
 };
 
+const system = {
+  getLocalSpec: (): Promise<{
+    platform: string;
+    arch: string;
+    release: string;
+    hostname: string;
+    cpus: number;
+    totalMem: number;
+    freeMem: number;
+    appVersion: string;
+  }> => ipcRenderer.invoke('system:get-local-spec'),
+  openPath: (filePath: string): Promise<{ ok: true } | { ok: false; error: string }> =>
+    ipcRenderer.invoke('system:open-path', filePath),
+};
+
 // ============================================================
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta };
+const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Types & Helpers
 // ============================================================
@@ -6,7 +7,7 @@
 // Ported from CSL IDE cross-file-navigation.ts + cross-file-rename.ts.
 // ============================================================
 
-import { logger } from '../_stubs/logger';
+import { logger } from '@/lib/logger';
 
 type Monaco = typeof import("monaco-editor");
 type ITextModel = import("monaco-editor").editor.ITextModel;

@@ -1,0 +1,3557 @@
+
+> eh-code-studio-desktop@0.1.0-alpha test C:\eh-universe-web\apps\desktop
+> jest
+
+FAIL renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+  ??useCodeStudioFileSystem ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+    "
+
+          12 | import { useState, useCallback, useRef } from 'react';
+          13 | import type { FileNode } from '@eh/quill-engine/types';
+        > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+             | ^
+          15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+          16 |
+          17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at require (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+
+  ??useCodeStudioFileSystem ??exports hook
+
+    Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+
+      12 | import { useState, useCallback, useRef } from 'react';
+      13 | import type { FileNode } from '@eh/quill-engine/types';
+    > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+         | ^
+      15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+      16 |
+      17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+  ??ai-features ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ai-features.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/ai-features.ts
+      renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+    "
+
+           5 | // ============================================================
+           6 |
+        >  7 | import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
+             | ^
+           8 | import { logger } from '@/lib/logger';
+           9 | // REMOVED OMIT
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ai-features.ts:7:1)
+      at require (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:49)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:49)
+
+  ??ai-features ??exports AI feature definitions
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ai-features.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/ai-features.ts
+      renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+
+       5 | // ============================================================
+       6 |
+    >  7 | import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
+         | ^
+       8 | import { logger } from '@/lib/logger';
+       9 | // REMOVED OMIT
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ai-features.ts:7:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:11:17)
+
+FAIL renderer/lib/__tests__/env.test.ts
+  ??env ??validateEnv returns valid:true when no required vars are missing
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/env.ts'
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { logger } from '@/lib/logger';
+        | ^
+      7 |
+      8 | /**
+      9 |  * Validates required environment variables at module load time.
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/env.ts:6:1)
+      at Object.require (renderer/lib/__tests__/env.test.ts:17:29)
+
+  ??env ??envResult is exported and has valid/warnings shape
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/env.ts'
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { logger } from '@/lib/logger';
+        | ^
+      7 |
+      8 | /**
+      9 |  * Validates required environment variables at module load time.
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/env.ts:6:1)
+      at Object.require (renderer/lib/__tests__/env.test.ts:25:27)
+
+FAIL renderer/lib/__tests__/multi-key-manager.test.ts
+  ??multi-key-manager ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'쨌
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/__tests__/multi-key-manager.test.ts
+    "
+
+           5 |
+           6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+        >  7 | import { logger } from '@/lib/logger';
+             | ^
+           8 | import { L4 } from '@/lib/i18n';
+           9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at require (renderer/lib/__tests__/multi-key-manager.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-manager.test.ts:7:94)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-manager.test.ts:7:94)
+
+  ??multi-key-manager ??exports manager functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/__tests__/multi-key-manager.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/__tests__/multi-key-manager.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+  ??useCodeStudioPanels ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioPanels.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioPanels.ts
+      renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+    "
+
+          12 |
+          13 | import { useState, useCallback, useRef, useMemo } from "react";
+        > 14 | import { streamChat, type ChatMsg } from "@/lib/ai-providers";
+             | ^
+          15 | import type { AgentRole } from "@/lib/code-studio/ai/agents";
+          16 | import type { FileNode } from "@eh/quill-engine/types";
+          17 | import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioPanels.ts:14:1)
+      at require (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:96)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:96)
+
+  ??useCodeStudioPanels ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioPanels.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioPanels.ts
+      renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+
+      12 |
+      13 | import { useState, useCallback, useRef, useMemo } from "react";
+    > 14 | import { streamChat, type ChatMsg } from "@/lib/ai-providers";
+         | ^
+      15 | import type { AgentRole } from "@/lib/code-studio/ai/agents";
+      16 | import type { FileNode } from "@eh/quill-engine/types";
+      17 | import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioPanels.ts:14:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+  ??terminal-emulator ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/code-studio/core/shell-parser' from 'renderer/lib/code-studio/features/terminal-emulator.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/terminal-emulator.ts
+      renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+    "
+
+           5 |
+           6 | import type { FileNode } from "@eh/quill-engine/types";
+        >  7 | import { tokenize, type Token } from "@/lib/code-studio/core/shell-parser";
+             | ^
+           8 |
+           9 | export interface TerminalLine {
+          10 |   id: string;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-emulator.ts:7:1)
+      at require (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:94)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:94)
+
+  ??terminal-emulator ??exports emulator types
+
+    Cannot find module '@/lib/code-studio/core/shell-parser' from 'renderer/lib/code-studio/features/terminal-emulator.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/terminal-emulator.ts
+      renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+
+       5 |
+       6 | import type { FileNode } from "@eh/quill-engine/types";
+    >  7 | import { tokenize, type Token } from "@/lib/code-studio/core/shell-parser";
+         | ^
+       8 |
+       9 | export interface TerminalLine {
+      10 |   id: string;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-emulator.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:8:54)
+
+FAIL renderer/lib/__tests__/multi-key-bridge.test.ts
+  ??multi-key-bridge ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'쨌
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/multi-key-bridge.ts
+      renderer/lib/__tests__/multi-key-bridge.test.ts
+    "
+
+           5 |
+           6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+        >  7 | import { logger } from '@/lib/logger';
+             | ^
+           8 | import { L4 } from '@/lib/i18n';
+           9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/multi-key-bridge.ts:12:1)
+      at require (renderer/lib/__tests__/multi-key-bridge.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-bridge.test.ts:7:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-bridge.test.ts:7:93)
+
+  ??multi-key-bridge ??exports bridge functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/multi-key-bridge.ts
+      renderer/lib/__tests__/multi-key-bridge.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/multi-key-bridge.ts:12:1)
+      at Object.require (renderer/lib/__tests__/multi-key-bridge.test.ts:8:56)
+
+FAIL renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+  ??useCodeStudioAgent ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/code-studio/ai/agents' from 'renderer/hooks/useCodeStudioAgent.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioAgent.ts
+      renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+    "
+
+           7 |
+           8 | import { useState, useCallback, useRef } from 'react';
+        >  9 | import {
+             | ^
+          10 |   runAgentPipeline,
+          11 |   createAgentSession,
+          12 |   type AgentMessage,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioAgent.ts:9:1)
+      at require (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:95)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:95)
+
+  ??useCodeStudioAgent ??exports hook
+
+    Cannot find module '@/lib/code-studio/ai/agents' from 'renderer/hooks/useCodeStudioAgent.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioAgent.ts
+      renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+
+       7 |
+       8 | import { useState, useCallback, useRef } from 'react';
+    >  9 | import {
+         | ^
+      10 |   runAgentPipeline,
+      11 |   createAgentSession,
+      12 |   type AgentMessage,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioAgent.ts:9:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/features/__tests__/recent-files.test.ts
+  ??getRecentFiles ??returns stored files
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      27 |   it('returns stored files', () => {
+      28 |     mockStorage['eh-cs-recent-files'] = JSON.stringify([{ fileId: '1', fileName: 'a.ts', filePath: '/a.ts', timestamp: 1 }]);
+    > 29 |     expect(getRecentFiles()).toHaveLength(1);
+         |                              ^
+      30 |   });
+      31 | });
+      32 |
+
+      at Object.toHaveLength (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:29:30)
+
+  ??trackRecentFile ??adds file to recent list
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      34 |   it('adds file to recent list', () => {
+      35 |     trackRecentFile('1', 'a.ts', '/a.ts');
+    > 36 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      37 |     expect(stored).toHaveLength(1);
+      38 |     expect(stored[0].fileId).toBe('1');
+      39 |   });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:36:25)
+
+  ??trackRecentFile ??deduplicates by fileId
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      42 |     trackRecentFile('1', 'a.ts', '/a.ts');
+      43 |     trackRecentFile('1', 'a.ts', '/a.ts');
+    > 44 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      45 |     expect(stored).toHaveLength(1);
+      46 |   });
+      47 |
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:44:25)
+
+  ??trackRecentFile ??puts newest first
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      49 |     trackRecentFile('1', 'a.ts', '/a.ts');
+      50 |     trackRecentFile('2', 'b.ts', '/b.ts');
+    > 51 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      52 |     expect(stored[0].fileId).toBe('2');
+      53 |   });
+      54 | });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:51:25)
+
+  ??removeRecentFile ??removes specific file
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      59 |     trackRecentFile('2', 'b.ts', '/b.ts');
+      60 |     removeRecentFile('1');
+    > 61 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      62 |     expect(stored).toHaveLength(1);
+      63 |     expect(stored[0].fileId).toBe('2');
+      64 |   });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:61:25)
+
+FAIL renderer/lib/code-studio/ai/__tests__/agents.test.ts
+  ??agents ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/agents.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/agents.ts
+      renderer/lib/code-studio/ai/__tests__/agents.test.ts
+    "
+
+          4 | // ============================================================
+          5 |
+        > 6 | import { streamChat } from '@/lib/ai-providers';
+            | ^
+          7 | import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+          8 | import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
+          9 | import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/agents.ts:6:1)
+      at require (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:44)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:44)
+
+  ??agents ??exports agent definitions
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/agents.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/agents.ts
+      renderer/lib/code-studio/ai/__tests__/agents.test.ts
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { streamChat } from '@/lib/ai-providers';
+        | ^
+      7 | import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+      8 | import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
+      9 | import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/agents.ts:6:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/agents.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+  ??ghost ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ghost.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/ghost.ts
+      renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+    "
+
+           8 | // Tab?쇰줈 ?섎씫, Escape濡?嫄곕?.
+           9 |
+        > 10 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+             | ^
+          11 |
+          12 | // ?붾컮?댁뒪 + 痍⑥냼 ?쒖뼱
+          13 | let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ghost.ts:10:1)
+      at require (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:43)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:43)
+
+  ??ghost ??exports ghost completion types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ghost.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/ghost.ts
+      renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+
+       8 | // Tab?쇰줈 ?섎씫, Escape濡?嫄곕?.
+       9 |
+    > 10 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+         | ^
+      11 |
+      12 | // ?붾컮?댁뒪 + 痍⑥냼 ?쒖뼱
+      13 | let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ghost.ts:10:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/features/__tests__/git.test.ts
+  ??git ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/features/git.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/git.ts
+      renderer/lib/code-studio/features/__tests__/git.test.ts
+    "
+
+           6 | // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
+           7 |
+        >  8 | import { logger } from '@/lib/logger';
+             | ^
+           9 |
+          10 | // ============================================================
+          11 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/git.ts:8:1)
+      at require (renderer/lib/code-studio/features/__tests__/git.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/git.test.ts:8:41)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/git.test.ts:8:41)
+
+  ??git ??exports git types and functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/features/git.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/git.ts
+      renderer/lib/code-studio/features/__tests__/git.test.ts
+
+       6 | // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
+       7 |
+    >  8 | import { logger } from '@/lib/logger';
+         | ^
+       9 |
+      10 | // ============================================================
+      11 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/git.ts:8:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/git.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+  ??autopilot ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/autopilot.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/autopilot.ts
+      renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+    "
+
+          4 | // ============================================================
+          5 |
+        > 6 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+            | ^
+          7 | import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+          8 | import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+          9 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/autopilot.ts:6:1)
+      at require (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:86)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:86)
+
+  ??autopilot ??exports autopilot types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/autopilot.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/autopilot.ts
+      renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+        | ^
+      7 | import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+      8 | import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+      9 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/autopilot.ts:6:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:8:55)
+
+FAIL renderer/components/code-studio/__tests__/AgentPanel.test.ts
+  ??AgentPanel helpers ??prefers high-priority agent code blocks (repair) over others when picking apply candidate
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\AgentPanel.tsx:54
+      plan: <_lucideReact.GitBranch size={11} />,
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      3 | describe('AgentPanel helpers', () => {
+      4 |   it('prefers high-priority agent code blocks (repair) over others when picking apply candidate', () => {
+    > 5 |     const { pickAgentApplyCandidate } = require('../AgentPanel');
+        |                                         ^
+      6 |
+      7 |     const candidate = pickAgentApplyCandidate({
+      8 |       id: 'session-1',
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.require (renderer/components/code-studio/__tests__/AgentPanel.test.ts:5:41)
+
+  ??AgentPanel helpers ??returns null when the session has no code blocks
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\AgentPanel.tsx:54
+      plan: <_lucideReact.GitBranch size={11} />,
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      50 |
+      51 |   it('returns null when the session has no code blocks', () => {
+    > 52 |     const { pickAgentApplyCandidate } = require('../AgentPanel');
+         |                                         ^
+      53 |
+      54 |     const candidate = pickAgentApplyCandidate({
+      55 |       id: 'session-2',
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.require (renderer/components/code-studio/__tests__/AgentPanel.test.ts:52:41)
+
+FAIL renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+  ??terminal-ai ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/terminal-ai.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/terminal-ai.ts
+      renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+    "
+
+           6 | // suggest fixes, explain error messages, auto-retry.
+           7 |
+        >  8 | import { streamChat } from '@/lib/ai-providers';
+             | ^
+           9 | import { logger } from '@/lib/logger';
+          10 |
+          11 | export interface TerminalAISuggestion {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-ai.ts:8:1)
+      at require (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:88)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:88)
+
+  ??terminal-ai ??exports AI terminal types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/terminal-ai.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/terminal-ai.ts
+      renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+
+       6 | // suggest fixes, explain error messages, auto-retry.
+       7 |
+    >  8 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       9 | import { logger } from '@/lib/logger';
+      10 |
+      11 | export interface TerminalAISuggestion {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-ai.ts:8:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useCodeStudioChat.test.ts
+  ??useCodeStudioChat ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioChat.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioChat.ts
+      renderer/hooks/__tests__/useCodeStudioChat.test.ts
+    "
+
+          11 |
+          12 | import { useState, useCallback, useRef } from 'react';
+        > 13 | import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+             | ^
+          14 | import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
+          15 | import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
+          16 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioChat.ts:13:1)
+      at require (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:94)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:94)
+
+  ??useCodeStudioChat ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioChat.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioChat.ts
+      renderer/hooks/__tests__/useCodeStudioChat.test.ts
+
+      11 |
+      12 | import { useState, useCallback, useRef } from 'react';
+    > 13 | import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+         | ^
+      14 | import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
+      15 | import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
+      16 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioChat.ts:13:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioChat.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+  ??cross-file ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/cross-file.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/core/cross-file.ts
+      renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+    "
+
+           8 | // ============================================================
+           9 |
+        > 10 | import { logger } from '@/lib/logger';
+             | ^
+          11 |
+          12 | type Monaco = typeof import("monaco-editor");
+          13 | type ITextModel = import("monaco-editor").editor.ITextModel;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/cross-file.ts:10:1)
+      at require (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:87)
+      at Object.toThrow (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:87)
+
+  ??cross-file ??exports cross-file utilities
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/cross-file.ts'
+
+    Require stack:
+      renderer/lib/code-studio/core/cross-file.ts
+      renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+
+       8 | // ============================================================
+       9 |
+    > 10 | import { logger } from '@/lib/logger';
+         | ^
+      11 |
+      12 | type Monaco = typeof import("monaco-editor");
+      13 | type ITextModel = import("monaco-editor").editor.ITextModel;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/cross-file.ts:10:1)
+      at Object.require (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:8:60)
+
+FAIL renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts
+  ??patent-scanner ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'"
+
+           5 |  */
+           6 | describe('patent-scanner', () => {
+        >  7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+             |                                                         ^
+           8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+           9 | });
+          10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at require (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+
+  ??patent-scanner ??exports scanner functions
+
+    Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'
+
+       6 | describe('patent-scanner', () => {
+       7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+    >  8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+         |                                                         ^
+       9 | });
+      10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useAIProvider.test.ts
+  ??useAIProvider ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useAIProvider.ts'쨌
+    Require stack:
+      renderer/hooks/useAIProvider.ts
+      renderer/hooks/__tests__/useAIProvider.test.ts
+    "
+
+           8 | // ============================================================
+           9 |
+        > 10 | import {
+             | ^
+          11 |   // Types
+          12 |   ProviderId,
+          13 |   ChatMsg,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useAIProvider.ts:10:1)
+      at require (renderer/hooks/__tests__/useAIProvider.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useAIProvider.test.ts:7:90)
+      at Object.toThrow (renderer/hooks/__tests__/useAIProvider.test.ts:7:90)
+
+  ??useAIProvider ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useAIProvider.ts'
+
+    Require stack:
+      renderer/hooks/useAIProvider.ts
+      renderer/hooks/__tests__/useAIProvider.test.ts
+
+       8 | // ============================================================
+       9 |
+    > 10 | import {
+         | ^
+      11 |   // Types
+      12 |   ProviderId,
+      13 |   ChatMsg,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useAIProvider.ts:10:1)
+      at Object.require (renderer/hooks/__tests__/useAIProvider.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts'
+
+      3 |  * Unit tests for speed-optimizations ??debounce, throttle, memoize
+      4 |  */
+    > 5 | jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() } }));
+        |      ^
+      6 |
+      7 | import { debounce, throttle, memoize } from '../speed-optimizations';
+      8 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts:5:6)
+
+FAIL renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/core/project-spec-bridge' from 'renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   buildProjectSpecChatSeed,
+      4 |   toCoreProjectSpec,
+      5 |   type ProjectSpecFormData,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts:2:1)
+
+FAIL renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@eh/quill-engine/autofix-policy' from 'renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   classifyFixDescription,
+      4 |   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,
+      5 | } from '@eh/quill-engine/autofix-policy';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts:2:1)
+
+FAIL renderer/lib/__tests__/verification-loop.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-loop.test.ts'
+
+      24 | const mockScanProject = jest.fn<IPReport, [FileNode[]]>();
+      25 |
+    > 26 | jest.mock('../code-studio/pipeline/pipeline', () => ({
+         |      ^
+      27 |   runStaticPipeline: (...args: unknown[]) => mockRunStaticPipeline(...(args as [string, string])),
+      28 | }));
+      29 | jest.mock('../code-studio/pipeline/bugfinder', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/verification-loop.test.ts:26:6)
+
+FAIL renderer/components/code-studio/__tests__/components-coverage.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\__tests__\components-coverage.test.tsx:134
+        } = (0, _react2.render)(<_ChatPanel.ChatPanel {...defaultProps} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+  ??sandbox ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+    "
+
+           5 |
+           6 | import type { FileNode } from '../types';
+        >  7 | import { streamChat } from '@/lib/ai-providers';
+             | ^
+           8 |
+           9 | // ============================================================
+          10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at require (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:84)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:84)
+
+  ??sandbox ??exports sandbox utilities
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+
+       5 |
+       6 | import type { FileNode } from '../types';
+    >  7 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       8 |
+       9 | // ============================================================
+      10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:8:57)
+
+FAIL renderer/lib/__tests__/sanitize.test.ts
+  ??Test suite failed to run
+
+    Cannot find module 'firebase/firestore' from 'renderer/lib/__tests__/sanitize.test.ts'
+
+       6 |
+       7 | // Mock firebase dependencies so the module can load without firebase config
+    >  8 | jest.mock('firebase/firestore', () => ({
+         |      ^
+       9 |   collection: jest.fn(),
+      10 |   deleteDoc: jest.fn(),
+      11 |   doc: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/sanitize.test.ts:8:6)
+
+FAIL renderer/lib/__tests__/verification-integration.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-integration.test.ts'
+
+      26 | // ============================================================
+      27 |
+    > 28 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      29 |   runStaticPipeline: jest.fn(),
+      30 | }));
+      31 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/verification-integration.test.ts:28:6)
+
+FAIL renderer/lib/__tests__/safe-fix-filtering.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/safe-fix-filtering.test.ts'
+
+      14 | // ============================================================
+      15 |
+    > 16 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      17 |   runStaticPipeline: jest.fn(),
+      18 | }));
+      19 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/safe-fix-filtering.test.ts:16:6)
+
+FAIL renderer/lib/__tests__/token-utils.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/token-utils' from 'renderer/lib/__tests__/token-utils.test.ts'
+
+       5 |  */
+       6 |
+    >  7 | import {
+         | ^
+       8 |   estimateTokens,
+       9 |   getContextLimit,
+      10 |   getMaxOutputTokens,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/__tests__/token-utils.test.ts:7:1)
+
+FAIL renderer/lib/__tests__/composer-state.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/__tests__/composer-state.test.ts'
+
+       5 |  */
+       6 |
+    >  7 | jest.mock('@/lib/logger', () => ({
+         |      ^
+       8 |   logger: {
+       9 |     warn: jest.fn(),
+      10 |     error: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/composer-state.test.ts:7:6)
+
+FAIL renderer/hooks/__tests__/useCodeStudioComposer.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/__tests__/useCodeStudioComposer.test.tsx'
+
+      16 |
+      17 | // Mock streamChat and logger to avoid real AI calls
+    > 18 | jest.mock('@/lib/ai-providers', () => ({
+         |      ^
+      19 |   streamChat: jest.fn(),
+      20 | }));
+      21 | jest.mock('@/lib/logger', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/hooks/__tests__/useCodeStudioComposer.test.tsx:18:6)
+
+FAIL renderer/lib/__tests__/panel-registry.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/i18n' from 'renderer/lib/code-studio/core/panel-registry.ts'
+
+    Require stack:
+      renderer/lib/code-studio/core/panel-registry.ts
+      renderer/lib/__tests__/panel-registry.test.ts
+
+      1 | // @ts-nocheck
+    > 2 | import { L4 } from "@/lib/i18n";
+        | ^
+      3 |
+      4 | // ============================================================
+      5 | // PART 1 ??Panel Definition Interface & Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/panel-registry.ts:2:1)
+      at Object.require (renderer/lib/__tests__/panel-registry.test.ts:7:1)
+
+FAIL renderer/hooks/__tests__/hooks-coverage.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/__tests__/hooks-coverage.test.tsx'
+
+      27 |
+      28 | // Mock ai-providers (used by useCodeStudioPanels)
+    > 29 | jest.mock('@/lib/ai-providers', () => ({
+         |      ^
+      30 |   streamChat: jest.fn().mockResolvedValue('mocked response'),
+      31 | }));
+      32 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/hooks/__tests__/hooks-coverage.test.tsx:29:6)
+
+FAIL renderer/hooks/__tests__/useUndoRedo.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/hooks/useUndoRedo' from 'renderer/hooks/__tests__/useUndoRedo.test.ts'
+
+      14 | import ReactDOM from 'react-dom/client';
+      15 | import { act } from 'react';
+    > 16 | import { useUndoRedo } from '@/hooks/useUndoRedo';
+         | ^
+      17 |
+      18 | // ============================================================
+      19 | // PART 1 ??Test harness
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/__tests__/useUndoRedo.test.ts:16:1)
+
+FAIL renderer/components/__tests__/WelcomeScreen.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\WelcomeScreen.test.tsx:58
+        } = (0, _react2.render)(<_WelcomeScreen.default onNewFile={noop} onOpenDemo={noop} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/__tests__/lib-coverage.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/__tests__/lib-coverage.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/__tests__/lib-coverage.test.ts:18:1)
+
+FAIL renderer/hooks/__tests__/useSessionRestore.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/hooks/useSessionRestore' from 'renderer/hooks/__tests__/useSessionRestore.test.tsx'
+
+      75 |
+      76 | // Must import after mock setup
+    > 77 | import { useSessionRestore, type SessionSnapshot } from '@/hooks/useSessionRestore';
+         | ^
+      78 |
+      79 | // ============================================================
+      80 | // PART 2 ??Test Harness
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/__tests__/useSessionRestore.test.tsx:77:1)
+
+FAIL renderer/components/__tests__/SectionErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\SectionErrorBoundary.test.tsx:21
+      }) => <a href={href}>{children}</a>
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/StatusBar.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\StatusBar.test.tsx:25
+        } = (0, _react2.render)(<_StatusBar.StatusBar activeFile={null} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/code-studio/features/__tests__/features-deep.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/features-deep.test.ts
+
+       5 |
+       6 | import type { FileNode } from '../types';
+    >  7 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       8 |
+       9 | // ============================================================
+      10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/features-deep.test.ts:297:1)
+
+FAIL renderer/components/__tests__/ErrorPage.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ErrorPage.test.tsx:6
+      default: () => <header data-testid="mock-header">Header</header>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/PipelinePanel.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\PipelinePanel.test.tsx:34
+        } = (0, _react2.render)(<_PipelinePanel.PipelinePanel result={null} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioPanelManager.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioPanelManager.test.tsx:50
+        } = (0, _react2.render)(<_CodeStudioPanelManager.ActivityBar widthPx={48} rightPanel={null} onSetRightPanel={jest.fn()} bugReports={[]} showAdvancedPanels={false} onToggleAdvancedPanels={jest.fn()} showSettings={false} onToggleSettings={jest.fn()} lang="en" />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioShell.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioShell.test.tsx:6
+      default: () => <div data-testid="mock-monaco">Monaco</div>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/ChatPanel.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ChatPanel.test.tsx:42
+        } = (0, _react2.render)(<_ChatPanel.ChatPanel />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/ErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ErrorBoundary.test.tsx:19
+      }) => <a href={href}>{children}</a>
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioEditor.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioEditor.test.tsx:7
+      default: () => <div data-testid="mock-monaco">Monaco Editor</div>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL e2e/specs/smoke.spec.ts
+  ??Test suite failed to run
+
+    Cannot find module '@playwright/test' from 'e2e/specs/smoke.spec.ts'
+
+      10 |  */
+      11 |
+    > 12 | import { test, expect, _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
+         | ^
+      13 | import path from 'node:path';
+      14 | import os from 'node:os';
+      15 | import fs from 'node:fs/promises';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (e2e/specs/smoke.spec.ts:12:1)
+
+FAIL renderer/lib/__tests__/ai-providers.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/__tests__/ai-providers.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/__tests__/ai-providers.test.ts:2:1)
+
+PASS renderer/lib/code-studio/core/__tests__/shell-parser.test.ts
+PASS renderer/lib/code-studio/features/__tests__/file-icons.test.ts
+PASS renderer/lib/code-studio/editor/__tests__/editor-features.test.ts
+PASS renderer/lib/code-studio/features/__tests__/collaboration.test.ts
+PASS renderer/lib/code-studio/features/__tests__/webcontainer.test.ts
+PASS renderer/lib/code-studio/features/__tests__/preview-hmr.test.ts
+PASS renderer/lib/code-studio/core/__tests__/virtual-list.test.ts
+PASS renderer/hooks/__tests__/useCodeStudioKeyboard.test.ts
+PASS renderer/lib/code-studio/features/__tests__/mcp-client.test.ts
+PASS renderer/lib/code-studio/core/__tests__/ansi.test.ts
+PASS renderer/lib/code-studio/editor/__tests__/fuzzy-match.test.ts
+PASS renderer/lib/code-studio/features/__tests__/commit-message.test.ts
+PASS renderer/lib/code-studio/features/__tests__/terminal.test.ts
+PASS renderer/lib/__tests__/logger.test.ts
+PASS renderer/lib/code-studio/core/__tests__/types.test.ts
+FAIL renderer/__tests__/code-studio-integration.test.ts
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: C:\eh-universe-web\packages\quill-engine\src\pipeline\design-lint.ts: Support for the experimental syntax 'flow' isn't currently enabled (13:8):
+
+      11 | // ============================================================
+      12 |
+    > 13 | export type DesignLintSeverity = 'error' | 'warning' | 'info';
+         |        ^
+      14 |
+      15 | export interface DesignLintIssue {
+      16 |   rule: string;
+
+    Add @babel/preset-flow (https://github.com/babel/babel/tree/main/packages/babel-preset-flow) to the 'presets' section of your Babel config to enable transformation.
+    If you want to leave it as-is, add @babel/plugin-syntax-flow (https://github.com/babel/babel/tree/main/packages/babel-plugin-syntax-flow) to the 'plugins' section to enable parsing.
+
+    If you already added the plugin for this syntax to your config, it's possible that your config isn't being loaded.
+    You can re-run Babel with the BABEL_SHOW_CONFIG_FOR environment variable to show the loaded configuration:
+    	npx cross-env BABEL_SHOW_CONFIG_FOR=C:\eh-universe-web\packages\quill-engine\src\pipeline\design-lint.ts <your build command>
+    See https://babeljs.io/docs/configuration#print-effective-configs for more info.
+
+       5 |  */
+       6 |
+    >  7 | import { runDesignLint, formatDesignLintReport } from '@eh/quill-engine/pipeline/design-lint';
+         | ^
+       8 | import { detectPreset, DESIGN_PRESETS, buildPresetPrompt } from '@/lib/code-studio/core/design-presets';
+       9 | import { runStaticPipeline } from '@eh/quill-engine/pipeline/pipeline';
+      10 | import { tokenize, parseCommandChain, expandGlob, containsGlob, isIncomplete } from '@/lib/code-studio/core/shell-parser';
+
+      at constructor (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at Parser.toParseError [as raise] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/tokenizer/index.ts:1504:19)
+      at Parser.raise [as expectOnePlugin] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/tokenizer/index.ts:1569:18)
+      at Parser.expectOnePlugin [as isExportDefaultSpecifier] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2659:16)
+      at Parser.isExportDefaultSpecifier [as maybeParseExportDefaultSpecifier] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2483:40)
+      at Parser.maybeParseExportDefaultSpecifier [as parseExport] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2387:29)
+      at Parser.parseExport [as parseStatementContent] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:649:25)
+      at Parser.parseStatementContent [as parseStatementLike] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseModuleItem] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at Parser.parseModuleItem [as parseBlockOrModuleBlockBody] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseProgram] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at Parser.parseProgram [as parseTopLevel] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at Parser.parseTopLevel [as parse] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/index.ts:83:25)
+      at parse (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+          at normalizeFile.next (<anonymous>)
+      at run (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (../../node_modules/.pnpm/gensync@1.0.0-beta.2/node_modules/gensync/index.js:251:28)
+      at sync (../../node_modules/.pnpm/gensync@1.0.0-beta.2/node_modules/gensync/index.js:89:14)
+      at fn (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transform.ts:66:52)
+      at ScriptTransformer.transformSource (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:415:31)
+      at ScriptTransformer._transformAndBuildScript (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:512:40)
+      at ScriptTransformer.transform (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:551:19)
+      at Object.require (renderer/__tests__/code-studio-integration.test.ts:7:1)
+
+PASS renderer/lib/code-studio/editor/__tests__/editor-surface-context-menu.test.ts
+
+Summary of all failing tests
+FAIL renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+  ??useCodeStudioFileSystem ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+    "
+
+          12 | import { useState, useCallback, useRef } from 'react';
+          13 | import type { FileNode } from '@eh/quill-engine/types';
+        > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+             | ^
+          15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+          16 |
+          17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at require (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+
+  ??useCodeStudioFileSystem ??exports hook
+
+    Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+
+      12 | import { useState, useCallback, useRef } from 'react';
+      13 | import type { FileNode } from '@eh/quill-engine/types';
+    > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+         | ^
+      15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+      16 |
+      17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+  ??ai-features ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ai-features.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/ai-features.ts
+      renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+    "
+
+           5 | // ============================================================
+           6 |
+        >  7 | import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
+             | ^
+           8 | import { logger } from '@/lib/logger';
+           9 | // REMOVED OMIT
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ai-features.ts:7:1)
+      at require (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:49)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:8:49)
+
+  ??ai-features ??exports AI feature definitions
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ai-features.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/ai-features.ts
+      renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+
+       5 | // ============================================================
+       6 |
+    >  7 | import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
+         | ^
+       8 | import { logger } from '@/lib/logger';
+       9 | // REMOVED OMIT
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ai-features.ts:7:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/ai-features.test.ts:11:17)
+
+FAIL renderer/lib/__tests__/env.test.ts
+  ??env ??validateEnv returns valid:true when no required vars are missing
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/env.ts'
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { logger } from '@/lib/logger';
+        | ^
+      7 |
+      8 | /**
+      9 |  * Validates required environment variables at module load time.
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/env.ts:6:1)
+      at Object.require (renderer/lib/__tests__/env.test.ts:17:29)
+
+  ??env ??envResult is exported and has valid/warnings shape
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/env.ts'
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { logger } from '@/lib/logger';
+        | ^
+      7 |
+      8 | /**
+      9 |  * Validates required environment variables at module load time.
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/env.ts:6:1)
+      at Object.require (renderer/lib/__tests__/env.test.ts:25:27)
+
+FAIL renderer/lib/__tests__/multi-key-manager.test.ts
+  ??multi-key-manager ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'쨌
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/__tests__/multi-key-manager.test.ts
+    "
+
+           5 |
+           6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+        >  7 | import { logger } from '@/lib/logger';
+             | ^
+           8 | import { L4 } from '@/lib/i18n';
+           9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at require (renderer/lib/__tests__/multi-key-manager.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-manager.test.ts:7:94)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-manager.test.ts:7:94)
+
+  ??multi-key-manager ??exports manager functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/__tests__/multi-key-manager.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/__tests__/multi-key-manager.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+  ??useCodeStudioPanels ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioPanels.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioPanels.ts
+      renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+    "
+
+          12 |
+          13 | import { useState, useCallback, useRef, useMemo } from "react";
+        > 14 | import { streamChat, type ChatMsg } from "@/lib/ai-providers";
+             | ^
+          15 | import type { AgentRole } from "@/lib/code-studio/ai/agents";
+          16 | import type { FileNode } from "@eh/quill-engine/types";
+          17 | import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioPanels.ts:14:1)
+      at require (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:96)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:7:96)
+
+  ??useCodeStudioPanels ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioPanels.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioPanels.ts
+      renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+
+      12 |
+      13 | import { useState, useCallback, useRef, useMemo } from "react";
+    > 14 | import { streamChat, type ChatMsg } from "@/lib/ai-providers";
+         | ^
+      15 | import type { AgentRole } from "@/lib/code-studio/ai/agents";
+      16 | import type { FileNode } from "@eh/quill-engine/types";
+      17 | import type { CanvasNode, CanvasConnection } from "@/components/code-studio/CanvasPanel";
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioPanels.ts:14:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioPanels.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+  ??terminal-emulator ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/code-studio/core/shell-parser' from 'renderer/lib/code-studio/features/terminal-emulator.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/terminal-emulator.ts
+      renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+    "
+
+           5 |
+           6 | import type { FileNode } from "@eh/quill-engine/types";
+        >  7 | import { tokenize, type Token } from "@/lib/code-studio/core/shell-parser";
+             | ^
+           8 |
+           9 | export interface TerminalLine {
+          10 |   id: string;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-emulator.ts:7:1)
+      at require (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:94)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:7:94)
+
+  ??terminal-emulator ??exports emulator types
+
+    Cannot find module '@/lib/code-studio/core/shell-parser' from 'renderer/lib/code-studio/features/terminal-emulator.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/terminal-emulator.ts
+      renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+
+       5 |
+       6 | import type { FileNode } from "@eh/quill-engine/types";
+    >  7 | import { tokenize, type Token } from "@/lib/code-studio/core/shell-parser";
+         | ^
+       8 |
+       9 | export interface TerminalLine {
+      10 |   id: string;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-emulator.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts:8:54)
+
+FAIL renderer/lib/__tests__/multi-key-bridge.test.ts
+  ??multi-key-bridge ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'쨌
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/multi-key-bridge.ts
+      renderer/lib/__tests__/multi-key-bridge.test.ts
+    "
+
+           5 |
+           6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+        >  7 | import { logger } from '@/lib/logger';
+             | ^
+           8 | import { L4 } from '@/lib/i18n';
+           9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+          10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/multi-key-bridge.ts:12:1)
+      at require (renderer/lib/__tests__/multi-key-bridge.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-bridge.test.ts:7:93)
+      at Object.toThrow (renderer/lib/__tests__/multi-key-bridge.test.ts:7:93)
+
+  ??multi-key-bridge ??exports bridge functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/multi-key-manager.ts
+      renderer/lib/multi-key-bridge.ts
+      renderer/lib/__tests__/multi-key-bridge.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/multi-key-manager.ts:7:1)
+      at Object.require (renderer/lib/multi-key-bridge.ts:12:1)
+      at Object.require (renderer/lib/__tests__/multi-key-bridge.test.ts:8:56)
+
+FAIL renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+  ??useCodeStudioAgent ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/code-studio/ai/agents' from 'renderer/hooks/useCodeStudioAgent.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioAgent.ts
+      renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+    "
+
+           7 |
+           8 | import { useState, useCallback, useRef } from 'react';
+        >  9 | import {
+             | ^
+          10 |   runAgentPipeline,
+          11 |   createAgentSession,
+          12 |   type AgentMessage,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioAgent.ts:9:1)
+      at require (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:95)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:7:95)
+
+  ??useCodeStudioAgent ??exports hook
+
+    Cannot find module '@/lib/code-studio/ai/agents' from 'renderer/hooks/useCodeStudioAgent.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioAgent.ts
+      renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+
+       7 |
+       8 | import { useState, useCallback, useRef } from 'react';
+    >  9 | import {
+         | ^
+      10 |   runAgentPipeline,
+      11 |   createAgentSession,
+      12 |   type AgentMessage,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioAgent.ts:9:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioAgent.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/features/__tests__/recent-files.test.ts
+  ??getRecentFiles ??returns stored files
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      27 |   it('returns stored files', () => {
+      28 |     mockStorage['eh-cs-recent-files'] = JSON.stringify([{ fileId: '1', fileName: 'a.ts', filePath: '/a.ts', timestamp: 1 }]);
+    > 29 |     expect(getRecentFiles()).toHaveLength(1);
+         |                              ^
+      30 |   });
+      31 | });
+      32 |
+
+      at Object.toHaveLength (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:29:30)
+
+  ??trackRecentFile ??adds file to recent list
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      34 |   it('adds file to recent list', () => {
+      35 |     trackRecentFile('1', 'a.ts', '/a.ts');
+    > 36 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      37 |     expect(stored).toHaveLength(1);
+      38 |     expect(stored[0].fileId).toBe('1');
+      39 |   });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:36:25)
+
+  ??trackRecentFile ??deduplicates by fileId
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      42 |     trackRecentFile('1', 'a.ts', '/a.ts');
+      43 |     trackRecentFile('1', 'a.ts', '/a.ts');
+    > 44 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      45 |     expect(stored).toHaveLength(1);
+      46 |   });
+      47 |
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:44:25)
+
+  ??trackRecentFile ??puts newest first
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      49 |     trackRecentFile('1', 'a.ts', '/a.ts');
+      50 |     trackRecentFile('2', 'b.ts', '/b.ts');
+    > 51 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      52 |     expect(stored[0].fileId).toBe('2');
+      53 |   });
+      54 | });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:51:25)
+
+  ??removeRecentFile ??removes specific file
+
+    SyntaxError: "undefined" is not valid JSON
+        at JSON.parse (<anonymous>)
+
+      59 |     trackRecentFile('2', 'b.ts', '/b.ts');
+      60 |     removeRecentFile('1');
+    > 61 |     const stored = JSON.parse(mockStorage['eh-cs-recent-files']);
+         |                         ^
+      62 |     expect(stored).toHaveLength(1);
+      63 |     expect(stored[0].fileId).toBe('2');
+      64 |   });
+
+      at Object.parse (renderer/lib/code-studio/features/__tests__/recent-files.test.ts:61:25)
+
+FAIL renderer/lib/code-studio/ai/__tests__/agents.test.ts
+  ??agents ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/agents.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/agents.ts
+      renderer/lib/code-studio/ai/__tests__/agents.test.ts
+    "
+
+          4 | // ============================================================
+          5 |
+        > 6 | import { streamChat } from '@/lib/ai-providers';
+            | ^
+          7 | import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+          8 | import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
+          9 | import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/agents.ts:6:1)
+      at require (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:44)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/agents.test.ts:8:44)
+
+  ??agents ??exports agent definitions
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/agents.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/agents.ts
+      renderer/lib/code-studio/ai/__tests__/agents.test.ts
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { streamChat } from '@/lib/ai-providers';
+        | ^
+      7 | import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
+      8 | import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
+      9 | import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/agents.ts:6:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/agents.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+  ??ghost ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ghost.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/ghost.ts
+      renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+    "
+
+           8 | // Tab?쇰줈 ?섎씫, Escape濡?嫄곕?.
+           9 |
+        > 10 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+             | ^
+          11 |
+          12 | // ?붾컮?댁뒪 + 痍⑥냼 ?쒖뼱
+          13 | let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ghost.ts:10:1)
+      at require (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:43)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:8:43)
+
+  ??ghost ??exports ghost completion types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/ghost.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/ghost.ts
+      renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+
+       8 | // Tab?쇰줈 ?섎씫, Escape濡?嫄곕?.
+       9 |
+    > 10 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+         | ^
+      11 |
+      12 | // ?붾컮?댁뒪 + 痍⑥냼 ?쒖뼱
+      13 | let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/ghost.ts:10:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/ghost.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/features/__tests__/git.test.ts
+  ??git ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/features/git.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/git.ts
+      renderer/lib/code-studio/features/__tests__/git.test.ts
+    "
+
+           6 | // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
+           7 |
+        >  8 | import { logger } from '@/lib/logger';
+             | ^
+           9 |
+          10 | // ============================================================
+          11 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/git.ts:8:1)
+      at require (renderer/lib/code-studio/features/__tests__/git.test.ts:8:18)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/git.test.ts:8:41)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/git.test.ts:8:41)
+
+  ??git ??exports git types and functions
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/features/git.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/git.ts
+      renderer/lib/code-studio/features/__tests__/git.test.ts
+
+       6 | // stage, commit, push, pull, branch, checkout, merge, status, diff, log, blame.
+       7 |
+    >  8 | import { logger } from '@/lib/logger';
+         | ^
+       9 |
+      10 | // ============================================================
+      11 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/git.ts:8:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/git.test.ts:11:17)
+
+FAIL renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+  ??autopilot ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/autopilot.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/ai/autopilot.ts
+      renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+    "
+
+          4 | // ============================================================
+          5 |
+        > 6 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+            | ^
+          7 | import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+          8 | import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+          9 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/autopilot.ts:6:1)
+      at require (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:86)
+      at Object.toThrow (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:7:86)
+
+  ??autopilot ??exports autopilot types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/ai/autopilot.ts'
+
+    Require stack:
+      renderer/lib/code-studio/ai/autopilot.ts
+      renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+
+      4 | // ============================================================
+      5 |
+    > 6 | import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+        | ^
+      7 | import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
+      8 | import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
+      9 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/ai/autopilot.ts:6:1)
+      at Object.require (renderer/lib/code-studio/ai/__tests__/autopilot.test.ts:8:55)
+
+FAIL renderer/components/code-studio/__tests__/AgentPanel.test.ts
+  ??AgentPanel helpers ??prefers high-priority agent code blocks (repair) over others when picking apply candidate
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\AgentPanel.tsx:54
+      plan: <_lucideReact.GitBranch size={11} />,
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      3 | describe('AgentPanel helpers', () => {
+      4 |   it('prefers high-priority agent code blocks (repair) over others when picking apply candidate', () => {
+    > 5 |     const { pickAgentApplyCandidate } = require('../AgentPanel');
+        |                                         ^
+      6 |
+      7 |     const candidate = pickAgentApplyCandidate({
+      8 |       id: 'session-1',
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.require (renderer/components/code-studio/__tests__/AgentPanel.test.ts:5:41)
+
+  ??AgentPanel helpers ??returns null when the session has no code blocks
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\AgentPanel.tsx:54
+      plan: <_lucideReact.GitBranch size={11} />,
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      50 |
+      51 |   it('returns null when the session has no code blocks', () => {
+    > 52 |     const { pickAgentApplyCandidate } = require('../AgentPanel');
+         |                                         ^
+      53 |
+      54 |     const candidate = pickAgentApplyCandidate({
+      55 |       id: 'session-2',
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.require (renderer/components/code-studio/__tests__/AgentPanel.test.ts:52:41)
+
+FAIL renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+  ??terminal-ai ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/terminal-ai.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/terminal-ai.ts
+      renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+    "
+
+           6 | // suggest fixes, explain error messages, auto-retry.
+           7 |
+        >  8 | import { streamChat } from '@/lib/ai-providers';
+             | ^
+           9 | import { logger } from '@/lib/logger';
+          10 |
+          11 | export interface TerminalAISuggestion {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-ai.ts:8:1)
+      at require (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:88)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:7:88)
+
+  ??terminal-ai ??exports AI terminal types
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/terminal-ai.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/terminal-ai.ts
+      renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+
+       6 | // suggest fixes, explain error messages, auto-retry.
+       7 |
+    >  8 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       9 | import { logger } from '@/lib/logger';
+      10 |
+      11 | export interface TerminalAISuggestion {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/terminal-ai.ts:8:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useCodeStudioChat.test.ts
+  ??useCodeStudioChat ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioChat.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioChat.ts
+      renderer/hooks/__tests__/useCodeStudioChat.test.ts
+    "
+
+          11 |
+          12 | import { useState, useCallback, useRef } from 'react';
+        > 13 | import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+             | ^
+          14 | import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
+          15 | import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
+          16 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioChat.ts:13:1)
+      at require (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:94)
+      at Object.toThrow (renderer/hooks/__tests__/useCodeStudioChat.test.ts:7:94)
+
+  ??useCodeStudioChat ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useCodeStudioChat.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioChat.ts
+      renderer/hooks/__tests__/useCodeStudioChat.test.ts
+
+      11 |
+      12 | import { useState, useCallback, useRef } from 'react';
+    > 13 | import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+         | ^
+      14 | import { saveChatSession, loadChatSession, type StoredChatSession } from '@/lib/code-studio/core/store';
+      15 | import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
+      16 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useCodeStudioChat.ts:13:1)
+      at Object.require (renderer/hooks/__tests__/useCodeStudioChat.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+  ??cross-file ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/cross-file.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/core/cross-file.ts
+      renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+    "
+
+           8 | // ============================================================
+           9 |
+        > 10 | import { logger } from '@/lib/logger';
+             | ^
+          11 |
+          12 | type Monaco = typeof import("monaco-editor");
+          13 | type ITextModel = import("monaco-editor").editor.ITextModel;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/cross-file.ts:10:1)
+      at require (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:87)
+      at Object.toThrow (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:7:87)
+
+  ??cross-file ??exports cross-file utilities
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/cross-file.ts'
+
+    Require stack:
+      renderer/lib/code-studio/core/cross-file.ts
+      renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+
+       8 | // ============================================================
+       9 |
+    > 10 | import { logger } from '@/lib/logger';
+         | ^
+      11 |
+      12 | type Monaco = typeof import("monaco-editor");
+      13 | type ITextModel = import("monaco-editor").editor.ITextModel;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/cross-file.ts:10:1)
+      at Object.require (renderer/lib/code-studio/core/__tests__/cross-file.test.ts:8:60)
+
+FAIL renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts
+  ??patent-scanner ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'"
+
+           5 |  */
+           6 | describe('patent-scanner', () => {
+        >  7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+             |                                                         ^
+           8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+           9 | });
+          10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at require (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+
+  ??patent-scanner ??exports scanner functions
+
+    Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'
+
+       6 | describe('patent-scanner', () => {
+       7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+    >  8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+         |                                                         ^
+       9 | });
+      10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:8:57)
+
+FAIL renderer/hooks/__tests__/useAIProvider.test.ts
+  ??useAIProvider ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useAIProvider.ts'쨌
+    Require stack:
+      renderer/hooks/useAIProvider.ts
+      renderer/hooks/__tests__/useAIProvider.test.ts
+    "
+
+           8 | // ============================================================
+           9 |
+        > 10 | import {
+             | ^
+          11 |   // Types
+          12 |   ProviderId,
+          13 |   ChatMsg,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useAIProvider.ts:10:1)
+      at require (renderer/hooks/__tests__/useAIProvider.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/hooks/__tests__/useAIProvider.test.ts:7:90)
+      at Object.toThrow (renderer/hooks/__tests__/useAIProvider.test.ts:7:90)
+
+  ??useAIProvider ??exports hook
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/useAIProvider.ts'
+
+    Require stack:
+      renderer/hooks/useAIProvider.ts
+      renderer/hooks/__tests__/useAIProvider.test.ts
+
+       8 | // ============================================================
+       9 |
+    > 10 | import {
+         | ^
+      11 |   // Types
+      12 |   ProviderId,
+      13 |   ChatMsg,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/useAIProvider.ts:10:1)
+      at Object.require (renderer/hooks/__tests__/useAIProvider.test.ts:8:44)
+
+FAIL renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts'
+
+      3 |  * Unit tests for speed-optimizations ??debounce, throttle, memoize
+      4 |  */
+    > 5 | jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() } }));
+        |      ^
+      6 |
+      7 | import { debounce, throttle, memoize } from '../speed-optimizations';
+      8 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts:5:6)
+
+FAIL renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/core/project-spec-bridge' from 'renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   buildProjectSpecChatSeed,
+      4 |   toCoreProjectSpec,
+      5 |   type ProjectSpecFormData,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts:2:1)
+
+FAIL renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@eh/quill-engine/autofix-policy' from 'renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   classifyFixDescription,
+      4 |   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,
+      5 | } from '@eh/quill-engine/autofix-policy';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts:2:1)
+
+FAIL renderer/lib/__tests__/verification-loop.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-loop.test.ts'
+
+      24 | const mockScanProject = jest.fn<IPReport, [FileNode[]]>();
+      25 |
+    > 26 | jest.mock('../code-studio/pipeline/pipeline', () => ({
+         |      ^
+      27 |   runStaticPipeline: (...args: unknown[]) => mockRunStaticPipeline(...(args as [string, string])),
+      28 | }));
+      29 | jest.mock('../code-studio/pipeline/bugfinder', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/verification-loop.test.ts:26:6)
+
+FAIL renderer/components/code-studio/__tests__/components-coverage.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\__tests__\components-coverage.test.tsx:134
+        } = (0, _react2.render)(<_ChatPanel.ChatPanel {...defaultProps} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+  ??sandbox ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'쨌
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+    "
+
+           5 |
+           6 | import type { FileNode } from '../types';
+        >  7 | import { streamChat } from '@/lib/ai-providers';
+             | ^
+           8 |
+           9 | // ============================================================
+          10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at require (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:57)
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:84)
+      at Object.toThrow (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:7:84)
+
+  ??sandbox ??exports sandbox utilities
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+
+       5 |
+       6 | import type { FileNode } from '../types';
+    >  7 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       8 |
+       9 | // ============================================================
+      10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/sandbox.test.ts:8:57)
+
+FAIL renderer/lib/__tests__/sanitize.test.ts
+  ??Test suite failed to run
+
+    Cannot find module 'firebase/firestore' from 'renderer/lib/__tests__/sanitize.test.ts'
+
+       6 |
+       7 | // Mock firebase dependencies so the module can load without firebase config
+    >  8 | jest.mock('firebase/firestore', () => ({
+         |      ^
+       9 |   collection: jest.fn(),
+      10 |   deleteDoc: jest.fn(),
+      11 |   doc: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/sanitize.test.ts:8:6)
+
+FAIL renderer/lib/__tests__/verification-integration.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-integration.test.ts'
+
+      26 | // ============================================================
+      27 |
+    > 28 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      29 |   runStaticPipeline: jest.fn(),
+      30 | }));
+      31 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/verification-integration.test.ts:28:6)
+
+FAIL renderer/lib/__tests__/safe-fix-filtering.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/safe-fix-filtering.test.ts'
+
+      14 | // ============================================================
+      15 |
+    > 16 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      17 |   runStaticPipeline: jest.fn(),
+      18 | }));
+      19 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/safe-fix-filtering.test.ts:16:6)
+
+FAIL renderer/lib/__tests__/token-utils.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/token-utils' from 'renderer/lib/__tests__/token-utils.test.ts'
+
+       5 |  */
+       6 |
+    >  7 | import {
+         | ^
+       8 |   estimateTokens,
+       9 |   getContextLimit,
+      10 |   getMaxOutputTokens,
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/__tests__/token-utils.test.ts:7:1)
+
+FAIL renderer/lib/__tests__/composer-state.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/__tests__/composer-state.test.ts'
+
+       5 |  */
+       6 |
+    >  7 | jest.mock('@/lib/logger', () => ({
+         |      ^
+       8 |   logger: {
+       9 |     warn: jest.fn(),
+      10 |     error: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/lib/__tests__/composer-state.test.ts:7:6)
+
+FAIL renderer/hooks/__tests__/useCodeStudioComposer.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/__tests__/useCodeStudioComposer.test.tsx'
+
+      16 |
+      17 | // Mock streamChat and logger to avoid real AI calls
+    > 18 | jest.mock('@/lib/ai-providers', () => ({
+         |      ^
+      19 |   streamChat: jest.fn(),
+      20 | }));
+      21 | jest.mock('@/lib/logger', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/hooks/__tests__/useCodeStudioComposer.test.tsx:18:6)
+
+FAIL renderer/lib/__tests__/panel-registry.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/i18n' from 'renderer/lib/code-studio/core/panel-registry.ts'
+
+    Require stack:
+      renderer/lib/code-studio/core/panel-registry.ts
+      renderer/lib/__tests__/panel-registry.test.ts
+
+      1 | // @ts-nocheck
+    > 2 | import { L4 } from "@/lib/i18n";
+        | ^
+      3 |
+      4 | // ============================================================
+      5 | // PART 1 ??Panel Definition Interface & Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/core/panel-registry.ts:2:1)
+      at Object.require (renderer/lib/__tests__/panel-registry.test.ts:7:1)
+
+FAIL renderer/hooks/__tests__/hooks-coverage.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/hooks/__tests__/hooks-coverage.test.tsx'
+
+      27 |
+      28 | // Mock ai-providers (used by useCodeStudioPanels)
+    > 29 | jest.mock('@/lib/ai-providers', () => ({
+         |      ^
+      30 |   streamChat: jest.fn().mockResolvedValue('mocked response'),
+      31 | }));
+      32 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.mock (renderer/hooks/__tests__/hooks-coverage.test.tsx:29:6)
+
+FAIL renderer/hooks/__tests__/useUndoRedo.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/hooks/useUndoRedo' from 'renderer/hooks/__tests__/useUndoRedo.test.ts'
+
+      14 | import ReactDOM from 'react-dom/client';
+      15 | import { act } from 'react';
+    > 16 | import { useUndoRedo } from '@/hooks/useUndoRedo';
+         | ^
+      17 |
+      18 | // ============================================================
+      19 | // PART 1 ??Test harness
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/__tests__/useUndoRedo.test.ts:16:1)
+
+FAIL renderer/components/__tests__/WelcomeScreen.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\WelcomeScreen.test.tsx:58
+        } = (0, _react2.render)(<_WelcomeScreen.default onNewFile={noop} onOpenDemo={noop} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/__tests__/lib-coverage.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/__tests__/lib-coverage.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/__tests__/lib-coverage.test.ts:18:1)
+
+FAIL renderer/hooks/__tests__/useSessionRestore.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '@/hooks/useSessionRestore' from 'renderer/hooks/__tests__/useSessionRestore.test.tsx'
+
+      75 |
+      76 | // Must import after mock setup
+    > 77 | import { useSessionRestore, type SessionSnapshot } from '@/hooks/useSessionRestore';
+         | ^
+      78 |
+      79 | // ============================================================
+      80 | // PART 2 ??Test Harness
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/hooks/__tests__/useSessionRestore.test.tsx:77:1)
+
+FAIL renderer/components/__tests__/SectionErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\SectionErrorBoundary.test.tsx:21
+      }) => <a href={href}>{children}</a>
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/StatusBar.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\StatusBar.test.tsx:25
+        } = (0, _react2.render)(<_StatusBar.StatusBar activeFile={null} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/lib/code-studio/features/__tests__/features-deep.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/ai-providers' from 'renderer/lib/code-studio/features/sandbox.ts'
+
+    Require stack:
+      renderer/lib/code-studio/features/sandbox.ts
+      renderer/lib/code-studio/features/__tests__/features-deep.test.ts
+
+       5 |
+       6 | import type { FileNode } from '../types';
+    >  7 | import { streamChat } from '@/lib/ai-providers';
+         | ^
+       8 |
+       9 | // ============================================================
+      10 | // PART 1 ??Types
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/code-studio/features/sandbox.ts:7:1)
+      at Object.require (renderer/lib/code-studio/features/__tests__/features-deep.test.ts:297:1)
+
+FAIL renderer/components/__tests__/ErrorPage.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ErrorPage.test.tsx:6
+      default: () => <header data-testid="mock-header">Header</header>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/PipelinePanel.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\PipelinePanel.test.tsx:34
+        } = (0, _react2.render)(<_PipelinePanel.PipelinePanel result={null} />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioPanelManager.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioPanelManager.test.tsx:50
+        } = (0, _react2.render)(<_CodeStudioPanelManager.ActivityBar widthPx={48} rightPanel={null} onSetRightPanel={jest.fn()} bugReports={[]} showAdvancedPanels={false} onToggleAdvancedPanels={jest.fn()} showSettings={false} onToggleSettings={jest.fn()} lang="en" />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioShell.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioShell.test.tsx:6
+      default: () => <div data-testid="mock-monaco">Monaco</div>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/ChatPanel.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ChatPanel.test.tsx:42
+        } = (0, _react2.render)(<_ChatPanel.ChatPanel />);
+                                ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/ErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\ErrorBoundary.test.tsx:19
+      }) => <a href={href}>{children}</a>
+            ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL renderer/components/__tests__/CodeStudioEditor.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\__tests__\CodeStudioEditor.test.tsx:7
+      default: () => <div data-testid="mock-monaco">Monaco Editor</div>
+                     ^
+
+    SyntaxError: Unexpected token '<'
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+
+FAIL e2e/specs/smoke.spec.ts
+  ??Test suite failed to run
+
+    Cannot find module '@playwright/test' from 'e2e/specs/smoke.spec.ts'
+
+      10 |  */
+      11 |
+    > 12 | import { test, expect, _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
+         | ^
+      13 | import path from 'node:path';
+      14 | import os from 'node:os';
+      15 | import fs from 'node:fs/promises';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (e2e/specs/smoke.spec.ts:12:1)
+
+FAIL renderer/lib/__tests__/ai-providers.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'renderer/lib/ai-providers.ts'
+
+    Require stack:
+      renderer/lib/ai-providers.ts
+      renderer/lib/__tests__/ai-providers.test.ts
+
+       5 |
+       6 | import { truncateMessages, getMaxOutputTokens } from './token-utils';
+    >  7 | import { logger } from '@/lib/logger';
+         | ^
+       8 | import { L4 } from '@/lib/i18n';
+       9 | import { lazyFirebaseAuth } from '@/lib/firebase';
+      10 | // REMOVED OMIT
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (renderer/lib/ai-providers.ts:7:1)
+      at Object.require (renderer/lib/__tests__/ai-providers.test.ts:2:1)
+
+FAIL renderer/__tests__/code-studio-integration.test.ts
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: C:\eh-universe-web\packages\quill-engine\src\pipeline\design-lint.ts: Support for the experimental syntax 'flow' isn't currently enabled (13:8):
+
+      11 | // ============================================================
+      12 |
+    > 13 | export type DesignLintSeverity = 'error' | 'warning' | 'info';
+         |        ^
+      14 |
+      15 | export interface DesignLintIssue {
+      16 |   rule: string;
+
+    Add @babel/preset-flow (https://github.com/babel/babel/tree/main/packages/babel-preset-flow) to the 'presets' section of your Babel config to enable transformation.
+    If you want to leave it as-is, add @babel/plugin-syntax-flow (https://github.com/babel/babel/tree/main/packages/babel-plugin-syntax-flow) to the 'plugins' section to enable parsing.
+
+    If you already added the plugin for this syntax to your config, it's possible that your config isn't being loaded.
+    You can re-run Babel with the BABEL_SHOW_CONFIG_FOR environment variable to show the loaded configuration:
+    	npx cross-env BABEL_SHOW_CONFIG_FOR=C:\eh-universe-web\packages\quill-engine\src\pipeline\design-lint.ts <your build command>
+    See https://babeljs.io/docs/configuration#print-effective-configs for more info.
+
+       5 |  */
+       6 |
+    >  7 | import { runDesignLint, formatDesignLintReport } from '@eh/quill-engine/pipeline/design-lint';
+         | ^
+       8 | import { detectPreset, DESIGN_PRESETS, buildPresetPrompt } from '@/lib/code-studio/core/design-presets';
+       9 | import { runStaticPipeline } from '@eh/quill-engine/pipeline/pipeline';
+      10 | import { tokenize, parseCommandChain, expandGlob, containsGlob, isIncomplete } from '@/lib/code-studio/core/shell-parser';
+
+      at constructor (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at Parser.toParseError [as raise] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/tokenizer/index.ts:1504:19)
+      at Parser.raise [as expectOnePlugin] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/tokenizer/index.ts:1569:18)
+      at Parser.expectOnePlugin [as isExportDefaultSpecifier] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2659:16)
+      at Parser.isExportDefaultSpecifier [as maybeParseExportDefaultSpecifier] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2483:40)
+      at Parser.maybeParseExportDefaultSpecifier [as parseExport] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:2387:29)
+      at Parser.parseExport [as parseStatementContent] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:649:25)
+      at Parser.parseStatementContent [as parseStatementLike] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseModuleItem] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at Parser.parseModuleItem [as parseBlockOrModuleBlockBody] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseProgram] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at Parser.parseProgram [as parseTopLevel] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at Parser.parseTopLevel [as parse] (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/parser/index.ts:83:25)
+      at parse (../../node_modules/.pnpm/@babel+parser@7.29.2/node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+          at normalizeFile.next (<anonymous>)
+      at run (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (../../node_modules/.pnpm/gensync@1.0.0-beta.2/node_modules/gensync/index.js:251:28)
+      at sync (../../node_modules/.pnpm/gensync@1.0.0-beta.2/node_modules/gensync/index.js:89:14)
+      at fn (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (../../node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/src/transform.ts:66:52)
+      at ScriptTransformer.transformSource (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:415:31)
+      at ScriptTransformer._transformAndBuildScript (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:512:40)
+      at ScriptTransformer.transform (../../node_modules/.pnpm/@jest+transform@30.3.0/node_modules/@jest/transform/build/index.js:551:19)
+      at Object.require (renderer/__tests__/code-studio-integration.test.ts:7:1)
+
+
+Test Suites: 50 failed, 16 passed, 66 total
+Tests:       43 failed, 103 passed, 146 total
+Snapshots:   0 total
+Time:        2.552 s
+Ran all test suites.
+C:\eh-universe-web\apps\desktop:
+?덭RR_PNPM_RECURSIVE_RUN_FIRST_FAIL??eh-code-studio-desktop@0.1.0-alpha test: `jest`
+Exit status 1

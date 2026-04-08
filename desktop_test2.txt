@@ -1,0 +1,1690 @@
+
+> eh-code-studio-desktop@0.1.0-alpha test C:\eh-universe-web\apps\desktop
+> jest
+
+FAIL unit renderer/lib/__tests__/verification-integration.test.ts
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      26 | // ============================================================
+      27 |
+    > 28 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      29 |   runStaticPipeline: jest.fn(),
+      30 | }));
+      31 |
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/lib/__tests__/verification-integration.test.ts:28:6)
+
+FAIL components renderer/hooks/__tests__/hooks-coverage.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/engine/hfcp mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      46 |
+      47 | // Mock heavy deps of useStudioAI
+    > 48 | jest.mock('@/engine/hfcp', () => ({
+         |      ^
+      49 |   processHFCPTurn: jest.fn().mockReturnValue({
+      50 |     mode: 'normal',
+      51 |     verdict: 'pass',
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/hooks/__tests__/hooks-coverage.test.tsx:48:6)
+
+FAIL unit renderer/lib/__tests__/verification-loop.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-loop.test.ts'
+
+      24 | const mockScanProject = jest.fn<IPReport, [FileNode[]]>();
+      25 |
+    > 26 | jest.mock('../code-studio/pipeline/pipeline', () => ({
+         |      ^
+      27 |   runStaticPipeline: (...args: unknown[]) => mockRunStaticPipeline(...(args as [string, string])),
+      28 | }));
+      29 | jest.mock('../code-studio/pipeline/bugfinder', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/verification-loop.test.ts:26:6)
+
+FAIL unit renderer/lib/__tests__/safe-fix-filtering.test.ts
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      14 | // ============================================================
+      15 |
+    > 16 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      17 |   runStaticPipeline: jest.fn(),
+      18 | }));
+      19 |
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/lib/__tests__/safe-fix-filtering.test.ts:16:6)
+
+FAIL components renderer/components/code-studio/__tests__/components-coverage.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/design-lint mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      70 | }));
+      71 |
+    > 72 | jest.mock("@/lib/code-studio/pipeline/design-lint", () => ({
+         |      ^
+      73 |   runDesignLint: jest.fn(() => ({ results: [], score: 100 })),
+      74 |   formatDesignLintReport: jest.fn(() => ""),
+      75 | }));
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/code-studio/__tests__/components-coverage.test.tsx:72:6)
+
+PASS unit renderer/lib/__tests__/panel-registry.test.ts
+FAIL unit renderer/lib/__tests__/lib-coverage.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/ai/ari-engine' from 'renderer/lib/__tests__/lib-coverage.test.ts'
+
+      154 | // ============================================================
+      155 |
+    > 156 | import { ARIManager } from '../code-studio/ai/ari-engine';
+          | ^
+      157 |
+      158 | describe('ARIManager', () => {
+      159 |   let ari: ARIManager;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/lib-coverage.test.ts:156:1)
+
+PASS unit renderer/lib/__tests__/composer-state.test.ts
+FAIL unit renderer/lib/__tests__/token-utils.test.ts
+  ??estimateTokens ??returns 0 for empty string
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      20 | describe('estimateTokens', () => {
+      21 |   it('returns 0 for empty string', () => {
+    > 22 |     expect(estimateTokens('')).toBe(0);
+         |                          ^
+      23 |   });
+      24 |
+      25 |   it('returns 0 for null-ish input', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:22:26)
+
+  ??estimateTokens ??returns 0 for null-ish input
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      25 |   it('returns 0 for null-ish input', () => {
+      26 |     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    > 27 |     expect(estimateTokens(undefined as any)).toBe(0);
+         |                          ^
+      28 |     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      29 |     expect(estimateTokens(null as any)).toBe(0);
+      30 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:27:26)
+
+  ??estimateTokens ??estimates English text at ~0.25 tokens per char
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      32 |   it('estimates English text at ~0.25 tokens per char', () => {
+      33 |     const text = 'Hello world'; // 11 chars, 0 CJK => ceil(11/4) = 3
+    > 34 |     expect(estimateTokens(text)).toBe(3);
+         |                          ^
+      35 |   });
+      36 |
+      37 |   it('estimates longer English text correctly', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:34:26)
+
+  ??estimateTokens ??estimates longer English text correctly
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      37 |   it('estimates longer English text correctly', () => {
+      38 |     const text = 'The quick brown fox jumps over the lazy dog'; // 43 chars => ceil(43/4) = 11
+    > 39 |     expect(estimateTokens(text)).toBe(11);
+         |                          ^
+      40 |   });
+      41 |
+      42 |   it('estimates CJK text at ~1.5 tokens per char', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:39:26)
+
+  ??estimateTokens ??estimates CJK text at ~1.5 tokens per char
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      42 |   it('estimates CJK text at ~1.5 tokens per char', () => {
+      43 |     const text = '?덈뀞?섏꽭??; // 5 CJK chars => ceil(5 * 1.5) = 8
+    > 44 |     expect(estimateTokens(text)).toBe(8);
+         |                          ^
+      45 |   });
+      46 |
+      47 |   it('estimates mixed English and CJK text', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:44:26)
+
+  ??estimateTokens ??estimates mixed English and CJK text
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      47 |   it('estimates mixed English and CJK text', () => {
+      48 |     const text = 'Hello ?멸퀎'; // 6 non-CJK + 2 CJK => ceil(6/4 + 2*1.5) = ceil(1.5+3) = 5
+    > 49 |     expect(estimateTokens(text)).toBe(5);
+         |                          ^
+      50 |   });
+      51 |
+      52 |   it('handles Japanese/Chinese CJK characters', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:49:26)
+
+  ??estimateTokens ??handles Japanese/Chinese CJK characters
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      52 |   it('handles Japanese/Chinese CJK characters', () => {
+      53 |     const text = '?ζ쑍沃욁깇?밤깉'; // 6 CJK chars => ceil(6 * 1.5) = 9
+    > 54 |     expect(estimateTokens(text)).toBe(9);
+         |                          ^
+      55 |   });
+      56 | });
+      57 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:54:26)
+
+  ??getContextLimit ??returns correct limit for known Gemini model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      62 | describe('getContextLimit', () => {
+      63 |   it('returns correct limit for known Gemini model', () => {
+    > 64 |     expect(getContextLimit('gemini-2.5-pro')).toBe(1048576);
+         |                           ^
+      65 |   });
+      66 |
+      67 |   it('returns correct limit for known GPT model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:64:27)
+
+  ??getContextLimit ??returns correct limit for known GPT model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      66 |
+      67 |   it('returns correct limit for known GPT model', () => {
+    > 68 |     expect(getContextLimit('gpt-4o')).toBe(128000);
+         |                           ^
+      69 |   });
+      70 |
+      71 |   it('returns correct limit for known Claude model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:68:27)
+
+  ??getContextLimit ??returns correct limit for known Claude model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      70 |
+      71 |   it('returns correct limit for known Claude model', () => {
+    > 72 |     expect(getContextLimit('claude-sonnet-4-20250514')).toBe(200000);
+         |                           ^
+      73 |   });
+      74 |
+      75 |   it('returns correct limit for known Llama model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:72:27)
+
+  ??getContextLimit ??returns correct limit for known Llama model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      74 |
+      75 |   it('returns correct limit for known Llama model', () => {
+    > 76 |     expect(getContextLimit('llama-3.3-70b-versatile')).toBe(131072);
+         |                           ^
+      77 |   });
+      78 |
+      79 |   it('returns correct limit for Qwen model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:76:27)
+
+  ??getContextLimit ??returns correct limit for Qwen model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      78 |
+      79 |   it('returns correct limit for Qwen model', () => {
+    > 80 |     expect(getContextLimit('qwen-qwq-32b')).toBe(32768);
+         |                           ^
+      81 |   });
+      82 |
+      83 |   it('returns default 128000 for unknown models', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:80:27)
+
+  ??getContextLimit ??returns default 128000 for unknown models
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      82 |
+      83 |   it('returns default 128000 for unknown models', () => {
+    > 84 |     expect(getContextLimit('unknown-model-xyz')).toBe(128000);
+         |                           ^
+      85 |   });
+      86 |
+      87 |   it('returns default for empty string model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:84:27)
+
+  ??getContextLimit ??returns default for empty string model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      86 |
+      87 |   it('returns default for empty string model', () => {
+    > 88 |     expect(getContextLimit('')).toBe(128000);
+         |                           ^
+      89 |   });
+      90 | });
+      91 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:88:27)
+
+  ??getMaxOutputTokens ??returns reserved tokens based on 15% ratio
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 16384
+    Received: null
+
+       99 |     // used=0, available=128000, result = max(4096, min(16384, 128000)) = 16384
+      100 |     const result = getMaxOutputTokens('gpt-4o', 0, 0);
+    > 101 |     expect(result).toBe(16384);
+          |                    ^
+      102 |   });
+      103 |
+      104 |   it('respects minimum output reserve of 4096', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:101:20)
+
+  ??getMaxOutputTokens ??respects minimum output reserve of 4096
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4096
+    Received: null
+
+      107 |     // available = 128000 - 125000 = 3000, reserved=16384
+      108 |     // max(4096, min(16384, 3000)) = max(4096, 3000) = 4096
+    > 109 |     expect(result).toBe(4096);
+          |                    ^
+      110 |   });
+      111 |
+      112 |   it('clamps to available space when budget is tight', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:109:20)
+
+  ??getMaxOutputTokens ??clamps to available space when budget is tight
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4915
+    Received: null
+
+      115 |     // max(4096, min(4915, 12768)) = 4915
+      116 |     const result = getMaxOutputTokens('qwen-qwq-32b', 10000, 10000);
+    > 117 |     expect(result).toBe(4915);
+          |                    ^
+      118 |   });
+      119 |
+      120 |   it('works with large context models', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:117:20)
+
+  ??getMaxOutputTokens ??works with large context models
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 16384
+    Received: null
+
+      121 |     // gemini: limit=1048576, 15%=157286, clamped to MAX=16384
+      122 |     const result = getMaxOutputTokens('gemini-2.5-pro', 1000, 1000);
+    > 123 |     expect(result).toBe(16384);
+          |                    ^
+      124 |   });
+      125 | });
+      126 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:123:20)
+
+  ??truncateMessages ??keeps all messages when within budget
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      138 |     const msgs = [makeMsg('hi'), makeMsg('hello', 'assistant')];
+      139 |     const result = truncateMessages('system prompt', msgs, 'gpt-4o');
+    > 140 |     expect(result.truncated).toBe(false);
+          |                   ^
+      141 |     expect(result.messages).toHaveLength(2);
+      142 |     expect(result.systemTokens).toBeGreaterThan(0);
+      143 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:140:19)
+
+  ??truncateMessages ??returns empty array info correctly for empty messages
+
+    TypeError: Cannot read properties of null (reading 'messages')
+
+      145 |   it('returns empty array info correctly for empty messages', () => {
+      146 |     const result = truncateMessages('system', [], 'gpt-4o');
+    > 147 |     expect(result.messages).toHaveLength(0);
+          |                   ^
+      148 |     expect(result.truncated).toBe(false);
+      149 |     expect(result.messageTokens).toBe(0);
+      150 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:147:19)
+
+  ??truncateMessages ??truncates oldest messages when exceeding budget
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      160 |     ];
+      161 |     const result = truncateMessages('sys', msgs, 'qwen-qwq-32b');
+    > 162 |     expect(result.truncated).toBe(true);
+          |                   ^
+      163 |     // Last message should always be preserved
+      164 |     expect(result.messages[result.messages.length - 1].content).toBe('latest message');
+      165 |     expect(result.messages.length).toBeLessThan(msgs.length);
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:162:19)
+
+  ??truncateMessages ??preserves at least the last message even with huge system prompt
+
+    TypeError: Cannot read properties of null (reading 'messages')
+
+      170 |     const msgs = [makeMsg('A'), makeMsg('B'), makeMsg('C')];
+      171 |     const result = truncateMessages(hugeSystem, msgs, 'qwen-qwq-32b');
+    > 172 |     expect(result.messages).toHaveLength(1);
+          |                   ^
+      173 |     expect(result.messages[0].content).toBe('C');
+      174 |     expect(result.truncated).toBe(true);
+      175 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:172:19)
+
+  ??truncateMessages ??reports correct systemTokens
+
+    TypeError: Cannot read properties of null (reading 'systemTokens')
+
+      178 |     const system = 'Hello world'; // 3 tokens
+      179 |     const result = truncateMessages(system, [makeMsg('test')], 'gpt-4o');
+    > 180 |     expect(result.systemTokens).toBe(3);
+          |                   ^
+      181 |   });
+      182 |
+      183 |   it('single message is never truncated', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:180:19)
+
+  ??truncateMessages ??single message is never truncated
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      184 |     const msgs = [makeMsg('only one')];
+      185 |     const result = truncateMessages('sys', msgs, 'gpt-4o');
+    > 186 |     expect(result.truncated).toBe(false);
+          |                   ^
+      187 |     expect(result.messages).toHaveLength(1);
+      188 |   });
+      189 | });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:186:19)
+
+  ??HISTORY_LIMITS ??has STORAGE property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'STORAGE')
+
+      195 | describe('HISTORY_LIMITS', () => {
+      196 |   it('has STORAGE property as a number', () => {
+    > 197 |     expect(typeof HISTORY_LIMITS.STORAGE).toBe('number');
+          |                                  ^
+      198 |     expect(HISTORY_LIMITS.STORAGE).toBe(50);
+      199 |   });
+      200 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:197:34)
+
+  ??HISTORY_LIMITS ??has CHAT_API property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'CHAT_API')
+
+      200 |
+      201 |   it('has CHAT_API property as a number', () => {
+    > 202 |     expect(typeof HISTORY_LIMITS.CHAT_API).toBe('number');
+          |                                  ^
+      203 |     expect(HISTORY_LIMITS.CHAT_API).toBe(15);
+      204 |   });
+      205 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:202:34)
+
+  ??HISTORY_LIMITS ??has STORY_API property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'STORY_API')
+
+      205 |
+      206 |   it('has STORY_API property as a number', () => {
+    > 207 |     expect(typeof HISTORY_LIMITS.STORY_API).toBe('number');
+          |                                  ^
+      208 |     expect(HISTORY_LIMITS.STORY_API).toBe(20);
+      209 |   });
+      210 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:207:34)
+
+  ??HISTORY_LIMITS ??is a frozen (const) object with exactly 3 keys
+
+    TypeError: Cannot convert undefined or null to object
+        at Object.keys (<anonymous>)
+
+      210 |
+      211 |   it('is a frozen (const) object with exactly 3 keys', () => {
+    > 212 |     expect(Object.keys(HISTORY_LIMITS)).toHaveLength(3);
+          |                   ^
+      213 |     expect(Object.keys(HISTORY_LIMITS).sort()).toEqual(['CHAT_API', 'STORAGE', 'STORY_API']);
+      214 |   });
+      215 | });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:212:19)
+
+PASS components renderer/hooks/__tests__/useCodeStudioComposer.test.tsx
+FAIL unit renderer/lib/__tests__/sanitize.test.ts
+  ??Test suite failed to run
+
+    Cannot find module 'firebase/firestore' from 'renderer/lib/__tests__/sanitize.test.ts'
+
+       6 |
+       7 | // Mock firebase dependencies so the module can load without firebase config
+    >  8 | jest.mock('firebase/firestore', () => ({
+         |      ^
+       9 |   collection: jest.fn(),
+      10 |   deleteDoc: jest.fn(),
+      11 |   doc: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/sanitize.test.ts:8:6)
+
+PASS unit renderer/__tests__/code-studio-integration.test.ts
+  ??Console
+
+    console.info
+      [quill] code-studio.design-lint Design lint: 0 errors, 0 warnings, 1 info ??score 98/100 ??{ score: 98, errors: 0, warnings: 0, infos: 1 }
+
+      at Object.info (../../packages/quill-engine/src/_stubs/logger.ts:22:30)
+
+    console.info
+      [quill] code-studio.design-lint Design lint: 1 error, 0 warnings, 0 info ??score 85/100 ??{ score: 85, errors: 1, warnings: 0, infos: 0 }
+
+      at Object.info (../../packages/quill-engine/src/_stubs/logger.ts:22:30)
+
+    console.info
+      [quill] code-studio.design-lint Design lint: 1 error, 0 warnings, 0 info ??score 85/100 ??{ score: 85, errors: 1, warnings: 0, infos: 0 }
+
+      at Object.info (../../packages/quill-engine/src/_stubs/logger.ts:22:30)
+
+    console.info
+      [quill] code-studio.design-lint All 10 design lint checks passed ??{ score: 100, errors: 0, warnings: 0, infos: 0 }
+
+      at Object.info (../../packages/quill-engine/src/_stubs/logger.ts:22:30)
+
+PASS unit renderer/lib/code-studio/core/__tests__/shell-parser.test.ts
+FAIL components renderer/components/__tests__/CodeStudioShell.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      71 | }));
+      72 |
+    > 73 | jest.mock("@/lib/code-studio/pipeline/pipeline", () => ({
+         |      ^
+      74 |   runStaticPipeline: jest.fn(),
+      75 | }));
+      76 | jest.mock("@/lib/code-studio/pipeline/bugfinder", () => ({
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/CodeStudioShell.test.tsx:73:6)
+
+PASS unit renderer/lib/__tests__/ai-providers.test.ts
+PASS unit renderer/hooks/__tests__/useUndoRedo.test.ts
+PASS unit renderer/lib/code-studio/core/__tests__/virtual-list.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/recent-files.test.ts
+PASS components renderer/hooks/__tests__/useSessionRestore.test.tsx
+PASS unit renderer/lib/code-studio/core/__tests__/speed-optimizations.test.ts
+FAIL components renderer/components/__tests__/CodeStudioPanelManager.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/bugfinder mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      20 | }));
+      21 |
+    > 22 | jest.mock('@/lib/code-studio/pipeline/bugfinder', () => ({}));
+         |      ^
+      23 | jest.mock('@/lib/code-studio/pipeline/stress-test', () => ({}));
+      24 | jest.mock('@/lib/code-studio/pipeline/verification-loop', () => ({}));
+      25 | jest.mock('@/lib/code-studio/core/composer-state', () => ({}));
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/CodeStudioPanelManager.test.tsx:22:6)
+
+PASS unit renderer/lib/code-studio/features/__tests__/file-icons.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/commit-message.test.ts
+PASS unit renderer/lib/code-studio/editor/__tests__/fuzzy-match.test.ts
+PASS unit renderer/lib/code-studio/editor/__tests__/editor-surface-context-menu.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/features-deep.test.ts
+PASS unit renderer/lib/code-studio/core/__tests__/ansi.test.ts
+PASS unit renderer/lib/code-studio/core/__tests__/project-spec-bridge.test.ts
+PASS unit renderer/components/code-studio/__tests__/AgentPanel.test.ts
+FAIL components renderer/components/__tests__/PipelinePanel.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline-teams mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      12 | }));
+      13 |
+    > 14 | jest.mock('@/lib/code-studio/pipeline/pipeline-teams', () => ({}));
+         |      ^
+      15 |
+      16 | jest.mock('@/lib/code-studio/pipeline/pipeline-utils', () => ({
+      17 |   generateReport: () => 'report text',
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/PipelinePanel.test.tsx:14:6)
+
+PASS components renderer/components/__tests__/CodeStudioEditor.test.tsx
+PASS unit renderer/lib/code-studio/features/__tests__/webcontainer.test.ts
+PASS unit renderer/lib/__tests__/env.test.ts
+FAIL components renderer/components/__tests__/SectionErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '../studio/SectionErrorBoundary' from 'renderer/components/__tests__/SectionErrorBoundary.test.tsx'
+
+       6 | import { render, screen } from "@testing-library/react";
+       7 | import React from "react";
+    >  8 | import { SectionErrorBoundary } from "../studio/SectionErrorBoundary";
+         | ^
+       9 |
+      10 | // Mock logger
+      11 | jest.mock("@/lib/logger", () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/components/__tests__/SectionErrorBoundary.test.tsx:8:1)
+
+FAIL unit renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@eh/quill-engine/autofix-policy' from 'renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   classifyFixDescription,
+      4 |   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,
+      5 | } from '@eh/quill-engine/autofix-policy';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts:2:1)
+
+PASS unit renderer/lib/code-studio/features/__tests__/collaboration.test.ts
+PASS unit renderer/lib/code-studio/ai/__tests__/ai-features.test.ts
+FAIL unit renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+  ??useCodeStudioFileSystem ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+    "
+
+          12 | import { useState, useCallback, useRef } from 'react';
+          13 | import type { FileNode } from '@eh/quill-engine/types';
+        > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+             | ^
+          15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+          16 |
+          17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:57
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+
+  ??useCodeStudioFileSystem ??exports hook
+
+    Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+
+      12 | import { useState, useCallback, useRef } from 'react';
+      13 | import type { FileNode } from '@eh/quill-engine/types';
+    > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+         | ^
+      15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+      16 |
+      17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:8:44)
+
+PASS components renderer/components/__tests__/ErrorBoundary.test.tsx
+PASS unit renderer/hooks/__tests__/useCodeStudioKeyboard.test.ts
+FAIL components renderer/components/__tests__/WelcomeScreen.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\welcome-screen.css:1
+    .welcome-bg-glow-1 {
+    ^
+
+    SyntaxError: Unexpected token '.'
+
+      14 | import { listProjects } from "@/lib/code-studio/core/store";
+      15 | import type { AppLanguage } from "@/types/i18n";
+    > 16 | import "./welcome-screen.css";
+         | ^
+      17 |
+      18 |
+      19 | interface WelcomeScreenProps {
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.<anonymous> (renderer/components/code-studio/WelcomeScreen.tsx:16:1)
+      at Object.<anonymous> (renderer/components/__tests__/WelcomeScreen.test.tsx:8:1)
+
+PASS unit renderer/lib/code-studio/editor/__tests__/editor-features.test.ts
+PASS components renderer/components/__tests__/ErrorPage.test.tsx
+PASS unit renderer/lib/__tests__/multi-key-manager.test.ts
+PASS unit renderer/lib/__tests__/multi-key-bridge.test.ts
+PASS unit renderer/lib/code-studio/ai/__tests__/ghost.test.ts
+PASS unit renderer/hooks/__tests__/useCodeStudioPanels.test.ts
+PASS unit renderer/lib/code-studio/ai/__tests__/agents.test.ts
+PASS unit renderer/hooks/__tests__/useCodeStudioAgent.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/terminal-emulator.test.ts
+FAIL unit renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts
+  ??patent-scanner ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'"
+
+           5 |  */
+           6 | describe('patent-scanner', () => {
+        >  7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+             |                                                         ^
+           8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+           9 | });
+          10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:57
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+
+  ??patent-scanner ??exports scanner functions
+
+    Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'
+
+       6 | describe('patent-scanner', () => {
+       7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+    >  8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+         |                                                         ^
+       9 | });
+      10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:8:57)
+
+PASS unit renderer/lib/code-studio/features/__tests__/git.test.ts
+PASS unit renderer/hooks/__tests__/useCodeStudioChat.test.ts
+PASS components renderer/components/__tests__/StatusBar.test.tsx
+PASS unit renderer/lib/code-studio/features/__tests__/terminal-ai.test.ts
+PASS unit renderer/hooks/__tests__/useAIProvider.test.ts
+PASS components renderer/components/__tests__/ChatPanel.test.tsx
+PASS unit renderer/lib/code-studio/core/__tests__/cross-file.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/mcp-client.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/terminal.test.ts
+PASS unit renderer/lib/code-studio/core/__tests__/types.test.ts
+PASS unit renderer/lib/code-studio/ai/__tests__/autopilot.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/preview-hmr.test.ts
+PASS unit renderer/lib/__tests__/logger.test.ts
+PASS unit renderer/lib/code-studio/features/__tests__/sandbox.test.ts
+
+Summary of all failing tests
+FAIL renderer/lib/__tests__/verification-integration.test.ts
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      26 | // ============================================================
+      27 |
+    > 28 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      29 |   runStaticPipeline: jest.fn(),
+      30 | }));
+      31 |
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/lib/__tests__/verification-integration.test.ts:28:6)
+
+FAIL renderer/hooks/__tests__/hooks-coverage.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/engine/hfcp mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      46 |
+      47 | // Mock heavy deps of useStudioAI
+    > 48 | jest.mock('@/engine/hfcp', () => ({
+         |      ^
+      49 |   processHFCPTurn: jest.fn().mockReturnValue({
+      50 |     mode: 'normal',
+      51 |     verdict: 'pass',
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/hooks/__tests__/hooks-coverage.test.tsx:48:6)
+
+FAIL renderer/lib/__tests__/verification-loop.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/pipeline/pipeline' from 'renderer/lib/__tests__/verification-loop.test.ts'
+
+      24 | const mockScanProject = jest.fn<IPReport, [FileNode[]]>();
+      25 |
+    > 26 | jest.mock('../code-studio/pipeline/pipeline', () => ({
+         |      ^
+      27 |   runStaticPipeline: (...args: unknown[]) => mockRunStaticPipeline(...(args as [string, string])),
+      28 | }));
+      29 | jest.mock('../code-studio/pipeline/bugfinder', () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/verification-loop.test.ts:26:6)
+
+FAIL renderer/lib/__tests__/safe-fix-filtering.test.ts
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      14 | // ============================================================
+      15 |
+    > 16 | jest.mock('@/lib/code-studio/pipeline/pipeline', () => ({
+         |      ^
+      17 |   runStaticPipeline: jest.fn(),
+      18 | }));
+      19 |
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/lib/__tests__/safe-fix-filtering.test.ts:16:6)
+
+FAIL renderer/components/code-studio/__tests__/components-coverage.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/design-lint mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      70 | }));
+      71 |
+    > 72 | jest.mock("@/lib/code-studio/pipeline/design-lint", () => ({
+         |      ^
+      73 |   runDesignLint: jest.fn(() => ({ results: [], score: 100 })),
+      74 |   formatDesignLintReport: jest.fn(() => ""),
+      75 | }));
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/code-studio/__tests__/components-coverage.test.tsx:72:6)
+
+FAIL renderer/lib/__tests__/lib-coverage.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '../code-studio/ai/ari-engine' from 'renderer/lib/__tests__/lib-coverage.test.ts'
+
+      154 | // ============================================================
+      155 |
+    > 156 | import { ARIManager } from '../code-studio/ai/ari-engine';
+          | ^
+      157 |
+      158 | describe('ARIManager', () => {
+      159 |   let ari: ARIManager;
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/lib-coverage.test.ts:156:1)
+
+FAIL renderer/lib/__tests__/token-utils.test.ts
+  ??estimateTokens ??returns 0 for empty string
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      20 | describe('estimateTokens', () => {
+      21 |   it('returns 0 for empty string', () => {
+    > 22 |     expect(estimateTokens('')).toBe(0);
+         |                          ^
+      23 |   });
+      24 |
+      25 |   it('returns 0 for null-ish input', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:22:26)
+
+  ??estimateTokens ??returns 0 for null-ish input
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      25 |   it('returns 0 for null-ish input', () => {
+      26 |     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    > 27 |     expect(estimateTokens(undefined as any)).toBe(0);
+         |                          ^
+      28 |     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      29 |     expect(estimateTokens(null as any)).toBe(0);
+      30 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:27:26)
+
+  ??estimateTokens ??estimates English text at ~0.25 tokens per char
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      32 |   it('estimates English text at ~0.25 tokens per char', () => {
+      33 |     const text = 'Hello world'; // 11 chars, 0 CJK => ceil(11/4) = 3
+    > 34 |     expect(estimateTokens(text)).toBe(3);
+         |                          ^
+      35 |   });
+      36 |
+      37 |   it('estimates longer English text correctly', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:34:26)
+
+  ??estimateTokens ??estimates longer English text correctly
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      37 |   it('estimates longer English text correctly', () => {
+      38 |     const text = 'The quick brown fox jumps over the lazy dog'; // 43 chars => ceil(43/4) = 11
+    > 39 |     expect(estimateTokens(text)).toBe(11);
+         |                          ^
+      40 |   });
+      41 |
+      42 |   it('estimates CJK text at ~1.5 tokens per char', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:39:26)
+
+  ??estimateTokens ??estimates CJK text at ~1.5 tokens per char
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      42 |   it('estimates CJK text at ~1.5 tokens per char', () => {
+      43 |     const text = '?덈뀞?섏꽭??; // 5 CJK chars => ceil(5 * 1.5) = 8
+    > 44 |     expect(estimateTokens(text)).toBe(8);
+         |                          ^
+      45 |   });
+      46 |
+      47 |   it('estimates mixed English and CJK text', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:44:26)
+
+  ??estimateTokens ??estimates mixed English and CJK text
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      47 |   it('estimates mixed English and CJK text', () => {
+      48 |     const text = 'Hello ?멸퀎'; // 6 non-CJK + 2 CJK => ceil(6/4 + 2*1.5) = ceil(1.5+3) = 5
+    > 49 |     expect(estimateTokens(text)).toBe(5);
+         |                          ^
+      50 |   });
+      51 |
+      52 |   it('handles Japanese/Chinese CJK characters', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:49:26)
+
+  ??estimateTokens ??handles Japanese/Chinese CJK characters
+
+    TypeError: (0 , token_utils_1.estimateTokens) is not a function
+
+      52 |   it('handles Japanese/Chinese CJK characters', () => {
+      53 |     const text = '?ζ쑍沃욁깇?밤깉'; // 6 CJK chars => ceil(6 * 1.5) = 9
+    > 54 |     expect(estimateTokens(text)).toBe(9);
+         |                          ^
+      55 |   });
+      56 | });
+      57 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:54:26)
+
+  ??getContextLimit ??returns correct limit for known Gemini model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      62 | describe('getContextLimit', () => {
+      63 |   it('returns correct limit for known Gemini model', () => {
+    > 64 |     expect(getContextLimit('gemini-2.5-pro')).toBe(1048576);
+         |                           ^
+      65 |   });
+      66 |
+      67 |   it('returns correct limit for known GPT model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:64:27)
+
+  ??getContextLimit ??returns correct limit for known GPT model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      66 |
+      67 |   it('returns correct limit for known GPT model', () => {
+    > 68 |     expect(getContextLimit('gpt-4o')).toBe(128000);
+         |                           ^
+      69 |   });
+      70 |
+      71 |   it('returns correct limit for known Claude model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:68:27)
+
+  ??getContextLimit ??returns correct limit for known Claude model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      70 |
+      71 |   it('returns correct limit for known Claude model', () => {
+    > 72 |     expect(getContextLimit('claude-sonnet-4-20250514')).toBe(200000);
+         |                           ^
+      73 |   });
+      74 |
+      75 |   it('returns correct limit for known Llama model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:72:27)
+
+  ??getContextLimit ??returns correct limit for known Llama model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      74 |
+      75 |   it('returns correct limit for known Llama model', () => {
+    > 76 |     expect(getContextLimit('llama-3.3-70b-versatile')).toBe(131072);
+         |                           ^
+      77 |   });
+      78 |
+      79 |   it('returns correct limit for Qwen model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:76:27)
+
+  ??getContextLimit ??returns correct limit for Qwen model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      78 |
+      79 |   it('returns correct limit for Qwen model', () => {
+    > 80 |     expect(getContextLimit('qwen-qwq-32b')).toBe(32768);
+         |                           ^
+      81 |   });
+      82 |
+      83 |   it('returns default 128000 for unknown models', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:80:27)
+
+  ??getContextLimit ??returns default 128000 for unknown models
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      82 |
+      83 |   it('returns default 128000 for unknown models', () => {
+    > 84 |     expect(getContextLimit('unknown-model-xyz')).toBe(128000);
+         |                           ^
+      85 |   });
+      86 |
+      87 |   it('returns default for empty string model', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:84:27)
+
+  ??getContextLimit ??returns default for empty string model
+
+    TypeError: (0 , token_utils_1.getContextLimit) is not a function
+
+      86 |
+      87 |   it('returns default for empty string model', () => {
+    > 88 |     expect(getContextLimit('')).toBe(128000);
+         |                           ^
+      89 |   });
+      90 | });
+      91 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:88:27)
+
+  ??getMaxOutputTokens ??returns reserved tokens based on 15% ratio
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 16384
+    Received: null
+
+       99 |     // used=0, available=128000, result = max(4096, min(16384, 128000)) = 16384
+      100 |     const result = getMaxOutputTokens('gpt-4o', 0, 0);
+    > 101 |     expect(result).toBe(16384);
+          |                    ^
+      102 |   });
+      103 |
+      104 |   it('respects minimum output reserve of 4096', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:101:20)
+
+  ??getMaxOutputTokens ??respects minimum output reserve of 4096
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4096
+    Received: null
+
+      107 |     // available = 128000 - 125000 = 3000, reserved=16384
+      108 |     // max(4096, min(16384, 3000)) = max(4096, 3000) = 4096
+    > 109 |     expect(result).toBe(4096);
+          |                    ^
+      110 |   });
+      111 |
+      112 |   it('clamps to available space when budget is tight', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:109:20)
+
+  ??getMaxOutputTokens ??clamps to available space when budget is tight
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4915
+    Received: null
+
+      115 |     // max(4096, min(4915, 12768)) = 4915
+      116 |     const result = getMaxOutputTokens('qwen-qwq-32b', 10000, 10000);
+    > 117 |     expect(result).toBe(4915);
+          |                    ^
+      118 |   });
+      119 |
+      120 |   it('works with large context models', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:117:20)
+
+  ??getMaxOutputTokens ??works with large context models
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 16384
+    Received: null
+
+      121 |     // gemini: limit=1048576, 15%=157286, clamped to MAX=16384
+      122 |     const result = getMaxOutputTokens('gemini-2.5-pro', 1000, 1000);
+    > 123 |     expect(result).toBe(16384);
+          |                    ^
+      124 |   });
+      125 | });
+      126 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:123:20)
+
+  ??truncateMessages ??keeps all messages when within budget
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      138 |     const msgs = [makeMsg('hi'), makeMsg('hello', 'assistant')];
+      139 |     const result = truncateMessages('system prompt', msgs, 'gpt-4o');
+    > 140 |     expect(result.truncated).toBe(false);
+          |                   ^
+      141 |     expect(result.messages).toHaveLength(2);
+      142 |     expect(result.systemTokens).toBeGreaterThan(0);
+      143 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:140:19)
+
+  ??truncateMessages ??returns empty array info correctly for empty messages
+
+    TypeError: Cannot read properties of null (reading 'messages')
+
+      145 |   it('returns empty array info correctly for empty messages', () => {
+      146 |     const result = truncateMessages('system', [], 'gpt-4o');
+    > 147 |     expect(result.messages).toHaveLength(0);
+          |                   ^
+      148 |     expect(result.truncated).toBe(false);
+      149 |     expect(result.messageTokens).toBe(0);
+      150 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:147:19)
+
+  ??truncateMessages ??truncates oldest messages when exceeding budget
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      160 |     ];
+      161 |     const result = truncateMessages('sys', msgs, 'qwen-qwq-32b');
+    > 162 |     expect(result.truncated).toBe(true);
+          |                   ^
+      163 |     // Last message should always be preserved
+      164 |     expect(result.messages[result.messages.length - 1].content).toBe('latest message');
+      165 |     expect(result.messages.length).toBeLessThan(msgs.length);
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:162:19)
+
+  ??truncateMessages ??preserves at least the last message even with huge system prompt
+
+    TypeError: Cannot read properties of null (reading 'messages')
+
+      170 |     const msgs = [makeMsg('A'), makeMsg('B'), makeMsg('C')];
+      171 |     const result = truncateMessages(hugeSystem, msgs, 'qwen-qwq-32b');
+    > 172 |     expect(result.messages).toHaveLength(1);
+          |                   ^
+      173 |     expect(result.messages[0].content).toBe('C');
+      174 |     expect(result.truncated).toBe(true);
+      175 |   });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:172:19)
+
+  ??truncateMessages ??reports correct systemTokens
+
+    TypeError: Cannot read properties of null (reading 'systemTokens')
+
+      178 |     const system = 'Hello world'; // 3 tokens
+      179 |     const result = truncateMessages(system, [makeMsg('test')], 'gpt-4o');
+    > 180 |     expect(result.systemTokens).toBe(3);
+          |                   ^
+      181 |   });
+      182 |
+      183 |   it('single message is never truncated', () => {
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:180:19)
+
+  ??truncateMessages ??single message is never truncated
+
+    TypeError: Cannot read properties of null (reading 'truncated')
+
+      184 |     const msgs = [makeMsg('only one')];
+      185 |     const result = truncateMessages('sys', msgs, 'gpt-4o');
+    > 186 |     expect(result.truncated).toBe(false);
+          |                   ^
+      187 |     expect(result.messages).toHaveLength(1);
+      188 |   });
+      189 | });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:186:19)
+
+  ??HISTORY_LIMITS ??has STORAGE property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'STORAGE')
+
+      195 | describe('HISTORY_LIMITS', () => {
+      196 |   it('has STORAGE property as a number', () => {
+    > 197 |     expect(typeof HISTORY_LIMITS.STORAGE).toBe('number');
+          |                                  ^
+      198 |     expect(HISTORY_LIMITS.STORAGE).toBe(50);
+      199 |   });
+      200 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:197:34)
+
+  ??HISTORY_LIMITS ??has CHAT_API property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'CHAT_API')
+
+      200 |
+      201 |   it('has CHAT_API property as a number', () => {
+    > 202 |     expect(typeof HISTORY_LIMITS.CHAT_API).toBe('number');
+          |                                  ^
+      203 |     expect(HISTORY_LIMITS.CHAT_API).toBe(15);
+      204 |   });
+      205 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:202:34)
+
+  ??HISTORY_LIMITS ??has STORY_API property as a number
+
+    TypeError: Cannot read properties of undefined (reading 'STORY_API')
+
+      205 |
+      206 |   it('has STORY_API property as a number', () => {
+    > 207 |     expect(typeof HISTORY_LIMITS.STORY_API).toBe('number');
+          |                                  ^
+      208 |     expect(HISTORY_LIMITS.STORY_API).toBe(20);
+      209 |   });
+      210 |
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:207:34)
+
+  ??HISTORY_LIMITS ??is a frozen (const) object with exactly 3 keys
+
+    TypeError: Cannot convert undefined or null to object
+        at Object.keys (<anonymous>)
+
+      210 |
+      211 |   it('is a frozen (const) object with exactly 3 keys', () => {
+    > 212 |     expect(Object.keys(HISTORY_LIMITS)).toHaveLength(3);
+          |                   ^
+      213 |     expect(Object.keys(HISTORY_LIMITS).sort()).toEqual(['CHAT_API', 'STORAGE', 'STORY_API']);
+      214 |   });
+      215 | });
+
+      at Object.<anonymous> (renderer/lib/__tests__/token-utils.test.ts:212:19)
+
+FAIL renderer/lib/__tests__/sanitize.test.ts
+  ??Test suite failed to run
+
+    Cannot find module 'firebase/firestore' from 'renderer/lib/__tests__/sanitize.test.ts'
+
+       6 |
+       7 | // Mock firebase dependencies so the module can load without firebase config
+    >  8 | jest.mock('firebase/firestore', () => ({
+         |      ^
+       9 |   collection: jest.fn(),
+      10 |   deleteDoc: jest.fn(),
+      11 |   doc: jest.fn(),
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/__tests__/sanitize.test.ts:8:6)
+
+FAIL renderer/components/__tests__/CodeStudioShell.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      71 | }));
+      72 |
+    > 73 | jest.mock("@/lib/code-studio/pipeline/pipeline", () => ({
+         |      ^
+      74 |   runStaticPipeline: jest.fn(),
+      75 | }));
+      76 | jest.mock("@/lib/code-studio/pipeline/bugfinder", () => ({
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/CodeStudioShell.test.tsx:73:6)
+
+FAIL renderer/components/__tests__/CodeStudioPanelManager.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/bugfinder mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      20 | }));
+      21 |
+    > 22 | jest.mock('@/lib/code-studio/pipeline/bugfinder', () => ({}));
+         |      ^
+      23 | jest.mock('@/lib/code-studio/pipeline/stress-test', () => ({}));
+      24 | jest.mock('@/lib/code-studio/pipeline/verification-loop', () => ({}));
+      25 | jest.mock('@/lib/code-studio/core/composer-state', () => ({}));
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/CodeStudioPanelManager.test.tsx:22:6)
+
+FAIL renderer/components/__tests__/PipelinePanel.test.tsx
+  ??Test suite failed to run
+
+    Configuration error:
+
+    Could not locate module @/lib/code-studio/pipeline/pipeline-teams mapped as:
+    C:\eh-universe-web\apps\desktop\renderer\$1.
+
+    Please check your configuration for these entries:
+    {
+      "moduleNameMapper": {
+        "/^@\/(.*)$/": "C:\eh-universe-web\apps\desktop\renderer\$1"
+      },
+      "resolver": undefined
+    }
+
+      12 | }));
+      13 |
+    > 14 | jest.mock('@/lib/code-studio/pipeline/pipeline-teams', () => ({}));
+         |      ^
+      15 |
+      16 | jest.mock('@/lib/code-studio/pipeline/pipeline-utils', () => ({
+      17 |   generateReport: () => 'report text',
+
+      at createNoMappedModuleFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:1117:17)
+      at Object.<anonymous> (renderer/components/__tests__/PipelinePanel.test.tsx:14:6)
+
+FAIL renderer/components/__tests__/SectionErrorBoundary.test.tsx
+  ??Test suite failed to run
+
+    Cannot find module '../studio/SectionErrorBoundary' from 'renderer/components/__tests__/SectionErrorBoundary.test.tsx'
+
+       6 | import { render, screen } from "@testing-library/react";
+       7 | import React from "react";
+    >  8 | import { SectionErrorBoundary } from "../studio/SectionErrorBoundary";
+         | ^
+       9 |
+      10 | // Mock logger
+      11 | jest.mock("@/lib/logger", () => ({
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/components/__tests__/SectionErrorBoundary.test.tsx:8:1)
+
+FAIL renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@eh/quill-engine/autofix-policy' from 'renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts'
+
+      1 | // @ts-nocheck
+    > 2 | import {
+        | ^
+      3 |   classifyFixDescription,
+      4 |   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,
+      5 | } from '@eh/quill-engine/autofix-policy';
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/code-studio/core/__tests__/autofix-policy.test.ts:2:1)
+
+FAIL renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+  ??useCodeStudioFileSystem ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'쨌
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+    "
+
+          12 | import { useState, useCallback, useRef } from 'react';
+          13 | import type { FileNode } from '@eh/quill-engine/types';
+        > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+             | ^
+          15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+          16 |
+          17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:57
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:7:100)
+
+  ??useCodeStudioFileSystem ??exports hook
+
+    Cannot find module '@eh/quill-engine/types' from 'renderer/hooks/useCodeStudioFileSystem.ts'
+
+    Require stack:
+      renderer/hooks/useCodeStudioFileSystem.ts
+      renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts
+
+      12 | import { useState, useCallback, useRef } from 'react';
+      13 | import type { FileNode } from '@eh/quill-engine/types';
+    > 14 | import { detectLanguage } from '@eh/quill-engine/types';
+         | ^
+      15 | import { saveFileTree, loadFileTree } from '@/lib/code-studio/core/store';
+      16 |
+      17 | interface UseCodeStudioFileSystemReturn {
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/hooks/useCodeStudioFileSystem.ts:14:1)
+      at Object.<anonymous> (renderer/hooks/__tests__/useCodeStudioFileSystem.test.ts:8:44)
+
+FAIL renderer/components/__tests__/WelcomeScreen.test.tsx
+  ??Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ??If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ??If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ??To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ??If you need a custom transformation, specify a "transform" option in your config.
+     ??If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\eh-universe-web\apps\desktop\renderer\components\code-studio\welcome-screen.css:1
+    .welcome-bg-glow-1 {
+    ^
+
+    SyntaxError: Unexpected token '.'
+
+      14 | import { listProjects } from "@/lib/code-studio/core/store";
+      15 | import type { AppLanguage } from "@/types/i18n";
+    > 16 | import "./welcome-screen.css";
+         | ^
+      17 |
+      18 |
+      19 | interface WelcomeScreenProps {
+
+      at Runtime.createScriptFromCode (../../node_modules/.pnpm/jest-runtime@30.3.0/node_modules/jest-runtime/build/index.js:1314:40)
+      at Object.<anonymous> (renderer/components/code-studio/WelcomeScreen.tsx:16:1)
+      at Object.<anonymous> (renderer/components/__tests__/WelcomeScreen.test.tsx:8:1)
+
+FAIL renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts
+  ??patent-scanner ??module loads without error
+
+    expect(received).not.toThrow()
+
+    Error name:    "Error"
+    Error message: "Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'"
+
+           5 |  */
+           6 | describe('patent-scanner', () => {
+        >  7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+             |                                                         ^
+           8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+           9 | });
+          10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:57
+      at Object.<anonymous> (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (../../node_modules/.pnpm/expect@30.3.0/node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:7:91)
+
+  ??patent-scanner ??exports scanner functions
+
+    Cannot find module '../patent-scanner' from 'renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts'
+
+       6 | describe('patent-scanner', () => {
+       7 |   it('module loads without error', () => { expect(() => require('../patent-scanner')).not.toThrow(); });
+    >  8 |   it('exports scanner functions', () => { expect(typeof require('../patent-scanner')).toBe('object'); });
+         |                                                         ^
+       9 | });
+      10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (renderer/lib/code-studio/features/__tests__/patent-scanner.test.ts:8:57)
+
+
+Test Suites: 16 failed, 49 passed, 65 total
+Tests:       32 failed, 331 passed, 363 total
+Snapshots:   0 total
+Time:        3.505 s
+Ran all test suites in 2 projects.
+C:\eh-universe-web\apps\desktop:
+?덭RR_PNPM_RECURSIVE_RUN_FIRST_FAIL??eh-code-studio-desktop@0.1.0-alpha test: `jest`
+Exit status 1

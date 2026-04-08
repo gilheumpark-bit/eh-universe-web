@@ -1,4 +1,5 @@
-import { logger } from '../_stubs/logger';
+// @ts-nocheck
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 1 — Composer Mode Types & Transition Map

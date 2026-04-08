@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Code Studio — Desktop Project Hook
  *

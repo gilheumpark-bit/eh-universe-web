@@ -1,0 +1,518 @@
+
+errors.txt:229:renderer/app/code-studio/error.tsx(4,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:230:renderer/app/code-studio/layout.tsx(2,40): error TS2307: Cannot find module '@/lib/feature-flags' or its corresponding type declarations.
+errors.txt:231:renderer/app/code-studio/loading.tsx(3,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:232:renderer/app/code-studio/loading.tsx(4,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:233:renderer/app/code-studio/page.tsx(5,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:234:renderer/app/code-studio/page.tsx(6,30): error TS2307: Cannot find module '@/lib/studio-translations' or its corresponding type declarations.
+errors.txt:235:renderer/app/code-studio/page.tsx(7,34): error TS2307: Cannot find module '@/types/i18n' or its corresponding type declarations.
+errors.txt:236:renderer/app/code-studio/page.tsx(8,36): error TS2307: Cannot find module '@/components/SkeletonLoader' or its corresponding type declarations.
+errors.txt:237:renderer/app/code-studio/page.tsx(30,16): error TS2307: Cannot find module '@/components/code-studio/CodeStudioShell' or its corresponding type declarations.
+errors.txt:238:renderer/app/error.tsx(4,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:239:renderer/app/error.tsx(5,20): error TS2307: Cannot find module '@/components/Header' or its corresponding type declarations.
+errors.txt:240:renderer/app/error.tsx(6,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:241:renderer/app/error.tsx(7,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:242:renderer/app/layout.tsx(2,30): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:243:renderer/app/layout.tsx(3,30): error TS2307: Cannot find module '@/lib/AuthContext' or its corresponding type declarations.
+errors.txt:244:renderer/app/layout.tsx(4,31): error TS2307: Cannot find module '@/components/ErrorReporterInit' or its corresponding type declarations.
+errors.txt:245:renderer/app/layout.tsx(5,29): error TS2307: Cannot find module '@/components/WebFeaturesInit' or its corresponding type declarations.
+errors.txt:246:renderer/app/layout.tsx(6,33): error TS2307: Cannot find module '@/components/ui/StatusIndicator' or its corresponding type declarations.
+errors.txt:247:renderer/app/layout.tsx(7,41): error TS2307: Cannot find module '@/lib/UnifiedSettingsContext' or its corresponding type declarations.
+errors.txt:248:renderer/app/layout.tsx(8,39): error TS2307: Cannot find module '@/components/DeferredClientMetrics' or its corresponding type declarations.
+errors.txt:249:renderer/app/layout.tsx(9,28): error TS2307: Cannot find module '@/components/ApiKeyHydrator' or its corresponding type declarations.
+errors.txt:250:renderer/app/layout.tsx(10,35): error TS2307: Cannot find module '@/components/MainContentRegion' or its corresponding type declarations.
+errors.txt:251:renderer/app/not-found.tsx(4,20): error TS2307: Cannot find module '@/components/Header' or its corresponding type declarations.
+errors.txt:252:renderer/app/not-found.tsx(5,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:253:renderer/app/not-found.tsx(6,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:563:renderer/components/code-studio/ADRPanel.tsx(16,8): error TS2307: Cannot find module '@/lib/code-studio/core/adr' or its corresponding type declarations.
+errors.txt:564:renderer/components/code-studio/AgentDiffPreview.tsx(12,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:565:renderer/components/code-studio/AgentDiffPreview.tsx(13,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:566:renderer/components/code-studio/AgentPanel.tsx(13,46): error TS2307: Cannot find module '@/lib/code-studio/ai/agents' or its corresponding type declarations.
+errors.txt:567:renderer/components/code-studio/AgentPanel.tsx(14,62): error TS2307: Cannot find module '@/lib/code-studio/ai/agents' or its corresponding type declarations.
+errors.txt:568:renderer/components/code-studio/AgentPanel.tsx(15,36): error TS2307: Cannot find module '@/hooks/useCodeStudioAgent' or its corresponding type declarations.
+errors.txt:569:renderer/components/code-studio/AgentPanel.tsx(16,27): error TS2307: Cannot find module '@/components/ui/ActionBar' or its corresponding type declarations.
+errors.txt:570:renderer/components/code-studio/AgentPanel.tsx(17,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:571:renderer/components/code-studio/AgentPanel.tsx(18,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:572:renderer/components/code-studio/AgentPanel.tsx(19,34): error TS2307: Cannot find module '@/lib/noa/saga-transaction' or its corresponding type declarations.
+errors.txt:573:renderer/components/code-studio/AgentPanel.tsx(130,49): error TS2307: Cannot find module '@/types/code-studio-agent' or its corresponding type declarations.
+errors.txt:574:renderer/components/code-studio/AgentPanel.tsx(139,42): error TS7006: Parameter 'role' implicitly has an 'any' type.
+errors.txt:575:renderer/components/code-studio/AgentPanel.tsx(182,48): error TS7006: Parameter 'message' implicitly has an 'any' type.
+errors.txt:576:renderer/components/code-studio/AgentPanel.tsx(182,57): error TS7006: Parameter 'messageIndex' implicitly has an 'any' type.
+errors.txt:577:renderer/components/code-studio/AgentPanel.tsx(194,35): error TS7006: Parameter 'currentBest' implicitly has an 'any' type.
+errors.txt:578:renderer/components/code-studio/AgentPanel.tsx(194,48): error TS7006: Parameter 'candidate' implicitly has an 'any' type.
+errors.txt:579:renderer/components/code-studio/AgentPanel.tsx(245,32): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:580:renderer/components/code-studio/AgentPanel.tsx(245,35): error TS7006: Parameter 'i' implicitly has an 'any' type.
+errors.txt:581:renderer/components/code-studio/AgentPanel.tsx(270,40): error TS7006: Parameter 'a' implicitly has an 'any' type.
+errors.txt:582:renderer/components/code-studio/AgentPanel.tsx(296,34): error TS2307: Cannot find module '@/lib/browser' or its corresponding type declarations.
+errors.txt:583:renderer/components/code-studio/AgentPanel.tsx(369,65): error TS2307: Cannot find module '@/lib/code-studio/harness' or its corresponding type declarations.
+errors.txt:584:renderer/components/code-studio/AgentPanel.tsx(370,53): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:585:renderer/components/code-studio/AgentPanel.tsx(377,24): error TS7006: Parameter 'step' implicitly has an 'any' type.
+errors.txt:586:renderer/components/code-studio/AgentPanel.tsx(377,30): error TS7006: Parameter 'iter' implicitly has an 'any' type.
+errors.txt:587:renderer/components/code-studio/AgentPanel.tsx(377,36): error TS7006: Parameter 'errors' implicitly has an 'any' type.
+errors.txt:588:renderer/components/code-studio/AgentPanel.tsx(383,32): error TS7006: Parameter 'errors' implicitly has an 'any' type.
+errors.txt:589:renderer/components/code-studio/AgentPanel.tsx(383,40): error TS7006: Parameter 'currentCode' implicitly has an 'any' type.
+errors.txt:590:renderer/components/code-studio/AgentPanel.tsx(392,20): error TS7006: Parameter 'session' implicitly has an 'any' type.
+errors.txt:591:renderer/components/code-studio/AgentPanel.tsx(407,90): error TS2307: Cannot find module '@/lib/code-studio/harness' or its corresponding type declarations.
+errors.txt:592:renderer/components/code-studio/AgentPanel.tsx(416,28): error TS7006: Parameter 'gate' implicitly has an 'any' type.
+errors.txt:593:renderer/components/code-studio/AgentPanel.tsx(416,34): error TS7006: Parameter 'status' implicitly has an 'any' type.
+errors.txt:594:renderer/components/code-studio/AgentPanel.tsx(496,27): error TS7006: Parameter 'a' implicitly has an 'any' type.
+errors.txt:595:renderer/components/code-studio/AgentPanel.tsx(496,30): error TS7006: Parameter 'i' implicitly has an 'any' type.
+errors.txt:596:renderer/components/code-studio/AgentPanel.tsx(539,49): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:597:renderer/components/code-studio/AIHub.tsx(9,73): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:598:renderer/components/code-studio/AIHub.tsx(10,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:599:renderer/components/code-studio/AIHub.tsx(11,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:600:renderer/components/code-studio/AIHub.tsx(149,34): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:601:renderer/components/code-studio/AIWorkspace.tsx(9,65): error TS2307: Cannot find module '@/types/code-studio-agent' or its corresponding type declarations.
+errors.txt:602:renderer/components/code-studio/AIWorkspace.tsx(10,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:603:renderer/components/code-studio/AuditPanel.tsx(4,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:604:renderer/components/code-studio/AuditPanel.tsx(5,87): error TS2307: Cannot find module '@eh/quill-engine/audit/audit-types' or its corresponding type declarations.
+errors.txt:605:renderer/components/code-studio/AuditPanel.tsx(6,52): error TS2307: Cannot find module '@eh/quill-engine/audit/audit-types' or its corresponding type declarations.
+errors.txt:606:renderer/components/code-studio/AuditPanel.tsx(7,26): error TS2307: Cannot find module '@/components/code-studio/ui/ProgressBar' or its corresponding type declarations.
+errors.txt:607:renderer/components/code-studio/AuditPanel.tsx(55,26): error TS7006: Parameter 'area' implicitly has an 'any' type.
+errors.txt:608:renderer/components/code-studio/AuditPanel.tsx(100,30): error TS7006: Parameter 'f' implicitly has an 'any' type.
+errors.txt:609:renderer/components/code-studio/AuditPanel.tsx(141,35): error TS7006: Parameter 'a' implicitly has an 'any' type.
+errors.txt:610:renderer/components/code-studio/AuditPanel.tsx(228,45): error TS7006: Parameter 'cat' implicitly has an 'any' type.
+errors.txt:611:renderer/components/code-studio/AuditPanel.tsx(240,44): error TS7006: Parameter 'area' implicitly has an 'any' type.
+errors.txt:612:renderer/components/code-studio/AuditPanel.tsx(268,41): error TS7006: Parameter 'item' implicitly has an 'any' type.
+errors.txt:613:renderer/components/code-studio/AutopilotPanel.tsx(16,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:614:renderer/components/code-studio/AutopilotPanel.tsx(17,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:615:renderer/components/code-studio/AutopilotPanel.tsx(202,96): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:616:renderer/components/code-studio/CanvasPanel.tsx(9,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:617:renderer/components/code-studio/ChatPanel.tsx(13,57): error TS2307: Cannot find module '@/lib/code-studio/ai/nod' or its corresponding type declarations.
+errors.txt:618:renderer/components/code-studio/ChatPanel.tsx(14,35): error TS2307: Cannot find module '@/hooks/useCodeStudioChat' or its corresponding type declarations.
+errors.txt:619:renderer/components/code-studio/ChatPanel.tsx(15,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:620:renderer/components/code-studio/ChatPanel.tsx(16,64): error TS2307: Cannot find module '@/lib/code-studio/features/mcp-client' or its corresponding type declarations.
+errors.txt:621:renderer/components/code-studio/ChatPanel.tsx(17,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:622:renderer/components/code-studio/ChatPanel.tsx(18,48): error TS2307: Cannot find module '@/lib/code-studio/core/project-spec-bridge' or its corresponding type declarations.
+errors.txt:623:renderer/components/code-studio/ChatPanel.tsx(19,36): error TS2307: Cannot find module '@/lib/code-studio/core/design-system-spec' or its corresponding type declarations.
+errors.txt:624:renderer/components/code-studio/ChatPanel.tsx(20,36): error TS2307: Cannot find module '@/lib/code-studio/core/design-linter' or its corresponding type declarations.
+errors.txt:625:renderer/components/code-studio/ChatPanel.tsx(21,49): error TS2307: Cannot find module '@/lib/code-studio/core/design-presets' or its corresponding type declarations.
+errors.txt:626:renderer/components/code-studio/ChatPanel.tsx(23,32): error TS2307: Cannot find module '@/lib/code-studio/features/nl-terminal' or its corresponding type declarations.
+errors.txt:627:renderer/components/code-studio/ChatPanel.tsx(24,41): error TS2307: Cannot find module '@eh/quill-engine/quality-rules-from-catalog' or its corresponding type declarations.
+errors.txt:628:renderer/components/code-studio/ChatPanel.tsx(167,41): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:629:renderer/components/code-studio/ChatPanel.tsx(169,33): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:630:renderer/components/code-studio/ChatPanel.tsx(169,50): error TS7006: Parameter 't' implicitly has an 'any' type.
+errors.txt:631:renderer/components/code-studio/ChatPanel.tsx(227,24): error TS7006: Parameter 'mention' implicitly has an 'any' type.
+errors.txt:632:renderer/components/code-studio/ChatPanel.tsx(294,54): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:633:renderer/components/code-studio/ChatPanel.tsx(310,100): error TS7006: Parameter 't' implicitly has an 'any' type.
+errors.txt:634:renderer/components/code-studio/ChatPanel.tsx(322,37): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:635:renderer/components/code-studio/ChatPanel.tsx(461,29): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+errors.txt:636:renderer/components/code-studio/CodeCreatorPanel.tsx(14,29): error TS2307: Cannot find module '@/lib/code-studio/features/app-generator' or its corresponding type declarations.
+errors.txt:637:renderer/components/code-studio/CodeCreatorPanel.tsx(15,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:638:renderer/components/code-studio/CodeCreatorPanel.tsx(156,58): error TS7006: Parameter 'f' implicitly has an 'any' type.
+errors.txt:639:renderer/components/code-studio/CodeCreatorPanel.tsx(266,58): error TS7006: Parameter 'f' implicitly has an 'any' type.
+errors.txt:640:renderer/components/code-studio/CodeStudioEditor.tsx(12,61): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:641:renderer/components/code-studio/CodeStudioEditor.tsx(13,33): error TS2307: Cannot find module '@/components/code-studio/EditorGroup' or its corresponding type declarations.
+errors.txt:642:renderer/components/code-studio/CodeStudioEditor.tsx(15,60): error TS2307: Cannot find module '@/lib/code-studio/ai/ghost' or its corresponding type declarations.
+errors.txt:643:renderer/components/code-studio/CodeStudioEditor.tsx(16,40): error TS2307: Cannot find module '@/lib/code-studio/editor/editor-features' or its corresponding type declarations.
+errors.txt:644:renderer/components/code-studio/CodeStudioEditor.tsx(17,29): error TS2307: Cannot find module '@/lib/code-studio/editor/monaco-setup' or its corresponding type declarations.
+errors.txt:645:renderer/components/code-studio/CodeStudioEditor.tsx(18,44): error TS2307: Cannot find module '@/lib/code-studio/core/cross-file' or its corresponding type declarations.
+errors.txt:646:renderer/components/code-studio/CodeStudioEditor.tsx(19,53): error TS2307: Cannot find module '@/lib/code-studio/editor/model-path' or its corresponding type declarations.
+errors.txt:647:renderer/components/code-studio/CodeStudioEditor.tsx(20,76): error TS2307: Cannot find module '@/lib/code-studio/editor/editor-surface-context-menu' or its corresponding type declarations.
+errors.txt:648:renderer/components/code-studio/CodeStudioEditor.tsx(21,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:649:renderer/components/code-studio/CodeStudioEditor.tsx(22,27): error TS2307: Cannot find module '@/components/code-studio/WelcomeScreen' or its corresponding type declarations.
+errors.txt:650:renderer/components/code-studio/CodeStudioEditor.tsx(23,53): error TS2307: Cannot find module '@/components/code-studio/ContextMenu' or its corresponding type declarations.
+errors.txt:651:renderer/components/code-studio/CodeStudioEditor.tsx(24,21): error TS2307: Cannot find module '@/components/code-studio/PanelImports' or its corresponding type declarations.
+errors.txt:652:renderer/components/code-studio/CodeStudioEditor.tsx(25,32): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:653:renderer/components/code-studio/CodeStudioEditor.tsx(29,16): error TS2307: Cannot find module '@/components/code-studio/Breadcrumb' or its corresponding type declarations.
+errors.txt:654:renderer/components/code-studio/CodeStudioEditor.tsx(33,16): error TS2307: Cannot find module '@/components/code-studio/Toolbar' or its corresponding type declarations.
+errors.txt:655:renderer/components/code-studio/CodeStudioEditor.tsx(37,44): error TS2307: Cannot find module '@/components/studio/MultiKeyPanel' or its corresponding type declarations.
+errors.txt:656:renderer/components/code-studio/CodeStudioEditor.tsx(171,39): error TS7006: Parameter 'f' implicitly has an 'any' type.
+errors.txt:657:renderer/components/code-studio/CodeStudioEditor.tsx(202,62): error TS7006: Parameter 'pos' implicitly has an 'any' type.
+errors.txt:658:renderer/components/code-studio/CodeStudioEditor.tsx(202,67): error TS7006: Parameter 'target' implicitly has an 'any' type.
+errors.txt:659:renderer/components/code-studio/CodeStudioEditor.tsx(230,56): error TS7006: Parameter 'pos' implicitly has an 'any' type.
+errors.txt:660:renderer/components/code-studio/CodeStudioEditor.tsx(230,61): error TS7006: Parameter 'target' implicitly has an 'any' type.
+errors.txt:661:renderer/components/code-studio/CodeStudioEditor.tsx(289,11): error TS2769: No overload matches this call.
+errors.txt:668:renderer/components/code-studio/CodeStudioEditor.tsx(300,28): error TS7006: Parameter 'id' implicitly has an 'any' type.
+errors.txt:669:renderer/components/code-studio/CodeStudioEditor.tsx(321,11): error TS2769: No overload matches this call.
+errors.txt:676:renderer/components/code-studio/CodeStudioEditor.tsx(350,28): error TS2769: No overload matches this call.
+errors.txt:683:renderer/components/code-studio/CodeStudioPanelManager.tsx(22,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:684:renderer/components/code-studio/CodeStudioPanelManager.tsx(23,41): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:685:renderer/components/code-studio/CodeStudioPanelManager.tsx(24,33): error TS2307: Cannot find module '@/lib/code-studio/core/panel-registry' or its corresponding type declarations.
+errors.txt:686:renderer/components/code-studio/CodeStudioPanelManager.tsx(25,34): error TS2307: Cannot find module '@/lib/code-studio/core/panel-registry' or its corresponding type declarations.
+errors.txt:687:renderer/components/code-studio/CodeStudioPanelManager.tsx(26,32): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:688:renderer/components/code-studio/CodeStudioPanelManager.tsx(30,35): error TS2307: Cannot find module '@/lib/code-studio/core/composer-state' or its corresponding type declarations.
+errors.txt:689:renderer/components/code-studio/CodeStudioPanelManager.tsx(31,33): error TS2307: Cannot find module '@/lib/code-studio/core/project-spec' or its corresponding type declarations.
+errors.txt:690:renderer/components/code-studio/CodeStudioPanelManager.tsx(37,8): error TS2307: Cannot find module '@/lib/code-studio/core/project-spec-bridge' or its corresponding type declarations.
+errors.txt:691:renderer/components/code-studio/CodeStudioPanelManager.tsx(38,58): error TS2307: Cannot find module '@/lib/code-studio/ai/ai-features' or its corresponding type declarations.
+errors.txt:692:renderer/components/code-studio/CodeStudioPanelManager.tsx(39,42): error TS2307: Cannot find module '@/hooks/useCodeStudioPanels' or its corresponding type declarations.
+errors.txt:693:renderer/components/code-studio/CodeStudioPanelManager.tsx(40,21): error TS2307: Cannot find module '@/components/code-studio/PanelImports' or its corresponding type declarations.
+errors.txt:694:renderer/components/code-studio/CodeStudioPanelManager.tsx(197,19): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:695:renderer/components/code-studio/CodeStudioPanelManager.tsx(198,16): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:696:renderer/components/code-studio/CodeStudioPanelManager.tsx(331,22): error TS7006: Parameter 'result' implicitly has an 'any' type.
+errors.txt:697:renderer/components/code-studio/CodeStudioPanelManager.tsx(427,72): error TS7006: Parameter 'template' implicitly has an 'any' type.
+errors.txt:698:renderer/components/code-studio/CodeStudioPanelManager.tsx(480,92): error TS7006: Parameter 'symbol' implicitly has an 'any' type.
+errors.txt:699:renderer/components/code-studio/CodeStudioPanelManager.tsx(495,32): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:700:renderer/components/code-studio/CodeStudioPanelManager.tsx(509,16): error TS2307: Cannot find module '@/lib/code-studio/audit/audit-engine' or its corresponding type declarations.
+errors.txt:701:renderer/components/code-studio/CodeStudioShell.tsx(13,61): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:702:renderer/components/code-studio/CodeStudioShell.tsx(14,65): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:703:renderer/components/code-studio/CodeStudioShell.tsx(15,73): error TS2307: Cannot find module '@/lib/code-studio/core/store' or its corresponding type declarations.
+errors.txt:704:renderer/components/code-studio/CodeStudioShell.tsx(21,111): error TS2307: Cannot find module '@/lib/code-studio/core/panel-registry' or its corresponding type declarations.
+errors.txt:705:renderer/components/code-studio/CodeStudioShell.tsx(22,57): error TS2307: Cannot find module '@/hooks/useSessionRestore' or its corresponding type declarations.
+errors.txt:706:renderer/components/code-studio/CodeStudioShell.tsx(23,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:707:renderer/components/code-studio/CodeStudioShell.tsx(24,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:708:renderer/components/code-studio/CodeStudioShell.tsx(29,41): error TS2307: Cannot find module '@/components/code-studio/ToastSystem' or its corresponding type declarations.
+errors.txt:709:renderer/components/code-studio/CodeStudioShell.tsx(30,27): error TS2307: Cannot find module '@/components/code-studio/WelcomeScreen' or its corresponding type declarations.
+errors.txt:710:renderer/components/code-studio/CodeStudioShell.tsx(31,29): error TS2307: Cannot find module '@/components/code-studio/MobileLayout' or its corresponding type declarations.
+errors.txt:711:renderer/components/code-studio/CodeStudioShell.tsx(32,41): error TS2307: Cannot find module '@/hooks/useCodeStudioFileSystem' or its corresponding type declarations.
+errors.txt:712:renderer/components/code-studio/CodeStudioShell.tsx(33,27): error TS2307: Cannot find module '@/lib/desktop-bridge' or its corresponding type declarations.
+errors.txt:713:renderer/components/code-studio/CodeStudioShell.tsx(35,39): error TS2307: Cannot find module '@/hooks/useCodeStudioComposer' or its corresponding type declarations.
+errors.txt:714:renderer/components/code-studio/CodeStudioShell.tsx(36,37): error TS2307: Cannot find module '@/hooks/useCodeStudioPanels' or its corresponding type declarations.
+errors.txt:715:renderer/components/code-studio/CodeStudioShell.tsx(37,39): error TS2307: Cannot find module '@/hooks/useCodeStudioKeyboard' or its corresponding type declarations.
+errors.txt:716:renderer/components/code-studio/CodeStudioShell.tsx(38,31): error TS2307: Cannot find module '@/components/ErrorBoundary' or its corresponding type declarations.
+errors.txt:717:renderer/components/code-studio/CodeStudioShell.tsx(39,21): error TS2307: Cannot find module '@/components/code-studio/PanelImports' or its corresponding type declarations.
+errors.txt:718:renderer/components/code-studio/CodeStudioShell.tsx(41,53): error TS2307: Cannot find module '@/lib/code-studio/editor/model-path' or its corresponding type declarations.
+errors.txt:719:renderer/components/code-studio/CodeStudioShell.tsx(42,76): error TS2307: Cannot find module '@/lib/code-studio/editor/editor-surface-context-menu' or its corresponding type declarations.
+errors.txt:720:renderer/components/code-studio/CodeStudioShell.tsx(43,53): error TS2307: Cannot find module '@/components/code-studio/ContextMenu' or its corresponding type declarations.
+errors.txt:721:renderer/components/code-studio/CodeStudioShell.tsx(56,34): error TS2307: Cannot find module '@/components/code-studio/CodeStudioEditor' or its corresponding type declarations.
+errors.txt:722:renderer/components/code-studio/CodeStudioShell.tsx(57,82): error TS2307: Cannot find module '@/components/code-studio/CodeStudioPanelManager' or its corresponding type declarations.
+errors.txt:723:renderer/components/code-studio/CodeStudioShell.tsx(60,45): error TS2307: Cannot find module '@/components/code-studio/CommandPalette' or its corresponding type declarations.
+errors.txt:724:renderer/components/code-studio/CodeStudioShell.tsx(62,16): error TS2307: Cannot find module '@/components/code-studio/TouchGestures' or its corresponding type declarations.
+errors.txt:725:renderer/components/code-studio/CodeStudioShell.tsx(66,16): error TS2307: Cannot find module '@/components/code-studio/Breadcrumb' or its corresponding type declarations.
+errors.txt:726:renderer/components/code-studio/CodeStudioShell.tsx(70,16): error TS2307: Cannot find module '@/components/code-studio/ConfirmDialog' or its corresponding type declarations.
+errors.txt:727:renderer/components/code-studio/CodeStudioShell.tsx(74,16): error TS2307: Cannot find module '@/components/code-studio/ShortcutOverlay' or its corresponding type declarations.
+errors.txt:728:renderer/components/code-studio/CodeStudioShell.tsx(78,16): error TS2307: Cannot find module '@/components/code-studio/ErrorOverlay' or its corresponding type declarations.
+errors.txt:729:renderer/components/code-studio/CodeStudioShell.tsx(182,48): error TS7006: Parameter 'child' implicitly has an 'any' type.
+errors.txt:730:renderer/components/code-studio/CodeStudioShell.tsx(322,60): error TS7006: Parameter 'v' implicitly has an 'any' type.
+errors.txt:731:renderer/components/code-studio/CodeStudioShell.tsx(325,52): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:732:renderer/components/code-studio/CodeStudioShell.tsx(326,52): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:733:renderer/components/code-studio/CodeStudioShell.tsx(401,84): error TS7006: Parameter 'v' implicitly has an 'any' type.
+errors.txt:734:renderer/components/code-studio/CodeStudioShell.tsx(410,87): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:735:renderer/components/code-studio/CodeStudioShell.tsx(411,68): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:736:renderer/components/code-studio/CodeStudioShell.tsx(497,80): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:737:renderer/components/code-studio/CodeStudioShell.tsx(629,15): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+errors.txt:738:renderer/components/code-studio/CodeStudioShell.tsx(631,53): error TS7006: Parameter 'n' implicitly has an 'any' type.
+errors.txt:739:renderer/components/code-studio/CodeStudioShell.tsx(644,130): error TS7006: Parameter 'n' implicitly has an 'any' type.
+errors.txt:740:renderer/components/code-studio/CodeStudioShell.tsx(910,45): error TS2769: No overload matches this call.
+errors.txt:747:renderer/components/code-studio/CodeStudioShell.tsx(922,24): error TS2307: Cannot find module '@/lib/code-studio/editor/monaco-setup' or its corresponding type declarations.
+errors.txt:748:renderer/components/code-studio/CodeStudioShell.tsx(923,24): error TS2307: Cannot find module '@/lib/code-studio/editor/editor-features' or its corresponding type declarations.
+errors.txt:749:renderer/components/code-studio/CodeStudioShell.tsx(924,24): error TS2307: Cannot find module '@/lib/code-studio/ai/ghost' or its corresponding type declarations.
+errors.txt:750:renderer/components/code-studio/CodeStudioShell.tsx(941,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+errors.txt:751:renderer/components/code-studio/CodeStudioShell.tsx(992,8): error TS2769: No overload matches this call.
+errors.txt:758:renderer/components/code-studio/CodeStudioShell.tsx(995,23): error TS7006: Parameter 'scale' implicitly has an 'any' type.
+errors.txt:759:renderer/components/code-studio/CodeStudioShell.tsx(995,65): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:760:renderer/components/code-studio/CodeStudioShell.tsx(995,159): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:761:renderer/components/code-studio/CodeStudioShell.tsx(1014,53): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:762:renderer/components/code-studio/CodeStudioShell.tsx(1022,22): error TS7006: Parameter 'actionId' implicitly has an 'any' type.
+errors.txt:763:renderer/components/code-studio/CodeStudioShell.tsx(1059,28): error TS7006: Parameter 'line' implicitly has an 'any' type.
+errors.txt:764:renderer/components/code-studio/CodeStudioShell.tsx(1059,34): error TS7006: Parameter 'col' implicitly has an 'any' type.
+errors.txt:765:renderer/components/code-studio/CodeStudioShell.tsx(1060,48): error TS7006: Parameter 'content' implicitly has an 'any' type.
+errors.txt:766:renderer/components/code-studio/CodeStudioShell.tsx(1077,39): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:767:renderer/components/code-studio/CodeStudioShell.tsx(1078,40): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:768:renderer/components/code-studio/CodeStudioShell.tsx(1079,42): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:769:renderer/components/code-studio/CodeStudioShell.tsx(1113,14): error TS2578: Unused '@ts-expect-error' directive.
+errors.txt:770:renderer/components/code-studio/CodeStudioShell.tsx(1137,57): error TS7006: Parameter 'node' implicitly has an 'any' type.
+errors.txt:771:renderer/components/code-studio/CodeStudioShell.tsx(1143,13): error TS2769: No overload matches this call.
+errors.txt:778:renderer/components/code-studio/CodeStudioShell.tsx(1146,32): error TS7006: Parameter 'n' implicitly has an 'any' type.
+errors.txt:779:renderer/components/code-studio/CodeStudioShell.tsx(1149,25): error TS7006: Parameter 'cmdId' implicitly has an 'any' type.
+errors.txt:780:renderer/components/code-studio/CodeStudioShell.tsx(1158,40): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:781:renderer/components/code-studio/CodeStudioShell.tsx(1158,82): error TS7006: Parameter 'v' implicitly has an 'any' type.
+errors.txt:782:renderer/components/code-studio/CodeStudioShell.tsx(1164,77): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+errors.txt:783:renderer/components/code-studio/CodeStudioShell.tsx(1164,82): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:784:renderer/components/code-studio/CodeStudioShell.tsx(1166,17): error TS18046: 'panels' is of type 'unknown'.
+errors.txt:785:renderer/components/code-studio/CodeStudioShell.tsx(1166,29): error TS7006: Parameter 'p' implicitly has an 'any' type.
+errors.txt:786:renderer/components/code-studio/CodeStudioShell.tsx(1182,24): error TS2769: No overload matches this call.
+errors.txt:793:renderer/components/code-studio/CodeStudioShell.tsx(1184,24): error TS2769: No overload matches this call.
+errors.txt:800:renderer/components/code-studio/CodeStudioShell.tsx(1185,21): error TS2769: No overload matches this call.
+errors.txt:807:renderer/components/code-studio/CollabPanel.tsx(50,8): error TS2307: Cannot find module '@/lib/code-studio/features/collaboration' or its corresponding type declarations.
+errors.txt:808:renderer/components/code-studio/CollabPanel.tsx(51,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:809:renderer/components/code-studio/CollabPanel.tsx(145,41): error TS7006: Parameter 'cursor' implicitly has an 'any' type.
+errors.txt:810:renderer/components/code-studio/ComposerPanel.tsx(9,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:811:renderer/components/code-studio/ComposerPanel.tsx(10,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:812:renderer/components/code-studio/ComposerPanel.tsx(11,35): error TS2307: Cannot find module '@/lib/code-studio/core/composer-state' or its corresponding type declarations.
+errors.txt:813:renderer/components/code-studio/ComposerPanel.tsx(12,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:814:renderer/components/code-studio/ComposerPanel.tsx(13,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:815:renderer/components/code-studio/ContextMenu.tsx(13,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:816:renderer/components/code-studio/DebugPanel.tsx(23,8): error TS2307: Cannot find module '@/lib/code-studio/features/debugger' or its corresponding type declarations.
+errors.txt:817:renderer/components/code-studio/DependencyGraph.tsx(25,8): error TS2307: Cannot find module '@/lib/force-graph' or its corresponding type declarations.
+errors.txt:818:renderer/components/code-studio/DeployPanel.tsx(34,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:819:renderer/components/code-studio/EditorGroup.tsx(12,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:820:renderer/components/code-studio/EditorGroup.tsx(13,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:821:renderer/components/code-studio/EditorGroup.tsx(14,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:822:renderer/components/code-studio/EditorTabs.tsx(9,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:823:renderer/components/code-studio/EditorTabs.tsx(10,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:824:renderer/components/code-studio/EditorTabs.tsx(11,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:825:renderer/components/code-studio/EvaluationPanel.tsx(11,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:826:renderer/components/code-studio/FileExplorer.tsx(12,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:827:renderer/components/code-studio/FileExplorer.tsx(13,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:828:renderer/components/code-studio/FileExplorer.tsx(16,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:829:renderer/components/code-studio/FileExplorer.tsx(17,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:830:renderer/components/code-studio/FileExplorer.tsx(226,52): error TS7006: Parameter 'child' implicitly has an 'any' type.
+errors.txt:831:renderer/components/code-studio/GitPanel.tsx(36,41): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:832:renderer/components/code-studio/GitPanel.tsx(45,8): error TS2307: Cannot find module '@/lib/code-studio/features/git' or its corresponding type declarations.
+errors.txt:833:renderer/components/code-studio/GitPanel.tsx(49,8): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:834:renderer/components/code-studio/GitPanel.tsx(56,8): error TS2307: Cannot find module '@/lib/code-studio/features/git-engine' or its corresponding type declarations.
+errors.txt:835:renderer/components/code-studio/GitPanel.tsx(57,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:836:renderer/components/code-studio/GitPanel.tsx(58,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:837:renderer/components/code-studio/GitPanel.tsx(519,25): error TS7006: Parameter 'args' implicitly has an 'any' type.
+errors.txt:838:renderer/components/code-studio/InlineEditWidget.tsx(9,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:839:renderer/components/code-studio/InlineEditWidget.tsx(93,19): error TS7006: Parameter 'text' implicitly has an 'any' type.
+errors.txt:840:renderer/components/code-studio/ModelSwitcher.tsx(5,82): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:841:renderer/components/code-studio/ModuleProfilePanel.tsx(16,8): error TS2307: Cannot find module '@/lib/code-studio/core/module-profile' or its corresponding type declarations.
+errors.txt:842:renderer/components/code-studio/ModuleProfilePanel.tsx(210,16): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ public: Element; internal: Element; private: Element; }'.
+errors.txt:843:renderer/components/code-studio/MultiTerminal.tsx(9,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:844:renderer/components/code-studio/PackagePanel.tsx(12,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:845:renderer/components/code-studio/PackagePanel.tsx(13,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:846:renderer/components/code-studio/PanelImports.ts(14,16): error TS2307: Cannot find module '@/components/code-studio/ChatPanel' or its corresponding type declarations.
+errors.txt:847:renderer/components/code-studio/PanelImports.ts(20,16): error TS2307: Cannot find module '@/components/code-studio/PipelinePanel' or its corresponding type declarations.
+errors.txt:848:renderer/components/code-studio/PanelImports.ts(26,16): error TS2307: Cannot find module '@/components/code-studio/GitPanel' or its corresponding type declarations.
+errors.txt:849:renderer/components/code-studio/PanelImports.ts(32,16): error TS2307: Cannot find module '@/components/code-studio/DeployPanel' or its corresponding type declarations.
+errors.txt:850:renderer/components/code-studio/PanelImports.ts(38,16): error TS2307: Cannot find module '@/components/code-studio/SearchPanel' or its corresponding type declarations.
+errors.txt:851:renderer/components/code-studio/PanelImports.ts(44,16): error TS2307: Cannot find module '@/components/code-studio/AutopilotPanel' or its corresponding type declarations.
+errors.txt:852:renderer/components/code-studio/PanelImports.ts(50,16): error TS2307: Cannot find module '@/components/code-studio/AgentPanel' or its corresponding type declarations.
+errors.txt:853:renderer/components/code-studio/PanelImports.ts(56,16): error TS2307: Cannot find module '@/components/code-studio/ComposerPanel' or its corresponding type declarations.
+errors.txt:854:renderer/components/code-studio/PanelImports.ts(62,16): error TS2307: Cannot find module '@/components/code-studio/ReviewCenter' or its corresponding type declarations.
+errors.txt:855:renderer/components/code-studio/PanelImports.ts(68,16): error TS2307: Cannot find module '@/components/code-studio/PreviewPanel' or its corresponding type declarations.
+errors.txt:856:renderer/components/code-studio/PanelImports.ts(74,16): error TS2307: Cannot find module '@/components/code-studio/OutlinePanel' or its corresponding type declarations.
+errors.txt:857:renderer/components/code-studio/PanelImports.ts(80,16): error TS2307: Cannot find module '@/components/code-studio/TemplateGallery' or its corresponding type declarations.
+errors.txt:858:renderer/components/code-studio/PanelImports.ts(86,16): error TS2307: Cannot find module '@/components/code-studio/SettingsPanel' or its corresponding type declarations.
+errors.txt:859:renderer/components/code-studio/PanelImports.ts(92,16): error TS2307: Cannot find module '@/components/code-studio/PackagePanel' or its corresponding type declarations.
+errors.txt:860:renderer/components/code-studio/PanelImports.ts(98,16): error TS2307: Cannot find module '@/components/code-studio/EvaluationPanel' or its corresponding type declarations.
+errors.txt:861:renderer/components/code-studio/PanelImports.ts(104,16): error TS2307: Cannot find module '@/components/code-studio/CollabPanel' or its corresponding type declarations.
+errors.txt:862:renderer/components/code-studio/PanelImports.ts(110,16): error TS2307: Cannot find module '@/components/code-studio/CodeCreatorPanel' or its corresponding type declarations.
+errors.txt:863:renderer/components/code-studio/PanelImports.ts(122,16): error TS2307: Cannot find module '@/components/code-studio/TerminalPanel' or its corresponding type declarations.
+errors.txt:864:renderer/components/code-studio/PanelImports.ts(128,16): error TS2307: Cannot find module '@/components/code-studio/MultiTerminal' or its corresponding type declarations.
+errors.txt:865:renderer/components/code-studio/PanelImports.ts(134,16): error TS2307: Cannot find module '@/components/code-studio/DatabasePanel' or its corresponding type declarations.
+errors.txt:866:renderer/components/code-studio/PanelImports.ts(140,16): error TS2307: Cannot find module '@/components/code-studio/DiffEditorPanel' or its corresponding type declarations.
+errors.txt:867:renderer/components/code-studio/PanelImports.ts(146,16): error TS2307: Cannot find module '@/components/code-studio/GitGraph' or its corresponding type declarations.
+errors.txt:868:renderer/components/code-studio/PanelImports.ts(152,16): error TS2307: Cannot find module '@/components/code-studio/AIHub' or its corresponding type declarations.
+errors.txt:869:renderer/components/code-studio/PanelImports.ts(158,16): error TS2307: Cannot find module '@/components/code-studio/AIWorkspace' or its corresponding type declarations.
+errors.txt:870:renderer/components/code-studio/PanelImports.ts(164,16): error TS2307: Cannot find module '@/components/code-studio/CanvasPanel' or its corresponding type declarations.
+errors.txt:871:renderer/components/code-studio/PanelImports.ts(170,16): error TS2307: Cannot find module '@/components/code-studio/ProgressDashboard' or its corresponding type declarations.
+errors.txt:872:renderer/components/code-studio/PanelImports.ts(176,16): error TS2307: Cannot find module '@/components/code-studio/OnboardingGuide' or its corresponding type declarations.
+errors.txt:873:renderer/components/code-studio/PanelImports.ts(182,16): error TS2307: Cannot find module '@/components/code-studio/MergeConflictEditor' or its corresponding type declarations.
+errors.txt:874:renderer/components/code-studio/PanelImports.ts(188,16): error TS2307: Cannot find module '@/components/code-studio/ProjectSwitcher' or its corresponding type declarations.
+errors.txt:875:renderer/components/code-studio/PanelImports.ts(194,16): error TS2307: Cannot find module '@/components/code-studio/RecentFiles' or its corresponding type declarations.
+errors.txt:876:renderer/components/code-studio/PanelImports.ts(200,16): error TS2307: Cannot find module '@/components/code-studio/SymbolPalette' or its corresponding type declarations.
+errors.txt:877:renderer/components/code-studio/PanelImports.ts(206,16): error TS2307: Cannot find module '@/components/code-studio/KeybindingsPanel' or its corresponding type declarations.
+errors.txt:878:renderer/components/code-studio/PanelImports.ts(212,16): error TS2307: Cannot find module '@/components/code-studio/QuickVerify' or its corresponding type declarations.
+errors.txt:879:renderer/components/code-studio/PanelImports.ts(218,16): error TS2307: Cannot find module '@/components/home/APIKeySlotManager' or its corresponding type declarations.
+errors.txt:880:renderer/components/code-studio/PanelImports.ts(224,16): error TS2307: Cannot find module '@/components/code-studio/PreviewNetworkTab' or its corresponding type declarations.
+errors.txt:881:renderer/components/code-studio/PanelImports.ts(230,16): error TS2307: Cannot find module '@/components/code-studio/QuickActions' or its corresponding type declarations.
+errors.txt:882:renderer/components/code-studio/PanelImports.ts(236,16): error TS2307: Cannot find module '@/components/code-studio/ModelSwitcher' or its corresponding type declarations.
+errors.txt:883:renderer/components/code-studio/PanelImports.ts(242,16): error TS2307: Cannot find module '@/components/code-studio/AuditPanel' or its corresponding type declarations.
+errors.txt:884:renderer/components/code-studio/PanelImports.ts(248,16): error TS2307: Cannot find module '@/components/code-studio/MultiFileDiff' or its corresponding type declarations.
+errors.txt:885:renderer/components/code-studio/PanelImports.ts(254,16): error TS2307: Cannot find module '@/components/code-studio/DebugPanel' or its corresponding type declarations.
+errors.txt:886:renderer/components/code-studio/PanelImports.ts(260,16): error TS2307: Cannot find module '@/components/code-studio/NamingDictPanel' or its corresponding type declarations.
+errors.txt:887:renderer/components/code-studio/PanelImports.ts(266,16): error TS2307: Cannot find module '@/components/code-studio/DependencyGraph' or its corresponding type declarations.
+errors.txt:888:renderer/components/code-studio/PanelImports.ts(272,16): error TS2307: Cannot find module '@/components/code-studio/ReviewBoard' or its corresponding type declarations.
+errors.txt:889:renderer/components/code-studio/PanelImports.ts(278,16): error TS2307: Cannot find module '@/components/code-studio/ModuleProfilePanel' or its corresponding type declarations.
+errors.txt:890:renderer/components/code-studio/PanelImports.ts(284,16): error TS2307: Cannot find module '@/components/code-studio/CognitiveLoadPanel' or its corresponding type declarations.
+errors.txt:891:renderer/components/code-studio/PanelImports.ts(290,16): error TS2307: Cannot find module '@/components/code-studio/ADRPanel' or its corresponding type declarations.
+errors.txt:892:renderer/components/code-studio/PanelImports.ts(296,16): error TS2307: Cannot find module '@/components/code-studio/RhythmPanel' or its corresponding type declarations.
+errors.txt:893:renderer/components/code-studio/PanelImports.ts(302,16): error TS2307: Cannot find module '@/components/code-studio/MigrationAuditPanel' or its corresponding type declarations.
+errors.txt:894:renderer/components/code-studio/PanelImports.ts(308,16): error TS2307: Cannot find module '@/components/code-studio/SnippetMarket' or its corresponding type declarations.
+errors.txt:895:renderer/components/code-studio/PanelImports.ts(328,16): error TS2307: Cannot find module '@/components/code-studio/CommandPalette' or its corresponding type declarations.
+errors.txt:896:renderer/components/code-studio/PanelImports.ts(333,16): error TS2307: Cannot find module '@/components/code-studio/DiffViewer' or its corresponding type declarations.
+errors.txt:897:renderer/components/code-studio/PanelImports.ts(338,16): error TS2307: Cannot find module '@/components/code-studio/StatusBar' or its corresponding type declarations.
+errors.txt:898:renderer/components/code-studio/PanelImports.ts(343,16): error TS2307: Cannot find module '@/components/code-studio/MobileLayout' or its corresponding type declarations.
+errors.txt:899:renderer/components/code-studio/PanelImports.ts(348,16): error TS2307: Cannot find module '@/components/code-studio/TabletLayout' or its corresponding type declarations.
+errors.txt:900:renderer/components/code-studio/PanelImports.ts(353,16): error TS2307: Cannot find module '@/components/code-studio/EditorTabs' or its corresponding type declarations.
+errors.txt:901:renderer/components/code-studio/PanelImports.ts(358,16): error TS2307: Cannot find module '@/components/code-studio/ProblemsPanel' or its corresponding type declarations.
+errors.txt:902:renderer/components/code-studio/PanelImports.ts(363,16): error TS2307: Cannot find module '@/components/code-studio/QuickOpen' or its corresponding type declarations.
+errors.txt:903:renderer/components/code-studio/PanelImports.ts(379,16): error TS2307: Cannot find module '@/components/code-studio/FileExplorer' or its corresponding type declarations.
+errors.txt:904:renderer/components/code-studio/PanelImports.ts(385,16): error TS2307: Cannot find module '@/components/code-studio/ContextMenu' or its corresponding type declarations.
+errors.txt:905:renderer/components/code-studio/PanelImports.ts(391,16): error TS2307: Cannot find module '@/components/code-studio/InputDialog' or its corresponding type declarations.
+errors.txt:906:renderer/components/code-studio/PanelImports.ts(397,16): error TS2307: Cannot find module '@/components/code-studio/ResizeHandle' or its corresponding type declarations.
+errors.txt:907:renderer/components/code-studio/PanelImports.ts(403,16): error TS2307: Cannot find module '@/components/code-studio/EditorGroup' or its corresponding type declarations.
+errors.txt:908:renderer/components/code-studio/PanelImports.ts(409,16): error TS2307: Cannot find module '@/components/code-studio/SplitTerminal' or its corresponding type declarations.
+errors.txt:909:renderer/components/code-studio/PanelImports.ts(415,16): error TS2307: Cannot find module '@/components/code-studio/AgentDiffPreview' or its corresponding type declarations.
+errors.txt:910:renderer/components/code-studio/PanelImports.ts(421,16): error TS2307: Cannot find module '@/components/code-studio/CodeBlockActions' or its corresponding type declarations.
+errors.txt:911:renderer/components/code-studio/PanelImports.ts(427,16): error TS2307: Cannot find module '@/components/code-studio/InlineEditWidget' or its corresponding type declarations.
+errors.txt:912:renderer/components/code-studio/PanelImports.ts(433,16): error TS2307: Cannot find module '@/components/code-studio/LanguageSwitch' or its corresponding type declarations.
+errors.txt:913:renderer/components/code-studio/PanelImports.ts(439,16): error TS2307: Cannot find module '@/components/code-studio/ProjectSpecForm' or its corresponding type declarations.
+errors.txt:914:renderer/components/code-studio/PanelImports.ts(445,16): error TS2307: Cannot find module '@/components/code-studio/WelcomeTab' or its corresponding type declarations.
+errors.txt:915:renderer/components/code-studio/PanelImports.ts(451,16): error TS2307: Cannot find module '@/components/code-studio/ActivityBar' or its corresponding type declarations.
+errors.txt:916:renderer/components/code-studio/PipelinePanel.tsx(45,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:917:renderer/components/code-studio/PipelinePanel.tsx(46,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:918:renderer/components/code-studio/PreviewPanel.tsx(42,8): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:919:renderer/components/code-studio/PreviewPanel.tsx(43,64): error TS2307: Cannot find module '@/lib/code-studio/features/preview-hmr' or its corresponding type declarations.
+errors.txt:920:renderer/components/code-studio/PreviewPanel.tsx(44,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:921:renderer/components/code-studio/PreviewPanel.tsx(45,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:922:renderer/components/code-studio/QuickOpen.tsx(9,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:923:renderer/components/code-studio/QuickOpen.tsx(10,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:924:renderer/components/code-studio/QuickVerify.tsx(10,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:925:renderer/components/code-studio/QuickVerify.tsx(11,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:926:renderer/components/code-studio/RecentFiles.tsx(5,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:927:renderer/components/code-studio/SearchPanel.tsx(8,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:928:renderer/components/code-studio/SearchPanel.tsx(9,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:929:renderer/components/code-studio/SearchPanel.tsx(14,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:930:renderer/components/code-studio/SettingsPanel.tsx(10,63): error TS2307: Cannot find module '@/lib/noa/lora-swap' or its corresponding type declarations.
+errors.txt:931:renderer/components/code-studio/SplitTerminal.tsx(9,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:932:renderer/components/code-studio/StatusBar.tsx(16,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:933:renderer/components/code-studio/StatusBar.tsx(18,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:934:renderer/components/code-studio/SymbolPalette.tsx(9,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:935:renderer/components/code-studio/TerminalPanel.tsx(51,8): error TS2307: Cannot find module '@/lib/code-studio/features/terminal' or its corresponding type declarations.
+errors.txt:936:renderer/components/code-studio/TerminalPanel.tsx(55,8): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:937:renderer/components/code-studio/TerminalPanel.tsx(56,27): error TS2307: Cannot find module '@/lib/code-studio/core/ansi' or its corresponding type declarations.
+errors.txt:938:renderer/components/code-studio/TerminalPanel.tsx(57,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:939:renderer/components/code-studio/TerminalPanel.tsx(58,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:940:renderer/components/code-studio/TerminalPanel.tsx(68,8): error TS2307: Cannot find module '@/lib/code-studio/features/terminal-emulator' or its corresponding type declarations.
+errors.txt:941:renderer/components/code-studio/TerminalPanel.tsx(69,58): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:942:renderer/components/code-studio/TerminalPanel.tsx(70,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:943:renderer/components/code-studio/TerminalPanel.tsx(288,15): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:944:renderer/components/code-studio/TerminalPanel.tsx(343,33): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:945:renderer/components/code-studio/TerminalPanel.tsx(443,40): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:946:renderer/components/code-studio/TerminalPanel.tsx(482,12): error TS7006: Parameter 'fileName' implicitly has an 'any' type.
+errors.txt:947:renderer/components/code-studio/TerminalPanel.tsx(490,12): error TS7006: Parameter 'prompt' implicitly has an 'any' type.
+errors.txt:948:renderer/components/code-studio/TerminalPanel.tsx(544,34): error TS7006: Parameter 's' implicitly has an 'any' type.
+errors.txt:949:renderer/components/code-studio/TerminalPanel.tsx(668,40): error TS7006: Parameter 'span' implicitly has an 'any' type.
+errors.txt:950:renderer/components/code-studio/TerminalPanel.tsx(668,46): error TS7006: Parameter 'j' implicitly has an 'any' type.
+errors.txt:951:renderer/components/code-studio/ThemeToggle.tsx(10,42): error TS2307: Cannot find module '@/lib/theme-controller' or its corresponding type declarations.
+errors.txt:952:renderer/components/code-studio/WelcomeScreen.tsx(10,25): error TS2307: Cannot find module '@/lib/LangContext' or its corresponding type declarations.
+errors.txt:953:renderer/components/code-studio/WelcomeScreen.tsx(11,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:954:renderer/components/code-studio/WelcomeScreen.tsx(12,30): error TS2307: Cannot find module '@/lib/studio-translations' or its corresponding type declarations.
+errors.txt:955:renderer/components/code-studio/WelcomeScreen.tsx(13,30): error TS2307: Cannot find module '@/lib/code-studio/core/store' or its corresponding type declarations.
+errors.txt:956:renderer/components/code-studio/WelcomeScreen.tsx(14,34): error TS2307: Cannot find module '@/types/i18n' or its corresponding type declarations.
+errors.txt:957:renderer/components/code-studio/WelcomeScreen.tsx(56,26): error TS7006: Parameter 'projects' implicitly has an 'any' type.
+errors.txt:958:renderer/components/code-studio/WelcomeTab.tsx(9,32): error TS2307: Cannot find module '@/lib/use-code-studio-translations' or its corresponding type declarations.
+errors.txt:959:renderer/components/ErrorBoundary.tsx(11,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:960:renderer/components/ErrorBoundary.tsx(13,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:961:renderer/components/ErrorBoundary.tsx(14,34): error TS2307: Cannot find module '@/lib/studio-types' or its corresponding type declarations.
+errors.txt:962:renderer/components/ui/ActionBar.tsx(77,63): error TS2307: Cannot find module '@/lib/web-features' or its corresponding type declarations.
+errors.txt:963:renderer/components/ui/ActionBar.tsx(86,43): error TS2307: Cannot find module '@/lib/web-features' or its corresponding type declarations.
+errors.txt:964:renderer/components/ui/ActionBar.tsx(92,43): error TS2307: Cannot find module '@/lib/web-features' or its corresponding type declarations.
+errors.txt:1248:renderer/hooks/useAIProvider.ts(55,8): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1249:renderer/hooks/useCodeStudioAgent.ts(14,8): error TS2307: Cannot find module '@/lib/code-studio/ai/agents' or its corresponding type declarations.
+errors.txt:1250:renderer/hooks/useCodeStudioAgent.ts(15,33): error TS2307: Cannot find module '@/types/code-studio-agent' or its corresponding type declarations.
+errors.txt:1251:renderer/hooks/useCodeStudioChat.ts(12,42): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1252:renderer/hooks/useCodeStudioChat.ts(13,74): error TS2307: Cannot find module '@/lib/code-studio/core/store' or its corresponding type declarations.
+errors.txt:1253:renderer/hooks/useCodeStudioChat.ts(14,39): error TS2307: Cannot find module '@/lib/code-studio/core/design-system-spec' or its corresponding type declarations.
+errors.txt:1254:renderer/hooks/useCodeStudioChat.ts(138,19): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+errors.txt:1255:renderer/hooks/useCodeStudioChat.ts(188,31): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1256:renderer/hooks/useCodeStudioComposer.ts(6,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1257:renderer/hooks/useCodeStudioComposer.ts(7,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:1258:renderer/hooks/useCodeStudioComposer.ts(8,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1259:renderer/hooks/useCodeStudioComposer.ts(13,8): error TS2307: Cannot find module '@/lib/code-studio/core/composer-state' or its corresponding type declarations.
+errors.txt:1260:renderer/hooks/useCodeStudioComposer.ts(15,35): error TS2307: Cannot find module '@/lib/code-studio/core/composer-state' or its corresponding type declarations.
+errors.txt:1261:renderer/hooks/useCodeStudioComposer.ts(16,53): error TS2307: Cannot find module '@/lib/code-studio/core/composer-state' or its corresponding type declarations.
+errors.txt:1262:renderer/hooks/useCodeStudioComposer.ts(111,21): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+errors.txt:1263:renderer/hooks/useCodeStudioFileSystem.ts(12,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1264:renderer/hooks/useCodeStudioFileSystem.ts(13,32): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1265:renderer/hooks/useCodeStudioFileSystem.ts(14,44): error TS2307: Cannot find module '@/lib/code-studio/core/store' or its corresponding type declarations.
+errors.txt:1266:renderer/hooks/useCodeStudioPanels.ts(13,42): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1267:renderer/hooks/useCodeStudioPanels.ts(14,32): error TS2307: Cannot find module '@/lib/code-studio/ai/agents' or its corresponding type declarations.
+errors.txt:1268:renderer/hooks/useCodeStudioPanels.ts(15,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1269:renderer/hooks/useCodeStudioPanels.ts(16,51): error TS2307: Cannot find module '@/components/code-studio/CanvasPanel' or its corresponding type declarations.
+errors.txt:1270:renderer/hooks/useCodeStudioPanels.ts(17,34): error TS2307: Cannot find module '@/components/code-studio/SymbolPalette' or its corresponding type declarations.
+errors.txt:1271:renderer/hooks/useCodeStudioPanels.ts(18,32): error TS2307: Cannot find module '@/components/code-studio/AIHub' or its corresponding type declarations.
+errors.txt:1272:renderer/hooks/useCodeStudioPanels.ts(19,56): error TS2307: Cannot find module '@/components/code-studio/AIWorkspace' or its corresponding type declarations.
+errors.txt:1273:renderer/hooks/useCodeStudioPanels.ts(20,48): error TS2307: Cannot find module '@/components/code-studio/DatabasePanel' or its corresponding type declarations.
+errors.txt:1274:renderer/hooks/useCodeStudioPanels.ts(21,36): error TS2307: Cannot find module '@/components/code-studio/MergeConflictEditor' or its corresponding type declarations.
+errors.txt:1275:renderer/hooks/useCodeStudioPanels.ts(22,80): error TS2307: Cannot find module '@/lib/code-studio/ai/ai-features' or its corresponding type declarations.
+errors.txt:1276:renderer/hooks/useCodeStudioPanels.ts(435,37): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1277:renderer/hooks/useDesktopProject.ts(14,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1278:renderer/hooks/useDesktopProject.ts(15,32): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:1919:renderer/lib/ai-providers.ts(5,54): error TS2307: Cannot find module './token-utils' or its corresponding type declarations.
+errors.txt:1920:renderer/lib/ai-providers.ts(6,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:1921:renderer/lib/ai-providers.ts(7,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:1922:renderer/lib/ai-providers.ts(8,34): error TS2307: Cannot find module '@/lib/firebase' or its corresponding type declarations.
+errors.txt:1923:renderer/lib/ai-providers.ts(9,28): error TS2307: Cannot find module '@eh/quill-engine/ari-engine' or its corresponding type declarations.
+errors.txt:1944:renderer/lib/code-studio/ai/agents.ts(5,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1945:renderer/lib/code-studio/ai/agents.ts(6,54): error TS2307: Cannot find module '@/lib/multi-key-bridge' or its corresponding type declarations.
+errors.txt:1946:renderer/lib/code-studio/ai/agents.ts(7,53): error TS2307: Cannot find module '@/lib/multi-key-manager' or its corresponding type declarations.
+errors.txt:1947:renderer/lib/code-studio/ai/agents.ts(8,51): error TS2307: Cannot find module '@/lib/code-studio/core/architecture-spec' or its corresponding type declarations.
+errors.txt:1948:renderer/lib/code-studio/ai/agents.ts(9,36): error TS2307: Cannot find module '@/lib/code-studio/core/design-system-spec' or its corresponding type declarations.
+errors.txt:1949:renderer/lib/code-studio/ai/agents.ts(10,36): error TS2307: Cannot find module '@/lib/code-studio/core/design-linter' or its corresponding type declarations.
+errors.txt:1950:renderer/lib/code-studio/ai/agents.ts(11,72): error TS2307: Cannot find module '@/lib/code-studio/ai/idiom-presets' or its corresponding type declarations.
+errors.txt:1951:renderer/lib/code-studio/ai/agents.ts(14,46): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1952:renderer/lib/code-studio/ai/agents.ts(16,48): error TS2307: Cannot find module '@/types/code-studio-agent' or its corresponding type declarations.
+errors.txt:1953:renderer/lib/code-studio/ai/ai-features.ts(6,58): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1954:renderer/lib/code-studio/ai/ai-features.ts(7,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:1955:renderer/lib/code-studio/ai/ai-features.ts(8,67): error TS2307: Cannot find module '@eh/quill-engine/quality-rules-from-catalog' or its corresponding type declarations.
+errors.txt:1956:renderer/lib/code-studio/ai/ai-features.ts(9,28): error TS2307: Cannot find module '@eh/quill-engine/ari-engine' or its corresponding type declarations.
+errors.txt:1957:renderer/lib/code-studio/ai/ai-features.ts(518,38): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1958:renderer/lib/code-studio/ai/ai-features.ts(544,32): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1959:renderer/lib/code-studio/ai/ai-features.ts(552,30): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1960:renderer/lib/code-studio/ai/ai-features.ts(555,32): error TS7006: Parameter 'm' implicitly has an 'any' type.
+errors.txt:1961:renderer/lib/code-studio/ai/autopilot.ts(5,58): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1962:renderer/lib/code-studio/ai/autopilot.ts(6,39): error TS2307: Cannot find module '@/lib/code-studio/core/design-system-spec' or its corresponding type declarations.
+errors.txt:1963:renderer/lib/code-studio/ai/autopilot.ts(7,41): error TS2307: Cannot find module '@eh/quill-engine/quality-rules-from-catalog' or its corresponding type declarations.
+errors.txt:1964:renderer/lib/code-studio/ai/autopilot.ts(547,17): error TS7006: Parameter 'text' implicitly has an 'any' type.
+errors.txt:1965:renderer/lib/code-studio/ai/autopilot.ts(599,17): error TS7006: Parameter 'text' implicitly has an 'any' type.
+errors.txt:1966:renderer/lib/code-studio/ai/ghost.ts(9,58): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:1967:renderer/lib/code-studio/ai/ghost.ts(406,25): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:1968:renderer/lib/code-studio/ai/ghost.ts(408,11): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:1969:renderer/lib/code-studio/ai/ghost.ts(410,52): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:1970:renderer/lib/code-studio/ai/ghost.ts(410,105): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:1971:renderer/lib/code-studio/ai/ghost.ts(410,165): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2171:renderer/lib/code-studio/core/architecture-spec.ts(6,38): error TS2307: Cannot find module '@/lib/code-studio/core/pipeline-execution-model' or its corresponding type declarations.
+errors.txt:2172:renderer/lib/code-studio/core/architecture-spec.ts(9,4): error TS7006: Parameter 't' implicitly has an 'any' type.
+errors.txt:2173:renderer/lib/code-studio/core/composer-state.ts(1,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2174:renderer/lib/code-studio/core/cross-file.ts(9,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2175:renderer/lib/code-studio/core/cross-file.ts(11,29): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2176:renderer/lib/code-studio/core/cross-file.ts(12,26): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2177:renderer/lib/code-studio/core/cross-file.ts(13,25): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2178:renderer/lib/code-studio/core/cross-file.ts(14,19): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2179:renderer/lib/code-studio/core/cross-file.ts(134,19): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2180:renderer/lib/code-studio/core/cross-file.ts(144,29): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2181:renderer/lib/code-studio/core/cross-file.ts(169,19): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2182:renderer/lib/code-studio/core/cross-file.ts(179,29): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2183:renderer/lib/code-studio/core/cross-file.ts(207,17): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2184:renderer/lib/code-studio/core/cross-file.ts(330,25): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2185:renderer/lib/code-studio/core/cross-file.ts(403,31): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2186:renderer/lib/code-studio/core/cross-file.ts(403,38): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2187:renderer/lib/code-studio/core/cross-file.ts(421,35): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2188:renderer/lib/code-studio/core/cross-file.ts(421,42): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2189:renderer/lib/code-studio/core/cross-file.ts(450,31): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2190:renderer/lib/code-studio/core/cross-file.ts(450,38): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2191:renderer/lib/code-studio/core/cross-file.ts(458,35): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2192:renderer/lib/code-studio/core/cross-file.ts(458,42): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2193:renderer/lib/code-studio/core/cross-file.ts(466,32): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2194:renderer/lib/code-studio/core/cross-file.ts(466,39): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2195:renderer/lib/code-studio/core/cross-file.ts(466,49): error TS7006: Parameter 'newName' implicitly has an 'any' type.
+errors.txt:2196:renderer/lib/code-studio/core/cross-file.ts(472,35): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2197:renderer/lib/code-studio/core/cross-file.ts(494,35): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2198:renderer/lib/code-studio/core/cross-file.ts(494,42): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2199:renderer/lib/code-studio/core/cross-file.ts(494,52): error TS7006: Parameter '_token' implicitly has an 'any' type.
+errors.txt:2200:renderer/lib/code-studio/core/panel-registry.ts(1,20): error TS2307: Cannot find module '@/lib/i18n' or its corresponding type declarations.
+errors.txt:2201:renderer/lib/code-studio/core/project-spec-bridge.ts(1,34): error TS2307: Cannot find module '@/lib/code-studio/core/project-spec' or its corresponding type declarations.
+errors.txt:2202:renderer/lib/code-studio/core/project-spec-bridge.ts(2,33): error TS2307: Cannot find module '@/lib/code-studio/core/project-spec' or its corresponding type declarations.
+errors.txt:2203:renderer/lib/code-studio/core/project-spec-bridge.ts(3,89): error TS2307: Cannot find module '@/lib/code-studio/core/design-presets' or its corresponding type declarations.
+errors.txt:2204:renderer/lib/code-studio/core/store.ts(5,51): error TS2307: Cannot find module './types' or its corresponding type declarations.
+errors.txt:2205:renderer/lib/code-studio/core/store.ts(6,50): error TS2307: Cannot find module './types' or its corresponding type declarations.
+errors.txt:2206:renderer/lib/code-studio/core/store.ts(7,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2240:renderer/lib/code-studio/editor/editor-features.ts(7,30): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2241:renderer/lib/code-studio/editor/editor-features.ts(59,35): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2242:renderer/lib/code-studio/editor/editor-features.ts(159,28): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2243:renderer/lib/code-studio/editor/editor-features.ts(159,35): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2244:renderer/lib/code-studio/editor/editor-features.ts(211,36): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2245:renderer/lib/code-studio/editor/editor-features.ts(230,9): error TS7006: Parameter 'ed' implicitly has an 'any' type.
+errors.txt:2246:renderer/lib/code-studio/editor/editor-features.ts(384,24): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2247:renderer/lib/code-studio/editor/editor-features.ts(384,31): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2248:renderer/lib/code-studio/editor/editor-features.ts(384,41): error TS7006: Parameter 'newName' implicitly has an 'any' type.
+errors.txt:2249:renderer/lib/code-studio/editor/editor-features.ts(414,27): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2250:renderer/lib/code-studio/editor/editor-features.ts(414,34): error TS7006: Parameter 'position' implicitly has an 'any' type.
+errors.txt:2251:renderer/lib/code-studio/editor/editor-features.ts(457,9): error TS7006: Parameter 'ed' implicitly has an 'any' type.
+errors.txt:2252:renderer/lib/code-studio/editor/editor-features.ts(480,24): error TS7006: Parameter 'model' implicitly has an 'any' type.
+errors.txt:2253:renderer/lib/code-studio/editor/editor-features.ts(480,31): error TS7006: Parameter 'range' implicitly has an 'any' type.
+errors.txt:2254:renderer/lib/code-studio/editor/editor-surface-context-menu.ts(6,30): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2255:renderer/lib/code-studio/editor/editor-surface-context-menu.ts(12,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+errors.txt:2256:renderer/lib/code-studio/editor/model-path.ts(1,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:2257:renderer/lib/code-studio/editor/monaco-setup.ts(6,30): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2258:renderer/lib/code-studio/editor/ts-intellisense.ts(8,30): error TS2307: Cannot find module 'monaco-editor' or its corresponding type declarations.
+errors.txt:2493:renderer/lib/code-studio/features/app-generator.ts(5,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:2494:renderer/lib/code-studio/features/app-generator.ts(6,39): error TS2307: Cannot find module '@/lib/code-studio/core/design-system-spec' or its corresponding type declarations.
+errors.txt:2495:renderer/lib/code-studio/features/app-generator.ts(7,49): error TS2307: Cannot find module '@/lib/code-studio/core/design-presets' or its corresponding type declarations.
+errors.txt:2496:renderer/lib/code-studio/features/app-generator.ts(168,15): error TS7006: Parameter 't' implicitly has an 'any' type.
+errors.txt:2497:renderer/lib/code-studio/features/git.ts(7,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2498:renderer/lib/code-studio/features/sandbox.ts(5,31): error TS2307: Cannot find module '../types' or its corresponding type declarations.
+errors.txt:2499:renderer/lib/code-studio/features/sandbox.ts(6,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:2500:renderer/lib/code-studio/features/sandbox.ts(216,15): error TS7006: Parameter 't' implicitly has an 'any' type.
+errors.txt:2501:renderer/lib/code-studio/features/terminal-ai.ts(7,28): error TS2307: Cannot find module '@/lib/ai-providers' or its corresponding type declarations.
+errors.txt:2502:renderer/lib/code-studio/features/terminal-ai.ts(8,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2503:renderer/lib/code-studio/features/terminal-emulator.ts(5,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:2504:renderer/lib/code-studio/features/terminal-emulator.ts(6,38): error TS2307: Cannot find module '@/lib/code-studio/core/shell-parser' or its corresponding type declarations.
+errors.txt:2505:renderer/lib/code-studio/features/terminal-emulator.ts(478,31): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:2506:renderer/lib/code-studio/features/terminal-emulator.ts(478,34): error TS7006: Parameter 'i' implicitly has an 'any' type.
+errors.txt:2507:renderer/lib/code-studio/features/terminal-emulator.ts(547,174): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ redirect_out: "out"; redirect_append: "append"; redirect_err: "err"; }'.
+errors.txt:2508:renderer/lib/code-studio/features/terminal.ts(8,31): error TS2307: Cannot find module '@eh/quill-engine/types' or its corresponding type declarations.
+errors.txt:2509:renderer/lib/code-studio/features/terminal.ts(121,30): error TS7006: Parameter 'l' implicitly has an 'any' type.
+errors.txt:2510:renderer/lib/code-studio/features/terminal.ts(121,33): error TS7006: Parameter 'i' implicitly has an 'any' type.
+errors.txt:2511:renderer/lib/code-studio/harness/build-test-loop.ts(9,43): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:2512:renderer/lib/code-studio/harness/build-test-loop.ts(11,60): error TS2307: Cannot find module '@/lib/code-studio/harness/adversarial-core' or its corresponding type declarations.
+errors.txt:2513:renderer/lib/code-studio/harness/dynamic-executor.ts(12,43): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:2514:renderer/lib/code-studio/harness/index.ts(37,43): error TS2307: Cannot find module '@/lib/code-studio/features/webcontainer' or its corresponding type declarations.
+errors.txt:2515:renderer/lib/env.ts(5,24): error TS2307: Cannot find module '@/lib/logger' or its corresponding type declarations.
+errors.txt:2516:renderer/lib/i18n.ts(3,15): error TS2614: Module '"./LangContext"' has no exported member 'Lang'. Did you mean to use 'import Lang from "./LangContext"' instead?
+

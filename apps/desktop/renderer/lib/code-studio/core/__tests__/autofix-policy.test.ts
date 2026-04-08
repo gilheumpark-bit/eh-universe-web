@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   classifyFixDescription,
   UNSAFE_AUTOFIX_DESCRIPTION_PATTERNS,

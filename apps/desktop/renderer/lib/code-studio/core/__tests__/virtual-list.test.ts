@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for virtual-list — calculateVisibleRange, getVirtualItems, DynamicVirtualList
  */

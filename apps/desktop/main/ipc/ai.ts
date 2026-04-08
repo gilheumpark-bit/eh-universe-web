@@ -93,7 +93,7 @@ const EMA_ALPHA = 0.3;
 const FAILURE_THRESHOLD = 0.4;       // close-to-open if EMA drops below
 const RECOVERY_THRESHOLD = 0.7;      // half-open to closed if EMA rises above
 const OPEN_COOLDOWN_MS = 30_000;
-const HALF_OPEN_PROBE_INTERVAL = 5;
+const _HALF_OPEN_PROBE_INTERVAL = 5;
 
 const ari = new Map<AIProvider, ARIState>();
 

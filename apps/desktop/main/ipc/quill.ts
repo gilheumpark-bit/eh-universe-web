@@ -180,7 +180,7 @@ export function notifyFileChange(rootPath: string, filePath: string): void {
 // PART 3 — Worker pool stub (tier C heavy scans)
 // ============================================================
 
-async function runFullProjectScan(rootPath: string): Promise<{ scanned: number; issues: number }> {
+async function runFullProjectScan(_rootPath: string): Promise<{ scanned: number; issues: number }> {
   // STUB: future implementation will use child_process worker pool
   // (apps/desktop/main/workers/quill-worker.ts) to run all detectors
   // in parallel against every tracked file.

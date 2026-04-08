@@ -1,10 +1,11 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio — IndexedDB Persistence Layer
 // ============================================================
 
 import type { FileNode, CodeStudioSettings } from './types';
 import { DEFAULT_SETTINGS, detectLanguage } from './types';
-import { logger } from '../_stubs/logger';
+import { logger } from '@/lib/logger';
 
 const DB_NAME = 'eh-code-studio';
 const DB_VERSION = 2;

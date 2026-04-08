@@ -101,6 +101,65 @@ function analyzeGeneration(code: string, _language: string): PipelineStage {
   let score = 100;
   const lines = code.split('\n');
 
+  // ============================================================
+  // PART Structure checks (IDENTITY_SEAL)
+  // ============================================================
+  // Enforce that PART blocks do not "forget" their identity seal.
+  // This is intentionally heuristic + regex-based so it can run offline fast.
+  const partStartIdxs: Array<{ part: number; start: number }> = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\s*\/\/\s*PART\s+(\d+)\b/i);
+    if (m) {
+      const partNum = Number(m[1]);
+      if (Number.isFinite(partNum)) partStartIdxs.push({ part: partNum, start: i });
+    }
+  }
+
+  if (partStartIdxs.length > 0) {
+    for (let idx = 0; idx < partStartIdxs.length; idx++) {
+      const { part, start } = partStartIdxs[idx];
+      const end = idx + 1 < partStartIdxs.length ? partStartIdxs[idx + 1]!.start : lines.length;
+      const block = lines.slice(start, end).join('\n');
+      const sealRe = new RegExp(`IDENTITY_SEAL:\\s*PART-${part}\\b`, 'i');
+      if (!sealRe.test(block)) {
+        findings.push(`L${start + 1}: Missing IDENTITY_SEAL for PART-${part}`);
+        score -= 12;
+      }
+    }
+  }
+
+  // ============================================================
+  // Scope/Contract/Block meta checks (context leakage guardrails)
+  // ============================================================
+  const scopeStartLines: number[] = [];
+  const scopeEndLines: number[] = [];
+  const blockIdLines = new Map<string, number>();
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/\[SCOPE_START:/i.test(lines[i])) scopeStartLines.push(i + 1);
+    if (/\[SCOPE_END\]/i.test(lines[i])) scopeEndLines.push(i + 1);
+
+    const bm = lines[i].match(/@block\s*\{\s*[^}]*"id"\s*:\s*([0-9]+)\s*,/i);
+    if (bm) {
+      const id = bm[1] ?? '';
+      if (id) {
+        if (blockIdLines.has(id)) {
+          findings.push(`L${i + 1}: Duplicate @block id=${id} (first at L${blockIdLines.get(id)})`);
+          score -= 10;
+        } else {
+          blockIdLines.set(id, i + 1);
+        }
+      }
+    }
+  }
+
+  if (scopeStartLines.length !== scopeEndLines.length) {
+    findings.push(
+      `SCOPE marker mismatch: starts=${scopeStartLines.length} (e.g. L${scopeStartLines[0] ?? '?'}) ends=${scopeEndLines.length} (e.g. L${scopeEndLines[0] ?? '?'})`,
+    );
+    score -= 15;
+  }
+
   // 함수 길이 검사
   let inFunc = false;
   let funcStart = 0;

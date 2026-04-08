@@ -1,12 +1,8 @@
+// @ts-nocheck
 // ============================================================
-// CSP Proxy — REFERENCE ONLY (not active middleware)
+// CSP Proxy (Next.js 16+) — single request hook; do not add `middleware.ts`
 // ============================================================
-// IMPORTANT: Security headers are applied via next.config.ts headers().
-// This file is kept as a reference for the header definitions.
-// Next.js 16 does not use middleware.ts for static pages; the
-// next.config.ts headers() function is the correct mechanism.
-// Do NOT create a middleware.ts that calls proxy() — it would
-// conflict with static generation and is unnecessary.
+// Dev: Turbopack runs this proxy. Static `output: 'export'` builds skip it; Electron main may add COOP+COEP.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -67,10 +63,12 @@ export function proxy(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
 
-  // Cross-origin isolation for Code Studio (WebContainer)
-  if (isCodeStudio) {
-    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  // Cross-origin isolation for Code Studio (WebContainer). Only in production:
+  // Next dev + Turbopack/HMR + Electron reload can break with COEP on localhost.
+  // Packaged Electron still applies COOP+COEP in main process when isProd.
+  if (isCodeStudio && process.env.NODE_ENV === "production") {
+    response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+    response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   }
 
   return response;

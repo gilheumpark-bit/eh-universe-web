@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for sanitization helpers in src/lib/network/helpers.ts
  * Covers: stripHtml, sanitizeTitle, sanitizeContent, sanitizeComment

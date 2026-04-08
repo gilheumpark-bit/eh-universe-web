@@ -10,7 +10,7 @@
  *   PART 3 — directory watch (chokidar) with debounced batching
  */
 
-import { dialog, ipcMain, BrowserWindow, type WebContents } from 'electron';
+import { dialog, ipcMain, BrowserWindow } from 'electron';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

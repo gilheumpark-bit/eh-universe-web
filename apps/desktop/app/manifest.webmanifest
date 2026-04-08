@@ -1,0 +1,14 @@
+{
+  "name": "EH Code Studio",
+  "short_name": "Code Studio",
+  "description": "EH Code Studio — Agentic Coding Engine",
+  "start_url": "/code-studio",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#1c1a17",
+  "icons": [
+    { "src": "/icon", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-icon", "sizes": "180x180", "type": "image/png" }
+  ]
+}
+

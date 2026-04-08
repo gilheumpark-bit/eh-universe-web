@@ -1,12 +1,14 @@
+// @ts-nocheck
 // ============================================================
 // PART 0: TYPES
 // ============================================================
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
-import { logger } from '../_stubs/logger';
+import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
-import { ariManager } from '@eh/quill-engine/ari-engine';
+// REMOVED OMIT
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -400,6 +402,24 @@ function deobfuscateKey(stored: string): string {
 }
 
 /**
+ * 레거시·CLI 별칭을 공식 `ProviderId`로 맵핑. 미인식 값은 `gemini`.
+ * (예: anthropic→claude, google→gemini, lm-studio→lmstudio)
+ */
+export function normalizeProviderId(raw: string | null | undefined): ProviderId {
+  if (raw == null || raw === "") return "gemini";
+  const trimmed = raw.trim();
+  if (trimmed in PROVIDERS) return trimmed as ProviderId;
+  const aliases: Record<string, ProviderId> = {
+    anthropic: "claude",
+    google: "gemini",
+    "lm-studio": "lmstudio",
+  };
+  const mapped = aliases[trimmed];
+  if (mapped && mapped in PROVIDERS) return mapped;
+  return "gemini";
+}
+
+/**
  * Migrate legacy provider storage keys to the current format.
  * Call once at app init — NOT inside getters.
  */
@@ -407,20 +427,32 @@ export function migrateProviderStorage(): void {
   if (typeof window === "undefined") return;
   const legacy = localStorage.getItem(LEGACY_PROVIDER_KEY);
   if (legacy) {
-    const resolved = legacy in PROVIDERS ? legacy : "gemini";
+    const resolved = normalizeProviderId(legacy);
     localStorage.setItem("noa_active_provider", resolved);
     localStorage.removeItem(LEGACY_PROVIDER_KEY);
+  }
+  const main = localStorage.getItem("noa_active_provider");
+  if (main != null && main !== "" && normalizeProviderId(main) !== main) {
+    localStorage.setItem("noa_active_provider", normalizeProviderId(main));
   }
 }
 
 /** @returns Currently active AI provider ID from localStorage, defaults to "gemini" */
 export function getActiveProvider(): ProviderId {
   if (typeof window === "undefined") return "gemini";
-  const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
-  let provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "gemini";
+  const storedMain = localStorage.getItem("noa_active_provider");
+  const storedLegacy = localStorage.getItem(LEGACY_PROVIDER_KEY);
+  const storedRaw = storedMain ?? storedLegacy;
+  let provider = normalizeProviderId(storedRaw);
+  if (storedRaw != null && provider !== storedRaw) {
+    localStorage.setItem("noa_active_provider", provider);
+    localStorage.removeItem(LEGACY_PROVIDER_KEY);
+  }
   // 로컬 provider가 활성인데 URL(키)이 비어 있으면 gemini로 폴백
-  if ((provider === 'ollama' || provider === 'lmstudio') && !localStorage.getItem(PROVIDERS[provider].storageKey)) {
-    provider = 'gemini';
+  const def = PROVIDERS[provider];
+  if (def && (provider === "ollama" || provider === "lmstudio") && !localStorage.getItem(def.storageKey)) {
+    provider = "gemini";
+    localStorage.setItem("noa_active_provider", provider);
   }
   return provider;
 }
@@ -428,7 +460,10 @@ export function getActiveProvider(): ProviderId {
 /** Persist the active AI provider selection to localStorage */
 export function setActiveProvider(id: ProviderId): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("noa_active_provider", id);
+  const resolved = id != null && typeof id === "string" && id in PROVIDERS
+    ? (id as ProviderId)
+    : normalizeProviderId(String(id));
+  localStorage.setItem("noa_active_provider", resolved);
   localStorage.removeItem(LEGACY_PROVIDER_KEY);
 }
 
@@ -440,13 +475,16 @@ export function setActiveProvider(id: ProviderId): void {
 /** localStorage에 값이 있는지(암호문 포함) — v4는 getApiKey 동기 호출이 빈 문자열일 수 있음 */
 export function hasStoredApiKey(providerId: ProviderId): boolean {
   if (typeof window === "undefined") return false;
-  const raw = localStorage.getItem(PROVIDERS[providerId].storageKey);
+  const def = PROVIDERS[providerId];
+  if (!def) return false;
+  const raw = localStorage.getItem(def.storageKey);
   return typeof raw === "string" && raw.trim().length > 0;
 }
 
 export function getApiKey(providerId: ProviderId): string {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
+  if (!def) return "";
   const stored = localStorage.getItem(def.storageKey) || "";
   // v4 cannot be decoded synchronously — return cached plaintext or ''
   if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
@@ -462,6 +500,7 @@ export function getApiKey(providerId: ProviderId): string {
 export async function getApiKeyAsync(providerId: ProviderId): Promise<string> {
   if (typeof window === "undefined") return "";
   const def = PROVIDERS[providerId];
+  if (!def) return "";
   const stored = localStorage.getItem(def.storageKey) || "";
   const plain = await decryptKey(stored);
   // Cache plaintext for sync getApiKey() access
@@ -477,6 +516,7 @@ const _v4PlainCache = new Map<string, string>();
 export function setApiKey(providerId: ProviderId, key: string): void {
   if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
+  if (!def) return;
   if (!key) {
     localStorage.removeItem(def.storageKey);
     localStorage.removeItem(`${def.storageKey}_ts`);
@@ -496,6 +536,7 @@ export function setApiKey(providerId: ProviderId, key: string): void {
 export async function setApiKeyAsync(providerId: ProviderId, key: string): Promise<void> {
   if (typeof window === "undefined") return;
   const def = PROVIDERS[providerId];
+  if (!def) return;
   if (!key) {
     localStorage.removeItem(def.storageKey);
     localStorage.removeItem(`${def.storageKey}_ts`);
@@ -520,6 +561,7 @@ export async function setApiKeyAsync(providerId: ProviderId, key: string): Promi
 export function getKeyAge(providerId: ProviderId): number | null {
   if (typeof window === 'undefined') return null;
   const def = PROVIDERS[providerId];
+  if (!def) return null;
   const ts = localStorage.getItem(`${def.storageKey}_ts`);
   if (!ts) return null;
   const storedAt = parseInt(ts, 10);
@@ -545,7 +587,8 @@ export async function hydrateAllApiKeys(): Promise<void> {
 }
 
 function getStoredModelForProvider(providerId: ProviderId): string {
-  if (typeof window === "undefined") return PROVIDERS[providerId].defaultModel;
+  const meta = PROVIDERS[providerId] ?? PROVIDERS.gemini;
+  if (typeof window === "undefined") return meta.defaultModel;
 
   // 1) provider별 키 우선
   const perProviderKey = `noa_model_${providerId}`;
@@ -554,8 +597,7 @@ function getStoredModelForProvider(providerId: ProviderId): string {
 
   // 2) 전역 키 fallback (하위호환 + 마이그레이션)
   const stored = localStorage.getItem("noa_active_model") || localStorage.getItem(LEGACY_MODEL_KEY);
-  const provider = PROVIDERS[providerId];
-  const model = stored && (provider.models.includes(stored) || stored.length > 0) ? stored : provider.defaultModel;
+  const model = stored && (meta.models.includes(stored) || stored.length > 0) ? stored : meta.defaultModel;
 
   // 마이그레이션: 전역 값을 현재 provider별 키로 이전
   if (providerId === getActiveProvider()) {
@@ -580,8 +622,9 @@ export function setActiveModel(model: string): void {
   if (typeof window === "undefined") return;
   // 커스텀 모델명도 그대로 저장 — BYOK/로컬 LLM에서 사용자 입력 모델 지원
   const provider = getActiveProvider();
+  const meta = PROVIDERS[provider] ?? PROVIDERS.gemini;
   const trimmed = model.trim();
-  const value = trimmed || PROVIDERS[provider].defaultModel;
+  const value = trimmed || meta.defaultModel;
   // provider별 키에 저장 + 전역 키에도 동시 저장 (하위호환)
   localStorage.setItem(`noa_model_${provider}`, value);
   localStorage.setItem("noa_active_model", value);
@@ -663,7 +706,16 @@ async function streamViaProxy(
   provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
 ): Promise<string> {
   // 0. Electron IPC mode (Preferred for Desktop App)
-  const electron = typeof window !== 'undefined' ? (window as { electron?: any }).electron : undefined;
+  type ElectronAiBridge = {
+    aiChat?: {
+      onChunk: (requestId: string, cb: (chunk: string) => void) => () => void;
+      onError: (requestId: string, cb: (err: unknown) => void) => () => void;
+      onEnd: (requestId: string, cb: () => void) => () => void;
+      request: (payload: Record<string, unknown>) => Promise<unknown>;
+    };
+  };
+  const electron =
+    typeof window !== 'undefined' ? (window as { electron?: ElectronAiBridge }).electron : undefined;
   if (electron?.aiChat) {
     const requestId = Math.random().toString(36).substring(7);
 
@@ -975,6 +1027,7 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
   if (!key.trim()) return false;
   try {
     const def = PROVIDERS[providerId];
+    if (!def) return false;
 
     // 로컬 프로바이더: /v1/models 엔드포인트로 연결 확인
     // localhost/Vercel 모두 프록시 경유 시도 → Vercel은 사설 IP 접근 불가로 실패

@@ -15,7 +15,7 @@
  *   - Failures are logged but never crash the app
  */
 
-import { app, ipcMain, type WebContents, type BrowserWindow } from 'electron';
+import { app, ipcMain, type BrowserWindow } from 'electron';
 
 // electron-updater is dynamically required so dev builds without
 // the package installed still run.
@@ -53,12 +53,6 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const INITIAL_DELAY_MS = 5_000;
 
 let mainWindowRef: BrowserWindow | null = null;
-
-interface UpdateInfo {
-  version: string;
-  releaseDate?: string;
-  releaseNotes?: string;
-}
 
 function broadcast(channel: string, payload: unknown): void {
   if (!mainWindowRef || mainWindowRef.isDestroyed()) return;

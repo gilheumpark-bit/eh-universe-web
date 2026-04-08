@@ -15,3 +15,17 @@
     linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 60px 60px;
 }
+
+/* Light theme: decorative glows quieter; grid uses dark ink on paper */
+html[data-theme="light"] .welcome-bg-glow-1,
+html[data-theme="light"] .welcome-bg-glow-2,
+html[data-theme="light"] .welcome-bg-glow-3 {
+  opacity: 0.045 !important;
+}
+
+html[data-theme="light"] .welcome-bg-grid,
+html[data-theme="light"] .welcome-bg-grid-dim {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+  opacity: 1;
+}

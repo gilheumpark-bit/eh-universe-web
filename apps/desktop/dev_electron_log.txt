@@ -1,0 +1,46 @@
+
+> eh-code-studio-desktop@0.1.0-alpha dev:electron C:\eh-universe-web\apps\desktop
+> nextron
+
+[nextron] Run renderer process: next dev -p 8888 renderer
+??Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:8888
+- Network:       http://192.168.219.102:8888
+??Ready in 344ms
+??`eslint` configuration in next.config.js is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+??Invalid next.config.js options detected: 
+??    Unrecognized key(s) in object: 'eslint'
+??See more info here: https://nextjs.org/docs/messages/invalid-next-config
+
+[nextron] Run main process: electron . 8888 --remote-debugging-port=5858 --inspect=9292
+일괄 작업을 끝내시겠습니까 (Y/N)? 
+^Cfile:///C:/eh-universe-web/node_modules/.pnpm/execa@9.6.1/node_modules/execa/lib/return/final-error.js:6
+	return new ErrorClass(message, options);
+	       ^
+
+ExecaError: Command failed with exit code 3221225786: electron . 8888 "--remote-debugging-port=5858" "--inspect=9292"
+    at getFinalError (file:///C:/eh-universe-web/node_modules/.pnpm/execa@9.6.1/node_modules/execa/lib/return/final-error.js:6:9)
+    at makeError (file:///C:/eh-universe-web/node_modules/.pnpm/execa@9.6.1/node_modules/execa/lib/return/result.js:108:16)
+    at getAsyncResult (file:///C:/eh-universe-web/node_modules/.pnpm/execa@9.6.1/node_modules/execa/lib/methods/main-async.js:168:4)
+    at handlePromise (file:///C:/eh-universe-web/node_modules/.pnpm/execa@9.6.1/node_modules/execa/lib/methods/main-async.js:151:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  shortMessage: 'Command failed with exit code 3221225786: electron . 8888 "--remote-debugging-port=5858" "--inspect=9292"',
+  command: 'electron . 8888 --remote-debugging-port=5858 --inspect=9292',
+  escapedCommand: 'electron . 8888 "--remote-debugging-port=5858" "--inspect=9292"',
+  cwd: 'C:\\eh-universe-web\\apps\\desktop',
+  durationMs: 22415.9119,
+  failed: true,
+  timedOut: false,
+  isCanceled: false,
+  isGracefullyCanceled: false,
+  isTerminated: false,
+  isMaxBuffer: false,
+  isForcefullyTerminated: false,
+  exitCode: 3221225786,
+  stdio: [ undefined, undefined, undefined ],
+  ipcOutput: [],
+  pipedFrom: []
+}
+
+Node.js v24.14.1
+?덭LIFECYCLE??Command failed with exit code 1.

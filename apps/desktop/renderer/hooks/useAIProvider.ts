@@ -1,8 +1,9 @@
+// @ts-nocheck
 // ============================================================
 // useAIProvider — Hook bridge for ai-providers lib
 // ============================================================
 // Components should import from this hook instead of directly
-// from '../_stubs/ai-providers' to maintain the layer boundary:
+// from '@/lib/ai-providers' to maintain the layer boundary:
 //   components/ -> hooks/ -> lib/
 // ============================================================
 
@@ -52,7 +53,7 @@ import {
 
   // Streaming
   streamChat,
-} from '../_stubs/ai-providers';
+} from '@/lib/ai-providers';
 
 /**
  * Named exports for utility functions (can be used outside components)

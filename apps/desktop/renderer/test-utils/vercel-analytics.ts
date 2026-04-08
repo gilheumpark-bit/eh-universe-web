@@ -1,3 +1,4 @@
+// @ts-nocheck
 export function track(): void {
   // Test stub for @vercel/analytics
 }

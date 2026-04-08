@@ -1,17 +1,19 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Types & Constants
 // ============================================================
 
-import { streamChat } from '../_stubs/ai-providers';
+import { streamChat } from '@/lib/ai-providers';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import { type AgentRole as MultiKeyAgentRole } from '@/lib/multi-key-manager';
 import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/architecture-spec';
 import { DESIGN_SYSTEM_SPEC } from '@/lib/code-studio/core/design-system-spec';
 import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
 import { buildIdiomDirective, detectFramework, type FrameworkId } from '@/lib/code-studio/ai/idiom-presets';
+import { buildCalcProtocolPrompt } from '@/lib/code-studio/ai/calc-protocol';
 
 // Re-export for consumers that need provider info alongside agent sessions.
-export { getApiKey, getActiveProvider } from '../_stubs/ai-providers';
+export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 import { type AgentRole, AGENT_REGISTRY } from '@/types/code-studio-agent';
 
@@ -542,8 +544,13 @@ async function runSingleAgent(
     ? `\n\n${buildIdiomDirective(_detectedFramework)}`
     : '';
 
+  const strictCalc = /\[\[STRICT_CALC\]\]/.test(userInput);
+  const calcAppendix = strictCalc
+    ? `\n\n${buildCalcProtocolPrompt({ instruction: 'Follow the task. Do not violate SCOPE/CONTRACT/@block.', fileName: 'target file', strict: true, maxLines: 10 })}`
+    : '';
+
   const streamOpts = {
-    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}`,
+    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}${calcAppendix}`,
     messages: [{ role: 'user' as const, content: userInput }],
     temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,

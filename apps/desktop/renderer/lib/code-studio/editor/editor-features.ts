@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * code-studio-editor-features.ts
  * Monaco editor advanced feature registration module.

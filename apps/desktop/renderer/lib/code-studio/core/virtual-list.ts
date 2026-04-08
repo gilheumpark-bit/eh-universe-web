@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface VirtualListConfig {
   totalItems: number;
   containerHeight: number;

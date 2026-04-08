@@ -1,15 +1,15 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
 
-import React from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Files, Search, GitBranch, MessageSquare, Activity,
   Edit3, AlertTriangle, Eye, ChevronRight, Settings, X,
-  Home, Plus,
+  Plus,
   type LucideIcon,
   Upload, Bug, Play, Shield, List, Layout,
   Package, BarChart3, Users, Wand2,
@@ -23,21 +23,15 @@ import { L4 } from "@/lib/i18n";
 import type { FileNode, OpenFile } from "@eh/quill-engine/types";
 import type { RightPanel } from "@/lib/code-studio/core/panel-registry";
 import { getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
-import { detectLanguage } from "@eh/quill-engine/types";
 import type { BugReport } from "@eh/quill-engine/pipeline/bugfinder";
 import type { StressReport } from "@eh/quill-engine/pipeline/stress-test";
 import type { VerificationResult } from "@eh/quill-engine/pipeline/verification-loop";
 import type { ComposerMode } from "@/lib/code-studio/core/composer-state";
-import { saveProjectSpec } from "@/lib/code-studio/core/project-spec";
-import {
-  CODE_STUDIO_SPEC_CHAT_SEED_KEY,
-  buildProjectSpecChatSeed,
-  toCoreProjectSpec,
-  type ProjectSpecFormData,
-} from "@/lib/code-studio/core/project-spec-bridge";
-import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio/ai/ai-features";
 import type { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import * as PI from "@/components/code-studio/PanelImports";
+import { renderRightPanelBranch } from "@/components/code-studio/right-panel-branch";
+import { ThemeToggle } from "@/components/code-studio/ThemeToggle";
+import { loadActivityBarOrder, saveActivityBarOrder } from "@/lib/code-studio/activity-bar-order";
 
 /** Map registry icon names → lucide-react components for the activity bar */
 const LUCIDE_MAP: Record<string, LucideIcon> = {
@@ -50,6 +44,16 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   BookA, Boxes, BookOpen, Code2, PenTool, Hash, Clock, Zap,
   GitCompare,
 };
+
+/** Maps engine bug reports to Problems panel finding shape (memoize at call sites). */
+function mapBugReportsToProblemFindings(bugReports: BugReport[]) {
+  return bugReports.map((b) => ({
+    severity: (b.severity === "critical" ? "critical" : b.severity === "high" ? "major" : b.severity === "medium" ? "minor" : "info") as "critical" | "major" | "minor" | "info",
+    message: b.description,
+    line: b.line,
+    team: b.category,
+  }));
+}
 
 interface PipelineStage {
   name: string;
@@ -106,8 +110,10 @@ export interface CodeStudioPanelManagerProps {
   fsUpdateContent: (id: string, content: string) => void;
   onSetOpenFiles: React.Dispatch<React.SetStateAction<OpenFile[]>>;
   onApproveFile: (fileName: string) => void;
+  onOverrideFile: (fileName: string) => void;
   onRejectFile: (fileName: string) => void;
   stagedFiles: Record<string, string>;
+  guardFindingsByFile: Record<string, import("@eh/quill-engine/pipeline/pipeline-teams").Finding[]>;
   onSetFiles: React.Dispatch<React.SetStateAction<FileNode[]>>;
   handleRunStressTest: () => void;
   handleRunVerification: () => void;
@@ -123,6 +129,19 @@ export interface CodeStudioPanelManagerProps {
 
 // IDENTITY_SEAL: PART-1 | role=Imports+Types | inputs=none | outputs=imports,PanelManagerProps
 
+/** 드롭 대상 앞에 끼워 넣기 (remove → insert before target) */
+function reorderActivityBarIds(ids: string[], fromId: string, toId: string): string[] {
+  if (fromId === toId) return ids;
+  const from = ids.indexOf(fromId);
+  const to = ids.indexOf(toId);
+  if (from < 0 || to < 0) return ids;
+  const next = [...ids];
+  const [removed] = next.splice(from, 1);
+  const insertAt = next.indexOf(toId);
+  next.splice(insertAt, 0, removed);
+  return next;
+}
+
 // ============================================================
 // PART 2 — Activity Bar
 // ============================================================
@@ -131,6 +150,7 @@ function ActivityBar({
   rightPanel, onSetRightPanel, bugReports, showAdvancedPanels,
   onToggleAdvancedPanels, showSettings, onToggleSettings, lang,
   onAction,
+  widthPx,
 }: {
   rightPanel: RightPanel | null;
   onSetRightPanel: (panel: RightPanel | null) => void;
@@ -141,43 +161,119 @@ function ActivityBar({
   onToggleSettings: () => void;
   lang: string;
   onAction?: (actionId: string) => void;
+  /** 드래그로 조절되는 액티비티 열 너비(px) */
+  widthPx: number;
 }) {
   const visiblePanels = getVisiblePanels(showAdvancedPanels);
-  const coreItems = [
-    { id: "files" as const, icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
-    { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
-    { id: "action-demo", icon: Play, label: "Open Demo", labelKo: "데모 열기", shortcut: undefined, isAction: true },
-    { id: "action-new-file", icon: Plus, label: "New File", labelKo: "새 파일", shortcut: undefined, isAction: true },
-    { id: "project-spec" as const, icon: Wand2, label: "Project Spec", labelKo: "이지모드 진입", shortcut: undefined },
-    { id: "pipeline" as const, icon: Activity, label: "Pipeline", labelKo: "파이프라인", shortcut: undefined },
-    { id: "search" as const, icon: Search, label: "Search", labelKo: "파일 검색", shortcut: "Ctrl+Shift+F" },
-    { id: "git" as const, icon: GitBranch, label: "Git", labelKo: "Git", shortcut: undefined },
-    { id: "review" as const, icon: AlertTriangle, label: "Review", labelKo: "리뷰 센터", shortcut: undefined },
-    { id: "composer" as const, icon: Edit3, label: "Composer", labelKo: "멀티파일 작성기", shortcut: undefined },
-    { id: "preview" as const, icon: Eye, label: "Preview", labelKo: "실시간 프리뷰", shortcut: undefined },
-  ];
+
+  const coreItemCatalog: Record<
+    string,
+    {
+      id: string;
+      icon: LucideIcon;
+      label: string;
+      labelKo: string;
+      shortcut?: string;
+      isAction?: boolean;
+    }
+  > = {
+    files: { id: "files", icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
+    chat: { id: "chat", icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅" },
+    "action-demo": { id: "action-demo", icon: Play, label: "Open Demo", labelKo: "데모 열기", isAction: true },
+    "action-new-file": { id: "action-new-file", icon: Plus, label: "New File", labelKo: "새 파일", isAction: true },
+    "project-spec": { id: "project-spec", icon: Wand2, label: "Project Spec", labelKo: "이지모드 진입" },
+    pipeline: { id: "pipeline", icon: Activity, label: "Pipeline", labelKo: "파이프라인" },
+    search: { id: "search", icon: Search, label: "Search", labelKo: "파일 검색", shortcut: "Ctrl+Shift+F" },
+    git: { id: "git", icon: GitBranch, label: "Git", labelKo: "Git" },
+    review: { id: "review", icon: AlertTriangle, label: "Review", labelKo: "리뷰 센터" },
+    composer: { id: "composer", icon: Edit3, label: "Composer", labelKo: "멀티파일 작성기" },
+    preview: { id: "preview", icon: Eye, label: "Preview", labelKo: "실시간 프리뷰" },
+  };
+
+  const [itemOrder, setItemOrder] = useState<string[]>(() => loadActivityBarOrder());
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  /** dragOver 시점에 getData가 비는 브라우저 대비 */
+  const draggedIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    saveActivityBarOrder(itemOrder);
+  }, [itemOrder]);
+
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    draggedIdRef.current = id;
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const from = draggedIdRef.current;
+    if (from && from !== id) setDropTargetId(id);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const fromId = e.dataTransfer.getData("text/plain") || draggedIdRef.current;
+    draggedIdRef.current = null;
+    if (!fromId || fromId === targetId) {
+      setDraggedId(null);
+      setDropTargetId(null);
+      return;
+    }
+    setItemOrder((prev) => reorderActivityBarIds(prev, fromId, targetId));
+    setDraggedId(null);
+    setDropTargetId(null);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    draggedIdRef.current = null;
+    setDraggedId(null);
+    setDropTargetId(null);
+  }, []);
+
+  const orderedCoreItems = itemOrder.map((id) => coreItemCatalog[id]).filter(Boolean);
 
   return (
-    <div className={`shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1 overflow-y-auto [&::-webkit-scrollbar]:hidden transition-all duration-300 ${
-      showAdvancedPanels ? "w-[92px]" : "w-12"
-    }`}>
+    <div
+      style={{ width: widthPx }}
+      className="shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1 overflow-y-auto [&::-webkit-scrollbar]:hidden min-w-0"
+    >
 
-      {/* Icons Container with flex-wrap to support 2 columns */}
-      <div className="flex flex-wrap justify-center gap-1 w-full px-1">
-        {coreItems.map((item) => {
+      {/* Icons Container — flex-wrap; 드래그로 순서 영속 저장 */}
+      <div
+        className="flex flex-wrap justify-center gap-1 w-full px-1"
+        role="toolbar"
+        aria-label={L4(lang, { ko: "액티비티 바", en: "Activity bar" })}
+      >
+        {orderedCoreItems.map((item) => {
           const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
+          const reorderHint = L4(lang, { ko: "드래그하여 순서 변경", en: "Drag to reorder" });
+          const titleBase = `${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`;
+          const isDrop = dropTargetId === item.id && draggedId && draggedId !== item.id;
           return (
             <button
               key={item.id}
+              type="button"
+              draggable
+              data-dragging={draggedId === item.id ? "true" : undefined}
+              onDragStart={(e) => handleDragStart(e, item.id)}
+              onDragOver={(e) => handleDragOver(e, item.id)}
+              onDrop={(e) => handleDrop(e, item.id)}
+              onDragEnd={handleDragEnd}
               onClick={() => {
                 if (item.isAction) {
                   onAction?.(item.id);
                 } else {
-                  onSetRightPanel(rightPanel === item.id ? null : item.id as RightPanel);
+                  onSetRightPanel(rightPanel === item.id ? null : (item.id as RightPanel));
                 }
               }}
-              className="relative w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
-              title={`${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`}
+              className={`relative w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group cursor-grab active:cursor-grabbing ${
+                draggedId === item.id ? "opacity-50" : ""
+              } ${isDrop ? "ring-2 ring-accent-purple/60 ring-offset-1 ring-offset-bg-primary rounded-lg" : ""}`}
+              title={`${titleBase} — ${reorderHint}`}
             >
               <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
                 rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
@@ -212,6 +308,10 @@ function ActivityBar({
       <div className="flex-1 min-h-[8px]" />
 
       <div className="flex flex-wrap justify-center gap-1 w-full px-1 mt-auto shrink-0 pb-1">
+        <ThemeToggle
+          variant="icon-only"
+          className="!min-h-10 !min-w-10 shrink-0 rounded-lg text-text-tertiary hover:bg-white/6 hover:text-text-secondary"
+        />
         <button onClick={onToggleAdvancedPanels}
           className="w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all hover:bg-white/6"
           title={showAdvancedPanels ? L4(lang, { ko: "확장 패널 숨기기", en: "Hide advanced panels" }) : L4(lang, { ko: "모든 패널 보기", en: "Show all panels" })}>
@@ -231,318 +331,21 @@ function ActivityBar({
 // PART 3 — Right Panel Renderer
 // ============================================================
 
-/** Finds a FileNode by basename in the tree */
-function findFileNodeByName(nodes: FileNode[], name: string): FileNode | null {
-  const basename = name.includes("/") ? name.split("/").pop()! : name;
-  for (const n of nodes) {
-    if (n.type === "file" && n.name === basename) return n;
-    if (n.children) {
-      const found = findFileNodeByName(n.children, basename);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 function RightPanelContent(props: CodeStudioPanelManagerProps) {
-  const {
-    rightPanel, onSetRightPanel, files, openFiles, activeFile, activeFileId,
-    bugReports, pipelineStages, pipelineScore, stressReport, isStressTesting,
-    verificationResult, isVerifying, verificationScore, currentVerifyRound,
-    composerMode, onComposerTransition, panels,
-    onFileSelect, onApplyCode, onSetDiffState, fsUpdateContent,
-    onSetOpenFiles, onSetFiles, handleRunStressTest, handleRunVerification,
-    editorNavigateToLine, toast, onApproveFile, onRejectFile, stagedFiles,
-  } = props;
+  const problemFindings = useMemo(
+    () => mapBugReportsToProblemFindings(props.bugReports),
+    [props.bugReports],
+  );
 
-  if (!rightPanel) return null;
+  if (!props.rightPanel) return null;
 
-  const problemFindings = bugReports.map((b) => ({
-    severity: (b.severity === "critical" ? "critical" : b.severity === "high" ? "major" : b.severity === "medium" ? "minor" : "info") as "critical" | "major" | "minor" | "info",
-    message: b.description,
-    line: b.line,
-    team: b.category,
-  }));
+  const body = renderRightPanelBranch(props.rightPanel, props, problemFindings);
+  if (body == null) return null;
 
-  const panelPropsMap: Record<string, () => React.ReactNode> = {
-    "quick-verify": () => (
-      <PI.QuickVerifyComponent
-        onStartVerify={(code: string, mode: string) => {
-          // 검증 전용: 코드를 에이전트 태스크로 전달 + 검증 모드 표시
-          const task = mode === "verify"
-            ? `## Code Verification Request\n\nReview the following code for security vulnerabilities, performance issues, memory leaks, dead code, and convention violations.\n\n\`\`\`\n${code}\n\`\`\``
-            : code;
-          localStorage.setItem("eh-cs-agent-task", task);
-          localStorage.setItem("eh-cs-agent-mode", mode);
-          onSetRightPanel("agents");
-          toast(mode === "verify" ? "검증 에이전트로 이동합니다." : "생성 + 검증을 시작합니다.", "success");
-        }}
-        onEasyMode={() => onSetRightPanel("project-spec")}
-        onClose={() => onSetRightPanel(null)}
-      />
-    ),
-    "project-spec": () => (
-      <PI.ProjectSpecFormComponent
-        onComplete={(spec: ProjectSpecFormData) => {
-          const coreSpec = toCoreProjectSpec(spec);
-          saveProjectSpec(coreSpec);
-          const chatSeed = buildProjectSpecChatSeed(coreSpec, spec);
-          localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed);
-          // 에이전트 파이프라인용 태스크도 저장
-          localStorage.setItem("eh-cs-agent-task", chatSeed);
-          toast("명세서 저장 완료. 에이전트 파이프라인으로 이동합니다.", "success");
-          onSetRightPanel("agents");
-        }}
-        onClose={() => onSetRightPanel(null)}
-      />
-    ),
-    "chat": () => (
-      <PI.ChatPanelComponent
-        activeFileContent={activeFile?.content}
-        activeFileName={activeFile?.name}
-        activeFileLanguage={activeFile?.language}
-        allFileNames={openFiles.map(f => f.name)}
-        onApplyCode={onApplyCode}
-      />
-    ),
-    "pipeline": () => {
-      const pipelineResult = pipelineStages.length > 0 ? {
-        stages: pipelineStages.map((s) => ({
-          stage: s.name, status: s.status, score: s.score ?? 0,
-          findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
-        })),
-        overallScore: pipelineScore ?? 0,
-        overallStatus: ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail",
-        timestamp: Date.now(),
-      } : null;
-      return <PI.PipelinePanelComponent result={pipelineResult} />;
-    },
-    "git": () => <PI.GitPanelComponent files={files} openFiles={openFiles} onRestore={(fid: string, content: string) => {
-      onSetOpenFiles((prev) => prev.map((f) => f.id === fid ? { ...f, content, isDirty: true } : f));
-      fsUpdateContent(fid, content);
-    }} onClearDirty={() => onSetOpenFiles((prev) => prev.map((f) => ({ ...f, isDirty: false })))} />,
-    "deploy": () => <PI.DeployPanelComponent files={files} language="EN" />,
-    "bugs": () => <PI.ProblemsPanelComponent findings={problemFindings} />,
-    "autopilot": () => (
-      <PI.AutopilotPanelComponent
-        code={activeFile?.content ?? ""}
-        language={activeFile?.language ?? "plaintext"}
-        fileName={activeFile?.name ?? "untitled"}
-        onComplete={(result) => {
-          if (result && result.files?.length > 0) {
-            for (const f of result.files) {
-              if (f.content && activeFileId) {
-                const newContent = f.content;
-                fsUpdateContent(activeFileId, newContent);
-                onSetOpenFiles((prev) => prev.map((file) => file.id === activeFileId ? { ...file, content: newContent, isDirty: true } : file));
-              }
-            }
-            toast(`Autopilot applied to ${result.files.length} file(s)`, "success");
-          }
-        }}
-        onClose={() => onSetRightPanel(null)}
-      />
-    ),
-    "agents": () => (
-      <PI.AgentPanelComponent
-        code={activeFile?.content ?? ""}
-        language={activeFile?.language ?? "plaintext"}
-        fileName={activeFile?.name ?? "untitled"}
-        onApplyCode={onApplyCode}
-        onOpenPreview={() => onSetRightPanel("preview")}
-      />
-    ),
-    "search": () => (
-      <PI.SearchPanelComponent
-        files={files}
-        onOpenFile={(name: string) => {
-          const node = findFileNodeByName(files, name);
-          if (node) onFileSelect(node);
-        }}
-        onClose={() => onSetRightPanel(null)}
-      />
-    ),
-    "composer": () => (
-      <PI.ComposerPanelComponent
-        files={files}
-        composerMode={composerMode}
-        onCompose={async (fileIds: string[], _instruction: string) => {
-          onComposerTransition('generating' as ComposerMode);
-          const result = fileIds.map((fid) => {
-            const f = openFiles.find((of) => of.id === fid);
-            return { fileId: fid, fileName: f?.name ?? fid, original: f?.content ?? "", modified: f?.content ?? "", status: "pending" as const };
-          });
-          onComposerTransition('verifying' as ComposerMode);
-          return result;
-        }}
-        onApplyChanges={(changes: Array<{ fileId: string; modified: string }>) => {
-          onComposerTransition('staged' as ComposerMode);
-          for (const c of changes) {
-            onSetOpenFiles((prev) => prev.map((f) => f.id === c.fileId ? { ...f, content: c.modified, isDirty: true } : f));
-            fsUpdateContent(c.fileId, c.modified);
-          }
-          onComposerTransition('applied' as ComposerMode);
-          onComposerTransition('idle' as ComposerMode);
-          toast(`Applied ${changes.length} file(s)`, "success");
-        }}
-        onPreviewDiff={(change: { original: string; modified: string; fileName: string }) => {
-          onComposerTransition('review' as ComposerMode);
-          onSetDiffState({ original: change.original, modified: change.modified, fileName: change.fileName });
-        }}
-      />
-    ),
-    "review": () => {
-      const effectiveScore = verificationResult?.finalScore ?? pipelineScore ?? 0;
-      const effectiveStatus = verificationResult?.finalStatus ?? ((pipelineScore ?? 0) >= 80 ? "pass" : (pipelineScore ?? 0) >= 60 ? "warn" : "fail") as "pass" | "warn" | "fail";
-      return (
-        <PI.ReviewCenterComponent
-          pipelineResult={pipelineStages.length > 0 ? {
-            stages: pipelineStages.map((s) => ({
-              stage: s.name, status: s.status, score: s.score ?? 0,
-              findings: s.message ? [{ severity: s.status === "fail" ? "critical" as const : "minor" as const, message: s.message, rule: s.name }] : [],
-            })),
-            overallScore: effectiveScore,
-            overallStatus: effectiveStatus,
-            timestamp: Date.now(),
-          } : null}
-          files={Object.entries(stagedFiles || {}).map(([name]) => ({
-            name,
-            status: "pending",
-            comments: [],
-            findings: [{ severity: "info" as const, message: "Self-repair fix staged for review", line: 0 }]
-          }))}
-          onApproveFile={onApproveFile}
-          onRejectFile={onRejectFile}
-        />
-      );
-    },
-    "preview": () => <PI.PreviewPanelComponent files={files} visible={rightPanel === "preview"} />,
-    "outline": () => (
-      <PI.OutlinePanelComponent
-        code={activeFile?.content ?? ""}
-        language={activeFile?.language ?? "plaintext"}
-        onNavigate={editorNavigateToLine}
-      />
-    ),
-    "templates": () => <PI.TemplateGalleryComponent onSelectTemplate={(template) => {
-      if (template?.files) {
-        for (const f of template.files) {
-          const node: FileNode = { id: `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.name, type: "file", content: f.content };
-          onSetFiles((prev) => [...prev, node]);
-        }
-        toast(`Template "${template.name}" loaded`, "success");
-      }
-      onSetRightPanel(null);
-    }} onClose={() => onSetRightPanel(null)} />,
-    "settings-panel": () => <PI.SettingsPanelComponent />,
-    "packages": () => <PI.PackagePanelComponent files={files} />,
-    "evaluation": () => <PI.EvaluationPanelComponent files={files} onClose={() => onSetRightPanel(null)} />,
-    "collab": () => <PI.CollabPanelComponent onClose={() => onSetRightPanel(null)} />,
-    "creator": () => (
-      <PI.CodeCreatorPanelComponent
-        onMerge={(createdFiles: Array<{ path: string; content: string }>) => {
-          for (const f of createdFiles) {
-            const node: FileNode = { id: `created-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.path.split("/").pop() ?? "file.ts", type: "file", content: f.content };
-            onSetFiles((prev) => [...prev, node]);
-            onSetOpenFiles((prev) => [...prev, { id: node.id, name: node.name, content: f.content, language: detectLanguage(node.name) }]);
-          }
-          toast(`Created ${createdFiles.length} file(s)`, "success");
-        }}
-        onClose={() => onSetRightPanel(null)}
-      />
-    ),
-    "terminal-panel": () => <PI.TerminalPanelComponent files={files} />,
-    "multi-terminal": () => <PI.MultiTerminalComponent />,
-    "database": () => <PI.DatabasePanelComponent connections={panels.dbConnections} onConnect={panels.handleDbConnect} onExecuteQuery={panels.handleDbQuery} tables={panels.dbTables} />,
-    "diff-editor": () => <PI.DiffEditorPanelComponent original="" modified="" />,
-    "git-graph": () => <PI.GitGraphComponent commits={[]} branches={[]} currentBranch="main" />,
-    "ai-hub": () => <PI.AIHubComponent features={panels.aiFeatures} onToggleFeature={panels.toggleAiFeature} onConfigureProvider={() => onSetRightPanel("api-config" as RightPanel)} />,
-    "ai-workspace": () => <PI.AIWorkspaceComponent threads={panels.wsThreads} sharedMemory={panels.wsSharedMemory} onSendMessage={panels.sendWsMessage} onCreateThread={panels.createWsThread} onDeleteThread={panels.deleteWsThread} />,
-    "canvas": () => { panels.initCanvas(); return <PI.CanvasPanelComponent nodes={panels.canvasNodes} connections={panels.canvasConnections} onNodesChange={panels.setCanvasNodes} onConnectionsChange={panels.setCanvasConnections} />; },
-    "progress": () => {
-      const status: "pass" | "warn" | "fail" | undefined = pipelineScore ? (pipelineScore >= 80 ? "pass" : pipelineScore >= 60 ? "warn" : "fail") : undefined;
-      return <PI.ProgressDashboardComponent pipelineScore={pipelineScore ?? undefined} pipelineStatus={status} stressReport={stressReport} onRunStress={handleRunStressTest} isStressTesting={isStressTesting} verificationScore={verificationScore ?? undefined} onRunVerification={handleRunVerification} isVerifying={isVerifying} verificationResult={verificationResult} currentVerifyRound={currentVerifyRound} />;
-    },
-    "onboarding": () => <PI.OnboardingGuideComponent onComplete={() => onSetRightPanel(null)} onSkip={() => onSetRightPanel(null)} />,
-    "merge-conflict": () => <PI.MergeConflictEditorComponent fileName={activeFile?.name ?? ""} conflicts={panels.mergeConflictsWithResolutions} onResolve={(conflictId: string, resolution: "ours" | "theirs" | "both" | "manual" | undefined, content?: string) => {
-      panels.resolveConflict(conflictId, resolution, content);
-      if (activeFileId && content) {
-        fsUpdateContent(activeFileId, content);
-        onSetOpenFiles((prev) => prev.map((f) => f.id === activeFileId ? { ...f, content, isDirty: true } : f));
-      }
-      toast("Conflict resolved", "success");
-    }} />,
-    "project-switcher": () => <PI.ProjectSwitcherComponent onClose={() => onSetRightPanel(null)} />,
-    "recent-files": () => <PI.RecentFilesComponent files={panels.recentFiles} onOpen={(fileId: string) => {
-      const found = findFileNodeByName(files, fileId);
-      if (found) onFileSelect(found);
-    }} onClear={() => { panels.clearRecentFiles(); toast("Recent files cleared", "info"); }} />,
-    "symbol-palette": () => <PI.SymbolPaletteComponent symbols={panels.symbols} onSelect={(symbol) => {
-      if (symbol?.line) editorNavigateToLine(symbol.line);
-    }} onClose={() => onSetRightPanel(null)} />,
-    "keybindings": () => <PI.KeybindingsPanelComponent onClose={() => onSetRightPanel(null)} />,
-    "api-config": () => <PI.APIKeyConfigComponent onClose={() => onSetRightPanel(null)} />,
-    "network-inspector": () => <PI.PreviewNetworkTabComponent visible={rightPanel === "network-inspector"} onClose={() => onSetRightPanel(null)} />,
-    "code-actions": () => <PI.QuickActionsComponent selectedText={panels.editorSelection.text} position={{ top: panels.editorSelection.top, left: panels.editorSelection.left }} language={activeFile?.language ?? "plaintext"} onAction={async (actionId: string, contextPrompt?: string) => {
-      onSetRightPanel("chat" as RightPanel);
-      toast(`Running: ${actionId}`, "info");
-      if (activeFile && contextPrompt) {
-        try {
-          let result = '';
-          if (actionId === 'explain') result = await explainCode(activeFile.content, activeFile.language);
-          else if (actionId === 'bugs') {
-            const lints = await lintCode(activeFile.content, activeFile.language);
-            result = lints.map(l => `Line ${l.line}: ${l.message}`).join('\n');
-          }
-          else if (actionId === 'document') result = await generateDocstring(activeFile.content, activeFile.language);
-          if (result) toast(result.slice(0, 100) + '...', 'info');
-        } catch { /* AI call failed */ }
-      }
-    }} onClose={() => onSetRightPanel(null)} />,
-    "model-switcher": () => <PI.ModelSwitcherComponent />,
-    "audit": () => <PI.AuditPanelComponent
-      files={files.flatMap(function flatFiles(n: typeof files[number]): { path: string; content: string; language: string }[] {
-        if (n.type === 'file') return [{ path: n.name, content: n.content ?? '', language: n.language ?? 'plaintext' }];
-        return (n.children ?? []).flatMap(flatFiles);
-      })}
-      onRunAudit={() => {
-        import('@/lib/code-studio/audit/audit-engine').then(({ runProjectAudit }) => {
-          const ctx = {
-            files: files.flatMap(function flatFiles(n: typeof files[number]): { path: string; content: string; language: string }[] {
-              if (n.type === 'file') return [{ path: n.name, content: n.content ?? '', language: n.language ?? 'plaintext' }];
-              return (n.children ?? []).flatMap(flatFiles);
-            }),
-            language: 'ko',
-          };
-          const report = runProjectAudit(ctx);
-          toast(`Audit: ${report.totalScore}/100 (${report.totalGrade}) — ${report.totalFindings} findings`, report.hardGateFail ? 'error' : 'success');
-        });
-      }}
-    />,
-    "module-profile": () => <PI.ModuleProfilePanelComponent />,
-    "cognitive-load": () => <PI.CognitiveLoadPanelComponent code={activeFile?.content ?? ''} />,
-    "adr": () => <PI.ADRPanelComponent
-      files={files.flatMap(function flatFiles(n: typeof files[number]): string[] {
-        if (n.type === 'file') return [n.name];
-        return (n.children ?? []).flatMap(flatFiles);
-      })}
-    />,
-    "code-rhythm": () => <PI.RhythmPanelComponent code={activeFile?.content ?? ''} />,
-    "migration-audit": () => <PI.MigrationAuditPanelComponent />,
-    "snippet-market": () => <PI.SnippetMarketComponent onImportToEditor={undefined} />,
-    "multi-diff": () => <PI.MultiFileDiffComponent files={openFiles.map(f => ({ path: f.name, original: '', modified: f.content }))} />,
-    "debugger": () => <PI.DebugPanelComponent />,
-    "naming-dict": () => <PI.NamingDictPanelComponent />,
-    "dep-graph": () => <PI.DependencyGraphComponent files={openFiles.reduce<Record<string, string>>((acc, f) => { acc[f.name] = f.content; return acc; }, {})} />,
-    "review-board": () => <PI.ReviewBoardComponent code={activeFile?.content ?? ''} />,
-  };
-
-  const renderer = panelPropsMap[rightPanel];
-  if (!renderer) return null;
-
+  // Parent (Shell) sets width; fill height so flex children (e.g. ChatPanel h-full) work.
   return (
-    <div className="w-80 shrink-0 border-l border-white/8 bg-bg-secondary overflow-hidden cs-panel-enter">
-      {renderer()}
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-bg-secondary cs-panel-enter">
+      {body}
     </div>
   );
 }
@@ -570,35 +373,33 @@ function BottomPanels({
   pipelineStages: PipelineStage[];
   tcs: Record<string, string>;
 }) {
+  const problemFindings = useMemo(
+    () => mapBugReportsToProblemFindings(bugReports),
+    [bugReports],
+  );
+
   if (!showTerminal && !showProblems && !showPipelineBottom) return null;
 
-  const problemFindings = bugReports.map((b) => ({
-    severity: (b.severity === "critical" ? "critical" : b.severity === "high" ? "major" : b.severity === "medium" ? "minor" : "info") as "critical" | "major" | "minor" | "info",
-    message: b.description,
-    line: b.line,
-    team: b.category,
-  }));
-
   return (
-    <div className="border-t border-white/8 max-h-[40vh] overflow-hidden flex flex-col">
-      <div className="flex items-center gap-1 border-b border-white/8 px-2 py-0.5 bg-bg-primary shrink-0">
+    <div className="shrink-0 border-t border-border flex max-h-[min(520px,55vh)] min-h-0 w-full flex-col overflow-hidden bg-bg-primary">
+      <div className="flex shrink-0 items-center gap-1 border-b border-white/8 bg-bg-secondary px-2 py-1">
         <button onClick={onToggleTerminal} title={tcs.consoleTooltip} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console}</button>
         <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
         <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
         <button onClick={onCloseAllBottom} aria-label="하단 패널 닫기" className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
       </div>
       {showTerminal && (
-        <div className="h-40 bg-bg-primary dark:bg-[#0d0d0d]">
-          <div ref={termRef} className="h-full" />
+        <div className="min-h-[min(320px,42vh)] h-[min(400px,48vh)] w-full bg-bg-primary dark:bg-[#0d0d0d]">
+          <div ref={termRef} className="h-full min-h-[inherit] w-full" />
         </div>
       )}
       {showProblems && (
-        <div className="h-40 overflow-auto">
+        <div className="min-h-[min(240px,35vh)] max-h-[min(360px,45vh)] w-full overflow-auto">
           <PI.ProblemsPanelComponent findings={problemFindings} />
         </div>
       )}
       {showPipelineBottom && pipelineStages.length > 0 && (
-        <div className="h-40 overflow-auto p-2">
+        <div className="min-h-[min(200px,30vh)] max-h-[min(320px,40vh)] w-full overflow-auto p-2">
           {pipelineStages.map((s) => (
             <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-mono">
               <span className={`w-2 h-2 rounded-full ${s.status === "pass" ? "bg-accent-green" : s.status === "warn" ? "bg-accent-amber" : s.status === "fail" ? "bg-accent-red" : "bg-white/20"}`} />

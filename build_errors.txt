@@ -1,0 +1,66 @@
+??turbo 2.9.4
+
+   ??Packages in scope: eh-code-studio-desktop
+   ??Running build in 1 packages
+   ??Remote caching disabled
+
+@eh/shared-types:build: cache hit, replaying logs 77f1358545d86b16
+@eh/shared-types:build: 
+@eh/shared-types:build: > @eh/shared-types@0.1.0 build C:\eh-universe-web\packages\shared-types
+@eh/shared-types:build: > tsc
+@eh/shared-types:build: 
+@eh/quill-engine:build: cache hit, replaying logs cb1059feb68726cb
+@eh/quill-engine:build: 
+@eh/quill-engine:build: > @eh/quill-engine@0.1.0 build C:\eh-universe-web\packages\quill-engine
+@eh/quill-engine:build: > tsc
+@eh/quill-engine:build: 
+@eh/quill-cli:build: cache hit, replaying logs f61cf8f7dfbd6e98
+@eh/quill-cli:build: 
+@eh/quill-cli:build: > @eh/quill-cli@0.1.0 build C:\eh-universe-web\packages\quill-cli
+@eh/quill-cli:build: > tsc
+@eh/quill-cli:build: 
+eh-code-studio-desktop:build: cache miss, executing 89fa534796847acf
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: > eh-code-studio-desktop@0.1.0-alpha build C:\eh-universe-web\apps\desktop
+eh-code-studio-desktop:build: > next build renderer
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: ??`eslint` configuration in next.config.js is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+eh-code-studio-desktop:build: ??Invalid next.config.js options detected: 
+eh-code-studio-desktop:build: ??    Unrecognized key(s) in object: 'eslint'
+eh-code-studio-desktop:build: ??See more info here: https://nextjs.org/docs/messages/invalid-next-config
+eh-code-studio-desktop:build: ??Next.js 16.2.1 (Turbopack)
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build:   Creating an optimized production build ...
+eh-code-studio-desktop:build: ??Compiled successfully in 8.1s
+eh-code-studio-desktop:build:   Skipping validation of types
+eh-code-studio-desktop:build:   Finished TypeScript config validation in 17ms ...
+eh-code-studio-desktop:build:   Collecting page data using 7 workers ...
+eh-code-studio-desktop:build:   Generating static pages using 7 workers (0/7) ...
+eh-code-studio-desktop:build:   Generating static pages using 7 workers (1/7) 
+eh-code-studio-desktop:build:   Generating static pages using 7 workers (3/7) 
+eh-code-studio-desktop:build:   Generating static pages using 7 workers (5/7) 
+eh-code-studio-desktop:build: ??Generating static pages using 7 workers (7/7) in 440ms
+eh-code-studio-desktop:build:   Finalizing page optimization ...
+eh-code-studio-desktop:build: ??Statically exporting a Next.js application via `next export` disables API routes and middleware.
+eh-code-studio-desktop:build: This command is meant for static-only hosts, and is not necessary to make your application static.
+eh-code-studio-desktop:build: Pages in your application without server-side data dependencies will be automatically statically exported by `next build`, including pages powered by `getStaticProps`.
+eh-code-studio-desktop:build: Learn more: https://nextjs.org/docs/messages/api-routes-static-export
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: Route (app)
+eh-code-studio-desktop:build: ????/
+eh-code-studio-desktop:build: ????/_not-found
+eh-code-studio-desktop:build: ????/apple-icon
+eh-code-studio-desktop:build: ????/code-studio
+eh-code-studio-desktop:build: ????/icon
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: ? Proxy (Middleware)
+eh-code-studio-desktop:build: 
+eh-code-studio-desktop:build: ?? (Static)  prerendered as static content
+eh-code-studio-desktop:build: 
+
+ Tasks:    4 successful, 4 total
+Cached:    3 cached, 4 total
+  Time:    12.362s 
+
+ WARNING  no output files found for task eh-code-studio-desktop#build. Please check your `outputs` key in `turbo.json`

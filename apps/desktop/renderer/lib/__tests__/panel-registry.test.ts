@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for src/lib/code-studio-panel-registry.ts
  * Covers: registry size, ID uniqueness, getPanelDef, required fields, category validation

@@ -147,10 +147,14 @@ async function streamGemini(
     async start(controller) {
       let emittedText = '';
       try {
-        // Handle both object-with-stream and direct-generator patterns
-        const chunks = (streamingResponse as any).stream || streamingResponse;
-        for await (const chunk of chunks) {
-          const rawText = (chunk as any).text ?? '';
+        // Handle both object-with-stream and direct-generator patterns (SDK shape varies by version).
+        type GeminiChunk = { text?: string };
+        type StreamSource = AsyncIterable<GeminiChunk> & { stream?: AsyncIterable<GeminiChunk> };
+        const sr = streamingResponse as StreamSource;
+        const iterable: AsyncIterable<GeminiChunk> =
+          sr.stream ?? sr;
+        for await (const chunk of iterable) {
+          const rawText = typeof chunk?.text === 'string' ? chunk.text : '';
           if (!rawText) continue;
 
           const text = rawText.startsWith(emittedText)

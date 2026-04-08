@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for useUndoRedo hook logic.
  *

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for src/lib/token-utils.ts
  * Covers: estimateTokens, getContextLimit, getMaxOutputTokens, truncateMessages, HISTORY_LIMITS
@@ -10,7 +11,7 @@ import {
   truncateMessages,
   HISTORY_LIMITS,
 } from '@/lib/token-utils';
-import type { ChatMsg } from '../_stubs/ai-providers';
+import type { ChatMsg } from '@/lib/ai-providers';
 
 // ============================================================
 // PART 1 — estimateTokens

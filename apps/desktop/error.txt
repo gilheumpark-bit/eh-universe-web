@@ -1,0 +1,13 @@
+
+App threw an error during load
+Error: Cannot find module '@babel/runtime-corejs3/core-js-stable/object/keys'
+    at webpackMissingModule (C:\eh-universe-web\apps\desktop\app\main.js:490035:50)
+    at C:\eh-universe-web\apps\desktop\app\main.js:490035:174
+    at C:\eh-universe-web\apps\desktop\app\main.js:490299:3
+    at C:\eh-universe-web\apps\desktop\app\main.js:490302:12
+    at webpackUniversalModuleDefinition (C:\eh-universe-web\apps\desktop\app\main.js:3:20)
+    at Object.<anonymous> (C:\eh-universe-web\apps\desktop\app\main.js:10:3)
+    at Module._compile (node:internal/modules/cjs/loader:1820:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1953:10)
+    at Module.load (node:internal/modules/cjs/loader:1540:32)
+    at Module._load (node:internal/modules/cjs/loader:1342:12)

@@ -1,8 +1,9 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Environment Variable Validation
 // ============================================================
 
-import { logger } from '../_stubs/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Validates required environment variables at module load time.

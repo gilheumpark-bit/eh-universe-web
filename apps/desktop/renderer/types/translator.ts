@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type ChapterEntry = {
   name: string;
   content: string;

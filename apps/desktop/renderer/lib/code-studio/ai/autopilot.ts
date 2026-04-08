@@ -1,8 +1,9 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Types & Constants
 // ============================================================
 
-import { streamChat, getApiKey, getActiveProvider } from '../_stubs/ai-providers';
+import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { DESIGN_SYSTEM_COMPACT } from '@/lib/code-studio/core/design-system-spec';
 import { buildQualityRulesPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
 

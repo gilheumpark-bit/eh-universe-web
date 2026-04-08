@@ -12,6 +12,7 @@ import { join, basename } from 'path';
 
 interface ApplyOptions {
   all?: boolean;
+  override?: boolean;
 }
 
 export async function runApply(file: string | undefined, opts: ApplyOptions): Promise<void> {
@@ -99,6 +100,36 @@ export async function runApply(file: string | undefined, opts: ApplyOptions): Pr
         console.log(`  ❌ ${f} — 백업 실패: ${(err as Error).message}`);
         failed++;
         continue; // Don't apply if backup failed
+      }
+    }
+
+    // diff-guard: block apply unless --override
+    if (existsSync(targetPath)) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { runDiffGuard } = require('@eh/quill-engine/pipeline/diff-guard');
+        const original = readFileSync(targetPath, 'utf-8');
+        const decision = runDiffGuard({
+          original,
+          modified: content,
+          fileName: f,
+          policy: { mode: 'soft' },
+          language: f.endsWith('.tsx') ? 'tsx' : f.endsWith('.ts') ? 'typescript' : f.endsWith('.jsx') ? 'jsx' : 'javascript',
+        });
+        if (decision.status === 'fail' && !opts.override) {
+          console.log(`  ⛔ ${f} — diff-guard 차단 (Override 필요)`);
+          for (const fd of decision.findings.slice(0, 6)) {
+            console.log(`     - [${fd.rule}] ${fd.message}${fd.line ? ` (L${fd.line})` : ''}`);
+          }
+          console.log(`     hint: cs apply ${f} --override`);
+          failed++;
+          continue;
+        }
+        if (decision.status === 'fail' && opts.override) {
+          console.log(`  ⚠️  ${f} — diff-guard 위반이지만 --override로 강제 적용`);
+        }
+      } catch (err) {
+        console.log(`  ⚠️  ${f} — diff-guard 실행 실패(무시): ${(err as Error).message}`);
       }
     }
 

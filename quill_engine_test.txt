@@ -1,0 +1,43 @@
+
+> @eh/quill-engine@0.1.0 test C:\eh-universe-web\packages\quill-engine
+> jest
+
+FAIL src/pipeline/__tests__/design-lint.test.ts
+  ??Test suite failed to run
+
+    Cannot find module '@/lib/logger' from 'src/pipeline/__tests__/design-lint.test.ts'
+
+       5 | // Note: logger is imported by design-lint. In test env it may not exist,
+       6 | // so we mock it to prevent import errors.
+    >  7 | jest.mock('@/lib/logger', () => ({
+         |      ^
+       8 |   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+       9 | }));
+      10 |
+
+      at Resolver._throwModNotFoundError (../../node_modules/.pnpm/jest-resolve@30.3.0/node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (src/pipeline/__tests__/design-lint.test.ts:7:6)
+
+PASS src/audit/__tests__/audit-quality.test.ts
+PASS src/pipeline/__tests__/quality-checklist.test.ts
+PASS src/pipeline/__tests__/error-parser.test.ts
+PASS src/pipeline/__tests__/chaos-engineering.test.ts
+PASS src/pipeline/__tests__/dead-code.test.ts
+PASS src/audit/__tests__/audit-engine.test.ts
+PASS src/pipeline/__tests__/pipeline-deep.test.ts
+PASS src/pipeline/__tests__/pipeline-utils.test.ts
+PASS src/pipeline/__tests__/stress-test.test.ts
+PASS src/pipeline/__tests__/pipeline-teams.test.ts
+PASS src/pipeline/__tests__/bugfinder.test.ts
+PASS src/pipeline/__tests__/verification-loop.test.ts
+PASS src/audit/__tests__/audit-types.test.ts
+PASS src/pipeline/__tests__/pipeline.test.ts
+
+Test Suites: 1 failed, 14 passed, 15 total
+Tests:       82 passed, 82 total
+Snapshots:   0 total
+Time:        1.09 s, estimated 2 s
+Ran all test suites.
+C:\eh-universe-web\packages\quill-engine:
+?덭RR_PNPM_RECURSIVE_RUN_FIRST_FAIL??@eh/quill-engine@0.1.0 test: `jest`
+Exit status 1

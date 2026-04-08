@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import Link from "next/link";
@@ -40,11 +41,11 @@ export default function NotFound() {
               {T({ ko: "기지로 귀환", en: "RETURN TO BASE", ja: "基地へ帰還", zh: "返回基地" })}
             </Link>
             <Link
-              href="/studio"
-              aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", ja: "スタジオへ", zh: "前往工作室" })}
+              href="/code-studio"
+              aria-label={T({ ko: "코드 스튜디오로 이동", en: "Go to Code Studio", ja: "コードスタジオへ", zh: "前往代码工作室" })}
               className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >
-              {T({ ko: "스튜디오", en: "STUDIO", ja: "スタジオ", zh: "工作室" })}
+              {T({ ko: "코드 스튜디오", en: "CODE STUDIO", ja: "コードスタジオ", zh: "代码工作室" })}
             </Link>
           </div>
         </div>

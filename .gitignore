@@ -37,6 +37,15 @@ apps/desktop/app/main.js
 apps/desktop/app/main.js.map
 apps/desktop/app/preload.js
 apps/desktop/app/preload.js.map
+apps/desktop/app/_next/
+apps/desktop/app/dev/
+apps/desktop/app/**/*.js
+apps/desktop/app/**/*.js.map
+apps/desktop/app/**/*.LICENSE.txt
+apps/desktop/app/**/*.html
+apps/desktop/app/**/*.css
+apps/desktop/app/__next._*.txt
+apps/desktop/app/__next.__PAGE__.txt
 apps/desktop/main/dist/
 apps/desktop/preload/dist/
 apps/desktop/renderer/.next/

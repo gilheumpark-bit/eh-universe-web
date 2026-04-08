@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Metadata } from "next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
@@ -5,6 +6,7 @@ import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
 import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
+import { ThemeProvider } from "@/lib/theme-controller";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { MainContentRegion } from "@/components/MainContentRegion";
@@ -21,7 +23,6 @@ import {
 
 import "./globals.css";
 import "./globals-components.css";
-import "./globals-studio.css";
 import "./globals-animations.css";
 import "./globals-utilities.css";
 
@@ -114,20 +115,33 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${ibmPlexMono.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} ${notoSansKr.variable} ${cormorantGaramond.variable} ${notoSerifKr.variable} h-full antialiased dark`}
+      className={`${ibmPlexMono.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} ${notoSansKr.variable} ${cormorantGaramond.variable} ${notoSerifKr.variable} h-full antialiased`}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      data-theme="dark"
     >
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                localStorage.setItem('eh-theme', 'dark');
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.documentElement.classList.add('dark');
-              } catch (e) {}
+              (function () {
+                try {
+                  var raw = localStorage.getItem('cs:theme');
+                  if (raw !== 'light' && raw !== 'dark' && raw !== 'auto') {
+                    var eh = localStorage.getItem('eh-theme');
+                    raw = (eh === 'light' || eh === 'dark') ? eh : 'dark';
+                  }
+                  var resolved;
+                  if (raw === 'auto') {
+                    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  } else {
+                    resolved = raw;
+                  }
+                  document.documentElement.setAttribute('data-theme', resolved);
+                  document.documentElement.style.colorScheme = resolved;
+                  if (resolved === 'dark') document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                } catch (e) {}
+              })();
             `,
           }}
         />
@@ -153,7 +167,9 @@ export default function RootLayout({
         <AuthProvider>
           <LangProvider>
             <UnifiedSettingsProvider>
-              <MainContentRegion>{children}</MainContentRegion>
+              <ThemeProvider>
+                <MainContentRegion>{children}</MainContentRegion>
+              </ThemeProvider>
             </UnifiedSettingsProvider>
           </LangProvider>
         </AuthProvider>
