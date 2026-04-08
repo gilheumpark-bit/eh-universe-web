@@ -5,8 +5,11 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { FileText, ChevronRight, ChevronLeft, Check, Sparkles, Loader2, X } from "lucide-react";
+import { useLang } from "@/lib/LangContext";
+import { createT } from "@/lib/i18n";
+import type { AppLanguage } from "@eh/shared-types";
 
 interface SpecQuestion {
   id: string; question: string; category: string;
@@ -26,24 +29,6 @@ interface Props {
   onClose: () => void;
 }
 
-const CATEGORIES = [
-  { id: "web-app", label: "웹 앱", icon: "🌐" },
-  { id: "api", label: "API 서버", icon: "⚡" },
-  { id: "mobile", label: "모바일", icon: "📱" },
-  { id: "library", label: "라이브러리", icon: "📦" },
-  { id: "cli", label: "CLI 도구", icon: "🖥️" },
-  { id: "other", label: "기타", icon: "🔧" },
-];
-
-const QUESTIONS: SpecQuestion[] = [
-  { id: "q1", question: "프로젝트의 주요 기능은 무엇인가요?", category: "기능", type: "textarea", placeholder: "핵심 기능을 설명해주세요" },
-  { id: "q2", question: "기술 스택을 선택하세요", category: "기술", type: "multi-select", options: ["React", "Next.js", "Vue", "Svelte", "Express", "FastAPI", "Tailwind CSS", "TypeScript"] },
-  { id: "q3", question: "대상 사용자는 누구인가요?", category: "기획", type: "text", placeholder: "예: 개발자, 일반 사용자, 기업" },
-  { id: "q4", question: "배포 환경은?", category: "인프라", type: "select", options: ["Vercel", "AWS", "GCP", "Docker", "기타"] },
-  { id: "q5", question: "디자인 스타일을 선택하세요", category: "디자인", type: "select", options: ["IDE / 코딩 앱", "랜딩페이지 / 마케팅", "대시보드 / 어드민", "이커머스 / 쇼핑몰", "SaaS / 웹 서비스"] },
-  { id: "q6", question: "테마를 선택하세요", category: "디자인", type: "select", options: ["다크 (Archive)", "다크 (Night)", "라이트", "라이트 (Bright)", "베이지 (Warm)"] },
-];
-
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=SpecQuestion,Props
 
 // ============================================================
@@ -51,12 +36,33 @@ const QUESTIONS: SpecQuestion[] = [
 // ============================================================
 
 export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
+  const { lang } = useLang();
+  const t = createT(lang as AppLanguage);
+
   const [step, setStep] = useState<"category" | "questions" | "review">("category");
   const [category, setCategory] = useState("web-app");
   const [title, setTitle] = useState(initialPrompt ?? "");
   const [answers, setAnswers] = useState<SpecAnswer[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [autoFilling, setAutoFilling] = useState(false);
+
+  const categories = useMemo(() => [
+    { id: "web-app", label: t("projectSpecForm.categories.webApp"), icon: "🌐" },
+    { id: "api", label: t("projectSpecForm.categories.api"), icon: "⚡" },
+    { id: "mobile", label: t("projectSpecForm.categories.mobile"), icon: "📱" },
+    { id: "library", label: t("projectSpecForm.categories.library"), icon: "📦" },
+    { id: "cli", label: t("projectSpecForm.categories.cli"), icon: "🖥️" },
+    { id: "other", label: t("projectSpecForm.categories.other"), icon: "🔧" },
+  ], [t]);
+
+  const questions: SpecQuestion[] = useMemo(() => [
+    { id: "q1", question: t("projectSpecForm.questions.q1"), category: t("projectSpecForm.questions.q1Group"), type: "textarea", placeholder: t("projectSpecForm.questions.q1Placeholder") },
+    { id: "q2", question: t("projectSpecForm.questions.q2"), category: t("projectSpecForm.questions.q2Group"), type: "multi-select", options: ["React", "Next.js", "Vue", "Svelte", "Express", "FastAPI", "Tailwind CSS", "TypeScript"] },
+    { id: "q3", question: t("projectSpecForm.questions.q3"), category: t("projectSpecForm.questions.q3Group"), type: "text", placeholder: t("projectSpecForm.questions.q3Placeholder") },
+    { id: "q4", question: t("projectSpecForm.questions.q4"), category: t("projectSpecForm.questions.q4Group"), type: "select", options: ["Vercel", "AWS", "GCP", "Docker", t("projectSpecForm.otherOption")] },
+    { id: "q5", question: t("projectSpecForm.questions.q5"), category: t("projectSpecForm.questions.q5Group"), type: "select", options: [t("projectSpecForm.opts.q5Opt1"), t("projectSpecForm.opts.q5Opt2"), t("projectSpecForm.opts.q5Opt3"), t("projectSpecForm.opts.q5Opt4"), t("projectSpecForm.opts.q5Opt5")] },
+    { id: "q6", question: t("projectSpecForm.questions.q6"), category: t("projectSpecForm.questions.q6Group"), type: "select", options: [t("projectSpecForm.opts.q6Opt1"), t("projectSpecForm.opts.q6Opt2"), t("projectSpecForm.opts.q6Opt3"), t("projectSpecForm.opts.q6Opt4"), t("projectSpecForm.opts.q6Opt5")] },
+  ], [t]);
 
   const setAnswer = useCallback((questionId: string, answer: string | string[]) => {
     setAnswers((prev) => {
@@ -74,39 +80,38 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
     if (!title.trim()) return;
     setAutoFilling(true);
 
-    // Infer design preset from project title/description + category
     const lower = title.toLowerCase();
     const catLower = category.toLowerCase();
-    let inferredPreset = "랜딩페이지 / 마케팅";
-    let inferredTheme = "라이트 (Bright)";
+    let inferredPreset = t("projectSpecForm.opts.q5Opt2");
+    let inferredTheme = t("projectSpecForm.opts.q6Opt4");
     if (/ide|에디터|editor|terminal|터미널|코딩|code/i.test(lower) || catLower === "cli") {
-      inferredPreset = "IDE / 코딩 앱"; inferredTheme = "다크 (Archive)";
+      inferredPreset = t("projectSpecForm.opts.q5Opt1"); inferredTheme = t("projectSpecForm.opts.q6Opt1");
     } else if (/대시보드|dashboard|admin|어드민|analytics|모니터링|관리/i.test(lower)) {
-      inferredPreset = "대시보드 / 어드민"; inferredTheme = "라이트";
+      inferredPreset = t("projectSpecForm.opts.q5Opt3"); inferredTheme = t("projectSpecForm.opts.q6Opt3");
     } else if (/쇼핑|shopping|이커머스|e-?commerce|상품|product|장바구니|주문/i.test(lower)) {
-      inferredPreset = "이커머스 / 쇼핑몰"; inferredTheme = "라이트 (Bright)";
+      inferredPreset = t("projectSpecForm.opts.q5Opt4"); inferredTheme = t("projectSpecForm.opts.q6Opt4");
     } else if (/saas|서비스|구독|pricing|온보딩|폼|회원|로그인|가입/i.test(lower)) {
-      inferredPreset = "SaaS / 웹 서비스"; inferredTheme = "라이트";
+      inferredPreset = t("projectSpecForm.opts.q5Opt5"); inferredTheme = t("projectSpecForm.opts.q6Opt3");
     } else if (catLower === "api") {
-      inferredPreset = "대시보드 / 어드민"; inferredTheme = "다크 (Night)";
+      inferredPreset = t("projectSpecForm.opts.q5Opt3"); inferredTheme = t("projectSpecForm.opts.q6Opt2");
     }
 
     setAnswers([
-      { questionId: "q1", answer: `${title} 관련 핵심 기능 구현` },
+      { questionId: "q1", answer: `${title} core features implementation` },
       { questionId: "q2", answer: ["React", "TypeScript", "Tailwind CSS"] },
-      { questionId: "q3", answer: "개발자" },
+      { questionId: "q3", answer: "Developers" },
       { questionId: "q4", answer: "Vercel" },
       { questionId: "q5", answer: inferredPreset },
       { questionId: "q6", answer: inferredTheme },
     ]);
     setAutoFilling(false); setStep("review");
-  }, [title, category]);
+  }, [title, category, t]);
 
   const handleComplete = useCallback(() => {
     onComplete({ category, title, answers });
   }, [category, title, answers, onComplete]);
 
-  const currentQuestion = QUESTIONS[currentQ];
+  const currentQuestion = questions[currentQ];
 
   return (
     <div className="flex flex-col h-full bg-bg-primary">
@@ -114,22 +119,22 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-accent-amber" />
-            <span className="text-sm font-semibold text-text-primary">프로젝트 명세서</span>
+            <span className="text-sm font-semibold text-text-primary">{t("projectSpecForm.title")}</span>
             <span className="text-[10px] px-1.5 py-0.5 bg-accent-amber/20 text-accent-amber rounded">
-              {step === "category" ? "1/3" : step === "questions" ? `2/3 (${currentQ + 1}/${QUESTIONS.length})` : "3/3"}
+              {step === "category" ? "1/3" : step === "questions" ? `2/3 (${currentQ + 1}/${questions.length})` : "3/3"}
             </span>
           </div>
-          <button onClick={onClose} aria-label="닫기" className="text-text-tertiary hover:text-text-primary"><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-text-tertiary hover:text-text-primary"><X size={16} /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {step === "category" && (
             <div>
-              <p className="text-sm mb-1 text-text-primary">어떤 프로젝트를 만드시겠어요?</p>
-              <p className="text-xs text-text-tertiary mb-4">프롬프트를 입력하면 카테고리가 자동 선택됩니다</p>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 수제 케이크 쇼핑몰 만들어줘"
+              <p className="text-sm mb-1 text-text-primary">{t("projectSpecForm.step1Title")}</p>
+              <p className="text-xs text-text-tertiary mb-4">{t("projectSpecForm.step1Desc")}</p>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("projectSpecForm.step1Placeholder")}
                 className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber mb-4" />
               <div className="grid grid-cols-3 gap-2">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <button key={cat.id} onClick={() => setCategory(cat.id)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs border transition-colors ${category === cat.id ? "border-accent-amber bg-accent-amber/10 text-accent-amber" : "border-border hover:bg-bg-secondary/50 text-text-secondary"}`}>
                     <span>{cat.icon}</span><span>{cat.label}</span>
@@ -171,7 +176,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
                 </div>
               )}
               <div className="flex items-center justify-center gap-1 mt-6">
-                {QUESTIONS.map((_, i) => (
+                {questions.map((_, i) => (
                   <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentQ ? "bg-accent-amber" : i < currentQ ? "bg-green-400" : "bg-border"}`} />
                 ))}
               </div>
@@ -179,9 +184,9 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
           )}
           {step === "review" && (
             <div>
-              <p className="text-sm font-medium text-text-primary mb-3">명세서 확인</p>
+              <p className="text-sm font-medium text-text-primary mb-3">{t("projectSpecForm.reviewTitle")}</p>
               <div className="space-y-2">
-                {QUESTIONS.map((q) => {
+                {questions.map((q) => {
                   const answer = getAnswer(q.id);
                   const text = Array.isArray(answer) ? answer.join(", ") : answer;
                   if (!text) return null;
@@ -194,20 +199,20 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
         <div className="flex items-center justify-between px-5 py-3 border-t border-border">
           <div>
             {step === "category" && title.trim() && (
-              <button onClick={handleAutoFill} disabled={autoFilling}
+               <button onClick={handleAutoFill} disabled={autoFilling}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs bg-accent-amber/15 text-accent-amber rounded-lg hover:bg-accent-amber/20 disabled:opacity-50">
-                {autoFilling ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI 자동 완성
+                {autoFilling ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} {t("projectSpecForm.autoFillLabel")}
               </button>
             )}
           </div>
           <div className="flex items-center gap-2">
             {step === "questions" && currentQ > 0 && (
-              <button onClick={() => setCurrentQ((p) => p - 1)} className="flex items-center gap-1 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-primary"><ChevronLeft size={12} /> 이전</button>
+              <button onClick={() => setCurrentQ((p) => p - 1)} className="flex items-center gap-1 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-primary"><ChevronLeft size={12} /> {t("projectSpecForm.btnPrev")}</button>
             )}
-            {step === "category" && <button onClick={() => { if (title.trim()) setStep("questions"); }} disabled={!title.trim()} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 disabled:opacity-30">다음 <ChevronRight size={12} /></button>}
-            {step === "questions" && currentQ < QUESTIONS.length - 1 && <button onClick={() => setCurrentQ((p) => p + 1)} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">다음 <ChevronRight size={12} /></button>}
-            {step === "questions" && currentQ === QUESTIONS.length - 1 && <button onClick={() => setStep("review")} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">확인 <Check size={12} /></button>}
-            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-green text-text-primary rounded-lg hover:bg-accent-green/80"><Sparkles size={12} /> 프로젝트 생성</button>}
+            {step === "category" && <button onClick={() => { if (title.trim()) setStep("questions"); }} disabled={!title.trim()} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 disabled:opacity-30">{t("projectSpecForm.btnNext")} <ChevronRight size={12} /></button>}
+            {step === "questions" && currentQ < questions.length - 1 && <button onClick={() => setCurrentQ((p) => p + 1)} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">{t("projectSpecForm.btnNext")} <ChevronRight size={12} /></button>}
+            {step === "questions" && currentQ === questions.length - 1 && <button onClick={() => setStep("review")} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80">{t("projectSpecForm.btnConfirm")} <Check size={12} /></button>}
+            {step === "review" && <button onClick={handleComplete} className="flex items-center gap-1 px-4 py-1.5 text-xs bg-accent-green text-text-primary rounded-lg hover:bg-accent-green/80"><Sparkles size={12} /> {t("projectSpecForm.btnCreate")}</button>}
           </div>
         </div>
       </div>

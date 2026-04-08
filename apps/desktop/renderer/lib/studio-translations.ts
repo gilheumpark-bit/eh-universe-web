@@ -10,12 +10,13 @@
 // Fallback chain: JP/CN → EN → KO
 
 import type { AppLanguage } from '@eh/shared-types';
+import KO from '../locales/ko.json';
 
 // ============================================================
 // PART 2 — Code Studio UI Strings
 // ============================================================
 
-interface CodeStudioStrings {
+export interface CodeStudioStrings {
   title: string;
   subtitle: string;
   loading: string;
@@ -34,195 +35,193 @@ interface CodeStudioStrings {
   blankCreated: string;
   verificationFailed: string;
   selectFile: string;
+  explorerClosedTitle: string;
+  explorerClosedDesc: string;
+  greetingTitle: string;
+  greetingDesc: string;
+  quickVerifyTitle: string;
+  quickVerifyDesc: string;
+  openLocalFolder: string;
+  openLocalFolderDesc: string;
+  lessOptions: string;
+  moreOptions: string;
+  commandPalette: string;
+  terminal: string;
 }
 
 // ============================================================
 // PART 3 — Sidebar / Engine Common Strings
 // ============================================================
 
-interface SidebarStrings {
+export interface SidebarStrings {
   newProject: string;
   openProject: string;
   settings: string;
 }
 
-interface EngineStrings {
+export interface EngineStrings {
   cancel: string;
   confirm: string;
   save: string;
   delete: string;
 }
 
+export interface SearchPanelStrings {
+  title: string;
+  close: string;
+  searchPlaceholder: string;
+  history: string;
+  toggleReplace: string;
+  replaceWith: string;
+  replaceAll: string;
+  caseSensitive: string;
+  useRegex: string;
+  fileTypeFilter: string;
+  allFiles: string;
+  typeMore: string;
+  noResults: string;
+  replace: string;
+}
+
+export interface PipelinePanelStrings {
+  pass: string;
+  warn: string;
+  fail: string;
+  noResults: string;
+  runTitle: string;
+  lastRun: string;
+  running: string;
+  abort: string;
+  runningTitle: string;
+  resultsTitle: string;
+  rerun: string;
+  copyReport: string;
+  downloadReport: string;
+  findingsCount: string;
+  teamSimulation: string;
+  teamGeneration: string;
+  teamValidation: string;
+  teamSizeDensity: string;
+  teamAssetTrace: string;
+  teamStability: string;
+  teamReleaseIp: string;
+  teamGovernance: string;
+}
+
+export interface ProjectSpecFormStrings {
+  title: string;
+  step1Title: string;
+  step1Desc: string;
+  step1Placeholder: string;
+  reviewTitle: string;
+  autoFillLabel: string;
+  btnPrev: string;
+  btnNext: string;
+  btnConfirm: string;
+  btnCreate: string;
+  otherOption: string;
+  categories: {
+    webApp: string;
+    api: string;
+    mobile: string;
+    library: string;
+    cli: string;
+    other: string;
+  };
+  questions: {
+    q1: string;
+    q1Group: string;
+    q1Placeholder: string;
+    q2: string;
+    q2Group: string;
+    q3: string;
+    q3Group: string;
+    q3Placeholder: string;
+    q4: string;
+    q4Group: string;
+    q5: string;
+    q5Group: string;
+    q6: string;
+    q6Group: string;
+  };
+  opts: {
+    q5Opt1: string;
+    q5Opt2: string;
+    q5Opt3: string;
+    q5Opt4: string;
+    q5Opt5: string;
+    q6Opt1: string;
+    q6Opt2: string;
+    q6Opt3: string;
+    q6Opt4: string;
+    q6Opt5: string;
+  };
+}
+
+export interface TerminalPanelStrings {
+  terminal: string;
+  copyOutput: string;
+  runAgain: string;
+  booting: string;
+  commandInput: string;
+  analysisComplete: string;
+  stderrLogs: string;
+  copiedToClipboard: string;
+  simulatedMode: string;
+  actualCommands: string;
+  simulatedFallback: string;
+  fallbackToBuiltin: string;
+  aiAnalysisInProgress: string;
+  suggestion: string;
+  bootFailed: string;
+  scrollLock: string;
+  autoScrollOn: string;
+  clickToFix: string;
+}
+
 // ============================================================
 // PART 4 — Translation Record Shape
 // ============================================================
 
-interface TranslationRecord {
+export interface TranslationRecord {
   codeStudio: CodeStudioStrings;
   sidebar: SidebarStrings;
   engine: EngineStrings;
+  searchPanel: SearchPanelStrings;
+  pipelinePanel: PipelinePanelStrings;
+  terminalPanel: TerminalPanelStrings;
+  projectSpecForm: ProjectSpecFormStrings;
 }
 
-type TranslationDictionary = Record<AppLanguage, TranslationRecord>;
+type TranslationDictionary = Partial<Record<AppLanguage, TranslationRecord>>;
 
 // ============================================================
-// PART 5 — KO (한국어)
+// PART 5 — Export & Dynamic Loading
 // ============================================================
 
-const KO: TranslationRecord = {
-  codeStudio: {
-    title: 'EH Code Studio',
-    subtitle: '에이전트 코딩 엔진',
-    loading: '로딩 중...',
-    openDemo: '데모 열기',
-    openDemoDesc: '데모 프로젝트로 시작하기',
-    resumeProject: '마지막 프로젝트 이어서',
-    resumeProjectDesc: '이전 작업을 계속합니다',
-    newFile: '새 파일',
-    newFileDesc: '빈 파일을 만들어 편집을 시작하세요',
-    blankProject: '빈 프로젝트',
-    importFiles: '파일 가져오기',
-    savedLocally: '로컬에 저장됨',
-    demoLoaded: '데모 로드됨',
-    fileCreated: '파일 생성됨',
-    fileDeleted: '파일 삭제됨',
-    blankCreated: '빈 프로젝트 생성됨',
-    verificationFailed: '검증 실패',
-    selectFile: '파일을 선택하세요',
-  },
-  sidebar: {
-    newProject: '새로운 소설 시작',
-    openProject: '프로젝트 열기',
-    settings: '설정',
-  },
-  engine: {
-    cancel: '취소',
-    confirm: '확인',
-    save: '저장',
-    delete: '삭제',
-  },
+export const TRANSLATIONS: TranslationDictionary = { 
+  KO: KO as unknown as TranslationRecord 
 };
 
-// ============================================================
-// PART 6 — EN (English)
-// ============================================================
+export async function loadTranslation(lang: AppLanguage | string): Promise<void> {
+  const l = typeof lang === 'string' ? lang.toUpperCase() : lang;
+  
+  if (l === 'KO' || TRANSLATIONS[l as AppLanguage]) return;
 
-const EN: TranslationRecord = {
-  codeStudio: {
-    title: 'EH Code Studio',
-    subtitle: 'Agentic coding engine',
-    loading: 'Loading...',
-    openDemo: 'Open Demo',
-    openDemoDesc: 'Start with a demo project',
-    resumeProject: 'Resume last project',
-    resumeProjectDesc: 'Continue where you left off',
-    newFile: 'New file',
-    newFileDesc: 'Create an empty file and start editing',
-    blankProject: 'Blank project',
-    importFiles: 'Import files',
-    savedLocally: 'Saved locally',
-    demoLoaded: 'Demo loaded',
-    fileCreated: 'File created',
-    fileDeleted: 'File deleted',
-    blankCreated: 'Blank project created',
-    verificationFailed: 'Verification failed',
-    selectFile: 'Select a file',
-  },
-  sidebar: {
-    newProject: 'Start a new novel',
-    openProject: 'Open project',
-    settings: 'Settings',
-  },
-  engine: {
-    cancel: 'Cancel',
-    confirm: 'Confirm',
-    save: 'Save',
-    delete: 'Delete',
-  },
-};
+  try {
+    if (l === 'EN') {
+      const dict = await import('../locales/en.json');
+      TRANSLATIONS.EN = (dict.default || dict) as unknown as TranslationRecord;
+    } else if (l === 'JP' || l === 'JA') {
+      const dict = await import('../locales/ja.json');
+      TRANSLATIONS.JP = (dict.default || dict) as unknown as TranslationRecord;
+    } else if (l === 'CN' || l === 'ZH') {
+      const dict = await import('../locales/zh.json');
+      TRANSLATIONS.CN = (dict.default || dict) as unknown as TranslationRecord;
+    }
+  } catch (err) {
+    console.error(`Failed to load translation for ${lang}:`, err);
+  }
+}
 
-// ============================================================
-// PART 7 — JP (日本語)
-// ============================================================
-
-const JP: TranslationRecord = {
-  codeStudio: {
-    title: 'EH Code Studio',
-    subtitle: 'エージェントコーディングエンジン',
-    loading: '読み込み中...',
-    openDemo: 'デモを開く',
-    openDemoDesc: 'デモプロジェクトで開始',
-    resumeProject: '前回のプロジェクトを再開',
-    resumeProjectDesc: '前回の作業を続けます',
-    newFile: '新しいファイル',
-    newFileDesc: '空のファイルを作成して編集を開始',
-    blankProject: '空のプロジェクト',
-    importFiles: 'ファイルをインポート',
-    savedLocally: 'ローカルに保存済み',
-    demoLoaded: 'デモが読み込まれました',
-    fileCreated: 'ファイルが作成されました',
-    fileDeleted: 'ファイルが削除されました',
-    blankCreated: '空のプロジェクトが作成されました',
-    verificationFailed: '検証失敗',
-    selectFile: 'ファイルを選択してください',
-  },
-  sidebar: {
-    newProject: '新しい小説を始める',
-    openProject: 'プロジェクトを開く',
-    settings: '設定',
-  },
-  engine: {
-    cancel: 'キャンセル',
-    confirm: '確認',
-    save: '保存',
-    delete: '削除',
-  },
-};
-
-// ============================================================
-// PART 8 — CN (中文)
-// ============================================================
-
-const CN: TranslationRecord = {
-  codeStudio: {
-    title: 'EH Code Studio',
-    subtitle: '智能编码引擎',
-    loading: '加载中...',
-    openDemo: '打开演示',
-    openDemoDesc: '从演示项目开始',
-    resumeProject: '继续上次的项目',
-    resumeProjectDesc: '接续上次的工作',
-    newFile: '新建文件',
-    newFileDesc: '创建空文件并开始编辑',
-    blankProject: '空白项目',
-    importFiles: '导入文件',
-    savedLocally: '已保存到本地',
-    demoLoaded: '演示已加载',
-    fileCreated: '文件已创建',
-    fileDeleted: '文件已删除',
-    blankCreated: '空白项目已创建',
-    verificationFailed: '验证失败',
-    selectFile: '请选择一个文件',
-  },
-  sidebar: {
-    newProject: '开始新小说',
-    openProject: '打开项目',
-    settings: '设置',
-  },
-  engine: {
-    cancel: '取消',
-    confirm: '确认',
-    save: '保存',
-    delete: '删除',
-  },
-};
-
-// IDENTITY_SEAL: PART-5..8 | role=language records | inputs=none | outputs=KO,EN,JP,CN
-
-// ============================================================
-// PART 9 — Export
-// ============================================================
-
-export const TRANSLATIONS: TranslationDictionary = { KO, EN, JP, CN };
-
-// IDENTITY_SEAL: PART-9 | role=export | inputs=KO,EN,JP,CN | outputs=TRANSLATIONS
+// IDENTITY_SEAL: PART-5 | role=export | inputs=KO,EN,JP,CN | outputs=TRANSLATIONS

@@ -50,7 +50,7 @@ mac:
   category: public.app-category.developer-tools
   hardenedRuntime: true
   gatekeeperAssess: false
-  notarize: false              # turn on after Apple Developer ID is set up
+  notarize: true              # Requires APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID in env
   target:
     - target: dmg
       arch: [x64, arm64]

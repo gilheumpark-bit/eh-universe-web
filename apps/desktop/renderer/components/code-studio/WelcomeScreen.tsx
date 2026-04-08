@@ -59,6 +59,18 @@ export default function WelcomeScreen({
       newFileDesc: "Create an empty file and start editing",
       blankProject: "Blank project",
       importFiles: "Import files",
+      explorerClosedTitle: "Explorer is closed",
+      explorerClosedDesc: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area.",
+      greetingTitle: "Hi there!",
+      greetingDesc: "How can I help?",
+      quickVerifyTitle: "AI Code Verify",
+      quickVerifyDesc: "Paste → Verify / Generate → Verify",
+      openLocalFolder: "Open Local Folder",
+      openLocalFolderDesc: "Select a folder from your system",
+      lessOptions: "Less",
+      moreOptions: "More options",
+      commandPalette: "Commands",
+      terminal: "Terminal",
     } as Record<string, string>);
   const [visible, setVisible] = useState(false);
   const [hasProjects, setHasProjects] = useState(false);
@@ -112,20 +124,10 @@ export default function WelcomeScreen({
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-mono text-xs font-semibold text-text-primary">
-              {L4(lang, {
-                ko: "탐색기가 닫혀 있어요",
-                en: "Explorer is closed",
-                ja: "エクスプローラーが閉じています",
-                zh: "资源管理器已关闭",
-              })}
+              {t.explorerClosedTitle}
             </p>
             <p className="mt-1 font-mono text-[11px] leading-snug text-text-secondary">
-              {L4(lang, {
-                ko: "맨 왼쪽 세로 아이콘 줄에서 파일(폴더) 아이콘을 누르면 프로젝트 트리가 열립니다. 트리에서 파일을 고르면 이 중앙 영역에 편집기가 열려요.",
-                en: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area.",
-                ja: "左端のバーでファイルアイコンを押すとツリーが開きます。",
-                zh: "点击最左侧活动栏中的文件图标可打开项目树。",
-              })}
+              {t.explorerClosedDesc}
             </p>
           </div>
         </div>
@@ -166,9 +168,9 @@ export default function WelcomeScreen({
                   EH Code Studio
                 </p>
                 <p className="mt-2 font-mono text-sm font-semibold leading-snug text-text-primary sm:text-base">
-                  {L4(lang, { ko: "좋은 하루예요!", en: "Hi there!" })}
+                  {t.greetingTitle}
                   <br />
-                  {L4(lang, { ko: "무엇을 도와드릴까요?", en: "How can I help?" })}
+                  {t.greetingDesc}
                 </p>
               </div>
             </motion.div>
@@ -180,7 +182,7 @@ export default function WelcomeScreen({
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent-green/25 bg-accent-green/10 px-3 py-1">
             <span className="h-2 w-2 shrink-0 rounded-full bg-accent-green animate-pulse" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
-              {L4(lang, { ko: "코드 스튜디오", en: "Code Studio" })}
+              {t.title}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">{t.title}</h1>
@@ -234,10 +236,10 @@ export default function WelcomeScreen({
               </div>
               <div className="min-w-0">
                 <div className="font-mono text-sm font-bold text-text-primary">
-                  {L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" })}
+                  {t.quickVerifyTitle}
                 </div>
                 <div className="mt-0.5 font-mono text-[11px] text-text-secondary">
-                  {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" })}
+                  {t.quickVerifyDesc}
                 </div>
               </div>
             </button>
@@ -255,10 +257,10 @@ export default function WelcomeScreen({
               </div>
               <div className="min-w-0">
                 <div className="font-mono text-sm font-bold text-text-primary">
-                  {L4(lang, { ko: "로컬 폴더 열기", en: "Open Local Folder" })}
+                  {t.openLocalFolder}
                 </div>
                 <div className="mt-0.5 font-mono text-[11px] text-text-secondary">
-                  {L4(lang, { ko: "시스템의 폴더를 선택하여 편집", en: "Select a folder from your system" })}
+                  {t.openLocalFolderDesc}
                 </div>
               </div>
             </button>
@@ -273,9 +275,7 @@ export default function WelcomeScreen({
             className="flex min-h-11 items-center gap-1 rounded-lg px-2 font-mono text-[11px] text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
           >
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
-            {showExtras
-              ? L4(lang, { ko: "접기", en: "Less" })
-              : L4(lang, { ko: "더 보기", en: "More options" })}
+            {showExtras ? t.lessOptions : t.moreOptions}
           </button>
 
           {showExtras && (
@@ -304,13 +304,13 @@ export default function WelcomeScreen({
               {/* Keyboard shortcuts */}
               <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 font-mono text-[10px] text-text-secondary">
                 <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+N</span>
-                <span className="mx-1">{L4(lang, { ko: "새 파일", en: "New File" })}</span>
+                <span className="mx-1">{t.newFile}</span>
                 <span className="mx-1 text-text-tertiary" aria-hidden>|</span>
                 <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+Shift+P</span>
-                <span className="mx-1">{L4(lang, { ko: "명령 팔레트", en: "Commands" })}</span>
+                <span className="mx-1">{t.commandPalette}</span>
                 <span className="mx-1 text-text-tertiary" aria-hidden>|</span>
                 <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+`</span>
-                <span className="mx-1">{L4(lang, { ko: "터미널", en: "Terminal" })}</span>
+                <span className="mx-1">{t.terminal}</span>
               </div>
             </div>
           )}

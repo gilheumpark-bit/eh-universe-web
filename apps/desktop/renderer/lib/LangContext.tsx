@@ -2,6 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { loadTranslation } from "./studio-translations";
 
 export type Lang = "ko" | "en" | "ja" | "zh";
 
@@ -44,7 +45,9 @@ export function LangProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const detected = detectLang();
     if (detected !== "ko") {
-      queueMicrotask(() => setLang(detected));
+      loadTranslation(detected).then(() => {
+        setLang(detected);
+      });
     }
   }, []);
 
@@ -56,15 +59,20 @@ export function LangProvider({ children }: { children: ReactNode }) {
   const toggleLang = useCallback(() => {
     setLang((prev) => {
       const idx = LANG_CYCLE.indexOf(prev);
-      const next = LANG_CYCLE[(idx + 1) % LANG_CYCLE.length];
-      applyLangToDOM(next);
-      return next;
+      const next = LANG_CYCLE[(idx + 1) % LANG_CYCLE.length] as Lang;
+      loadTranslation(next).then(() => {
+        applyLangToDOM(next);
+        setLang(next);
+      });
+      return prev; // Defer lang state update until JSON is loaded
     });
   }, []);
 
   const setLangDirect = useCallback((l: Lang) => {
-    applyLangToDOM(l);
-    setLang(l);
+    loadTranslation(l).then(() => {
+      applyLangToDOM(l);
+      setLang(l);
+    });
   }, []);
 
   return (

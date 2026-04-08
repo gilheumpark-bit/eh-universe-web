@@ -56,7 +56,8 @@ import {
 } from "@/lib/code-studio/features/webcontainer";
 import { parseAnsi } from "@/lib/code-studio/core/ansi";
 import { useLang } from "@/lib/LangContext";
-import { L4 } from "@/lib/i18n";
+import { L4, createT } from "@/lib/i18n";
+import type { AppLanguage } from "@eh/shared-types";
 import {
   HistoryManager,
   EnvironmentManager,
@@ -82,6 +83,8 @@ interface TermLine {
   isCommand?: boolean;
   rawCommand?: string;
   executionTime?: number;
+  fixCommand?: string;
+  isAutoHeal?: boolean;
 }
 
 // IDENTITY_SEAL: PART-1 | role=imports+types | inputs=none | outputs=TerminalPanelProps,TermLine
@@ -126,9 +129,10 @@ async function analyzeErrorWithAI(
   stderr: string,
   exitCode: number,
   lang: string
-): Promise<{ summary: string; suggestion: string } | null> {
+): Promise<{ summary: string; suggestion: string; fixCommand?: string } | null> {
   try {
     const provider = getActiveProvider();
+    const t = createT(lang as AppLanguage);
     const apiKey = getApiKey(provider);
     if (!apiKey) return null;
 
@@ -137,7 +141,8 @@ async function analyzeErrorWithAI(
       systemInstruction:
         "You are a terminal error analyst. Given a failed command and its stderr, " +
         "provide a brief 1-line summary of the error and a 1-line fix suggestion. " +
-        `Respond in ${lang === "ko" ? "Korean" : "English"}. Format: SUMMARY: ...\nSUGGESTION: ...`,
+        "If there is a clear actionable command to fix the issue, provide it under FIX_COMMAND. " +
+        `Respond in ${lang === "ko" ? "Korean" : "English"}. Format: SUMMARY: ...\nSUGGESTION: ...\nFIX_COMMAND: ...`,
       messages: [
         {
           role: "user",
@@ -153,11 +158,13 @@ async function analyzeErrorWithAI(
 
     const summaryMatch = result.match(/SUMMARY:\s*(.+)/);
     const suggestionMatch = result.match(/SUGGESTION:\s*(.+)/);
+    const fixCommandMatch = result.match(/FIX_COMMAND:\s*(.+)/);
 
-    if (summaryMatch || suggestionMatch) {
+    if (summaryMatch || suggestionMatch || fixCommandMatch) {
       return {
-        summary: summaryMatch?.[1]?.trim() ?? L4(lang, { ko: "분석 완료", en: "Analysis complete" }),
-        suggestion: suggestionMatch?.[1]?.trim() ?? L4(lang, { ko: "stderr 로그를 확인하세요.", en: "Please check stderr logs." }),
+        summary: summaryMatch?.[1]?.trim() ?? t('terminalPanel.analysisComplete'),
+        suggestion: suggestionMatch?.[1]?.trim() ?? t('terminalPanel.stderrLogs'),
+        fixCommand: fixCommandMatch?.[1]?.trim(),
       };
     }
     return null;
@@ -178,6 +185,7 @@ export function TerminalPanel({
   onAskAI,
 }: TerminalPanelProps) {
   const { lang } = useLang();
+  const t = createT(lang as AppLanguage);
   const [lines, setLines] = useState<TermLine[]>([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -197,7 +205,7 @@ export function TerminalPanel({
     navigator.clipboard.writeText(text).then(() => {
       setLines((prev) => [
         ...prev,
-        { text: L4(lang, { ko: "[출력이 클립보드에 복사됨]", en: "[Output copied to clipboard]" }), color: "blue" },
+        { text: t('terminalPanel.copiedToClipboard'), color: "blue" },
       ]);
     });
   }, [lines, lang]);
@@ -206,7 +214,7 @@ export function TerminalPanel({
   useEffect(() => {
     let cancelled = false;
     setWcBooting(true);
-    setLines([{ text: L4(lang, { ko: "WebContainer 부팅 중\u2026", en: "Booting WebContainer\u2026" }), color: "blue" }]);
+    setLines([{ text: t('terminalPanel.booting'), color: "blue" }]);
 
     (async () => {
       try {
@@ -217,13 +225,13 @@ export function TerminalPanel({
           {
             text: instance.isAvailable
               ? "EH Code Studio Terminal v2.0 \u2014 WebContainer Ready"
-              : L4(lang, { ko: "EH Code Studio Terminal v2.0 \u2014 시뮬레이션 모드", en: "EH Code Studio Terminal v2.0 \u2014 Simulated Mode" }),
+              : t('terminalPanel.simulatedMode'),
             color: "green",
           },
           {
             text: instance.isAvailable
-              ? L4(lang, { ko: "실제 명령 실행 가능: npm, node, git, ls, cat 등", en: "Actual commands available: npm, node, git, ls, cat, etc." })
-              : L4(lang, { ko: "시뮬레이션 모드 \u2014 내장 명령 사용 가능 (type 'help')", en: "Simulated mode \u2014 built-in commands available (type 'help')" }),
+              ? t('terminalPanel.actualCommands')
+              : t('terminalPanel.simulatedFallback'),
             color: instance.isAvailable ? "green" : "yellow",
           },
           { text: "" },
@@ -233,11 +241,11 @@ export function TerminalPanel({
         setLines([
           { text: "EH Code Studio Terminal v2.0", color: "green" },
           {
-            text: L4(lang, { ko: `WebContainer 부팅 실패: ${(err as Error).message}`, en: `WebContainer boot failed: ${(err as Error).message}` }),
+            text: `${t('terminalPanel.bootFailed')}: ${(err as Error).message}`,
             color: "red",
           },
           {
-            text: L4(lang, { ko: "내장 명령으로 대체합니다 (type 'help')", en: "Fallback to built-in commands (type 'help')" }),
+            text: t('terminalPanel.fallbackToBuiltin'),
             color: "yellow",
           },
           { text: "" },
@@ -279,8 +287,8 @@ export function TerminalPanel({
     setAutocompleteIdx(-1);
   }, []);
 
-  const handleCommand = useCallback(async () => {
-    let cmd = input.trim();
+  const handleCommand = useCallback(async (overrideCmd?: string | React.MouseEvent) => {
+    let cmd = typeof overrideCmd === 'string' ? overrideCmd.trim() : input.trim();
     if (!cmd) return;
 
     const processed = preprocessCommand(cmd, shellEnv);
@@ -383,7 +391,7 @@ export function TerminalPanel({
           setLines((prev) => [...prev, ...newLines]);
           setLines((prev) => [
             ...prev,
-            { text: L4(lang, { ko: "[AI 분석 중\u2026]", en: "[AI analysis in progress\u2026]" }), color: "blue" },
+            { text: t('terminalPanel.aiAnalysisInProgress'), color: "blue" },
           ]);
           const analysis = await analyzeErrorWithAI(
             cmd,
@@ -395,7 +403,14 @@ export function TerminalPanel({
             setLines((prev) => [
               ...prev,
               { text: `[AI] ${analysis.summary}`, color: "blue" },
-              { text: `[AI] ${L4(lang, { ko: "제안", en: "Suggestion" })}: ${analysis.suggestion}`, color: "blue" },
+              { text: `[AI] ${t('terminalPanel.suggestion')}: ${analysis.suggestion}`, color: "blue" },
+              ...(analysis.fixCommand ? [{
+                text: `💡 [${t('terminalPanel.clickToFix')}] ${analysis.fixCommand}`,
+                color: "green",
+                isCommand: true,
+                rawCommand: analysis.fixCommand,
+                isAutoHeal: true,
+              } as TermLine] : []),
               { text: "" },
             ]);
           } else {
@@ -602,7 +617,7 @@ export function TerminalPanel({
       {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-1 bg-bg-secondary border-b border-white/8">
         <span className="flex items-center gap-1 text-xs text-text-secondary">
-          <TerminalIcon size={12} /> {L4(lang, { ko: "터미널", en: "Terminal" })}
+          <TerminalIcon size={12} /> {t('terminalPanel.terminal')}
           {wcInstance?.isAvailable && (
             <span className="text-[9px] px-1 py-0.5 bg-green-500/15 text-green-400 rounded">
               WebContainer
@@ -616,8 +631,8 @@ export function TerminalPanel({
           <button
             onClick={handleCopyOutput}
             className="p-0.5 hover:bg-white/5 rounded text-text-secondary hover:text-white"
-            title={L4(lang, { ko: "출력 복사", en: "Copy output" })}
-            aria-label={L4(lang, { ko: "출력 복사", en: "Copy output" })}
+            title={t('terminalPanel.copyOutput')}
+            aria-label={t('terminalPanel.copyOutput')}
           >
             <Copy size={11} />
           </button>
@@ -628,8 +643,8 @@ export function TerminalPanel({
                 ? "text-accent-amber"
                 : "text-text-secondary hover:text-white"
             }`}
-            title={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll" })}
-            aria-label={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll" })}
+            title={scrollLock ? t('terminalPanel.autoScrollOn') : t('terminalPanel.scrollLock')}
+            aria-label={scrollLock ? t('terminalPanel.autoScrollOn') : t('terminalPanel.scrollLock')}
           >
             {scrollLock ? <Lock size={11} /> : <Unlock size={11} />}
           </button>
@@ -644,8 +659,14 @@ export function TerminalPanel({
             onClick={
               line.isCommand && line.rawCommand
                 ? () => {
-                    setInput(line.rawCommand!);
-                    inputRef.current?.focus();
+                    if (line.isAutoHeal) {
+                      setInput("");
+                      inputRef.current?.focus();
+                      handleCommand(line.rawCommand!);
+                    } else {
+                      setInput(line.rawCommand!);
+                      inputRef.current?.focus();
+                    }
                   }
                 : undefined
             }
@@ -664,7 +685,7 @@ export function TerminalPanel({
               borderRadius: line.isCommand ? 2 : undefined,
             }}
             className={line.isCommand ? "hover:bg-white/5" : ""}
-            title={line.isCommand ? L4(lang, { ko: "클릭하여 다시 실행", en: "Click to run again" }) : undefined}
+            title={line.isCommand ? t('terminalPanel.runAgain') : undefined}
           >
             {parseAnsi(line.text).map((span, j) => (
               <span
@@ -726,12 +747,12 @@ export function TerminalPanel({
           className="flex-1 bg-transparent text-xs font-mono text-green-400 outline-none placeholder:text-white/60"
           placeholder={
             wcBooting
-              ? L4(lang, { ko: "부팅 중\u2026", en: "Booting\u2026" })
-              : L4(lang, { ko: "명령어 입력... (Tab: 자동완성, Ctrl+L: 화면 지우기)", en: "command... (Tab: autocomplete, Ctrl+L: clear)" })
+              ? t('terminalPanel.booting')
+              : t('terminalPanel.commandInput')
           }
           disabled={wcBooting}
           autoFocus
-          aria-label={L4(lang, { ko: "터미널 명령 입력", en: "Terminal command input" })}
+          aria-label={t('terminalPanel.commandInput')}
         />
       </div>
     </div>

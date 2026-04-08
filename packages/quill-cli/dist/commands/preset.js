@@ -305,7 +305,7 @@ async function runPreset(action, args) {
                 return;
             }
             (0, fs_1.unlinkSync)(path);
-            console.log(`  🗑️  ${args[0]} 제��됨\n`);
+            console.log(`  🗑️  ${args[0]} 제거됨\n`);
             break;
         }
         default:
